@@ -15,16 +15,16 @@ Add directives to html to make it more dynamic
 
 ```js
 (function() {
-  var app = angular.module('gemStore', []);							// define a module
+    var app = angular.module('gemStore', []);                         // define a module
 
-  app.controller('StoreController', ['$http', function($http){		// define a controller 
-	var store = this;												// save this in a variable to be used in a callback
-	store.products = [];
+    app.controller('StoreController', ['$http', function($http){      // define a controller 
+        var store = this;                                               // save this in a variable to be used in a callback
+        store.products = [];
 
-	$http.get('/store-products.json').success(function(data) {		// get a json file using the $http service
-		store.products = data;
-	});
-  });
+        $http.get('/store-products.json').success(function(data) {      // get a json file using the $http service
+            store.products = data;
+        });
+    });
 })();
 ```
 
