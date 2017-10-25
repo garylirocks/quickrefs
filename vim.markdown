@@ -479,3 +479,25 @@ use fencview.vim plugin to autodetect encodings, which provides two commands:
 ## folding
 
     za      # open or close folds
+
+
+## plugins
+
+`.vim` files in `.vim/plugin` folder are loaded automatically when vim starts
+
+
+### Vundle
+
+go to https://github.com/VundleVim/Vundle.vim for details
+
+basically:
+
+    * clone vundle to `~/.vim/bundle/Vundle.vim`
+        
+            git clone https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim
+
+    * configure plugins in `.vimrc`
+
+    * Launch vim and run `:PluginInstall`
+
+
