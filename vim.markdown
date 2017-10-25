@@ -374,7 +374,7 @@ copy to and paste from system clipboard, in X11 system register '\*' means *PRIM
 
 or 
 
-    alt+h/i/j/k/o       # alt followed by any normal mode key, will exit from the insert mode and take the normal mode action
+    alt+h/j/k/l         # alt followed by any normal mode key, will exit from the insert mode and take the normal mode action
     
 
 ### Save a readonly file
