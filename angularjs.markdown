@@ -238,7 +238,54 @@ Add directives to html to make it more dynamic
 AngularJS do input validation automatically for each input type: `email`, `number`, ...
 
 
+## `factory` vs. `service`
+
+[SERVICE VS FACTORY - ONCE AND FOR ALL](https://blog.thoughtram.io/angular/2015/07/07/service-vs-factory-once-and-for-all.html)
+
+the following two snippets do basically the same thing
+
+`.factory` accepts a function that returns an object
+
+    app.factory('MyService', function () {
+      return {
+        sayHello: function () {
+          console.log('hello');
+        }
+      }
+    });
 
 
+`.service` usually accepts a constructor function
+
+    app.service('MyService', function () {
+      this.sayHello = function () {
+        console.log('hello');
+      };
+    });
+
+
+but `.service` can accepts a function that returns an object as well
+
+    app.service('MyService', function () {
+      // we could do additional work here too
+      return {
+        sayHello: function () {
+          console.log('hello');
+        };
+      }
+    });
+
+and `.service` allows us to use ES6 classes, it's not possible with `.factory`
+
+    class MyService {
+      sayHello() {
+        console.log('hello');
+      }
+    }
+
+    app.service('MyService', MyService);
+
+
+**so always use `.service` over `.factory`**
 
 
