@@ -286,6 +286,8 @@ in vim:
 
 ### tab page
 
+**different tabs are like multiple desktops, multiple windows can be opened in one tab**
+
 open and close tab page
 
     $ vim -p file_1 file_2  # open each file in a tab page
@@ -476,6 +478,7 @@ use fencview.vim plugin to autodetect encodings, which provides two commands:
     :FencView           -> let you select an encoding for the buffer
     :FencAutoDetect     -> auto detect and convert encodings automatically
 
+
 ## folding
 
     za      # open or close folds
@@ -485,12 +488,47 @@ use fencview.vim plugin to autodetect encodings, which provides two commands:
 
 `.vim` files in `.vim/plugin` folder are loaded automatically when vim starts
 
+* ctrl-p
+
+    use `Ctrl-p` to start searching files
+
+    `Ctrl-r` to switch to regex mode
+
+    `Ctrl-t`, `Ctrl-v`, `Ctrl-x` to open the file in new tab / vertical split / horizontal split
+
+    `Ctrl-y` to create a new file and its parent directories
+
+* nerdtree
+
+    file system explorer
+
+* nerdtree-tabs
+
+    makes the file system explorer consistent across all tabs
+
+* vim-airline
+
+    beautiful status line
+
+* syntastic
+
+    syntax checker
+
+* easytags
+
+    update tags file automatically
+
+* tagbar
+
+    show all tags in a separate window
+
+
 
 ### Vundle
 
-go to https://github.com/VundleVim/Vundle.vim for details
+Vundle is one of the best Vim plugin managers, go to https://github.com/VundleVim/Vundle.vim for details
 
-basically:
+to use it:
 
     * clone vundle to `~/.vim/bundle/Vundle.vim`
         
