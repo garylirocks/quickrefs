@@ -57,6 +57,8 @@ react
 
 ## Example with lifecycle functions
 
+![react-lifecyle-explained](https://cdn-images-1.medium.com/max/1600/0*VoYsN6eq7I_wjVV5.png)
+
 	class Clock extends React.Component {
 	  constructor(props) {
 		super(props);
