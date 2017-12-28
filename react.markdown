@@ -110,21 +110,24 @@ react
 		}));
 
 
+## defaultProps and propTypes
 
-## propTypes
-
-with `Babel`, you can define static class variables within calss definition, so you can define props validation rules in `static propTypes`
+we can use static class variables within class definition to define defaultProps and propTypes
 
 	import React from 'react';
 	import PropTypes from 'prop-types';
 
-	class Book extends React.Component {
+    export class Book extends React.Component {
+        static defaultProps = {     
+            title: 'untitled book',
+        }
+    
 		static propTypes = {
 			title: PropTypes.string.isRequired
-		};
+		}
 
-		...
-	}
+        ...
+    }
 
 
 ## Styling
