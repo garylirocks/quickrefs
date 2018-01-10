@@ -51,6 +51,7 @@ react
 	* `for`			-> `htmlFor`
 	* `class`		-> `className`
 	* `tabindex`	-> `tabIndex`
+    * `colspan`     -> `colSpan`
 	* `style`		->	`style`  value should be wrapped by double brackets, and CSS property names should be in camelCase: `background-color` -> `backgroundColor`
 
 			<div htmlFor="nameField" className="wide" style={{border: "1px solid #000", backgroundColor: 'red'}}>a demo div</div>
@@ -100,7 +101,22 @@ react
 	);
 
 
-## state updating
+## state
+
+### state initializing
+
+with ES6 class syntax, add a `state` property to the class
+
+    class Book extends React.Component {
+        state = {
+            title: 'Moby Dick',
+            ...
+        }
+
+        ...
+    }
+
+### state updating
 
 * always use `this.setState({})` to update the state
 * state updates may be asynchronous, if new state is depended upon the previous state, use the second form of `setState()`:
@@ -123,7 +139,17 @@ we can use static class variables within class definition to define defaultProps
         }
     
 		static propTypes = {
-			title: PropTypes.string.isRequired
+			title: PropTypes.string.isRequired,
+
+    //      you can also use a custom validation rule here
+    //      title: function(props) {
+    //            if ((typeof props.title) !== 'string' || props.title.length < 5) {
+    //                return new Error('title should be a string and longer than 5');
+    //            } else {
+    //                return null;
+    //            }
+    //      }
+
 		}
 
         ...
