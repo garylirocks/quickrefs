@@ -156,6 +156,36 @@ we can use static class variables within class definition to define defaultProps
     }
 
 
+## Refs and the DOM
+
+[Official Doc](https://reactjs.org/docs/refs-and-the-dom.html)
+
+usually `props` is the way for parent components to interact with children, but sometimes you would like to modify a child outside of the typical dataflow:
+
+    * Managing focus, text selection, or media playback;
+    * Triggering imperative animations;
+    * Integrating with third-party DOM libraries;
+
+`ref` 
+    
+    * can be added to either a React component or a DOM element;
+    * takes a callback function, which is executed immediately after the component is mounted or unmounted;
+
+### `ref` on DOM element
+
+the callback function receives the underlying DOM element as its argument, following is a common usage:
+
+    <input
+        type="text"
+        ref={(input) => { this.textInput = input; }} />
+
+### `ref` on Components
+
+an instance of the component will be passed to the callback function (it won't work with functional components, which don't have instances)
+
+    <MyButton ref={button => this.buttonInstance = button;} />
+
+
 ## Styling
 
 * Inline styles
