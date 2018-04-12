@@ -188,6 +188,8 @@ indent a block: place cursor on one of the brackets, then `>%` to indent the blo
 
 ### Abbreviations
 
+**Turn off paste mode** for this abbreviations to work
+
     :ab <abbr> <phrase>     # when in insert mode, <abbr> inputted as a whole word will be expanded to <phrase> automatically
     :ab                     # list all abbreviations
     :unab <abbr>            # disable <abbr> abbreviation
