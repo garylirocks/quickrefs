@@ -801,6 +801,34 @@ you can even yield into another iterable within a generator:
 
 
 
+## Async/Await
+
+[ref](https://hackernoon.com/6-reasons-why-javascripts-async-await-blows-promises-away-tutorial-c7ec10518dd9)
+
+```javascript
+function resolveAfter2Seconds(x) { 
+    return new Promise(resolve => {
+        setTimeout(() => {
+            resolve(x);
+        }, 2000);
+    });
+}
+
+async function f1() {
+    try {
+        var x = await resolveAfter2Seconds(10);
+        console.log(x); // 10
+    } catch (e) {
+        console.log(e);
+    }
+}
+
+f1();
+```
+
+* `await` can only be used in `async` functions
+* `await` is followed by a Promise, if it resolves, it returns the resolved value, or it can throw an error
+
 
 ## tricks
 
