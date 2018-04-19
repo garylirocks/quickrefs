@@ -524,6 +524,79 @@ use fencview.vim plugin to autodetect encodings, which provides two commands:
 
     show all tags in a separate window
 
+* vim-surround
+
+    easily delete, change and add surroundings in pairs, surroundings can be parentheses, brackets, html/xml tags
+
+```
+Hello World
+```
+
+to add surroundings, in visual mode, select the two words, `S'`, it must be a capital `S` here
+
+```
+'Hello World'
+```
+
+to change surroundings, `cs'"`
+
+```
+"Hello World"
+```
+
+to change to tags, `cs"<span>`
+
+```
+<span>Hello World</span>
+```
+
+to change the surrounding tags, `cst"`
+
+```
+"Hello World"
+```
+
+to remove surroundings, `ds"`
+
+```
+Hello World
+```
+
+to add surroundings on a word, `ysiw]`
+
+```
+[Hello] World
+```
+
+to add braces and spaces, `cs[{`, a left brace `(`, `[`, `{` will add a space after it as well
+
+```
+({ Hello } World)
+```
+
+to add parentheses to the entire line, `yss)`
+
+```
+{ Hello } World
+```
+
+to use a tag, `cs}<em>`
+
+```
+<em> Hello </em> World
+```
+
+to wrap it in another tag, use `V` to select the whole line, then `S<p class="notice">`
+
+```
+<p class="notice">
+    <em> Hello </em> World
+</p>
+```
+
+* vim-repeat
+
+make `.` to work with plugin actions as well
 
 
 ### Vundle
