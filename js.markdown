@@ -254,7 +254,7 @@ another illustration created by myself:
 ## functions
 
 	// function expression
-	var foo = funcion() {};
+	var foo = function() {};
 
 	// function statement
 	function foo() {};
