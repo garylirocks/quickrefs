@@ -186,6 +186,14 @@ an instance of the component will be passed to the callback function (it won't w
     <MyButton ref={button => this.buttonInstance = button;} />
 
 
+## Controlled vs. Uncontrolled Components
+
+An input field can be a controlled element or an uncontrolled one: 
+
+<iframe height='265' scrolling='no' title='React - Contolled vs. Uncontolled Component' src='//codepen.io/garylirocks/embed/jYgQLO/?height=265&theme-id=dark&default-tab=js,result&embed-version=2' frameborder='no' allowtransparency='true' allowfullscreen='true' style='width: 100%;'>See the Pen <a href='https://codepen.io/garylirocks/pen/jYgQLO/'>React - Contolled vs. Uncontolled Component</a> by Gary Li (<a href='https://codepen.io/garylirocks'>@garylirocks</a>) on <a href='https://codepen.io'>CodePen</a>.
+</iframe>
+
+
 ## Styling
 
 * Inline styles
