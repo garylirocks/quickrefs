@@ -235,11 +235,51 @@ another illustration created by myself:
 
     convert truesy value to `true`, falsy value to `false`
 
+
+## Closures 
+
+[A Tricky JavaScript Interview Question Asked by Google and Amazon](https://medium.com/coderbyte/a-tricky-javascript-interview-question-asked-by-google-and-amazon-48d212890703)
+
+```javascript
+// interviewer: what will the following code output?
+const arr = [10, 12, 15, 21];
+for (var i = 0; i < arr.length; i++) {
+  setTimeout(function() {
+    console.log('Index: ' + i + ', element: ' + arr[i]);
+  }, 3000);
+}
+```
+
+output:
+
+    Index: 4, element: undefined
+    Index: 4, element: undefined
+    Index: 4, element: undefined
+    Index: 4, element: undefined
+
+when the anonymous function executes, the value of `i` is `4`
+
+```javascript
+const arr = [10, 12, 15, 21];
+for (let i = 0; i < arr.length; i++) {
+  // using the ES6 let syntax, it creates a new binding
+  // every single time the function is called
+  // read more here: http://exploringjs.com/es6/ch_variables.html#sec_let-const-loop-heads
+  setTimeout(function() {
+    console.log('The index of this number is: ' + i);
+  }, 3000);
+}
+```
+
 ## convert strings to numbers
 
-        +"42" -> 42;
-        Number("42") -> 42;
-        parseInt("42", 10) -> 42;
+```javascript
++"42" -> 42;
+Number("42") -> 42;
+
+// always use a radix here
+parseInt("42", 10) -> 42;
+```
 
 ## truesy and falsey
 
