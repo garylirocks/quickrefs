@@ -1,15 +1,12 @@
 NodeJS notes
 ============
 
-## update nodejs
+## multiple versions of Node.js 
 
-[How to update node.js](http://stackoverflow.com/questions/8191459/how-to-update-node-js)
+use [nvm](https://github.com/creationix/nvm) to manage multiple versions of Node
 
-    sudo npm cache clean -f
-    sudo npm install -g n
-    sudo n stable
-    
-    // sudo n 0.8.20  // install a specific version
+    nvm ls      # list installed versions
+    nvm ls-remote    # list all available versions
 
 
 ## blocking vs non-blocking
@@ -27,6 +24,11 @@ npm's config file is at `~/.npmrc`, can be updated with `npm config set`
 	npm config set save-exact=true	// save the exact version
 
 ### avoid installing packages globally
+
+*Since npm 5.2, there is a tool `npx` bundled with npm*, you can use it to run some scripts without installing a global package, such as 
+
+    npx create-react-app my-app
+
 
 [The Issue With Global Node Packages](https://www.smashingmagazine.com/2016/01/issue-with-global-node-npm-packages/)
 
