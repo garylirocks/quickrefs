@@ -1,19 +1,19 @@
 NodeJS notes
 ============
 
-## update nodejs
+## multiple versions of Node.js 
 
-[How to update node.js](http://stackoverflow.com/questions/8191459/how-to-update-node-js)
+use [nvm](https://github.com/creationix/nvm) to manage multiple versions of Node
 
 ```shell
-sudo npm cache clean -f
-sudo npm install -g n
-sudo n stable
+# list installed versions
+nvm ls
 
-# install a specific version
-sudo n 0.8.20
+# list all available versions
+nvm ls-remote
 ```
 
+## blocking vs non-blocking
 
 * All of the I/O methods in the Node.js standard library provide asynchronous versions, which are **non-blocking**, and accept callback functions. Some methods also have **blocking** counter parts, which have names that end with `Sync`.
 
@@ -33,6 +33,11 @@ npm config set save-exact=true
 ```
 
 ### avoid installing packages globally
+
+*Since npm 5.2, there is a tool `npx` bundled with npm*, you can use it to run some scripts without installing a global package, such as 
+
+    npx create-react-app my-app
+
 
 [The Issue With Global Node Packages](https://www.smashingmagazine.com/2016/01/issue-with-global-node-npm-packages/)
 
