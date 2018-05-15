@@ -1,6 +1,19 @@
 NodeJS notes
 ============
 
+- [NodeJS notes](#nodejs-notes)
+    - [multiple versions of Node.js](#multiple-versions-of-nodejs)
+    - [blocking vs non-blocking](#blocking-vs-non-blocking)
+    - [npm](#npm)
+        - [avoid installing packages globally](#avoid-installing-packages-globally)
+    - [Module System - CommonJs vs. ES6 Modules](#module-system---commonjs-vs-es6-modules)
+        - [current status in Node 9/10](#current-status-in-node-9-10)
+    - [streams and pipes](#streams-and-pipes)
+        - [read](#read)
+        - [write](#write)
+        - [pipe](#pipe)
+        - [events](#events)
+
 ## multiple versions of Node.js 
 
 use [nvm](https://github.com/creationix/nvm) to manage multiple versions of Node
@@ -59,9 +72,52 @@ some notes:
     then you just need to run `npm run build`, you can add options to the original tool by adding them following `--`: `npm run build -- --debug` 
 
 
+## Module System - CommonJs vs. ES6 Modules
+
+this blog post explains the implementation difference between the two module systems: [An Update on ES6 Modules in Node.js](https://medium.com/the-node-js-collection/an-update-on-es6-modules-in-node-js-42c958b890c)
+
+* core difference: **ES Module loading is asynchronous, while CommonJS module loading is synchronous**;
+* Babel/webpack load ES Modules *synchronously*, while the ECMAScript specs specify *asynchronous* loading;
+
+### current status in Node 9/10
+details are here https://nodejs.org/docs/latest-v9.x/api/esm.html
+
+more info: https://medium.com/@giltayar/native-es-modules-in-nodejs-status-and-future-directions-part-i-ee5ea3001f71
+
+if you want to use ES Module syntax with Node (not Babel transpiling)
+
+* end your ES Module file with `.mjs`;
+* use `--experimental-modules` flag in your command;
+
+    ```node
+    node --experimental-modules test.mjs
+    ```
+
+
 ## streams and pipes
 
-Node makes extensive use of streams
+Node makes extensive use of streams, there are fundamental stream types in Node.js:
+* **Readable**: such as `fs.createReadStream`;
+* **Writable**: such as `fs.createWriteStream`;
+* **Duplex**: both readable and writable, such as a TCP socket;
+* **Transform**: a duplex stream that can be used to modify or transfer the data, such as `zlib.createGzip`;
+
+all streams are instances of `EventEmitter`, they emit events that can be used to read and write data, however, we can consume streams data in a simpler way using the `pipe` method
+
+```node
+readableSrc.pipe(writableDest)
+```
+
+or
+
+```node
+readableSrc
+  .pipe(transformStream1)
+  .pipe(transformStream2)
+  .pipe(finalWrtitableDest)
+```
+
+it's recommended to use either the `pipe` method or consume streams with events, but don't mix them
 
 ### read
 
@@ -96,6 +152,20 @@ var readStream = fs.createReadStream('/data/input.txt');
 var writeStream = fs.createwriteStream('/data/output.txt');
 
 readStream.pipe(writeStream);
+```
+
+or server a large file
+
+```node
+const fs = require('fs');
+const server = require('http').createServer();
+
+server.on('request', (req, res) => {
+  const src = fs.createReadStream('./big.file');
+  src.pipe(res);
+});
+
+server.listen(8000);
 ```
 
 ### events
