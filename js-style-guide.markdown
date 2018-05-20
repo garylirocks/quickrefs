@@ -4,6 +4,29 @@ JS Style Guide
 * [Airbnb JavaScript Style Guide](https://github.com/airbnb/javascript/blob/master/README.md#airbnb-javascript-style-guide-)
 * [Popular JS Coding Convention on GitHub](http://sideeffect.kr/popularconvention/#javascript)
 
+- [JS Style Guide](#js-style-guide)
+  - [Variable declaration](#variable-declaration)
+  - [Object](#object)
+  - [Arrays](#arrays)
+  - [Destructuring](#destructuring)
+  - [Strings](#strings)
+  - [Functions](#functions)
+  - [Arrow functions](#arrow-functions)
+  - [Modules](#modules)
+  - [Iterators and Generators](#iterators-and-generators)
+  - [Properties](#properties)
+  - [Variables](#variables)
+  - [Comparison Operators & Equality](#comparison-operators-equality)
+  - [Comments](#comments)
+  - [Whitespace](#whitespace)
+  - [Semicolons](#semicolons)
+  - [Type casting & Coercion](#type-casting-coercion)
+  - [Naming Conventions](#naming-conventions)
+  - [Events](#events)
+  - [jQuery](#jquery)
+  - [Standard Library](#standard-library)
+  - [Test](#test)
+
 
 ## Variable declaration
 

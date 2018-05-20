@@ -3,6 +3,33 @@ Javascript
 
 General topics about Javascript and front-end develpoment.
 
+- [Javascript](#javascript)
+    - [Data types in JS](#data-types-in-js)
+        - [Type casting and coercion](#type-casting-and-coercion)
+        - [Truesy and falsey](#truesy-and-falsey)
+    - [Objects](#objects)
+    - [Prototype](#prototype)
+        - [Inheritance by Prototype](#inheritance-by-prototype)
+    - [Javascript: The Good Parts](#javascript--the-good-parts)
+    - [Functions](#functions)
+        - [the `arguments` parameter](#the-arguments-parameter)
+    - [The `this` keyword](#the-this-keyword)
+    - [Closures](#closures)
+    - [Regular Expression](#regular-expression)
+        - [named groups](#named-groups)
+    - [Style guide](#style-guide)
+    - [Module Systems](#module-systems)
+        - [AMD (Asynchronous Module Design)](#amd-asynchronous-module-design)
+        - [CommonJS (CJS)](#commonjs-cjs)
+        - [ES6](#es6)
+    - [Symbol](#symbol)
+    - [Iterations](#iterations)
+    - [Generator](#generator)
+    - [Async/Await](#async-await)
+    - [ECMAScript](#ecmascript)
+    - [Tricks](#tricks)
+        - [Deboucing an event](#deboucing-an-event)
+
 ## Data types in JS
 
 * undefined
@@ -22,72 +49,97 @@ please note:
 
 example
 
-	> typeof 'abc'
-	'string'
-	> typeof String('abc')
-	'string'
-	> 'abc' === String('abc')
-	true							// the same
+```javascript
+typeof 'abc'  			// 'string'
+typeof String('abc')	// 'string'
+'abc' === String('abc') // true
 
-	> s = new String('abc')
-	[String: 'abc']
-	> typeof s
-	'object'
-	> s === 'abc'
-	false							// different
+s = new String('abc') 	// [String: 'abc']
+typeof s				// 'object'
+s === 'abc'				// false
+```
 
+### Type casting and coercion
+
+```javascript
++"42" -> 42;
+Number("42") -> 42;
+
+// always use a radix here
+parseInt("42", 10) -> 42;
+```
+
+### Truesy and falsey
+
+* falsey values:
+
+	`false`, `null`, `undefined`, `''`, `0`, `NaN`
+
+* trusey values:
+
+	`'0'`, `'false'`, `[]`, `{}`, ...
 
 ## Objects
 
 * define object using object literal
 
-        var circle = {
-                radius: 2;
-        };
+```javascript
+var circle = {
+    radius: 2;
+};
+```
 
 * define object using Object constructor:
 
-        var circle = new Object();
-        circle.radius = 2;
+```javascript
+var circle = new Object();
+circle.radius = 2;
+```
 
 * define objects using custom constructor:
 
-        var Circle = function(radius) {
-            this.radius = radius;
-            this.area = function () {
-                return Math.PI * this.radius * this.radius;
-            };
-        }
+```javascript
+var Circle = function(radius) {
+    this.radius = radius;
+    this.area = function () {
+        return Math.PI * this.radius * this.radius;
+    };
+}
 
-        var circle = new Circle(2);
+var circle = new Circle(2);
+```
 
-    **constructor function return `this` if no explicit `return`**
+**constructor function return `this` if no explicit `return`**
 
 ## Prototype
 
-    function Dog (breed) {
-      this.breed = breed;
-    };
+```javascript
+function Dog (breed) {
+    this.breed = breed;
+};
 
-    var buddy = new Dog("golden Retriever");
+var buddy = new Dog("golden Retriever");
 
-    // add a method to prototype of Dog
-    Dog.prototype.bark = function() {
-      console.log("Woof");
-    };
+// add a method to prototype of Dog
+Dog.prototype.bark = function() {
+    console.log("Woof");
+};
+```
 
-## Inheritance by Prototype
+### Inheritance by Prototype
 
 [Douglas Crockford's video course: Prototypal Inheritance](http://app.pluralsight.com/training/player?author=douglas-crockford&name=javascript-good-parts-m0&mode=live&clip=0&course=javascript-good-parts)
+ 
+```javascript
+function Gizmo(id) {
+    this.id = id;
+}
 
-    function Gizmo(id) {
-        this.id = id;
-    }
-
-    Gizmo.prototype.toString = function() {
-        return "gizmo " + this.id;
-    }
-    var g = new Gizmo(1);
+Gizmo.prototype.toString = function() {
+    return "gizmo " + this.id;
+}
+var g = new Gizmo(1);
+```
 
 ![Object](./images/js_obj.png)
 
@@ -95,21 +147,23 @@ example
 * `Gizmo.prototype` has a `constructor` property points to `Gizmo`, a `__proto__` property points to `Object.prototype`;
 * `g` does **not** have a `prototype` property, but has a `__proto__` property, which points to `Gizmo.prototype`
 
-        g.__proto__ === Gizmo.prototype; // true
-        Gizmo.prototype.__proto__ === Object.prototype; // true
+```javascript
+g.__proto__ === Gizmo.prototype; // true
+Gizmo.prototype.__proto__ === Object.prototype; // true
+```
 
 * then add a Hoozit constructor:
 
-        function Hoozit(id) {
-            this.id = id;
-        }
-        Hoozit.prototype = new Gizmo();
-        Hoozit.prototype.test = function (id) {
-            return this.id === id;
-        }
-        var h = new Hoozit(2);
-
-
+```javascript
+function Hoozit(id) {
+    this.id = id;
+}
+Hoozit.prototype = new Gizmo();
+Hoozit.prototype.test = function (id) {
+    return this.id === id;
+}
+var h = new Hoozit(2);
+```
 
 * **only functions have `prototype` property;**
 * **every object has an `__proto__` property;**
@@ -144,61 +198,77 @@ another illustration created by myself:
 
 * **`var`**
 
-        var a = 0; //local to function scope
-        b = 0;     //global scope
+```js
+var a = 0; //local to function scope
+b = 0;     //global scope
+```
 
-   the following statement:
+the following statement:
 
-        var a=b=0;
+```js
+var a=b=0;
+```
 
-    equals to:
+equals to:
 
-        b = 0;      // b becomes global !!!
-        var a = b;
+```js
+b = 0;      // b becomes global !!!
+var a = b;
+```
 
 * **variable scope**
 
-    javascript is **function scoped**, not block scoped, so:
+javascript is **function scoped**, not block scoped, so:
 
-        // declaration of variable i will be hoisted to the beggining of the function
-        // so, it is available at any place inside foo, not just the for loop
-        function foo() {
-            ...
-            for(var i=0; ...) {}    
-            ...
-        }
+```js
+// declaration of variable i will be hoisted to the beggining of the function
+// so, it is available at any place inside foo, not just the for loop
+function foo() {
+    ...
+    for(var i=0; ...) {}    
+    ...
+}
+```
 
-    you should **put variable declaration in the begining of a function**:
+you should **put variable declaration in the begining of a function**:
 
-        function foo() {
-            var i = 0;
-            ...
-            for(i=0; ...) {}
-            ...
-        }
+```js
+function foo() {
+    var i = 0;
+    ...
+    for(i=0; ...) {}
+    ...
+}
+```
 
 * **`let` statement**
 
-    `let` statement respect block scoping, so the following code does what it seems to do:
+`let` statement respect block scoping, so the following code does what it seems to do:
 
-        foo(let i=0; ...} {}    
+```js
+foo(let i=0; ...} {}    
+```
 
 * **numbers**
 
-        0.1 + 0.2 !== 0.3; // this can cause problems when dealing with money
-        (a + b) + c === a + (b + c);  // can be false, this is not a js specific problem
+    * javascript only has one number type, which is 64bit double;
+    * `NaN` is a number;
+    * `NaN` is not equal to anything, including `NaN` itself;
+    * any arithmetic operation with `NaN` will result in `NaN`;
 
-        Infinity + 1 === Infinity; // true
-        Number.MAX_VALUE + 1 === Number.MAX_VALUE;  // true
+    ```js
+    0.1 + 0.2 !== 0.3; // this can cause problems when dealing with money
+    (a + b) + c === a + (b + c);  // can be false, this is not a js specific problem
 
-    * **javascript only has one number type, which is 64bit double**
-    * **NaN is a number**
-    * **NaN is not equal to anything, including NaN itself**
-    * **any arithmetic operation with NaN will result in NaN**
+    Infinity + 1 === Infinity; // true
+    Number.MAX_VALUE + 1 === Number.MAX_VALUE;  // true
+    ```
 
 * **`null` isn't anything**
 
-        typeof null === 'object'; // actually, null is not an object
+    ```js
+    typeof null === 'object'; // actually, null is not an object
+    ```
 
 * **`undefined`: default value for uninitialized variables and parameters**
 
@@ -206,9 +276,11 @@ another illustration created by myself:
 
 * **`typeof`**
 
-        var a = [1, 2];
-        typeof a === 'object'; // typeof array returns 'object'
-        Array.isArray(a);      // true, use this to check arrays
+    ```js
+    var a = [1, 2];
+    typeof a === 'object'; // typeof array returns 'object'
+    Array.isArray(a);      // true, use this to check arrays
+    ```
 
 * **`+`**
 
@@ -219,13 +291,17 @@ another illustration created by myself:
             convert to string and concatenate  
         end  
 
-        2 + '3' -> '23'
+    ```js
+    2 + '3' -> '23'
+    ```
 
 * **`%`**
 
     `%` is a remainder operator, takes sign from the first operator, not a modulo operator, which takes sign from the second operator
 
-        -1 % 8 -> -1;
+```js
+-1 % 8 -> -1;
+```
 
 * **`&&`** , **`||`**
 
@@ -236,7 +312,170 @@ another illustration created by myself:
     convert truesy value to `true`, falsy value to `false`
 
 
+## Functions
+
+```javascript
+// function expression
+var foo = function() {};
+
+// function statement
+function foo() {};
+
+// function statement is a short-hand for var statement, which will expand to:
+var foo = undefined;
+foo = function() {};
+```
+
+the difference between these two methods of defining functions:
+
+```javascript
+console.log(typeof statementFoo);   // function
+statementFoo();    // NOTE this function runs fine here
+
+console.log(typeof expressionFoo);  // undefined
+expressionFoo();   // NOTE throws an error, expressionFoo is still undefined here
+
+function statementFoo() {
+    console.log("an statement function");
+}
+
+var expressionFoo = function() {
+    console.log("an expression function");
+};
+```
+
+**don't put function statement in a block, such as `if` block, since the function name will also be hoisted**
+
+### the `arguments` parameter
+
+* each function receives two pseudo parameters: `arguments` and `this`;
+
+* `arguments` is an **array-like object** which has an `length` property and contains all the parameters;
+
+* it is recommended to use rest syntax instead of `arguments`;
+
+```javascript
+// use arguments to create a function with variable length parameters
+function sum() {
+    var i,
+        n = arguments.length,
+        total = 0;
+    for (i=0; i<n; i++) {
+        total += arguments[i];
+    }
+    return total;
+}
+
+console.log(sum(1, 2, 3, 4));
+
+// with rest syntax
+function sum(...args) {
+    return args.reduce((total, e) => total + e, 0);
+}
+
+console.log(sum(1, 2, 3, 4));
+```
+
+
+## The `this` keyword
+
+every function receives an implicit `this` parameter, which is bound at invocation time
+
+four ways to call a function:
+
+* Function form
+
+    * `this` binds to the global object, which cause problems  
+    * in ES5/Strict, `this` binds to `undefined`  
+    * outer `this` is not accessible from inner functions, use `var that = this;` to pass it
+
+```javascript
+functionObject(arguments);
+```
+
+* Method form
+
+`this` binds to `thisObject`
+
+```javascript
+thisObject.methodName(arguments);
+thisObject['methodName'](arguments);
+```
+
+* Constructor form
+
+a new object is created and assigned to `this`, if not an explicit return value, then `this` will be returned
+
+```javascript
+new FunctionObject(arguments);
+```
+
+* Apply form
+
+explicitly bind an object to 'this'
+
+```javascript
+functionObject.apply(thisObject, arguements);
+functionObject.call(thisObject, arg1, arg2, ...);
+```
+
+* `this` scope example
+
+```javascript
+var person = {
+    'name': 'Gary',
+    'hobbies': ['tennis', 'badminton', 'hiking'],
+
+    // 'this' scope error, will be undefined
+    'print': function(){
+        console.log("// Wrong, \'this\' will be undefined.");
+        this.hobbies.forEach(function(hobby){
+            console.log(this.name + ' likes ' + hobby);
+        });
+    },
+
+    // use '_this' to pass the correct context this in
+    'print2': function(){
+        var _this = this;
+        console.log("// use '_this' to pass the correct context this in");
+        this.hobbies.forEach(function(hobby){
+            console.log(_this.name + ' likes ' + hobby);
+        });
+    },
+
+    // use 'bind' to get the correct this
+    'print3': function(){
+        console.log("// use 'bind' to get the correct this");
+        this.hobbies.forEach(function(hobby){
+            console.log(this.name + ' likes ' + hobby);
+        }.bind(this));
+    },
+
+    // use arrow function syntax, this is the recommended way
+    'print4': function(){
+        console.log("// use arrow function syntax");
+        this.hobbies.forEach(hobby => {
+            console.log(this.name + ' likes ' + hobby);
+        });
+    }
+}
+```
+
+
 ## Closures 
+
+The context of an inner function includes the scope of the outer function. An inner function enjoys that context even after the parent function have returned   
+
+```javascript
+var digit_name = (function(){
+    var names = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
+    return function(n){
+        return names[n];
+    };
+}());
+
+console.log(digit_name(2));
+```
 
 [A Tricky JavaScript Interview Question Asked by Google and Amazon](https://medium.com/coderbyte/a-tricky-javascript-interview-question-asked-by-google-and-amazon-48d212890703)
 
@@ -271,205 +510,53 @@ for (let i = 0; i < arr.length; i++) {
 }
 ```
 
-## convert strings to numbers
+## Regular Expression
 
-```javascript
-+"42" -> 42;
-Number("42") -> 42;
+### named groups
 
-// always use a radix here
-parseInt("42", 10) -> 42;
+*ES 2018*
+
+```js
+const date = '2018-05-16';
+const re = /(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})/u;
+const result = re.exec(date);
+console.log(result);
+//[ '2018-05-16',
+//  '2018',
+//  '05',
+//  '16',
+//  index: 0,
+//  input: '2018-05-16',
+//  groups: { year: '2018', month: '05', day: '16' } ]
+
+console.log(result.groups.year);       // get the value of a matched group
+//2018
 ```
 
-## truesy and falsey
+back reference named groups in a regular expression
 
-* falsey values:
+```js
+const re = /(?<fruit>apple|orange) == \k<fruit>/u;
 
-	`false`, `null`, `undefined`, `''`, `0`, `NaN`
+console.log(
+    re.test('apple == apple'),      // true
+    re.test('orange == orange'),    // true
+    re.test('apple == orange'),     // false
+);
+```
 
-* trusey values:
+use named groups in string repalcing
 
-	`'0'`, `'false'`, `[]`, `{}`, ...
+```js
+const re = /(?<firstName>[a-zA-Z]+) (?<lastName>[a-zA-Z]+)/u;
 
-## functions
+console.log('Arya Stark'.replace(re, '$<lastName>, $<firstName>'));     // Stark, Arya
+```
 
-	// function expression
-	var foo = function() {};
 
-	// function statement
-	function foo() {};
+## Style guide
 
-	// function statement is a short-hand for var statement, which will expand to:
-	var foo = undefined;
-	foo = function() {};
-
-
-the difference between these two methods of defining functions:
-
-	console.log(typeof statementFoo);   // function
-	statementFoo();    // NOTE this function runs fine here
-
-	console.log(typeof expressionFoo);  // undefined
-	expressionFoo();   // NOTE throws an error, expressionFoo is still undefined here
-
-	function statementFoo() {
-		console.log("an statement function");
-	}
-
-	var expressionFoo = function() {
-		console.log("an expression function");
-	};
-
-
-**don't put function statement in a block, such as `if` block, since the function name will also be hoisted**
-
-* pseudo parameters
-
-    **each function receives two pseudo parameters: `arguments` and `this`**
-
-    `arguments` is an **array-like object** which has an `length` property and contains all the parameters
-
-        // use arguments to create a function with variable length parameters
-        function sum() {
-          var i,
-              n = arguments.length,
-              total = 0;
-          for (i=0; i<n; i++) {
-            total += arguments[i];
-          }
-          return total;
-        }
-
-        console.log(sum(1, 2, 3, 4));
-
-* function invocation and `this`
-
-    **`this` is bound at invocation time**
-
-    four ways to call a function:
-
-    * Function form
-
-        `this` binds to the global object, which cause problems  
-        in ES5/Strict, `this` binds to `undefined`  
-        outer `this` is not accessible from inner functions, use `var that = this;` to pass it
-
-            functionObject(arguments);
-
-
-    * Method form
-
-        `this` binds to `thisObject`
-
-            thisObject.methodName(arguments);
-            thisObject['methodName'](arguments);
-
-    * Constructor form
-
-        a new object is created and assigned to `this`, if not an explicit return value, then `this` will be returned
-
-            new FunctionObject(arguments);
-
-    * Apply form
-
-		explicitly bind an object to 'this'
-
-            functionObject.apply(thisObject, arguements);
-            functionObject.call(thisObject, arguement...);
-
-
-* `this` scope example
-
-
-		var person = {
-			'name': 'Gary',
-			'hobbies': ['tennis', 'badminton', 'hiking'],
-
-			// 'this' scope error, will be undefined
-			'print': function(){
-				console.log("// Wrong, \'this\' will be undefined.");
-				this.hobbies.forEach(function(hobby){
-					console.log(this.name + ' likes ' + hobby);
-				});
-			},
-
-			// use '_this' to pass the correct context this in
-			'print2': function(){
-				var _this = this;
-				console.log("// use '_this' to pass the correct context this in");
-				this.hobbies.forEach(function(hobby){
-					console.log(_this.name + ' likes ' + hobby);
-				});
-			},
-
-			// use 'bind' to get the correct this
-			'print3': function(){
-				console.log("// use 'bind' to get the correct this");
-				this.hobbies.forEach(function(hobby){
-					console.log(this.name + ' likes ' + hobby);
-				}.bind(this));
-			},
-
-			// use arrow function syntax
-			'print4': function(){
-				console.log("// use arrow function syntax");
-				this.hobbies.forEach(hobby => {
-					console.log(this.name + ' likes ' + hobby);
-				});
-			}
-		}
-
-
-
-* closures
-
-    The context of an inner function includes the scope of the outer function  
-    An inner function enjoys that context even after the parent function have returned   
-
-
-        var digit_name = (function(){
-          var names = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
-          return function(n){
-            return names[n];
-          };
-        }());
-
-        console.log(digit_name(2));
-
-
-## style guides
-
-* **start constructor name with uppercase**
-
-        function Person(name){
-            this.name = name;
-        }
-
-* **put curly braces on the right**
-
-        // result in a silent error, since a semicolon will be inserted after 'return'
-        return
-        {
-            id: 20
-        };
-
-    so, always put curly braces on the right:
-
-        // this is fine
-        return {
-            id: 20
-        };
-
-
-    **always add semicolons, do not trust auto insertion**
-
-* **imdediate invoking function**
-
-        (funtion() {
-            ...
-        }());
-
-* **always use `===`, never `==`**
+please refer to the specific note on JS Coding Styles
 
 
 ## Module Systems
@@ -480,56 +567,60 @@ https://www.airpair.com/javascript/posts/the-mind-boggling-universe-of-javascrip
 
 asynchronous, unblocking
 
-	// this is an AMD module
-	define(function () {
-		return something
-	})
-
+```js
+// this is an AMD module
+define(function () {
+    return something
+})
+```
 
 ### CommonJS (CJS)
 
 synchronous, blocking, easier to understand
 
-	// and this is CommonJS
-	module.exports = something
-
+```js
+// and this is CommonJS
+module.exports = something
+```
 
 ### ES6
 
 example, `lib.js`:
 
-	let person = {
-		'name': 'gary',
-		'age': 30,
-	};
+```js
+let person = {
+    'name': 'gary',
+    'age': 30,
+};
 
-	let position = {
-		'x': 20,
-		'y': 30,
-	};
+let position = {
+    'x': 20,
+    'y': 30,
+};
 
-	export default person;
-	export {position};
-
+export default person;
+export {position};
+```
 
 `app.js`:
 
-	import theDefault from './lib';
-	import {position as p, imaginedVar} from './lib';
-	import * as all from './lib';
+```js
+import theDefault from './lib';
+import {position as p, imaginedVar} from './lib';
+import * as all from './lib';
 
+console.log('theDefault:');
+console.log(theDefault);
 
-	console.log('theDefault:');
-	console.log(theDefault);
+console.log('position:');
+console.log(p);
 
-	console.log('position:');
-	console.log(p);
+console.log('imaginedVar:');
+console.log(imaginedVar);
 
-	console.log('imaginedVar:');
-	console.log(imaginedVar);
-
-	console.log('all:');
-	console.log(all);
+console.log('all:');
+console.log(all);
+```
 
 
 run `app.js`:
@@ -547,13 +638,15 @@ run `app.js`:
 
 or you can put everything on one line:
 
-	import theDefault, {position as p, imaginedVar} from './lib';
-
+```js
+import theDefault, {position as p, imaginedVar} from './lib';
+```
 
 if you just want to trigger the side effect, do not actually import any binding:
 
-	import './myModule';
-
+```js
+import './myModule';
+```
 
 
 ## Symbol
@@ -570,20 +663,23 @@ There are three different flavors of symbols - each flavor is accessed in a diff
 
 	create a local symbol:
 
-			let s = Symbol('a desc');
+    ```js
+    let s = Symbol('a desc');
+    ```
 
 	**you can NOT use `new Symbol()` to create a symbol value**
 
 	local symbols are **immutable** and **unique**
 
-		> Symbol() === Symbol()
-		false
+    ```js
+    Symbol() === Symbol()   // false
+    ```
 
 	you can add a description when creating symbols, it's just for debugging purpose
 
-		> s = Symbol('gary symbol')
-		Symbol(gary symbol)
-
+    ```js
+    s = Symbol('gary symbol')   // Symbol(gary symbol)
+    ```
 
 2. **global registry symbols**
 
@@ -694,110 +790,111 @@ Main usages for symbols:
 	just like there's `Symbol.iterator` which allows you to define how an object can be iterated
 
 
-## iterations
+## Iterations
 
 * `for..of` loop
 
-		'use strict';
+```javascript
+'use strict';
 
-		let characters = ['Jon', 'Sansa', 'Arya', 'Tyrion', 'Cercei'];
+let characters = ['Jon', 'Sansa', 'Arya', 'Tyrion', 'Cercei'];
 
-		for (let c of characters) {
-			console.log(c);
-		}
-		// Jon
-		// Sansa
-		// Arya
-		// Tyrion
-		// Cercei
+for (let c of characters) {
+    console.log(c);
+}
+// Jon
+// Sansa
+// Arya
+// Tyrion
+// Cercei
 
 
-		// NOTE compare with the for..in loop
-		for (let c in characters) {
-			console.log(c);
-		}
-		// 0
-		// 1
-		// 2
-		// 3
-		// 4
-
+// NOTE compare with the for..in loop
+for (let c in characters) {
+    console.log(c);
+}
+// 0
+// 1
+// 2
+// 3
+// 4
+```
 
 * iterate an object's properties
 
-		let o = {5e5: '$500K', 1e6: '$1M', 2e6: '$2M', 3e6: '$3M', 5e6: '$5M', 10e6: '$10M'};
+```javascript
+let o = {5e5: '$500K', 1e6: '$1M', 2e6: '$2M', 3e6: '$3M', 5e6: '$5M', 10e6: '$10M'};
 
-		for (let [n, v] of Object.entries(o)) {
-			console.log(n, v);
-		}
+for (let [n, v] of Object.entries(o)) {
+    console.log(n, v);
+}
 
-	output
+// 500000 $500K
+// 1000000 $1M
+// 2000000 $2M
+// 3000000 $3M
+// 5000000 $5M
+// 10000000 $10M
 
-		500000 $500K
-		1000000 $1M
-		2000000 $2M
-		3000000 $3M
-		5000000 $5M
-		10000000 $10M
-
+```
 
 * custom iterator
 
-	you can add a custom iterator to an object:
+    you can add a custom iterator to an object:
 
-	* using the `Symbol.iterator` property, which should be a function, this function executes once when the iteration starts, and returns an object containing a `next` method;
+    * using the `Symbol.iterator` property, which should be a function, this function executes once when the iteration starts, and returns an object containing a `next` method;
 
-	* this `next` method should instead return an object that contains two properties: `done` and `value`, the `done` property is checked to see if the iteration finished;
+    * this `next` method should instead return an object that contains two properties: `done` and `value`, the `done` property is checked to see if the iteration finished;
 
-	example
+example
 
-		// NOTE you can define a custom iteration function for an object
-		'use strict';
+```javascript
+// NOTE you can define a custom iteration function for an object
+'use strict';
 
-		// a custom id maker that generates ids from 100 to 105
-		let idMaker = {
-			[Symbol.iterator]() {
-				let currentId = 100;
-				let maxId = 105;
-				return {
-					next() {
-						return {
-							done: currentId > maxId,
-							value: currentId++,
-						};
-					}
-				};
-			}
-		};
+// a custom id maker that generates ids from 100 to 105
+let idMaker = {
+    [Symbol.iterator]() {
+        let currentId = 100;
+        let maxId = 105;
+        return {
+            next() {
+                return {
+                    done: currentId > maxId,
+                    value: currentId++,
+                };
+            }
+        };
+    }
+};
 
-		for (let id of idMaker) {
-			console.log(id);
-		}
-		// 100
-		// 101
-		// 102
-		// 103
-		// 104
-		// 105
+for (let id of idMaker) {
+    console.log(id);
+}
+// 100
+// 101
+// 102
+// 103
+// 104
+// 105
 
+// NOTE another way to iterate through the id maker object
+let iter = idMaker[Symbol.iterator]();
+let next = iter.next();
 
-		// NOTE another way to iterate through the id maker object
-		let iter = idMaker[Symbol.iterator]();
-		let next = iter.next();
+while (!next.done) {
+    console.log(next.value);
+    next = iter.next();
+}
+// 100
+// 101
+// 102
+// 103
+// 104
+// 105
+```
 
-		while (!next.done) {
-			console.log(next.value);
-			next = iter.next();
-		}
-		// 100
-		// 101
-		// 102
-		// 103
-		// 104
-		// 105
-
-
-## generator
+## Generator
 
 	'use strict';
 
@@ -837,13 +934,9 @@ you can even yield into another iterable within a generator:
 	// end
 
 
-## promises
-
-
-
 ## Async/Await
 
-[ref](https://hackernoon.com/6-reasons-why-javascripts-async-await-blows-promises-away-tutorial-c7ec10518dd9)
+[Ref - Hackernoon](https://hackernoon.com/6-reasons-why-javascripts-async-await-blows-promises-away-tutorial-c7ec10518dd9)
 
 ```javascript
 function resolveAfter2Seconds(x) { 
@@ -856,7 +949,7 @@ function resolveAfter2Seconds(x) {
 
 async function f1() {
     try {
-        var x = await resolveAfter2Seconds(10);
+        var x = await resolveAfter2Seconds(10);     // the compiler pauses here, when the promise resolves, the value is assigned to x, if the promise is rejected, an error is thrown
         console.log(x); // 10
     } catch (e) {
         console.log(e);
@@ -866,22 +959,35 @@ async function f1() {
 f1();
 ```
 
+See the Pen <a href='https://codepen.io/garylirocks/pen/yKRzeM/'>async/await</a>
+
 * `await` can only be used in `async` functions
 * `await` is followed by a Promise, if it resolves, it returns the resolved value, or it can throw an error
 
 
-## tricks
+## ECMAScript
 
-### deboucing an event
+The language specification is managed by ECMA's TC39 committee now, the general process of making changes to the specification is here: [TC39 Process]
+
+There are 5 stages, from 0 to 4, all finished proposals (reached stage 4) are here: https://github.com/tc39/proposals/blob/master/finished-proposals.md
+
+
+## Tricks
+
+### Deboucing an event
 
 http://stackoverflow.com/questions/5489946/jquery-how-to-wait-for-the-end-of-resize-event-and-only-then-perform-an-ac
 
 in the following code, the `updateLayout` function will only run after the `resize` event stopped 250ms
 
-		// debounce the resize event
-		$(window).on('resize', function() {
-			clearTimeout(window.resizedFinished);
-			window.resizedFinished = setTimeout(function(){
-				updateLayout();
-			}, 250);
-		});
+```javascript
+// debounce the resize event
+$(window).on('resize', function() {
+    clearTimeout(window.resizedFinished);
+    window.resizedFinished = setTimeout(function(){
+        updateLayout();
+    }, 250);
+});
+```
+
+[TC39 Process]: https://tc39.github.io/process-document/
