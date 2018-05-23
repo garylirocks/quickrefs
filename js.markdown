@@ -24,11 +24,15 @@ General topics about Javascript and front-end develpoment.
         - [ES6](#es6)
     - [Symbol](#symbol)
     - [Iterations](#iterations)
+    - [Promise](#promise)
+        - [Callback hell](#callback-hell)
+        - [resolved vs. rejected](#resolved-vs-rejected)
     - [Generator](#generator)
     - [Async/Await](#async-await)
     - [ECMAScript](#ecmascript)
     - [Tricks](#tricks)
         - [Deboucing an event](#deboucing-an-event)
+    - [Reference](#reference)
 
 ## Data types in JS
 
@@ -722,30 +726,32 @@ There are three different flavors of symbols - each flavor is accessed in a diff
 	one of the most useful symbols is `Symbol.iterator`, which can be used to define the `@@iterator` method on an object, convert it to be `iterable`, it's just like implementing the `Iterable` interface in other languages
 
 
-		> var foo = {
-			  [Symbol.iterator]: () => ({
-				  items: ['p', 'o', 'n', 'y', 'f', 'o', 'o'],
-				  next: function next () {
-					  return {
-						  done: this.items.length === 0,
-						  value: this.items.shift()
-						}
-					}
-				})
-			}
-		undefined
+    ```js
+    var foo = {
+        [Symbol.iterator]: () => ({
+            items: ['p', 'o', 'n', 'y', 'f', 'o', 'o'],
+            next: function next () {
+                return {
+                    done: this.items.length === 0,
+                    value: this.items.shift()
+                }
+            }
+        })
+    }
 
-		> for (let p of foo) {
-			console.log(p)
-			}
-		p
-		o
-		n
-		y
-		f
-		o
-		o
+    for (let p of foo) {
+        console.log(p)
+    }
+    // p
+    // o
+    // n
+    // y
+    // f
+    // o
+    // o
+    ```
 
+    see [this article][symbol-iterator-etc] for defining a custom search function on any object
 
 Main usages for symbols:
 
@@ -894,6 +900,72 @@ while (!next.done) {
 // 105
 ```
 
+## Promise
+
+JS uses callbacks a lot, if not handled properly, it will lead to [Callback Hell][callback-hell], Promise was introduced in ES6, it's a way to simplify asynchronous programming by making code *look* synchronous and avoid callback hell.
+
+[A Simple Guide to ES6 Promises](https://codeburst.io/a-simple-guide-to-es6-promises-d71bacd2e13a)
+
+### Callback hell
+
+[this page][callback-hell] explains what is callback hell and how to avoid it, by **giving callback functions a name, moving them to the top level of a file or a separate file**
+
+```js
+var form = document.querySelector('form');
+
+form.onsubmit = function (submitEvent) {
+  var name = document.querySelector('input').value
+  request({
+    uri: "http://example.com/upload",
+    body: name,
+    method: "POST"
+  }, function (err, response, body) {
+    var statusMessage = document.querySelector('.status')
+    if (err) return statusMessage.value = err
+    statusMessage.value = body
+  })
+}
+```
+
+refactor the above code by moving the callback functions to a separate module
+
+```js
+odule.exports.submit = formSubmit;
+
+function formSubmit (submitEvent) {
+  var name = document.querySelector('input').value
+  request({
+    uri: "http://example.com/upload",
+    body: name,
+    method: "POST"
+  }, postResponse)
+}
+
+function postResponse (err, response, body) {
+  var statusMessage = document.querySelector('.status')
+  if (err) return statusMessage.value = err
+  statusMessage.value = body
+}
+```
+
+then import it in the main file
+
+```js
+var formUploader = require('formuploader');
+document.querySelector('form').onsubmit = formUploader.submit;
+```
+
+### resolved vs. rejected
+
+please see here for detailed examples about when a promise is resolved or rejected: https://github.com/garylirocks/js-es6/tree/master/promises
+
+take note:
+
+* it is recommended to only pass the resolved callback to   `.then()`, use `.catch()` to handle errors;
+* always use a `.catch()`;
+
+
+
 ## Generator
 
 	'use strict';
@@ -990,4 +1062,15 @@ $(window).on('resize', function() {
 });
 ```
 
+
+## Reference
+
+[JavaScript Symbols, Iterators, Generators, Async/Await, and Async Iterators — All Explained Simply
+][symbol-iterator-etc]: **Read this one to fully understand the relations between Symbols, Iterators, Generators, Async/Await and Aync Iterators**
+
+
+
+
+[callback-hell]: http://callbackhell.com/
+[symbol-iterator-etc]: https://medium.freecodecamp.org/some-of-javascripts-most-useful-features-can-be-tricky-let-me-explain-them-4003d7bbed32
 [TC39 Process]: https://tc39.github.io/process-document/
