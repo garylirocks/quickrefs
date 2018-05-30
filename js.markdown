@@ -1021,7 +1021,9 @@ function resolveAfter2Seconds(x) {
 
 async function f1() {
     try {
-        var x = await resolveAfter2Seconds(10);     // the compiler pauses here, when the promise resolves, the value is assigned to x, if the promise is rejected, an error is thrown
+        // the compiler pauses here, when the promise resolves, the value is assigned to x, 
+        //  if the promise is rejected, an error is thrown
+        var x = await resolveAfter2Seconds(10);     
         console.log(x); // 10
     } catch (e) {
         console.log(e);
