@@ -1,7 +1,7 @@
-react
+React
 ===============
 
-## general ideas
+## General Ideas
 
 * HTML is written in JavaScript (usually JSX), so react can construct a virtual DOM;
 
@@ -12,7 +12,9 @@ react
 * state is dynamic, can be changed, is private and fully controlled by the component
 
 
-## components
+## Components
+
+read [Dan Abramov's article](https://medium.com/@dan_abramov/smart-and-dumb-components-7ca2f9a7c7d0) about presentational and container components
 
 * function components
 	
@@ -27,6 +29,40 @@ react
 	it's called '**stateful**' component
 
 	have internal states, useful for top level components
+
+### Presentational vs. Container
+
+#### Presentational
+
+* **May contain both presentational and container components inside**;
+* Usually have some DOM markup and styles of their own;
+* Receive data and callbacks exclusively via props;
+* Rarely have their own when they do, it’s UI state rather than data);
+* Examples: *Page, Sidebar, Story, UserInfo, List*;
+* Redux
+	- Not aware of Redux;
+	- Data from props;
+	- Invoke callbacks from props;
+	- Written by hand;
+
+#### Container
+
+* **May contain both presentational and container components inside**;
+* Usually don’t have any DOM markup of their own except for some wrapping divs, and never have any styles;
+* Usually generated using higher order components such as connect() from React Redux;
+* Examples: *UserPage, FollowersSidebar, StoryContainer, FollowedUserList*;
+* Redux
+	- Aware of Redux;
+	- Subscribe to Redux state;
+	- Dispatch Redux actions;
+	- Usually generate by React Redux;
+
+#### How to do it
+
+* They are usually put into different folders to make the disdinction clear;
+* Start with only presentational components;
+* When you realize you are passing too many props down the intermediate components, it’s a good time to introduce some container components without burdening the unrelated components in the middle of the tree;
+* Don’t try to get it right the first time, you’ll develop an intuitive sense when you keeping do it;
 
 
 ## JSX Syntaxes
