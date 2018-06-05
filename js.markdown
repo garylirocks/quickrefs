@@ -15,6 +15,7 @@ General topics about Javascript and front-end develpoment.
         - [the `arguments` parameter](#the-arguments-parameter)
     - [The `this` keyword](#the-this-keyword)
     - [Closures](#closures)
+        - [Temporal Dead Zone](#temporal-dead-zone)
     - [Regular Expression](#regular-expression)
         - [named groups](#named-groups)
     - [Style guide](#style-guide)
@@ -468,7 +469,9 @@ var person = {
 
 ## Closures 
 
-The context of an inner function includes the scope of the outer function. An inner function enjoys that context even after the parent function have returned   
+When a function gets declared, it contains a function definition and *a closure*. The closure is a collection of all the variables in scope at the time of creation of the function.
+
+Think of a closure as a backpack, it is attached to the function, when a function get passed around, the backpack get passed around with it.
 
 ```javascript
 var digit_name = (function(){
@@ -489,7 +492,7 @@ const arr = [10, 12, 15, 21];
 for (var i = 0; i < arr.length; i++) {
   setTimeout(function() {
     console.log('Index: ' + i + ', element: ' + arr[i]);
-  }, 3000);
+  }, 300);
 }
 ```
 
@@ -502,6 +505,20 @@ output:
 
 when the anonymous function executes, the value of `i` is `4`
 
+you can fix this by add a separate closure for each loop iteration, in this case, the `i` is separate for each closure
+
+```js
+const arr = [10, 12, 15, 21];
+for (var i = 0; i < arr.length; i++) {
+    setTimeout((function(i) {
+        return function() {
+            console.log('The index of this number is: ' + i);}
+    })(i), 300);
+}
+```
+
+or use `let`, it creates a new block binding for each iteration (**this is because `let` is block scoped, a new 'backpack' is created for each iteration, in contrast, `var` is function scoped, so the `i` is shared in the first example**)
+
 ```javascript
 const arr = [10, 12, 15, 21];
 for (let i = 0; i < arr.length; i++) {
@@ -510,8 +527,35 @@ for (let i = 0; i < arr.length; i++) {
   // read more here: http://exploringjs.com/es6/ch_variables.html#sec_let-const-loop-heads
   setTimeout(function() {
     console.log('The index of this number is: ' + i);
-  }, 3000);
+  }, 300);
 }
+```
+
+### Temporal Dead Zone
+
+See [let - MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/let) for details
+
+* `var` declarations will be hoisted to the top of **function scope**, and the value is `undefined`;
+* `let` bindings are created at the top of the **block scope**, but unlike `var`, the variable is not initilized, you get a `ReferenceError` if using it before the definition is evaluated;
+
+```js
+function do_something() {
+    console.log(bar); // undefined
+    console.log(foo); // ReferenceError
+    var bar = 1;
+    let foo = 2;
+}
+```
+
+the `foo` in `(foo + 55)` is the `foo` in the `if` block, not the `foo` declared by `var`
+```js
+function test(){
+    var foo = 33;
+    if (true) {
+        let foo = (foo + 55); // ReferenceError
+    }
+}
+test();
 ```
 
 ## Regular Expression
