@@ -13,84 +13,106 @@ ref: [How to Run Multiple Versions of PHP on One Server](https://www.sitepoint.c
 
 * clone git repo
 
-		sudo mkdir /opt/source && cd /opt/source
-		git clone git@github.com:php/php-src.git && cd php-src
+	```bash
+	sudo mkdir /opt/source && cd /opt/source
+	git clone git@github.com:php/php-src.git && cd php-src
 
-* switch to any branch you want
-
-		git checkout PHP-5.6
+	# switch to any branch you want
+	git checkout PHP-5.6
+	```
 
 * generate the configure script
 
-		sudo ./buildconf
+	```bash
+	sudo ./buildconf
+	```
 
 * create a directory for this version of php
 
-		cd /opt
-		sudo mkdir php-5.6
-
+	```bash
+	cd /opt
+	sudo mkdir php-5.6
+	```
 
 * (optional) you need to get some tools ready before your build
 
 	* get bison 2.7
 
-		[http://askubuntu.com/questions/444982/install-bison-2-7-in-ubuntu-14-04](http://askubuntu.com/questions/444982/install-bison-2-7-in-ubuntu-14-04)
+		http://askubuntu.com/questions/444982/install-bison-2-7-in-ubuntu-14-04
 		
-			wget http://launchpadlibrarian.net/140087283/libbison-dev_2.7.1.dfsg-1_amd64.deb http://launchpadlibrarian.net/140087282/bison_2.7.1.dfsg-1_amd64.deb
-			dpkg -i libbison-dev_2.7.1.dfsg-1_amd64.deb bison_2.7.1.dfsg-1_amd64.deb
+		```bash
+		wget http://launchpadlibrarian.net/140087283/libbison-dev_2.7.1.dfsg-1_amd64.deb http://launchpadlibrarian.net/140087282/bison_2.7.1.dfsg-1_amd64.deb
+		dpkg -i libbison-dev_2.7.1.dfsg-1_amd64.deb bison_2.7.1.dfsg-1_amd64.deb
 
-		prevent update manager from overwriting this package
-
-			sudo apt-mark hold libbison-dev bison
-
+		# prevent update manager from overwriting this package
+		sudo apt-mark hold libbison-dev bison
+		```
 
 * configure your php build
 
-		./configure --prefix=/opt/php-5.6 --enable-fpm --with-fpm-user=www-data --with-fpm-group=www-data
+	```bash
+	./configure --prefix=/opt/php-5.6 --enable-fpm --with-fpm-user=www-data --with-fpm-group=www-data
+	```
 
 * compile and install
 
-		make
-		sudo make install
+	```bash
+	make
+	sudo make install
+	```
 
 	now new version of php is installed at `/opt/php-5.6/bin/php`
 
 * edit config files
  
-		cd /opt/php-5.6/
-		sudo cp etc/php-fpm.conf.default etc/php-fpm.conf
-		sudo cp /opt/source/php-src/php.ini-development lib/php.ini
+	```bash
+	cd /opt/php-5.6/
+	sudo cp etc/php-fpm.conf.default etc/php-fpm.conf
+	sudo cp /opt/source/php-src/php.ini-development lib/php.ini
+	```
 
-now
+	now
 
-		$ ./bin/php --ini
-		Configuration File (php.ini) Path: /opt/php-5.6/lib
-		Loaded Configuration File:         /opt/php-5.6/lib/php.ini
-		Scan for additional .ini files in: (none)
-		Additional .ini files parsed:      (none)
+	```bash
+	./bin/php --ini
+	```
 
-edit php-fpm config (refer to following section of this doc):
+	```
+	Configuration File (php.ini) Path: /opt/php-5.6/lib
+	Loaded Configuration File:         /opt/php-5.6/lib/php.ini
+	Scan for additional .ini files in: (none)
+	Additional .ini files parsed:      (none)
+	```
 
-		sudo vi etc/php-fpm.conf
+	edit php-fpm config (refer to following section of this doc):
 
-make sure:
+	```bash
+	sudo vi etc/php-fpm.conf
+	```
 
-		user = www-data
-		group = www-data
+	make sure:
 
-		listen = 127.0.0.1:9200
+	```bash
+	user = www-data
+	group = www-data
 
-* ini script setup
+	listen = 127.0.0.1:9200
+	```
 
+* init script setup
+
+	```bash
 	sudo cp /opt/source/php-src/sapi/fpm/init.d.php-fpm /etc/init.d/php5.6-fpm
 	sudo chmod 755 /etc/init.d/php5.6-fpm
+	```
 
 * start fpm
 
+	```bash
 	sudo /etc/init.d/php5.6-fpm start
+	```
 
-
-### Install PHP 5.6 or to upgrade from PHP 5.5 on Ubuntu 14
+### Install a new PHP version and make Apache it
 
 	apt-get -y update
 	add-apt-repository ppa:ondrej/php
@@ -257,6 +279,162 @@ output:
 ## Coding styles
 
 * PHP 5.4 will always have the `<?=` tag available.
+
+
+## New Features in Each Version
+
+*Only some prominent changes are listed here, always refer to the official doc for a full list.*
+
+### 5.6
+
+* Constant expressions
+
+	```php
+	const X = 20;
+
+	// a constant expression is allowed now, previously only static value is allowed
+	const Y = X * 2; 
+	```
+
+	```php
+	// constant array is possible now
+	const ARR = ['Arya', 'Sansa'];
+	```
+
+* Variadic functions / rest operator
+
+	```php
+	function foo($x, $y, ...$others) {
+		// $others is an arrow containing remaining arguments
+	}
+	```
+
+* Argument unpacking
+
+	```php
+	function ($a, $b, $c) {
+		return $a + $b + $c;
+	}
+
+	$arr = [2, 3];
+	echo add(1, ...$arr);
+	```
+
+* Exponentiation operator `**`
+
+	```php
+	2 ** 3	// 8
+	```
+
+* `use function` and `use const`
+
+	previously `use` operator can only be used to import classes
+
+	```php
+	namespace My\Namespace {
+		const NAME = 'Gary';
+		function f() { echo __FUNCTION__ . "\n"; }
+	}
+
+	namespace {
+		use const My\Namespace\NAME;
+		use function My\Namespace\f;
+
+		echo NAME . "\n";
+		f();
+	}
+	```
+
+### 7.0
+
+* Scalar type declarations
+
+* Return type declarations
+
+* Null coalescing operator
+
+	```php
+	$name = $_GET['name'] ?? 'unknown';
+	// equivalent to 
+	$name = isset($_GET['name']) ? $_GET['name'] : 'unknown';
+
+	// chaining
+	$name = $_GET['name'] ?? $_POST['name'] ?? 'unknown';
+	```
+
+* Spaceship operator
+
+	compares two expressions and return -1, 0 or 1
+
+	```php
+	echo 1 <=> 1; 		// 0
+	echo 'a' <=> 'b'; 	// -1
+	echo 2.5 <=> 1.5; 	// 1 
+	```
+
+### 7.1
+
+* Nullable types
+
+	prefixing a type name with a '?' to signify `NULL` can be passed or returned as well as the specific type
+
+	```php
+	function foo(): ?string {
+		return 'hello'; 	// return a string
+		// return null;		// you can return null as well
+	}
+
+	function bar(?string $name) {	// accepts a string or null
+		echo 'hello ' . $name;
+	}
+
+	```
+
+* Void functions
+
+	```php
+	function foo(): void {
+		// no return statement
+	}
+	```
+
+* Symmetric array destructuring
+
+	```php
+	$data = [
+		[1, 'US'],
+		[2, 'China'],
+	];
+
+	foreach ($data as [$id, $country]) {
+		// do something
+	}
+	```
+
+* class constant visibility
+
+	```php
+	class Animal {
+		const PUBLIC_A = 1;
+		public const PUBLIC_B = 2;
+		private const PRIVATE_C = 3;
+		protected const PROTECTED_C = 4;
+	}
+	```
+
+### 7.2
+
+* New object type
+
+	```php
+	function foo(object $obj) : object {
+		return new StdClass();
+	}
+	```
+
+* Extension loading by name
+
+	In `php.ini`, extensions' file extension (*.so* or *.dll*) is not required, just use the name
 
 
 ## Pitfalls
