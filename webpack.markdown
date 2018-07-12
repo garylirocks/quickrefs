@@ -8,16 +8,17 @@ Most content based on Webpack 4, if not specified specifically.
 
 ## Install
 
-	yarn init
-	yarn add -D webpack webpack-cli
-
+```bash
+yarn init
+yarn add -D webpack webpack-cli
+```
 
 ## Default Behaviour
 
 Webpack 4 requires zero configuration, it would try to use `src/index.js` as entry and `dist/main.js` as output.
 
 
-## Add NPM scripts
+## Add building commands to `package.json`
 
 add the following to `scripts` field in `package.json`:
 
@@ -39,6 +40,109 @@ or
 ```shell
 yarn build
 ```
+
+## Configs
+
+* `externals`
+
+    excluding dependencies from the output bundles, the created bundle relies on the dependency to be present in the consumers' environment, you can also specify how it will be available in run time with different module context (commonjs, amd, ES2015)
+
+    ```js
+    module.exports = {
+        //...
+        externals : {
+            react: 'react'                  // react will be available as 'react' in global env
+        },
+
+        // or
+
+        externals : {
+            lodash : {
+                commonjs: 'lodash',         // in commonjs context, it will be available as 'lodash'
+                amd: 'lodash',              // same as above
+                root: '_'                   // available as '_' global variable
+            }
+        },
+
+        // or
+
+        externals : {
+            subtract : {
+                root: ['math', 'subtract']  // will be available as window['math']['subtract']
+            }
+        }
+    };
+    ```
+
+* `entry` -> `vendor`
+
+    make your app and the vendor code separate from each other, this setup allows you to leverage `CommonsChunkPlugin` and extract any vendor references from your app bundle into your vendor bundle;
+
+* `resolve` 
+
+    controls how webpack finds modules included by `require / import` statements, some of the common fields:
+
+    ```json
+    resolve: {
+        // whether resolve symlinks
+        symlinks: false,
+
+        // file extensions to try
+        extensions: [".js", ".jsx", ".json"],
+
+        // modules in your own 'src' folder take precedence over 'node_modules'
+        // if your import 
+        modules: [path.resolve(__dirname, "src"), "node_modules"]
+    }
+    ```
+
+    resolving steps:
+
+
+
+* `targets`
+
+    set the environment you are targeting, usually:
+
+    * `web`: default value;
+    * `node`: compile for usage in Node environment (using Node.js `require` to load chunks, and not touch any built in modules like `fs` or `path`, as they are always available in the target Node environment);
+    * `async-node`: uses `fs` and `vm` to load chunks asynchronously (`require` loads chunks synchronously)
+
+    you can create an isomophic library by bundling two separate configurations:
+
+    ```node
+    const path = require('path');
+    const serverConfig = {
+    target: 'node',
+    output: {
+        path: path.resolve(__dirname, 'dist'),
+        filename: 'lib.node.js'
+    }
+    //…
+    };
+
+    const clientConfig = {
+    target: 'web', // <=== can be omitted as default is 'web'
+    output: {
+        path: path.resolve(__dirname, 'dist'),
+        filename: 'lib.js'
+    }
+    //…
+    };
+
+    module.exports = [ serverConfig, clientConfig ];
+    ```
+
+    exporting a config array, not a single config, it will create both `lib.node.js` and `lib.js` in `dist` folder
+
+
+
+## Plugins
+
+* `Jarvis`
+
+    shows info about your webpack build, the count of ES Harmony module imports which can be treeshakable and the CJSs ones which are not;
+
 
 ## Loaders
 
@@ -224,7 +328,7 @@ module.exports = {
             {
                 test: /\.scss$/,
                 exclude: /(node_modules)/,
-                loader: 'style-loader!css-loader!autoprefixer-loader!sass-loader',
+                loader: 'style-loader!css-loader!autoprefixer-loader!sass-loader', // <- loaders are applied from right to left
             },
 
         ],
