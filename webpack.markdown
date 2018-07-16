@@ -135,7 +135,35 @@ yarn build
 
     exporting a config array, not a single config, it will create both `lib.node.js` and `lib.js` in `dist` folder
 
+* `devtool`
 
+    defines how source maps are generated, suggested settings:
+
+    * in dev: `devtool: 'cheap-module-eval-source-map',`,
+    * in production: `devtool: 'cheap-module-source-map',`,
+
+    see details here [webpack - Devtool](https://webpack.js.org/configuration/devtool/)
+
+    This affects your debug launching config in VS Code, see here (https://github.com/Microsoft/vscode-chrome-debug) for details, you may need to change the `sourceMapPathOverrides` part
+
+    ```json
+    {
+        "type": "chrome",
+        "request": "attach",
+        "skipFiles": [
+            "${workspaceFolder}/node_modules/**/*.js",
+            "<node_internals>/**/*.js"
+        ],
+        "name": "Launch Chrome against localhost",
+        "url": "http://localhost:8080/*",
+        "port": 9222,
+        "sourceMapPathOverrides": {
+            "webpack:///./*"    : "${webRoot}/*",                
+            "webpack:///*"      : "${webRoot}/*",                
+        },
+        "webRoot": "${workspaceFolder}"
+    }
+    ```
 
 ## Plugins
 
