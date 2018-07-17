@@ -94,6 +94,39 @@ read [Dan Abramov's article](https://medium.com/@dan_abramov/smart-and-dumb-comp
 
 ## Example with lifecycle functions
 
+### v16.4
+![react-lifecyle-explained](./images/react-lifecycle-v16.4.png)
+
+see this **[CodeSandbox example](https://codesandbox.io/s/2jxjn85n0j)** to understand how each method is supposed to work
+
+* **`getDerivedStateFromProps`** introduced to replace `componentWillMount` and `componentWillReceiveProps`;
+
+	```
+	static getDerivedStateFromProps(props, state)
+	```
+
+	it should return an object to update state, so no need to call `this.setState()`
+
+	this method add complexity to components, often leads to bugs, you should consider [simpler alternatives](https://reactjs.org/blog/2018/06/07/you-probably-dont-need-derived-state.html)
+
+	it is always called any time a parent component rerenders, regardless of whether the props are "different" from before
+
+* **`getSnapshotBeforeUpdate`** is introduced, it is run after `render`, can be used to capture any DOM status before it is actually updated, the returned value is available to `componentDidUpdate`;
+
+	```
+	getSnapshotBeforeUpdate(prevProps, prevState)
+	```
+
+	it's not often needed, can be useful in cases like manually preserving scroll position during rerenders
+
+* **`componentDidUpdate`** is definded as:
+
+	```
+	componentDidUpdate(prevProps, prevState, snapshot)
+	```
+
+
+### Before v16.3
 ![react-lifecyle-explained](./images/react-lifecycle.png)
 
 	class Clock extends React.Component {
@@ -198,14 +231,14 @@ we can use static class variables within class definition to define defaultProps
 
 usually `props` is the way for parent components to interact with children, but sometimes you would like to modify a child outside of the typical dataflow:
 
-    * Managing focus, text selection, or media playback;
-    * Triggering imperative animations;
-    * Integrating with third-party DOM libraries;
+* Managing focus, text selection, or media playback;
+* Triggering imperative animations;
+* Integrating with third-party DOM libraries;
 
 `ref` 
     
-    * can be added to either a React component or a DOM element;
-    * takes a callback function, which is executed immediately after the component is mounted or unmounted;
+* can be added to either a React component or a DOM element;
+* takes a callback function, which is executed immediately after the component is mounted or unmounted;
 
 ### `ref` on DOM element
 
@@ -221,6 +254,28 @@ an instance of the component will be passed to the callback function (it won't w
 
     <MyButton ref={button => this.buttonInstance = button;} />
 
+
+## another way to creat `ref` since v16.3
+
+v16.3 introduced the `React.createRef()` function, the callback way of creating a ref still works
+
+```
+class MyComponent extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.inputRef = React.createRef();
+  }
+
+  render() {
+    return <input type="text" ref={this.inputRef} />;
+  }
+
+  componentDidMount() {
+    this.inputRef.current.focus();
+  }
+}
+```
 
 ## Controlled vs. Uncontrolled Components
 
