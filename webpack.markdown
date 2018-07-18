@@ -113,21 +113,21 @@ yarn build
     ```node
     const path = require('path');
     const serverConfig = {
-    target: 'node',
-    output: {
-        path: path.resolve(__dirname, 'dist'),
-        filename: 'lib.node.js'
-    }
-    //…
+        target: 'node',
+        output: {
+            path: path.resolve(__dirname, 'dist'),
+            filename: 'lib.node.js'
+        }
+        //…
     };
 
     const clientConfig = {
-    target: 'web', // <=== can be omitted as default is 'web'
-    output: {
-        path: path.resolve(__dirname, 'dist'),
-        filename: 'lib.js'
-    }
-    //…
+        target: 'web', // <=== can be omitted as default is 'web'
+        output: {
+            path: path.resolve(__dirname, 'dist'),
+            filename: 'lib.js'
+        }
+        //…
     };
 
     module.exports = [ serverConfig, clientConfig ];
@@ -164,6 +164,52 @@ yarn build
         "webRoot": "${workspaceFolder}"
     }
     ```
+
+## Build a library 
+
+`webpack.config.js`
+
+```js
+var path = require('path');
+
+module.exports = {
+    entry: './src/index.js',
+
+    output: {
+        path: path.resolve(__dirname, 'dist'),
+        filename: 'webpack-numbers.js',
+        library: 'webpackNumbers',  // name of the global variable when imported
+        libraryTarget: 'umd'        // consumer can include in CommonJS, ES2015, and as a global variable
+    },
+
+    // exclude lodash from the final library file, it should be a dependency 
+    externals: {
+        lodash: {
+            commonjs: 'lodash',
+            commonjs2: 'lodash',
+            amd: 'lodash',
+            root: '_'
+        }
+    }
+};
+```
+
+in `package.json`
+
+```js
+{
+  "name": "my-library",
+  "version": "1.0.0",
+  "description": "My Library",
+  "main": "dist/index.js",          // the entry file for consumers
+  "files": [                        // files need to be uploaded to npm
+    "dist"
+  ],
+
+  ...
+}
+```
+
 
 ## Plugins
 
