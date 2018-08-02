@@ -3,15 +3,22 @@ Docker
 - [Docker](#docker)
     - [General](#general)
         - [Overview](#overview)
+        - [commands](#commands)
     - [Images vs. Containers](#images-vs-containers)
         - [Images](#images)
         - [Containers](#containers)
     - [Dockerfile](#dockerfile)
+        - [Example](#example)
         - [`RUN`](#run)
         - [`CMD`](#cmd)
+        - [`ENTRYPOINT`](#entrypoint)
+        - [`ENV`](#env)
         - [.dockerignore](#dockerignore)
+    - [Volumns](#volumns)
+    - [Network](#network)
     - [Docker Compose](#docker-compose)
         - [`docker-compose.yml`](#docker-composeyml)
+    - [Misc](#misc)
 
 
 docker basics:
@@ -31,6 +38,17 @@ docker basics:
 a more detailed view of the workflow
 
 ![Docker Workflow](./images/docker-workflow.png)
+
+
+### commands
+
+```bash
+# show installation info
+docker info
+
+# search images
+docker search <query>
+```
 
 ## Images vs. Containers
 
@@ -59,12 +77,32 @@ A container is a running instance of an image, when you start an image, you have
     # list images
     docker images
 
+    # list images, including intermediate ones
+    docker images -a
+
+    # build an image, from the Dockerfile in the current directory
+    docker build -t einstein:v1 .
+
+    # show history of an image
+    docker history node:slim
+
+    # inspect an image
+    docker inspect node:slim
+
     # remove image
     docker rmi [IMAGE_ID]
 
     # remove dangling images
     docker image prune
+
+    # start the image in daemon mode, expose 80, bind it to 8080 on host
+    # '--expose' is optional here, 80 is exposed automatically when you specify the ports mapping
+    docker run [--expose 80] -p 8080:80 -itd my-image echo 'hello'
+
+    # access the shell of an image
+    docker run -it node:slim bash
     ```
+
 * about image tags
 
     ```bash
@@ -92,18 +130,56 @@ A container is a running instance of an image, when you start an image, you have
     # list all containers
     docker ps -a
 
-    # execute a command in a container
+    # inspect a container
+    docker inspect <container>
+
+    # start/stop/restart/pause/unpause/attach
+    # attach: connecting local stdin, stdout, stderr to a running container
+    # pause|unpause: pause or unpause running processes in a container
+    docker start|stop|restart|pause|unpause|attach <container>
+
+    # show the output logs of a container
+    docker logs <container>
+
+    # convert a container to an image file
+    docker commit -a 'Albert Einstein <albert@example.com>' -m 'theory of relativity' <container> einstein/relativity:v1
+
+    # execute a command in a running container
     docker exec node-box "node" "myapp.js"
 
     # remove a container
     docker rm [CONTAINER_ID]
     ```
 
+
 ## Dockerfile
+
+### Example
+
+```docker
+FROM ubuntu:xenial
+MAINTAINER einstein <einstein@example.com>
+
+# add a user to the image
+RUN useradd -ms /bin/bash einstein
+
+# use this username when running any command, (root is always created)
+USER einstein
+
+RUN apt-get update
+RUN ate-get install --yes openssh-server
+```
+
+```bash
+# run an image using a specified user (`0` for `root`)
+docker run -u 0 -it <image> /bin/bash
+```
 
 ### `RUN`
 
-`RUN` will execute commands in a new layer on top of current image and commit the results, the resulting image will be used for the next step in the `Dockerfile`
+* `RUN` will execute commands in a new layer on top of current image and commit the results, the resulting image will be used for the next step in the `Dockerfile`;
+* the command is ran by root user by default, if a `USER` directive is present, following `RUN` commands will be ran by that user;
+
 
 it has two forms:
 
@@ -151,9 +227,35 @@ has three forms:
 
 **differencies to `RUN`**
 
-* `RUN` actually runs a command and commits the result, `CMD` does not execute at build time, but specifies the intended command for the image;
+* `RUN` actually runs a command and commits the result, `CMD` does not execute at build time, but specifies what to be ran when instantiating a container out of the image;
 * there can be multiple `RUN` command in one `Dockerfile`, but there should only be one `CMD`;
 
+### `ENTRYPOINT`
+
+like `CMD`, it specifies an application to run when instantiating a container, the difference is `ENTRYPOINT` is always ran (like always run `apache` for an apache image), can't be overriden, even you specify a command to run in the command line
+
+```dockerfile
+...
+
+# CMD and ENTRYPOINT can be used together, when both are in exec form
+CMD ["CMD is running"]
+ENTRYPOINT ["echo", "ENTRYPOINT is running"]
+```
+
+```bash
+docker run <imagename>
+
+# CMD params are appended to the ENTRYPOINT exec
+ENTRYPOINT is running CMD is running
+```
+
+### `ENV`
+
+```docker
+ENV MY_NAME gary
+```
+
+add environment variable in the container, it's **system wide**, no specific to any user
 
 ### .dockerignore
 
@@ -175,7 +277,28 @@ config what files and directories should be ignored when sending to the docker d
 **/.cache
 ```
 
+## Volumns
 
+mount a host directory to a container
+
+```bash
+docker run -it -v /home/gary/code/super-app:/app ubuntu
+```
+
+## Network
+
+* by default, docker assigns IP address starting from `172.17.0.2` to container instances;
+
+```bash
+# list networks
+docker network ls
+
+# create a subnet (looks like this will create a virtual network adapter on a Linux host, but not a Mac)
+docker network create --subnet 10.1.0.0/16 --gateway 10.1.0.1 --ip-range=10.1.4.0/24 --driver=bridge --label=host4network bridge04
+
+# use a network, and specify a static IP for it
+docker run -it --name test --net bridge04 --ip 10.1.4.100 ubuntu:xenial /bin/bash
+```
 
 
 ## Docker Compose
@@ -219,4 +342,6 @@ services:
 in the above example, the mounted volumes will override any existing files in the image, current directory `.` is mounted to `/app`, and will override existing `/app` in the image, but the image's `/app/node_modules` is preserved, not mounted from the host machine
 
 
+## Misc
 
+* on Mac, you can talk to a container through port binding, but you may **NOT** be able to ping the container's IP address;
