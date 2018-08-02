@@ -6,8 +6,9 @@ NodeJS notes
     - [Blocking vs non-blocking](#blocking-vs-non-blocking)
     - [NPM](#npm)
         - [Avoid installing packages globally](#avoid-installing-packages-globally)
+        - [Publish package to NPM](#publish-package-to-npm)
     - [Module System - CommonJs vs. ES6 Modules](#module-system---commonjs-vs-es6-modules)
-        - [Current status in Node 9/10](#current-status-in-node-9-10)
+        - [Current status in Node 9/10](#current-status-in-node-910)
     - [Debugging](#debugging)
         - [Remote debugging](#remote-debugging)
     - [Streams and pipes](#streams-and-pipes)
@@ -72,6 +73,24 @@ some notes:
     ```
 
     then you just need to run `npm run build`, you can add options to the original tool by adding them following `--`: `npm run build -- --debug` 
+
+### Publish package to NPM
+
+(https://docs.npmjs.com/getting-started/publishing-npm-packages)
+
+* Create an account on NPM;
+* Review the package directory:
+    * everything in the directory will be included unless ignored by `.gitignore` or `.npmignore`;
+    * review `package.json`;
+    * choose a name;
+    * include a `readme.md` file;
+* `npm publish`;
+
+update a package:
+
+* `npm version (patch|minor|major)`
+    it will change the version number in `package.json`, (will also add a tag to the linked git repo)
+* `npm publish`
 
 
 ## Module System - CommonJs vs. ES6 Modules

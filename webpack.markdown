@@ -144,6 +144,19 @@ yarn build
 
     see details here [webpack - Devtool](https://webpack.js.org/configuration/devtool/)
 
+    `output.devtoolModuleFilenameTemplate` is used to customize the names used in each source map's `sources` array
+
+    ```js
+    module.exports = {
+        //...
+        output: {
+            devtoolModuleFilenameTemplate: 'webpack://[namespace]/[resource-path]?[loaders]'
+        }
+    };
+    ```
+
+    `output.devtoolNamespace` can be used to customize the `[namespace]` part above, used to prevent source file path collisions in source maps when loading multiple libraries built with webpack;
+
     This affects your debug launching config in VS Code, see here (https://github.com/Microsoft/vscode-chrome-debug) for details, you may need to change the `sourceMapPathOverrides` part
 
     ```json

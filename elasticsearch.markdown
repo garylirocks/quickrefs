@@ -77,7 +77,7 @@ ElasticSearch
 * Type
 
     * used to represent the *type* of documents, e.g. an *email*, a *user*, or a *tweet*;
-    * Types are deprecated now;
+    * *Types are deprecated now*;
     * Indices created in Elasticsearch 6.0 or later may only contain a single mapping type;
     * Previously in a `twitter` index, you can have a `user` type and a `tweet` type, now you should create two separate indices, one `user` index and one `tweet` index;
 
