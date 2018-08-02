@@ -48,6 +48,9 @@ docker info
 
 # search images
 docker search <query>
+
+# monitoring (show container events, such as: start, network connect, stop, die, attach)
+docker events
 ```
 
 ## Images vs. Containers
@@ -83,7 +86,7 @@ A container is a running instance of an image, when you start an image, you have
     # build an image, from the Dockerfile in the current directory
     docker build -t einstein:v1 .
 
-    # show history of an image
+    # show history (building layers) of an image
     docker history node:slim
 
     # inspect an image
@@ -98,6 +101,12 @@ A container is a running instance of an image, when you start an image, you have
     # start the image in daemon mode, expose 80, bind it to 8080 on host
     # '--expose' is optional here, 80 is exposed automatically when you specify the ports mapping
     docker run [--expose 80] -p 8080:80 -itd my-image echo 'hello'
+
+    # bind only to the 127.0.0.1 network interface on host
+    docker run -p 127.0.0.1:8080:80 -itd my-image echo 'hello'
+
+    # give the container a meaningful name
+    docker run --name my-hello-container -itd my-image echo 'hello'
 
     # access the shell of an image
     docker run -it node:slim bash
