@@ -5,6 +5,8 @@ NodeJS notes
     - [Multiple versions of Node.js](#multiple-versions-of-nodejs)
     - [Blocking vs non-blocking](#blocking-vs-non-blocking)
     - [NPM](#npm)
+        - [`package.json`](#packagejson)
+        - [Yarn](#yarn)
         - [Avoid installing packages globally](#avoid-installing-packages-globally)
         - [Publish package to NPM](#publish-package-to-npm)
     - [Module System - CommonJs vs. ES6 Modules](#module-system---commonjs-vs-es6-modules)
@@ -46,6 +48,34 @@ npm config set save=true
 
 # save the exact version
 npm config set save-exact=true
+```
+
+### `package.json`
+
+* it's a JSON file, comments are **NOT** allowed;
+* you can use `//` key for comments, since duplicate keys are removed after you run any `npm` command, so make sure only use `//` once per block, or append something after `//` for each comment key to be unique:
+
+```json
+{
+    "scripts": {
+        "// --- comment ---": "echo this is a comment",
+        "build": "echo building"
+    },
+    "//": [
+        "first line",
+        "second line"
+    ]
+}
+```
+
+### Yarn
+
+```bash
+# save to devDependencies
+yarn add -D [packages ...]
+
+# make sure the installed files are matching the specified version
+yarn add --check-files [packages ...]
 ```
 
 ### Avoid installing packages globally
