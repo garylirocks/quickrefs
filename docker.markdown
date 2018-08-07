@@ -13,11 +13,12 @@ Docker
         - [`CMD`](#cmd)
         - [`ENTRYPOINT`](#entrypoint)
         - [`ENV`](#env)
-        - [.dockerignore](#dockerignore)
+        - [`.dockerignore`](#dockerignore)
     - [Volumns](#volumns)
     - [Network](#network)
     - [Docker Compose](#docker-compose)
         - [`docker-compose.yml`](#docker-composeyml)
+        - [Name collision issue](#name-collision-issue)
     - [Misc](#misc)
 
 
@@ -266,7 +267,7 @@ ENV MY_NAME gary
 
 add environment variable in the container, it's **system wide**, no specific to any user
 
-### .dockerignore
+### `.dockerignore`
 
 config what files and directories should be ignored when sending to the docker daemon and ignored by `ADD` and `COPY`
 
@@ -329,6 +330,9 @@ docker-compose up -d --build
 docker-compose build 
 
 docker-compose up -d
+
+## specicy a project name 
+docker-compose up -p myproject
 ```
 
 ### `docker-compose.yml`
@@ -349,6 +353,35 @@ services:
 ```
 
 in the above example, the mounted volumes will override any existing files in the image, current directory `.` is mounted to `/app`, and will override existing `/app` in the image, but the image's `/app/node_modules` is preserved, not mounted from the host machine
+
+### Name collision issue
+
+for the following example:
+
+```yaml
+# /path/to/MyProject/docker-compose.yml
+version: "2"
+
+services:
+    app:
+        build: 
+            #...
+        #...
+```
+
+when you run 
+
+```bash
+docker-compose up
+```
+
+it will create a container named `MyProject_app_1`, if you got another docker compose file in the same folder (or another folder with the same name), and the service is called `app` as well, the container name will collide, you need to specify a `--project-name` option:
+
+```bash
+docker-compose up --project-name <anotherName>
+```
+
+see [Proposal: make project-name persistent](https://github.com/docker/compose/issues/745)
 
 
 ## Misc
