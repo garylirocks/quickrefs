@@ -331,6 +331,10 @@ docker-compose build
 
 docker-compose up -d
 
+# make sure no cached images are used and all intermediate images are removed
+#  use this when you updated package.json 
+docker-compose build --force-rm --no-cache
+
 ## specicy a project name 
 docker-compose up -p myproject
 ```
