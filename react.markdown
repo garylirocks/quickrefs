@@ -1,6 +1,30 @@
 React
 ===============
 
+- [React](#react)
+    - [General Ideas](#general-ideas)
+    - [State and Props](#state-and-props)
+    - [Components](#components)
+        - [Presentational vs. Container](#presentational-vs-container)
+            - [Presentational](#presentational)
+            - [Container](#container)
+            - [How to do it](#how-to-do-it)
+    - [JSX Syntaxes](#jsx-syntaxes)
+    - [Example with lifecycle functions](#example-with-lifecycle-functions)
+        - [v16.4](#v164)
+        - [Before v16.3](#before-v163)
+    - [state](#state)
+        - [state initializing](#state-initializing)
+        - [state updating](#state-updating)
+    - [defaultProps and propTypes](#defaultprops-and-proptypes)
+    - [Refs and the DOM](#refs-and-the-dom)
+        - [`ref` on DOM element](#ref-on-dom-element)
+        - [`ref` on Components](#ref-on-components)
+    - [another way to creat `ref` since v16.3](#another-way-to-creat-ref-since-v163)
+    - [Controlled vs. Uncontrolled Components](#controlled-vs-uncontrolled-components)
+        - [Error Handling](#error-handling)
+    - [Styling](#styling)
+
 ## General Ideas
 
 * HTML is written in JavaScript (usually JSX), so react can construct a virtual DOM;
@@ -17,18 +41,18 @@ React
 read [Dan Abramov's article](https://medium.com/@dan_abramov/smart-and-dumb-components-7ca2f9a7c7d0) about presentational and container components
 
 * function components
-	
-	do not have states, if a component does not need any interactive activity, then use a function component, often used for bottom level reprenstational component;
+    
+    do not have states, if a component does not need any interactive activity, then use a function component, often used for bottom level reprenstational component;
 
-	it's called '**stateless**' component
+    it's called '**stateless**' component
 
-	**have `props`, no `state`**
+    **have `props`, no `state`**
 
 * class components
 
-	it's called '**stateful**' component
+    it's called '**stateful**' component
 
-	have internal states, useful for top level components
+    have internal states, useful for top level components
 
 ### Presentational vs. Container
 
@@ -40,10 +64,10 @@ read [Dan Abramov's article](https://medium.com/@dan_abramov/smart-and-dumb-comp
 * Rarely have their own when they do, it’s UI state rather than data);
 * Examples: *Page, Sidebar, Story, UserInfo, List*;
 * Redux
-	- Not aware of Redux;
-	- Data from props;
-	- Invoke callbacks from props;
-	- Written by hand;
+    - Not aware of Redux;
+    - Data from props;
+    - Invoke callbacks from props;
+    - Written by hand;
 
 #### Container
 
@@ -52,10 +76,10 @@ read [Dan Abramov's article](https://medium.com/@dan_abramov/smart-and-dumb-comp
 * Usually generated using higher order components such as connect() from React Redux;
 * Examples: *UserPage, FollowersSidebar, StoryContainer, FollowedUserList*;
 * Redux
-	- Aware of Redux;
-	- Subscribe to Redux state;
-	- Dispatch Redux actions;
-	- Usually generate by React Redux;
+    - Aware of Redux;
+    - Subscribe to Redux state;
+    - Dispatch Redux actions;
+    - Usually generate by React Redux;
 
 #### How to do it
 
@@ -69,28 +93,28 @@ read [Dan Abramov's article](https://medium.com/@dan_abramov/smart-and-dumb-comp
 
 * Embed JavaScript expressions in curly braces, for readability, put it in multiple lines and wrap it in parentheses
 
-		const element = (
-		  <h1>
-			Hello, {formatName(user)}!
-		  </h1>
-		);
+        const element = (
+          <h1>
+            Hello, {formatName(user)}!
+          </h1>
+        );
 
 
 * attributes: use quotes for string literals and curly braces for JS expressions
 
-		const element = <div tabIndex="0"></div>;
-		const element = <img src={user.avatarUrl}></img>;
+        const element = <div tabIndex="0"></div>;
+        const element = <img src={user.avatarUrl}></img>;
 
 
 * use `camelCase` for attributes names, and some attributes' tag need to be modified to avoid conflicting with JS keywords
 
-	* `for`			-> `htmlFor`
-	* `class`		-> `className`
-	* `tabindex`	-> `tabIndex`
+    * `for`			-> `htmlFor`
+    * `class`		-> `className`
+    * `tabindex`	-> `tabIndex`
     * `colspan`     -> `colSpan`
-	* `style`		->	`style`  value should be wrapped by double brackets, and CSS property names should be in camelCase: `background-color` -> `backgroundColor`
+    * `style`		->	`style`  value should be wrapped by double brackets, and CSS property names should be in camelCase: `background-color` -> `backgroundColor`
 
-			<div htmlFor="nameField" className="wide" style={{border: "1px solid #000", backgroundColor: 'red'}}>a demo div</div>
+            <div htmlFor="nameField" className="wide" style={{border: "1px solid #000", backgroundColor: 'red'}}>a demo div</div>
 
 ## Example with lifecycle functions
 
@@ -101,73 +125,73 @@ see this **[CodeSandbox example](https://codesandbox.io/s/2jxjn85n0j)** to under
 
 * **`getDerivedStateFromProps`** introduced to replace `componentWillMount` and `componentWillReceiveProps`;
 
-	```
-	static getDerivedStateFromProps(props, state)
-	```
+    ```
+    static getDerivedStateFromProps(props, state)
+    ```
 
-	it should return an object to update state, so no need to call `this.setState()`
+    it should return an object to update state, so no need to call `this.setState()`
 
-	this method add complexity to components, often leads to bugs, you should consider [simpler alternatives](https://reactjs.org/blog/2018/06/07/you-probably-dont-need-derived-state.html)
+    this method add complexity to components, often leads to bugs, you should consider [simpler alternatives](https://reactjs.org/blog/2018/06/07/you-probably-dont-need-derived-state.html)
 
-	it is always called any time a parent component rerenders, regardless of whether the props are "different" from before
+    it is always called any time a parent component rerenders, regardless of whether the props are "different" from before
 
 * **`getSnapshotBeforeUpdate`** is introduced, it is run after `render`, can be used to capture any DOM status before it is actually updated, the returned value is available to `componentDidUpdate`;
 
-	```
-	getSnapshotBeforeUpdate(prevProps, prevState)
-	```
+    ```
+    getSnapshotBeforeUpdate(prevProps, prevState)
+    ```
 
-	it's not often needed, can be useful in cases like manually preserving scroll position during rerenders
+    it's not often needed, can be useful in cases like manually preserving scroll position during rerenders
 
 * **`componentDidUpdate`** is definded as:
 
-	```
-	componentDidUpdate(prevProps, prevState, snapshot)
-	```
+    ```
+    componentDidUpdate(prevProps, prevState, snapshot)
+    ```
 
 
 ### Before v16.3
 ![react-lifecyle-explained](./images/react-lifecycle.png)
 
-	class Clock extends React.Component {
-	  constructor(props) {
-		super(props);
-		this.state = {date: new Date()};
-	  }
+    class Clock extends React.Component {
+      constructor(props) {
+        super(props);
+        this.state = {date: new Date()};
+      }
 
-	  // NOTE setup a timer after the component has been rendered
-	  componentDidMount() {
-		this.timerID = setInterval(
-		  () => this.tick(),
-		  1000
-		);
-	  }
+      // NOTE setup a timer after the component has been rendered
+      componentDidMount() {
+        this.timerID = setInterval(
+          () => this.tick(),
+          1000
+        );
+      }
 
-	  // NOTE it's a good practice to clear the timer when this component is removed from the DOM
-	  componentWillUnmount() {
-		clearInterval(this.timerID);
-	  }
+      // NOTE it's a good practice to clear the timer when this component is removed from the DOM
+      componentWillUnmount() {
+        clearInterval(this.timerID);
+      }
 
-	  tick() {
-		this.setState({
-		  date: new Date()
-		});
-	  }
+      tick() {
+        this.setState({
+          date: new Date()
+        });
+      }
 
-	  render() {
-		return (
-		  <div>
-			<h1>Hello, world!</h1>
-			<h2>It is {this.state.date.toLocaleTimeString()}.</h2>
-		  </div>
-		);
-	  }
-	}
+      render() {
+        return (
+          <div>
+            <h1>Hello, world!</h1>
+            <h2>It is {this.state.date.toLocaleTimeString()}.</h2>
+          </div>
+        );
+      }
+    }
 
-	ReactDOM.render(
-	  <Clock />,
-	  document.getElementById('root')
-	);
+    ReactDOM.render(
+      <Clock />,
+      document.getElementById('root')
+    );
 
 
 ## state
@@ -190,25 +214,25 @@ with ES6 class syntax, add a `state` property to the class
 * always use `this.setState({})` to update the state
 * state updates may be asynchronous, if new state is depended upon the previous state, use the second form of `setState()`:
 
-		this.setState((prevState, props) => ({
-			counter: prevState.counter + props.increment
-		}));
+        this.setState((prevState, props) => ({
+            counter: prevState.counter + props.increment
+        }));
 
 
 ## defaultProps and propTypes
 
 we can use static class variables within class definition to define defaultProps and propTypes
 
-	import React from 'react';
-	import PropTypes from 'prop-types';
+    import React from 'react';
+    import PropTypes from 'prop-types';
 
     export class Book extends React.Component {
         static defaultProps = {     
             title: 'untitled book',
         }
     
-		static propTypes = {
-			title: PropTypes.string.isRequired,
+        static propTypes = {
+            title: PropTypes.string.isRequired,
 
     //      you can also use a custom validation rule here
     //      title: function(props) {
@@ -219,7 +243,7 @@ we can use static class variables within class definition to define defaultProps
     //            }
     //      }
 
-		}
+        }
 
         ...
     }
@@ -284,6 +308,50 @@ An input field can be a controlled element or an uncontrolled one:
 <iframe height='265' scrolling='no' title='React - Contolled vs. Uncontolled Component' src='//codepen.io/garylirocks/embed/jYgQLO/?height=265&theme-id=dark&default-tab=js,result&embed-version=2' frameborder='no' allowtransparency='true' allowfullscreen='true' style='width: 100%;'>See the Pen <a href='https://codepen.io/garylirocks/pen/jYgQLO/'>React - Contolled vs. Uncontolled Component</a> by Gary Li (<a href='https://codepen.io/garylirocks'>@garylirocks</a>) on <a href='https://codepen.io'>CodePen</a>.
 </iframe>
 
+### Error Handling
+
+[Error Handling in React 16](https://reactjs.org/blog/2017/07/26/error-handling-in-react-16.html)  
+[Demo](https://codepen.io/gaearon/pen/wqvxGa?editors=0010)
+
+
+* the benefit of an error boundary is an error within it will not crash the whole app;
+* any component with a `componentDidCatch` lifecycle method becomes an error boundary;
+* an error boundary only catches errors in its subtree, not itself;
+* you can use error boundary components to wrap different parts of your app;
+
+```js
+class ErrorBoundary extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = { hasError: false };
+    }
+
+    componentDidCatch(error, info) {
+        // Display fallback UI
+        this.setState({ hasError: true });
+        // You can also log the error to an error reporting service
+        logErrorToMyService(error, info);
+    }
+
+    render() {
+        if (this.state.hasError) {
+        // You can render any custom fallback UI
+            return <h1>Something went wrong.</h1>;
+        }
+
+        return this.props.children;
+    }
+}
+```
+
+then use it to wrap other components 
+
+```js
+<ErrorBoundary>
+    <MyWidget />
+</ErrorBoundary>
+```
+
 
 ## Styling
 
@@ -296,26 +364,26 @@ cons: can't use Media Queries, Pseudo Selectors, Keyframe Animations
 
 `app.js`
 
-	...
-	import styles from './app-styles.js';
+    ...
+    import styles from './app-styles.js';
 
-	...
-		return (<div style={styles.root}>
-			...
-		</div>);
-	...
+    ...
+        return (<div style={styles.root}>
+            ...
+        </div>);
+    ...
 
 `app-styles.js`
 
-	const defaultFontSize = '20px';
+    const defaultFontSize = '20px';
 
-	export default {
-		'root': {
-			color: 'red',
-			fontSize: defaultFontSize,
-		}
-		...
-	}
+    export default {
+        'root': {
+            color: 'red',
+            fontSize: defaultFontSize,
+        }
+        ...
+    }
 
 
 * Radium
@@ -326,98 +394,98 @@ a enhanced version of 'Inline styles', supporting Media Queries, Pseudo Selector
 
 `app.js`
 
-	...
-	import Radium from 'radium';
-	import styles from './app-styles.js';
+    ...
+    import Radium from 'radium';
+    import styles from './app-styles.js';
 
-	...
-		return (<div style={styles.root}>
-					...
-					<button style={styles.submit}> Submit </button>
-		</div>);
-	...
+    ...
+        return (<div style={styles.root}>
+                    ...
+                    <button style={styles.submit}> Submit </button>
+        </div>);
+    ...
 
-	exports default Radium(App);					// wrap the component with the Radium function
+    exports default Radium(App);					// wrap the component with the Radium function
 
 `app-styles.js`
 
-	const defaultFontSize = '20px';
+    const defaultFontSize = '20px';
 
-	const pulse = Radium.keyframes({				// create key frame animations
-		'0%': {
-			transform: 'scale3d(1, 1, 1)'
-		},
-		'15%': {
-			transform: 'scale3d(1.05, 1.05, 1.05)'
-		},
-		'100%': {
-			transform: 'scale3d(1, 1, 1)'
-		},
-	}, 'Nav');
+    const pulse = Radium.keyframes({				// create key frame animations
+        '0%': {
+            transform: 'scale3d(1, 1, 1)'
+        },
+        '15%': {
+            transform: 'scale3d(1.05, 1.05, 1.05)'
+        },
+        '100%': {
+            transform: 'scale3d(1, 1, 1)'
+        },
+    }, 'Nav');
 
-	const btn = {
-		...
-		animation: `${pulse} 4s 2s infinite`,		// animation
+    const btn = {
+        ...
+        animation: `${pulse} 4s 2s infinite`,		// animation
 
-		':hover': {									// pseudo selectors
-			transition: 'all 1s',
-			color: 'red',
-		}
-	};
+        ':hover': {									// pseudo selectors
+            transition: 'all 1s',
+            color: 'red',
+        }
+    };
 
-	export default {
-		'root': {
-			color: 'red',
-			fontSize: defaultFontSize,
-		},
-		'submit': {
-			...btn
-		},
-		...
-	}
+    export default {
+        'root': {
+            color: 'red',
+            fontSize: defaultFontSize,
+        },
+        'submit': {
+            ...btn
+        },
+        ...
+    }
 
 
 * CSS Modules
 
 in webpack config file, add a `modules` parameter for the css loader:
 
-	module.exports = {
-	  ...
+    module.exports = {
+      ...
 
-		module: {
-			loaders: [
-			...
-			{
-				test: /\.css/,
-				loaders: ['style', 'css?modules&localIdentName=[local]--[hash:base64:5]', 'cssnext'],
-			}]
-		}
-	}
+        module: {
+            loaders: [
+            ...
+            {
+                test: /\.css/,
+                loaders: ['style', 'css?modules&localIdentName=[local]--[hash:base64:5]', 'cssnext'],
+            }]
+        }
+    }
 
 
 `app.js`
 
-	...
-	import styles from './app-styles.css';
+    ...
+    import styles from './app-styles.css';
 
-	...
-		return (<div className={styles.btn}>
-			...
-		</div>);
-	...
+    ...
+        return (<div className={styles.btn}>
+            ...
+        </div>);
+    ...
 
 `app-styles.css`: almost pure css, see [https://github.com/css-modules/css-modules](https://github.com/css-modules/css-modules) for details
 
-	@import 'basic.css';
-	
-	.btn {
-		color: 'red',
-		fontSize: 14px,
-	}
+    @import 'basic.css';
+    
+    .btn {
+        color: 'red',
+        fontSize: 14px,
+    }
 
-	:global(.info) {
-		background: 'green';
-	}
+    :global(.info) {
+        background: 'green';
+    }
 
 
 
