@@ -1,6 +1,19 @@
 Webpack
 =================
 
+- [Webpack](#webpack)
+    - [Install](#install)
+        - [Default Behaviour](#default-behaviour)
+    - [Add building commands to `package.json`](#add-building-commands-to-packagejson)
+    - [Configs](#configs)
+        - [Demo config file](#demo-config-file)
+    - [Build a library](#build-a-library)
+    - [Plugins](#plugins)
+    - [Loaders](#loaders)
+    - [Webpack 1 vs. Webpack 3](#webpack-1-vs-webpack-3)
+        - [Webpack 1](#webpack-1)
+        - [Webpack 3](#webpack-3)
+
 Most content based on Webpack 4, if not specified specifically.
 
 [A tale of Webpack 4 and how to finally configure it in the right way]( https://hackernoon.com/a-tale-of-webpack-4-and-how-to-finally-configure-it-in-the-right-way-4e94c8e7e5c1)
@@ -13,7 +26,7 @@ yarn init
 yarn add -D webpack webpack-cli
 ```
 
-## Default Behaviour
+### Default Behaviour
 
 Webpack 4 requires zero configuration, it would try to use `src/index.js` as entry and `dist/main.js` as output.
 
@@ -42,6 +55,54 @@ yarn build
 ```
 
 ## Configs
+
+### Demo config file
+
+```js
+// webpack v4
+const path = require('path');
+const ExtractTextPlugin = require('extract-text-webpack-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+module.exports = {
+  entry: { main: './src/index.js' },
+  output: {
+    path: path.resolve(__dirname, 'dist'),
+    filename: 'main.js'
+  },
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        exclude: /node_modules/,
+        use: {
+          loader: "babel-loader"
+        }
+      },
+      {
+        test: /\.scss$/,
+        use: ExtractTextPlugin.extract(
+          {
+            fallback: 'style-loader',
+            use: ['css-loader', 'sass-loader']
+          })
+      }
+    ]
+  },
+  plugins: [ 
+    new ExtractTextPlugin(
+      {filename: 'style.css'}
+    ),
+    new HtmlWebpackPlugin({
+      inject: false,
+      hash: true,
+      template: './src/index.html',
+      filename: 'index.html'
+    })
+  ]
+};
+```
+
+
 
 * `externals`
 
@@ -230,6 +291,54 @@ in `package.json`
 
     shows info about your webpack build, the count of ES Harmony module imports which can be treeshakable and the CJSs ones which are not;
 
+* `DefinePlugin`
+
+    allows you to create global constants which can be configured at compile time, such as define `IS_DEBUG`, `VERSION` constants
+
+    ```js
+    // webpack.config.js
+    new webpack.DefinePlugin({
+        IS_DEBUG: true,
+        VERSION: "2.3.1",
+    });
+    ```
+
+    then use these constants in the code
+
+    ```js
+    // app.js
+    if (IS_DEBUG) {
+        console.log('version: ' + VERSION);
+        console.log('debugging: xxxx');
+    }
+    ```
+
+* `EnvironmentPlugin`
+
+    is a shorthand for using `DefinePlugin` on `process.env` keys
+
+    ```js
+    new webpack.EnvironmentPlugin(['NODE_ENV', 'DEBUG']);
+    ```
+
+    is equivalent as 
+
+    ```js
+    new webpack.DefinePlugin({
+        'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
+        'process.env.DEBUG': JSON.stringify(process.env.DEBUG)
+    });
+    ```
+
+    you can also provide default values if the env variable is not defined
+
+    ```js
+    new webpack.EnvironmentPlugin({
+        NODE_ENV: 'development', // use 'development' unless process.env.NODE_ENV is defined
+        DEBUG: false
+    });
+    ```
+
 
 ## Loaders
 
@@ -265,53 +374,6 @@ in `package.json`
     ```bash
     yarn add -D url-loader file-loader
     ```
-
-
-## A simple config file
-
-```js
-// webpack v4
-const path = require('path');
-const ExtractTextPlugin = require('extract-text-webpack-plugin');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-module.exports = {
-  entry: { main: './src/index.js' },
-  output: {
-    path: path.resolve(__dirname, 'dist'),
-    filename: 'main.js'
-  },
-  module: {
-    rules: [
-      {
-        test: /\.js$/,
-        exclude: /node_modules/,
-        use: {
-          loader: "babel-loader"
-        }
-      },
-      {
-        test: /\.scss$/,
-        use: ExtractTextPlugin.extract(
-          {
-            fallback: 'style-loader',
-            use: ['css-loader', 'sass-loader']
-          })
-      }
-    ]
-  },
-  plugins: [ 
-    new ExtractTextPlugin(
-      {filename: 'style.css'}
-    ),
-    new HtmlWebpackPlugin({
-      inject: false,
-      hash: true,
-      template: './src/index.html',
-      filename: 'index.html'
-    })
-  ]
-};
-```
 
 
 ## Webpack 1 vs. Webpack 3
