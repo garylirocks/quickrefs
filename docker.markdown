@@ -13,13 +13,14 @@ Docker
         - [`CMD`](#cmd)
         - [`ENTRYPOINT`](#entrypoint)
         - [`ENV`](#env)
+        - [`ADD` vs. `COPY`](#add-vs-copy)
         - [`.dockerignore`](#dockerignore)
-    - [Volumns](#volumns)
+    - [Volumes](#volumes)
     - [Network](#network)
     - [Docker Compose](#docker-compose)
         - [`docker-compose.yml`](#docker-composeyml)
         - [Name collision issue](#name-collision-issue)
-    - [Misc](#misc)
+    - [Tips / Best Practices](#tips--best-practices)
 
 
 docker basics:
@@ -170,14 +171,13 @@ A container is a running instance of an image, when you start an image, you have
 FROM ubuntu:xenial
 MAINTAINER einstein <einstein@example.com>
 
-# add a user to the image
+# add a user to the image and use it, otherwise root is used for everything
 RUN useradd -ms /bin/bash einstein
-
-# use this username when running any command, (root is always created)
 USER einstein
 
-RUN apt-get update
-RUN ate-get install --yes openssh-server
+# install required tools, it's a good practice to chain shell commands together, reducing intermediate images created
+RUN apt-get update && \ 
+    apt-get install --yes openssh-server
 ```
 
 ```bash
@@ -267,6 +267,23 @@ ENV MY_NAME gary
 
 add environment variable in the container, it's **system wide**, no specific to any user
 
+### `ADD` vs. `COPY`
+
+they are basically the same, only difference is `ADD` will extract TAR files or fetching files from remote URLs
+
+```
+ADD example.tar.gz /add     # Will untar the file into the ADD directory
+COPY example.tar.gz /copy   # Will copy the file directly
+```
+
+files pulled in by `ADD` and `COPY` are owned by `root` by default, **DON'T** honor `USER`, [use a `--chwon` flag to specify user](https://github.com/moby/moby/pull/9934):
+
+```
+ADD --chown=someuser:somegroup /foo /bar
+COPY --chown=someuser:somegroup /foo /bar
+```
+
+
 ### `.dockerignore`
 
 config what files and directories should be ignored when sending to the docker daemon and ignored by `ADD` and `COPY`
@@ -287,7 +304,7 @@ config what files and directories should be ignored when sending to the docker d
 **/.cache
 ```
 
-## Volumns
+## Volumes
 
 mount a host directory to a container
 
@@ -303,7 +320,7 @@ docker run -it -v /home/gary/code/super-app:/app ubuntu
 # list networks
 docker network ls
 
-# create a subnet (looks like this will create a virtual network adapter on a Linux host, but not a Mac)
+# create a subnet (looks like this will create a virtual network adapter on a Linux host, but not a M)
 docker network create --subnet 10.1.0.0/16 --gateway 10.1.0.1 --ip-range=10.1.4.0/24 --driver=bridge --label=host4network bridge04
 
 # use a network, and specify a static IP for it
@@ -358,6 +375,15 @@ services:
 
 in the above example, the mounted volumes will override any existing files in the image, current directory `.` is mounted to `/app`, and will override existing `/app` in the image, but the image's `/app/node_modules` is preserved, not mounted from the host machine
 
+see details here: [Lessons from Building a Node App in Docker](http://jdlm.info/articles/2016/03/06/lessons-building-node-app-docker.html)
+
+**There is a problem with this config** 
+
+see here: ["docker-compose up" not rebuilding container that has an underlying updated image](https://github.com/docker/compose/issues/4337)
+
+* after you update `package.json` on your local, and run `docker-compose up --build`, the underlying images do get updated, but Docker Compose is using an old anonymous volume for `/app/node_modules` from the old container, so the new package you installed is absent from the new container;
+* add a `--renew-anon-volumes` flag to `docker-compose up --build` will solve this issue;
+
 ### Name collision issue
 
 for the following example:
@@ -388,6 +414,29 @@ docker-compose up --project-name <anotherName>
 see [Proposal: make project-name persistent](https://github.com/docker/compose/issues/745)
 
 
-## Misc
+## Tips / Best Practices
 
 * on Mac, you can talk to a container through port binding, but you may **NOT** be able to ping the container's IP address;
+
+* don't but `apt-get update` on a different line than `apt-get install`, the result of the `apt-get update` will get cached and won't run every time, the following is a good example of how this should be done:
+
+    ```
+    # From https://github.com/docker-library/golang
+    RUN apt-get update && \
+        apt-get install -y --no-install-recommends \
+        g++ \
+        gcc \
+        libc6-dev \
+        make \
+        && rm -rf /var/lib/apt/lists/*
+    ```
+
+* no utilize Docker's caching capability better, install dependencies first before copying over everthing, this make sure other changes don't trigger a rebuild (e.g. non `package.json` changes don't trigger node package downloads)
+
+```
+COPY ./my-app/package.json /home/app/package.json   # copy over dependency config first
+WORKDIR /home/app/
+RUN npm install                 # result get cached here
+
+COPY ./my-app/ /home/app/       # copy over other stuff
+```
