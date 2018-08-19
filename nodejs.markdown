@@ -9,6 +9,7 @@ NodeJS notes
         - [Yarn](#yarn)
         - [Avoid installing packages globally](#avoid-installing-packages-globally)
         - [Publish package to NPM](#publish-package-to-npm)
+        - [Symlink a package folder](#symlink-a-package-folder)
     - [Module System - CommonJs vs. ES6 Modules](#module-system---commonjs-vs-es6-modules)
         - [Current status in Node 9/10](#current-status-in-node-910)
     - [Debugging](#debugging)
@@ -121,6 +122,27 @@ update a package:
 * `npm version (patch|minor|major)`
     it will change the version number in `package.json`, (will also add a tag to the linked git repo)
 * `npm publish`
+
+### Symlink a package folder
+
+make one local package available to another project, quite useful for developing and testing a library package
+
+two steps process:
+
+```bash
+cd ~/code/myLibrary
+npm link                # symlinks this to a global folder
+
+cd ~/code/myApp
+npm link my-library     # link to this package, use the 'name' in package.json, not the directory name
+```
+
+or a shortcut:
+
+```bash
+cd ~/code/myApp
+npm link ../myLibrary   # use 'my-library' in code of myApp
+```
 
 
 ## Module System - CommonJs vs. ES6 Modules
