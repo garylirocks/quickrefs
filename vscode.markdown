@@ -1,12 +1,43 @@
 VS Code
 =============
 
+- [VS Code](#vs-code)
+    - [Shortcuts](#shortcuts)
+    - [Debugging](#debugging)
+        - [Trouble shooting](#trouble-shooting)
+        - [Sample debugging settings for React / Mocha](#sample-debugging-settings-for-react--mocha)
+    - [Mac trivias](#mac-trivias)
 
-## shortcuts
+
+## Shortcuts
 
 * multi word cursors/selections, allows you to change multi occurence of a word simutaneously: `Ctrl + Shift + L`
 
-## Sample debugging settings for React / Mocha
+
+## Debugging
+
+see [vscode-chrome-debug](https://github.com/Microsoft/vscode-chrome-debug) for some settings for the Chrome Debugger
+
+### Trouble shooting
+
+* in Debug Console, you can use `.scripts` command to see a list of all scripts loaded in the runtime, sourcemap infomation, and how they are mapped to files on disk.
+
+    The output is like this:
+
+    ```
+    › <The exact URL for a script, reported by Chrome> (<The local path that has been inferred for this script, using webRoot, if applicable>)
+        - <The exact source path from the sourcemap> (<The local path inferred for the source, using sourceMapPathOverrides, or webRoot, etc, if applicable>)
+    ```
+
+    ```
+    › /app/index.js (/Users/gary/code/MyApp/index.js)
+        - /app/index.js (/Users/gary/code/MyApp/index.js)
+    ```
+
+    use `sourceMapPathOverrides` or `webRoot` to make sure file paths are mapped correctly
+
+
+### Sample debugging settings for React / Mocha
 
 ```json
 {
