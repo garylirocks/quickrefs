@@ -10,6 +10,8 @@ show dbs            # list all dbs
 use <db>            # switch to a db
 
 show tables         # show tables in current db
+
+db.users.drop()     # drop/delete the users table
 ```
 
 ## CRUD
