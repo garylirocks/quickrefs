@@ -1,5 +1,42 @@
-git cheatsheet
+Git Cheatsheet
 ===============
+
+- [Git Cheatsheet](#git-cheatsheet)
+    - [Preface](#preface)
+    - [Basics](#basics)
+        - [First Commit](#first-commit)
+        - [Staging area](#staging-area)
+    - [Stashing](#stashing)
+        - [Creating a Branch from a Stash](#creating-a-branch-from-a-stash)
+    - [Log](#log)
+        - [limiting log output](#limiting-log-output)
+        - [a GUI to visualize log](#a-gui-to-visualize-log)
+        - [show log for a specific commit](#show-log-for-a-specific-commit)
+    - [Configs](#configs)
+    - [Command Aliases](#command-aliases)
+    - [History](#history)
+    - [Tags](#tags)
+        - [sharing tags](#sharing-tags)
+    - [Undoing changes](#undoing-changes)
+    - [Branches](#branches)
+        - [set a local branch to track a remote branch](#set-a-local-branch-to-track-a-remote-branch)
+    - [Remotes](#remotes)
+        - [push](#push)
+        - [Add a local branch that tracks a remote branch](#add-a-local-branch-that-tracks-a-remote-branch)
+        - [add a remote](#add-a-remote)
+        - [clone a repo to remote](#clone-a-repo-to-remote)
+    - [Revision Selection](#revision-selection)
+        - [Commit Ranges](#commit-ranges)
+    - [diff](#diff)
+    - [checkout](#checkout)
+    - [rebase](#rebase)
+    - [ignore files](#ignore-files)
+    - [Hooks](#hooks)
+    - [Merge & Diff](#merge--diff)
+    - [Split a subfolder out into a new repository](#split-a-subfolder-out-into-a-new-repository)
+    - [Multiple accounts setup for Bitbucket/Github](#multiple-accounts-setup-for-bitbucketgithub)
+    - [Misc](#misc)
+    - [NOTICES](#notices)
 
 ## Preface
 Some useful tips of git  
@@ -402,23 +439,29 @@ show branches not merged in current branch, thest branch diverged from current b
 
 local branches do not automatically synchronize to remotes, you have to explicitly push the branches you want to share
     
-    # git push <remote> <branch>[:<remote-branch>]
+```bash
+# git push <remote> <branch>[:<remote-branch>]
+# use '-u' to set the remote branch as upstream
 
-    $ git push origin test  # push local branch 'test' to origin
-    $ git push origin test:abc  # push local branch 'test' to origin as branch 'abc'
+git push -u origin test     # push local branch 'test' to origin
+git push -u origin test:abc # push local branch 'test' to origin as branch 'abc'
+```
 
 delete a remote branch
 
-    $ git push origin :hotfix  # delete the 'hotfix' branch on origin
+```bash
+git push origin :hotfix  # delete the 'hotfix' branch on origin
+```
 
 ### set a local branch to track a remote branch
 
-    # set upstream to a remote branch
-    git branch --set-upstream-to=bb/master
+```bash
+# set upstream to a remote branch
+git branch --set-upstream-to=bb/master
 
-    # create a new branch and tracking a remote one
-    git branch --track testing origin/testing
-
+# create a new branch on local and tracking a remote one
+git branch --track testing origin/testing
+```
 
 
 ## Remotes
@@ -594,6 +637,37 @@ other notations:
     
     $ git checkout <commit> -- <path>       # checkout a file from a commit to working directory
 
+
+## rebase
+
+typical usage: moving a topic branch to a new base
+
+```
+      A---B---C topic
+     /
+D---E---F---G master
+```
+
+```bash
+git rebase master
+git rebase master topic
+```
+
+this will result in
+
+```
+               A'--B'--C' topic
+             /
+D---E---F---G master
+```
+
+You can also use it to **reorder, squash, edit and split commits**, see `git help rebase` for details:
+
+```
+git rebase -i HEAD~5
+```
+
+
 ## ignore files
 
 global ignore files, `~/.gitignore`, then make it a global ignore file with:
@@ -713,36 +787,45 @@ in `.ssh/config`
 
 
 
-## misc
+## Misc
 
-`git status` may output Chinese characters in wrong encoding, fix:
+* `git status` may output Chinese characters in wrong encoding, fix:
 
-    $ git config --global core.quotepath false
+    ```bash
+    git config --global core.quotepath false
+    ```
 
-ignore changes in tracked file:
+* ignore changes in tracked file:
 
-    $ git update-index --assume-unchanged <file>
+    ```bash
+    git update-index --assume-unchanged <file>
+    ```
 
-create a bare repo 'hello.git' based on 'hello'
+* create a bare repo 'hello.git' based on 'hello'
 
-    $ git clone --bare hello hello.git
+    ```bash
+    git clone --bare hello hello.git
+    ```
 
+* add files interactively
 
-## Tricks
+    ```bash
+    git add -i
+    ```
 
-add files interactively
+* stage part of a file (you can select which change you want to stage):
 
-    $ git add -i
+    ```bash
+    git add --patch
+    git add -p    # the same
+    ```
 
-stage part of a file (you can select which change you want to stage):
+* add all modified files
 
-    $ git add --patch
-    $ git add -p    # the same
-
-add all modified files
-
-    $ git add -u    # --update
-    
+    ```bash
+    git add -u    # --update
+    ```
+ 
 
 ## NOTICES
 
