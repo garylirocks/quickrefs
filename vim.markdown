@@ -1,5 +1,44 @@
-vim cheatsheet
+Vim cheatsheet
 ===============
+
+- [Vim cheatsheet](#vim-cheatsheet)
+    - [Preface](#preface)
+    - [Moving around](#moving-around)
+        - [Jumping](#jumping)
+        - [Scrolling](#scrolling)
+        - [tags](#tags)
+    - [Search and replace](#search-and-replace)
+    - [Regular Expressions](#regular-expressions)
+        - [enable ERE (extended regular expression)](#enable-ere-extended-regular-expression)
+        - [about new line](#about-new-line)
+    - [Editing](#editing)
+        - [Change a word/sentence](#change-a-wordsentence)
+        - [Change word to uppper/lower case](#change-word-to-uppperlower-case)
+        - [Increase / Decrease numbers](#increase--decrease-numbers)
+        - [Indent lines](#indent-lines)
+        - [Abbreviations](#abbreviations)
+        - [Command macros](#command-macros)
+    - [Edit multiple files](#edit-multiple-files)
+        - [multiple buffers](#multiple-buffers)
+        - [multiple windows](#multiple-windows)
+        - [tab page](#tab-page)
+        - [tag with windows](#tag-with-windows)
+    - [Record and Play](#record-and-play)
+    - [Copy and Paste](#copy-and-paste)
+    - [Options](#options)
+    - [misc](#misc)
+        - [Avoid the Esc key](#avoid-the-esc-key)
+        - [Save a readonly file](#save-a-readonly-file)
+        - [ex mode](#ex-mode)
+    - [visual mode](#visual-mode)
+    - [add a new filetype](#add-a-new-filetype)
+    - [save session](#save-session)
+    - [word completion](#word-completion)
+    - [save macros](#save-macros)
+    - [encoding](#encoding)
+    - [folding](#folding)
+    - [plugins](#plugins)
+        - [Vundle](#vundle)
 
 ## Preface
 Some useful tips for vim
@@ -96,7 +135,7 @@ use tags in Vim:
         /green
         :~              # replace green to blue
 
-## regular expressions
+## Regular Expressions
 
 most characters lose their special meaning inside brackets, you don't need to escape them. There are threee characters you still need to escape: `]-/`
 
