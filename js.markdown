@@ -10,7 +10,7 @@ General topics about Javascript and front-end develpoment.
     - [Objects](#objects)
     - [Prototype](#prototype)
         - [Inheritance by Prototype](#inheritance-by-prototype)
-    - [Javascript: The Good Parts](#javascript--the-good-parts)
+    - [Javascript: The Good Parts](#javascript-the-good-parts)
     - [Functions](#functions)
         - [the `arguments` parameter](#the-arguments-parameter)
     - [The `this` keyword](#the-this-keyword)
@@ -29,7 +29,15 @@ General topics about Javascript and front-end develpoment.
         - [Callback hell](#callback-hell)
         - [resolved vs. rejected](#resolved-vs-rejected)
     - [Generator](#generator)
-    - [Async/Await](#async-await)
+    - [Async/Await](#asyncawait)
+    - [Immutability](#immutability)
+        - [What is immutability ?](#what-is-immutability)
+        - [Reference equality vs. value equality](#reference-equality-vs-value-equality)
+        - [Immutability tools](#immutability-tools)
+            - [The JS way](#the-js-way)
+            - [Immutable.js](#immutablejs)
+            - [Immer](#immer)
+            - [immutability-helper](#immutability-helper)
     - [ECMAScript](#ecmascript)
     - [Tricks](#tricks)
         - [Deboucing an event](#deboucing-an-event)
@@ -974,7 +982,7 @@ form.onsubmit = function (submitEvent) {
 refactor the above code by moving the callback functions to a separate module
 
 ```js
-odule.exports.submit = formSubmit;
+module.exports.submit = formSubmit;
 
 function formSubmit (submitEvent) {
   var name = document.querySelector('input').value
@@ -1081,6 +1089,271 @@ See the Pen <a href='https://codepen.io/garylirocks/pen/yKRzeM/'>async/await</a>
 
 * `await` can only be used in `async` functions
 * `await` is followed by a Promise, if it resolves, it returns the resolved value, or it can throw an error
+
+
+## Immutability
+
+* [Immutability in React: There’s nothing wrong with mutating objects](https://blog.logrocket.com/immutability-in-react-ebe55253a1cc)
+* [Immutability in JavaScript: A Contrarian View](http://desalasworks.com/article/immutability-in-javascript-a-contrarian-view/)
+
+
+### What is immutability ?
+
+the `string` primitive type is immutable in JS, whenever you do any manipulation on a string, a new string get created
+
+but the `String` object type *is* immutable
+
+```js
+const s = new String('hello');
+//undefined
+
+s
+//[String: 'hello']
+
+// add a new property to a String object
+s.name = 'gary';
+s
+// { [String: 'hello'] name: 'gary' }
+```
+
+### Reference equality vs. value equality
+
+two references are equal when they refer to the same value if this value is immutable:
+
+```js
+var str1 = 'abc';
+var str2 = 'abc';
+str1 === str2;      // true
+
+var n1 = 1;
+var n2 = 1;
+n1 === n2;          // also true
+```
+
+![js_equality_immutable](./images/js_equality_immutable.png)
+
+but if the value is mutable, the two references are not equal:
+
+```js
+var str1 =  new String('abc');
+var str2 = new String('abc');
+str1 === str2;      // false
+
+var arr1 = [];
+var arr2 = [];
+arr1 === arr2;      // false
+```
+
+![js_equality_mutable](./images/js_equality_mutable.png)
+
+You need to use your custom methods or something like `_.isEqual` from Lo-Dash to check value equality on objects.
+
+### Immutability tools
+
+* [Redux Ecosystem - Immutable Data](https://github.com/markerikson/redux-ecosystem-links/blob/master/immutable-data.md#immutable-update-utilities)
+
+#### [The JS way](https://github.com/reduxjs/redux/blob/master/docs/recipes/reducers/ImmutableUpdatePatterns.md) 
+
+* Updating Nested Objects
+
+    if you want to update deeply nested state, it's become quite verbose and hard to read:
+    ```js
+    function updateVeryNestedField(state, action) {
+        return {
+            ...state,
+            first : {
+                ...state.first,
+                second : {
+                    ...state.first.second,
+                    [action.someId] : {
+                        ...state.first.second[action.someId],
+                        fourth : action.someValue
+                    }
+                }
+            }
+        }
+    }
+    ```
+
+    **it's recommended to keep your state flattened, and compose reducers as much as possible, so you only need to update flat objects or arrays**
+
+* Appending/Prepending/Inserting/Removing/Replacing/Updating Items in arrays
+
+    ```js
+    // append item
+    function appendItem(array, action) {
+        return array.concat(action.item);
+    }
+
+    // prepend item
+    function prependItem(array, action) {
+        return action.item.concat(array);
+    }
+
+    // insert item
+    function insertItem(array, action) {
+        let newArray = array.slice();
+        newArray.splice(action.index, 0, action.item);
+        return newArray;
+    }
+
+    // remove item
+    function removeItem(array, action) {
+        let newArray = array.slice();
+        newArray.splice(action.index, 1);
+        return newArray;
+    }
+
+    // remove item (alternative way)
+    function removeItem(array, action) {
+        return array.filter( (item, index) => index !== action.index );
+    }
+
+    // replace item
+    function replaceItem(array, action) {
+        let newArray = array.slice();
+        newArray.splice(action.index, 1, action.item);
+        return newArray;
+    }
+
+    // update item
+    function removeItem(array, action) {
+        return array.map( (item, index) => {
+            if (index !== action.index) {
+                return item;
+            }
+
+            // update the one we want
+            return {
+                ...item,
+                ...action.item,
+            };
+        });
+    }
+    ```
+
+#### [Immutable.js](https://facebook.github.io/immutable-js/)
+
+* Fully-featured data structures library;
+* Using [persistent data structures](http://en.wikipedia.org/wiki/Persistent_data_structure);
+* Using structural sharing via [hash maps tries](http://en.wikipedia.org/wiki/Hash_array_mapped_trie) and [vector tries](http://hypirion.com/musings/understanding-persistent-vector-pt-1);
+* Provides data structures including: `List`, `Stack`, `Map`, `OrderedMap`, `Set`, `OrderedSet` and `Record`;
+
+#### [Immer](https://github.com/mweststrate/immer)
+
+* A tiny package, based on the [`copy-on-write`](https://en.wikipedia.org/wiki/Copy-on-write) mechanism;
+* Idea: all changes are applied to a temporary *draftState* (a proxy of the *currentState*), once all mutations are done, `Immer` will produce the *nextState*;
+
+    ![immer-idea](images/js-immer-how-it-works.png)
+
+* Auto freezing
+
+    * Immer automatically freezes any state trees that are modified using `produce`, this protects against any accidental modifications of the state tree outside of a producer; 
+    * It impacts performance, by default it is turned on during local develpoment, off in production;
+    * Use `setAutoFreeze(true/false)` to control it explicitly;
+
+* Read the doc for:
+
+    * Limitations;
+    * TypeScript or Flow;
+    * Patches;
+    * `this`, `void`;
+    * Performance;
+    * More examples;
+
+* API
+
+    `produce(currentState, producer: (draftState) => void): nextState`
+
+* basic usage:
+
+    ```js
+    import produce from 'immer';
+
+    cosnt a = {name: 'Gary', age: 20};
+    // { name: 'Gary', age: 20 }
+
+    // update draft in whatever way you like, and no need to return anything
+    const b = produce(a, draft => { 
+        draft.name = 'Federer';
+    });
+    // { name: 'Federer', age: 20 }
+
+    console.log(`${a.name} vs. ${b.name}`);
+    // Gary vs. Federer
+    ```
+
+* React `setState`
+
+    ```js
+    increaseAge = () => {
+        this.setState(
+            produce(draft => {
+                draft.user.age += 1
+            });
+        );
+    }
+    ```
+
+* Redux reducers
+
+    ```js
+    import produce from "immer"
+
+    const byId = produce(
+        (draft, action) => {
+            switch (action.type) {
+                case RECEIVE_PRODUCTS:
+                    action.products.forEach(product => {
+                        draft[product.id] = product
+                    })
+                    return
+            }
+        },
+        {
+            1: {id: 1, name: "product-1"}
+        }
+    )
+    ```
+
+#### [immutability-helper](https://github.com/kolodny/immutability-helper)
+
+* Provides a simple immutability helper, `update()`;
+* It's syntax is inspired by MongoDB's query language;
+* Commands:
+    * `{$push: array}` `push()` all the items in `array` on the target.
+    * `{$unshift: array}` `unshift()` all the items in `array` on the target.
+    * `{$splice: array of arrays}` for each item in `arrays` call `splice()` on the target with the parameters provided by the item. **Note**: *The items in the array are applied sequentially, so the order matters. The indices of the target may change during the operation.*
+    * `{$set: any}` replace the target entirely.
+    * `{$toggle: array of strings}` toggles a list of boolean fields from the target object.
+    * `{$unset: array of strings}` remove the list of keys in a`rray from the target object.
+    * `{$merge: object}` merge the keys of object with the target.
+    * `{$apply: function}` passes in the current value to the function and updates it with the new returned value.
+    * `{$add: array of objects}` add a value to a `Map` or `Set`. When adding to a Set you pass in an array of objects to add, when adding to a Map, you pass in `[key, value]` arrays like so: `update(myMap, {$add: [['foo', 'bar'], ['baz', 'boo']]})`.
+    * `{$remove: array of strings}` remove the list of keys in array from a `Map` or `Set`.
+
+* You can define you own commands;
+* Baisc examples:
+
+    ```js
+    // push
+    const initialArray = [1, 2, 3];
+    const newArray = update(initialArray, {$push: [4]}); // => [1, 2, 3, 4]
+
+    // nested
+    const collection = [1, 2, {a: [12, 17, 15]}];
+    const newCollection = update(collection, {2: {a: {$splice: [[1, 1, 13, 14]]}}});
+    // => [1, 2, {a: [12, 13, 14, 15]}]
+
+    // merge
+    const obj = {a: 5, b: 3};
+    const newObj = update(obj, {$merge: {b: 6, c: 7}}); // => {a: 5, b: 6, c: 7}
+
+    // update based on current value
+    const obj = {a: 5, b: 3};
+    const newObj = update(obj, {b: {$apply: function(x) {return x * 2;}}});
+    // => {a: 5, b: 6}
+    ```
 
 
 ## ECMAScript
