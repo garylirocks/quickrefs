@@ -4,12 +4,15 @@ Webpack
 - [Webpack](#webpack)
     - [Install](#install)
         - [Default Behaviour](#default-behaviour)
-    - [Add building commands to `package.json`](#add-building-commands-to-packagejson)
+        - [Add building commands to `package.json`](#add-building-commands-to-packagejson)
     - [Configs](#configs)
         - [Demo config file](#demo-config-file)
-    - [Build a library](#build-a-library)
+        - [Mode](#mode)
+        - [Config directives](#config-directives)
+        - [Optimization](#optimization)
     - [Plugins](#plugins)
     - [Loaders](#loaders)
+    - [Build a library](#build-a-library)
     - [Webpack 1 vs. Webpack 3](#webpack-1-vs-webpack-3)
         - [Webpack 1](#webpack-1)
         - [Webpack 3](#webpack-3)
@@ -30,8 +33,7 @@ yarn add -D webpack webpack-cli
 
 Webpack 4 requires zero configuration, it would try to use `src/index.js` as entry and `dist/main.js` as output.
 
-
-## Add building commands to `package.json`
+### Add building commands to `package.json`
 
 add the following to `scripts` field in `package.json`:
 
@@ -41,8 +43,6 @@ add the following to `scripts` field in `package.json`:
     "build": "webpack --mode production"
 }
 ```
-
-`development` mode supports hot module replacement, dev server and other things assisting dev work 
 
 then you can just use
 
@@ -102,7 +102,30 @@ module.exports = {
 };
 ```
 
+### Mode
 
+in config file
+
+```js
+module.exports = {
+    mode: 'development',
+}
+```
+
+or as CLI argument
+
+```js
+webpack --mode=production
+```
+
+* it let's webpack use its built-in optimizations;
+* `NODE_ENV` doesn't set `mode`;
+* `development` mode sets `process.env.NODE_ENV` on `DefinePlugin` to `development`, enables `NamedChunksPlugin` and `NamedModulesPlugin`;
+* `production` mode sets `process.env.NODE_ENV` on `DefinePlugin` to value `production`. Enables `UglifyJsPlugin` and other plugins;
+
+see [Webpack concepts - Mode](https://webpack.js.org/concepts/mode/)
+
+### Config directives
 
 * `externals`
 
@@ -239,50 +262,15 @@ module.exports = {
     }
     ```
 
-## Build a library 
+### Optimization
 
-`webpack.config.js`
+**the `CommonsChunkPlugin` is replace by `SplitChunksPlugin` in Webpack 4**
 
-```js
-var path = require('path');
+understand how code splitting works:
 
-module.exports = {
-    entry: './src/index.js',
+* [SplitChunksPlugin](https://webpack.js.org/plugins/split-chunks-plugin/)
+* [Webpack 4 — Mysterious SplitChunks Plugin](https://medium.com/dailyjs/webpack-4-splitchunks-plugin-d9fbbe091fd0)
 
-    output: {
-        path: path.resolve(__dirname, 'dist'),
-        filename: 'webpack-numbers.js',
-        library: 'webpackNumbers',  // name of the global variable when imported
-        libraryTarget: 'umd'        // consumer can include in CommonJS, ES2015, and as a global variable
-    },
-
-    // exclude lodash from the final library file, it should be a dependency 
-    externals: {
-        lodash: {
-            commonjs: 'lodash',
-            commonjs2: 'lodash',
-            amd: 'lodash',
-            root: '_'
-        }
-    }
-};
-```
-
-in `package.json`
-
-```js
-{
-  "name": "my-library",
-  "version": "1.0.0",
-  "description": "My Library",
-  "main": "dist/index.js",          // the entry file for consumers
-  "files": [                        // files need to be uploaded to npm
-    "dist"
-  ],
-
-  ...
-}
-```
 
 
 ## Plugins
@@ -374,6 +362,53 @@ in `package.json`
     ```bash
     yarn add -D url-loader file-loader
     ```
+
+
+## Build a library 
+
+`webpack.config.js`
+
+```js
+var path = require('path');
+
+module.exports = {
+    entry: './src/index.js',
+
+    output: {
+        path: path.resolve(__dirname, 'dist'),
+        filename: 'webpack-numbers.js',
+        library: 'webpackNumbers',  // name of the global variable when imported
+        libraryTarget: 'umd'        // consumer can include in CommonJS, ES2015, and as a global variable
+    },
+
+    // exclude lodash from the final library file, it should be a dependency 
+    externals: {
+        lodash: {
+            commonjs: 'lodash',
+            commonjs2: 'lodash',
+            amd: 'lodash',
+            root: '_'
+        }
+    }
+};
+```
+
+in `package.json`
+
+```js
+{
+  "name": "my-library",
+  "version": "1.0.0",
+  "description": "My Library",
+  "main": "dist/index.js",          // the entry file for consumers
+  "files": [                        // files need to be uploaded to npm
+    "dist"
+  ],
+
+  ...
+}
+```
+
 
 
 ## Webpack 1 vs. Webpack 3
