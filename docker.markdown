@@ -431,12 +431,12 @@ see [Proposal: make project-name persistent](https://github.com/docker/compose/i
         && rm -rf /var/lib/apt/lists/*
     ```
 
-* no utilize Docker's caching capability better, install dependencies first before copying over everthing, this make sure other changes don't trigger a rebuild (e.g. non `package.json` changes don't trigger node package downloads)
+* to utilize Docker's caching capability better, install dependencies first before copying over everything, this makes sure other changes don't trigger a rebuild (e.g. non `package.json` changes don't trigger node package downloads)
 
-```
-COPY ./my-app/package.json /home/app/package.json   # copy over dependency config first
-WORKDIR /home/app/
-RUN npm install                 # result get cached here
+    ```
+    COPY ./my-app/package.json /home/app/package.json   # copy over dependency config first
+    WORKDIR /home/app/
+    RUN npm install                 # result get cached here
 
-COPY ./my-app/ /home/app/       # copy over other stuff
-```
+    COPY ./my-app/ /home/app/       # copy over other stuff
+    ```
