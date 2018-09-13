@@ -16,7 +16,7 @@ React
     - [state](#state)
         - [state initializing](#state-initializing)
         - [state updating](#state-updating)
-    - [defaultProps and propTypes](#defaultprops-and-proptypes)
+    - [PropTypes](#proptypes)
     - [Refs and the DOM](#refs-and-the-dom)
         - [`ref` on DOM element](#ref-on-dom-element)
         - [`ref` on Components](#ref-on-components)
@@ -219,34 +219,36 @@ with ES6 class syntax, add a `state` property to the class
         }));
 
 
-## defaultProps and propTypes
+## PropTypes
 
-we can use static class variables within class definition to define defaultProps and propTypes
+we can use static class variables within class definition to define `defaultProps` and `propTypes`
 
-    import React from 'react';
-    import PropTypes from 'prop-types';
+```js
+import React from 'react';
+import PropTypes from 'prop-types';
 
-    export class Book extends React.Component {
-        static defaultProps = {     
-            title: 'untitled book',
-        }
-    
-        static propTypes = {
-            title: PropTypes.string.isRequired,
-
-    //      you can also use a custom validation rule here
-    //      title: function(props) {
-    //            if ((typeof props.title) !== 'string' || props.title.length < 5) {
-    //                return new Error('title should be a string and longer than 5');
-    //            } else {
-    //                return null;
-    //            }
-    //      }
-
-        }
-
-        ...
+export class Book extends React.Component {
+    static defaultProps = {     
+        title: 'untitled book',
     }
+
+    static propTypes = {
+        title: PropTypes.string.isRequired,
+
+//      you can also use a custom validation rule here
+//      title: function(props) {
+//            if ((typeof props.title) !== 'string' || props.title.length < 5) {
+//                return new Error('title should be a string and longer than 5');
+//            } else {
+//                return null;
+//            }
+//      }
+
+    }
+
+    ...
+}
+```
 
 
 ## Refs and the DOM
