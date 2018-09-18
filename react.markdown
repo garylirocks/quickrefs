@@ -9,6 +9,7 @@ React
             - [Presentational](#presentational)
             - [Container](#container)
             - [How to do it](#how-to-do-it)
+        - [How to bind event handlers](#how-to-bind-event-handlers)
     - [JSX Syntaxes](#jsx-syntaxes)
     - [Example with lifecycle functions](#example-with-lifecycle-functions)
         - [v16.4](#v164)
@@ -87,6 +88,53 @@ read [Dan Abramov's article](https://medium.com/@dan_abramov/smart-and-dumb-comp
 * Start with only presentational components;
 * When you realize you are passing too many props down the intermediate components, it’s a good time to introduce some container components without burdening the unrelated components in the middle of the tree;
 * Don’t try to get it right the first time, you’ll develop an intuitive sense when you keeping do it;
+
+
+### How to bind event handlers
+
+* [Arrow Functions in Class Properties Might Not Be As Great As We Think](https://medium.com/@charpeni/arrow-functions-in-class-properties-might-not-be-as-great-as-we-think-3b3551c440b1)
+* [garylirocks: class-in-depth.js](https://github.com/garylirocks/js-es6/blob/master/class-syntax/class-in-depth.js)
+
+```js
+class A {
+  static color = "red";
+  counter = 0;
+  
+  handleClick = () => {
+    this.counter++;
+  }
+  
+  handleLongClick() {
+    this.counter++;
+  }
+}
+```
+
+are transpiled(with the help of `babel-plugin-transform-class-properties`) into
+
+```js
+class A {
+  constructor() {
+    this.counter = 0;
+
+    this.handleClick = () => {
+      this.counter++;
+    };
+  }
+  
+  handleLongClick() {
+    this.counter++;
+  }
+}
+A.color = "red";
+```
+
+General Rules:
+
+* **Don't bind all class methods**, only bind those ones that you're going to pass around;
+* Arrow functions in class properties are transpiled into the constructor, so it's not in the prototype chain, not available in `super`, not shared, it's created for each instance;
+* Arrow functions is almost the same as do binding manually in the constructor, but for binding functions, the bound one is in the instance, the original function is still in the prototype;
+* Arrow functions and bound functions are **slower** than usual methods;
 
 
 ## JSX Syntaxes
