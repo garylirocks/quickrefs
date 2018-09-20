@@ -30,6 +30,7 @@ Flow
     - [Optional object properties](#optional-object-properties)
   - [React](#react)
     - [Class Component example:](#class-component-example)
+    - [Binding method in constructor](#binding-method-in-constructor)
     - [Functional Component example](#functional-component-example)
     - [Event Handling](#event-handling)
     - [ref functions](#ref-functions)
@@ -37,6 +38,7 @@ Flow
     - [Higher-order Components](#higher-order-components)
     - [Context](#context)
     - [Redux](#redux)
+    - [React Types](#react-types)
   - [Strict Mode](#strict-mode)
   - [Refs](#refs)
 
@@ -297,6 +299,17 @@ var obj: {
 };
 ```
 
+'Unsealed' vs. 'Sealed' types
+
+```js
+// @flow
+const obj1 = {};          // 'Unsealed' type
+obj1.x = 'foo';           // OK 
+
+const obj2 = {x: 'bar'};  // 'Sealed' type, can't add new property
+obj2.y = 'bat';           // Errror, can't add new property
+```
+
 ### Array Types
 
 Annotate arrays with `Array<T>`, which has a shorthand syntax: `Type[]`
@@ -507,6 +520,60 @@ class MyComponent extends React.Component<Props> {
 * if you only need `Props` type once, you can define it inline `React.Component<{ foo: number, bar?: string }>`;
 * `React.Component<Props, State>` is a generic type that takes two arguments, `State` is optional, omitted above;
 
+### Binding method in constructor
+
+by default, methods on classes are considered to be read-only, there is an error when binding method in the constructor:
+
+```js
+ constructor() {
+    super();
+    this.onToggle = this.onToggle.bind(this); // Flow error: Cannot assign `this.onToggle.bind(...)` to `this.onToggle` because property `onToggle` is not writable.
+  }
+```
+
+see this [Github issue](https://github.com/facebook/flow/issues/5874) for workaround:
+
+* do a type declaration for the method:
+
+  ```js
+  class App extends React.Component {
+    constructor() {
+      super();
+      this.onToggle = this.onToggle.bind(this);
+    }
+
+    onToggle: () => void      // do a type declaration here
+    onToggle() {
+      // ... 
+    }
+    ...
+  }
+  ```
+
+* use the arrow function syntax:
+
+  ```js
+  class App extends React.Component {
+    constructor() {
+      super();
+    }
+
+    onToggle = () => {
+      // ... 
+    }
+    ...
+  }
+  ```
+
+* annotate `this` with `any` in the constructor:
+
+  ```js
+  constructor() {
+    super();
+    (this: any).onToggle = this.onToggle.bind(this);
+  }
+  ```
+
 ### Functional Component example
 
 ```js
@@ -589,12 +656,97 @@ class MyComponent extends React.Component<{}> {
 
 ### Higher-order Components
 
+**!!! Quite Important, READ THE DOCS**
+
 ### Context
 
 ### Redux
 
+### React Types
+
+React exports some utility types:
+
+* `React.Node`
+
+  can be used as the return type of `render()`
+
+  ```js
+  class MyComponent extends React.Component<{}> {
+    render(): React.Node {
+      // ...
+    }
+  }
+
+  function MyComponent(props: {}): React.Node {
+    // ...
+  }
+  ```
+
+  ```js
+  // definition
+
+  type Node = React.ChildrenArray<void | null | boolean | string | number | React.Element<any>>;
+  ```
+
+* `React.Element<typeof Component>`
+
+  ```js
+  // intrinsic element
+  (<div />: React.Element<'div'>); // OK
+
+  // custom component
+  class Foo extends React.Component<{}> {}
+  function Bar(props: {}) {}
+
+  (<Foo />: React.Element<typeof Foo>); // OK
+  (<Bar />: React.Element<typeof Bar>); // OK
+  ```
+
+  **`typeof Foo` is different from `Foo`, `Foo` is the type of an instance of `Foo`**
+  
+* `React.ChildrenArray<T>`
+
+  can be a single value or an array nested to any level
+
+  ```js
+  import * as React from 'react';
+
+  // A children array can be a single value...
+  const children: React.ChildrenArray<number> = 42;
+  // ...or an arbitrarily nested array.
+  const children: React.ChildrenArray<number> = [[1, 2], 3, [4, 5]];
+
+  // Using the `React.Children` API can flatten the array.
+  const array: Array<number> = React.Children.toArray(children);
+  ```
+
+* `React.ComponentType<Props>`
 
 
+* `React.StatelessFunctionalComponent<Props>`
+* `React.ElementType`
+* `React.Key`
+* `React.Ref<typeof Component>`
+* `React.ElementProps<typeof Component>`
+* `React.ElementConfig<typeof Component>`
+* `React.ElementRef<typeof Component>`
+
+There are two ways to access them:
+
+Import `React` as a namespace, then Flow add the exported named types automatically:
+
+```js
+import * as React from 'react';
+
+// use React.Node
+```
+
+or you need to use named type imports:
+
+```js
+import React from 'react';
+import type { Node } from 'react';
+```
 
 ## Strict Mode
 
