@@ -6,7 +6,7 @@ Vim cheatsheet
     - [Moving around](#moving-around)
         - [Jumping](#jumping)
         - [Scrolling](#scrolling)
-        - [tags](#tags)
+        - [Tags](#tags)
     - [Search and replace](#search-and-replace)
     - [Regular Expressions](#regular-expressions)
         - [enable ERE (extended regular expression)](#enable-ere-extended-regular-expression)
@@ -17,6 +17,7 @@ Vim cheatsheet
         - [Increase / Decrease numbers](#increase--decrease-numbers)
         - [Indent lines](#indent-lines)
         - [Abbreviations](#abbreviations)
+        - [Word completion](#word-completion)
         - [Command macros](#command-macros)
     - [Edit multiple files](#edit-multiple-files)
         - [multiple buffers](#multiple-buffers)
@@ -25,18 +26,18 @@ Vim cheatsheet
         - [tag with windows](#tag-with-windows)
     - [Record and Play](#record-and-play)
     - [Copy and Paste](#copy-and-paste)
+    - [Registers](#registers)
     - [Options](#options)
-    - [misc](#misc)
+    - [Miscs](#miscs)
         - [Avoid the Esc key](#avoid-the-esc-key)
         - [Save a readonly file](#save-a-readonly-file)
+        - [Add a new filetype](#add-a-new-filetype)
+        - [Encoding](#encoding)
+        - [Save session](#save-session)
+        - [Folding](#folding)
+    - [Modes](#modes)
         - [ex mode](#ex-mode)
-    - [visual mode](#visual-mode)
-    - [add a new filetype](#add-a-new-filetype)
-    - [save session](#save-session)
-    - [word completion](#word-completion)
-    - [save macros](#save-macros)
-    - [encoding](#encoding)
-    - [folding](#folding)
+        - [visual mode](#visual-mode)
     - [plugins](#plugins)
         - [Vundle](#vundle)
 
@@ -86,7 +87,7 @@ Source:
     M    # move cursor to screen middle
     L    # move cursor to screen bottom
 
-### tags
+### Tags
 
 in project root dir, create tags file (`.TAGS`) for all php files, you should add the `.TAGS` to svn ignore (add it to `~/.subversion/config`)
 
@@ -234,6 +235,34 @@ indent a block: place cursor on one of the brackets, then `>%` to indent the blo
     :unab <abbr>            # disable <abbr> abbreviation
 
     :ab DB Database         # input 'DB' to get 'Database'
+
+### Word completion
+
+use `Ctrl+X` followed by:
+
+* `Ctrl+F` filename
+* `Ctrl+L` whole line
+* `Ctrl+N/P` word, search current file
+* `Ctrl+K` dictionary, dictionary files is set by `set dictionary`
+	such as `set dictionary=~/.mydict`, put any words you want in the file `~/.mydict`
+* `Ctrl+T` thesaurus file is set by `set thesaurus`
+	such as `set thesaurus=~/.mythesaurus`
+* `Ctrl+I` word, search current file and included files
+
+* `Ctrl+N` next
+* `Ctrl+P` previous
+
+dictionary file example:
+	
+    china
+    zhongguo
+    lenovo
+
+thesaurus file example, in insert mode, when you place the cursor after a word, then `Ctrl+X_Ctrl+T`, a list of synonyms from the thesaurus file would show up:
+
+	fun enjoyable desirable
+    funny hilarious lol lmao
+    retrieve getchar getcwd getdirentries getenv 
 
 ### Command macros
 
@@ -388,7 +417,29 @@ copy to and paste from system clipboard, in X11 system register '\*' means *PRIM
     :% y +  # copy all lines 
 
 
-	:reg	# show all registers
+## Registers
+
+Registers are used for recording, copying:
+
+* in normal mode:
+
+    * `@x` replays register `x`;
+    * `"xp` pastes content from register `x`;
+
+* in insert or command mode:
+
+    * `Ctrl+R` followd by `x` pastes content from register `x`;
+
+* special registers:
+
+    * `%`: relative path of current file, so `"%p` pastes the current file path;
+    * `#`: relative path of the alternative file;
+
+* you can edit register contents in command line:
+
+	`:let @q = 'macro contents'`
+
+* or show all registers by `:reg`
 
 
 ## Options
@@ -400,7 +451,7 @@ copy to and paste from system clipboard, in X11 system register '\*' means *PRIM
     :set list       # display tab and newline characters
     :5,20 l         # temporarily display tab and newline characters of line 5 through 20
 
-## misc
+## Miscs
 
     <C-g>   # show file info
     :=       # show line numbers of file
@@ -430,29 +481,7 @@ you can also save to a new file which you have write permission, then move it to
 
     :w /path/to/another_file
 
-### ex mode
-
-    Q               # go to ex mode
-    :vi             # go back to vi mode
-
-    :sh             # create a shell withoud exiting vi, go back to vi using Ctrl+D
-    :r !sort file       # read in file in sorted order
-    :31,34!sort -n      # sort lines from 31 through 34 as numbers
-
-    !<move><command>    # filtering text selected by <move> using <command>
-    <num>!!<command>         # filtering <num> lines using <command>
-
-
-## visual mode
-
-select text objects in visual mode (find more, :help text-objects):
-
-    <count>aw   # select <count> words(delimited by punctuations)
-    <count>aW   # select <count> words(delimited by white space)
-    as, is      # add sentence, or inner sentence
-    ap, ip      # add paragraph, or inner paragraph
-
-## add a new filetype
+### Add a new filetype
 
 e.g. treat `.md` file as markdown files, to use syntax highlighting, add following lines to `~/.vim/filetype.vim`, ref `:help new-filetype`
 
@@ -467,7 +496,14 @@ e.g. treat `.md` file as markdown files, to use syntax highlighting, add followi
       au! BufRead,BufNewFile *.md       setfiletype markdown
     augroup END
 
-## save session
+### Encoding
+
+use fencview.vim plugin to autodetect encodings, which provides two commands:
+
+    :FencView           -> let you select an encoding for the buffer
+    :FencAutoDetect     -> auto detect and convert encodings automatically
+
+### Save session
 
 save session info in a file
 
@@ -478,51 +514,34 @@ reenter a session:
     $ vi
     :source ~/myVimSession.vim
 
-## word completion
-
-use `Ctrl+X` followed by:
-
-* `Ctrl+F` filename
-* `Ctrl+L` whole line
-* `Ctrl+N/P` word, search current file
-* `Ctrl+K` dictionary, dictionary files is set by `set dictionary`
-	such as `set dictionary=~/.mydict`, put any words you want in the file `~/.mydict`
-* `Ctrl+T` thesaurus file is set by `set thesaurus`
-	such as `set thesaurus=~/.mythesaurus`
-* `Ctrl+I` word, search current file and included files
-
-* `Ctrl+N` next
-* `Ctrl+P` previous
-
-dictionary file example:
-	
-    china
-    zhongguo
-    lenovo
-
-thesaurus file example, in insert mode, when you place the cursor after a word, then `Ctrl+X_Ctrl+T`, a list of synonyms from the thesaurus file would show up:
-
-	fun enjoyable desirable
-    funny hilarious lol lmao
-    retrieve getchar getcwd getdirentries getenv 
-
-## save macros
-
-macros are stored in named registers, shared with copy/paste, e.g. use `qa` to record a macro in register a, you can then use `"ap` to paste the macro's content
-
-	:let @q = 'macro contents'
-
-## encoding
-
-use fencview.vim plugin to autodetect encodings, which provides two commands:
-
-    :FencView           -> let you select an encoding for the buffer
-    :FencAutoDetect     -> auto detect and convert encodings automatically
-
-
-## folding
+### Folding
 
     za      # open or close folds
+
+
+## Modes
+
+### ex mode
+
+    Q               # go to ex mode
+    :vi             # go back to vi mode
+
+    :sh             # create a shell withoud exiting vi, go back to vi using Ctrl+D
+    :r !sort file       # read in file in sorted order
+    :31,34!sort -n      # sort lines from 31 through 34 as numbers
+
+    !<move><command>    # filtering text selected by <move> using <command>
+    <num>!!<command>         # filtering <num> lines using <command>
+
+
+### visual mode
+
+select text objects in visual mode (find more, :help text-objects):
+
+    <count>aw   # select <count> words(delimited by punctuations)
+    <count>aW   # select <count> words(delimited by white space)
+    as, is      # add sentence, or inner sentence
+    ap, ip      # add paragraph, or inner paragraph
 
 
 ## plugins
