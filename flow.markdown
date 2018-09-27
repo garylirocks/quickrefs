@@ -6,6 +6,7 @@ Flow
   - [Setup](#setup)
     - [Config Babel to Strip Flow Annotations](#config-babel-to-strip-flow-annotations)
     - [Prepare Your Files for Flow](#prepare-your-files-for-flow)
+    - [Ignoring](#ignoring)
   - [Type System](#type-system)
     - [Depth Subtyping](#depth-subtyping)
   - [Type Annotations](#type-annotations)
@@ -105,6 +106,10 @@ you can alos check all files with
 ```sh
 flow check --all
 ```
+
+### Ignoring
+
+use `// $FlowFixMe` to ignore flow errors on the following line, this can be configured with `suppress_comment` option in `.flowconfig`
 
 
 ## Type System
