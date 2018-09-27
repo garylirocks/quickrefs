@@ -13,11 +13,11 @@ VS Code
 
 * multi word cursors/selections, allows you to change multi occurence of a word simutaneously: `Ctrl + Shift + L`
 
-* `Command + Alt + C`: copy absolute path of current file;
+* `Command + Alt + C`: copy absolute path of current file
 
-    this can be used to grep content from the current file and paste them to current position:
+    this *only works when editor is not focused*, which is not convenient, I bound it to `gc` in vim mode,  this can be used to grep content from the current file and paste them at current position:
 
-    * `<Command+Alt+C>`
+    * `gc`
     * `:r !grep -o <Pattern> <Command+V>`
 
 
