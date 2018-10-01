@@ -8,9 +8,12 @@ Vim cheatsheet
         - [Scrolling](#scrolling)
         - [Tags](#tags)
     - [Search and replace](#search-and-replace)
+        - [Copy from one location, replacing multiple locations](#copy-from-one-location-replacing-multiple-locations)
+        - [Special characters in a replacement pattern](#special-characters-in-a-replacement-pattern)
     - [Regular Expressions](#regular-expressions)
-        - [enable ERE (extended regular expression)](#enable-ere-extended-regular-expression)
-        - [about new line](#about-new-line)
+        - [Enable ERE (extended regular expression)](#enable-ere-extended-regular-expression)
+        - [About new line](#about-new-line)
+        - [Lookahead/lookbehind modifiers](#lookaheadlookbehind-modifiers)
     - [Editing](#editing)
         - [Change a word/sentence](#change-a-wordsentence)
         - [Change word to uppper/lower case](#change-word-to-uppperlower-case)
@@ -104,65 +107,89 @@ use tags in Vim:
 
 ## Search and replace
 
-	* #				 search for the word under cursor
+```
+:set ic          # set ignore case in search on
+:set is          # set increment search on
+:set his         # set highlight search on
+```
 
-    :%s/old/new/gc   confirm before replace 
-    /whereisyou\c    ignore case in this search
-    :set ic          set ignore case in search on
-    :set is          set increment search on
-    :set his         set highlight search on
-    
-    :g/^$/d          # delete all empty lines
-    :g /^[[:space:]]*$/ d    # delete all blank lines(only contains spaces)
-    :s/.*/\U&/       # change a line to uppercase
-    
-    :g /^/ mo 0      # reverse order of lines in a file (by moving each line to line 1 in order)
-    
-    :g! /integer/ s/$/ NO-INT/   # append a 'NO-INT' to each line which does not contain 'integer', equivalent to ':g! /integer/ s/$/ NO-INT/', ** use `g!` or `v` for reverse matching
+```
+*                # search for the word under cursor
+```
 
-    :/^Part 2/,/^Part 3/g /^Chapter/ .+2w >> begin  # write the second line of each Chapter in Part 2 to a file named 'begin'
+```
+/whereisyou\c                   # ignore case in this search
+
+:%s/old/new/gc                  # confirm before replace 
+
+:g/^$/ d                        # delete all empty lines
+:g/^[[:space:]]*$/ d            # delete all blank lines(only contains spaces)
+:s/.*/\U&/                      # change a line to uppercase
     
-    :s/\<file\>/&s/  # '&' in relace string represents text matched
+:g/^/ mo 0                     # reverse order of lines in a file (by moving each line to line 1 in order)
     
-    :g/hint mode/ s/open/OPEN/gc     # replace only in lines match 'hint mode'
+:g!/integer/ s/$/ NO-INT/      # append a 'NO-INT' to each line which does not contain 'integer'
+
+:/^Part 2/,/^Part 3/g /^Chapter/ .+2w >> begin  # write the second line of each Chapter in Part 2 to a file named 'begin'
+
+:s/\<file\>/&s/  # '&' in relace string represents text matched
+
+:g/hint mode/ s/open/OPEN/gc    # replace only in lines match 'hint mode'
+
+:s                              # the same as `:s//~/`, repeat last substitution
+:&                              # repeat last substitution
+&                               # repeat last substitution
+:%&g                            # repeat last substitution globally
+:~                              # similar to `:&`, the search pattern used is the last search pattern used in any command, not just last substition command, example:
     
-    :s   # the same as `:s//~/`, repeat last substitution
-    :&   # repeat last substitution
-    :%&g     # repeat last substitution globally
-    &        # repeat last substitution
-    :~       # similar to `:&`, the search pattern used is the last search pattern used in any command, not just last substition command, example:
+:s/red/blue/
+/green
+:~              # replace green to blue
+```
+
+### Copy from one location, replacing multiple locations
+
+1. `yiw`                # copy a word
+2. ...                  # move to destination
+3. `ciw<C-r>0<Esc>`     # replace the current one with the yanked one in register 0
+
+define a map for the last command: `map <leader>rr ciw<C-r>0<Esc>`, so you can just use `<leader>rr` to get the work done;
+
+
+### Special characters in a replacement pattern
+
+* `&` means the entire string matched by the search pattern: `:s/tab/(&)/`, add parenthesis to 'tab';
+
+* `~` means your last replacement pattern,
         
-        :s/red/blue/
-        /green
-        :~              # replace green to blue
+```
+:s/tab/(&)/     # add parenthesis to 'tab'
+:s/open/~/      # add parenthesis to 'open'
+```
+
+* `\u`, `\l` causes the following character to upper or lower case
+
+```
+:s/\(you\)\(.*\)\(he\)/\u\3\2\u\1/      # switch 'you' and 'he', and to 'You' and 'He'
+```
+
+* `\U`, `\L`, `\e`, `\E` causes characters up to `\e`, `\E` or end of string to change case
+
+```
+:s/should/\U&/g     # change 'should' to upper case
+```
+
+
+
 
 ## Regular Expressions
 
-most characters lose their special meaning inside brackets, you don't need to escape them. There are threee characters you still need to escape: `]-/`
+* most characters lose their special meaning inside brackets, you don't need to escape them. There are threee characters you still need to escape: `]-/`
 
-in vi, `\<` matches the beginning of a word, `\>` matches the end of a word
+* in vi, `\<` matches the beginning of a word, `\>` matches the end of a word
 
-
-in replacement string:
     
-    `&` means the entire string matched by the search pattern: `:s/tab/(&)/`, add parenthesis to 'tab'
-
-    '~' means your last replacement pattern,
-        
-        :s/tab/(&)/     # add parenthesis to 'tab'
-        :s/open/~/      # add parenthesis to 'open'
-
-    \u, \l  causes the following character to upper or lower case
-
-        :s/\(you\)\(.*\)\(he\)/\u\3\2\u\1/      # switch 'you' and 'he', and to 'You' and 'He'
-
-    \U, \L, \e, \E      causes characters up to \e, \E or end of string to change case
-
-        :s/should/\U&/g     # change 'should' to upper case
-
-
-
-### enable ERE (extended regular expression)
+### Enable ERE (extended regular expression)
 
 by default, vim use basic regular expressions, which means   
 
@@ -172,7 +199,7 @@ by default, vim use basic regular expressions, which means
 
 to match a string like this `AAAA`, you should use `/A\{4\}`, you can **enable extended regex syntax by prepending the pattern with `\v` (very magic)**, so this pattern can be written as `/\vA{4}`
 
-### about new line
+### About new line
 
 when searching:
 
@@ -181,6 +208,23 @@ when searching:
 when replacing:
 
 `\r` is newline, `\n` is a null byte (0x00 = `^@`) 
+
+### Lookahead/lookbehind modifiers
+
+To find `Gary` in `GaryLi`:
+
+* In PCRE, you use `Gary(?=Li)` 
+* PCRE is not supported in Vim, its syntax (ECE mode): 
+
+    `Gary(Li)@?=`
+
+* Reference:
+
+    * `@?=`: positive lookahead;
+    * `@?!`: negative lookahead;
+    * `@?<=`: prositive lookbehind;
+    * `@?<!`: negative lookbehind;
+
 
 ## Editing
 
@@ -434,12 +478,15 @@ Registers are used for recording, copying:
 
     * `%`: relative path of current file, so `"%p` pastes the current file path;
     * `#`: relative path of the alternative file;
+    * `_`: blackhole/null register;
+    * `"`: unamed register, deleting, changing and yanking text copies the text to this register, `p` paste from this register;
+    * `0`: yanking text copies it to this register and the unnamed register `"` as well;
 
 * you can edit register contents in command line:
 
 	`:let @q = 'macro contents'`
 
-* or show all registers by `:reg`
+* or show all registers by `:reg` or `:registers`
 
 
 ## Options
@@ -535,6 +582,13 @@ reenter a session:
 
 
 ### visual mode
+
+```
+viw         # go into visual mode, selecting current word 
+vis         # go into visual mode, selecting current sentence
+vi"         # go into visual mode, selecting current everything inside "
+vi(         # go into visual mode, selecting current everything inside (
+```
 
 select text objects in visual mode (find more, :help text-objects):
 
