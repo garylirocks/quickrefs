@@ -5,7 +5,7 @@ MongoDB
 
 ## Connection / Management
 
-```bash
+```sh
 show dbs            # list all dbs
 use <db>            # switch to a db
 
@@ -23,7 +23,7 @@ db.users.drop()     # drop/delete the users table
 
 the object in `insertOnce` is a document
 
-```bash
+```sh
 db.users.insertOne(
     {
         name: "gary",
@@ -34,7 +34,7 @@ db.users.insertOne(
 
 ### Read
 
-```
+```sh
 > db.users.find()
 { "_id" : ObjectId("59f9018840bf58d73f217a51"), "name" : "gary", "age" : 20 }
 
@@ -48,7 +48,7 @@ db.users.insertOne(
 
 ### Update
 
-```
+```sh
 > db.users.updateOne(
 ... { name: {$eq: "gary"} },
 ... { $set: {age: 30} }
@@ -61,7 +61,7 @@ db.users.insertOne(
 
 ### Delete
 
-```
+```sh
 > db.users.deleteOne(
 ... {age: {$gt: 20}}
 ... )
