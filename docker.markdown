@@ -158,8 +158,14 @@ A container is a running instance of an image, when you start an image, you have
     # execute a command in a running container
     docker exec node-box "node" "myapp.js"
 
+    # access the command line of a running container
+    docker exec -it [CONTAINER] bash
+
     # remove a container
     docker rm [CONTAINER_ID]
+
+    # force remove a running container
+    docker rm -f [CONTAINER_ID]
     ```
 
 
@@ -349,7 +355,7 @@ docker-compose build
 docker-compose up -d
 
 # make sure no cached images are used and all intermediate images are removed
-#  use this when you updated package.json 
+#  use this when you updated package.json, see '--renew-anon-volumes' below as well
 docker-compose build --force-rm --no-cache
 
 ## specicy a project name 
@@ -381,7 +387,7 @@ see details here: [Lessons from Building a Node App in Docker](http://jdlm.info/
 
 see here: ["docker-compose up" not rebuilding container that has an underlying updated image](https://github.com/docker/compose/issues/4337)
 
-* after you update `package.json` on your local, and run `docker-compose up --build`, the underlying images do get updated, but Docker Compose is using an old anonymous volume for `/app/node_modules` from the old container, so the new package you installed is absent from the new container;
+* after you update `package.json` on your local, and run `docker-compose up --build`, the underlying images do get updated, because Docker Compose is using an old anonymous volume for `/app/node_modules` from the old container, so the new package you installed is absent from the new container;
 * add a `--renew-anon-volumes` flag to `docker-compose up --build` will solve this issue;
 
 ### Name collision issue
