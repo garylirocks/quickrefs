@@ -1,6 +1,39 @@
 Bash Cheatsheet
 ===============
 
+- [apple banana cherry](#apple-banana-cherry)
+- [apple banana cherry](#apple-banana-cherry)
+- [3](#3)
+- [apple](#apple)
+- [banana cherry](#banana-cherry)
+- [cherry](#cherry)
+- [apple banana](#apple-banana)
+    - [Looping](#looping)
+    - [`case` statements](#case-statements)
+    - [Functions](#functions)
+    - [Variable scope](#variable-scope)
+    - [the source (.) command](#the-source--command)
+    - [integer or character sequence](#integer-or-character-sequence)
+    - [get directory of a script you're running](#get-directory-of-a-script-youre-running)
+    - [History](#history)
+        - [Search history using Ctrl+R](#search-history-using-ctrlr)
+        - [Repeat previous command](#repeat-previous-command)
+        - [Execute a specific command](#execute-a-specific-command)
+    - [Bash Invocation](#bash-invocation)
+        - [an prompt cannot be changed issue](#an-prompt-cannot-be-changed-issue)
+    - [Multiple commands on a single line](#multiple-commands-on-a-single-line)
+    - [Here documents](#here-documents)
+    - [read user input](#read-user-input)
+    - [expr](#expr)
+    - [printf](#printf)
+    - [set](#set)
+    - [shift](#shift)
+    - [Generate random numbers](#generate-random-numbers)
+    - [Debugging scripts](#debugging-scripts)
+    - [read lines of a file](#read-lines-of-a-file)
+    - [vi editing mode](#vi-editing-mode)
+
+
 ## Preface
 This is a bash cheatsheat for quick reference. Code get from [Bash by example][bash by example] on IBM DeveloperWorks by Daniel Robbins.
 
@@ -163,6 +196,7 @@ bash comparison operators:
     -z          Zero-length string                  [ -z "$myvar" ]
     -n          Non-zero-length string              [ -n "$myvar" ]
     =           String equality                     [ "abc" = "$myvar" ]
+    ==          Bash extension, same as '='
     !=          String inequality                   [ "abc" != "$myvar" ]
     -eq         Numeric equality                    [ 3 -eq "$myinteger" ]
     -ne         Numeric inequality                  [ 3 -ne "$myinteger" ]
@@ -215,6 +249,62 @@ so, **Always enclose string variables and environment variable in double quotes!
         echo "yes"
     fi
 
+## `[` vs `[[`
+
+* `[` is a shell builtin command, similar to `test`, but requires a closing `]`, builtin commands executes in the current process;
+* There is a `/bin/[`, which executes in a subshell;
+
+    ```bash
+    type [
+    # [ is a shell builtin
+
+    type -p [
+    # [ is /bin/[
+
+    type '[['
+    # [[ is a reserved word
+    ```
+
+* `[[` is a Bash extension to `[`, it has some improvements:
+
+    * `<`
+
+        * `[[ a < b ]]`     # works
+        * `[ a \< b]`       # `\` is required, do a redirection otherwise
+
+    * `&&` and `||`
+
+        * `[[ a = a && b = b ]]`      # works
+        * `[ a = a && b = b ]`        # syntax error
+        * `[ a = a ] && [ b = b ]`        # POSIX recommendation
+
+    * `(`
+
+        * `[[ (a = a || a = b) && a = b ]]`     # false
+        * `[ ( a = a ) ]`                       # syntax error, `()` is interpreted as a subshell
+        * `[ \( a = a -o a = b \) -a a = b ]`   # equivalent, but `()` is deprecated by POSIX
+        * `([ a = a ] || [ a = b ]) && [ a = b ]`   # POSIX recommendation
+
+    * word splitting
+
+        * `x='a b'; [[ $x = 'a b' ]]`   # true, quotes not needed
+        * `x='a b'; [ $x = 'a b' ]`     # syntax error, expands to `[ a b = 'a b' ]`
+        * `x='a b'; [ "$x" = 'a b' ]`   # equivalent
+
+    * `=` 
+
+        * `[[ ab = a? ]]`   # true, because it does pattern matching ( `* ? [` are magic). Does not glob expand to files in current directory. (**pattern matching, not regular expression**)
+        * `[ ab = a? ]`     # `a?` glob expands to files in current directory. So may be true or false depending on the files in the current directory.
+        * `[ ab = a\? ]`    # false, not glob expansion
+        * `=` and `==` are the same in both `[` and `[[,` but `==` is a Bash extension.
+
+    * `=~`
+
+        * `[[ ab =~ ab? ]]`         # true, POSIX extended regular expression match, `?` does not glob expand
+        * `[ a =~ a ]`              # syntax error
+        * `printf 'ab' | grep -Eq 'ab?'`    # POSIX equivalent
+
+
 ## Arithmetic    
 
 enclose arithmetic expressions(**integer only**) in `$((` and `))`
@@ -231,6 +321,34 @@ enclose arithmetic expressions(**integer only**) in `$((` and `))`
     $ echo $(( 1.3 + 4 ))
     bash: 1.3 + 4 : syntax error: invalid arithmetic operator (error token is ".3 + 4 ")
 
+## Array
+
+* Available in Bash, Zsh, not the original Bourne shell;
+
+```bash
+arr=(apple banana cherry)
+
+echo ${arr[@]}                      # all elements
+# apple banana cherry
+
+echo ${arr[*]}                      # same as above, get all elements
+# apple banana cherry
+
+echo ${#arr[@]}                     # length
+# 3
+
+echo ${#arr[1]}                     # first element, index starts at 1
+# apple 
+
+echo ${arr[@]:1}                    # leave the first
+# banana cherry
+
+echo ${arr[@]: -1}                  # get the last, the space is needed
+# cherry
+
+echo ${arr[@]:0:2}                  # start from the first, get two
+# apple banana
+```
 
 ## Looping
 
