@@ -1,7 +1,58 @@
 MongoDB
 ========
 
+- [MongoDB](#mongodb)
+    - [Concepts](#concepts)
+        - [Field](#field)
+    - [Architecture](#architecture)
+    - [Connection / Management](#connection--management)
+    - [CRUD](#crud)
+        - [Create](#create)
+        - [Read](#read)
+        - [Update](#update)
+        - [Delete](#delete)
+
+
+## Concepts
+
 [SQL to MongoDB Mapping Chart](https://docs.mongodb.com/manual/reference/sql-comparison/)
+
+SQL to Mongo terminology mapping
+
+```
+SQL                 <->         Mongo
+
+database                        database
+table                           collection
+row                             document
+column                          field
+index                           index
+table joins                     $lookup, embedded documents
+primary key                     primary key (automatically set to the _id field)
+aggregation (e.g. group by)     aggregaton pipeline
+transactions                    transactions
+```
+
+### Field
+
+A field can be 
+
+* Scalar value
+    * `string` 
+    * `int32`
+    * `double`
+    * `decimal`: for finicial calculations
+    * `date`
+    * `coordinates`
+* Array (its element can be scalar or object);
+* Document (object);
+
+
+## Architecture
+
+![MongoDB Sharding and Replica Set](./images/mongo-sharding-replicaset.png)
+
+
 
 ## Connection / Management
 
