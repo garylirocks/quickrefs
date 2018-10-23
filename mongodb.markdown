@@ -1,17 +1,19 @@
 MongoDB
 ========
 
-- [MongoDB](#mongodb)
-    - [Concepts](#concepts)
-        - [Field](#field)
-    - [Architecture](#architecture)
-    - [Connection / Management](#connection--management)
-    - [Data Import / Export](#data-import--export)
-    - [CRUD](#crud)
-        - [Create](#create)
-        - [Read](#read)
-        - [Update](#update)
-        - [Delete](#delete)
+- [Concepts](#concepts)
+    - [`BSON`](#bson)
+    - [Field](#field)
+- [Architecture](#architecture)
+- [Connection / Management](#connection--management)
+- [Data Import / Export](#data-import--export)
+- [CRUD](#crud)
+    - [Create](#create)
+    - [Read](#read)
+    - [Update](#update)
+        - [Upsert](#upsert)
+        - [Replace](#replace)
+    - [Delete](#delete)
 
 
 ## Concepts
@@ -33,6 +35,13 @@ primary key                     primary key (automatically set to the _id field)
 aggregation (e.g. group by)     aggregaton pipeline
 transactions                    transactions
 ```
+
+### `BSON`
+
+* `BSON` means binary JSON, is a binary-encoded serialization of JSON-like documents; 
+* MongoDB data is stored and transfered in this format; 
+* It supports more data types than JSON, such as a Date type, a BinData type, an ObjectId type (for the `_id` field);
+
 
 ### Field
 
@@ -84,7 +93,14 @@ show tables         # show tables in current db
 db.users.drop()     # drop/delete the users table
 
 db.movies.find().pretty()   # add `pretty()` for pretty output, this output 20 documents by default
-it                          # output next 20 documents
+it                          # iterate over the next 20 documents
+```
+
+* `find()` actually returns an iterator, you can use `next()`, `hasNext()` on it
+
+```sh
+var r = db.movieDetails.find({});
+r.hasNext()
 ```
 
 
@@ -147,7 +163,7 @@ db.users.find()
 /* specify query and fields */
 db.users.find( 
     { age: {$gt: 18} },     # query criteria
-    {name: 1}               # projection, only get 'name' field
+    { name: 1 }               # projection, only get 'name' field
 )
 // { "_id" : ObjectId("59f9018840bf58d73f217a51"), "name" : "gary" }
 
@@ -156,33 +172,87 @@ db.data.find({
     'wind.type': 'N',
     'wind.angle': 290,
 }).count();
+
+/* search an array field */
+db.data.find({ actors: 'Julia Roberts' });  // any position in an array
+
+{ 'actors.0': 'Julia Roberts'}      // query against the first element
 ```
 
 * Multiple queries are joined with `and` logic;
 * Use `count()` to get results count;
+* The second parameter is a projection field, which controls which fields are returned, use `1` to include a field, `0` to exclude it (`_id` is included by default, you can exclude it explicitly);
 
 
 ### Update
 
 ```js
-> db.users.updateOne(
-... { name: {$eq: "gary"} },
-... { $set: {age: 30} }
-... )
-{ "acknowledged" : true, "matchedCount" : 1, "modifiedCount" : 1 }
+/* update the first matching document */
+db.users.updateOne(
+    { name: {$eq: "gary"} },
+    { $set: {age: 30} }
+    )
+// { "acknowledged" : true, "matchedCount" : 1, "modifiedCount" : 1 }
 
-> db.users.find()
-{ "_id" : ObjectId("59f9018840bf58d73f217a51"), "name" : "gary", "age" : 30 }
+db.users.find()
+// { "_id" : ObjectId("59f9018840bf58d73f217a51"), "name" : "gary", "age" : 30 }
+
+/* update all matching documents: remove the rated field if it is null */
+db.movies.updateMany(
+    { rated: null },
+    { $unset: { rated: "" }}
+)
 ```
+
+* Update operators: `$currentDate`, `$inc`, `$min`, `$max`, `$mul`, `$rename`, `$set`, `$setOnInsert`, `$unset`; 
+* Array operators: `$`, `$[]`, `$[<identifier>]`, `$addtoSet`, `$pop`, `$pull`, `$push`, `$pushAll`;
+* Array modifiers: `$each`, `$position`, `$slice`, `$sort`;
+
+See here https://docs.mongodb.com/manual/reference/operator/update/
+
+#### Upsert
+
+```js
+/* insert if no match found */
+db.movies.updateOne({ 
+    name: 'Notting Hill' 
+}, { 
+    $set: { 
+        name: 'Notting Hill',
+        rating: 5,
+    },
+}, { 
+    upsert: true,
+});
+```
+
+#### Replace
+
+```js
+/* replace the whole document, it lets you work on multiple fields, and then replace the whole */
+theMovie = db.movies.find({ name: 'Notting Hill' });
+theMovie.rating = 10;
+theMovie.cast = [ 'Julia Roberts' ];
+
+db.movies.replaceOne({ 
+    name: 'Notting Hill' 
+}, 
+    theMovie,
+);
+```
+  
 
 ### Delete
 
 ```js
-> db.users.deleteOne(
-... {age: {$gt: 20}}
-... )
-{ "acknowledged" : true, "deletedCount" : 1 }
+/* delete first one */
+db.users.deleteOne({
+    age: {$gt: 20}
+});
+// { "acknowledged" : true, "deletedCount" : 1 }
 
-> db.users.find()
-> 
+/* delete all matching documents */
+db.users.deleteMany({
+    age: {$gt: 20}
+});
 ```
