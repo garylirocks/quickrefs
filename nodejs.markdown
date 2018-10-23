@@ -1,24 +1,24 @@
 NodeJS notes
 ============
 
-- [NodeJS notes](#nodejs-notes)
-    - [Multiple versions of Node.js](#multiple-versions-of-nodejs)
-    - [Blocking vs non-blocking](#blocking-vs-non-blocking)
-    - [NPM](#npm)
-        - [`package.json`](#packagejson)
-        - [Yarn](#yarn)
-        - [Avoid installing packages globally](#avoid-installing-packages-globally)
-        - [Publish package to NPM](#publish-package-to-npm)
-        - [Symlink a package folder](#symlink-a-package-folder)
-    - [Module System - CommonJs vs. ES6 Modules](#module-system---commonjs-vs-es6-modules)
-        - [Current status in Node 9/10](#current-status-in-node-910)
-    - [Debugging](#debugging)
-        - [Remote debugging](#remote-debugging)
-    - [Streams and pipes](#streams-and-pipes)
-        - [read](#read)
-        - [write](#write)
-        - [pipe](#pipe)
-        - [events](#events)
+- [Multiple versions of Node.js](#multiple-versions-of-nodejs)
+- [Blocking vs non-blocking](#blocking-vs-non-blocking)
+- [NPM](#npm)
+    - [`package.json`](#packagejson)
+    - [Yarn](#yarn)
+    - [Avoid installing packages globally](#avoid-installing-packages-globally)
+    - [Publish package to NPM](#publish-package-to-npm)
+    - [Symlink a package folder](#symlink-a-package-folder)
+- [Module System - CommonJs vs. ES6 Modules](#module-system---commonjs-vs-es6-modules)
+    - [Current status in Node 9/10](#current-status-in-node-910)
+- [Debugging](#debugging)
+    - [Remote debugging](#remote-debugging)
+- [Barebone HTTP server](#barebone-http-server)
+- [Streams and pipes](#streams-and-pipes)
+    - [read](#read)
+    - [write](#write)
+    - [pipe](#pipe)
+    - [events](#events)
 
 ## Multiple versions of Node.js 
 
@@ -199,6 +199,22 @@ ssh -L 9221:localhost:9229 user@remote.example.com
 ```
 
 then connect to `9221` on local using any debugging client.
+
+
+## Barebone HTTP server
+
+```js
+var http = require('http');
+
+var server = http.createServer(function(req, resp) {
+    resp.writeHead(200, {"Content-Type": 'text/plain'});
+    resp.end('Hello World');
+});
+
+server.listen(8000);
+
+console.log('Server running at http://localhost:8000');
+```
 
 
 ## Streams and pipes
