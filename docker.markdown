@@ -1,27 +1,31 @@
 Docker
 ============
-- [Docker](#docker)
-    - [General](#general)
-        - [Overview](#overview)
-        - [commands](#commands)
-    - [Images vs. Containers](#images-vs-containers)
-        - [Images](#images)
-        - [Containers](#containers)
-    - [Dockerfile](#dockerfile)
-        - [Example](#example)
-        - [`RUN`](#run)
-        - [`CMD`](#cmd)
-        - [`ENTRYPOINT`](#entrypoint)
-        - [`ENV`](#env)
-        - [`ADD` vs. `COPY`](#add-vs-copy)
-        - [`.dockerignore`](#dockerignore)
-    - [Volumes](#volumes)
-    - [Network](#network)
-    - [Docker Compose](#docker-compose)
-        - [`docker-compose.yml`](#docker-composeyml)
-        - [Name collision issue](#name-collision-issue)
-    - [Tips / Best Practices](#tips--best-practices)
 
+- [General](#general)
+    - [Overview](#overview)
+    - [commands](#commands)
+- [Images vs. Containers](#images-vs-containers)
+    - [Images](#images)
+    - [Containers](#containers)
+- [Dockerfile](#dockerfile)
+    - [Example](#example)
+    - [`RUN`](#run)
+    - [`CMD`](#cmd)
+    - [`ENTRYPOINT`](#entrypoint)
+    - [`ENV`](#env)
+    - [`ADD` vs. `COPY`](#add-vs-copy)
+    - [`.dockerignore`](#dockerignore)
+- [Volumes](#volumes)
+- [Network](#network)
+- [Docker Compose](#docker-compose)
+    - [`docker-compose.yml`](#docker-composeyml)
+    - [Networking](#networking)
+        - [Custom networks](#custom-networks)
+    - [Name collision issue](#name-collision-issue)
+- [Docker machine](#docker-machine)
+- [Swarm mode](#swarm-mode)
+    - [Example](#example)
+- [Tips / Best Practices](#tips--best-practices)
 
 docker basics:
 
@@ -224,7 +228,6 @@ the cache for `RUN` instructions isn't invalidated automatically during the next
 
 * `CMD` sets the command to be executed when running the image, it is not executed at build time;
 * arguments to `docker run` will overide `CMD`;
-* 
 
 has three forms:
 
@@ -390,6 +393,74 @@ see here: ["docker-compose up" not rebuilding container that has an underlying u
 * after you update `package.json` on your local, and run `docker-compose up --build`, the underlying images do get updated, because Docker Compose is using an old anonymous volume for `/app/node_modules` from the old container, so the new package you installed is absent from the new container;
 * add a `--renew-anon-volumes` flag to `docker-compose up --build` will solve this issue;
 
+### Networking
+
+By default:
+
+* Compose sets up a single network, every service is reachable by other services, using the service name as the hostname;
+
+* In this example
+
+    ```yaml
+    # /path/to/myapp/docker-compose.yml
+
+    version: "3"
+    services:
+    web:
+        build: .
+        ports:
+            - "8000:8000"
+        links:
+            - "db:database"
+    db:
+        image: mysql 
+        ports:
+            - "8001:3061"
+    ```
+
+    * The network will be called `myapp_default`;
+    * `web` can connect to the `db` thru `db:3061`;
+    * Host can access the `db` thru `<docker_ip>:8001`;
+    * The `links` directive defines an alias, so `db` can be accessed by `database` as well, it is not required;
+
+#### Custom networks
+
+```yaml
+version: "3"
+services:
+
+  proxy:
+    build: ./proxy
+    networks:
+      - frontend
+  app:
+    build: ./app
+    networks:
+      - frontend
+      - backend
+  db:
+    image: postgres
+    networks:
+      - backend
+
+networks:
+  frontend:
+    # Use a custom driver
+    driver: custom-driver-1
+  backend:
+    # Use a custom driver which takes special options
+    driver: custom-driver-2
+    driver_opts:
+      foo: "1"
+      bar: "2"
+```
+
+* Define custom networks by top-level `networks` directive;
+* Each service can specify which networks to join;
+* In the example above, `proxy` and `db` are isolated to each other, `app` can connect to both;
+
+See https://docs.docker.com/compose/networking/ for configuring the default network and connecting containers to external networks;
+
 ### Name collision issue
 
 for the following example:
@@ -418,6 +489,112 @@ docker-compose up --project-name <anotherName>
 ```
 
 see [Proposal: make project-name persistent](https://github.com/docker/compose/issues/745)
+
+
+## Docker machine
+
+Docker Machine is a tool that lets you install Docker Engine on virtual/remote hosts, and manage the hosts with `docker-machine` commands.
+
+![Docker machine](images/docker-machine.png)
+
+```sh
+# create a machine named 'default', using virtualbox as the driver
+docker-machine create --driver virtualbox default
+
+# list docker machines
+docker-machine ls
+# NAME      ACTIVE   DRIVER       STATE     URL                         SWARM   DOCKER        ERRORS
+# default   -        virtualbox   Running   tcp://192.168.99.100:2376           v18.06.1-ce
+
+# connect to the new machine, this set some 'DOCKER_' env variables, which make the 'docker' command talk to the 'default' machine
+eval "$(docker-machine env default)"
+
+# get ip address
+docker-machine ip
+
+# stop and start machines
+docker-machine stop <machine-name>
+docker-machine start <machine-name>
+
+# unset 'DOCKER_' envs
+eval $(docker-machine env -u)
+```
+
+
+## Swarm mode
+
+![Swarm-architecture](images/docker-swarm-architecture.png)
+
+* A swarm consists of multiple Docker hosts which run in **swarm mode** and act as managers and workers;
+* Advantage over standalone containers: You can modify a service's configuration without manually restart the service;
+* You can run one or more nodes on a single physical computer, in production, nodes are typically distributed over multiple machines;
+* A Docker host can be a manager, a worker or both;
+* You can run both swarm services and standalone containers on the same Docker host;
+
+### Example
+
+```yaml
+version: "3"
+services:
+  web:
+    image: garylirocks/get-started:part2
+    deploy:
+      replicas: 3               # run 3 instance
+      resources:
+        limits:
+          cpus: "0.1"
+          memory: 50M
+      restart_policy:
+        condition: on-failure
+    ports:
+      - "4000:80"
+    networks:
+      - webnet
+networks:
+  webnet:                       # this is a load-balanced overlay network
+```
+
+* **service**:  A service only runs one image, but it specifies the way that image runs -- what ports it should use, how many replicas of the container should run, etc;
+* **task**: A single container running in a service is called a task, a service contains multiple tasks;
+
+```sh
+# init a swarm
+docker swarm init
+
+# start the service, the last argument is the app/stack name
+docker stack deploy -c docker-compose.yml getstartedlab
+# creates a network named 'getstartedlab_webnet'
+# creates a service named 'getstartedlab_web'
+
+# list stacks/apps
+docker stack ls
+
+# list all services
+docker service ls
+
+# list tasks for this service
+docker service ps etstartedlab_web
+# ID                  NAME                 IMAGE                           NODE                    DESIRED STATE       CURRENT STATE           ERROR               PORTS
+# o4u5rpngt6lq        etstartedlab_web.1   garylirocks/get-started:part2   linuxkit-025000000001   Running             Running 4 minutes ago
+# oqaep03q6gkf        etstartedlab_web.2   garylirocks/get-started:part2   linuxkit-025000000001   Running             Running 4 minutes ago
+# tebeg1r7mb9o        etstartedlab_web.3   garylirocks/get-started:part2   linuxkit-025000000001   Running             Running 4 minutes ago
+
+# show containers
+docker ps   # container ids and names are different from task ids and names
+# CONTAINER ID        IMAGE                           COMMAND                  CREATED             STATUS              PORTS                                     NAMES
+# fb1ae6433344        garylirocks/get-started:part2   "python app.py"          8 minutes ago       Up 8 minutes        80/tcp                                    etstartedlab_web.1.o4u5rpngt6lqmv44io3k269tn
+# 8a1b8a50ea52        garylirocks/get-started:part2   "python app.py"          8 minutes ago       Up 8 minutes        80/tcp                                    etstartedlab_web.2.oqaep03q6gkfy3rv09vvqk2ul
+# e2523c31d341        garylirocks/get-started:part2   "python app.py"          8 minutes ago       Up 8 minutes        80/tcp                                    etstartedlab_web.3.tebeg1r7mb9odm2lf9mlx217e
+
+# scale the app: update the replicas value in the compose file, then
+docker stack deploy -c docker-compose.yml getstartedlab
+
+# take down the app
+docker stack rm getstartedlab
+
+# take down the swarm
+docker swarm leave --force
+```
 
 
 ## Tips / Best Practices
