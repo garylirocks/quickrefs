@@ -3,7 +3,7 @@ Docker
 
 - [General](#general)
     - [Overview](#overview)
-    - [commands](#commands)
+    - [Commands](#commands)
 - [Images vs. Containers](#images-vs-containers)
     - [Images](#images)
     - [Containers](#containers)
@@ -15,16 +15,29 @@ Docker
     - [`ENV`](#env)
     - [`ADD` vs. `COPY`](#add-vs-copy)
     - [`.dockerignore`](#dockerignore)
-- [Volumes](#volumes)
+- [Data Storage](#data-storage)
+    - [Volumes](#volumes)
+        - [Data Sharing](#data-sharing)
+        - [Backup, restore, or migrate data volumes](#backup-restore-or-migrate-data-volumes)
+        - [Remove volumes](#remove-volumes)
+        - [`-v`, `--mount` and volume driver](#v---mount-and-volume-driver)
+    - [Bind mounts](#bind-mounts)
+        - [Commands](#commands)
+    - [`tmpfs`](#tmpfs)
+    - [Usage](#usage)
 - [Network](#network)
 - [Docker Compose](#docker-compose)
     - [`docker-compose.yml`](#docker-composeyml)
+        - [`volumes`](#volumes)
+        - [Variable substitution](#variable-substitution)
     - [Networking](#networking)
         - [Custom networks](#custom-networks)
     - [Name collision issue](#name-collision-issue)
 - [Docker machine](#docker-machine)
 - [Swarm mode](#swarm-mode)
-    - [Example](#example)
+    - [Swarm on a single node](#swarm-on-a-single-node)
+    - [Multi-nodes swarm example](#multi-nodes-swarm-example)
+    - [Multi-service stacks](#multi-service-stacks)
 - [Tips / Best Practices](#tips--best-practices)
 
 docker basics:
@@ -46,9 +59,9 @@ a more detailed view of the workflow
 ![Docker Workflow](./images/docker-workflow.png)
 
 
-### commands
+### Commands
 
-```bash
+```sh
 # show installation info
 docker info
 
@@ -57,6 +70,17 @@ docker search <query>
 
 # monitoring (show container events, such as: start, network connect, stop, die, attach)
 docker events
+
+# it provides various sub-commands to help manage different entities
+
+# image, container
+docker [image|container|volume|network] <COMMAND>
+
+# service, stack, swarm
+docker [service|stack|swarm|node|config] <COMMAND>
+
+# other
+docker [plugin|secret|system|trust] <COMMAND>
 ```
 
 ## Images vs. Containers
@@ -313,13 +337,135 @@ config what files and directories should be ignored when sending to the docker d
 **/.cache
 ```
 
-## Volumes
+## Data Storage
 
-mount a host directory to a container
+By default, all files created inside a container are stored on a writable container layer:
 
-```bash
+* Those data doesn't persist, it's hard to move it out of the container or to another host;
+* A *storage drive* is required to manage the filesystem, **it's slower comparing to writing to the host filesystem using *data volumes***;
+* Docker can store files in the host, using *volumes*, *bind mounts* or *tmpfs (Linux only)*;
+
+![Storage types](images/docker-storage.png)
+
+### Volumes
+
+* Created and managed by Docker;
+* You can create/manage them explicitly using `docker volume` commands;
+* Docker create a volume during container or service creation if the volume does not exist yet;
+* Stored in a Docker managed area on the host filesystem (`/var/lib/docker/volumes` on Linux), non-Docker processes should not modify it;
+* A volume **can be mounted into multiple containers simultaneously**, it doesn't get removed automatically even no running container is using it (**So volumes can be mounted into a container, but they are not depended on any conatiner**);
+* Volumes can be *named* or *anonymous*, an anonymous volume get a randomly generated unique name, otherwise they behave in the same ways;
+* They support *volume drivers*, which **allow you to store data on remote hosts or cloud providers**;
+* *Best way* to persist data in Docker;
+
+#### Data Sharing
+
+![data sharing](images/docker-volumes-shared-storage.svg)
+
+If you want to configure multiple replicas of the same service to access the same files, there are two ways:
+
+* Add logic to your application to store data in cloud (e.g. AWS S3);
+* Create volumes with a driver that supports writing files to an external storage system like NFS or AWS S3 (in this way, you can abstract the storage system away from the application logic);
+
+#### Backup, restore, or migrate data volumes
+
+You can use `--volumes-from` to create a container that mounts volumes from another container;
+
+* Backup `dbstore:/dbdata` to current directory
+
+    ```sh
+    docker run --rm --volumes-from dbstore -v $(pwd):/backup ubuntu tar cvf /backup/backup.tar /dbdata
+    ```
+
+* Restore `backup.tar` in current directory to a new container `dbstore2`
+
+```sh
+# create dbstore2 and a new volume with it
+docker run -v /dbdata --name dbstore2 ubuntu /bin/bash
+
+# restore the backup file to the volume
+docker run --rm --volumes-from dbstore2 -v $(pwd):/backup ubuntu bash -c "cd /dbdata && tar xvf /backup/backup.tar --strip 1"
+```
+
+#### Remove volumes
+
+```sh
+# use `--rm` to let Docker remove the anonymous volume /foo when the container is removed
+# the named `awesome` volume is NOT removed
+docker run --rm -v /foo -v awesome:/bar busybox top
+
+# remove all unused volumes
+docker volume prune
+```
+
+
+#### `-v`, `--mount` and volume driver
+
+```sh
+# start a container using `-v`
+docker run -d \
+  --name devtest \
+  -v myvol2:/app \
+  nginx:latest
+
+# start a service using `--mount`
+docker service create -d \
+  --replicas=4 \
+  --name devtest-service \
+  --mount source=myvol2,target=/app \
+  nginx:latest
+
+# install a volume driver plugin
+docker plugin install --grant-all-permissions vieux/sshfs
+
+# use a volume driver
+docker run -d \
+  --name sshfs-container \
+  --volume-driver vieux/sshfs \
+  --mount src=sshvolume,target=/app,volume-opt=sshcmd=test@node2:/home/test,volume-opt=password=testpassword \
+  nginx:latest
+```
+
+### Bind mounts
+
+* Available since early days of Docker;
+* A file or directory on the *host machine* is mounted into a container;
+* It **does not** need to exist on the host already, Docker will create it if not exist;
+* Can be anywhere on the host system;
+* May be important system files or directories;
+* Both non-Docker processes on the host or the Docker container can modify them at any time, so it have security implications;
+* Can't be managed by Docker CLI directly;
+* **Consider using named volumes instead**;
+
+#### Commands
+
+```sh
 docker run -it -v /home/gary/code/super-app:/app ubuntu
 ```
+
+### `tmpfs`
+
+* Not persisted on disk;
+* Can be used by a container to store non-persistent state or sensitive info;
+    * Swarm services use `tmpfs` to mount secrets into a service's containers;
+
+### Usage
+
+* Use `-v` or `--volume` to mount volumes or bind mounts;
+* In Dokcer 17.06+, `--mount` is recommended, syntax is more verbose, and it's required for creating services;
+* Volumes are good for:
+    * Sharing data among multiple running containers;
+    * When the Docker host is not guaranteed to have a given directory or file structure;
+    * Store a container's data on a remote host or a cloud provider;
+    * You need to backup, restore or migrate data from one Docker host to another, you can stop the containers using the volume, then back up the volume's directory (such as `/var/lib/docker/volumes/<volume-name>`);
+
+* Bind mounts are good for:
+    * Sharing config files from the host machine to containers, by default Docker mount `/etc/resolv.conf` from host to container for DNS resolution;
+    * Sharing source code or build artifacts between a development env on the host and a container (**Your production Dockerfile should copy the production-ready artifacts into the image directly, instead of relying on a bind mount**); 
+
+
+* If you mount an **empty volume** into a directory in the container in which files or directories exist, these files or directories are copied into the volume, if you start a container and specify a volume which does not already exist, an empty volume is created;
+* If you mount a **bind mount or non-empty volume** into a directory in which soe file or directories exist, these files or directories are obscured by the mount;
 
 ## Network
 
@@ -329,7 +475,7 @@ docker run -it -v /home/gary/code/super-app:/app ubuntu
 # list networks
 docker network ls
 
-# create a subnet (looks like this will create a virtual network adapter on a Linux host, but not a M)
+# create a subnet (looks like this will create a virtual network adapter on a Linux host, but not a Mac)
 docker network create --subnet 10.1.0.0/16 --gateway 10.1.0.1 --ip-range=10.1.4.0/24 --driver=bridge --label=host4network bridge04
 
 # use a network, and specify a static IP for it
@@ -367,6 +513,19 @@ docker-compose up -p myproject
 
 ### `docker-compose.yml`
 
+* `docker-compose` use this file to create containers;
+* Options specified in the `Dockerfile`, such as `CMD`, `EXPOSE`, `VOLUME`, `ENV` are respected;
+* `docker stack deploy` use this file to deploy stacks to a swarm as well, the old way is to use `docker service create`, adding all options on the command line;
+* Network and volume definitions are analogous to `docker network create` and `docker volume create`;
+* Options ignored by `docker stack`:
+    * `build`: only pre-build images can be used;
+
+* Options ignored by `docker-compose`:
+    * `deploy`
+
+
+#### `volumes`
+
 ```yaml
 version: "2"
 
@@ -382,7 +541,10 @@ services:
         #...
 ```
 
-in the above example, the mounted volumes will override any existing files in the image, current directory `.` is mounted to `/app`, and will override existing `/app` in the image, but the image's `/app/node_modules` is preserved, not mounted from the host machine
+in the above example, 
+
+* the mounted volumes will override any existing files in the image, current directory `.` is mounted to `/app`, and will override existing `/app` in the image; 
+* but the image's `/app/node_modules` is preserved, not mounted from the host machine;
 
 see details here: [Lessons from Building a Node App in Docker](http://jdlm.info/articles/2016/03/06/lessons-building-node-app-docker.html)
 
@@ -392,6 +554,18 @@ see here: ["docker-compose up" not rebuilding container that has an underlying u
 
 * after you update `package.json` on your local, and run `docker-compose up --build`, the underlying images do get updated, because Docker Compose is using an old anonymous volume for `/app/node_modules` from the old container, so the new package you installed is absent from the new container;
 * add a `--renew-anon-volumes` flag to `docker-compose up --build` will solve this issue;
+
+
+#### Variable substitution
+
+```yaml
+db:
+  image: "postgres:${POSTGRES_VERSION}"
+```
+
+`${POSTGRES_VERSION}` get its value from shell environment
+
+
 
 ### Networking
 
@@ -506,8 +680,11 @@ docker-machine ls
 # NAME      ACTIVE   DRIVER       STATE     URL                         SWARM   DOCKER        ERRORS
 # default   -        virtualbox   Running   tcp://192.168.99.100:2376           v18.06.1-ce
 
-# connect to the new machine, this set some 'DOCKER_' env variables, which make the 'docker' command talk to the 'default' machine
-eval "$(docker-machine env default)"
+# one way to talk to a machine: run a command thru ssh on a machine
+docker-machine ssh <machine-name> "docker images"
+
+# another way to talk to a machine: this set some 'DOCKER_' env variables, which make the 'docker' command talk to the specified machine
+eval "$(docker-machine env <machine-name>)"
 
 # get ip address
 docker-machine ip
@@ -525,13 +702,30 @@ eval $(docker-machine env -u)
 
 ![Swarm-architecture](images/docker-swarm-architecture.png)
 
-* A swarm consists of multiple Docker hosts which run in **swarm mode** and act as managers and workers;
+* A swarm consists of multiple Docker hosts which run in **swarm mode** and act as managers or/and workers;
 * Advantage over standalone containers: You can modify a service's configuration without manually restart the service;
 * You can run one or more nodes on a single physical computer, in production, nodes are typically distributed over multiple machines;
 * A Docker host can be a manager, a worker or both;
 * You can run both swarm services and standalone containers on the same Docker host;
 
-### Example
+```sh
+# init a swarm
+docker swarm init
+
+# show join tokens
+docker swarm join-token [worker|manager]
+
+# join a swarm as a node (worker or manager), you can join from any machine
+docker swarm join
+
+# show nodes in a swarm (run on a manager node)
+docker node ls
+
+# leave the swarm
+docker swarm leave
+```
+
+### Swarm on a single node
 
 ```yaml
 version: "3"
@@ -573,20 +767,20 @@ docker stack ls
 docker service ls
 
 # list tasks for this service
-docker service ps etstartedlab_web
+docker service ps getstartedlab_web
 # ID                  NAME                 IMAGE                           NODE                    DESIRED STATE       CURRENT STATE           ERROR               PORTS
-# o4u5rpngt6lq        etstartedlab_web.1   garylirocks/get-started:part2   linuxkit-025000000001   Running             Running 4 minutes ago
-# oqaep03q6gkf        etstartedlab_web.2   garylirocks/get-started:part2   linuxkit-025000000001   Running             Running 4 minutes ago
-# tebeg1r7mb9o        etstartedlab_web.3   garylirocks/get-started:part2   linuxkit-025000000001   Running             Running 4 minutes ago
+# o4u5rpngt6lq        getstartedlab_web.1   garylirocks/get-started:part2   linuxkit-025000000001   Running             Running 4 minutes ago
+# oqaep03q6gkf        getstartedlab_web.2   garylirocks/get-started:part2   linuxkit-025000000001   Running             Running 4 minutes ago
+# tebeg1r7mb9o        getstartedlab_web.3   garylirocks/get-started:part2   linuxkit-025000000001   Running             Running 4 minutes ago
 
 # show containers
 docker ps   # container ids and names are different from task ids and names
 # CONTAINER ID        IMAGE                           COMMAND                  CREATED             STATUS              PORTS                                     NAMES
-# fb1ae6433344        garylirocks/get-started:part2   "python app.py"          8 minutes ago       Up 8 minutes        80/tcp                                    etstartedlab_web.1.o4u5rpngt6lqmv44io3k269tn
-# 8a1b8a50ea52        garylirocks/get-started:part2   "python app.py"          8 minutes ago       Up 8 minutes        80/tcp                                    etstartedlab_web.2.oqaep03q6gkfy3rv09vvqk2ul
-# e2523c31d341        garylirocks/get-started:part2   "python app.py"          8 minutes ago       Up 8 minutes        80/tcp                                    etstartedlab_web.3.tebeg1r7mb9odm2lf9mlx217e
+# fb1ae6433344        garylirocks/get-started:part2   "python app.py"          8 minutes ago       Up 8 minutes        80/tcp                                    getstartedlab_web.1.o4u5rpngt6lqmv44io3k269tn
+# 8a1b8a50ea52        garylirocks/get-started:part2   "python app.py"          8 minutes ago       Up 8 minutes        80/tcp                                    getstartedlab_web.2.oqaep03q6gkfy3rv09vvqk2ul
+# e2523c31d341        garylirocks/get-started:part2   "python app.py"          8 minutes ago       Up 8 minutes        80/tcp                                    getstartedlab_web.3.tebeg1r7mb9odm2lf9mlx217e
 
-# scale the app: update the replicas value in the compose file, then
+# scale the app: update the replicas value in the compose file, then deploy again, no need to manually stop anything
 docker stack deploy -c docker-compose.yml getstartedlab
 
 # take down the app
@@ -596,6 +790,133 @@ docker stack rm getstartedlab
 docker swarm leave --force
 ```
 
+### Multi-nodes swarm example
+
+![Swarm services diagram](images/docker-services-diagram.png)
+
+```sh
+# create docker machines
+docker-machine create --driver virtualbox myvm1
+docker-machine create --driver virtualbox myvm2
+
+# list the machines, NOTE: 2377 is the swarm management port, 2376 is the Docker daemon port
+docker-machine ls
+
+# init a swarm on myvm1, it becomes a manager
+docker-machine ssh myvm1 "docker swarm init --advertise-addr <myvm1 ip>"
+
+# let myvm2 join as a worker to the swarm
+docker-machine ssh myvm2 "docker swarm join --token <token> <ip>:2377"
+
+# list all the nodes in the swarm
+docker-machine ssh myvm1 "docker node ls"
+# ID                            HOSTNAME            STATUS              AVAILABILITY        MANAGER STATUS      ENGINE VERSION
+# skcuugxvjltou1dvhzgogprs4 *   myvm1               Ready               Active              Leader              18.06.1-ce
+# t57kref0g1zye30qrpabsexkk     myvm2               Ready               Active                                  18.06.1-ce
+
+# connect to myvm1, so you can use your local `docker-compose.yml` to deploy an app without copying it
+eval $(docker-machine env myvm1)
+
+# deploy the app on the swarm
+docker stack deploy -c docker-compose.yml getstartedlab
+
+# list stacks
+docker-demo docker stack ls
+# NAME                SERVICES            ORCHESTRATOR
+# getstartedlab       1                   Swarm
+
+# list services
+docker-demo docker service ls
+# ID                  NAME                MODE                REPLICAS            IMAGE                           PORTS
+# s6978kvj671c        getstartedlab_web   replicated          3/3                 garylirocks/get-started:part2   *:4000->80/tcp
+
+# show tasks
+docker-demo docker service ps getstartedlab_web
+# ID                  NAME                  IMAGE                           NODE                DESIRED STATE       CURRENT STATE           ERROR               PORTS
+# bt422r4gsp3p        getstartedlab_web.1   garylirocks/get-started:part2   myvm2               Running             Running 4 minutes ago
+# z6q4wzex8x4z        getstartedlab_web.2   garylirocks/get-started:part2   myvm1               Running             Running 4 minutes ago
+# 3805vovw1ioq        getstartedlab_web.3   garylirocks/get-started:part2   myvm2               Running             Running 4 minutes ago
+
+# now, you can visit the app by 192.168.99.100:4000 or 192.168.99.101:4000, it's load-balanced, meaning one node may redirect a request to another node
+
+# you can also: update the app, then rebuild and push the image; 
+#               or, update docker-compose.yml and deploy again;
+
+# tear down the stack
+docker stack rm getstartedlab
+```
+
+![Swarm ingress routing](images/docker-swarm-ingress-routing-mesh.png)
+
+### Multi-service stacks
+
+Add `visualizer` and `redis` service to the stack, 
+
+* `visualizer` doesn't depend on anything, but it should be run on a manager node;
+* `redis` need data persistence, we put it on the manager node, and add volume mapping as well;
+
+```yml
+version: "3"
+services:
+  web:
+    # replace username/repo:tag with your name and image details
+    image: username/repo:tag
+    deploy:
+      replicas: 5
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          cpus: "0.1"
+          memory: 50M
+    ports:
+      - "80:80"
+    networks:
+      - webnet
+
+  visualizer:
+    image: dockersamples/visualizer:stable
+    ports:
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+    networks:
+      - webnet
+
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - "/home/docker/data:/data"
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+    command: redis-server --appendonly yes
+    networks:
+      - webnet 
+
+networks:
+  webnet:
+```
+
+```sh
+# add the data folder on the manager node
+docker-machine ssh myvm1 "mkdir ./data"
+
+# deploy again
+docker stack deploy -c docker-compose.yml getstartedlab
+
+# list services
+docker service ls
+# ID                  NAME                       MODE                REPLICAS            IMAGE                             PORTS
+# t3g55qxamxnv        getstartedlab_redis        replicated          1/1                 redis:latest                      *:6379->6379/tcp
+# 6h3c994a1evq        getstartedlab_visualizer   replicated          1/1                 dockersamples/visualizer:stable   *:8080->8080/tcp
+# xzqj0epf49eq        getstartedlab_web          replicated          3/3                 garylirocks/get-started:part2     *:4000->80/tcp
+```
 
 ## Tips / Best Practices
 
