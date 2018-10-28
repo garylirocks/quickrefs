@@ -1,0 +1,324 @@
+Quick Recipes
+===============
+
+Quick productivity tips, shortcuts, command line snippets.
+
+- [Shortcuts](#shortcuts)
+    - [Ubuntu](#ubuntu)
+- [Update keyboard layout](#update-keyboard-layout)
+- [Add a user as sudoer](#add-a-user-as-sudoer)
+- [Find out Linux distribution name](#find-out-linux-distribution-name)
+- [Find module version](#find-module-version)
+- [Disable a service from autostart](#disable-a-service-from-autostart)
+- [Display IP address in shell prompt](#display-ip-address-in-shell-prompt)
+- [Hide default folders in home directory in Ubuntu](#hide-default-folders-in-home-directory-in-ubuntu)
+- [Send email](#send-email)
+- [Work with ps or pdf files](#work-with-ps-or-pdf-files)
+- [SSH login without password](#ssh-login-without-password)
+- [Version number specifications](#version-number-specifications)
+- [Lorem ipsum](#lorem-ipsum)
+- [Extract media from Office files (docx,xlsx,pptx)](#extract-media-from-office-files-docxxlsxpptx)
+- [Package files](#package-files)
+- [Download all images from a web page](#download-all-images-from-a-web-page)
+- [Linux process management](#linux-process-management)
+    - [Kill a process](#kill-a-process)
+
+## Shortcuts
+
+### Ubuntu
+
+```
+Alt + F2                # run a command in Dash
+Ctrl + Alt + F1 ~ F6    # switch to virtual terminals
+
+# workspaces
+Super + s               # spread workspaces
+
+Ctrl + Alt + Left       # move to workspace left 
+Ctrl + Alt + Right      # move to workspace right 
+Ctrl + Alt + Down       # move to workspace down
+Ctrl + Alt + Up         # move to workspace up
+
+Ctrl + Shift + Alt + Left       # move window to workspace left 
+Ctrl + Shift + Alt + Right      # move window to workspace right 
+Ctrl + Shift + Alt + Down       # move window to workspace down
+Ctrl + Shift + Alt + Up         # move window to workspace up
+```
+
+## Update keyboard layout
+
+[treat the `CapsLock` key as `Ctrl`](http://askubuntu.com/a/633539)
+
+To permanently change the behaviour:
+
+* run `dconf-editor`
+* select `org.gnome.desktop.input-sources`
+* Change `xkb-options` to `['ctrl:nocaps']` (or add it to any existing options)
+
+OR
+
+on the command line (Warning -- this overwrites your existing settings!):
+
+```sh
+gsettings set org.gnome.desktop.input-sources xkb-options "['ctrl:nocaps']" 
+```
+
+OR 
+
+see method at this link: http://askubuntu.com/a/633539
+
+```sh
+sudo vi /etc/default/keyboard
+
+# edit the XKBOPTIONS line as below
+# XKBOPTIONS="ctrl:swapcaps"
+
+sudo dpkg-reconfigure keyboard-configuration
+```
+
+## Add a user as sudoer    
+
+add the user to the `sudo` group
+
+```sh
+# login as root, add gary to the sudo group
+usermod -a -G sudo gary 
+
+# login as gary, confirm it had been added to the sudo group
+id
+# uid=1000(gary) gid=1000(gary) groups=1000(gary),27(sudo)
+
+# crete a file in /etc/sudoers.d/ with the same name of your username
+echo "gary ALL=(ALL) ALL" > /etc/sudoers.d/gary
+chmod 440 /etc/sudoers.d/gary
+```
+
+
+## Find out Linux distribution name    
+
+```sh
+ls /etc/*release*
+# /etc/lsb-release  /etc/os-release
+
+cat /etc/os-release 
+# NAME="Ubuntu"
+# VERSION="12.04.2 LTS, Precise Pangolin"
+# ID=ubuntu
+# ID_LIKE=debian
+# PRETTY_NAME="Ubuntu precise (12.04.2 LTS)"
+# VERSION_ID="12.04"
+```
+
+
+## Find module version
+
+```sh
+strings modulename.so | grep "modulename/[0-9]\.[0-9]"
+```
+
+
+## Disable a service from autostart
+
+```sh
+sudo update-rc.d nginx disable
+```
+
+
+## Display IP address in shell prompt
+
+add following line to `~/.bashrc`
+
+```sh
+MYIP=`ifconfig eth0 | sed -nr 's/^ *inet addr:([0-9.]+) .*$/\1/p'`
+export PS1="\u@$MYIP:\w\$ "
+```
+
+
+## Hide default folders in home directory in Ubuntu
+
+Ubuntu will create some folders in a user's home directory, such as 'Desktop', 'Music', etc
+
+you can change these folders location by editting `~/.config/user-dirs.dirs`
+    
+
+## Send email
+
+use `ssmtp` to send mail
+
+compose message in `msg.txt`:
+
+    To: jack@gmail.com
+    Subject: hi
+
+    hello world!
+
+send mail:
+    
+```sh
+ssmtp jack@gmail.com < msg.txt
+```
+
+    
+## Work with ps or pdf files
+
+make a ps(PostScript) file from text
+
+```sh
+enscript -p syslog.ps /var/log/syslog
+# [ 2 pages * 1 copy ] left in syslog.ps
+# 38 lines were wrapped
+```
+ 
+convert ps to pdf
+
+```sh
+ps2pdf syslog.ps
+
+pdfinfo syslog.pdf 
+#     Title:          Enscript Output
+#     Creator:        GNU Enscript 1.6.5.90
+#     Producer:       GPL Ghostscript 9.10
+#     CreationDate:   Mon Aug 11 11:51:07 2014
+#     ModDate:        Mon Aug 11 11:51:07 2014
+#     Tagged:         no
+#     Form:           none
+#     Pages:          2
+#     Encrypted:      no
+#     Page size:      612 x 792 pts (letter)
+#     Page rot:       0
+#     File size:      5016 bytes
+#     Optimized:      no
+#     PDF version:    1.4
+
+# extract first page of a pdf file
+pdftk A=syslog.pdf cat A1 output syslog-firstpage.pdf
+
+# rotate pages of a pdf file
+pdftk A=syslog.pdf cat A1-endright output syslog-rotated.pdf
+```
+
+
+## SSH login without password
+
+login from `a@A` to `b@B` using ssh withoud password, ref: http://www.linuxproblem.org/art_9.html
+
+```
+a@A:~> ssh-keygen -t rsa
+a@A:~> ssh b@B mkdir -p .ssh
+b@B's password: 
+
+a@A:~> cat .ssh/id_rsa.pub | ssh b@B 'cat >> .ssh/authorized_keys'
+b@B's password: 
+
+# you may need to change some permissions (e.g. this is a must on CentOS 6)
+b@B:~> chmod 700 .ssh
+b@B:~> chmod 640 .ssh/authorized_keys
+
+# then no password, hooray!
+a@A:~> ssh b@B
+```
+
+simple:
+
+```
+$ ssh-copy-id b@B
+```
+
+
+## Version number specifications
+
+when you work with `npm` or `composer`, you may encounter various version numbers, refer to:
+
+```sh
+npm help 7 semver
+```
+
+
+## Lorem ipsum
+
+placeholder text generator, install a perl module `libtext-lorem-perl` and use the `lorem` command
+
+```sh
+sudo apt-get install libtext-lorem-perl
+lorem
+```
+
+
+## Extract media from Office files (docx,xlsx,pptx)
+
+[ref](http://www.howtogeek.com/50628/easily-extract-images-text-and-embedded-files-from-an-office-2007-document/)
+
+A `docx` file is actually a compressed zip file, so we just need to copy that file as a zip file, and then extract it, all media files are in `word/media/`
+
+```sh
+cp a.docx the-doc.zip	
+
+unzip the-doc.zip 
+# Archive:  the-doc.zip
+#     inflating: [Content_Types].xml     
+#     inflating: _rels/.rels    
+# ...
+
+ls
+# a.docx  [Content_Types].xml  docProps  _rels  the-doc.zip  word
+
+ls word/media/
+# image10.png  image17.png
+# ...
+```
+
+
+## Package files
+
+```sh
+ls -A -1 * .*
+# .secret
+# top.txt
+# top.zip
+# 
+# foo:
+# .secret
+# bar
+# sub.zip
+
+# package and ignore these files/folders
+#   all *.zip files
+#   any .secret file
+#   all bar/ folders
+tar czf /tmp/test.tgz --exclude '*.zip' --exclude '.secret' --exclude 'bar/'  ./
+
+# list result
+tar tzf /tmp/test.tgz
+./
+./foo/
+./top.txt
+```
+
+
+## Download all images from a web page
+
+```sh
+wget --page-requisites --span-hosts --no-directories --accept jpg,png --execute robots=off --domains="images.example.com"  'http://example.com/page1'
+```
+
+* `--page-requisites` get image files, by default, `wget` do not download images in `<img />` tag
+* `--span-hosts` download from other hosts
+* `--no-directories` do not create separate directory
+* `robots=off` do not follow rules in `robots.txt`
+* `--domains` specify which domains to download files from
+* `--accept` what file types to download
+
+
+## Linux process management
+
+* `lsof -i:8080`  list processes listening on port 8080
+
+### Kill a process
+
+* `kill <PID>` 
+
+    send the `TERM` (a.k.a `-15`) signal to the process, a soft kill;
+
+* `kill -9 <PID>`
+
+    `SIGKILL`, terminate immediately/hard kill;
