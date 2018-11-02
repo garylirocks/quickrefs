@@ -15,7 +15,7 @@ Regular expression on Linux/Mac command line/Vim has different flavors, be aware
 
     `+ ? | ( ) { }` are metacharacters by default
 
-    usage: `grep -E`, `egrep`, `sed -r`, `awk`
+    usage: `grep -E`, `egrep`, `sed -r` (Linux), `sed -E` (Mac), `awk`
 
 3. **PCRE**: Perl compatible regular expression, looks like not working on Mac;
 
