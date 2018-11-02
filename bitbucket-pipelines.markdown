@@ -1,6 +1,9 @@
 Bitbucket Pipelines
 =====================
 
+- [General](#general)
+- [Demo config](#demo-config)
+
 ## General
 
 add a `bitbucket-pipelines.yml` file in your root directory to config how pipelines run
@@ -12,6 +15,8 @@ add a `bitbucket-pipelines.yml` file in your root directory to config how pipeli
 ## Demo config
 
 ```yaml
+image: atlassian/default-image:2    # specify a global image, can be overriden by each step
+
 pipelines:
   default:                          # runs on every push, unless another branch/tag pipeline matches
     - step:
@@ -38,6 +43,7 @@ pipelines:
     - step:
         name: Deploy to beanstalk
         image: python:3.5.1
+        trigger: manual             # trigger this step manually
         script:
           - python deploy-to-beanstalk.py
   tags:
@@ -60,3 +66,6 @@ definitions:                        # defines other containers
     postgres:
       image: postgres:9.6.4
 ```
+
+* `custom` pipelines and steps with `trigger: manual` are triggered manually;
+* `deployment` can be `test`, `staging`, `production`;
