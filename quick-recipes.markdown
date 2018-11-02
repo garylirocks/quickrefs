@@ -11,6 +11,8 @@ Quick productivity tips, shortcuts, command line snippets.
 - [Find module version](#find-module-version)
 - [Disable a service from autostart](#disable-a-service-from-autostart)
 - [Display IP address in shell prompt](#display-ip-address-in-shell-prompt)
+- [Mount/Unmount device](#mountunmount-device)
+    - [`cifs`](#cifs)
 - [Hide default folders in home directory in Ubuntu](#hide-default-folders-in-home-directory-in-ubuntu)
 - [Send email](#send-email)
 - [Work with ps or pdf files](#work-with-ps-or-pdf-files)
@@ -133,6 +135,37 @@ MYIP=`ifconfig eth0 | sed -nr 's/^ *inet addr:([0-9.]+) .*$/\1/p'`
 export PS1="\u@$MYIP:\w\$ "
 ```
 
+
+## Mount/Unmount device
+
+```sh
+sudo mkdir -p /mnt/data
+sudo mount -t smbfs //Administrator@192.168.88.3/data  /mnt/data
+
+sudo ls /mnt/data
+# ...
+
+mount           # show mounted devices
+# ...
+# //Administrator@192.168.88.3/data on /mnt/data (smbfs)
+
+sudo umount /mnt/data
+```
+
+* system default mounts are stored in `/etc/fstab`;
+* current mounts are in `/etc/mtab`;
+* you can specify mount options using `-o`, options available are different for each file system type;
+
+### `cifs`
+
+```sh
+# for cifs, specify server user, client uid/gid, file_mode and dir _mode 
+USER=Administrator mount -o uid=dockeruser,gid=dockeruser,file_mode=0770,dir_mode=0700 //192.168.88.3/data /home/dockeruser/test/mpoint
+
+# you can't chown or chmod after the device is mounted
+```
+
+* `cifs` is an implementation of `smb`, it's outdated, you should use `smb 2` or `smb 3` when possible  (https://www.varonis.com/blog/cifs-vs-smb/)
 
 ## Hide default folders in home directory in Ubuntu
 
