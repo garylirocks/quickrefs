@@ -10,10 +10,15 @@ MongoDB
 - [CRUD](#crud)
     - [Create](#create)
     - [Read](#read)
+        - [Sort / Skip / Limit](#sort--skip--limit)
     - [Update](#update)
         - [Upsert](#upsert)
         - [Replace](#replace)
     - [Delete](#delete)
+- [Query Language](#query-language)
+    - [Array](#array)
+    - [Regex](#regex)
+- [NodeJS](#nodejs)
 
 
 ## Concepts
@@ -106,7 +111,13 @@ r.hasNext()
 
 ## Data Import / Export
 
-In Mongo shell
+Use `mongoimport`, specify database and collection name
+
+```sh
+mongoimport -d crunchbash -c companies companies.json
+```
+
+In Mongo shell, using `load`
 
 ```js
 # the shell is a JS interpreter, so you can run a js script to load data
@@ -176,12 +187,39 @@ db.data.find({
 /* search an array field */
 db.data.find({ actors: 'Julia Roberts' });  // any position in an array
 
-{ 'actors.0': 'Julia Roberts'}      // query against the first element
+/* $or operator */
+db.data.find({
+    $or: [
+        { 'actors': 'Julia Roberts' }, 
+        { 'year': 2010 }
+    ]}
+);
 ```
 
 * Multiple queries are joined with `and` logic;
 * Use `count()` to get results count;
 * The second parameter is a projection field, which controls which fields are returned, use `1` to include a field, `0` to exclude it (`_id` is included by default, you can exclude it explicitly);
+
+#### Sort / Skip / Limit
+
+```js
+db.movieDetails.find({
+    'rated': 'PG-13'
+}).sort({
+    'year': 1,              // increasing order
+    'awards.wins': -1       // decreasing order
+}).skip(10).limit(5);
+```
+
+* MongoDB always do it in this order: `sort()`, `skip()`, `limit()`, even you put `limit()` at the first;
+* In the NodeJS driver, the sorting document can be an array:
+
+    ```js
+    cursor.sort([
+        ["founded_year", 1], 
+        ["number_of_employees", -1]
+    ])
+    ```
 
 
 ### Update
@@ -256,3 +294,92 @@ db.users.deleteMany({
     age: {$gt: 20}
 });
 ```
+
+## Query Language
+
+### Array
+
+```js
+// at least one element in the actors array is 'Julia Roberts'
+db.data.find({ actors: 'Julia Roberts' });
+
+// actors array has 3 elements
+db.data.find({ actors: { $size: 3 } });
+
+// the first element in the actors array is 'Julia Roberts'
+db.data.find({ 'actors.0': 'Julia Roberts' );
+
+// !!!THIS IS USUALLY NOT WHAT WE WANT: 
+//      there is one element >= 70 and one element < 80
+db.scores.find({ results: { $gte: 70, $lt: 80 } });
+
+// CORRECT WAY TO APPLY MULTI CONDITIONS ON ONE ELEMENT
+//      at least one element of the results array >= 70 and < 80
+db.scores.find({ results: { $elemMatch: { $gte: 70, $lt: 80 } } });
+```
+
+### Regex
+
+```js
+db.companies.find({
+    name: {
+        $regex: 'facebook',
+        $options: 'i'           // case insensitive
+    }}, {
+        name: 1
+    });
+```
+
+
+## NodeJS
+
+```js
+var MongoClient = require('mongodb').MongoClient,
+    assert = require('assert');
+
+MongoClient.connect('mongodb://localhost:27017/crunchbase', function(err, db) {
+    assert.equal(err, null);
+    console.log("Successfully connected to MongoDB.");
+
+    var query = {"category_code": "biotech"};
+
+    db.collection('companies').find(query).toArray(function(err, docs) {
+        assert.equal(err, null);
+        assert.notEqual(docs.length, 0);
+        
+        docs.forEach(function(doc) {
+            console.log( doc.name + " is a " + doc.category_code + " company." );
+        });
+        
+        db.close();
+    });
+});
+```
+
+explicit cursor
+
+
+```js
+...
+var query = {"category_code": "biotech"};
+var projection = {"name": 1, "category_code": 1, "_id": 0};
+
+var cursor = db.collection('companies').find(query);
+cursor.project(projection);
+
+cursor.forEach(
+    function(doc) {
+        console.log( doc.name + " is a " + doc.category_code + " company." );
+    },
+    function(err) {                     // error or the end of results
+        assert.equal(err, null);
+        return db.close();              // close connection here
+    }
+);
+...
+```
+
+* In the above examples, `find()` returns a cursor object, which has methods like `project()`, `toArray()` and `forEach()`;
+* The cursor is getting results back in batches, not all in one go;
+* The query is not triggered immediately after the cursor is created, it only fires when the result is needed;
+* The `project()` method modifies the cursor, the projection document can be passed to `find()` directly as well;
