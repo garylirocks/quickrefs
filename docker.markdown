@@ -26,6 +26,10 @@ Docker
     - [`tmpfs`](#tmpfs)
     - [Usage](#usage)
 - [Network](#network)
+    - [DNS](#dns)
+    - [Swarm](#swarm)
+    - [Network Driver Types](#network-driver-types)
+    - [Port Publishing Mode](#port-publishing-mode)
 - [Docker Compose](#docker-compose)
     - [`docker-compose.yml`](#docker-composeyml)
         - [`volumes`](#volumes)
@@ -171,6 +175,9 @@ A container is a running instance of an image, when you start an image, you have
 
     # inspect a container
     docker inspect <container>
+
+    # get a specific value using a Go template string
+    docker inspect testweb --format="{{.NetworkSettings.IPAddress}}"
 
     # start/stop/restart/pause/unpause/attach
     # attach: connecting local stdin, stdout, stderr to a running container
@@ -469,18 +476,151 @@ docker run -it -v /home/gary/code/super-app:/app ubuntu
 
 ## Network
 
-* by default, docker assigns IP address starting from `172.17.0.2` to container instances;
+Basic commands
 
 ```bash
 # list networks
 docker network ls
 
 # create a subnet (looks like this will create a virtual network adapter on a Linux host, but not a Mac)
-docker network create --subnet 10.1.0.0/16 --gateway 10.1.0.1 --ip-range=10.1.4.0/24 --driver=bridge --label=host4network bridge04
+docker network create \
+                --subnet 10.1.0.0/16 \
+                --gateway 10.1.0.1 \
+                --ip-range=10.1.0.0/28 \
+                --driver=bridge \
+                bridge04
 
-# use a network, and specify a static IP for it
-docker run -it --name test --net bridge04 --ip 10.1.4.100 ubuntu:xenial /bin/bash
+# start a container with a network, specifying a static IP for it
+docker run \
+        -it \
+        --name test \
+        --net bridge04 \
+        --ip 10.1.0.2 \
+        ubuntu:xenial /bin/bash
+
+# OR 
+# connect a running container to a network, 
+# you can specify an IP address, and a network scoped alias for the container
+docker network connect \
+                --ip 10.1.0.2 \
+                --alias ACoolName \
+                bridge04 <container_name>
+
+# show network settings and containers in this network
+docker network inspect bridge04
 ```
+
+### DNS
+
+* By default, Docker passes the host's DNS config(`/etc/resolv.conf`) to a container;
+
+* You can specify DNS servers by 
+    * Adding command line option `--dns`
+
+    ```sh
+    # specify DNS servers
+    docker run -d \
+            --dns=8.8.8.8 \
+            --dns=8.8.4.4 \
+            --name testweb \
+            -p 80:80 \
+            httpd
+    ```
+
+    * Adding configs in `/etc/docker/daemon.json` (affects all containers);
+
+    ```js
+    // in /etc/docker/daemon.json 
+    {
+        ...
+        "dns": ["8.8.8.8", "8.8.4.4"]
+        ...
+    }
+    ```
+
+
+### Swarm
+
+After `docker swarm init`, Docker will create an overlay network called `ingress` and a bridge network called `docker_gwbridge`
+
+```sh
+docker network ls
+# NETWORK ID          NAME                DRIVER              SCOPE
+# ...
+# hzmie3wc2krb        ingress             overlay             swarm
+# a08d8933c9cf        docker_gwbridge     bridge              local
+
+# show nodes in the ingress network
+docker network inspect ingress
+```
+
+You can create your own overlay network:
+
+```sh
+# create another overlay network, this netowrk will be available to all nodes
+docker network create \
+                --driver=overlay \
+                --subnet 192.168.1.0/24 \
+                overlay0
+
+# start a service using the above overlay network
+docker service create \
+                --name testweb \
+                -p 80:80 \
+                --network=overlay0 \
+                --replicas 3 \
+                httpd
+
+# inspect the network, it will show containers in this network
+docker network inspect overlay0
+```
+
+* An overlay network will be available to all nodes in a swarm;
+* If the above service `testweb` runs on `node1.example.com` and `node2.exmaple.com`, you can access it from either domain;
+
+### Network Driver Types
+
+* bridge
+    * default on stand-alone Docker hosts;
+    * a private network internal to the host system;
+    * all containers on this host using bridge networking can communicate to each other;
+    * external access is granted by port exposure of the container's services and accessed by the host;
+
+* none
+    * when absolutely no networking is needed;
+    * can only be accessed on the host;
+    * can `docker attach <container-id>` or `docker exec -it <container-id>`;
+
+* overlay
+    * allows communication among all Docker Daemons in a Swarm;
+    * it is a 'swarm' scope driver: it extends itself to all daemons in the swarm (building on workers if needed);
+    * allows multiple services in the swarm communicate to each other (regardless of origination or destination);
+
+* ingress
+
+    * **A Special overlay network that load balances network traffic amongst a given service's working nodes**;
+    * Maitains a list of all IP addresses from nodes of a service, when a request comes in, routes to one of them;
+    * Provides '**routing mesh**', allows services to be exposed to the external network without having a replica running on every node in the Swarm;
+
+    ![Swarm ingress routing](images/docker-swarm-ingress-routing-mesh.png)
+
+* gateway bridge
+
+    * special bridge network that allows overlay networks access to an individual Docker daemon's physical network;
+    * every contianer run within a service is connected to the local Docker daemon's host network;
+    * automatically created when initing a joining a swarm;
+    
+### Port Publishing Mode
+
+* Host
+
+    * `mode=host` in deployment;
+    * used in single host environment or in environment where you need complete control over routing;
+    * ports for containers are only available on the underlying host system and are NOT avaliable for services which don't have a replica on this host;
+
+* Ingress
+    * provides 'routing mesh', makes all published ports available on all hosts, so that service is accessible from every node regardless whether there is a replica running on it or not;
+
 
 
 ## Docker Compose
@@ -580,16 +720,16 @@ By default:
 
     version: "3"
     services:
-    web:
-        build: .
-        ports:
-            - "8000:8000"
-        links:
-            - "db:database"
-    db:
-        image: mysql 
-        ports:
-            - "8001:3061"
+        web:
+            build: .
+            ports:
+                - "8000:8000"
+            links:
+                - "db:database"
+        db:
+            image: mysql 
+            ports:
+                - "8001:3061"
     ```
 
     * The network will be called `myapp_default`;
@@ -659,7 +799,7 @@ docker-compose up
 it will create a container named `MyProject_app_1`, if you got another docker compose file in the same folder (or another folder with the same name), and the service is called `app` as well, the container name will collide, you need to specify a `--project-name` option:
 
 ```bash
-docker-compose up --project-name <anotherName>
+docker-compose --project-name <anotherName> up
 ```
 
 see [Proposal: make project-name persistent](https://github.com/docker/compose/issues/745)
