@@ -1,10 +1,26 @@
 Nginx
 ==========
 
-- [Nginx](#nginx)
-    - [How a request is processed](#how-a-request-is-processed)
-        - [`server` block](#server-block)
-        - [`location` block](#location-block)
+- [How a request is processed](#how-a-request-is-processed)
+    - [`server` block](#server-block)
+    - [`location` block](#location-block)
+- [Directives](#directives)
+    - [`server_name`](#servername)
+        - [Wildcard names](#wildcard-names)
+        - [Regular expression names](#regular-expression-names)
+        - [Default server](#default-server)
+    - [`try_files`](#tryfiles)
+    - [`return`](#return)
+    - [`rewrite`](#rewrite)
+        - [`rewrite` vs. `return`](#rewrite-vs-return)
+    - [`upstream`](#upstream)
+    - [`fastcgi_split_path_info`](#fastcgisplitpathinfo)
+- [Cheatsheets](#cheatsheets)
+    - [Standardizing domain names](#standardizing-domain-names)
+    - [Add or removing the 'www' prefix](#add-or-removing-the-www-prefix)
+    - [Forcing all request to use SSL/TLS](#forcing-all-request-to-use-ssltls)
+    - [Enabling pretty permalinks for Wordpress](#enabling-pretty-permalinks-for-wordpress)
+    - [Load balancing](#load-balancing)
     - [CORS rules](#cors-rules)
 
 
@@ -259,7 +275,7 @@ server {
 
 ### `upstream` 
 
-Used to define server groups that can be referenced by the `proxy_pass`, `fastcgi_pass`, `uwsgi_pass`, `memcached_pass` etc.
+Used to define server groups that can be referenced by the `proxy_pass`, `fastcgi_pass`, `uwsgi_pass`, `memcached_pass` etc, this is actually a simple **load balancer**.
 
 ```nginx
 upstream backend {
@@ -287,12 +303,17 @@ location ~ ^(.+\.php)(.*)$ {
     fastcgi_split_path_info       ^(.+\.php)(.*)$;
     fastcgi_param SCRIPT_FILENAME /path/to/php$fastcgi_script_name;
     fastcgi_param PATH_INFO       $fastcgi_path_info;
+    ...
+}
 ```
 
-and the "/show.php/article/0001" request, the `SCRIPT_FILENAME` parameter will be equal to "/path/to/php/show.php", and the `PATH_INFO` parameter will be equal to "/article/0001".
+for this request `/show.php/article/0001`:
+
+* the `SCRIPT_FILENAME` parameter will be equal to `/path/to/php/show.php`; 
+* and the `PATH_INFO` parameter will be equal to `/article/0001`;
 
 
-## Cheatsheet
+## Cheatsheets
 
 ### Standardizing domain names
 
@@ -356,6 +377,28 @@ location / {
 }
 ```
 
+### Load balancing
+
+```nginx
+upstream backend {
+    server backend1.example.com       weight=5;
+    server 192.168.11.1:8080;
+    server unix:/tmp/backend3;
+
+    server backup1.example.com:8080   backup;
+    server backup2.example.com:8080   backup;
+}
+
+server {
+    listen *:80;
+    server_name example.com;
+    index index.html index.htm;
+
+    location / {
+        proxy_pass http://backend;
+    }
+}
+```
 
 ### CORS rules
 
