@@ -22,7 +22,7 @@ Docker
         - [Remove volumes](#remove-volumes)
         - [`-v`, `--mount` and volume driver](#v---mount-and-volume-driver)
     - [Bind mounts](#bind-mounts)
-        - [Commands](#commands)
+        - [Commands](#commands-1)
     - [`tmpfs`](#tmpfs)
     - [Usage](#usage)
 - [Network](#network)
@@ -608,7 +608,7 @@ docker network inspect overlay0
 
     * special bridge network that allows overlay networks access to an individual Docker daemon's physical network;
     * every contianer run within a service is connected to the local Docker daemon's host network;
-    * automatically created when initing a joining a swarm;
+    * automatically created when initing or joining a swarm;
     
 ### Port Publishing Mode
 
@@ -617,6 +617,15 @@ docker network inspect overlay0
     * `mode=host` in deployment;
     * used in single host environment or in environment where you need complete control over routing;
     * ports for containers are only available on the underlying host system and are NOT avaliable for services which don't have a replica on this host;
+    * in `docker-compose.yml` :
+
+        ```yaml
+        ports:
+        - target: 80
+            published: 8080
+            rotocol: tcp
+            mode: host      # specify mode here
+        ```
 
 * Ingress
     * provides 'routing mesh', makes all published ports available on all hosts, so that service is accessible from every node regardless whether there is a replica running on it or not;
@@ -929,6 +938,9 @@ docker stack rm getstartedlab
 # take down the swarm
 docker swarm leave --force
 ```
+
+* Docker Swarm keeps history of each task, so `docker service ps <service>` will list both running and shutdown services, you can add a filter option to only show running tasks: `docker service ps -f "DESIRED-STATE=Running" <service>`;
+* Or you can use `docker swarm update --task-history-limit <int>` to update the task history limit;
 
 ### Multi-nodes swarm example
 
