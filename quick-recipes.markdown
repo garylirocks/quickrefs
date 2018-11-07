@@ -7,6 +7,8 @@ Quick productivity tips, shortcuts, command line snippets.
     - [Ubuntu](#ubuntu)
 - [Update keyboard layout](#update-keyboard-layout)
 - [Add a user as sudoer](#add-a-user-as-sudoer)
+- [Change file/directory permissions](#change-filedirectory-permissions)
+    - [`setgid`](#setgid)
 - [Find out Linux distribution name](#find-out-linux-distribution-name)
 - [Find module version](#find-module-version)
 - [Disable a service from autostart](#disable-a-service-from-autostart)
@@ -94,6 +96,48 @@ id
 echo "gary ALL=(ALL) ALL" > /etc/sudoers.d/gary
 chmod 440 /etc/sudoers.d/gary
 ```
+
+## Change file/directory permissions
+
+* Use capital `X` to add execute/seach permission only on directories, not files, this is effective when you want to add search permission ;
+
+```sh
+ls -l
+# total 4
+# -rw-rw-r-- 1 gary gary    0 Nov  7 19:58 a-file
+# drw-rw-r-- 2 gary gary 4096 Nov  7 19:58 b-folder
+
+chmod -R ug+X .
+ls -l         
+# total 4
+# -rw-rw-r-- 1 gary gary    0 Nov  7 19:58 a-file
+# drwxrwxr-- 2 gary gary 4096 Nov  7 19:58 b-folder
+```
+
+### `setgid`
+
+when set on a directory, make new files and directories created in it inherit the group id
+
+```sh
+ls -dl .       
+# drwxrwxr-x 2 gary gary 4096 Nov  7 20:03 .
+
+chmod g+s .         # add setgid to current directory
+
+ls -dl .
+# drwxrwsr-x 2 gary gary 4096 Nov  7 20:04 .
+
+sudo touch newfile
+sudo mkdir newfolder    
+
+ls -dl . newfile newfolder
+# drwxrwsr-x 3 gary gary 4096 Nov  7 20:18 .
+# -rw-r--r-- 1 root gary    0 Nov  7 20:05 newfile
+# drwxr-sr-x 2 root gary 4096 Nov  7 20:18 newfolder
+```
+
+* `newfile` inherits its group `gary` from the parent folder;
+* `newfolder` inherits its group `gary`, its `setgid` bit is set as well;
 
 
 ## Find out Linux distribution name    

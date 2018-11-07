@@ -391,9 +391,17 @@ or use `column`
 
 ## `find`
 
-find files with different extensions
+* find files with different extensions
 
-	find . -regextype posix-extended -regex '.*(php)|(phtml)'
+    ```sh
+    find . -regextype posix-extended -regex '.*(php)|(phtml)'
+    ```
+
+* find all sub directories, excluding itself
+
+    ```sh
+    find . -mindepth 1 -type d
+    ```
 
 
 ## `pushd`, `popd`, `dirs`
