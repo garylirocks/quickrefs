@@ -22,7 +22,7 @@ Docker
         - [Remove volumes](#remove-volumes)
         - [`-v`, `--mount` and volume driver](#v---mount-and-volume-driver)
     - [Bind mounts](#bind-mounts)
-        - [Commands](#commands-1)
+        - [Commands](#commands)
     - [`tmpfs`](#tmpfs)
     - [Usage](#usage)
 - [Network](#network)
@@ -42,6 +42,15 @@ Docker
     - [Swarm on a single node](#swarm-on-a-single-node)
     - [Multi-nodes swarm example](#multi-nodes-swarm-example)
     - [Multi-service stacks](#multi-service-stacks)
+- [Configs](#configs)
+    - [Basic usage using `docker config` commands](#basic-usage-using-docker-config-commands)
+    - [Use for Nginx config](#use-for-nginx-config)
+    - [Rotate a config](#rotate-a-config)
+    - [Usage in `compose` files](#usage-in-compose-files)
+- [Secrets](#secrets)
+    - [Example: Use secrets with a WordPress service](#example-use-secrets-with-a-wordpress-service)
+    - [Rotate a secret](#rotate-a-secret)
+    - [Example compose file](#example-compose-file)
 - [Tips / Best Practices](#tips--best-practices)
 
 docker basics:
@@ -1068,6 +1077,288 @@ docker service ls
 # t3g55qxamxnv        getstartedlab_redis        replicated          1/1                 redis:latest                      *:6379->6379/tcp
 # 6h3c994a1evq        getstartedlab_visualizer   replicated          1/1                 dockersamples/visualizer:stable   *:8080->8080/tcp
 # xzqj0epf49eq        getstartedlab_web          replicated          3/3                 garylirocks/get-started:part2     *:4000->80/tcp
+```
+
+
+## Configs
+
+* Store non-sensitive info (e.g. config files) outside image or running containers;
+* **Don't neet to bind-mount**;
+* Added or removed from a service at any time, and services can share a config;
+* Config values can be **generic strings or binary content** (up to 500KB);
+* **Only available to swarm services**, not standalone containers;
+* Configs are managed by swarm managers, when a service been granted access to a config, the config is mounted as a file in the container. (`/<config-name>`), you can sed `uid`, `pid` and `mode` for a config;
+
+### Basic usage using `docker config` commands
+
+```sh
+# create a config
+echo "This is a config" | docker config create my-config -
+
+# create a service and grant it access to the config
+docker service create --name redis --config my-config redis:alpine
+
+# inspect the config file in the container
+docker container exec $(docker ps --filter name=redis -q) ls -l /my-config
+# -r--r--r--    1 root     root            12 Jun  5 20:49 my-config
+
+docker container exec $(docker ps --filter name=redis -q) cat /my-config
+# This is a config
+
+# update a service, removing access to the config
+docker service update --config-rm my-config redis
+
+# remove a config
+docker config rm my-config
+```
+
+### Use for Nginx config
+
+You have already got tow secret files: `site.key`, `site.crt` and on config file `site.conf`:
+
+```nginx
+server {
+    listen                443 ssl;
+    server_name           localhost;
+    ssl_certificate       /run/secrets/site.crt;
+    ssl_certificate_key   /run/secrets/site.key;
+
+    location / {
+        root   /usr/share/nginx/html;
+        index  index.html index.htm;
+    }
+}
+```
+
+```sh
+# create secrets and config
+docker secret create site.key site.key
+docker secret create site.crt site.crt
+docker config create site.conf site.conf
+
+# create a service using the secrets and config
+docker service create \
+     --name nginx \
+     --secret site.key \
+     --secret site.crt \
+     --config source=site.conf,target=/etc/nginx/conf.d/site.conf,mode=0440 \
+     --publish published=3000,target=443 \
+     nginx:latest \
+     sh -c "exec nginx -g 'daemon off;'"
+```
+
+in the running container, the following three files now exist:
+
+* `/run/secrets/site.key`
+* `/run/secrets/site.crt`
+* `/etc/nginx/conf.d/site.conf`
+
+### Rotate a config
+
+Update `site.conf`:
+
+```sh
+# create a new config using the updated file
+docker config create site-v2.conf site.conf
+
+# update the service, removing old config, adding new one 
+docker service update \
+  --config-rm site.conf \
+  --config-add source=site-v2.conf,target=/etc/nginx/conf.d/site.conf,mode=0440 \
+  nginx
+
+# remove old config from the swarm
+docker config rm site.conf
+```
+
+### Usage in `compose` files
+
+* short syntax
+
+    ```yml
+    version: "3.3"
+    services:
+    redis:
+        image: redis:latest
+        deploy:
+        replicas: 1
+        configs:
+        - my_config
+        - my_other_config
+
+    configs:
+    my_config:
+        file: ./my_config.txt
+    my_other_config:
+        external: true
+    ```
+
+* long syntax
+
+    ```yml
+    version: "3.3"
+    services:
+    redis:
+        image: redis:latest
+        deploy:
+        replicas: 1
+        configs:
+        - source: my_config
+            target: /redis_config
+            uid: '103'
+            gid: '103'
+            mode: 0440
+
+    configs:
+    my_config:
+        file: ./my_config.txt
+    my_other_config:
+        external: true
+    ```
+
+
+## Secrets
+
+Sensitive data a container needs at runtime, should not be stored in the image or in source control:
+
+* Usernames and passwords;
+* TLS certificates and keys;
+* SSH keys;
+* Name of a database or internal server;
+* Generic strings or binary content (up to 500kb);
+
+Usage:
+
+* Secret is encrypted in transition and at rest, it's replicated across all managers;
+* Decrypted secret is mounted into the container in an in-memory filesystem, the mount point defaults to `/run/secrets/<scret_name>`;
+* Management commands:
+
+    * `docker secret create`;
+    * `docker secret inspect`;
+    * `docker secret ls`;
+    * `docker secret rm`;
+    * `--secret` flag for `docker service create`;
+    * `--secret-add` and `--secret-rm` flags for `docker service update`;
+
+### Example: Use secrets with a WordPress service
+
+the `mysql` and `wordpress` image has been created in a way that you can pass in environment variable for the password directly (`MYSQL_PASSWORD`) or for a secret file (`MYSQL_PASSWORD_FILE`).
+
+```sh
+# generate a random string as a secret 'mysql_password'
+openssl rand -base64 20 | docker secret create mysql_password -
+
+# root password, not shared with Wordpress service
+openssl rand -base64 20 | docker secret create mysql_root_password -
+
+# create a custom network, MySQL service doesn't need to be exposed
+docker network create -d overlay mysql_private
+
+# create a MySQL service using the above secrets
+docker service create \
+     --name mysql \
+     --replicas 1 \
+     --network mysql_private \
+     --mount type=volume,source=mydata,destination=/var/lib/mysql \
+     --secret source=mysql_root_password,target=mysql_root_password \
+     --secret source=mysql_password,target=mysql_password \
+     -e MYSQL_ROOT_PASSWORD_FILE="/run/secrets/mysql_root_password" \
+     -e MYSQL_PASSWORD_FILE="/run/secrets/mysql_password" \
+     -e MYSQL_USER="wordpress" \
+     -e MYSQL_DATABASE="wordpress" \
+     mysql:latest
+
+# create a Wordpress service
+docker service create \
+     --name wordpress \
+     --replicas 1 \
+     --network mysql_private \
+     --publish published=30000,target=80 \
+     --mount type=volume,source=wpdata,destination=/var/www/html \
+     --secret source=mysql_password,target=wp_db_password,mode=0400 \
+     -e WORDPRESS_DB_USER="wordpress" \
+     -e WORDPRESS_DB_PASSWORD_FILE="/run/secrets/wp_db_password" \
+     -e WORDPRESS_DB_HOST="mysql:3306" \
+     -e WORDPRESS_DB_NAME="wordpress" \
+     wordpress:latest
+
+# verify the services are running
+docker service ls
+```
+
+### Rotate a secret 
+
+Here we rotate the password of the `wordpress` user, not the root password:
+
+```sh
+# create a new password and store it as a secret
+openssl rand -base64 20 | docker secret create mysql_password_v2 -
+
+# remove old secret and mount it again under a new name, add the new password secret, which is still needed for actually updating the password in MySQL
+docker service update \
+     --secret-rm mysql_password mysql
+docker service update \
+     --secret-add source=mysql_password,target=old_mysql_password \
+     --secret-add source=mysql_password_v2,target=mysql_password \
+     mysql
+
+# update MySQL password using the `mysqladmin` CLI
+docker container exec $(docker ps --filter name=mysql -q) \
+    bash -c 'mysqladmin --user=wordpress --password="$(< /run/secrets/old_mysql_password)" password "$(< /run/secrets/mysql_password)"'
+
+# update WP service, this triggers a rolling restart of the WP service and make it use the new secret
+docker service update \
+     --secret-rm mysql_password \
+     --secret-add source=mysql_password_v2,target=wp_db_password,mode=0400 \
+     wordpress
+
+# remove old secret
+docker service update \
+     --secret-rm mysql_password \
+     mysql
+docker secret rm mysql_password
+```
+
+### Example compose file
+
+```yaml
+version: '3.1'
+
+services:
+   db:
+     image: mysql:latest
+     volumes:
+       - db_data:/var/lib/mysql
+     environment:
+       MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
+       MYSQL_DATABASE: wordpress
+       MYSQL_USER: wordpress
+       MYSQL_PASSWORD_FILE: /run/secrets/db_password
+     secrets:
+       - db_root_password
+       - db_password
+
+   wordpress:
+     depends_on:
+       - db
+     image: wordpress:latest
+     ports:
+       - "8000:80"
+     environment:
+       WORDPRESS_DB_HOST: db:3306
+       WORDPRESS_DB_USER: wordpress
+       WORDPRESS_DB_PASSWORD_FILE: /run/secrets/db_password
+     secrets:
+       - db_password
+
+secrets:
+   db_password:
+     file: db_password.txt
+   db_root_password:
+     file: db_root_password.txt
+
+volumes:
+    db_data:
 ```
 
 ## Tips / Best Practices
