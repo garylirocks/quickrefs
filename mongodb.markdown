@@ -18,7 +18,21 @@ MongoDB
 - [Query Language](#query-language)
     - [Array](#array)
     - [Regex](#regex)
+    - [Geospatial](#geospatial)
 - [NodeJS](#nodejs)
+- [Schema design](#schema-design)
+- [Storage Enginge](#storage-enginge)
+- [Indexes](#indexes)
+    - [Create Indexes](#create-indexes)
+        - [Creation Mode](#creation-mode)
+    - [Single field indexes](#single-field-indexes)
+    - [Compound indexes](#compound-indexes)
+    - [Full text index](#full-text-index)
+    - [Explain](#explain)
+    - [Covered queries](#covered-queries)
+- [Performance](#performance)
+    - [Hardware Condsiderations](#hardware-condsiderations)
+    - [Profiling](#profiling)
 
 
 ## Concepts
@@ -321,15 +335,22 @@ db.scores.find({ results: { $elemMatch: { $gte: 70, $lt: 80 } } });
 ### Regex
 
 ```js
+db.companies.find({'name': /facebook/i});
+
+// equivalent to
 db.companies.find({
     name: {
         $regex: 'facebook',
         $options: 'i'           // case insensitive
-    }}, {
-        name: 1
-    });
+    }});
 ```
 
+### Geospatial
+
+```js
+// use '$near' to find places near a location, from closest to furthest
+db.places.find({'location': {$near: [74, 140]}}).limit(3);
+```
 
 ## NodeJS
 
@@ -383,3 +404,246 @@ cursor.forEach(
 * The cursor is getting results back in batches, not all in one go;
 * The query is not triggered immediately after the cursor is created, it only fires when the result is needed;
 * The `project()` method modifies the cursor, the projection document can be passed to `find()` directly as well;
+
+## Schema design
+
+In relational database, we used to keep db schema in the thrid normal form;
+
+For MongoDB, the first principle is making the schema matching the data access pattern of your application, e.g. what data need to be read together;
+
+Differences to relational DB:
+
+* no foreign key constraints;
+* no transactions, it does have atomic operations within a single document, so you can:
+    * restructure your data, so only need to update one document;
+    * implement transaction in your application;
+    * tolerate some inconsistency;
+
+Constraints
+
+* Document size (16MB ?);
+
+
+## Storage Enginge
+
+A storage engine controls how data and index are stored in a disk, not related to cluster structure, db driver, etc;
+
+* MMAPv1
+    * Use the `mmap` system call, which maps files to memory;
+    * Collection-level locking: one write at a time for a collection;
+
+* WiredTiger
+
+    * Default since MongoDB v3.2;
+    * Document-level concurrency, usually faster than MMAPv1;
+    * Offers compression of data and indexes;
+
+
+## Indexes
+
+### Create Indexes
+
+```js
+// get indexes of a collection
+db.students.getIndexes();
+
+// create a compound index
+db.students.createIndex({ student_id: 1, class_id: -1 });
+
+// create a unique index
+db.students.createIndex({ student_id: 1 }, { unique: true });
+
+// create a sparse index, if `email` is missing for a document, that document won't be added to the index
+db.students.createIndex({ email: 1 }, { unique: true, sparse: true });
+```
+
+For a schema like this:
+
+```js
+{
+    name: 'Gary',
+    tags: ['reading', 'skipping', 'learning'],
+    color: 'blue',
+    location: ['NZ', 'CN'],
+    scores: [{
+            class: 'Math',
+            score: 30,
+        }, {
+            class: 'History',
+            score: 66,
+        }]
+}
+```
+
+* `{'tags': 1}`: a multikey index; 
+* `{'tags': 1, 'color': 1}` is valid;
+* `{'tags': 1, 'location': 1}` is **NOT** valid, can't use two array fields in one key;
+
+#### Creation Mode
+
+* Foreground:
+    * default option;
+    * fast;
+    * blocks writes and reads on database level;
+
+* Background
+    * don't block;
+
+    ```js
+    db.students.createIndex({ student_id: 1 }, { background: true });
+    ```
+
+### Single field indexes
+
+```js
+db.foo.createIndex({ age: 1 });
+
+// on a sub field
+db.foo.createIndex({ people.age: 1 });
+```
+
+An index like this `{ age: 1 }` can be used for these queries:
+
+* Query
+    * `{ age: 20 }`;
+    * `{ age: { $gt: 20, $lt: 30 } }`: filter by range;
+    * `{ age: { $in: [ 20, 30, 40 ] } }`: filter by distinctive values;
+    * `{ age: { $in: [ 20, 30, 40 ] }, name: 'Gary' }`: `IXSCAN` on the `age` index, then filter by `name`;
+
+* Sort
+    * `.find({ name: 'Gary' }).sort({ age: 1 })`: `IXSCAN` on the `age` index for sorting, then filter by `name`;
+    * `.find({ name: 'Gary' }).sort({ age: -1 })`: backword `IXSCAN` on the `age` index for sorting;
+    * `.find({ age: { $gt: 20 } }).sort({ age: 1 })`: `IXSCAN` for both sorting and filtering;
+
+### Compound indexes
+
+For an index `{a: 1, b: 1, c: 1}`, to use it:
+
+* Queried fields must be a **prefix** of the indexed fileds:
+
+    * `{ a: 20 }`; 
+    * `{ a: 20, b: 30 }`;
+    * `{ a: 20, b: 30, c: 40 }`;
+    * `{ a: 20, b: { $gte: 30 } }`;
+    * `{ a: { $lte: 20 }, c: { $gte: 30 } }`: `keysExamined` will be larger than `docsExamined`;
+    * **NOT** used for:
+        * `{ b: { $lte: 20 } }`;
+        * `{ b: { $lte: 20 }, c: 30 }`;
+
+* For sorting
+
+    * `.find().sort({ a: 1, b: 1 })`: index prefix;
+    * `.find().sort({ a: -1 })`: `b` will be sorted backwards;
+    * `.find().sort({ a: -1, b: -1 })`: invert;
+    * `.find({ a: 20 }).sort({ b: 1 })`: `a` is an equality predicate and is before `b` in the index;
+    * `.find({ a: 20, c: { $gt: 20 } }).sort({ b: 1 })`: `a` is an equality predicate and is before `b` in the index;
+    * **NOT** used for:
+        * `.find().sort({ b: 1, a: 1 })`;
+        * `.find().sort({ a: 1, b: -1 })`;
+        * `.find().sort({ a: -1, b: 1 })`;
+        * `.find().sort({ a: 1, c: 1 })`;
+        * `.find().sort({ a: 1, c: 1 })`;
+        * `.find({ a: { $gt: 20 }}).sort({ b: 1 })`: `a` is a range predicate, the index can be used for filtering but not sorting;
+
+**Equality fields first, then sort fields, then range fields**
+
+
+### Full text index
+
+```js
+// create a text index
+db.foo.createIndex({'description': 'text'});
+
+// search against the index (case insensitive), not every word need to be present in the record
+db.foo.find({$text: {$search: 'football dog'}})
+
+// sort by text maching score
+db.foo.find({$text: {$search: 'football dog'}}, {score: {$meta: 'textScore'}}).sort({score: {$meta: 'textScore'}})
+```
+
+### Explain
+
+Use `explain()` to show how query is executed:
+
+```js
+db.movies.explain().find({'title': 'Jaws'})
+
+// equivalent to
+var exp = db.movies.explain();
+exp.find({'title': 'Jaws'});
+```
+
+* `explain()` returns an explainable object, which can then be used with a lot of operations, like `find()`, `count()`, `update()`, `remove()`, `group()`, `aggregate()` etc;
+
+* The old syntax is using `explain()` on a cursor object, like:
+
+    ```js
+    db.movies.find({'title': 'Jaws'}).explain();
+    ```
+
+    but it doesn't work for `count()` which doesn't return a cursor object;
+
+* Three levels of verbosity:
+
+    * `queryPlanner`: don't actually exec the winning plan;
+    * `executionStats`: do exec the winning plan and return stats;
+    * `allPlansExecution`: more verbose, show info about rejected plans;
+
+* Stages:
+
+    * `COLLSCAN`: scan all the documents;
+    * `IXSCAN`: scan the index;
+    * `FETCH`: fetch document after `IXSCAN`;
+    * `SORT`: in memory sort, expensive operation, try to avoid this;
+    * `PROJECTION`: transform data to needed form; 
+
+### Covered queries
+
+A covered query is a query that is covered by an index, no need to go to read any document (`totalDocsExamined` in explain is 0);
+
+If a collection has schema like this:
+
+```js
+{
+    _id: 1,
+    name: 'Gary',
+    age: 20,
+}
+```
+
+and there is a index `{name: 1, age: 1}`, for the following queries:
+
+* `.find({name: 'Gary', age: 20})`: NOT COVERED; 
+* `.find({name: 'Gary', age: 20}, {_id: 0})`: NOT COVERED, MongoDB doesn't know whether there is any field not covered by the index; 
+* `.find({name: 'Gary', age: 20}, {_id: 0, name: 1, age: 1})`: COVERED, all needed fields are covered by the index; 
+
+So, inorder for a query to be covered, you need to be **explicit about needed fields, (`_id` need to be suppressed explicitly)**;
+
+
+## Performance
+
+### Hardware Condsiderations
+
+* RAM (most db operations are done in the RAM), the larger and faster, the better;
+* CPU, benefit from multi-core CPUs;
+* Disk, IOPS matters, SSD is better than SATA, RAID 10 is the suggested RAID architecture;
+* Networking;
+
+### Profiling
+
+```js
+// show status
+db.getProfilingStatus()
+
+// turn off profilling
+db.getProfilingLevel(0)
+
+// log queries taken longer than 22ms
+db.setProfilingLevel(1, {slowms: 22})
+
+// log all queries
+db.setProfilingLevel(2)
+
+// profilling data are in 'system.profile' collection, use 'ns' key to limit to queries against a paticular collection
+db.system.profile.find({ns: /test.foo/})
+```
