@@ -678,22 +678,28 @@ stop execution after the first successed
 
 ## Here documents
 
-    $ cat <<EOT
-    > haha
-    > here documents
-    > EOT
-    haha
-    here documents
+Used in place of standard input
 
-variable expansion in here documents:
+```sh
+name='Gary'
 
-    $ name='Lee'
-    $ echo $name
-    Lee
-    $ cat <<EOT
-    > my name: $name
-    > EOT
-    my name: Lee
+# write something to a file, varialbes expanded
+cat > result.txt <<EOT
+hello ${name}
+EOT
+
+cat result.txt
+# hello Gary
+
+# quote EOT to disable variable expansion
+cat > result2.txt <<'EOT'
+hello ${name}
+EOT
+
+cat result2.txt
+# hello ${name}
+```
+
 
 use here documents to edit an file:
 
