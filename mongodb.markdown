@@ -27,12 +27,18 @@ MongoDB
         - [Creation Mode](#creation-mode)
     - [Single field indexes](#single-field-indexes)
     - [Compound indexes](#compound-indexes)
+    - [Multikey indexes](#multikey-indexes)
+    - [Partial index](#partial-index)
     - [Full text index](#full-text-index)
     - [Explain](#explain)
     - [Covered queries](#covered-queries)
 - [Performance](#performance)
     - [Hardware Condsiderations](#hardware-condsiderations)
     - [Profiling](#profiling)
+- [Aggregation](#aggregation)
+    - [Overview](#overview)
+    - [`$match` stage](#match-stage)
+    - [`$project`](#project)
 
 
 ## Concepts
@@ -320,6 +326,9 @@ db.data.find({ actors: 'Julia Roberts' });
 // actors array has 3 elements
 db.data.find({ actors: { $size: 3 } });
 
+// contains both actors
+db.data.find({ actors: { $all: ['Julia Roberts', 'Hugh Grant'] } });
+
 // the first element in the actors array is 'Julia Roberts'
 db.data.find({ 'actors.0': 'Julia Roberts' );
 
@@ -330,6 +339,17 @@ db.scores.find({ results: { $gte: 70, $lt: 80 } });
 // CORRECT WAY TO APPLY MULTI CONDITIONS ON ONE ELEMENT
 //      at least one element of the results array >= 70 and < 80
 db.scores.find({ results: { $elemMatch: { $gte: 70, $lt: 80 } } });
+
+// actors don't contain either of them
+db.data.find({ 
+    actors: { 
+        $not: { 
+            $elemMatch: { 
+                $in: ['Julia Roberts', 'Hugh Grant']
+            } 
+        } 
+    }
+});
 ```
 
 ### Regex
@@ -457,28 +477,6 @@ db.students.createIndex({ student_id: 1 }, { unique: true });
 db.students.createIndex({ email: 1 }, { unique: true, sparse: true });
 ```
 
-For a schema like this:
-
-```js
-{
-    name: 'Gary',
-    tags: ['reading', 'skipping', 'learning'],
-    color: 'blue',
-    location: ['NZ', 'CN'],
-    scores: [{
-            class: 'Math',
-            score: 30,
-        }, {
-            class: 'History',
-            score: 66,
-        }]
-}
-```
-
-* `{'tags': 1}`: a multikey index; 
-* `{'tags': 1, 'color': 1}` is valid;
-* `{'tags': 1, 'location': 1}` is **NOT** valid, can't use two array fields in one key;
-
 #### Creation Mode
 
 * Foreground:
@@ -535,8 +533,10 @@ For an index `{a: 1, b: 1, c: 1}`, to use it:
     * `.find().sort({ a: 1, b: 1 })`: index prefix;
     * `.find().sort({ a: -1 })`: `b` will be sorted backwards;
     * `.find().sort({ a: -1, b: -1 })`: invert;
-    * `.find({ a: 20 }).sort({ b: 1 })`: `a` is an equality predicate and is before `b` in the index;
-    * `.find({ a: 20, c: { $gt: 20 } }).sort({ b: 1 })`: `a` is an equality predicate and is before `b` in the index;
+    * Equlaity on index prefix, followed by sort field:
+        * `.find({ a: 20 }).sort({ b: 1 })`;
+        * `.find({ a: 20, b: { $gt: 20 } }).sort({ b: 1 })`;
+        * `.find({ a: 20, c: { $gt: 20 } }).sort({ b: 1 })`;
     * **NOT** used for:
         * `.find().sort({ b: 1, a: 1 })`;
         * `.find().sort({ a: 1, b: -1 })`;
@@ -547,6 +547,73 @@ For an index `{a: 1, b: 1, c: 1}`, to use it:
 
 **Equality fields first, then sort fields, then range fields**
 
+### Multikey indexes
+
+For a schema like this:
+
+```js
+{
+    name: 'Gary',
+    tags: ['reading', 'skipping', 'learning'],
+    color: 'blue',
+    location: ['NZ', 'CN'],
+    scores: [{
+            class: 'Math',
+            score: 30,
+        }, {
+            class: 'History',
+            score: 66,
+        }]
+}
+```
+
+* `{'tags': 1}`: a multikey index, each element of the array is a key; 
+* `{'scores.class': 1}`: can be on a sub-field of documents in an array;
+* `{'tags': 1, 'color': 1}` is valid;
+* `{'tags': 1, 'location': 1}` is **NOT** valid, can't use two array fields in one index;
+
+### Partial index
+
+* Not all documents are indexed, you can just index a subset which get most of the queries, it will be more efficient, since not all documents need to be added to the index:
+    ```js
+    {
+        ...
+        cuisine: "Sichuan",
+        stars: 4,
+        address: {
+            city: "Auckland",
+            ...
+        }
+    }
+    ```
+    create a partial index on city and cuisine, but only for restaurants with ratings higher than 3.5, that will cover most queries:
+    ```js
+    db.restaurants.createIndex(
+        { 'address.city': 1, cuisine: 1 },
+        { partialFilterExpression: { 'stars': { $gte: 3.5 }}}
+    );
+    ```
+* The filter field doesn't need to be in the index;
+* The query needs to have predicates matching the filter expression:
+    ```js
+    db.restaurants.find({
+        'address.city': 'Auckland',
+        'stars': { $gte: 4 },     // needed inorder to use the index
+    });
+    ```
+* Sparse index is a special case of partial index:
+    ```js
+    db.restaurants.createIndex(
+        { 'stars': 1 },
+        { sparse: true }
+    );
+
+    // is equivalent to 
+    db.restaurants.createIndex(
+        { 'stars': 1 },
+        { partialFilterExpression: { 'stars': { $exists: true }}}
+    );
+    ```
 
 ### Full text index
 
@@ -554,10 +621,11 @@ For an index `{a: 1, b: 1, c: 1}`, to use it:
 // create a text index
 db.foo.createIndex({'description': 'text'});
 
-// search against the index (case insensitive), not every word need to be present in the record
+// search against the index (case insensitive)
+//  not every word need to be present in the record
 db.foo.find({$text: {$search: 'football dog'}})
 
-// sort by text maching score
+// sort by text maching score, this makes sure the best result returns first
 db.foo.find({$text: {$search: 'football dog'}}, {score: {$meta: 'textScore'}}).sort({score: {$meta: 'textScore'}})
 ```
 
@@ -646,4 +714,118 @@ db.setProfilingLevel(2)
 
 // profilling data are in 'system.profile' collection, use 'ns' key to limit to queries against a paticular collection
 db.system.profile.find({ns: /test.foo/})
+```
+
+## Aggregation
+
+### Overview
+
+Aggregation allows you to do some data processing on the server, instead of fetching all the data and processing them in a client application.
+
+```js
+// basic aggregate structure
+db.myCollection.aggregate([
+    { stage1 },
+    { stage2 },
+    { ...stageN },
+], {
+    options
+});
+
+// simple example with two stages
+db.solarSystem.aggregate([{
+    $match: { 
+        meanTemperature: { $gte: -40, $lte: 40 }
+    }
+}, {
+    $project: {
+        _id: 0, 
+        name: 1,
+        hasMoons: { $gt: [ "$numberOfMoons", 0 ] } 
+    } 
+}]);
+// { "name" : "Earth", "hasMoons" : true }
+```
+
+* Field path: `"$age"`    (single `$`)
+* System variable: `"$$CURRENT"`    (`$$` followed by all uppercase)
+* User variable: `"$$foo"`    (`$$` followed by all lowercase)
+
+### `$match` stage
+
+* Use the same syntax as `find`;
+* Should come early in an aggregation pipeline;
+  
+### `$project`
+
+* Transforms data, like the `map()` function in JS;
+* More powerful than projection in find, not limited to removing and retaining fields, it lets you create new fields;
+* Can be used as many times as required within a pipeline;
+
+```js
+// get the count of movies with a single word title
+db.movies.aggregate([
+    {
+        // split the "$title" field
+        $project: {
+            title: { $split: ["$title", " "] }
+        }
+    }, {
+        // filter by array size
+        $match: {
+            title: { $size: 1 }
+        }
+    }
+]).itcount();
+
+
+// find movies which has the same name in 'directors', 'cast' and 'writers'
+db.movies.aggregate([
+    {
+        // make sure each field is a non empty array
+        $match: { 
+            cast: { $elemMatch: { $exists: true } },
+            directors: { $elemMatch: { $exists: true } },
+            writers: { $elemMatch: { $exists: true } }
+        }
+    }, {
+        // process writers array, convert 'George Lucas (story)' to 'George Lucas'
+        $project: {
+            cast: 1,
+            directors: 1,
+            writers: { 
+                $map: {
+                    input: "$writers",
+                    as: "writer",
+                    in: {
+                        $arrayElemAt: [
+                            {
+                                $split: [ "$$writer", " (" ]
+                            },
+                            0
+                        ]
+                    }
+                }
+            }
+        }
+    }, {
+        // get the $size of array intersection
+        $project: {
+            common_count: {
+                $size: {
+                    $setIntersection: [
+                        "$cast",
+                        "$directors",
+                        "$writers",
+                    ]
+                }
+            }
+        }
+    }, {
+        // count >= 1
+        $match: {
+            common_count: { $gte: 1 }
+        }
+    }
+]).itcount();
 ```
