@@ -4,9 +4,15 @@ MongoDB
 - [Concepts](#concepts)
     - [`BSON`](#bson)
     - [Field](#field)
-- [Architecture](#architecture)
 - [Connection / Management](#connection--management)
-- [Data Import / Export](#data-import--export)
+    - [`mongod`](#mongod)
+    - [connection](#connection)
+    - [`mongo` shell](#mongo-shell)
+    - [Other CLI tools](#other-cli-tools)
+    - [Security](#security)
+    - [Authentication mechanisms](#authentication-mechanisms)
+    - [Authorization](#authorization)
+        - [Built-in roles](#built-in-roles)
 - [CRUD](#crud)
     - [Create](#create)
     - [Read](#read)
@@ -22,6 +28,11 @@ MongoDB
 - [NodeJS](#nodejs)
 - [Schema design](#schema-design)
 - [Storage Enginge](#storage-enginge)
+- [Architecture](#architecture)
+    - [Databases](#databases)
+    - [Collections](#collections)
+    - [Replica Set](#replica-set)
+    - [Sharding](#sharding)
 - [Indexes](#indexes)
     - [Create Indexes](#create-indexes)
         - [Creation Mode](#creation-mode)
@@ -39,6 +50,11 @@ MongoDB
     - [Overview](#overview)
     - [`$match` stage](#match-stage)
     - [`$project`](#project)
+    - [`$addField`](#addfield)
+    - [`$geoNear`](#geonear)
+    - [cusor-like stages](#cusor-like-stages)
+    - [`$sample`](#sample)
+    - [`$group`](#group)
 
 
 ## Concepts
@@ -83,13 +99,45 @@ A field can be
 * Document (object);
 
 
-## Architecture
-
-![MongoDB Sharding and Replica Set](./images/mongo-sharding-replicaset.png)
-
-
-
 ## Connection / Management
+
+### `mongod`
+
+```sh
+mongod --port 27000 --dbpath '/data/db' --bind_ip "192.168.103.100,localhost" --auth
+```
+
+Options:
+
+* `--port`;
+* `--dbpath`;
+* `--bind_ip`: ips to bind to;
+* `--auth`: enable authentication;
+* `--logpath`;
+* `--fork`: start in bac￼kground;
+
+the above command line options can be saved in a config file
+
+```yaml
+storage:
+  dbPath: /data/db
+
+net:
+  port: 27000
+  bindIp: 192.168.103.100,127.0.0.1
+
+security:
+  authorization: enabled
+```
+
+then start `monogd` with this config file
+
+```sh
+mongod --config-file mymongod.conf
+```
+
+
+### connection
 
 ```sh
 # a sample connection command
@@ -106,6 +154,7 @@ In the above example, you are:
 * Specifying an auth db;
 * Using `--ssl` to enable encryption;
 
+### `mongo` shell
 
 After connection, use `help` to get started
 
@@ -115,10 +164,33 @@ use <db>            # switch to a db
 
 show tables         # show tables in current db
 
-db.users.drop()     # drop/delete the users table
+use admin
+db.shutdownServer() # shut down the server
+```
 
+```js
+// this is the underlying command, others are shell helper commands that use this one
+db.runCommand()
+
+// db
+db.dropDatabase()
+db.createCollection()
+
+// user
+db.createUser()
+db.dropUser()
+
+// collection 
+db.<collection>.renameCollection()
+db.<collection>.createIndex()
+db.<collection>.drop()
+
+// find
 db.movies.find().pretty()   # add `pretty()` for pretty output, this output 20 documents by default
 it                          # iterate over the next 20 documents
+
+// load a javascript file
+load('./my.js')
 ```
 
 * `find()` actually returns an iterator, you can use `next()`, `hasNext()` on it
@@ -128,21 +200,133 @@ var r = db.movieDetails.find({});
 r.hasNext()
 ```
 
+### Other CLI tools
 
-## Data Import / Export
+* `mongostat`
+* `mongodump`
 
-Use `mongoimport`, specify database and collection name
+    ```sh
+    # dump in BSON format
+    mongodump --db applicationData --collection products
+    ```
+
+* `mongorestore`
+
+    ```sh
+    # '--drop' drops existing data
+    mongorestore --drop dump/
+    ```
+
+* `mongoexport`
+
+    ```sh
+    # export in JSON format
+    mongoexport --db applicationData --collection products -o products.json
+    ```
+
+* `mongoimport`
+
+    ```sh
+    # import with auth options
+    mongoimport --port 27000 \
+                -u my-user \
+                -p my-pass \
+                --authenticationDatabase=admin \
+                -d applicationData \
+                -c products \
+                ./products.json
+    ```
+
+### Security
 
 ```sh
-mongoimport -d crunchbash -c companies companies.json
+# enable authentication, if no user exists
+#   only connections from localhost are allowed
+#   after the first user is created, you need to use it
+mongod --auth
 ```
 
-In Mongo shell, using `load`
+```sh
+# add a user to 'admin'
+mongo admin --eval '
+  db.createUser({
+    user: "root",
+    pwd: "root-pass",
+    roles: [
+      { role: "root", db: "admin" }
+    ]
+  })
+'
 
-```js
-# the shell is a JS interpreter, so you can run a js script to load data
-load("demoDB.js")
+# connect, authenticating agains the 'admin' db
+mongo --username gary \
+        --password \
+        --authenticationDatabase admin
 ```
+
+* It's recommended to create all users in the `admin` database;
+
+### Authentication mechanisms
+
+* SCRAM (basic)
+* X.509
+* LDAP (enterprise only)
+* Kerberos (enterprise only)
+
+### Authorization
+
+Role Based Access Control (RBAC):
+
+* Each user has one or more **Roles**;
+* Each **Role** has one or more **Privileges**;
+* A **Privilege** represents a group of **Actions** and the **Resources** those actions apply to;
+
+```sh
+# grand a role to a user:
+db.grantRolesToUser("dba",  [
+    { db: "playground", role: "dbOwner" }
+];
+
+# show role privileges:
+db.runCommand({
+    rolesInfo: { role: "dbOwner", db: "playground" },
+    showPrivileges: true
+})
+```
+
+#### Built-in roles
+
+* `root`
+
+* `read`
+
+* `readWrite`
+
+    ```sh
+    # create in 'admin' db
+    use admin
+
+    # grant 'readWrite' privilege in 'appData' db
+    db.createUser({
+        user: "app",
+        pwd: "app-pass",
+        roles: [
+            { role: "readWrite", db: "appData" }
+        ]
+    });
+    ```
+
+* `userAdmin`
+
+    privileges include: `createRole`, `dropRole`, `createUser`, `dropUser`, `grantRole`, `revokeRole` etc;
+
+* `dbAdmin`
+
+    privileges include: `dbStats`, `listIndexes`, `collMod` etc;
+
+* `dbAdminAnyDatabase`
+
+    applies to any database;
 
 
 ## CRUD
@@ -457,6 +641,22 @@ A storage engine controls how data and index are stored in a disk, not related t
     * Default since MongoDB v3.2;
     * Document-level concurrency, usually faster than MMAPv1;
     * Offers compression of data and indexes;
+
+
+## Architecture
+
+### Databases
+
+
+### Collections
+
+
+
+### Replica Set
+
+### Sharding
+
+![MongoDB Sharding and Replica Set](./images/mongo-sharding-replicaset.png)
 
 
 ## Indexes
@@ -829,3 +1029,147 @@ db.movies.aggregate([
     }
 ]).itcount();
 ```
+
+### `$addField`
+
+Transform or add new fields;
+
+### `$geoNear`
+
+* Filter by geo distance;
+* Must be first stage;
+
+### cusor-like stages
+
+* `$skip`;
+* `$limit`;
+* `$count`;
+    ```js
+    db.people.aggregate([
+        {
+            $match: {
+                age: 18
+            }
+        }, {
+            // give the $count a label
+            $count: "People Interested"
+        }
+    ]);
+    ```
+* `$sort`;
+
+    * Can use indexes if used early in a pipeline;
+    * Use up to 100MB of RAM by default, option `allowDisUse: true` can be set for larger sorts;
+
+### `$sample`
+
+Get a random set of documents
+
+```js
+
+db.people.aggregate([
+    {
+        ...
+    }, {
+        $sample: 20
+    }
+]);
+```
+
+### `$group`
+
+* Similar to `GROUP` in SQL;
+* Use the specified `_id` field as the group key;
+* You can use accumulator expressions to work on a group of documents: `$sum`, `$avg`, `$first`, `$last`, `$min`, `$max`, `$push`, `$addToSet`, ...;
+
+```js
+// get a list of company names founded in each year
+db.companies.aggregate([
+    {
+        $match: {
+            founded_year: { $ne: null }
+        }
+    }, {
+        $group: {
+            "_id": { 'founded_year': "$founded_year" },
+            "companies": { $push: "$name" }
+        }
+    }, {
+        $sort: { "_id.founded_year": 1 }
+    }
+]);
+
+/*
+{ "_id" : { "founded_year" : 1800 }, "companies" : [ "Alstrasoft", "SmallWorlds", "US Army" ] }
+{ "_id" : { "founded_year" : 1802 }, "companies" : [ "DuPont" ] }
+{ "_id" : { "founded_year" : 1833 }, "companies" : [ "McKesson", "Bachmann Industries" ] }
+{ "_id" : { "founded_year" : 1835 }, "companies" : [ "Bertelsmann" ] }
+...
+*/
+
+// calculate fund raised in each year
+db.companies.aggregate([
+    {
+        $match: {
+            funding_rounds: { $exists: true, $ne: null }
+        }
+    }, {
+        // unwind the funding_rounds array of each doc
+        $unwind: "$funding_rounds"
+    }, {
+        // $sum up the raised_amount
+        $group: {
+            "_id": { 'funded_year': "$funding_rounds.funded_year" },
+            "total_raised": { $sum: "$funding_rounds.raised_amount" }
+        }
+    }, {
+        $sort: { "total_raised": -1 }
+    }
+]);
+/*
+{ "_id" : { "funded_year" : 2008 }, "total_raised" : NumberLong("27249115703") }
+{ "_id" : { "funded_year" : 2011 }, "total_raised" : NumberLong("19879268599") }
+{ "_id" : { "funded_year" : 2009 }, "total_raised" : 19082672825.1 }
+*/
+```
+
+
+
+```js
+db.companies.aggregate([
+    {$match: {
+        founded_year: 2004
+    }},
+    {$project: {
+        name: 1,
+        funding_rounds: 1,
+        roundsCount: {$size: "$funding_rounds"}
+    }},
+    {$match: {
+        roundsCount: {$gte: 5}
+    }},
+]);
+db.companies.aggregate([
+    {$match: {
+        founded_year: 2004
+    }},
+    {$project: {
+        name: 1,
+        funding_rounds: 1,
+        roundsCount: {$size: "$funding_rounds"}
+    }},
+    {$match: {
+        roundsCount: {$gte: 5}
+    }},
+    {$addFields: {
+        avg_amount: {$avg: "$funding_rounds.raised_amount"}
+    }},
+    {$project: {
+        funding_rounds: 0,
+    }},
+    {$sort: {avg_amount: 1}}
+]);
+```
+
+
+
