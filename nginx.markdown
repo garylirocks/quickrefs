@@ -152,7 +152,7 @@ When searching for a virtual server by name, if name matches more than one of th
 * PCRE compatible;
 * If the regex contains `{` or `}`, it should be quoted;
 * A named regular expression capture can be used later as a variable;
-  
+
 ```nginx
 server {
     server_name   ~^(www\.)?(?<domain>.+)$;
@@ -220,7 +220,7 @@ server {
 }
 ```
 
-* For `3xx` codes, specify a url for redirecting 
+* For `3xx` codes, specify a url for redirecting
 
 ```
 return (301 | 302 | 303 | 307) url;
@@ -228,9 +228,17 @@ return (301 | 302 | 303 | 307) url;
 
 * For other codes, you can optionally define a text which appears in the body of the response:
 
-```
-return (1xx | 2xx | 4xx | 5xx) ["text"];
-```
+    ```
+    return (1xx | 2xx | 4xx | 5xx) ["text"];
+    ```
+
+* Pass thru parameters
+
+    ```
+    return 301 https://www.example.com$uri$is_args$args;
+    ```
+
+    `$is_args` is either empty or `?`, `$args` is the paramters string
 
 * Always use `return` for redirections whenever:
 
@@ -273,7 +281,7 @@ server {
     the above code do internal rewrites, `last` indicates stop processing other Rewrite-module directives in current block, and start searching for a new matching `location`, if none of the `rewrite` rules match, it will return `403`.
 
 
-### `upstream` 
+### `upstream`
 
 Used to define server groups that can be referenced by the `proxy_pass`, `fastcgi_pass`, `uwsgi_pass`, `memcached_pass` etc, this is actually a simple **load balancer**.
 
@@ -309,7 +317,7 @@ location ~ ^(.+\.php)(.*)$ {
 
 for this request `/show.php/article/0001`:
 
-* the `SCRIPT_FILENAME` parameter will be equal to `/path/to/php/show.php`; 
+* the `SCRIPT_FILENAME` parameter will be equal to `/path/to/php/show.php`;
 * and the `PATH_INFO` parameter will be equal to `/article/0001`;
 
 
