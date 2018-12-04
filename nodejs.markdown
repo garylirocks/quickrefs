@@ -178,7 +178,7 @@ node --inspect demo.js
 node --inspect-brk demo.js
 ```
 
-by default the Node.js process listens via WebSocket on `127.0.0.1:9229` for debugging messages, a debugger programe then connect to this url (e.g. `ws://127.0.0.1:9229/0f2c936f-b1cd-4ac9-aab3-f63b0f33d55e`). You can also get metadata metadata about the program via a HTTP endpoint (`http://[host:port]/json/list`).
+by default the Node.js process listens via WebSocket on `127.0.0.1:9229` for debugging messages, a debugger programe then connect to this url (e.g. `ws://127.0.0.1:9229/0f2c936f-b1cd-4ac9-aab3-f63b0f33d55e`). You can also get metadata about the program via a HTTP endpoint (`http://[host:port]/json/list`).
 
 
 
