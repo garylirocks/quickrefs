@@ -28,11 +28,15 @@ MongoDB
 - [NodeJS](#nodejs)
 - [Schema design](#schema-design)
 - [Storage Enginge](#storage-enginge)
-- [Architecture](#architecture)
-    - [Databases](#databases)
-    - [Collections](#collections)
-    - [Replica Set](#replica-set)
-    - [Sharding](#sharding)
+- [Replica Set](#replica-set)
+    - [Start a Replica Set](#start-a-replica-set)
+    - [reconfig a running replica set](#reconfig-a-running-replica-set)
+    - [`local` DB](#local-db)
+    - [Write concern levels](#write-concern-levels)
+    - [Read concern levels](#read-concern-levels)
+    - [Read Preference](#read-preference)
+- [Sharding](#sharding)
+    - [Shard key](#shard-key)
 - [Indexes](#indexes)
     - [Create Indexes](#create-indexes)
         - [Creation Mode](#creation-mode)
@@ -79,17 +83,17 @@ transactions                    transactions
 
 ### `BSON`
 
-* `BSON` means binary JSON, is a binary-encoded serialization of JSON-like documents; 
-* MongoDB data is stored and transfered in this format; 
+* `BSON` means binary JSON, is a binary-encoded serialization of JSON-like documents;
+* MongoDB data is stored and transfered in this format;
 * It supports more data types than JSON, such as a Date type, a BinData type, an ObjectId type (for the `_id` field);
 
 
 ### Field
 
-A field can be 
+A field can be
 
 * Scalar value
-    * `string` 
+    * `string`
     * `int32`
     * `double`
     * `decimal`: for finicial calculations
@@ -116,11 +120,16 @@ Options:
 * `--logpath`;
 * `--fork`: start in bac￼kground;
 
-the above command line options can be saved in a config file
+all options can be configed ina YAML file:
 
 ```yaml
 storage:
-  dbPath: /data/db
+  dbPath: /var/mongodb/db
+
+systemLog:
+  destination: file
+  logAppend: true
+  path: /var/mongodb/db/mongod.log
 
 net:
   port: 27000
@@ -128,6 +137,13 @@ net:
 
 security:
   authorization: enabled
+
+processManagement:
+  fork: true
+
+operationProfiling:
+   mode: slowOp
+   slowOpThresholdMs: 50
 ```
 
 then start `monogd` with this config file
@@ -180,7 +196,7 @@ db.createCollection()
 db.createUser()
 db.dropUser()
 
-// collection 
+// collection
 db.<collection>.renameCollection()
 db.<collection>.createIndex()
 db.<collection>.drop()
@@ -232,6 +248,7 @@ r.hasNext()
                 -u my-user \
                 -p my-pass \
                 --authenticationDatabase=admin \
+                --drop  \
                 -d applicationData \
                 -c products \
                 ./products.json
@@ -347,9 +364,9 @@ db.scratch.insertOne({name: 'gary'})
 
 /* insert many */
 db.scratch.insertMany([
-        { name: 'jack' }, 
+        { name: 'jack' },
         { name: 'lucy' },
-    ], 
+    ],
     {
         ordered: false,
     });
@@ -376,7 +393,7 @@ db.users.find()
 // { "_id" : ObjectId("59f9018840bf58d73f217a51"), "name" : "gary", "age" : 20 }
 
 /* specify query and fields */
-db.users.find( 
+db.users.find(
     { age: {$gt: 18} },     # query criteria
     { name: 1 }               # projection, only get 'name' field
 )
@@ -394,7 +411,7 @@ db.data.find({ actors: 'Julia Roberts' });  // any position in an array
 /* $or operator */
 db.data.find({
     $or: [
-        { 'actors': 'Julia Roberts' }, 
+        { 'actors': 'Julia Roberts' },
         { 'year': 2010 }
     ]}
 );
@@ -420,7 +437,7 @@ db.movieDetails.find({
 
     ```js
     cursor.sort([
-        ["founded_year", 1], 
+        ["founded_year", 1],
         ["number_of_employees", -1]
     ])
     ```
@@ -436,8 +453,17 @@ db.users.updateOne(
     )
 // { "acknowledged" : true, "matchedCount" : 1, "modifiedCount" : 1 }
 
-db.users.find()
-// { "_id" : ObjectId("59f9018840bf58d73f217a51"), "name" : "gary", "age" : 30 }
+/* add a new entry to the reviews array */
+db.item.updateOne(
+    { _id: 12 },
+    { $push: {
+        reviews: {
+            name: 'Gary',
+            comment: 'a testing comment',
+            stars: 3,
+            date: 1455800194995
+        }
+    }});
 
 /* update all matching documents: remove the rated field if it is null */
 db.movies.updateMany(
@@ -446,7 +472,7 @@ db.movies.updateMany(
 )
 ```
 
-* Update operators: `$currentDate`, `$inc`, `$min`, `$max`, `$mul`, `$rename`, `$set`, `$setOnInsert`, `$unset`; 
+* Update operators: `$currentDate`, `$inc`, `$min`, `$max`, `$mul`, `$rename`, `$set`, `$setOnInsert`, `$unset`;
 * Array operators: `$`, `$[]`, `$[<identifier>]`, `$addtoSet`, `$pop`, `$pull`, `$push`, `$pushAll`;
 * Array modifiers: `$each`, `$position`, `$slice`, `$sort`;
 
@@ -456,14 +482,14 @@ See here https://docs.mongodb.com/manual/reference/operator/update/
 
 ```js
 /* insert if no match found */
-db.movies.updateOne({ 
-    name: 'Notting Hill' 
-}, { 
-    $set: { 
+db.movies.updateOne({
+    name: 'Notting Hill'
+}, {
+    $set: {
         name: 'Notting Hill',
         rating: 5,
     },
-}, { 
+}, {
     upsert: true,
 });
 ```
@@ -476,13 +502,13 @@ theMovie = db.movies.find({ name: 'Notting Hill' });
 theMovie.rating = 10;
 theMovie.cast = [ 'Julia Roberts' ];
 
-db.movies.replaceOne({ 
-    name: 'Notting Hill' 
-}, 
+db.movies.replaceOne({
+    name: 'Notting Hill'
+},
     theMovie,
 );
 ```
-  
+
 
 ### Delete
 
@@ -516,7 +542,7 @@ db.data.find({ actors: { $all: ['Julia Roberts', 'Hugh Grant'] } });
 // the first element in the actors array is 'Julia Roberts'
 db.data.find({ 'actors.0': 'Julia Roberts' );
 
-// !!!THIS IS USUALLY NOT WHAT WE WANT: 
+// !!!THIS IS USUALLY NOT WHAT WE WANT:
 //      there is one element >= 70 and one element < 80
 db.scores.find({ results: { $gte: 70, $lt: 80 } });
 
@@ -525,13 +551,13 @@ db.scores.find({ results: { $gte: 70, $lt: 80 } });
 db.scores.find({ results: { $elemMatch: { $gte: 70, $lt: 80 } } });
 
 // actors don't contain either of them
-db.data.find({ 
-    actors: { 
-        $not: { 
-            $elemMatch: { 
+db.data.find({
+    actors: {
+        $not: {
+            $elemMatch: {
                 $in: ['Julia Roberts', 'Hugh Grant']
-            } 
-        } 
+            }
+        }
     }
 });
 ```
@@ -571,11 +597,11 @@ MongoClient.connect('mongodb://localhost:27017/crunchbase', function(err, db) {
     db.collection('companies').find(query).toArray(function(err, docs) {
         assert.equal(err, null);
         assert.notEqual(docs.length, 0);
-        
+
         docs.forEach(function(doc) {
             console.log( doc.name + " is a " + doc.category_code + " company." );
         });
-        
+
         db.close();
     });
 });
@@ -643,20 +669,194 @@ A storage engine controls how data and index are stored in a disk, not related t
     * Offers compression of data and indexes;
 
 
-## Architecture
+## Replica Set
 
-### Databases
+* MongoDB uses statement replication (**oplog**) instead of binary replication (requires each node has the same OS, architecture, db version);
+* Each statement is transformed to be **idempotent**, making sure it can be applied multiple times and get the same result;
+* A replica set should
+    * contain at least 3 nodes, up to 50;
+    * up to 7 nodes can be voting members (so election won't take too much time);
+* A node can be set to be an **arbiter**, which doesn't hold any data, only used in an election arbiter;
+* A node can be **hidden**, which means it syncs the data, but won't be seen by an application, a hidden node can vote;
+* A hidden node can be set to be **delayed**, useful for **hot backup**: e.g., if a node is delayed for 1 hour, and someone deleted a collection accidently, you got 1 hour's time to recover it from the delayed node;
+* There must be a majority of nodes left in a set to elect a primary, that means a replica set must have at least **3 nodes**, if not a majority of nodes left, then no one can be elected as a primary, all nodes become secondary and the set becomes **read-only**;
+
+### Start a Replica Set
+
+```sh
+# start multiple mongod with the same repl set name
+#  the repl set name can be configed in a conf file as well
+mongod --replSet=<replset>
+
+# connect to one node
+mongo --port <port>
+
+# only need to initiate on one node
+rs.initiate()
+
+# create a user, otherwise you can't add nodes to the set
+use admin
+db.createUser({
+  user: "my-user",
+  pwd: "my-pass",
+  roles: [
+    {role: "root", db: "admin"}
+  ]
+})
+
+# exit now and log back using a username
+exit
+```
+
+```sh
+# connecting to a replica set, which acctually connects to the primary node
+mongo --host "<replset>/<ip>:<port>" -u <user> -p <pass> --authenticationDatabase 'admin'
+
+# show status
+rs.status()
+
+# add a node
+rs.add("<ip>:<port>")
+
+# remove a node
+rs.remove("<ip>:<port>")
+
+# check
+rs.isMaster()
+
+# step down
+rs.stepDown()
+
+# show oplog data
+rs.printReplicationInfo()
+```
+
+instead of adding nodes one by one, you can put them in a config file:
+
+```js
+// init_replica.js
+config = { _id: "myReplSet", members:[
+          { _id : 0, host : "localhost:27017"},
+          { _id : 1, host : "localhost:27018"},
+          { _id : 2, host : "localhost:27019"} ]
+};
+
+rs.initiate(config);
+rs.status();
+```
+
+then `mongo < init_replica.js`
 
 
-### Collections
+### reconfig a running replica set
+
+```sh
+# get current config (a JS object)
+cfg = rs.conf()
+
+# update the config: making member 3 hidden
+cfg.members[3].votes = 0
+cfg.members[3].hidden = true
+cfg.members[3].priority = 0
+
+# apply the updated config
+rs.reconfig(cfg)
+```
+
+### `local` DB
+
+The `local` db contains information about the repl set:
+
+```sh
+# quering oplog
+use local
+db.oplog.rs.find()
+
+db.oplog.rs.stats()
+```
+
+* `oplog.rs` is a **capped** collection, which means its size is predefined (5% of available disk by default), new log entries will overwrite oldest entries when the size limit is reached;
+* One operation may result in many `oplog.rs` entries, such as `updateMany` will create an entry for each affected document;
+* Any data written into the `local` db is strictly local, it won't be added to oplog, won't be replicated;
+
+### Write concern levels
+
+Whether a client app waits for acknowledgement from the replica set:
+
+* `0` - don't wait for acknowledgement;
+* `1` - (default) wait for acknowledgement from primary only (written data may lost if the primary stops working);
+* `>=2` - wait from primary and one or more secondaries;
+* `majority` - wait from a majority number of nodes;
+
+Other options:
+
+* `wtimeout` - timeout threshold;
+* `j` - whether the journal needs to be saved to disk before sending acknowledgement (default to `false`, which may result in data loss);
+
+Usage:
+
+```js
+db.foo.insert({
+    ...
+}, {
+    writeConcern: {
+        w: 'majority',
+        wtimeout: 500,
+    }
+});
+
+// return something like this if timeout exceeded:
+
+/*
+WriteResult({
+	"nInserted" : 1,
+	"writeConcernError" : {
+		"code" : 64,
+		"codeName" : "WriteConcernFailed",
+		"errInfo" : {
+			"wtimeout" : true
+		},
+		"errmsg" : "waiting for replication timed out"
+	}
+})
+*/
+```
+
+### Read concern levels
+
+* `local`   - latest data (data may be lost if a rollback occurs);
+* `available`   - the same as `local` except in sharded clusters;
+* `majority` - return data present on majority number of nodes;
+* `linearizable`
+
+![MongoDB Read Concerns](images/mongo-read-concerns.png)
+
+### Read Preference
+
+* `primary` - always get the latest data
+* `primaryPreferred`
+* `secondary`
+* `secondaryPreferred`
+* `nearest` - good for geographically distributed system
+
+all options except `primary` may result in stale data
 
 
-
-### Replica Set
-
-### Sharding
+## Sharding
 
 ![MongoDB Sharding and Replica Set](./images/mongo-sharding-replicaset.png)
+
+* You can start and connect to multiple `mongos` from a client driver, the driver can failover from one to another;
+* In production env, the config servers should be in a replication set as well;
+
+### Shard key
+
+* MongoDB use a hash function on shard key for sharding;
+* MongoDB will create an index for the shard key if it doesn't exist;
+* Shard key **doesn't** need to be unique;
+* A unique key on a sharded collection must be the shard key itself or indexes prefixed with the shard key;
+* If a shard key is not included in a query, `mongos` will go to all the shards to get the data;
+* All updates should contain the shard key or `_id` field;
 
 
 ## Indexes
@@ -719,7 +919,7 @@ For an index `{a: 1, b: 1, c: 1}`, to use it:
 
 * Queried fields must be a **prefix** of the indexed fileds:
 
-    * `{ a: 20 }`; 
+    * `{ a: 20 }`;
     * `{ a: 20, b: 30 }`;
     * `{ a: 20, b: 30, c: 40 }`;
     * `{ a: 20, b: { $gte: 30 } }`;
@@ -767,7 +967,7 @@ For a schema like this:
 }
 ```
 
-* `{'tags': 1}`: a multikey index, each element of the array is a key; 
+* `{'tags': 1}`: a multikey index, each element of the array is a key;
 * `{'scores.class': 1}`: can be on a sub-field of documents in an array;
 * `{'tags': 1, 'color': 1}` is valid;
 * `{'tags': 1, 'location': 1}` is **NOT** valid, can't use two array fields in one index;
@@ -808,7 +1008,7 @@ For a schema like this:
         { sparse: true }
     );
 
-    // is equivalent to 
+    // is equivalent to
     db.restaurants.createIndex(
         { 'stars': 1 },
         { partialFilterExpression: { 'stars': { $exists: true }}}
@@ -818,8 +1018,8 @@ For a schema like this:
 ### Full text index
 
 ```js
-// create a text index
-db.foo.createIndex({'description': 'text'});
+// create a text index (on multiple fields)
+db.foo.createIndex({'title': 'text', 'slogan': 'text', 'description': 'text'})
 
 // search against the index (case insensitive)
 //  not every word need to be present in the record
@@ -863,7 +1063,7 @@ exp.find({'title': 'Jaws'});
     * `IXSCAN`: scan the index;
     * `FETCH`: fetch document after `IXSCAN`;
     * `SORT`: in memory sort, expensive operation, try to avoid this;
-    * `PROJECTION`: transform data to needed form; 
+    * `PROJECTION`: transform data to needed form;
 
 ### Covered queries
 
@@ -881,9 +1081,9 @@ If a collection has schema like this:
 
 and there is a index `{name: 1, age: 1}`, for the following queries:
 
-* `.find({name: 'Gary', age: 20})`: NOT COVERED; 
-* `.find({name: 'Gary', age: 20}, {_id: 0})`: NOT COVERED, MongoDB doesn't know whether there is any field not covered by the index; 
-* `.find({name: 'Gary', age: 20}, {_id: 0, name: 1, age: 1})`: COVERED, all needed fields are covered by the index; 
+* `.find({name: 'Gary', age: 20})`: NOT COVERED;
+* `.find({name: 'Gary', age: 20}, {_id: 0})`: NOT COVERED, MongoDB doesn't know whether there is any field not covered by the index;
+* `.find({name: 'Gary', age: 20}, {_id: 0, name: 1, age: 1})`: COVERED, all needed fields are covered by the index;
 
 So, inorder for a query to be covered, you need to be **explicit about needed fields, (`_id` need to be suppressed explicitly)**;
 
@@ -934,15 +1134,15 @@ db.myCollection.aggregate([
 
 // simple example with two stages
 db.solarSystem.aggregate([{
-    $match: { 
+    $match: {
         meanTemperature: { $gte: -40, $lte: 40 }
     }
 }, {
     $project: {
-        _id: 0, 
+        _id: 0,
         name: 1,
-        hasMoons: { $gt: [ "$numberOfMoons", 0 ] } 
-    } 
+        hasMoons: { $gt: [ "$numberOfMoons", 0 ] }
+    }
 }]);
 // { "name" : "Earth", "hasMoons" : true }
 ```
@@ -955,7 +1155,7 @@ db.solarSystem.aggregate([{
 
 * Use the same syntax as `find`;
 * Should come early in an aggregation pipeline;
-  
+
 ### `$project`
 
 * Transforms data, like the `map()` function in JS;
@@ -983,7 +1183,7 @@ db.movies.aggregate([
 db.movies.aggregate([
     {
         // make sure each field is a non empty array
-        $match: { 
+        $match: {
             cast: { $elemMatch: { $exists: true } },
             directors: { $elemMatch: { $exists: true } },
             writers: { $elemMatch: { $exists: true } }
@@ -993,7 +1193,7 @@ db.movies.aggregate([
         $project: {
             cast: 1,
             directors: 1,
-            writers: { 
+            writers: {
                 $map: {
                     input: "$writers",
                     as: "writer",
