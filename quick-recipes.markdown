@@ -9,6 +9,7 @@ Quick productivity tips, shortcuts, command line snippets.
 - [Add a user as sudoer](#add-a-user-as-sudoer)
 - [Change file/directory permissions](#change-filedirectory-permissions)
     - [`setgid`](#setgid)
+    - [sticky bit](#sticky-bit)
 - [Find out Linux distribution name](#find-out-linux-distribution-name)
 - [Find module version](#find-module-version)
 - [Disable a service from autostart](#disable-a-service-from-autostart)
@@ -38,13 +39,13 @@ Ctrl + Alt + F1 ~ F6    # switch to virtual terminals
 # workspaces
 Super + s               # spread workspaces
 
-Ctrl + Alt + Left       # move to workspace left 
-Ctrl + Alt + Right      # move to workspace right 
+Ctrl + Alt + Left       # move to workspace left
+Ctrl + Alt + Right      # move to workspace right
 Ctrl + Alt + Down       # move to workspace down
 Ctrl + Alt + Up         # move to workspace up
 
-Ctrl + Shift + Alt + Left       # move window to workspace left 
-Ctrl + Shift + Alt + Right      # move window to workspace right 
+Ctrl + Shift + Alt + Left       # move window to workspace left
+Ctrl + Shift + Alt + Right      # move window to workspace right
 Ctrl + Shift + Alt + Down       # move window to workspace down
 Ctrl + Shift + Alt + Up         # move window to workspace up
 ```
@@ -64,10 +65,10 @@ OR
 on the command line (Warning -- this overwrites your existing settings!):
 
 ```sh
-gsettings set org.gnome.desktop.input-sources xkb-options "['ctrl:nocaps']" 
+gsettings set org.gnome.desktop.input-sources xkb-options "['ctrl:nocaps']"
 ```
 
-OR 
+OR
 
 see method at this link: http://askubuntu.com/a/633539
 
@@ -80,13 +81,13 @@ sudo vi /etc/default/keyboard
 sudo dpkg-reconfigure keyboard-configuration
 ```
 
-## Add a user as sudoer    
+## Add a user as sudoer
 
 add the user to the `sudo` group
 
 ```sh
 # login as root, add gary to the sudo group
-usermod -a -G sudo gary 
+usermod -a -G sudo gary
 
 # login as gary, confirm it had been added to the sudo group
 id
@@ -108,7 +109,7 @@ ls -l
 # drw-rw-r-- 2 gary gary 4096 Nov  7 19:58 b-folder
 
 chmod -R ug+X .
-ls -l         
+ls -l
 # total 4
 # -rw-rw-r-- 1 gary gary    0 Nov  7 19:58 a-file
 # drwxrwxr-- 2 gary gary 4096 Nov  7 19:58 b-folder
@@ -119,7 +120,7 @@ ls -l
 when set on a directory, make new files and directories created in it inherit the group id
 
 ```sh
-ls -dl .       
+ls -dl .
 # drwxrwxr-x 2 gary gary 4096 Nov  7 20:03 .
 
 chmod g+s .         # add setgid to current directory
@@ -128,7 +129,7 @@ ls -dl .
 # drwxrwsr-x 2 gary gary 4096 Nov  7 20:04 .
 
 sudo touch newfile
-sudo mkdir newfolder    
+sudo mkdir newfolder
 
 ls -dl . newfile newfolder
 # drwxrwsr-x 3 gary gary 4096 Nov  7 20:18 .
@@ -139,14 +140,27 @@ ls -dl . newfile newfolder
 * `newfile` inherits its group `gary` from the parent folder;
 * `newfolder` inherits its group `gary`, its `setgid` bit is set as well;
 
+### sticky bit
 
-## Find out Linux distribution name    
+```sh
+ls -adl /tmp/
+# drwxrwxrwt 5 root root 4096 Dec  6 12:32 /tmp/
+
+# add a sticky bit to a directory
+chmod +t mydir
+```
+
+* the `t` bit above indicates that files in this folder can only be renamed or deleted by the file owner or the super user;
+* it's a good practice to add it for world-writable directories;
+
+
+## Find out Linux distribution name
 
 ```sh
 ls /etc/*release*
 # /etc/lsb-release  /etc/os-release
 
-cat /etc/os-release 
+cat /etc/os-release
 # NAME="Ubuntu"
 # VERSION="12.04.2 LTS, Precise Pangolin"
 # ID=ubuntu
@@ -203,7 +217,7 @@ sudo umount /mnt/data
 ### `cifs`
 
 ```sh
-# for cifs, specify server user, client uid/gid, file_mode and dir _mode 
+# for cifs, specify server user, client uid/gid, file_mode and dir _mode
 USER=Administrator mount -o uid=dockeruser,gid=dockeruser,file_mode=0770,dir_mode=0700 //192.168.88.3/data /home/dockeruser/test/mpoint
 
 # you can't chown or chmod after the device is mounted
@@ -216,7 +230,7 @@ USER=Administrator mount -o uid=dockeruser,gid=dockeruser,file_mode=0770,dir_mod
 Ubuntu will create some folders in a user's home directory, such as 'Desktop', 'Music', etc
 
 you can change these folders location by editting `~/.config/user-dirs.dirs`
-    
+
 
 ## Send email
 
@@ -230,12 +244,12 @@ compose message in `msg.txt`:
     hello world!
 
 send mail:
-    
+
 ```sh
 ssmtp jack@gmail.com < msg.txt
 ```
 
-    
+
 ## Work with ps or pdf files
 
 make a ps(PostScript) file from text
@@ -245,13 +259,13 @@ enscript -p syslog.ps /var/log/syslog
 # [ 2 pages * 1 copy ] left in syslog.ps
 # 38 lines were wrapped
 ```
- 
+
 convert ps to pdf
 
 ```sh
 ps2pdf syslog.ps
 
-pdfinfo syslog.pdf 
+pdfinfo syslog.pdf
 #     Title:          Enscript Output
 #     Creator:        GNU Enscript 1.6.5.90
 #     Producer:       GPL Ghostscript 9.10
@@ -282,10 +296,10 @@ login from `a@A` to `b@B` using ssh withoud password, ref: http://www.linuxprobl
 ```
 a@A:~> ssh-keygen -t rsa
 a@A:~> ssh b@B mkdir -p .ssh
-b@B's password: 
+b@B's password:
 
 a@A:~> cat .ssh/id_rsa.pub | ssh b@B 'cat >> .ssh/authorized_keys'
-b@B's password: 
+b@B's password:
 
 # you may need to change some permissions (e.g. this is a must on CentOS 6)
 b@B:~> chmod 700 .ssh
@@ -328,12 +342,12 @@ lorem
 A `docx` file is actually a compressed zip file, so we just need to copy that file as a zip file, and then extract it, all media files are in `word/media/`
 
 ```sh
-cp a.docx the-doc.zip	
+cp a.docx the-doc.zip
 
-unzip the-doc.zip 
+unzip the-doc.zip
 # Archive:  the-doc.zip
-#     inflating: [Content_Types].xml     
-#     inflating: _rels/.rels    
+#     inflating: [Content_Types].xml
+#     inflating: _rels/.rels
 # ...
 
 ls
@@ -352,7 +366,7 @@ ls -A -1 * .*
 # .secret
 # top.txt
 # top.zip
-# 
+#
 # foo:
 # .secret
 # bar
@@ -392,7 +406,7 @@ wget --page-requisites --span-hosts --no-directories --accept jpg,png --execute 
 
 ### Kill a process
 
-* `kill <PID>` 
+* `kill <PID>`
 
     send the `TERM` (a.k.a `-15`) signal to the process, a soft kill;
 
