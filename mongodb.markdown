@@ -32,7 +32,7 @@ MongoDB
     - [Start a Replica Set](#start-a-replica-set)
     - [reconfig a running replica set](#reconfig-a-running-replica-set)
     - [`local` DB](#local-db)
-    - [Write concern levels](#write-concern-levels)
+    - [Write concern](#write-concern)
     - [Read concern levels](#read-concern-levels)
     - [Read Preference](#read-preference)
 - [Sharding](#sharding)
@@ -46,6 +46,7 @@ MongoDB
     - [Partial index](#partial-index)
     - [Full text index](#full-text-index)
     - [Explain](#explain)
+    - [Hint](#hint)
     - [Covered queries](#covered-queries)
 - [Performance](#performance)
     - [Hardware Condsiderations](#hardware-condsiderations)
@@ -54,11 +55,18 @@ MongoDB
     - [Overview](#overview)
     - [`$match` stage](#match-stage)
     - [`$project`](#project)
-    - [`$addField`](#addfield)
+    - [`$addFields`](#addfields)
     - [`$geoNear`](#geonear)
     - [cusor-like stages](#cusor-like-stages)
     - [`$sample`](#sample)
     - [`$group`](#group)
+    - [`$lookup`](#lookup)
+    - [`$graphLookup`](#graphlookup)
+    - [`$sortByCount`](#sortbycount)
+    - [`$bucket`](#bucket)
+    - [`$facets`](#facets)
+    - [`$out`](#out)
+- [Views](#views)
 
 
 ## Concepts
@@ -573,6 +581,12 @@ db.companies.find({
         $regex: 'facebook',
         $options: 'i'           // case insensitive
     }});
+
+// you can utilise index by matching the beginning part of a  string
+db.companies.find({'name': /^facebook/});
+
+// this one can't use an index
+db.companies.find({'name': /.facebook/});
 ```
 
 ### Geospatial
@@ -651,7 +665,7 @@ Differences to relational DB:
 
 Constraints
 
-* Document size (16MB ?);
+* Document size is limited to 16MB;
 
 
 ## Storage Enginge
@@ -779,16 +793,14 @@ db.oplog.rs.stats()
 * One operation may result in many `oplog.rs` entries, such as `updateMany` will create an entry for each affected document;
 * Any data written into the `local` db is strictly local, it won't be added to oplog, won't be replicated;
 
-### Write concern levels
+### Write concern
 
-Whether a client app waits for acknowledgement from the replica set:
+* `w`: Whether a client app waits for acknowledgement from the replica set:
 
-* `0` - don't wait for acknowledgement;
-* `1` - (default) wait for acknowledgement from primary only (written data may lost if the primary stops working);
-* `>=2` - wait from primary and one or more secondaries;
-* `majority` - wait from a majority number of nodes;
-
-Other options:
+    * `0` - don't wait for acknowledgement;
+    * `1` - (default) wait for acknowledgement from primary only (written data may lost if the primary stops working);
+    * `>=2` - wait from primary and one or more secondaries;
+    * `majority` - wait from a majority number of nodes;
 
 * `wtimeout` - timeout threshold;
 * `j` - whether the journal needs to be saved to disk before sending acknowledgement (default to `false`, which may result in data loss);
@@ -809,15 +821,15 @@ db.foo.insert({
 
 /*
 WriteResult({
-	"nInserted" : 1,
-	"writeConcernError" : {
-		"code" : 64,
-		"codeName" : "WriteConcernFailed",
-		"errInfo" : {
-			"wtimeout" : true
-		},
-		"errmsg" : "waiting for replication timed out"
-	}
+    "nInserted" : 1,
+    "writeConcernError" : {
+        "code" : 64,
+        "codeName" : "WriteConcernFailed",
+        "errInfo" : {
+            "wtimeout" : true
+        },
+        "errmsg" : "waiting for replication timed out"
+    }
 })
 */
 ```
@@ -882,7 +894,7 @@ db.students.createIndex({ email: 1 }, { unique: true, sparse: true });
 * Foreground:
     * default option;
     * fast;
-    * blocks writes and reads on database level;
+    * blocks reads and writes on database level;
 
 * Background
     * don't block;
@@ -1065,6 +1077,19 @@ exp.find({'title': 'Jaws'});
     * `SORT`: in memory sort, expensive operation, try to avoid this;
     * `PROJECTION`: transform data to needed form;
 
+### Hint
+
+You can override MongoDB's index selection by using `hint`
+
+```js
+db.people.find(
+    { name: "John Doe", zipcode: { $gt: "6300" } }
+).hint(
+    { name: 1, zipcode: 1 } // or use the index name here "name_1_zipcode_1"
+);
+```
+
+
 ### Covered queries
 
 A covered query is a query that is covered by an index, no need to go to read any document (`totalDocsExamined` in explain is 0);
@@ -1133,18 +1158,18 @@ db.myCollection.aggregate([
 });
 
 // simple example with two stages
-db.solarSystem.aggregate([{
+db.people.aggregate([{
     $match: {
-        meanTemperature: { $gte: -40, $lte: 40 }
+        age: { $gte: 30, $lte: 40 }
     }
 }, {
     $project: {
         _id: 0,
         name: 1,
-        hasMoons: { $gt: [ "$numberOfMoons", 0 ] }
+        hasChildren: { $gt: [ "$children", 0 ] }
     }
 }]);
-// { "name" : "Earth", "hasMoons" : true }
+// { "name" : "Jack", "hasChildren" : true }
 ```
 
 * Field path: `"$age"`    (single `$`)
@@ -1155,6 +1180,7 @@ db.solarSystem.aggregate([{
 
 * Use the same syntax as `find`;
 * Should come early in an aggregation pipeline;
+* Can utilise indexes;
 
 ### `$project`
 
@@ -1230,7 +1256,7 @@ db.movies.aggregate([
 ]).itcount();
 ```
 
-### `$addField`
+### `$addFields`
 
 Transform or add new fields;
 
@@ -1260,6 +1286,7 @@ Transform or add new fields;
 
     * Can use indexes if used early in a pipeline;
     * Use up to 100MB of RAM by default, option `allowDisUse: true` can be set for larger sorts;
+    * Putting `$limit` and `$sort` close to each other can utilise performant top-k sorting algorithm;
 
 ### `$sample`
 
@@ -1331,45 +1358,267 @@ db.companies.aggregate([
 { "_id" : { "funded_year" : 2011 }, "total_raised" : NumberLong("19879268599") }
 { "_id" : { "funded_year" : 2009 }, "total_raised" : 19082672825.1 }
 */
+
+// get average rating of all movies
+//  null for _id field as a placeholder
+db.movies.aggregate([
+    {
+        $group: {
+            "_id": null
+            "avg_ratings": { $avg: "$ratings" }
+        }
+    }
+]);
 ```
 
+### `$lookup`
 
+* Like `JOIN` in sql;
+* The two collections need to be in the same db;
+
+```js
+db.air_routes.aggregate([
+    {
+        $lookup: {
+            from: 'air_alliances',      // match against
+            localField: 'airline.name',
+            foreignField: 'airlines',
+            as: 'alliance',             // result field
+        }
+    }
+]);
+```
+
+### `$graphLookup`
+
+![Graphlookup Tree](images/mongo-graphlookup.png)
+
+The above tree structure is saved in collection `employees`:
+
+```js
+{ "_id" : 2, "name" : "Eliot", "title" : "CTO", "reports_to" : 1 }
+{ "_id" : 3, "name" : "Meagen", "title" : "CMO", "reports_to" : 1 }
+{ "_id" : 6, "name" : "Ron", "title" : "VP PM", "reports_to" : 2 }
+{ "_id" : 7, "name" : "Elyse", "title" : "COO", "reports_to" : 2 }
+{ "_id" : 4, "name" : "Carlos", "title" : "CRO", "reports_to" : 1 }
+{ "_id" : 1, "name" : "Dev", "title" : "CEO" }
+{ "_id" : 5, "name" : "Andrew", "title" : "VP Eng", "reports_to" : 2 }
+{ "_id" : 8, "name" : "Richard", "title" : "VP PS", "reports_to" : 1 }
+{ "_id" : 9, "name" : "Shannon", "title" : "VP Education", "reports_to" : 5 }
+{ "_id" : 10, "name" : "Dan", "title" : "VP Core Engineering", "reports_to" : 5 }
+{ "_id" : 11, "name" : "Cailin", "title" : "VP Cloud Engineering", "reports_to" : 5 }
+```
+
+To lookup all employees that reports to CTO:
+
+```js
+db.employees.aggregate([
+    { $match: { title: 'CTO' }},
+    { $graphLookup: {
+        from: 'employees',              // lookup against
+        startWith: '$_id',              // where to start
+        connectFromField: '_id',        // from field
+        connectToField: 'reports_to',   // to field
+        as: 'all_reports'               // save to this field
+    }}
+]);
+
+/*
+{
+    "_id" : 2,
+    "name" : "Eliot",
+    "title" : "CTO",
+    "reports_to" : 1,
+    "all_reports" : [
+        {
+            "_id" : 11,
+            "name" : "Cailin",
+            "title" : "VP Cloud Engineering",
+            "reports_to" : 5
+        },
+        ...
+        {
+            "_id" : 5,
+            "name" : "Andrew",
+            "title" : "VP Eng",
+            "reports_to" : 2
+        }
+    ]
+}
+*/
+```
+
+Another example, finding all destinations you can reach only by 'Air New Zealand' from its base airport:
+
+```js
+var airline = 'Air New Zealand';
+db.air_airlines.aggregate([
+    { $match: { name: airline }},
+    { $graphLookup: {
+        from: 'air_routes',             // match against the routes collection
+        as: 'chain',
+        startWith: '$base',             // start from its base
+        connectFromField: 'dst_airport',
+        connectToField: 'src_airport',
+        maxDepth: 1,                    // one stop max
+        restrictSearchWithMatch: {
+            'airline.name': airline     // always use the same airline
+        }
+    }}
+]).pretty();
+```
+
+### `$sortByCount`
+
+```js
+db.movies.aggregate([
+    { $sortByCount: '$year' }
+]);
+
+/*
+{ "_id" : 2015, "count" : 2079 }
+{ "_id" : 2014, "count" : 2058 }
+{ "_id" : 2013, "count" : 1898 }
+...
+*/
+```
+
+works exactly like
+
+```js
+db.movies.aggregate([
+    { $group: {
+        _id: "$year",
+        count: { $sum: 1 }
+    }},
+    { $sort: {
+        count: -1,
+    }}
+]);
+```
+
+### `$bucket`
+
+```js
+// count movies by century buckets
+db.movies.aggregate([
+    { $bucket: {
+        groupBy: '$year',
+        boundaries: [1800, 1900, 2000, Infinity],   // boundaries
+        default: 'not dated',   // anything else not in a bucket
+        output: {
+            avg_rating: { $avg: '$imdb.rating' },
+            count: { $sum: 1 },
+        }
+    }},
+]);
+
+/*
+{ "_id" : 1800, "avg_rating" : 5.87051282051282, "count" : 78 }
+{ "_id" : 1900, "avg_rating" : 6.476328954135304, "count" : 21442 }
+{ "_id" : 2000, "avg_rating" : 6.287528814037729, "count" : 22903 }
+{ "_id" : "not dated", "avg_rating" : 7.923529411764705, "count" : 74 }
+*/
+```
+
+### `$facets`
 
 ```js
 db.companies.aggregate([
-    {$match: {
-        founded_year: 2004
+    { '$match': { '$text': { '$search': 'Database' }}},
+    { '$facet': {
+        'Categories': [{'$sortByCount': '$category_code'}],
+        'Employees': [
+            {'$match': {'founded_year': {'$gt': 1980}}},
+            {'$bucket': {
+                'groupBy': '$number_of_employees',
+                'boundaries': [0, 20, 50, 100, 500, 1000, Infinity],
+                'default': 'Other'
+            }}],
+        'Founded': [
+            {'$match': {'offices.city': 'New York'}},
+            {'$bucketAuto': {
+                'groupBy': '$founded_year',
+                'buckets': 5
+            }}],
+    }}
+])
+```
+
+* You can use multiple facets in `$facet`, each facet is like a sub-pipeline;
+* Each sub-pipeline receives the same data from previous stage, they are independent;
+* You can't use these stages in a sub-pipeline: `$facet`, `$out`, `$geoNear`, `$indexStats`, `$collStats`;
+
+
+```js
+// Find movies with both top 10 IMDB rating and top 10 metacritic rating
+db.movies.aggregate([
+    { $match: {
+            'imdb.rating': { $gte: 0 },
+            'metacritic': { $gte: 0 }
+        }
+    },
+    { $project: {
+        _id: 0,
+        title: 1,
+        metacritic: 1,
+        imdb: 1,
     }},
-    {$project: {
-        name: 1,
-        funding_rounds: 1,
-        roundsCount: {$size: "$funding_rounds"}
-    }},
-    {$match: {
-        roundsCount: {$gte: 5}
-    }},
-]);
-db.companies.aggregate([
-    {$match: {
-        founded_year: 2004
-    }},
-    {$project: {
-        name: 1,
-        funding_rounds: 1,
-        roundsCount: {$size: "$funding_rounds"}
-    }},
-    {$match: {
-        roundsCount: {$gte: 5}
-    }},
-    {$addFields: {
-        avg_amount: {$avg: "$funding_rounds.raised_amount"}
-    }},
-    {$project: {
-        funding_rounds: 0,
-    }},
-    {$sort: {avg_amount: 1}}
+    { $facet: {
+            'imdb_top': [
+                { $sort: { 'imdb.rating': -1 } },
+                { $limit: 10 },
+                { $project: { title: 1 }},
+            ],
+            'meta_top': [
+                { $sort: { 'metacritic': -1 } },
+                { $limit: 10 },
+                { $project: { title: 1 }},
+            ],
+        }
+    },
+    { $project: {
+        'top_in_top': {
+            $setIntersection: [
+                '$imdb_top',
+                '$meta_top'
+            ]
+        },
+    }}
 ]);
 ```
 
+### `$out`
 
+* Save ouput to a collection, creating a new one or overwriting an existing one;
+* Must be the last stage;
 
+```js
+db.myCollection.aggregate([
+    { stage1 },
+    { stage2 },
+    ...
+    { $out: 'collection_name' },
+]);
+```
+
+## Views
+
+```js
+// create a view
+db.createView('new_movies', 'movies', [
+    { $match: { year: {$gte: 2000 }}},
+    { $project: {
+        _id: 0,
+        title: 1,
+        year: 1,
+    }}
+]);
+
+// show views in a db
+db.system.views.find().pretty()
+```
+
+* Views are **stored aggregations** that run when queried;
+* Views are public;
+* There are other constraints on it;
