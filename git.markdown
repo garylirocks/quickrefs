@@ -1,46 +1,45 @@
 Git Cheatsheet
 ===============
 
-- [Git Cheatsheet](#git-cheatsheet)
-    - [Preface](#preface)
-    - [Basics](#basics)
-        - [First Commit](#first-commit)
-        - [Staging area](#staging-area)
-    - [Stashing](#stashing)
-        - [Creating a Branch from a Stash](#creating-a-branch-from-a-stash)
-    - [Log](#log)
-        - [limiting log output](#limiting-log-output)
-        - [a GUI to visualize log](#a-gui-to-visualize-log)
-        - [show log for a specific commit](#show-log-for-a-specific-commit)
-    - [Configs](#configs)
-    - [Command Aliases](#command-aliases)
-    - [History](#history)
-    - [Tags](#tags)
-        - [sharing tags](#sharing-tags)
-    - [Undoing changes](#undoing-changes)
-    - [Branches](#branches)
-        - [set a local branch to track a remote branch](#set-a-local-branch-to-track-a-remote-branch)
-    - [Remotes](#remotes)
-        - [push](#push)
-        - [Add a local branch that tracks a remote branch](#add-a-local-branch-that-tracks-a-remote-branch)
-        - [add a remote](#add-a-remote)
-        - [clone a repo to remote](#clone-a-repo-to-remote)
-    - [Revision Selection](#revision-selection)
-        - [Commit Ranges](#commit-ranges)
-    - [diff](#diff)
-    - [checkout](#checkout)
-    - [rebase](#rebase)
-    - [ignore files](#ignore-files)
-    - [Hooks](#hooks)
-    - [Merge & Diff](#merge--diff)
-    - [Split a subfolder out into a new repository](#split-a-subfolder-out-into-a-new-repository)
-    - [Multiple accounts setup for Bitbucket/Github](#multiple-accounts-setup-for-bitbucketgithub)
-    - [Misc](#misc)
-    - [NOTICES](#notices)
+- [Preface](#preface)
+- [Basics](#basics)
+    - [First Commit](#first-commit)
+    - [Staging area](#staging-area)
+- [Stashing](#stashing)
+    - [Creating a Branch from a Stash](#creating-a-branch-from-a-stash)
+- [Log](#log)
+    - [limiting log output](#limiting-log-output)
+    - [a GUI to visualize log](#a-gui-to-visualize-log)
+    - [show log for a specific commit](#show-log-for-a-specific-commit)
+- [Configs](#configs)
+- [Command Aliases](#command-aliases)
+- [History](#history)
+- [Tags](#tags)
+    - [sharing tags](#sharing-tags)
+- [Undoing changes](#undoing-changes)
+- [Branches](#branches)
+    - [set a local branch to track a remote branch](#set-a-local-branch-to-track-a-remote-branch)
+- [Remotes](#remotes)
+    - [push](#push)
+    - [Add a local branch that tracks a remote branch](#add-a-local-branch-that-tracks-a-remote-branch)
+    - [add a remote](#add-a-remote)
+    - [clone a repo to remote](#clone-a-repo-to-remote)
+- [Revision Selection](#revision-selection)
+    - [Commit Ranges](#commit-ranges)
+- [diff](#diff)
+- [checkout](#checkout)
+- [rebase](#rebase)
+- [ignore files](#ignore-files)
+- [Hooks](#hooks)
+- [Merge & Diff](#merge--diff)
+- [Split a subfolder out into a new repository](#split-a-subfolder-out-into-a-new-repository)
+- [Multiple accounts setup for Bitbucket/Github](#multiple-accounts-setup-for-bitbucketgithub)
+- [Misc](#misc)
+- [NOTICES](#notices)
 
 ## Preface
-Some useful tips of git  
-Source: 
+Some useful tips of git
+Source:
 
 * [Pro Git][pro_git_book]
 * [GIT IMMERSION][git_immersion] easy and useful
@@ -50,7 +49,7 @@ Source:
 ### First Commit
 
 there are usually many files to add to index before first commit, it would by tedious to add them one by one, use:
-    
+
     $ git add -A
 
 ### Staging area
@@ -60,7 +59,7 @@ Staging area, or index is saved in `.git/index`, git stages file as it is when y
 
 ## Stashing
 
-you do something to your working directory, the status is messy now, but the change is not ready for commit, 
+you do something to your working directory, the status is messy now, but the change is not ready for commit,
 you want to switch to another branch, but you may want to go back here
 use `git statsh` to save your changes
 
@@ -97,17 +96,17 @@ list stashes:
 
 apply stash:
 
-    $ git stash apply 
+    $ git stash apply
     # On branch master
     # Changes to be committed:
     #   (use "git reset HEAD <file>..." to unstage)
     #
     #   new file:   git.markdown
 
-`git stash apply` applies the newest stash  
-`git stash apply stash@{2}` to specify a stash to apply  
+`git stash apply` applies the newest stash
+`git stash apply stash@{2}` to specify a stash to apply
 
-`git stash apply --index` to try to reapply the staged changes, by default `stash apply` will not restage files that are staged when you stash  
+`git stash apply --index` to try to reapply the staged changes, by default `stash apply` will not restage files that are staged when you stash
 
 stashes still exist in the stack after you apply them, remove the stashes by `git stash drop`:
 
@@ -116,24 +115,24 @@ stashes still exist in the stack after you apply them, remove the stashes by `gi
     $ git stash drop stash@{0}
     Dropped stash@{0} (e0f8afd65884a3343e39b4cce011b290c6d55e34)
     $ git stash list
-    $ 
+    $
 
 ### Creating a Branch from a Stash
 
-`git stash branch <branchname> [<stash>]`: will  
-    creates a new branch  
-    checkout the commit you were on when you stashed your work  
-    reapplies your work there  
-    drop the stash if it applies successfully  
+`git stash branch <branchname> [<stash>]`: will
+    creates a new branch
+    checkout the commit you were on when you stashed your work
+    reapplies your work there
+    drop the stash if it applies successfully
 
 ## Log
 
 by default, `git log` will ouput all log info
 
-`git log -p`: output diff for each commit   
-`git log -2`: specify how many commit info to output  
+`git log -p`: output diff for each commit
+`git log -2`: specify how many commit info to output
 
-`git log --stat`: for stat of each commit   
+`git log --stat`: for stat of each commit
 
 customize output format with the `--pretty` option:
 
@@ -175,12 +174,12 @@ we love graphs, meet the `--graph` option:
     * dc40265 : add back shell_commands
     * 2b0254c : add git quickref
     *   06bf5ab : Merge branch 'master' of ssh://guisheng.li/opt/git/guisheng.li
-    |\  
+    |\
     | *   dd0682a : Merge branch 'master' of guisheng.li:/opt/git/guisheng.li
-    | |\  
+    | |\
     | | * 57bca79 : added some refs for 'ls', 'touch', 'tr', etc
     | * | ef3f255 : added something about bash and shell commands
-    | |/  
+    | |/
     | * 8f6f5e9 : shell commands ref changes
 
 a list of useful options for `git log`:
@@ -207,16 +206,16 @@ a list of useful options for `git log`:
     06bf5ab Merge branch 'master' of ssh://guisheng.li/opt/git/guisheng.li
     2a1722b added sql cheatsheet, modified vim
 
-`--author`: specify author  
-`--committer`: specify committer  
-`--grep`: limit to commits whose comment can by matched  
+`--author`: specify author
+`--committer`: specify committer
+`--grep`: limit to commits whose comment can by matched
 
     $ git log --grep='.*vim' --since='1.week' --oneline
     2a1722b added sql cheatsheet, modified vim
 
 ### a GUI to visualize log
 
-use `gitk`, it accepts nearly all options for `git log`  
+use `gitk`, it accepts nearly all options for `git log`
 
     $ gitk --since='1.month'
 
@@ -229,22 +228,24 @@ use `gitk`, it accepts nearly all options for `git log`
 
 ## Configs
 
-configuration levels: 
+configuration levels:
 
-`--system`: /etc/gitconfig  for anyone on this system  
-`--global`: ~/.gitconfig  for you  
-`--local`:  $PROJECT/.git/config  for this project  
-`--file <filename>`    
+* `--system`: `/etc/gitconfig`
+* `--global`: `~/.gitconfig`
+* `--local`: `$PROJECT/.git/config`
+* `--file <filename>`
 
-    # list configs
-    $ git config --global -l
+```sh
+# list configs
+$ git config --global -l
 
-    # get config
-    $ git config --global user.name
-    Li Guisheng
+# get config
+$ git config --global user.name
+Gary Li
 
-    # set config
-    $ git config --global core.safecrlf true
+# set config
+$ git config --global core.safecrlf true
+```
 
 quite useful configs:
 
@@ -257,14 +258,13 @@ quite useful configs:
 
 whitespace, line-endings:
 
-    core.autocrlf 
-        ture        # convert cflf to lf on commit, vice versa on checkout
-        input       # convert cflf to lf on commit, do nothing on checkout, suitable for Linux users
-        false       # nothing is done on commit or checkout
+* `core.autocrlf`
+    * `true`        # convert cflf to lf on commit, vice versa on checkout
+    * `input`       # convert cflf to lf on commit, do nothing on checkout, suitable for Linux users
+    * `false`       # nothing is done on commit or checkout
 
-    core.whitespace
-        trailing-space,space-before-tab,-indent-with-non-tab,-cr-at-eol # default value, git will mark whitespace issues with special colors when diff files
-    
+* `core.whitespace`
+    * `trailing-space,space-before-tab,-indent-with-non-tab,-cr-at-eol` # default value, git will mark whitespace issues with special colors when diff files
 
 set customized color to output:
 
@@ -300,7 +300,7 @@ list tags
     $ git tag
     v1
     v1-beta
-    
+
     # checkout to a tag
     $ git checkout v1
     HEAD is now at 9b28e32... add a comment line
@@ -330,7 +330,7 @@ list tags
     * 6a5a3a2 2013-06-01 | Using ARGV
     * 7ec63cb 2013-06-01 | First commit
 
-### sharing tags 
+### sharing tags
 
 by default, `git push` doesn't transfer tags to remote server, you need do that explicitly:
 
@@ -374,7 +374,7 @@ reset to a specific commit by `git reset`:
     * c5be8c4 2013-06-01 | add a default value (v1-beta)
     * 6a5a3a2 2013-06-01 | Using ARGV
     | * 12ac967 2013-06-01 | commit in DETACHED HEAD mode (b2)
-    |/  
+    |/
     * 7ec63cb 2013-06-01 | First commit
 
     # remove the oops tag
@@ -387,10 +387,10 @@ reset to a specific commit by `git reset`:
     | * 9b28e32 2013-06-01 | add a comment line (HEAD, v1, master)
     | * c5be8c4 2013-06-01 | add a default value (v1-beta)
     | * 6a5a3a2 2013-06-01 | Using ARGV
-    |/  
+    |/
     * 7ec63cb 2013-06-01 | First commit
 
-`--all` makes us to see all the branches  
+`--all` makes us to see all the branches
 
 *DO NOT USE RESET ON A SHARED BRANCH*
 
@@ -408,7 +408,7 @@ switch branches, `git checkout <branch>`:
     * greet
       master
 
-    $ git checkout master 
+    $ git checkout master
     Switched to branch 'master'
 
     $ git b
@@ -432,13 +432,13 @@ show verbose info about branches:
 show branches already merged in current branch, they point to an ancestor commit of current branch:
 
     $ git branch --merged
-    
+
 show branches not merged in current branch, thest branch diverged from current branch:
 
     $ git branch --no-merged
 
 local branches do not automatically synchronize to remotes, you have to explicitly push the branches you want to share
-    
+
 ```bash
 # git push <remote> <branch>[:<remote-branch>]
 # use '-u' to set the remote branch as upstream
@@ -490,9 +490,9 @@ show detailed info about remotes, which branch you have tracked, what will be do
 
 fetch remote commits:
 
-`git fetch` will fetch remote commits, but it will not merge them locally, you can do that manually by `git merge origin/master`  
+`git fetch` will fetch remote commits, but it will not merge them locally, you can do that manually by `git merge origin/master`
 
-or, use `git pull`, which fetch remote commits and merge them locally in one step 
+or, use `git pull`, which fetch remote commits and merge them locally in one step
 
 
 ### push
@@ -523,7 +523,7 @@ or, you can add a local 'greet' branch to track the remote one:
       remotes/origin/HEAD -> origin/master
       remotes/origin/greet
       remotes/origin/master
-      
+
 
 ### add a remote
 
@@ -535,7 +535,7 @@ or, you can add a local 'greet' branch to track the remote one:
 
 
 ### clone a repo to remote
-    
+
     $ git clone --bare git-demo/ git-demo-remote
     $ cd git-demo
     $ git remote add origin ../git-demo-remote/
@@ -550,14 +550,14 @@ or, you can add a local 'greet' branch to track the remote one:
 you can reference a single revision by commit hash, branch name, or reflog shortname
 
 `git reflog` shows where your HEAD have been, you can select a revision by `HEAD@{n}` or `master@{n}`
-    
-    $ git reflog 
+
+    $ git reflog
     f7c958f HEAD@{0}: commit: various modifications
     f9ddb8b HEAD@{1}: commit: add vimperator and super_user_tips refs
     2c04075 HEAD@{2}: commit: add sth to svn ref
     ...
 
-* `@{<n>}` 
+* `@{<n>}`
 
     reflog entry of current branch
 
@@ -567,14 +567,14 @@ you can reference a single revision by commit hash, branch name, or reflog short
 
 * `<refname>@{upstream}`,`<refname>@{u}`
 
-    the branch the ref is set to build on top of 
+    the branch the ref is set to build on top of
 
 * `<rev>^{<type>}`
 
     `<rev>` could be a tag, dereference the tag recursively until an object of the `<type>` is found
 
 * `<rev>^{/<text>}`
-    
+
     `HEAD^{/fix nasty bug}`, youngest matching commit reachable from `<rev>`
 
 * `:/<text>`
@@ -583,7 +583,7 @@ you can reference a single revision by commit hash, branch name, or reflog short
 
 * `<rev>:<path>`
 
-    `HEAD:./hello.php`, blob or tree at the given path in `<rev>`  
+    `HEAD:./hello.php`, blob or tree at the given path in `<rev>`
     `:./hello.php`, content recorded **in the index** at the given path
 
 
@@ -599,7 +599,7 @@ select a ref by time:
 
 `master@{3.month}`, `master@{3.months}`, `master@{3 months ago}` are the equivalent, *these reflogs are local, you maynot use them for commits older than a few months*
 
-* `HEAD`    the commit on which you based the changes in the working tree    
+* `HEAD`    the commit on which you based the changes in the working tree
 * `MERGE_HEAD`    the commit which you are merging into your branch when you run git merge
 * `CHERRY_PICK_HEAD`    the commit which you are cherry-picking when you run git cherry-pick
 
@@ -634,7 +634,7 @@ other notations:
 
 
 ## checkout
-    
+
     $ git checkout <commit> -- <path>       # checkout a file from a commit to working directory
 
 
@@ -690,10 +690,10 @@ there are two types: client-side hooks and server-side hooks
 
     * `pre-commit`
 
-        called by `git commit` without any arguments, before you type any commit message, can be used to verify what is about to be committed, such as lint the code, check TODOs    
+        called by `git commit` without any arguments, before you type any commit message, can be used to verify what is about to be committed, such as lint the code, check TODOs
 
     * `prepare-commit-msg`
-        
+
         run before the commit message editor is fired up but after the default message is created, lets you edit default commit message; generally isn't useful for normal commits, good for commits where default commit message is auto-generated, such as templated commit messages, merge commits, squashed commits, and amended commits. You may use it in conjunction with a commit template to programmatically insert information.
 
     * `commit-msg`
@@ -704,9 +704,9 @@ there are two types: client-side hooks and server-side hooks
 
         fires after the commit process is completed
 
-    * `pre-rebase`        
-    * `post-checkout`        
-    * `post-merge`        
+    * `pre-rebase`
+    * `post-checkout`
+    * `post-merge`
 
 * server-side:
 
@@ -736,8 +736,8 @@ diff and merge configs:
 
 ## Split a subfolder out into a new repository
 
-looks like there are two ways to accomplish this: 
-	
+looks like there are two ways to accomplish this:
+
 `git subtree split` and `git filter-branch`
 
 [Splitting a subfolder out into a new repository](https://help.github.com/articles/splitting-a-subfolder-out-into-a-new-repository/)
@@ -771,7 +771,7 @@ create ssh keys:
 
 
 in `.ssh/config`
-    
+
 	Host bitbucket.org
 	  User git
 	  Hostname bitbucket.org
@@ -783,7 +783,7 @@ in `.ssh/config`
 	  Hostname bitbucket.org
 	  PreferredAuthentications publickey
 	  IdentitiesOnly yes
-	  IdentityFile ~/.ssh/accountB 
+	  IdentityFile ~/.ssh/accountB
 
 
 
@@ -825,13 +825,13 @@ in `.ssh/config`
     ```bash
     git add -u    # --update
     ```
- 
+
 
 ## NOTICES
 
 **DO NOT USE REBASE ON SHARED BRANCHES**
 
 
-    
+
 [pro_git_book]: http://git-scm.com/book
 [git_immersion]: http://gitimmersion.com/index.html
