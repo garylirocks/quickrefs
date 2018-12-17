@@ -3,45 +3,45 @@ Javascript
 
 General topics about Javascript and front-end develpoment.
 
-- [Javascript](#javascript)
-    - [Data types in JS](#data-types-in-js)
-        - [Type casting and coercion](#type-casting-and-coercion)
-        - [Truesy and falsey](#truesy-and-falsey)
-    - [Objects](#objects)
-    - [Prototype](#prototype)
-        - [Inheritance by Prototype](#inheritance-by-prototype)
-    - [Javascript: The Good Parts](#javascript-the-good-parts)
-    - [Functions](#functions)
-        - [the `arguments` parameter](#the-arguments-parameter)
-    - [The `this` keyword](#the-this-keyword)
-    - [Closures](#closures)
-        - [Temporal Dead Zone](#temporal-dead-zone)
-    - [Regular Expression](#regular-expression)
-        - [named groups](#named-groups)
-    - [Style guide](#style-guide)
-    - [Module Systems](#module-systems)
-        - [AMD (Asynchronous Module Design)](#amd-asynchronous-module-design)
-        - [CommonJS (CJS)](#commonjs-cjs)
-        - [ES6](#es6)
-    - [Symbol](#symbol)
-    - [Iterations](#iterations)
-    - [Promise](#promise)
-        - [Callback hell](#callback-hell)
-        - [resolved vs. rejected](#resolved-vs-rejected)
-    - [Generator](#generator)
-    - [Async/Await](#asyncawait)
-    - [Immutability](#immutability)
-        - [What is immutability ?](#what-is-immutability)
-        - [Reference equality vs. value equality](#reference-equality-vs-value-equality)
-        - [Immutability tools](#immutability-tools)
-            - [The JS way](#the-js-way)
-            - [Immutable.js](#immutablejs)
-            - [Immer](#immer)
-            - [immutability-helper](#immutability-helper)
-    - [ECMAScript](#ecmascript)
-    - [Tricks](#tricks)
-        - [Deboucing an event](#deboucing-an-event)
-    - [Reference](#reference)
+- [Data types in JS](#data-types-in-js)
+    - [Type casting and coercion](#type-casting-and-coercion)
+    - [Truesy and falsey](#truesy-and-falsey)
+- [Objects](#objects)
+- [Prototype](#prototype)
+    - [Inheritance by Prototype](#inheritance-by-prototype)
+- [Javascript: The Good Parts](#javascript-the-good-parts)
+- [Functions](#functions)
+    - [the `arguments` parameter](#the-arguments-parameter)
+- [The `this` keyword](#the-this-keyword)
+- [Closures](#closures)
+    - [Temporal Dead Zone](#temporal-dead-zone)
+- [Regular Expression](#regular-expression)
+    - [named groups](#named-groups)
+- [Style guide](#style-guide)
+- [Module Systems](#module-systems)
+    - [AMD (Asynchronous Module Design)](#amd-asynchronous-module-design)
+    - [CommonJS (CJS)](#commonjs-cjs)
+    - [ES6](#es6)
+- [Symbol](#symbol)
+- [Iterations](#iterations)
+- [Promise](#promise)
+    - [Callback hell](#callback-hell)
+    - [resolved vs. rejected](#resolved-vs-rejected)
+- [Generator](#generator)
+- [Async/Await](#asyncawait)
+- [Immutability](#immutability)
+    - [What is immutability ?](#what-is-immutability)
+    - [Reference equality vs. value equality](#reference-equality-vs-value-equality)
+    - [Immutability tools](#immutability-tools)
+        - [The JS way](#the-js-way)
+        - [Immutable.js](#immutablejs)
+        - [Immer](#immer)
+        - [immutability-helper](#immutability-helper)
+- [ECMAScript](#ecmascript)
+- [Tricks](#tricks)
+    - [Deboucing an event](#deboucing-an-event)
+    - [Initialize an array with a value range](#initialize-an-array-with-a-value-range)
+- [Reference](#reference)
 
 ## Data types in JS
 
@@ -55,7 +55,7 @@ General topics about Javascript and front-end develpoment.
 
 string and number got accompanying wrapper object (`String` and `Number`)
 
-please note: 
+please note:
 
 * **`String('abc')` is the same as `'abc'`, they are both of primitive string value**
 * **`String('abc')` is different from `new String('abc')`, the later is an object**
@@ -142,7 +142,7 @@ Dog.prototype.bark = function() {
 ### Inheritance by Prototype
 
 [Douglas Crockford's video course: Prototypal Inheritance](http://app.pluralsight.com/training/player?author=douglas-crockford&name=javascript-good-parts-m0&mode=live&clip=0&course=javascript-good-parts)
- 
+
 ```javascript
 function Gizmo(id) {
     this.id = id;
@@ -238,7 +238,7 @@ javascript is **function scoped**, not block scoped, so:
 // so, it is available at any place inside foo, not just the for loop
 function foo() {
     ...
-    for(var i=0; ...) {}    
+    for(var i=0; ...) {}
     ...
 }
 ```
@@ -259,7 +259,7 @@ function foo() {
 `let` statement respect block scoping, so the following code does what it seems to do:
 
 ```js
-foo(let i=0; ...} {}    
+foo(let i=0; ...} {}
 ```
 
 * **numbers**
@@ -297,12 +297,12 @@ foo(let i=0; ...} {}
 
 * **`+`**
 
-        if both operands are numbers  
+        if both operands are numbers
         then
-            add them  
-        else  
-            convert to string and concatenate  
-        end  
+            add them
+        else
+            convert to string and concatenate
+        end
 
     ```js
     2 + '3' -> '23'
@@ -398,8 +398,8 @@ four ways to call a function:
 
 * Function form
 
-    * `this` binds to the global object, which cause problems  
-    * in ES5/Strict, `this` binds to `undefined`  
+    * `this` binds to the global object, which cause problems
+    * in ES5/Strict, `this` binds to `undefined`
     * outer `this` is not accessible from inner functions, use `var that = this;` to pass it
 
 ```javascript
@@ -475,7 +475,7 @@ var person = {
 ```
 
 
-## Closures 
+## Closures
 
 When a function gets declared, it contains a function definition and *a closure*. The closure is a collection of all the variables in scope at the time of creation of the function.
 
@@ -752,7 +752,7 @@ There are three different flavors of symbols - each flavor is accessed in a diff
 	get the key of a symbol:
 
 			let key = Symbol.keyFor(s);
-	
+
 
 3. **"Well-known" symbols**
 
@@ -808,7 +808,7 @@ There are three different flavors of symbols - each flavor is accessed in a diff
 Main usages for symbols:
 
 1. **as property keys**
-		
+
 	as each symbol is unique, it can be used to avoid name clashes
 
 2. **Privacy ?**
@@ -1063,7 +1063,7 @@ you can even yield into another iterable within a generator:
 [Ref - Hackernoon](https://hackernoon.com/6-reasons-why-javascripts-async-await-blows-promises-away-tutorial-c7ec10518dd9)
 
 ```javascript
-function resolveAfter2Seconds(x) { 
+function resolveAfter2Seconds(x) {
     return new Promise(resolve => {
         setTimeout(() => {
             resolve(x);
@@ -1073,9 +1073,9 @@ function resolveAfter2Seconds(x) {
 
 async function f1() {
     try {
-        // the compiler pauses here, when the promise resolves, the value is assigned to x, 
+        // the compiler pauses here, when the promise resolves, the value is assigned to x,
         //  if the promise is rejected, an error is thrown
-        var x = await resolveAfter2Seconds(10);     
+        var x = await resolveAfter2Seconds(10);
         console.log(x); // 10
     } catch (e) {
         console.log(e);
@@ -1152,7 +1152,7 @@ You need to use your custom methods or something like `_.isEqual` from Lo-Dash t
 
 * [Redux Ecosystem - Immutable Data](https://github.com/markerikson/redux-ecosystem-links/blob/master/immutable-data.md#immutable-update-utilities)
 
-#### [The JS way](https://github.com/reduxjs/redux/blob/master/docs/recipes/reducers/ImmutableUpdatePatterns.md) 
+#### [The JS way](https://github.com/reduxjs/redux/blob/master/docs/recipes/reducers/ImmutableUpdatePatterns.md)
 
 * Updating Nested Objects
 
@@ -1248,7 +1248,7 @@ You need to use your custom methods or something like `_.isEqual` from Lo-Dash t
 
 * Auto freezing
 
-    * Immer automatically freezes any state trees that are modified using `produce`, this protects against any accidental modifications of the state tree outside of a producer; 
+    * Immer automatically freezes any state trees that are modified using `produce`, this protects against any accidental modifications of the state tree outside of a producer;
     * It impacts performance, by default it is turned on during local develpoment, off in production;
     * Use `setAutoFreeze(true/false)` to control it explicitly;
 
@@ -1274,7 +1274,7 @@ You need to use your custom methods or something like `_.isEqual` from Lo-Dash t
     // { name: 'Gary', age: 20 }
 
     // update draft in whatever way you like, and no need to return anything
-    const b = produce(a, draft => { 
+    const b = produce(a, draft => {
         draft.name = 'Federer';
     });
     // { name: 'Federer', age: 20 }
@@ -1379,6 +1379,25 @@ $(window).on('resize', function() {
         updateLayout();
     }, 250);
 });
+```
+
+### Initialize an array with a value range
+
+* https://itnext.io/heres-why-mapping-a-constructed-array-doesn-t-work-in-javascript-f1195138615a
+* https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/from
+
+```js
+let a = Array(100).fill().map((e, i) => i);
+/*
+Array(100) creates an empty array
+{
+    length: 100
+},
+you need to call fill() before map()
+*/
+
+// or
+let a = Array.from({length: 100}, (e, i) => i);
 ```
 
 
