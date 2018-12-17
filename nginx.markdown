@@ -22,6 +22,7 @@ Nginx
     - [Enabling pretty permalinks for Wordpress](#enabling-pretty-permalinks-for-wordpress)
     - [Load balancing](#load-balancing)
     - [CORS rules](#cors-rules)
+- [Trivias](#trivias)
 
 
 ## How a request is processed
@@ -446,3 +447,8 @@ location / {
      }
 }
 ```
+
+
+## Trivias
+
+* For a request `/path`, if `path` points to a directory, NGINX does a 301 redirect to `/path/` by default;
