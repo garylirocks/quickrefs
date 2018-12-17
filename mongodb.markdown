@@ -26,17 +26,6 @@ MongoDB
     - [Regex](#regex)
     - [Geospatial](#geospatial)
 - [NodeJS](#nodejs)
-- [Schema design](#schema-design)
-- [Storage Enginge](#storage-enginge)
-- [Replica Set](#replica-set)
-    - [Start a Replica Set](#start-a-replica-set)
-    - [reconfig a running replica set](#reconfig-a-running-replica-set)
-    - [`local` DB](#local-db)
-    - [Write concern](#write-concern)
-    - [Read concern levels](#read-concern-levels)
-    - [Read Preference](#read-preference)
-- [Sharding](#sharding)
-    - [Shard key](#shard-key)
 - [Indexes](#indexes)
     - [Create Indexes](#create-indexes)
         - [Creation Mode](#creation-mode)
@@ -48,9 +37,20 @@ MongoDB
     - [Explain](#explain)
     - [Hint](#hint)
     - [Covered queries](#covered-queries)
-- [Performance](#performance)
-    - [Hardware Condsiderations](#hardware-condsiderations)
-    - [Profiling](#profiling)
+- [Schema design](#schema-design)
+- [Replica Set](#replica-set)
+    - [Start a Replica Set](#start-a-replica-set)
+    - [reconfig a running replica set](#reconfig-a-running-replica-set)
+    - [`local` DB](#local-db)
+    - [Write concern](#write-concern)
+    - [Read concern levels](#read-concern-levels)
+    - [Read Preference](#read-preference)
+- [Sharding](#sharding)
+    - [`mongos`](#mongos)
+    - [Shard key](#shard-key)
+    - [Shard a collection:](#shard-a-collection)
+    - [Chunks](#chunks)
+    - [Query a sharded cluster](#query-a-sharded-cluster)
 - [Aggregation](#aggregation)
     - [Overview](#overview)
     - [`$match` stage](#match-stage)
@@ -66,6 +66,11 @@ MongoDB
     - [`$bucket`](#bucket)
     - [`$facets`](#facets)
     - [`$out`](#out)
+    - [Performance](#performance)
+- [Performance](#performance-1)
+    - [Hardware Condsiderations](#hardware-condsiderations)
+    - [Profiling](#profiling)
+- [Storage Enginge](#storage-enginge)
 - [Views](#views)
 
 
@@ -649,227 +654,6 @@ cursor.forEach(
 * The query is not triggered immediately after the cursor is created, it only fires when the result is needed;
 * The `project()` method modifies the cursor, the projection document can be passed to `find()` directly as well;
 
-## Schema design
-
-In relational database, we used to keep db schema in the thrid normal form;
-
-For MongoDB, the first principle is making the schema matching the data access pattern of your application, e.g. what data need to be read together;
-
-Differences to relational DB:
-
-* no foreign key constraints;
-* no transactions, it does have atomic operations within a single document, so you can:
-    * restructure your data, so only need to update one document;
-    * implement transaction in your application;
-    * tolerate some inconsistency;
-
-Constraints
-
-* Document size is limited to 16MB;
-
-
-## Storage Enginge
-
-A storage engine controls how data and index are stored in a disk, not related to cluster structure, db driver, etc;
-
-* MMAPv1
-    * Use the `mmap` system call, which maps files to memory;
-    * Collection-level locking: one write at a time for a collection;
-
-* WiredTiger
-
-    * Default since MongoDB v3.2;
-    * Document-level concurrency, usually faster than MMAPv1;
-    * Offers compression of data and indexes;
-
-
-## Replica Set
-
-* MongoDB uses statement replication (**oplog**) instead of binary replication (requires each node has the same OS, architecture, db version);
-* Each statement is transformed to be **idempotent**, making sure it can be applied multiple times and get the same result;
-* A replica set should
-    * contain at least 3 nodes, up to 50;
-    * up to 7 nodes can be voting members (so election won't take too much time);
-* A node can be set to be an **arbiter**, which doesn't hold any data, only used in an election arbiter;
-* A node can be **hidden**, which means it syncs the data, but won't be seen by an application, a hidden node can vote;
-* A hidden node can be set to be **delayed**, useful for **hot backup**: e.g., if a node is delayed for 1 hour, and someone deleted a collection accidently, you got 1 hour's time to recover it from the delayed node;
-* There must be a majority of nodes left in a set to elect a primary, that means a replica set must have at least **3 nodes**, if not a majority of nodes left, then no one can be elected as a primary, all nodes become secondary and the set becomes **read-only**;
-
-### Start a Replica Set
-
-```sh
-# start multiple mongod with the same repl set name
-#  the repl set name can be configed in a conf file as well
-mongod --replSet=<replset>
-
-# connect to one node
-mongo --port <port>
-
-# only need to initiate on one node
-rs.initiate()
-
-# create a user, otherwise you can't add nodes to the set
-use admin
-db.createUser({
-  user: "my-user",
-  pwd: "my-pass",
-  roles: [
-    {role: "root", db: "admin"}
-  ]
-})
-
-# exit now and log back using a username
-exit
-```
-
-```sh
-# connecting to a replica set, which acctually connects to the primary node
-mongo --host "<replset>/<ip>:<port>" -u <user> -p <pass> --authenticationDatabase 'admin'
-
-# show status
-rs.status()
-
-# add a node
-rs.add("<ip>:<port>")
-
-# remove a node
-rs.remove("<ip>:<port>")
-
-# check
-rs.isMaster()
-
-# step down
-rs.stepDown()
-
-# show oplog data
-rs.printReplicationInfo()
-```
-
-instead of adding nodes one by one, you can put them in a config file:
-
-```js
-// init_replica.js
-config = { _id: "myReplSet", members:[
-          { _id : 0, host : "localhost:27017"},
-          { _id : 1, host : "localhost:27018"},
-          { _id : 2, host : "localhost:27019"} ]
-};
-
-rs.initiate(config);
-rs.status();
-```
-
-then `mongo < init_replica.js`
-
-
-### reconfig a running replica set
-
-```sh
-# get current config (a JS object)
-cfg = rs.conf()
-
-# update the config: making member 3 hidden
-cfg.members[3].votes = 0
-cfg.members[3].hidden = true
-cfg.members[3].priority = 0
-
-# apply the updated config
-rs.reconfig(cfg)
-```
-
-### `local` DB
-
-The `local` db contains information about the repl set:
-
-```sh
-# quering oplog
-use local
-db.oplog.rs.find()
-
-db.oplog.rs.stats()
-```
-
-* `oplog.rs` is a **capped** collection, which means its size is predefined (5% of available disk by default), new log entries will overwrite oldest entries when the size limit is reached;
-* One operation may result in many `oplog.rs` entries, such as `updateMany` will create an entry for each affected document;
-* Any data written into the `local` db is strictly local, it won't be added to oplog, won't be replicated;
-
-### Write concern
-
-* `w`: Whether a client app waits for acknowledgement from the replica set:
-
-    * `0` - don't wait for acknowledgement;
-    * `1` - (default) wait for acknowledgement from primary only (written data may lost if the primary stops working);
-    * `>=2` - wait from primary and one or more secondaries;
-    * `majority` - wait from a majority number of nodes;
-
-* `wtimeout` - timeout threshold;
-* `j` - whether the journal needs to be saved to disk before sending acknowledgement (default to `false`, which may result in data loss);
-
-Usage:
-
-```js
-db.foo.insert({
-    ...
-}, {
-    writeConcern: {
-        w: 'majority',
-        wtimeout: 500,
-    }
-});
-
-// return something like this if timeout exceeded:
-
-/*
-WriteResult({
-    "nInserted" : 1,
-    "writeConcernError" : {
-        "code" : 64,
-        "codeName" : "WriteConcernFailed",
-        "errInfo" : {
-            "wtimeout" : true
-        },
-        "errmsg" : "waiting for replication timed out"
-    }
-})
-*/
-```
-
-### Read concern levels
-
-* `local`   - latest data (data may be lost if a rollback occurs);
-* `available`   - the same as `local` except in sharded clusters;
-* `majority` - return data present on majority number of nodes;
-* `linearizable`
-
-![MongoDB Read Concerns](images/mongo-read-concerns.png)
-
-### Read Preference
-
-* `primary` - always get the latest data
-* `primaryPreferred`
-* `secondary`
-* `secondaryPreferred`
-* `nearest` - good for geographically distributed system
-
-all options except `primary` may result in stale data
-
-
-## Sharding
-
-![MongoDB Sharding and Replica Set](./images/mongo-sharding-replicaset.png)
-
-* You can start and connect to multiple `mongos` from a client driver, the driver can failover from one to another;
-* In production env, the config servers should be in a replication set as well;
-
-### Shard key
-
-* MongoDB use a hash function on shard key for sharding;
-* MongoDB will create an index for the shard key if it doesn't exist;
-* Shard key **doesn't** need to be unique;
-* A unique key on a sharded collection must be the shard key itself or indexes prefixed with the shard key;
-* If a shard key is not included in a query, `mongos` will go to all the shards to get the data;
-* All updates should contain the shard key or `_id` field;
-
 
 ## Indexes
 
@@ -1113,33 +897,282 @@ and there is a index `{name: 1, age: 1}`, for the following queries:
 So, inorder for a query to be covered, you need to be **explicit about needed fields, (`_id` need to be suppressed explicitly)**;
 
 
-## Performance
+## Schema design
 
-### Hardware Condsiderations
+In relational database, we used to keep db schema in the thrid normal form;
 
-* RAM (most db operations are done in the RAM), the larger and faster, the better;
-* CPU, benefit from multi-core CPUs;
-* Disk, IOPS matters, SSD is better than SATA, RAID 10 is the suggested RAID architecture;
-* Networking;
+For MongoDB, the first principle is making the schema matching the data access pattern of your application, e.g. what data need to be read together;
 
-### Profiling
+Differences to relational DB:
+
+* no foreign key constraints;
+* no transactions, it does have atomic operations within a single document, so you can:
+    * restructure your data, so only need to update one document;
+    * implement transaction in your application;
+    * tolerate some inconsistency;
+
+Constraints
+
+* Document size is limited to 16MB;
+
+
+## Replica Set
+
+* MongoDB uses statement replication (**oplog**) instead of binary replication (requires each node has the same OS, architecture, db version);
+* Each statement is transformed to be **idempotent**, making sure it can be applied multiple times and get the same result;
+* A replica set should
+    * contain at least 3 nodes, up to 50;
+    * up to 7 nodes can be voting members (so election won't take too much time);
+* A node can be set to be an **arbiter**, which doesn't hold any data, only used in an election arbiter;
+* A node can be **hidden**, which means it syncs the data, but won't be seen by an application, a hidden node can vote;
+* A hidden node can be set to be **delayed**, useful for **hot backup**: e.g., if a node is delayed for 1 hour, and someone deleted a collection accidently, you got 1 hour's time to recover it from the delayed node;
+* There must be a majority of nodes left in a set to elect a primary, that means a replica set must have at least **3 nodes**, if not a majority of nodes left, then no one can be elected as a primary, all nodes become secondary and the set becomes **read-only**;
+
+### Start a Replica Set
+
+```sh
+# start multiple mongod with the same repl set name
+#  the repl set name can be configed in a conf file as well
+mongod --replSet=<replset>
+
+# connect to one node
+mongo --port <port>
+
+# only need to initiate on one node
+# this will make current node master
+rs.initiate()
+
+# create a user, otherwise you can't add nodes to the set
+# you can only add user on the master node
+use admin
+db.createUser({
+  user: "my-user",
+  pwd: "my-pass",
+  roles: [
+    {role: "root", db: "admin"}
+  ]
+})
+
+# exit now and log back using a username
+exit
+```
+
+```sh
+# connecting to a replica set, which acctually connects to the primary node
+mongo --host "<replset>/<ip>:<port>" -u <user> -p <pass> --authenticationDatabase 'admin'
+
+# show status
+rs.status()
+
+# add a node
+rs.add("<ip>:<port>")
+
+# remove a node
+rs.remove("<ip>:<port>")
+
+# check
+rs.isMaster()
+
+# step down
+rs.stepDown()
+
+# show oplog data
+rs.printReplicationInfo()
+```
+
+instead of adding nodes one by one, you can put them in a config file:
 
 ```js
-// show status
-db.getProfilingStatus()
+// init_replica.js
+config = { _id: "myReplSet", members:[
+          { _id : 0, host : "localhost:27017"},
+          { _id : 1, host : "localhost:27018"},
+          { _id : 2, host : "localhost:27019"} ]
+};
 
-// turn off profilling
-db.getProfilingLevel(0)
-
-// log queries taken longer than 22ms
-db.setProfilingLevel(1, {slowms: 22})
-
-// log all queries
-db.setProfilingLevel(2)
-
-// profilling data are in 'system.profile' collection, use 'ns' key to limit to queries against a paticular collection
-db.system.profile.find({ns: /test.foo/})
+rs.initiate(config);
+rs.status();
 ```
+
+then `mongo < init_replica.js`
+
+
+### reconfig a running replica set
+
+```sh
+# get current config (a JS object)
+cfg = rs.conf()
+
+# update the config: making member 3 hidden
+cfg.members[3].votes = 0
+cfg.members[3].hidden = true
+cfg.members[3].priority = 0
+
+# apply the updated config
+rs.reconfig(cfg)
+```
+
+### `local` DB
+
+The `local` db contains information about the repl set:
+
+```sh
+# quering oplog
+use local
+db.oplog.rs.find()
+
+db.oplog.rs.stats()
+```
+
+* `oplog.rs` is a **capped** collection, which means its size is predefined (5% of available disk by default), new log entries will overwrite oldest entries when the size limit is reached;
+* One operation may result in many `oplog.rs` entries, such as `updateMany` will create an entry for each affected document;
+* Any data written into the `local` db is strictly local, it won't be added to oplog, won't be replicated;
+
+### Write concern
+
+* `w`: Whether a client app waits for acknowledgement from the replica set:
+
+    * `0` - don't wait for acknowledgement;
+    * `1` - (default) wait for acknowledgement from primary only (written data may lost if the primary stops working);
+    * `>=2` - wait from primary and one or more secondaries;
+    * `majority` - wait from a majority number of nodes;
+
+* `wtimeout` - timeout threshold;
+* `j` - whether the journal needs to be saved to disk before sending acknowledgement (default to `false`, which may result in data loss);
+
+Usage:
+
+```js
+db.foo.insert({
+    ...
+}, {
+    writeConcern: {
+        w: 'majority',
+        wtimeout: 500,
+    }
+});
+
+// return something like this if timeout exceeded:
+
+/*
+WriteResult({
+    "nInserted" : 1,
+    "writeConcernError" : {
+        "code" : 64,
+        "codeName" : "WriteConcernFailed",
+        "errInfo" : {
+            "wtimeout" : true
+        },
+        "errmsg" : "waiting for replication timed out"
+    }
+})
+*/
+```
+
+### Read concern levels
+
+* `local`   - latest data (data may be lost if a rollback occurs);
+* `available`   - the same as `local` except in sharded clusters;
+* `majority` - return data present on majority number of nodes;
+* `linearizable`
+
+![MongoDB Read Concerns](images/mongo-read-concerns.png)
+
+### Read Preference
+
+* `primary` - always get the latest data
+* `primaryPreferred`
+* `secondary`
+* `secondaryPreferred`
+* `nearest` - good for geographically distributed system
+
+all options except `primary` may result in stale data
+
+
+## Sharding
+
+![MongoDB Sharding and Replica Set](./images/mongo-sharding-replicaset.png)
+
+* In production env, the config servers should be in a replication set as well;
+* Primary shard:
+    * Each database has a primary shard, non-sharded collections stay on it;
+    * Merge operation for aggragation commands;
+
+### `mongos`
+
+* Use `mongos` to start;
+* It doesn't contain any data;
+* Config servers must be specified, that's where `mongos` get its data from;
+* It inherits its users from the config servers;
+* You can start and connect to multiple `mongos` from a client driver, the driver can failover from one to another;
+* Common tasks
+    ```sh
+    # show sharded cluster status
+    sh.status()
+
+    use config
+
+    db.databases.find().pretty()
+    db.collections.find().pretty()
+    db.shards.find().pretty()
+    db.chunks.find().pretty()
+    db.mongos.find().pretty()
+    ```
+
+### Shard key
+
+* MongoDB will create an index for the shard key if it doesn't exist;
+* Shard key **doesn't** need to be unique;
+* A unique key on a sharded collection must be the shard key itself or indexes prefixed with the shard key;
+
+A good shard key should has:
+
+* High Cardinality;
+* Low Frequency: low repetition for a given unique key value;
+* Not change monotonically (timestamps and dates increase monotonically);
+
+**Hashed shard keys**:
+
+* If you want to use a monotonically changing key(timestamps, dates, etc) for sharding, you should use a hashed shard key, which distributes the key more evenly;
+* But:
+    * Queries on ranges of shard key values are likely to be scatter-gather;
+    * Must be on a single non-array field;
+    * It doesn't support sorting;
+
+Shard key is permanent:
+
+* You **can not** change the shard key fields after sharding;
+* You **can not** change the values of the shard key fields after sharding;
+* You **can not** unshard a sharded collection;
+
+### Shard a collection:
+    ```sh
+    sh.enableSharding("myDB")
+    db.people.createIndex( { "name" : 1 } )
+    sh.shardCollection("myDB.people", { "name" : 1 } )
+    ```
+
+### Chunks
+
+* A partition of a collection is called a chunk;
+* Chunk ranges have an inclusive minimum and an exclusive maximum;
+* A shard can have multiple chunks;
+* You can specify how large a chunk should be (in MB):
+    ```sh
+    use config
+    db.settings.save({_id: "chunksize", value: 2})
+    ```
+
+### Query a sharded cluster
+
+* **Targeted query**: when you use a shard key or its prefix to query, the query gets sent to specifi shards;
+* **Scatter Gather**: when a shard key is not included in a query, `mongos` needs to go to all the shards to get the data, and do a `SHARD_MERGE`;
+* `mongos` can do `limit`, `sort`, `skip`:
+    * `sort`: each shard sorts first, then `mongos` only needs to do a merge-sort;
+    * `limit`: each shard does a `limit` first, then `mongos` limits after merge-sort;
+    * `skip`: done by `mongos` after the merge-sort;
+* All updates should contain the shard key or the `_id` field;
+
 
 ## Aggregation
 
@@ -1185,7 +1218,7 @@ db.people.aggregate([{
 ### `$project`
 
 * Transforms data, like the `map()` function in JS;
-* More powerful than projection in find, not limited to removing and retaining fields, it lets you create new fields;
+* More powerful than projection in `find`, not limited to removing and retaining fields, it lets you create new fields;
 * Can be used as many times as required within a pipeline;
 
 ```js
@@ -1601,6 +1634,56 @@ db.myCollection.aggregate([
     { $out: 'collection_name' },
 ]);
 ```
+
+### Performance
+
+Two modes of aggregation queries: realtime mode and batch mode;
+
+
+## Performance
+
+### Hardware Condsiderations
+
+* RAM (most db operations are done in the RAM), the larger and faster, the better;
+* CPU, benefit from multi-core CPUs;
+* Disk, IOPS matters, SSD is better than SATA, RAID 10 is the suggested RAID architecture;
+* Networking;
+
+### Profiling
+
+```js
+// show status
+db.getProfilingStatus()
+
+// turn off profilling
+db.getProfilingLevel(0)
+
+// log queries taken longer than 22ms
+db.setProfilingLevel(1, {slowms: 22})
+
+// log all queries
+db.setProfilingLevel(2)
+
+// profilling data are in 'system.profile' collection, use 'ns' key to limit to queries against a paticular collection
+db.system.profile.find({ns: /test.foo/})
+```
+
+
+## Storage Enginge
+
+A storage engine controls how data and index are stored in a disk, not related to cluster structure, db driver, etc;
+
+* MMAPv1
+    * Use the `mmap` system call, which maps files to memory;
+    * Collection-level locking: one write at a time for a collection;
+
+* WiredTiger
+
+    * Default since MongoDB v3.2;
+    * Document-level concurrency, usually faster than MMAPv1;
+    * Offers compression of data and indexes;
+
+
 
 ## Views
 
