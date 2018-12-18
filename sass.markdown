@@ -1,9 +1,9 @@
 Sass
 ==============
 
-## two formats
+## Two formats
 
-`.scss` is superset of CSS, every valid CSS is valid SCSS
+`.scss` is a superset of CSS, every valid CSS is valid SCSS
 
 ```scss
 #main {
@@ -21,9 +21,9 @@ Sass
 ```
 
 
-## maps
+## Maps
 
-sass map:
+SASS map:
 
 ```scss
 $map: (
@@ -35,7 +35,7 @@ $map: (
 
 ##  `for` loop
 
-you can create a color scale based on the `for` loop
+You can create a color scale based on the `for` loop
 
 ```scss
 // create '.color-scale-x' classes with background color changing from red to green
@@ -45,36 +45,26 @@ $greenHue: 128;
 
 @for $i from 0 through 10 {
   $amount: $redHue + $i * ($greenHue - $redHue) / 10;
-  
+
   .color-scale-#{$i} {
     background-color: change-color($base, $hue: $amount);
   }
 }
 ```
 
-## bootstrap-sass
+## Working with Bootstrap
 
-when you work with bootstrap-sass, use the following structure in your main .scss file (copied from roots sage project)
-
-your custom variables come first, then import `_bootstrap.scss`, then any other files
+When you work with bootstrap-sass, use the following structure in your main `.scss` file, your custom variables come first, then import `_bootstrap.scss`, then any other files:
 
 ```scss
 @import "common/variables";
 
-// bower:scss
-@import "../../bower_components/bootstrap-sass/assets/stylesheets/_bootstrap.scss";
-// endbower
+@import "./path/to/_bootstrap.scss";
 
 @import "common/global";
 @import "components/buttons";
-@import "components/comments";
-@import "components/forms";
-@import "components/grid";
-@import "components/wp-classes";
+// ...
+
 @import "layouts/header";
-@import "layouts/sidebar";
-@import "layouts/footer";
-@import "layouts/pages";
-@import "layouts/posts";
-@import "layouts/tinymce";
+// ...
 ```
