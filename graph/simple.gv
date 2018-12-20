@@ -1,0 +1,6 @@
+graph simple 
+{
+    a -- b --c;
+    b -- d;
+}
+

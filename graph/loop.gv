@@ -1,0 +1,13 @@
+digraph loop
+{
+    graph [bgcolor="#000000", label="A Loop", fontcolor="white"];
+
+    a [color="green", label="start", fontcolor="white"];
+    b [shape="circle", color="green", fontcolor="white"];
+    c [shape="circle", color="green", fontcolor="white"];
+    d [shape="circle", color="green", fontcolor="white"];
+    e [shape="circle", color="green", fontcolor="white"];
+
+    a -> b -> c -> d -> e [color="yellow", arrowhead="open"];
+    e -> a [color="yellow", arrowhead="open", style="bold"];
+}
