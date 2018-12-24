@@ -16,6 +16,7 @@ Quick productivity tips, shortcuts, command line snippets.
 - [Display IP address in shell prompt](#display-ip-address-in-shell-prompt)
 - [Mount/Unmount device](#mountunmount-device)
     - [`cifs`](#cifs)
+- [Relabel usb hard drive](#relabel-usb-hard-drive)
 - [Hide default folders in home directory in Ubuntu](#hide-default-folders-in-home-directory-in-ubuntu)
 - [Send email](#send-email)
 - [Work with ps or pdf files](#work-with-ps-or-pdf-files)
@@ -225,6 +226,33 @@ USER=Administrator mount -o uid=dockeruser,gid=dockeruser,file_mode=0770,dir_mod
 
 * `cifs` is an implementation of `smb`, it's outdated, you should use `smb 2` or `smb 3` when possible  (https://www.varonis.com/blog/cifs-vs-smb/)
 
+
+## Relabel usb hard drive
+
+reference: [RenameUSBDrive]
+
+```sh
+# find the usb drive
+sudo fdisk -l
+
+# unmount the drive
+sudo umount /dev/sdc1
+
+# IMPORTANT: 'ntfslabel' is for renaming ntfs drive, for drive of other filesystem, check the reference
+# check current label
+sudo ntfslabel /dev/sdc1
+# My Passport
+
+# change the label
+sudo ntfslabel /dev/sdc1 my_passport
+
+# unplug the drive, then plug it again, check the label
+sudo blkid
+# ...
+# /dev/sdc1: LABEL="my_passport" UUID="4E1AEA7B1AEA6007" TYPE="ntfs"
+```
+
+
 ## Hide default folders in home directory in Ubuntu
 
 Ubuntu will create some folders in a user's home directory, such as 'Desktop', 'Music', etc
@@ -413,3 +441,6 @@ wget --page-requisites --span-hosts --no-directories --accept jpg,png --execute 
 * `kill -9 <PID>`
 
     `SIGKILL`, terminate immediately/hard kill;
+
+
+[RenameUSBDrive]: [https://help.ubuntu.com/community/RenameUSBDrive]
