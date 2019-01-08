@@ -2,11 +2,12 @@ VS Code
 =============
 
 - [VS Code](#vs-code)
-    - [Shortcuts](#shortcuts)
-    - [Debugging](#debugging)
-        - [Trouble shooting](#trouble-shooting)
-        - [Sample debugging settings for React / Mocha](#sample-debugging-settings-for-react--mocha)
-    - [Mac trivias](#mac-trivias)
+  - [Shortcuts](#shortcuts)
+    - [with Vim plugin](#with-vim-plugin)
+  - [Debugging](#debugging)
+    - [Trouble shooting](#trouble-shooting)
+    - [Sample debugging settings for React / Mocha](#sample-debugging-settings-for-react--mocha)
+  - [Mac trivias](#mac-trivias)
 
 
 ## Shortcuts
@@ -15,10 +16,17 @@ VS Code
 
 * `Command + Alt + C`: copy absolute path of current file
 
-    this *only works when editor is not focused*, which is not convenient, I bound it to `gc` in vim mode,  this can be used to grep content from the current file and paste them at current position:
+### with Vim plugin
 
-    * `gc`
-    * `:r !grep -o <Pattern> <Command+V>`
+* `gd`: go to definition;
+* `gh`: show hover message (types or error messages);
+* `af`: in visual mode, select a larger block increasingly;
+* `Shift + <Esc>`: close popup boxes;
+* `gc`: toggle line comment, `gcc` for current line, `gc2j` for current and next 2 lines;
+* `gC`: toggle block comment;
+
+* when neovim is installed:
+    * `:g/foo/co$` copy all lines with `foo` to the end of file;
 
 
 ## Debugging
