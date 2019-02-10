@@ -4,43 +4,43 @@ Javascript
 General topics about Javascript and front-end develpoment.
 
 - [Data types in JS](#data-types-in-js)
-    - [Type casting and coercion](#type-casting-and-coercion)
-    - [Truesy and falsey](#truesy-and-falsey)
+  - [Type casting and coercion](#type-casting-and-coercion)
+  - [Truesy and falsey](#truesy-and-falsey)
 - [Objects](#objects)
 - [Prototype](#prototype)
-    - [Inheritance by Prototype](#inheritance-by-prototype)
+  - [Inheritance by Prototype](#inheritance-by-prototype)
 - [Javascript: The Good Parts](#javascript-the-good-parts)
 - [Functions](#functions)
-    - [the `arguments` parameter](#the-arguments-parameter)
+  - [the `arguments` parameter](#the-arguments-parameter)
 - [The `this` keyword](#the-this-keyword)
 - [Closures](#closures)
-    - [Temporal Dead Zone](#temporal-dead-zone)
+  - [Temporal Dead Zone](#temporal-dead-zone)
 - [Regular Expression](#regular-expression)
-    - [named groups](#named-groups)
+  - [named groups](#named-groups)
 - [Style guide](#style-guide)
 - [Module Systems](#module-systems)
-    - [AMD (Asynchronous Module Design)](#amd-asynchronous-module-design)
-    - [CommonJS (CJS)](#commonjs-cjs)
-    - [ES6](#es6)
+  - [AMD (Asynchronous Module Design)](#amd-asynchronous-module-design)
+  - [CommonJS (CJS)](#commonjs-cjs)
+  - [ES6](#es6)
 - [Symbol](#symbol)
 - [Iterations](#iterations)
 - [Promise](#promise)
-    - [Callback hell](#callback-hell)
-    - [resolved vs. rejected](#resolved-vs-rejected)
+  - [Callback hell](#callback-hell)
+  - [resolved vs. rejected](#resolved-vs-rejected)
 - [Generator](#generator)
 - [Async/Await](#asyncawait)
 - [Immutability](#immutability)
-    - [What is immutability ?](#what-is-immutability)
-    - [Reference equality vs. value equality](#reference-equality-vs-value-equality)
-    - [Immutability tools](#immutability-tools)
-        - [The JS way](#the-js-way)
-        - [Immutable.js](#immutablejs)
-        - [Immer](#immer)
-        - [immutability-helper](#immutability-helper)
+  - [What is immutability ?](#what-is-immutability)
+  - [Reference equality vs. value equality](#reference-equality-vs-value-equality)
+  - [Immutability tools](#immutability-tools)
+    - [The JS way](#the-js-way)
+    - [Immutable.js](#immutablejs)
+    - [Immer](#immer)
+    - [immutability-helper](#immutability-helper)
 - [ECMAScript](#ecmascript)
 - [Tricks](#tricks)
-    - [Deboucing an event](#deboucing-an-event)
-    - [Initialize an array with a value range](#initialize-an-array-with-a-value-range)
+  - [Deboucing an event](#deboucing-an-event)
+  - [Initialize an array with a value range](#initialize-an-array-with-a-value-range)
 - [Reference](#reference)
 
 ## Data types in JS
@@ -280,12 +280,18 @@ foo(let i=0; ...} {}
 * **`null` isn't anything**
 
     ```js
-    typeof null === 'object'; // actually, null is not an object
+    typeof null === 'object'; // null's type is 'object'
     ```
 
 * **`undefined`: default value for uninitialized variables and parameters**
 
-	always use `typof x === undefined` to check if a variable exists or not
+	always use `typeof x === 'undefined'` to check if a variable exists or not,
+
+    Comparison with `null`:
+
+    * `undefined` is a super global variable, you can override it: `let undefined = 'foo'`, while `null` is a keyword;
+    * `undeined` is of type `undefined`, `null` is of type `object`;
+
 
 * **`typeof`**
 
@@ -544,12 +550,12 @@ for (let i = 0; i < arr.length; i++) {
 See [let - MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/let) for details
 
 * `var` declarations will be hoisted to the top of **function scope**, and the value is `undefined`;
-* `let` bindings are created at the top of the **block scope**, but unlike `var`, the variable is not initilized, you get a `ReferenceError` if using it before the definition is evaluated;
+* `let` bindings are created at the top of the **block scope**, but unlike `var`, you can't read or write it, you get a `ReferenceError` if using it before the definition is evaluated;
 
 ```js
 function do_something() {
     console.log(bar); // undefined
-    console.log(foo); // ReferenceError
+    console.log(foo); // ReferenceError, in 'Temporal Dead Zone'
     var bar = 1;
     let foo = 2;
 }
