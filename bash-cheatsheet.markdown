@@ -1,41 +1,42 @@
 Bash Cheatsheet
 ===============
 
-- [Preface](#preface)
-- [Variables](#variables)
-- [Command substitution](#command-substitution)
-- [brace expansion](#brace-expansion)
-- [Strings](#strings)
-- [`if` statement](#if-statement)
-- [Command line arguments](#command-line-arguments)
-- [Conditional](#conditional)
-- [`[` vs `[[`](#vs)
-- [Arithmetic](#arithmetic)
-- [Array](#array)
-- [Looping](#looping)
-- [`case` statements](#case-statements)
-- [Functions](#functions)
-- [Variable scope](#variable-scope)
-- [the source (.) command](#the-source--command)
-- [integer or character sequence](#integer-or-character-sequence)
-- [get directory of a script you're running](#get-directory-of-a-script-youre-running)
-- [History](#history)
+- [Bash Cheatsheet](#bash-cheatsheet)
+  - [Preface](#preface)
+  - [Variables](#variables)
+  - [Command substitution](#command-substitution)
+  - [brace expansion](#brace-expansion)
+  - [Strings](#strings)
+  - [`if` statement](#if-statement)
+  - [Command line arguments](#command-line-arguments)
+  - [Conditional](#conditional)
+  - [`[` vs `[[`](#vs)
+  - [Arithmetic](#arithmetic)
+  - [Array](#array)
+  - [Looping](#looping)
+  - [`case` statements](#case-statements)
+  - [Functions](#functions)
+  - [Variable scope](#variable-scope)
+  - [the source (.) command](#the-source--command)
+  - [integer or character sequence](#integer-or-character-sequence)
+  - [get directory of a script you're running](#get-directory-of-a-script-youre-running)
+  - [History](#history)
     - [Search history using Ctrl+R](#search-history-using-ctrlr)
     - [Repeat previous command](#repeat-previous-command)
     - [Execute a specific command](#execute-a-specific-command)
-- [Bash Invocation](#bash-invocation)
+  - [Bash Invocation](#bash-invocation)
     - [an prompt cannot be changed issue](#an-prompt-cannot-be-changed-issue)
-- [Multiple commands on a single line](#multiple-commands-on-a-single-line)
-- [Here documents](#here-documents)
-- [read user input](#read-user-input)
-- [expr](#expr)
-- [printf](#printf)
-- [set](#set)
-- [shift](#shift)
-- [Generate random numbers](#generate-random-numbers)
-- [Debugging scripts](#debugging-scripts)
-- [read lines of a file](#read-lines-of-a-file)
-- [vi editing mode](#vi-editing-mode)
+  - [Multiple commands on a single line](#multiple-commands-on-a-single-line)
+  - [Here documents](#here-documents)
+  - [read user input](#read-user-input)
+  - [expr](#expr)
+  - [printf](#printf)
+  - [set](#set)
+  - [shift](#shift)
+  - [Generate random numbers](#generate-random-numbers)
+  - [Debugging scripts](#debugging-scripts)
+  - [read lines of a file](#read-lines-of-a-file)
+  - [vi editing mode](#vi-editing-mode)
 
 
 ## Preface
@@ -59,7 +60,7 @@ export a variable
     export foo
 
 or use one line:
-    
+
     export foo='i am a var'
 
 **exported variables are copied, not shared, which means any modification in the subroutine will not affect the variable in the parent routine**
@@ -96,7 +97,7 @@ basename and dirname
     /home/lee/code
 
 string length
-    
+
     $ a='hello world'
     $ echo ${#a}
     11
@@ -117,9 +118,9 @@ chopping strings, '##','#' to chop from beginning, '%%','%' to chop from the end
     hello-hello
     $ echo ${foo%.*}
     hello-hello.world
-    
+
 substring
-    
+
     $ foo='hello-world.jpg'
     $ echo ${foo:6:5}
     world
@@ -132,13 +133,14 @@ default values for a variable `${param:-default}`, ouput default if param is nul
     FOO
     $ echo $foo
 
-${foo:=FOO} set foo as 'FOO' if foo is null
-${foo:+BAR} returns 'BAR' if foo is NOT null
+`${foo:=FOO}` set `foo` as 'FOO' if foo is null
+
+`${foo:+BAR}` returns 'BAR' if `foo` is NOT null
 
 ## `if` statement
 
     if [ condition ]
-    then 
+    then
         action
     elif [ condition2 ]
     then
@@ -148,11 +150,11 @@ ${foo:+BAR} returns 'BAR' if foo is NOT null
     .
     elif [ condition3 ]
     then
-        action3 
+        action3
     else
         actionx
     fi
-    
+
 example
 
     if [ "${1##*.}" = "tar" ]
@@ -161,7 +163,7 @@ example
     else
         echo 'At first glance, this does not appear to be a tarball.'
     fi
-    
+
 ## Command line arguments
 create a file named `cmd-args.sh`:
 
@@ -179,14 +181,14 @@ create a file named `cmd-args.sh`:
     done
 
 test it out:
-    
+
     $ ./cmd-args.sh hello world is-fun
     name of script is './cmd-args.sh'
     first argument is 'hello'
     second argument is 'world'
     seventeenth argument is ''
     number of arguments is '3'
-    all arguments: 
+    all arguments:
     hello
     world
     is-fun
@@ -217,7 +219,7 @@ bash comparison operators:
 example:
 
     if [ "$myvar" -eq 3 ]
-    then 
+    then
         echo "myvar equals 3"
     fi
 
@@ -239,7 +241,7 @@ if `$myvar` is empty or have space in it, like 'foo bar', it will result in erro
 
     $ unset myvar
     $ echo $myvar
-    
+
     $ if [ $myvar = "foo bar oni" ]
     > then
     >     echo "yes"
@@ -295,7 +297,7 @@ so, **Always enclose string variables and environment variable in double quotes!
         * `x='a b'; [ $x = 'a b' ]`     # syntax error, expands to `[ a b = 'a b' ]`
         * `x='a b'; [ "$x" = 'a b' ]`   # equivalent
 
-    * `=` 
+    * `=`
 
         * `[[ ab = a? ]]`   # true, because it does pattern matching ( `* ? [` are magic). Does not glob expand to files in current directory. (**pattern matching, not regular expression**)
         * `[ ab = a? ]`     # `a?` glob expands to files in current directory. So may be true or false depending on the files in the current directory.
@@ -309,7 +311,7 @@ so, **Always enclose string variables and environment variable in double quotes!
         * `printf 'ab' | grep -Eq 'ab?'`    # POSIX equivalent
 
 
-## Arithmetic    
+## Arithmetic
 
 enclose arithmetic expressions(**integer only**) in `$((` and `))`
 
@@ -342,7 +344,7 @@ echo ${#arr[@]}                     # length
 # 3
 
 echo ${#arr[1]}                     # first element, index starts at 1
-# apple 
+# apple
 
 echo ${arr[@]:1}                    # leave the first
 # banana cherry
@@ -429,23 +431,23 @@ functions can take arguments just like scripts, use `$1`, `$2`, `$#`, `$@`, etc 
 write a script `func_args.sh`:
 
     #!/bin/bash
-    
+
     func() {
         echo "this function has $# arguments"
         local i
         local count=1
         for i in $@
-        do  
+        do
             echo "arg ${count}: $i"
             count=$(( count + 1 ))
         done
-    
+
         echo '.. and $0: ' $0
     }
 
 return to bash:
 
-    $ source func_args.sh 
+    $ source func_args.sh
     $ func a happy dog
     this function has 3 arguments
     arg 1: a
@@ -471,25 +473,25 @@ return values from a function:
 
 **You can make functions return numeric values using the return command. The usual way to make functions return strings is for the function to store the string in a variable, which can then be used after the function finishes. Alternatively, you can echo a string and catch the result, like this: `RETURN_VAL=$(func var1 var2)`**
 
-**you can get its exit status using `$?`** 
+**you can get its exit status using `$?`**
 
 ## Variable scope
 
     #!/bin/bash
-    
+
     s='hello from global scope'
-    
+
     func() {
         s='hello from func'
         echo $s
     }
-    
+
     func2() {
         local s='hello from func2'
         echo $s
     }
-    
-    
+
+
     echo 'before func():' $s
     func
     echo 'after func() :' $s
@@ -530,7 +532,7 @@ the source command runs the script in the same shell as the calling script, just
 brace expansion is performed before any other expansion, so `{1..$VAR}` would not work as expected, use `seq start end` or `for` loop instead:
 
     $ END=5
-    $ for i in {1..$END}; do echo $i; done 
+    $ for i in {1..$END}; do echo $i; done
     {1..5}
 
     $ for i in `seq 1 $END`; do echo $i; done
@@ -553,7 +555,7 @@ brace expansion is performed before any other expansion, so `{1..$VAR}` would no
 ref: http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
 
     DIR=$( cd "$( dirname "$0" )" && pwd )
-    
+
 ## History
 
 ref: [15 Examples To Master Linux Command Line History][15-examples-to-master-linux-command-line-history]
@@ -568,7 +570,7 @@ ref: [15 Examples To Master Linux Command Line History][15-examples-to-master-li
     Sat Jun  1 10:15:23 CST 2013
 
 ### Repeat previous command
-    
+
 * the Up key
 * Ctrl+P
 * `!!`
@@ -634,9 +636,9 @@ ref: [Zsh/Bash startup files loading order (.bashrc, .zshrc etc.)](https://shree
 
 General rule:
 
-* For bash, put stuff in `~/.bashrc`, and make `~/.bash_profile` source it. 
+* For bash, put stuff in `~/.bashrc`, and make `~/.bash_profile` source it.
 
-Typically, most users will only encounter a login shell ony if 
+Typically, most users will only encounter a login shell ony if
 
 * they logged in from a tty, not thru a GUI;
 * they logged in remotely, such as thru ssh;
@@ -659,8 +661,8 @@ on Ubuntu 14.04, the `Terminal` program starts as login shell, `Terminator` star
 
 ### an prompt cannot be changed issue
 
-    2016-02-09: a `PS1` prompt problem: it cannot be changed, `PS1` settings in ~/.bashrc got no effect, set `PS1` in command line cannot change it, but it got git branchs in it  
-    finally found the reason: `/etc/bash_completion.d/git-prompt`, which sourced `/usr/lib/git-core/git-sh-prompt` 
+    2016-02-09: a `PS1` prompt problem: it cannot be changed, `PS1` settings in ~/.bashrc got no effect, set `PS1` in command line cannot change it, but it got git branchs in it
+    finally found the reason: `/etc/bash_completion.d/git-prompt`, which sourced `/usr/lib/git-core/git-sh-prompt`
 
 ## Multiple commands on a single line
 
@@ -742,7 +744,7 @@ usually used for simple arithmetic, normally replaced with more efficient `$((..
 X/Open suggests it should be used in preference to `echo` for generating fomatted output, usage is similar to that in C
 
     $ printf '%10s\t%-10d\n' 'lee' 20
-           lee  20        
+           lee  20
 
 ## set
 
@@ -752,7 +754,7 @@ used to set shell options and positional parameters
     $ echo $1 $3
     foo lol
 
-a trick: using `set` to get fields of a command's ouput 
+a trick: using `set` to get fields of a command's ouput
 
     $ date
     Tue Sep  9 09:48:17 CST 2014
@@ -779,13 +781,13 @@ shift paramters off the left, can be used to scan parameters
 
 ## Generate random numbers
 
-    $ echo $RANDOM 
+    $ echo $RANDOM
     12521
-    $ echo $RANDOM 
+    $ echo $RANDOM
     15828
-    $ echo $RANDOM 
+    $ echo $RANDOM
     18324
-    $ echo $RANDOM 
+    $ echo $RANDOM
     21661
 
 ## Debugging scripts
