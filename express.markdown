@@ -3,7 +3,8 @@ Express
 
 - [Barebone Express app](#barebone-express-app)
 - [Request](#request)
-    - [Params and Queries](#params-and-queries)
+  - [Params and Queries](#params-and-queries)
+- [Middleware](#middleware)
 
 ## Barebone Express app
 
@@ -16,7 +17,7 @@ app.get('/', function(req, res){
 });
 
 app.use(function(req, res){
-    res.sendStatus(404); 
+    res.sendStatus(404);
 });
 
 var server = app.listen(3000, function() {
@@ -25,7 +26,8 @@ var server = app.listen(3000, function() {
 });
 ```
 
-## Request 
+
+## Request
 
 ### Params and Queries
 
@@ -45,3 +47,33 @@ app.post('/', function(req, res, next) {
     // ...
 });
 ```
+
+
+## Middleware
+
+![Express Middleware](images/express_middleware.png)
+
+```js
+var express = require('express')
+var app = express()
+
+var myLogger = function (req, res, next) {
+  console.log('LOGGED')
+  next()
+}
+
+app.use(myLogger)
+
+app.get('/', function (req, res) {
+  res.send('Hello World!')
+})
+
+app.listen(3000)
+```
+
+A middleware:
+
+* Can modify the `req` and `res` objects;
+* Passes control to next middleware by calling `next`;
+* Can end the request-response cycle;
+* Order matters, in the example above: `myLogger` is executed before the root route;
