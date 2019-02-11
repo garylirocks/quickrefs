@@ -1,30 +1,31 @@
 React
 ===============
 
-- [React](#react)
-    - [General Ideas](#general-ideas)
-    - [State and Props](#state-and-props)
-    - [Components](#components)
-        - [Presentational vs. Container](#presentational-vs-container)
-            - [Presentational](#presentational)
-            - [Container](#container)
-            - [How to do it](#how-to-do-it)
-        - [How to bind event handlers](#how-to-bind-event-handlers)
-    - [JSX Syntaxes](#jsx-syntaxes)
-    - [Example with lifecycle functions](#example-with-lifecycle-functions)
-        - [v16.4](#v164)
-        - [Before v16.3](#before-v163)
-    - [state](#state)
-        - [state initializing](#state-initializing)
-        - [state updating](#state-updating)
-    - [PropTypes](#proptypes)
-    - [Refs and the DOM](#refs-and-the-dom)
-        - [`ref` on DOM element](#ref-on-dom-element)
-        - [`ref` on Components](#ref-on-components)
-    - [another way to creat `ref` since v16.3](#another-way-to-creat-ref-since-v163)
-    - [Controlled vs. Uncontrolled Components](#controlled-vs-uncontrolled-components)
-        - [Error Handling](#error-handling)
-    - [Styling](#styling)
+- [General Ideas](#general-ideas)
+- [State and Props](#state-and-props)
+- [Components](#components)
+  - [Presentational vs. Container](#presentational-vs-container)
+    - [Presentational](#presentational)
+    - [Container](#container)
+    - [How to do it](#how-to-do-it)
+  - [How to bind event handlers](#how-to-bind-event-handlers)
+- [JSX Syntaxes](#jsx-syntaxes)
+- [Example with lifecycle functions](#example-with-lifecycle-functions)
+  - [v16.4](#v164)
+  - [Before v16.3](#before-v163)
+- [state](#state)
+  - [state initializing](#state-initializing)
+  - [state updating](#state-updating)
+- [PropTypes](#proptypes)
+- [Refs and the DOM](#refs-and-the-dom)
+  - [`ref` on DOM element](#ref-on-dom-element)
+  - [`ref` on Components](#ref-on-components)
+- [another way to creat `ref` since v16.3](#another-way-to-creat-ref-since-v163)
+- [Controlled vs. Uncontrolled Components](#controlled-vs-uncontrolled-components)
+  - [Error Handling](#error-handling)
+- [Styling](#styling)
+- [`ReactDOMServer`](#reactdomserver)
+- [SSR - Server Side Rendering](#ssr---server-side-rendering)
 
 ## General Ideas
 
@@ -42,7 +43,7 @@ React
 read [Dan Abramov's article](https://medium.com/@dan_abramov/smart-and-dumb-components-7ca2f9a7c7d0) about presentational and container components
 
 * function components
-    
+
     do not have states, if a component does not need any interactive activity, then use a function component, often used for bottom level reprenstational component;
 
     it's called '**stateless**' component
@@ -99,11 +100,11 @@ read [Dan Abramov's article](https://medium.com/@dan_abramov/smart-and-dumb-comp
 class A {
   static color = "red";
   counter = 0;
-  
+
   handleClick = () => {
     this.counter++;
   }
-  
+
   handleLongClick() {
     this.counter++;
   }
@@ -121,7 +122,7 @@ class A {
       this.counter++;
     };
   }
-  
+
   handleLongClick() {
     this.counter++;
   }
@@ -276,7 +277,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 export class Book extends React.Component {
-    static defaultProps = {     
+    static defaultProps = {
         title: 'untitled book',
     }
 
@@ -309,8 +310,8 @@ usually `props` is the way for parent components to interact with children, but 
 * Triggering imperative animations;
 * Integrating with third-party DOM libraries;
 
-`ref` 
-    
+`ref`
+
 * can be added to either a React component or a DOM element;
 * takes a callback function, which is executed immediately after the component is mounted or unmounted;
 
@@ -353,14 +354,14 @@ class MyComponent extends React.Component {
 
 ## Controlled vs. Uncontrolled Components
 
-An input field can be a controlled element or an uncontrolled one: 
+An input field can be a controlled element or an uncontrolled one:
 
 <iframe height='265' scrolling='no' title='React - Contolled vs. Uncontolled Component' src='//codepen.io/garylirocks/embed/jYgQLO/?height=265&theme-id=dark&default-tab=js,result&embed-version=2' frameborder='no' allowtransparency='true' allowfullscreen='true' style='width: 100%;'>See the Pen <a href='https://codepen.io/garylirocks/pen/jYgQLO/'>React - Contolled vs. Uncontolled Component</a> by Gary Li (<a href='https://codepen.io/garylirocks'>@garylirocks</a>) on <a href='https://codepen.io'>CodePen</a>.
 </iframe>
 
 ### Error Handling
 
-[Error Handling in React 16](https://reactjs.org/blog/2017/07/26/error-handling-in-react-16.html)  
+[Error Handling in React 16](https://reactjs.org/blog/2017/07/26/error-handling-in-react-16.html)
 [Demo](https://codepen.io/gaearon/pen/wqvxGa?editors=0010)
 
 
@@ -394,7 +395,7 @@ class ErrorBoundary extends React.Component {
 }
 ```
 
-then use it to wrap other components 
+then use it to wrap other components
 
 ```js
 <ErrorBoundary>
@@ -527,7 +528,7 @@ in webpack config file, add a `modules` parameter for the css loader:
 `app-styles.css`: almost pure css, see [https://github.com/css-modules/css-modules](https://github.com/css-modules/css-modules) for details
 
     @import 'basic.css';
-    
+
     .btn {
         color: 'red',
         fontSize: 14px,
@@ -538,8 +539,145 @@ in webpack config file, add a `modules` parameter for the css loader:
     }
 
 
+## `ReactDOMServer`
+
+* `renderToString`
+
+    ```js
+    ReactDOMServer.renderToString(element)
+    ```
+    * Render an element to HTML string;
+    * Return markup on initial request for faster page loads;
+    * Allow search engine to crawl the page;
+    * `ReactDOM.hydrate()` on a node that has sever-rendered markup, React will preserve it and only attach event handlers;
+
+* `renderToStaticMarkup`
+
+    * Similar to `renderToStaticMarkup`;
+    * Generate statick markup without extra DOM attributes used by React;
+    * `ReactDOM.hydrate()` won't work on the generated markup;
 
 
+## SSR - Server Side Rendering
+
+A good step by step guide: [Demystifying server-side rendering in React](https://medium.freecodecamp.org/demystifying-reacts-server-side-render-de335d408fe4)
+
+* On server side:
+    * Render the root component with `ReactDOMServer.renderToString`, put the result in the HTML page;
+    * Load the necessary data, and output the initial Redux state;
+    * Use a `StaticRouter` to match the request path;
+
+* On client side:
+    * Use the data from the server as initial state;
+    * `ReactDOM.hydrate`;
+
+```js
+// server.js
+import express from "express";
+import path from "path";
+
+import React from "react";
+import { renderToString } from "react-dom/server";
+import { StaticRouter, matchPath } from "react-router-dom";
+import { Provider as ReduxProvider } from "react-redux";
+import Helmet from "react-helmet";
+import routes from "./routes";
+import Layout from "./components/Layout";
+import createStore, { initializeSession } from "./store";
+
+const app = express();
+
+app.use( express.static( path.resolve( __dirname, "../dist" ) ) );
+
+app.get( "/*", ( req, res ) => {
+    const context = { };
+    const store = createStore( );
+
+    store.dispatch( initializeSession( ) );
+
+    const dataRequirements =
+        routes
+            .filter( route => matchPath( req.url, route ) ) // filter matching paths
+            .map( route => route.component ) // map to components
+            .filter( comp => comp.serverFetch ) // check if components have data requirement
+            .map( comp => store.dispatch( comp.serverFetch( ) ) ); // dispatch data requirement
+
+    Promise.all( dataRequirements ).then( ( ) => {
+        const jsx = (
+            <ReduxProvider store={ store }>
+                <StaticRouter context={ context } location={ req.url }>
+                    <Layout />
+                </StaticRouter>
+            </ReduxProvider>
+        );
+        const reactDom = renderToString( jsx );
+        const reduxState = store.getState( );
+        const helmetData = Helmet.renderStatic( );
+
+        res.writeHead( 200, { "Content-Type": "text/html" } );
+        res.end( htmlTemplate( reactDom, reduxState, helmetData ) );
+    } );
+} );
+
+app.listen( 2048 );
+
+function htmlTemplate( reactDom, reduxState, helmetData ) {
+    return `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <title>React SSR</title>
+            ${ helmetData.title.toString( ) }
+            ${ helmetData.meta.toString( ) }
+        </head>
+
+        <body>
+            <div id="app">${ reactDom }</div>
+            <script>
+                window.REDUX_DATA = ${ JSON.stringify( reduxState ) }
+            </script>
+            <script src="./app.bundle.js"></script>
+        </body>
+        </html>
+    `;
+}
+```
+
+```js
+// client.js
+import React from "react";
+import ReactDOM from "react-dom";
+import { BrowserRouter as Router } from "react-router-dom";
+import { Provider as ReduxProvider } from "react-redux";
+
+import Layout from "./components/Layout";
+import createStore from "./store";
+
+const store = createStore( window.REDUX_DATA );
+
+const jsx = (
+    <ReduxProvider store={ store }>
+        <Router>
+            <Layout />
+        </Router>
+    </ReduxProvider>
+);
+
+const app = document.getElementById( "app" );
+ReactDOM.hydrate( jsx, app );
+```
+
+In order for the server to use ES modules and JSX, require `babel-register` at the entry:
+
+```js
+// index.js
+require( "babel-register" )( {
+    presets: [ "env" ],
+} );
+
+require( "./src/server" );
+```
 
 
 
