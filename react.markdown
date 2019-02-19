@@ -3,26 +3,32 @@ React
 
 - [General Ideas](#general-ideas)
 - [State and Props](#state-and-props)
+- [State](#state)
+  - [Initializing](#initializing)
+  - [Updating](#updating)
 - [Components](#components)
   - [Presentational vs. Container](#presentational-vs-container)
     - [Presentational](#presentational)
     - [Container](#container)
     - [How to do it](#how-to-do-it)
   - [How to bind event handlers](#how-to-bind-event-handlers)
-- [JSX Syntaxes](#jsx-syntaxes)
+  - [Controlled vs. Uncontrolled Components](#controlled-vs-uncontrolled-components)
 - [Example with lifecycle functions](#example-with-lifecycle-functions)
   - [v16.4](#v164)
   - [Before v16.3](#before-v163)
-- [state](#state)
-  - [state initializing](#state-initializing)
-  - [state updating](#state-updating)
 - [PropTypes](#proptypes)
+- [JSX Syntaxes](#jsx-syntaxes)
 - [Refs and the DOM](#refs-and-the-dom)
   - [`ref` on DOM element](#ref-on-dom-element)
   - [`ref` on Components](#ref-on-components)
-- [another way to creat `ref` since v16.3](#another-way-to-creat-ref-since-v163)
-- [Controlled vs. Uncontrolled Components](#controlled-vs-uncontrolled-components)
+  - [Another way to create `ref` since v16.3](#another-way-to-create-ref-since-v163)
   - [Error Handling](#error-handling)
+- [Hooks](#hooks)
+  - [State Hooks](#state-hooks)
+  - [Effect Hooks](#effect-hooks)
+  - [Custom Hooks](#custom-hooks)
+  - [Other Hooks](#other-hooks)
+  - [Rules of Hooks](#rules-of-hooks)
 - [Styling](#styling)
 - [`ReactDOMServer`](#reactdomserver)
 - [SSR - Server Side Rendering](#ssr---server-side-rendering)
@@ -36,6 +42,33 @@ React
 
 * props are fixed, can not be changed
 * state is dynamic, can be changed, is private and fully controlled by the component
+
+
+## State
+
+### Initializing
+
+with ES6 class syntax, add a `state` property to the class
+
+    class Book extends React.Component {
+        state = {
+            title: 'Moby Dick',
+            ...
+        }
+
+        ...
+    }
+
+### Updating
+
+* always use `this.setState({})` to update the state
+* state updates may be asynchronous, if new state is depended upon the previous state, use the second form of `setState()`:
+
+        this.setState((prevState, props) => ({
+            counter: prevState.counter + props.increment
+        }));
+
+
 
 
 ## Components
@@ -137,33 +170,13 @@ General Rules:
 * Arrow functions is almost the same as do binding manually in the constructor, but for binding functions, the bound one is in the instance, the original function is still in the prototype;
 * Arrow functions and bound functions are **slower** than usual methods;
 
+### Controlled vs. Uncontrolled Components
 
-## JSX Syntaxes
+An input field can be a controlled element or an uncontrolled one:
 
-* Embed JavaScript expressions in curly braces, for readability, put it in multiple lines and wrap it in parentheses
+<iframe height='265' scrolling='no' title='React - Contolled vs. Uncontolled Component' src='//codepen.io/garylirocks/embed/jYgQLO/?height=265&theme-id=dark&default-tab=js,result&embed-version=2' frameborder='no' allowtransparency='true' allowfullscreen='true' style='width: 100%;'>See the Pen <a href='https://codepen.io/garylirocks/pen/jYgQLO/'>React - Contolled vs. Uncontolled Component</a> by Gary Li (<a href='https://codepen.io/garylirocks'>@garylirocks</a>) on <a href='https://codepen.io'>CodePen</a>.
+</iframe>
 
-        const element = (
-          <h1>
-            Hello, {formatName(user)}!
-          </h1>
-        );
-
-
-* attributes: use quotes for string literals and curly braces for JS expressions
-
-        const element = <div tabIndex="0"></div>;
-        const element = <img src={user.avatarUrl}></img>;
-
-
-* use `camelCase` for attributes names, and some attributes' tag need to be modified to avoid conflicting with JS keywords
-
-    * `for`			-> `htmlFor`
-    * `class`		-> `className`
-    * `tabindex`	-> `tabIndex`
-    * `colspan`     -> `colSpan`
-    * `style`		->	`style`  value should be wrapped by double brackets, and CSS property names should be in camelCase: `background-color` -> `backgroundColor`
-
-            <div htmlFor="nameField" className="wide" style={{border: "1px solid #000", backgroundColor: 'red'}}>a demo div</div>
 
 ## Example with lifecycle functions
 
@@ -243,31 +256,6 @@ see this **[CodeSandbox example](https://codesandbox.io/s/2jxjn85n0j)** to under
     );
 
 
-## state
-
-### state initializing
-
-with ES6 class syntax, add a `state` property to the class
-
-    class Book extends React.Component {
-        state = {
-            title: 'Moby Dick',
-            ...
-        }
-
-        ...
-    }
-
-### state updating
-
-* always use `this.setState({})` to update the state
-* state updates may be asynchronous, if new state is depended upon the previous state, use the second form of `setState()`:
-
-        this.setState((prevState, props) => ({
-            counter: prevState.counter + props.increment
-        }));
-
-
 ## PropTypes
 
 we can use static class variables within class definition to define `defaultProps` and `propTypes`
@@ -300,6 +288,34 @@ export class Book extends React.Component {
 ```
 
 
+## JSX Syntaxes
+
+* Embed JavaScript expressions in curly braces, for readability, put it in multiple lines and wrap it in parentheses
+
+        const element = (
+          <h1>
+            Hello, {formatName(user)}!
+          </h1>
+        );
+
+
+* attributes: use quotes for string literals and curly braces for JS expressions
+
+        const element = <div tabIndex="0"></div>;
+        const element = <img src={user.avatarUrl}></img>;
+
+
+* use `camelCase` for attributes names, and some attributes' tag need to be modified to avoid conflicting with JS keywords
+
+    * `for`			-> `htmlFor`
+    * `class`		-> `className`
+    * `tabindex`	-> `tabIndex`
+    * `colspan`     -> `colSpan`
+    * `style`		->	`style`  value should be wrapped by double brackets, and CSS property names should be in camelCase: `background-color` -> `backgroundColor`
+
+            <div htmlFor="nameField" className="wide" style={{border: "1px solid #000", backgroundColor: 'red'}}>a demo div</div>
+
+
 ## Refs and the DOM
 
 [Official Doc](https://reactjs.org/docs/refs-and-the-dom.html)
@@ -330,7 +346,7 @@ an instance of the component will be passed to the callback function (it won't w
     <MyButton ref={button => this.buttonInstance = button;} />
 
 
-## another way to creat `ref` since v16.3
+### Another way to create `ref` since v16.3
 
 v16.3 introduced the `React.createRef()` function, the callback way of creating a ref still works
 
@@ -351,13 +367,6 @@ class MyComponent extends React.Component {
   }
 }
 ```
-
-## Controlled vs. Uncontrolled Components
-
-An input field can be a controlled element or an uncontrolled one:
-
-<iframe height='265' scrolling='no' title='React - Contolled vs. Uncontolled Component' src='//codepen.io/garylirocks/embed/jYgQLO/?height=265&theme-id=dark&default-tab=js,result&embed-version=2' frameborder='no' allowtransparency='true' allowfullscreen='true' style='width: 100%;'>See the Pen <a href='https://codepen.io/garylirocks/pen/jYgQLO/'>React - Contolled vs. Uncontolled Component</a> by Gary Li (<a href='https://codepen.io/garylirocks'>@garylirocks</a>) on <a href='https://codepen.io'>CodePen</a>.
-</iframe>
 
 ### Error Handling
 
@@ -402,6 +411,157 @@ then use it to wrap other components
     <MyWidget />
 </ErrorBoundary>
 ```
+
+
+## Hooks
+
+* Added in v16.8;
+* Allow you to use state in functional components (without classes);
+* Hooks cover all existing use cases for classes, but classes are still supported, a gradual adoption strategy is recommended, do not rewrite everything straightaway;
+
+### State Hooks
+
+```js
+function ExampleWithManyStates() {
+  // Declare multiple state variables!
+  const [age, setAge] = useState(42);
+  const [fruit, setFruit] = useState('banana');
+  const [todos, setTodos] = useState([{ text: 'Learn Hooks' }]);
+
+  // Lazy initilize a state variable
+  const [lazy, setLazy] = useState(() => longOperation());
+  // ...
+
+  return (
+      <div>
+        { /* pass a value */ }
+        <button onClick={() => setAge(18)}>Back to 18</button>
+        { /* pass a function */ }
+        <button onClick={() => setAge(prev => prev + 1)}>
+            Increment age
+        </button>
+        { /* ... */ }
+      </div>
+  )
+}
+```
+
+* Provide initial state to `useState`, it can be of any type;
+* `useState` returns an array, first element is the state, second is the function to update the state;
+* The state value is kept when component re-renders;
+* By passing a function to `useState`, you can lazy initialize a state variable, the function only get called when the variable is first used;
+
+### Effect Hooks
+
+* Data fetching, subscriptions, manually changing the DOM: these are "side effects", they can affect other components and can't be done during rendering;
+* The Effect Hook `useEffect` performs side effects from a function component;
+* The code in an effect runs after every render, equivalent to `componentDidMount`, `componentDidUpdate`;
+* If you return a function from an effect, it runs when the component unmounts (`componentWillUnmount`), as well as before subsequent render;
+
+
+```js
+function FriendStatusWithCounter(props) {
+    const [count, setCount] = useState(0);
+
+    // performs a side-effect
+    useEffect(() => {
+        document.title = `You clicked ${count} times`;
+    });
+
+    const [isOnline, setIsOnline] = useState(null);
+
+    useEffect(() => {
+        ChatAPI.subscribeToFriendStatus(props.friend.id, handleStatusChange);
+
+        // return a function for 'cleanup'
+        return () => {
+            ChatAPI.unsubscribeFromFriendStatus(props.friend.id, handleStatusChange);
+        };
+    });
+
+    function handleStatusChange(status) {
+        setIsOnline(status.isOnline);
+    }
+    // ...
+```
+
+### Custom Hooks
+
+* Extract stateful logic, so it can be used in multiple components;
+* Accomplish the same as higher-order components and render props;
+
+```js
+import React, { useState, useEffect } from 'react';
+
+function useFriendStatus(friendID) {
+    const [isOnline, setIsOnline] = useState(null);
+
+    function handleStatusChange(status) {
+        setIsOnline(status.isOnline);
+    }
+
+    useEffect(() => {
+        ChatAPI.subscribeToFriendStatus(friendID, handleStatusChange);
+        return () => {
+        ChatAPI.unsubscribeFromFriendStatus(friendID, handleStatusChange);
+        };
+    });
+
+  return isOnline;
+}
+```
+
+Now we can use it from multiple components:
+
+```js
+function FriendStatus(props) {
+    const isOnline = useFriendStatus(props.friend.id);
+
+    if (isOnline === null) {
+        return 'Loading...';
+    }
+    return isOnline ? 'Online' : 'Offline';
+}
+```
+
+```js
+function FriendListItem(props) {
+    const isOnline = useFriendStatus(props.friend.id);
+
+    return (
+        <li style={{ color: isOnline ? 'green' : 'black' }}>
+        {props.friend.name}
+        </li>
+    );
+}
+```
+
+### Other Hooks
+
+* `useContext`: subscribe to React context without introducing nesting:
+
+```js
+function Example() {
+    const locale = useContext(LocaleContext);
+    const theme = useContext(ThemeContext);
+    // ...
+}
+```
+
+* `useReducer`: manage local state with a reducer:
+
+```js
+function Todos() {
+    const [todos, dispatch] = useReducer(todosReducer);
+    // ...
+```
+
+### Rules of Hooks
+
+* Only call Hooks at the top level, don't call them inside loops, conditions or nested functions;
+* Only call Hooks from React function components, not from regular functions;
+
+
 
 
 ## Styling
