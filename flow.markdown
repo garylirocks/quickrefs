@@ -1,47 +1,47 @@
 # Flow
 
-- [Flow](#flow)
-  - [Overview](#overview)
-    - [Flow vs. PropTypes](#flow-vs-proptypes)
-  - [Setup](#setup)
-    - [Config Babel to Strip Flow Annotations](#config-babel-to-strip-flow-annotations)
-    - [Prepare Your Files for Flow](#prepare-your-files-for-flow)
-    - [Ignoring](#ignoring)
-  - [Type System](#type-system)
-    - [Depth Subtyping](#depth-subtyping)
-  - [Type Annotations](#type-annotations)
-    - [Primitive Types](#primitive-types)
-    - [Literal Types](#literal-types)
-    - [Maybe Types](#maybe-types)
-    - [Any Type](#any-type)
-    - [Mixed](#mixed)
-    - [Variable Types](#variable-types)
-    - [Function Types](#function-types)
-    - [Object Types](#object-types)
-    - [Array Types](#array-types)
-    - [Tuple Types](#tuple-types)
-    - [Class Types](#class-types)
-    - [Interface Types](#interface-types)
-    - [Type Aliases](#type-aliases)
-    - [Module Types](#module-types)
-    - [Opt-out types](#opt-out-types)
-  - [Optional Parameters or Properties](#optional-parameters-or-properties)
-    - [Optional function parameters](#optional-function-parameters)
-    - [Function params with defaults](#function-params-with-defaults)
-    - [Optional object properties](#optional-object-properties)
-  - [React](#react)
-    - [Class Component example:](#class-component-example)
-    - [Binding method in constructor](#binding-method-in-constructor)
-    - [Functional Component example](#functional-component-example)
-    - [Event Handling](#event-handling)
-    - [ref functions](#ref-functions)
-    - [Children](#children)
-    - [Higher-order Components](#higher-order-components)
-    - [Context](#context)
-    - [Redux](#redux)
-    - [React Types](#react-types)
-  - [Strict Mode](#strict-mode)
-  - [Refs](#refs)
+- [Overview](#overview)
+  - [Flow vs. PropTypes](#flow-vs-proptypes)
+- [Setup](#setup)
+  - [Config Babel to Strip Flow Annotations](#config-babel-to-strip-flow-annotations)
+  - [Prepare Your Files for Flow](#prepare-your-files-for-flow)
+  - [Ignoring](#ignoring)
+  - [Config options:](#config-options)
+- [Type System](#type-system)
+  - [Depth Subtyping](#depth-subtyping)
+- [Type Annotations](#type-annotations)
+  - [Primitive Types](#primitive-types)
+  - [Literal Types](#literal-types)
+  - [Maybe Types](#maybe-types)
+  - [Any Type](#any-type)
+  - [Mixed](#mixed)
+  - [Variable Types](#variable-types)
+  - [Function Types](#function-types)
+  - [Object Types](#object-types)
+  - [Array Types](#array-types)
+  - [Tuple Types](#tuple-types)
+  - [Class Types](#class-types)
+  - [Interface Types](#interface-types)
+  - [Type Aliases](#type-aliases)
+  - [Module Types](#module-types)
+  - [Opt-out types](#opt-out-types)
+- [Optional Parameters or Properties](#optional-parameters-or-properties)
+  - [Optional function parameters](#optional-function-parameters)
+  - [Function params with defaults](#function-params-with-defaults)
+  - [Optional object properties](#optional-object-properties)
+- [React](#react)
+  - [Class Component example:](#class-component-example)
+  - [Binding method in constructor](#binding-method-in-constructor)
+  - [Functional Component example](#functional-component-example)
+  - [Event Handling](#event-handling)
+  - [ref functions](#ref-functions)
+  - [Children](#children)
+  - [Higher-order Components](#higher-order-components)
+  - [Context](#context)
+  - [Redux](#redux)
+  - [React Types](#react-types)
+- [Strict Mode](#strict-mode)
+- [Refs](#refs)
 
 ## Overview
 
@@ -104,6 +104,14 @@ flow check --all
 ### Ignoring
 
 use `// $FlowFixMe` to ignore flow errors on the following line, this can be configured with `suppress_comment` option in `.flowconfig`
+
+### Config options:
+
+In `.flowconfig`:
+
+- `[ignore]` - Have flow not parse, then you need to specify the modules in `flow-typed`;
+- `[untyped]` - Have flow parse but throw away types, treat them as `any`;
+- `[declarations]` - Code is not typechecked, but signatures of function, classes etc are extracted and used by flow to typecheck other code;
 
 ## Type System
 
