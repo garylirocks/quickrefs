@@ -6,6 +6,7 @@ HTML
     - [Bubbling](#bubbling)
     - [Capturing](#capturing)
   - [Passive Event Listeners](#passive-event-listeners)
+- [History API](#history-api)
 
 
 ## DOM Events
@@ -60,3 +61,11 @@ HTML
     ```
 
 * This is a breaking change to the `addEventListener` method, previously the third param is of boolean type, indicating whether respond in `capture` phase, so you may need to add a polyfill or do a feature detection;
+
+
+## History API
+
+* HTML5 supports history API;
+* You can manipulate the history by `pushState`, `replaceState`, and listen for `popstate` event;
+* `pushState(state: any, title: string, path?: string)`, this add a new entry to the history object, and attach a `state` object to it, you can update the `path` at the same time, which doesn't send a query to the server;
+* `popstate` happens when you use `back`, `forward`, `go`;
