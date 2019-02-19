@@ -1,31 +1,30 @@
-Git Cheatsheet
-===============
+# Git Cheatsheet
 
 - [Preface](#preface)
 - [Basics](#basics)
-    - [First Commit](#first-commit)
-    - [Staging area](#staging-area)
+  - [First Commit](#first-commit)
+  - [Staging area](#staging-area)
 - [Stashing](#stashing)
-    - [Creating a Branch from a Stash](#creating-a-branch-from-a-stash)
+  - [Creating a Branch from a Stash](#creating-a-branch-from-a-stash)
 - [Log](#log)
-    - [limiting log output](#limiting-log-output)
-    - [a GUI to visualize log](#a-gui-to-visualize-log)
-    - [show log for a specific commit](#show-log-for-a-specific-commit)
+  - [limiting log output](#limiting-log-output)
+  - [a GUI to visualize log](#a-gui-to-visualize-log)
+  - [show log for a specific commit](#show-log-for-a-specific-commit)
 - [Configs](#configs)
 - [Command Aliases](#command-aliases)
 - [History](#history)
 - [Tags](#tags)
-    - [sharing tags](#sharing-tags)
+  - [sharing tags](#sharing-tags)
 - [Undoing changes](#undoing-changes)
 - [Branches](#branches)
-    - [set a local branch to track a remote branch](#set-a-local-branch-to-track-a-remote-branch)
+  - [set a local branch to track a remote branch](#set-a-local-branch-to-track-a-remote-branch)
 - [Remotes](#remotes)
-    - [push](#push)
-    - [Add a local branch that tracks a remote branch](#add-a-local-branch-that-tracks-a-remote-branch)
-    - [add a remote](#add-a-remote)
-    - [clone a repo to remote](#clone-a-repo-to-remote)
+  - [push](#push)
+  - [Add a local branch that tracks a remote branch](#add-a-local-branch-that-tracks-a-remote-branch)
+  - [add a remote](#add-a-remote)
+  - [clone a repo to remote](#clone-a-repo-to-remote)
 - [Revision Selection](#revision-selection)
-    - [Commit Ranges](#commit-ranges)
+  - [Commit Ranges](#commit-ranges)
 - [diff](#diff)
 - [checkout](#checkout)
 - [rebase](#rebase)
@@ -38,11 +37,12 @@ Git Cheatsheet
 - [NOTICES](#notices)
 
 ## Preface
+
 Some useful tips of git
 Source:
 
-* [Pro Git][pro_git_book]
-* [GIT IMMERSION][git_immersion] easy and useful
+- [Pro Git][pro_git_book]
+- [GIT IMMERSION][git_immersion] easy and useful
 
 ## Basics
 
@@ -54,8 +54,7 @@ there are usually many files to add to index before first commit, it would by te
 
 ### Staging area
 
-Staging area, or index is saved in `.git/index`, git stages file as it is when you run `git add`, *if you modify a staged file, then run `git status`, the file will show as both staged and unstaged*, you can run `git add` on the file again
-
+Staging area, or index is saved in `.git/index`, git stages file as it is when you run `git add`, _if you modify a staged file, then run `git status`, the file will show as both staged and unstaged_, you can run `git add` on the file again
 
 ## Stashing
 
@@ -120,10 +119,10 @@ stashes still exist in the stack after you apply them, remove the stashes by `gi
 ### Creating a Branch from a Stash
 
 `git stash branch <branchname> [<stash>]`: will
-    creates a new branch
-    checkout the commit you were on when you stashed your work
-    reapplies your work there
-    drop the stash if it applies successfully
+creates a new branch
+checkout the commit you were on when you stashed your work
+reapplies your work there
+drop the stash if it applies successfully
 
 ## Log
 
@@ -230,10 +229,10 @@ use `gitk`, it accepts nearly all options for `git log`
 
 configuration levels:
 
-* `--system`: `/etc/gitconfig`
-* `--global`: `~/.gitconfig`
-* `--local`: `$PROJECT/.git/config`
-* `--file <filename>`
+- `--system`: `/etc/gitconfig`
+- `--global`: `~/.gitconfig`
+- `--local`: `$PROJECT/.git/config`
+- `--file <filename>`
 
 ```sh
 # list configs
@@ -258,13 +257,14 @@ quite useful configs:
 
 whitespace, line-endings:
 
-* `core.autocrlf`
-    * `true`        # convert cflf to lf on commit, vice versa on checkout
-    * `input`       # convert cflf to lf on commit, do nothing on checkout, suitable for Linux users
-    * `false`       # nothing is done on commit or checkout
+- `core.autocrlf`
 
-* `core.whitespace`
-    * `trailing-space,space-before-tab,-indent-with-non-tab,-cr-at-eol` # default value, git will mark whitespace issues with special colors when diff files
+  - `true` # convert cflf to lf on commit, vice versa on checkout
+  - `input` # convert cflf to lf on commit, do nothing on checkout, suitable for Linux users
+  - `false` # nothing is done on commit or checkout
+
+- `core.whitespace`
+  - `trailing-space,space-before-tab,-indent-with-non-tab,-cr-at-eol` # default value, git will mark whitespace issues with special colors when diff files
 
 set customized color to output:
 
@@ -392,8 +392,7 @@ reset to a specific commit by `git reset`:
 
 `--all` makes us to see all the branches
 
-*DO NOT USE RESET ON A SHARED BRANCH*
-
+_DO NOT USE RESET ON A SHARED BRANCH_
 
 ## Branches
 
@@ -463,7 +462,6 @@ git branch --set-upstream-to=bb/master
 git branch --track testing origin/testing
 ```
 
-
 ## Remotes
 
 show remotes:
@@ -494,12 +492,10 @@ fetch remote commits:
 
 or, use `git pull`, which fetch remote commits and merge them locally in one step
 
-
 ### push
 
     # push to the 'master' branch on the 'shared' remote
     $ git push shared master
-
 
 ### Add a local branch that tracks a remote branch
 
@@ -524,7 +520,6 @@ or, you can add a local 'greet' branch to track the remote one:
       remotes/origin/greet
       remotes/origin/master
 
-
 ### add a remote
 
     $ git remote -v
@@ -533,17 +528,11 @@ or, you can add a local 'greet' branch to track the remote one:
     shared  ../hello.git (fetch)
     shared  ../hello.git (push)
 
-
 ### clone a repo to remote
 
     $ git clone --bare git-demo/ git-demo-remote
     $ cd git-demo
     $ git remote add origin ../git-demo-remote/
-
-
-
-
-
 
 ## Revision Selection
 
@@ -557,35 +546,34 @@ you can reference a single revision by commit hash, branch name, or reflog short
     2c04075 HEAD@{2}: commit: add sth to svn ref
     ...
 
-* `@{<n>}`
+- `@{<n>}`
 
-    reflog entry of current branch
+  reflog entry of current branch
 
-* `@{-<n>}`
+- `@{-<n>}`
 
-    `<n>`th branch checked out before the current one
+  `<n>`th branch checked out before the current one
 
-* `<refname>@{upstream}`,`<refname>@{u}`
+- `<refname>@{upstream}`,`<refname>@{u}`
 
-    the branch the ref is set to build on top of
+  the branch the ref is set to build on top of
 
-* `<rev>^{<type>}`
+- `<rev>^{<type>}`
 
-    `<rev>` could be a tag, dereference the tag recursively until an object of the `<type>` is found
+  `<rev>` could be a tag, dereference the tag recursively until an object of the `<type>` is found
 
-* `<rev>^{/<text>}`
+- `<rev>^{/<text>}`
 
-    `HEAD^{/fix nasty bug}`, youngest matching commit reachable from `<rev>`
+  `HEAD^{/fix nasty bug}`, youngest matching commit reachable from `<rev>`
 
-* `:/<text>`
+- `:/<text>`
 
-    `:/fix nasty bug`, youngest matching commit reachable from any ref
+  `:/fix nasty bug`, youngest matching commit reachable from any ref
 
-* `<rev>:<path>`
+- `<rev>:<path>`
 
-    `HEAD:./hello.php`, blob or tree at the given path in `<rev>`
-    `:./hello.php`, content recorded **in the index** at the given path
-
+  `HEAD:./hello.php`, blob or tree at the given path in `<rev>`
+  `:./hello.php`, content recorded **in the index** at the given path
 
 * `HEAD^1`, `HEAD^` the first parent of HEAD
 * `HEAD^2` the second parent of HEAD, only useful for merge commits, which have more than one parent, the first is the one you were on when you merged, the second is the commit you merged in
@@ -597,11 +585,11 @@ select a ref by time:
     $ git show master@{yesterday}
     $ git show master@{3.month}
 
-`master@{3.month}`, `master@{3.months}`, `master@{3 months ago}` are the equivalent, *these reflogs are local, you maynot use them for commits older than a few months*
+`master@{3.month}`, `master@{3.months}`, `master@{3 months ago}` are the equivalent, _these reflogs are local, you maynot use them for commits older than a few months_
 
-* `HEAD`    the commit on which you based the changes in the working tree
-* `MERGE_HEAD`    the commit which you are merging into your branch when you run git merge
-* `CHERRY_PICK_HEAD`    the commit which you are cherry-picking when you run git cherry-pick
+- `HEAD` the commit on which you based the changes in the working tree
+- `MERGE_HEAD` the commit which you are merging into your branch when you run git merge
+- `CHERRY_PICK_HEAD` the commit which you are cherry-picking when you run git cherry-pick
 
 ### Commit Ranges
 
@@ -632,11 +620,9 @@ other notations:
 
     $ git diff --color @{3days}..HEAD -- [path]     # diff path in commits 3 days ago and now with color
 
-
 ## checkout
 
     $ git checkout <commit> -- <path>       # checkout a file from a commit to working directory
-
 
 ## rebase
 
@@ -667,7 +653,6 @@ You can also use it to **reorder, squash, edit and split commits**, see `git hel
 git rebase -i HEAD~5
 ```
 
-
 ## ignore files
 
 global ignore files, `~/.gitignore`, then make it a global ignore file with:
@@ -686,41 +671,41 @@ git hooks are scripts stored in the `.git/hooks/` directory, they are fired when
 
 there are two types: client-side hooks and server-side hooks
 
-* client-side:
+- client-side:
 
-    * `pre-commit`
+  - `pre-commit`
 
-        called by `git commit` without any arguments, before you type any commit message, can be used to verify what is about to be committed, such as lint the code, check TODOs
+    called by `git commit` without any arguments, before you type any commit message, can be used to verify what is about to be committed, such as lint the code, check TODOs
 
-    * `prepare-commit-msg`
+  - `prepare-commit-msg`
 
-        run before the commit message editor is fired up but after the default message is created, lets you edit default commit message; generally isn't useful for normal commits, good for commits where default commit message is auto-generated, such as templated commit messages, merge commits, squashed commits, and amended commits. You may use it in conjunction with a commit template to programmatically insert information.
+    run before the commit message editor is fired up but after the default message is created, lets you edit default commit message; generally isn't useful for normal commits, good for commits where default commit message is auto-generated, such as templated commit messages, merge commits, squashed commits, and amended commits. You may use it in conjunction with a commit template to programmatically insert information.
 
-    * `commit-msg`
+  - `commit-msg`
 
-        takes one parameter, the path to the file contains current commit message, can be used to validate commit message
+    takes one parameter, the path to the file contains current commit message, can be used to validate commit message
 
-    * `post-commit`
+  - `post-commit`
 
-        fires after the commit process is completed
+    fires after the commit process is completed
 
-    * `pre-rebase`
-    * `post-checkout`
-    * `post-merge`
+  - `pre-rebase`
+  - `post-checkout`
+  - `post-merge`
 
-* server-side:
+- server-side:
 
-    * `pre-receive`
+  - `pre-receive`
 
-        check commit message, check premissions, etc, can stop the push operation
+    check commit message, check premissions, etc, can stop the push operation
 
-    * `post-receive`
+  - `post-receive`
 
-        notify users, emails, etc
+    notify users, emails, etc
 
-    * `update`
+  - `update`
 
-        similar to `pre-receive`, but runs for each branch that is pushed to
+    similar to `pre-receive`, but runs for each branch that is pushed to
 
 ## Merge & Diff
 
@@ -732,7 +717,6 @@ diff and merge configs:
 
     merge.tool
     diff.external
-
 
 ## Split a subfolder out into a new repository
 
@@ -746,19 +730,18 @@ looks like there are two ways to accomplish this:
 
 [Stackoverflow: Detach (move) subdirectory into separate Git repository](http://stackoverflow.com/questions/359424/detach-move-subdirectory-into-separate-git-repository)
 
-	# create a new repo and add remote
-	mkdir newrepo
-	cd newrepo/
-	git init --bare
-	git remote add origin git@bitbucket.org:XXXX/newrepo.git
+    # create a new repo and add remote
+    mkdir newrepo
+    cd newrepo/
+    git init --bare
+    git remote add origin git@bitbucket.org:XXXX/newrepo.git
 
-	# split the subfolder out as a new branch, and then push it to the new repo
-	cd ../oldrepo
-	git subtree split --prefix=path/to/subfolder -b split
-	git push ../newrepo/ split:master
-	cd ../newrepo/
-	git push origin master
-
+    # split the subfolder out as a new branch, and then push it to the new repo
+    cd ../oldrepo
+    git subtree split --prefix=path/to/subfolder -b split
+    git push ../newrepo/ split:master
+    cd ../newrepo/
+    git push origin master
 
 ## Multiple accounts setup for Bitbucket/Github
 
@@ -766,72 +749,66 @@ looks like there are two ways to accomplish this:
 
 create ssh keys:
 
-	cd ~/.ssh
-	ssh-keygen -t rsa -f gary-new -C "gary@example.com"
-
+    cd ~/.ssh
+    ssh-keygen -t rsa -f gary-new -C "gary@example.com"
 
 in `.ssh/config`
 
-	Host bitbucket.org
-	  User git
-	  Hostname bitbucket.org
-	  PreferredAuthentications publickey
-	  IdentityFile ~/.ssh/id_rsa
+    Host bitbucket.org
+      User git
+      Hostname bitbucket.org
+      PreferredAuthentications publickey
+      IdentityFile ~/.ssh/id_rsa
 
-	Host bitbucket-accountB
-	  User git
-	  Hostname bitbucket.org
-	  PreferredAuthentications publickey
-	  IdentitiesOnly yes
-	  IdentityFile ~/.ssh/accountB
-
-
+    Host bitbucket-accountB
+      User git
+      Hostname bitbucket.org
+      PreferredAuthentications publickey
+      IdentitiesOnly yes
+      IdentityFile ~/.ssh/accountB
 
 ## Misc
 
-* `git status` may output Chinese characters in wrong encoding, fix:
+- `git status` may output Chinese characters in wrong encoding, fix:
 
-    ```bash
-    git config --global core.quotepath false
-    ```
+  ```bash
+  git config --global core.quotepath false
+  ```
 
-* ignore changes in tracked file:
+- ignore changes in tracked file:
 
-    ```bash
-    git update-index --assume-unchanged <file>
-    ```
+  ```bash
+  git update-index --assume-unchanged <file>
+  ```
 
-* create a bare repo 'hello.git' based on 'hello'
+- create a bare repo 'hello.git' based on 'hello'
 
-    ```bash
-    git clone --bare hello hello.git
-    ```
+  ```bash
+  git clone --bare hello hello.git
+  ```
 
-* add files interactively
+- add files interactively
 
-    ```bash
-    git add -i
-    ```
+  ```bash
+  git add -i
+  ```
 
-* stage part of a file (you can select which change you want to stage):
+- stage part of a file (you can select which change you want to stage):
 
-    ```bash
-    git add --patch
-    git add -p    # the same
-    ```
+  ```bash
+  git add --patch
+  git add -p    # the same
+  ```
 
-* add all modified files
+- add all modified files
 
-    ```bash
-    git add -u    # --update
-    ```
-
+  ```bash
+  git add -u    # --update
+  ```
 
 ## NOTICES
 
 **DO NOT USE REBASE ON SHARED BRANCHES**
-
-
 
 [pro_git_book]: http://git-scm.com/book
 [git_immersion]: http://gitimmersion.com/index.html

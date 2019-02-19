@@ -1,28 +1,23 @@
-VPN steup
-==============
-
+# VPN steup
 
 ## OpenVPN setup
 
 [How to Setup and Configure an OpenVPN Server on CentOS 6][openvpn_setup_digitalocean]
 
-0. add EPEL reporistory
+0.  add EPEL reporistory
 
         wget http://dl.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm
         rpm -Uvh epel-release-6-8.noarch.rpm
 
-
-1. install openvpn package
+1)  install openvpn package
 
         yum install openvpn -y
 
-
-2. copy sample config file
+2.  copy sample config file
 
         find /usr/share/doc/openvpn-*/ -name server.conf -exec cp {} /etc/openvpn/ \;
 
-
-3. edit config file
+3)  edit config file
 
         vi /etc/openvpn/server.conf
 
@@ -40,7 +35,7 @@ VPN steup
         user nobody
         group nobody
 
-4. keys and certificates
+4)  keys and certificates
 
         git clone https://github.com/OpenVPN/easy-rsa
         cd easy-rsa
@@ -80,14 +75,11 @@ VPN steup
         cd /etc/openvpn/easy-rsa
         ./build-key client
 
-
 4. client setup
-
 
 ## Other
 
 Check this repo https://github.com/drewsymo/VPN.git
-
 
 [openvpn_setup_digitalocean]: https://www.digitalocean.com/community/tutorials/how-to-setup-and-configure-an-openvpn-server-on-centos-6
 [pptp_vpn_setup]: http://drewsymo.com/2013/11/how-to-install-pptp-vpn-server-on-centos-6-x

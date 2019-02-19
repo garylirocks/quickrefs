@@ -1,5 +1,4 @@
-Ubuntu setup guide
-==================
+# Ubuntu setup guide
 
 - [Packages to install](#packages-to-install)
 - [Configurations](#configurations)
@@ -7,101 +6,98 @@ Ubuntu setup guide
 - [Graphic Drivers](#graphic-drivers)
 - [Thinkpad Trackpoint configuration](#thinkpad-trackpoint-configuration)
 
-
 Most of the configs needed are already in https://github.com/garylirocks/dotfiles
 
 ## Packages to install
 
-* vim
+- vim
 
-    only vim.tiny is installed by default, we need `vim-gnome` (it's compiled with `+xterm_clipboard` flag), which enables you to copy text to the system clipboard
+  only vim.tiny is installed by default, we need `vim-gnome` (it's compiled with `+xterm_clipboard` flag), which enables you to copy text to the system clipboard
 
-    ```sh
-    sudo apt-get install vim-gnome
+  ```sh
+  sudo apt-get install vim-gnome
 
-    # install exuberant-ctags
-    sudo apt-get install exuberant-ctags
-    ```
+  # install exuberant-ctags
+  sudo apt-get install exuberant-ctags
+  ```
 
-* VirtualBox
+- VirtualBox
 
-    ```sh
-    wget -q http://download.virtualbox.org/virtualbox/debian/oracle_vbox.asc -O- | sudo apt-key add -
-    sudo vi /etc/apt/sources.list.d/virtualbox.list
-    # input this line ('raring' need be changed to your version code):
-    # deb http://download.virtualbox.org/virtualbox/debian raring contrib
-    sudo apt-get update
-    sudo apt-get install virtualbox-4.2
+  ```sh
+  wget -q http://download.virtualbox.org/virtualbox/debian/oracle_vbox.asc -O- | sudo apt-key add -
+  sudo vi /etc/apt/sources.list.d/virtualbox.list
+  # input this line ('raring' need be changed to your version code):
+  # deb http://download.virtualbox.org/virtualbox/debian raring contrib
+  sudo apt-get update
+  sudo apt-get install virtualbox-4.2
 
-    # vbox will create a new group, add your user to it
-    sudo usermod -G vboxusers -a gary
+  # vbox will create a new group, add your user to it
+  sudo usermod -G vboxusers -a gary
 
-    # you need "Oracle VM VirtualBox Extension Pack" to enable USB support in guest OS
-    # download, install: 'File -> Preferences -> Extensions'
-    ```
+  # you need "Oracle VM VirtualBox Extension Pack" to enable USB support in guest OS
+  # download, install: 'File -> Preferences -> Extensions'
+  ```
 
-* Calibre - ebook management
+- Calibre - ebook management
 
-    ```sh
-    # ref: http://calibre-ebook.com/download_linux
-    # install to /opt (change the install_dir if you need)
-    sudo python -c "import sys; py3 = sys.version_info[0] > 2; u = __import__('urllib.request' if py3 else 'urllib', fromlist=1); exec(u.urlopen('http://status.calibre-ebook.com/linux_installer').read()); main(install_dir='/opt')"
-    ```
+  ```sh
+  # ref: http://calibre-ebook.com/download_linux
+  # install to /opt (change the install_dir if you need)
+  sudo python -c "import sys; py3 = sys.version_info[0] > 2; u = __import__('urllib.request' if py3 else 'urllib', fromlist=1); exec(u.urlopen('http://status.calibre-ebook.com/linux_installer').read()); main(install_dir='/opt')"
+  ```
 
-* Input method
+- Input method
 
-    ```sh
-    # 'System Settings' -> 'Language Support' -> change input method to 'fcitx'
-    sudo add-apt-repository ppa:fcitx-team/nightly
-    sudo apt-get update
-    sudo apt-get install fcitx-sogoupinyin
+  ```sh
+  # 'System Settings' -> 'Language Support' -> change input method to 'fcitx'
+  sudo add-apt-repository ppa:fcitx-team/nightly
+  sudo apt-get update
+  sudo apt-get install fcitx-sogoupinyin
 
-    # install google pinyin
-    sudo apt-get install ibus-googlepinyin
+  # install google pinyin
+  sudo apt-get install ibus-googlepinyin
 
-    # set preferences
-    ibus-setup
-    ```
-
+  # set preferences
+  ibus-setup
+  ```
 
 ## Configurations
 
-* Firefox
+- Firefox
 
-    * Setup sync;
-    * Disable some pre-installed addons;
+  - Setup sync;
+  - Disable some pre-installed addons;
 
-* Remove the email icon on top bar
+- Remove the email icon on top bar
 
-    Ref: http://askubuntu.com/a/533836/159823
+  Ref: http://askubuntu.com/a/533836/159823
 
-* Add a shortcut for moving windows between multiple monitors
+- Add a shortcut for moving windows between multiple monitors
 
-    ```sh
-    sudo apt-get install compizconfig-settings-manager compiz-plugins
-    ```
+  ```sh
+  sudo apt-get install compizconfig-settings-manager compiz-plugins
+  ```
 
-    Then use 'Put' in 'Window Management' to set a shortcut for moving window between monitors
+  Then use 'Put' in 'Window Management' to set a shortcut for moving window between monitors
 
-* Install custom fonts
+- Install custom fonts
 
-    Put the font files (.ttf) in `~/.fonts`
+  Put the font files (.ttf) in `~/.fonts`
 
-* Config startup applications
+- Config startup applications
 
-    * There is a `Startup Applications` GUI tool, the config files are in `~/.config/autostart/`;
-    * If you want a sudo service to autostart, add the command to `/etc/rc.local`;
+  - There is a `Startup Applications` GUI tool, the config files are in `~/.config/autostart/`;
+  - If you want a sudo service to autostart, add the command to `/etc/rc.local`;
 
-* Customize the Launcher
+- Customize the Launcher
 
-    ```sh
-    # show Launcher items
-    gsettings get com.canonical.Unity.Launcher favorites
-    # ['firefox.desktop', 'google-chrome.desktop', 'virtualbox.desktop', 'nautilus-home.desktop', 'gnome-control-center.desktop']
-    ```
+  ```sh
+  # show Launcher items
+  gsettings get com.canonical.Unity.Launcher favorites
+  # ['firefox.desktop', 'google-chrome.desktop', 'virtualbox.desktop', 'nautilus-home.desktop', 'gnome-control-center.desktop']
+  ```
 
-    `.desktop` files are usually stored in `~/.local/share/applications/` or `/usr/share/applications/`, you can edit those files, once a `.desktop` file is placed one of the folders, you can find them through Dash, and drag them to the Launcher
-
+  `.desktop` files are usually stored in `~/.local/share/applications/` or `/usr/share/applications/`, you can edit those files, once a `.desktop` file is placed one of the folders, you can find them through Dash, and drag them to the Launcher
 
 ## Python
 
@@ -138,15 +134,12 @@ apt-cache search python-tk
 # pre-built package: python-matplotlib
 ```
 
-
 ## Graphic Drivers
 
 Nvidia Drivers:
 
-* http://www.webupd8.org/2016/06/how-to-install-latest-nvidia-drivers-in.html
-* http://www.geforce.com/drivers
-
-
+- http://www.webupd8.org/2016/06/how-to-install-latest-nvidia-drivers-in.html
+- http://www.geforce.com/drivers
 
 ## Thinkpad Trackpoint configuration
 
@@ -154,14 +147,14 @@ Use middle button for scrolling
 
 ref: http://www.thinkwiki.org/wiki/How_to_configure_the_TrackPoint
 
-* Use `xinput list` to find the device name first, in the following case, the name is `ImPS/2 Generic Wheel Mouse`;
+- Use `xinput list` to find the device name first, in the following case, the name is `ImPS/2 Generic Wheel Mouse`;
 
-* Create a file `trackpoint-config.sh`;
+- Create a file `trackpoint-config.sh`;
 
-    ```sh
-    xinput set-prop "ImPS/2 Generic Wheel Mouse" "Evdev Wheel Emulation" 1
-    xinput set-prop "ImPS/2 Generic Wheel Mouse" "Evdev Wheel Emulation Button" 2
-    xinput set-prop "ImPS/2 Generic Wheel Mouse" "Evdev Wheel Emulation Axes" 6 7 4 5
-    ```
+  ```sh
+  xinput set-prop "ImPS/2 Generic Wheel Mouse" "Evdev Wheel Emulation" 1
+  xinput set-prop "ImPS/2 Generic Wheel Mouse" "Evdev Wheel Emulation Button" 2
+  xinput set-prop "ImPS/2 Generic Wheel Mouse" "Evdev Wheel Emulation Axes" 6 7 4 5
+  ```
 
-* Use it as an autostart script;
+- Use it as an autostart script;

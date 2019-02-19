@@ -1,10 +1,8 @@
-Design Patterns
-===============
+# Design Patterns
 
 - [Dependency Injection](#dependency-injection)
 - [Inversion of Control](#inversion-of-control)
 - [Delegation](#delegation)
-
 
 ## Dependency Injection
 
@@ -14,19 +12,19 @@ Design Patterns
 
 Dependency injection involves four roles:
 
-* the **service** object(s) to be used
-* the **client** object that is depending on the services
-* the **interfaces** that define how the client may use the services
-* the **injector**, which is responsible for constructing the services and injecting them into the client
+- the **service** object(s) to be used
+- the **client** object that is depending on the services
+- the **interfaces** that define how the client may use the services
+- the **injector**, which is responsible for constructing the services and injecting them into the client
 
 The **injector** may be referred to by other names: assembler, provider, container, factory, builder, spring, construction code, or main
 
-* Inversion of Control (IoC) is more general than Dependency Injection;
-* Some attempts at Inversion of Control do not provide full removal of dependency but instead simply substitute one form of dependency for another. As a rule of thumb, if a programmer can look at nothing but the client code and tell what framework is being used, then the client has a hard-coded dependency on the framework.
+- Inversion of Control (IoC) is more general than Dependency Injection;
+- Some attempts at Inversion of Control do not provide full removal of dependency but instead simply substitute one form of dependency for another. As a rule of thumb, if a programmer can look at nothing but the client code and tell what framework is being used, then the client has a hard-coded dependency on the framework.
 
 Simple Example:
 
-* Without dependency injection
+- Without dependency injection
 
 ```java
 // An example without dependency injection
@@ -45,7 +43,7 @@ public class Client {
 }
 ```
 
-* With dependency injection
+- With dependency injection
 
 ```java
 public class Injector {
@@ -60,16 +58,14 @@ public class Injector {
 }
 ```
 
-
 ## Inversion of Control
 
-* Traditional program: your custom code calls functionality from a library;
-* **Inversion of control**: a framework takes care of the flow of control, and calls your custom code;
+- Traditional program: your custom code calls functionality from a library;
+- **Inversion of control**: a framework takes care of the flow of control, and calls your custom code;
 
-It is sometimes referred to as "*Hollywood Principle: Don't call us, we'll call you*"
+It is sometimes referred to as "_Hollywood Principle: Don't call us, we'll call you_"
 
 Desc: **find the code to execute by reading its description from external configuration instead of with a direct reference in the code itself**
-
 
 ## Delegation
 

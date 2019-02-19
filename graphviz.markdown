@@ -1,5 +1,4 @@
-Graphviz
-=============
+# Graphviz
 
 - [Simple graph](#simple-graph)
 - [Graph with attributes](#graph-with-attributes)
@@ -36,7 +35,6 @@ digraph simple
 }
 ```
 
-
 ## Graph with attributes
 
 ```dot
@@ -58,4 +56,3 @@ digraph loop
 result image:
 
 ![a loop](./graph/loop.gv.png)
-

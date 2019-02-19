@@ -1,5 +1,5 @@
-Flow
-=======
+# Flow
+
 - [Flow](#flow)
   - [Overview](#overview)
     - [Flow vs. PropTypes](#flow-vs-proptypes)
@@ -43,17 +43,15 @@ Flow
   - [Strict Mode](#strict-mode)
   - [Refs](#refs)
 
-
 ## Overview
 
-* Static type checker, identify problems in compile time;
-* Improve developer workflow by adding features like auto-completion;
+- Static type checker, identify problems in compile time;
+- Improve developer workflow by adding features like auto-completion;
 
 ### Flow vs. PropTypes
 
-* It's [recommended for larger code bases][react-doc-flow] instead of `PropTypes`, which it's going to [replace in the long term][flow-replaces-proptypes];
-* There are Babel plugins which will generate `PropTypes` from Flow types such as `babel-plugin-react-flow-props-to-prop-types` if you want both static and runtime checks;
-
+- It's [recommended for larger code bases][react-doc-flow] instead of `PropTypes`, which it's going to [replace in the long term][flow-replaces-proptypes];
+- There are Babel plugins which will generate `PropTypes` from Flow types such as `babel-plugin-react-flow-props-to-prop-types` if you want both static and runtime checks;
 
 ## Setup
 
@@ -83,13 +81,9 @@ add the `flow` preset to `.babelrc`
 
 ```json
 {
-  "presets": [ 
-    "flow",
-    "react"
-  ]
+  "presets": ["flow", "react"]
 }
 ```
-
 
 ### Prepare Your Files for Flow
 
@@ -111,54 +105,53 @@ flow check --all
 
 use `// $FlowFixMe` to ignore flow errors on the following line, this can be configured with `suppress_comment` option in `.flowconfig`
 
-
 ## Type System
 
-* Every value and expression has a type;
-* Flow analyze the code statically to figure out type of each expression;
-* Flow uses structural typing for objects and functions, but nominal typing for classes (you can use `Interface` for structural typing);
+- Every value and expression has a type;
+- Flow analyze the code statically to figure out type of each expression;
+- Flow uses structural typing for objects and functions, but nominal typing for classes (you can use `Interface` for structural typing);
 
 ### Depth Subtyping
 
 ```js
 // @flow
-class Person { name: string }
-class Employee extends Person { department: string }
+class Person {
+  name: string;
+}
+class Employee extends Person {
+  department: string;
+}
 
-var employee: Employee = new Employee;
-var person: Person = employee;            // OK, pass a subtype instance to a supertype
+var employee: Employee = new Employee();
+var person: Person = employee; // OK, pass a subtype instance to a supertype
 
-var employee: { who: Employee } = { who: new Employee };
+var employee: { who: Employee } = { who: new Employee() };
 // $ExpectError
-var person: { who: Person } = employee;   // Error, passing an object containing a subtype instance to an object containing a supertype
+var person: { who: Person } = employee; // Error, passing an object containing a subtype instance to an object containing a supertype
 ```
 
 this is because objects are mutable, if you update `person.who`, `employee.who` get changed as well
 
 ```js
-person.who = new Person;
+person.who = new Person();
 ```
 
 We can use a plus sign to indicate the `who` property is "covariant", this makes it read-only, and allows us to use objects which have subtype-compatible values for that property:
 
 ```js
 // @flow
-class Person { name: string }
-class Employee extends Person { department: string }
+class Person {
+  name: string;
+}
+class Employee extends Person {
+  department: string;
+}
 
-var employee: { who: Employee } = { who: new Employee };
-var person: { +who: Person } = employee;    // OK
+var employee: { who: Employee } = { who: new Employee() };
+var person: { +who: Person } = employee; // OK
 // $ExpectError
-person.who = new Person;                    // Error!
+person.who = new Person(); // Error!
 ```
-
-
-
-
-
-
-
-
 
 ## Type Annotations
 
@@ -211,8 +204,8 @@ function acceptsMaybeNumber(value: ?number) {
 
 It outs out type checker, it's **unsafe**, **should be avoided** when possible, the only use cases:
 
-  * you are in the process of converting existing code base;
-  * you are sure the Flow is not working correctly;
+- you are in the process of converting existing code base;
+- you are sure the Flow is not working correctly;
 
 ```js
 // @flow
@@ -220,9 +213,9 @@ function add(one: any, two: any): number {
   return one + two;
 }
 
-add(1, 2);     // Works.
+add(1, 2); // Works.
 add("1", "2"); // Works.
-add({}, []);   // Works.
+add({}, []); // Works.
 ```
 
 avoid leaking `any`, cutting `any` off as soon as possible
@@ -230,13 +223,13 @@ avoid leaking `any`, cutting `any` off as soon as possible
 ```js
 // @flow
 function fn(obj: any) {
-  let foo: number = obj.foo;    // type foo to be number here
+  let foo: number = obj.foo; // type foo to be number here
   let bar = foo * 2;
   return bar;
 }
 
 let bar /* (:number) */ = fn({ foo: 2 });
-``` 
+```
 
 ### Mixed
 
@@ -245,7 +238,8 @@ accept any type, you must first figure out what the actual type is when you use 
 ```js
 // @flow
 function stringify(value: mixed) {
-  if (typeof value === 'string') {    // this refinement is required, otherwise would end up in an error
+  if (typeof value === "string") {
+    // this refinement is required, otherwise would end up in an error
     return "" + value; // Works!
   } else {
     return "";
@@ -257,17 +251,18 @@ stringify("foo");
 
 ### Variable Types
 
-When you declare a new variable: 
-  * you may optionally declare its type, when you re-assign, the value must be of a compatible type;
-  * or, Flow will infer the type from the value;
+When you declare a new variable:
+
+- you may optionally declare its type, when you re-assign, the value must be of a compatible type;
+- or, Flow will infer the type from the value;
 
 ```js
 const constVar: number = 2;
-let letVar: string = 'foo';
+let letVar: string = "foo";
 
-letVar = 3;       // Error! type not compatible
+letVar = 3; // Error! type not compatible
 
-let myVar = 10;   // Flow infers the type to be 'number'
+let myVar = 10; // Flow infers the type to be 'number'
 ```
 
 ### Function Types
@@ -285,22 +280,22 @@ function foo2(func: () => mixed) {
 }
 ```
 
-* `bool` is optional;
-* `nums` must be of type `Array`;
-* use `() => mixed` for arbitrary functions;
+- `bool` is optional;
+- `nums` must be of type `Array`;
+- use `() => mixed` for arbitrary functions;
 
 ### Object Types
 
 ```js
 var obj: {
   name: string,
-  age?: number,             // optional property
-  [year: string]: boolean,  // indexer property, allows reads and writes using any key of matching type
+  age?: number, // optional property
+  [year: string]: boolean // indexer property, allows reads and writes using any key of matching type
 } = {
-  name: 'Gary',
+  name: "Gary",
   age: 20,
-  '2018': true,
-  '2019': false,
+  "2018": true,
+  "2019": false
 };
 ```
 
@@ -308,11 +303,11 @@ var obj: {
 
 ```js
 // @flow
-const obj1 = {};          // 'Unsealed' type
-obj1.x = 'foo';           // OK 
+const obj1 = {}; // 'Unsealed' type
+obj1.x = "foo"; // OK
 
-const obj2 = {x: 'bar'};  // 'Sealed' type, can't add new property
-obj2.y = 'bat';           // Errror, can't add new property
+const obj2 = { x: "bar" }; // 'Sealed' type, can't add new property
+obj2.y = "bat"; // Errror, can't add new property
 ```
 
 ### Array Types
@@ -330,19 +325,19 @@ let arr3: (?number)[] = [1, null, 2]; // optional number type
 
 ```js
 // @flow
-const readonlyArray: $ReadOnlyArray<number> = [1, 2, 3]
+const readonlyArray: $ReadOnlyArray<number> = [1, 2, 3];
 
-const first = readonlyArray[0] // OK to read
-readonlyArray[1] = 20          // Error!
-readonlyArray.push(4)          // Error!
+const first = readonlyArray[0]; // OK to read
+readonlyArray[1] = 20; // Error!
+readonlyArray.push(4); // Error!
 
 // often used to annotate function parameters
 const someOperation = (arr: $ReadOnlyArray<number | string>) => {
   // Nothing can be added to `arr`
-}
+};
 
-const array: Array<number> = [1]
-someOperation(array) // Works!
+const array: Array<number> = [1];
+someOperation(array); // Works!
 ```
 
 ### Tuple Types
@@ -388,7 +383,7 @@ class MyClass<A, B, C> {
   }
 }
 
-var val: MyClass<number, boolean, string> = new MyClass(1, true, 'three');
+var val: MyClass<number, boolean, string> = new MyClass(1, true, "three");
 ```
 
 ### Interface Types
@@ -396,10 +391,10 @@ var val: MyClass<number, boolean, string> = new MyClass(1, true, 'three');
 ```js
 // interface types syntax is similar to object types
 interface PersonInterface {
-  name: string,
-  age: number,
-  hairColor: ?string,
-  [key: string]: number,
+  name: string;
+  age: number;
+  hairColor: ?string;
+  [key: string]: number;
 }
 
 // interface types can be implemented
@@ -409,11 +404,10 @@ class Person implements PersonInterface {
 
 // you can make properties read-only (covariant) or write-only (contravariant)
 interface MyInterface {
-  +covariant: number;     // read-only
+  +covariant: number; // read-only
   -contravariant: number; // write-only
 }
 ```
-
 
 ### Type Aliases
 
@@ -421,7 +415,7 @@ interface MyInterface {
 type NumberAlias = number;
 type ObjectAlias = {
   property: string,
-  method(): number,       // method is a function returning a number
+  method(): number // method is a function returning a number
 };
 type UnionAlias = 1 | 2 | 3;
 type AliasAlias = ObjectAlias;
@@ -429,7 +423,7 @@ type AliasAlias = ObjectAlias;
 // generic type alias
 type MyObject<A, B, C> = {
   property: A,
-  method(val: B): C,
+  method(val: B): C
 };
 ```
 
@@ -439,23 +433,25 @@ type MyObject<A, B, C> = {
 
 ```js
 // @flow
-export default class Foo {};
-export type MyObject = { /* ... */ };
-export interface MyInterface { /* ... */ };
+export default class Foo {}
+export type MyObject = {
+  /* ... */
+};
+export interface MyInterface {
+  /* ... */
+}
 ```
 
 `imports.js`
 
 ```js
 // @flow
-import type Foo, {MyObject, MyInterface} from './exports';
+import type Foo, { MyObject, MyInterface } from "./exports";
 ```
-
 
 ### Opt-out types
 
 `any`, `Object`, `Function` lets you opt-out of type checker, they should be avoided;
-
 
 ## Optional Parameters or Properties
 
@@ -492,18 +488,17 @@ function acceptsObject(value: { foo?: string }) {
 
 `foo` can be `string`, `undefined` or omitted, **CAN'T** be `null`
 
-
 ## React
 
 ### Class Component example:
 
 ```js
-import * as React from 'react';
+import * as React from "react";
 
 // add a Flow object type
 type Props = {
   foo: number,
-  bar?: string,
+  bar?: string
 };
 
 // use Props type
@@ -522,8 +517,8 @@ class MyComponent extends React.Component<Props> {
 <MyComponent foo={42} />;
 ```
 
-* if you only need `Props` type once, you can define it inline `React.Component<{ foo: number, bar?: string }>`;
-* `React.Component<Props, State>` is a generic type that takes two arguments, `State` is optional, omitted above;
+- if you only need `Props` type once, you can define it inline `React.Component<{ foo: number, bar?: string }>`;
+- `React.Component<Props, State>` is a generic type that takes two arguments, `State` is optional, omitted above;
 
 ### Binding method in constructor
 
@@ -538,7 +533,7 @@ by default, methods on classes are considered to be read-only, there is an error
 
 see this [Github issue](https://github.com/facebook/flow/issues/5874) for workaround:
 
-* do a type declaration for the method:
+- do a type declaration for the method:
 
   ```js
   class App extends React.Component {
@@ -549,13 +544,13 @@ see this [Github issue](https://github.com/facebook/flow/issues/5874) for workar
 
     onToggle: () => void      // do a type declaration here
     onToggle() {
-      // ... 
+      // ...
     }
     ...
   }
   ```
 
-* use the arrow function syntax:
+- use the arrow function syntax:
 
   ```js
   class App extends React.Component {
@@ -564,13 +559,13 @@ see this [Github issue](https://github.com/facebook/flow/issues/5874) for workar
     }
 
     onToggle = () => {
-      // ... 
+      // ...
     }
     ...
   }
   ```
 
-* annotate `this` with `any` in the constructor:
+- annotate `this` with `any` in the constructor:
 
   ```js
   constructor() {
@@ -582,16 +577,16 @@ see this [Github issue](https://github.com/facebook/flow/issues/5874) for workar
 ### Functional Component example
 
 ```js
-import * as React from 'react';
+import * as React from "react";
 
 type Props = {
-  foo: number, // foo is required.
+  foo: number // foo is required.
 };
 
 function MyComponent(props: Props) {}
 
 MyComponent.defaultProps = {
-  foo: 42, // ...but we have a default prop for foo.
+  foo: 42 // ...but we have a default prop for foo.
 };
 
 // So we don't need to include foo.
@@ -601,7 +596,7 @@ MyComponent.defaultProps = {
 ### Event Handling
 
 ```js
-import * as React from 'react';
+import * as React from "react";
 
 class MyComponent extends React.Component<{}, { count: number }> {
   handleClick = (event: SyntheticEvent<HTMLButtonElement>) => {
@@ -609,7 +604,7 @@ class MyComponent extends React.Component<{}, { count: number }> {
     (event.currentTarget: HTMLButtonElement);
 
     this.setState(prevState => ({
-      count: prevState.count + 1,
+      count: prevState.count + 1
     }));
   };
 
@@ -617,35 +612,33 @@ class MyComponent extends React.Component<{}, { count: number }> {
     return (
       <div>
         <p>Count: {this.state.count}</p>
-        <button onClick={this.handleClick}>
-          Increment
-        </button>
+        <button onClick={this.handleClick}>Increment</button>
       </div>
     );
   }
 }
 ```
 
-* React provides `SyntheticEvent<T>`, the `T` is the type of the HTML element the event handler was placed on, you can also use it with no type arguments like: `SyntheticEvent<>`;
-* React uses its own event system, ou need to use `SyntheticEvent` instead of the DOM types such as `Event`, `MouseEvent`;
-* A list of the events:
-    * `SyntheticEvent<T>` for `Event`
-    * `SyntheticAnimationEvent<T>` for `AnimationEvent`
-    * `SyntheticCompositionEvent<T>` for `CompositionEvent`
-    * `SyntheticInputEvent<T>` for `InputEvent`
-    * `SyntheticUIEvent<T>` for `UIEvent`
-    * `SyntheticFocusEvent<T>` for `FocusEvent`
-    * `SyntheticKeyboardEvent<T>` for `KeyboardEvent`
-    * `SyntheticMouseEvent<T>` for `MouseEvent`
-    * `SyntheticDragEvent<T>` for `DragEvent`
-    * `SyntheticWheelEvent<T>` for `WheelEvent`
-    * `SyntheticTouchEvent<T>` for `TouchEvent`
-    * `SyntheticTransitionEvent<T>` for `TransitionEvent`
+- React provides `SyntheticEvent<T>`, the `T` is the type of the HTML element the event handler was placed on, you can also use it with no type arguments like: `SyntheticEvent<>`;
+- React uses its own event system, ou need to use `SyntheticEvent` instead of the DOM types such as `Event`, `MouseEvent`;
+- A list of the events:
+  - `SyntheticEvent<T>` for `Event`
+  - `SyntheticAnimationEvent<T>` for `AnimationEvent`
+  - `SyntheticCompositionEvent<T>` for `CompositionEvent`
+  - `SyntheticInputEvent<T>` for `InputEvent`
+  - `SyntheticUIEvent<T>` for `UIEvent`
+  - `SyntheticFocusEvent<T>` for `FocusEvent`
+  - `SyntheticKeyboardEvent<T>` for `KeyboardEvent`
+  - `SyntheticMouseEvent<T>` for `MouseEvent`
+  - `SyntheticDragEvent<T>` for `DragEvent`
+  - `SyntheticWheelEvent<T>` for `WheelEvent`
+  - `SyntheticTouchEvent<T>` for `TouchEvent`
+  - `SyntheticTransitionEvent<T>` for `TransitionEvent`
 
 ### ref functions
 
 ```js
-import * as React from 'react';
+import * as React from "react";
 
 class MyComponent extends React.Component<{}> {
   // The `?` here is important because you may not always have the instance.
@@ -671,7 +664,7 @@ class MyComponent extends React.Component<{}> {
 
 React exports some utility types:
 
-* `React.Node`
+- `React.Node`
 
   can be used as the return type of `render()`
 
@@ -690,14 +683,16 @@ React exports some utility types:
   ```js
   // definition
 
-  type Node = React.ChildrenArray<void | null | boolean | string | number | React.Element<any>>;
+  type Node = React.ChildrenArray<
+    void | null | boolean | string | number | React.Element<any>
+  >;
   ```
 
-* `React.Element<typeof Component>`
+- `React.Element<typeof Component>`
 
   ```js
   // intrinsic element
-  (<div />: React.Element<'div'>); // OK
+  (<div />: React.Element<"div">); // OK
 
   // custom component
   class Foo extends React.Component<{}> {}
@@ -708,13 +703,13 @@ React exports some utility types:
   ```
 
   **`typeof Foo` is different from `Foo`, `Foo` is the type of an instance of `Foo`**
-  
-* `React.ChildrenArray<T>`
+
+- `React.ChildrenArray<T>`
 
   can be a single value or an array nested to any level
 
   ```js
-  import * as React from 'react';
+  import * as React from "react";
 
   // A children array can be a single value...
   const children: React.ChildrenArray<number> = 42;
@@ -725,8 +720,7 @@ React exports some utility types:
   const array: Array<number> = React.Children.toArray(children);
   ```
 
-* `React.ComponentType<Props>`
-
+- `React.ComponentType<Props>`
 
 * `React.StatelessFunctionalComponent<Props>`
 * `React.ElementType`
@@ -741,7 +735,7 @@ There are two ways to access them:
 Import `React` as a namespace, then Flow add the exported named types automatically:
 
 ```js
-import * as React from 'react';
+import * as React from "react";
 
 // use React.Node
 ```
@@ -749,13 +743,13 @@ import * as React from 'react';
 or you need to use named type imports:
 
 ```js
-import React from 'react';
-import type { Node } from 'react';
+import React from "react";
+import type { Node } from "react";
 ```
 
 ## Strict Mode
 
-use 
+use
 
 ```js
 // @flow strict
@@ -763,12 +757,10 @@ use
 
 to enable strict mode for current file, it enables strict rules
 
-
 ## Refs
 
-* [React Doc - Static Type Checking][react-doc-flow]
-* [Dan Abramov Twitter][flow-replaces-proptypes]
-
+- [React Doc - Static Type Checking][react-doc-flow]
+- [Dan Abramov Twitter][flow-replaces-proptypes]
 
 [react-doc-flow]: https://reactjs.org/docs/static-type-checking.html
-[flow-replaces-proptypes]:  https://twitter.com/dan_abramov/status/745700243216437248?lang=en
+[flow-replaces-proptypes]: https://twitter.com/dan_abramov/status/745700243216437248?lang=en

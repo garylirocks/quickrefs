@@ -1,15 +1,14 @@
-Samba
-==========
+# Samba
 
 - [Ubuntu sharing methods](#ubuntu-sharing-methods)
 - [Right-click Sharing](#right-click-sharing)
 - [Samba via CLI](#samba-via-cli)
 - [Command line tools](#command-line-tools)
-    - [Samba user management](#samba-user-management)
+  - [Samba user management](#samba-user-management)
 
 Refs:
-* [Ubuntu Samba Server Guide][ubuntu-samba-server-guide]
 
+- [Ubuntu Samba Server Guide][ubuntu-samba-server-guide]
 
 ## Ubuntu sharing methods
 
@@ -18,18 +17,17 @@ There are several ways to do sharing on Ubuntu:
 - **Personal File Sharing**: uses Apache to offer WebDAV-based file sharing [ref][howtogeek]
 
 - **Right-click Sharing**: based on Samba, the definitions are saved in `/var/lib/samba/usershares/`, not visible in `smb.conf`, this method is easier to work with because:
-    1. Shares are public (browserable in Network);
-    2. A password is not set for shares (can be mounted by anyone)
+
+  1. Shares are public (browserable in Network);
+  2. A password is not set for shares (can be mounted by anyone)
 
 - **Samba via CLI**: edit the `smb.conf` file and run `smbd`
 
 - **Samba GUI tool**: install by `sudo apt-get install system-config-samba`, it will update conf files `smb.conf`, `smbusers` in `/etc/samba`
 
-
 ## Right-click Sharing
 
 ![Object](images/samba_share-folder.png)
-
 
 ## Samba via CLI
 
@@ -95,7 +93,6 @@ wide links = yes
 unix extensions = no
 ```
 
-
 ## Command line tools
 
 ```
@@ -136,7 +133,6 @@ Use `pdbedit` to list all Samba users
 ```sh
 sudo pdbedit -L
 ```
-
 
 [ubuntu-samba-server-guide]: https://help.ubuntu.com/community/Samba/SambaServerGuide
 [howtogeek]: http://www.howtogeek.com/116309/use-ubuntus-public-folder-to-easily-share-files-between-computers/

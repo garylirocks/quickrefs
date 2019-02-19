@@ -1,5 +1,4 @@
-Sass
-==============
+# Sass
 
 ## Two formats
 
@@ -7,8 +6,8 @@ Sass
 
 ```scss
 #main {
-    color: blue;
-    font-size: 0.3em;
+  color: blue;
+  font-size: 0.3em;
 }
 ```
 
@@ -20,20 +19,18 @@ Sass
     font-size: 0.3em
 ```
 
-
 ## Maps
 
 SASS map:
 
 ```scss
 $map: (
-    key: value,
-    other-key: other-value
+  key: value,
+  other-key: other-value
 );
 ```
 
-
-##  `for` loop
+## `for` loop
 
 You can create a color scale based on the `for` loop
 

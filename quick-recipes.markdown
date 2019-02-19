@@ -1,21 +1,20 @@
-Quick Recipes
-===============
+# Quick Recipes
 
 Quick productivity tips, shortcuts, command line snippets.
 
 - [Shortcuts](#shortcuts)
-    - [Ubuntu](#ubuntu)
+  - [Ubuntu](#ubuntu)
 - [Update keyboard layout](#update-keyboard-layout)
 - [Add a user as sudoer](#add-a-user-as-sudoer)
 - [Change file/directory permissions](#change-filedirectory-permissions)
-    - [`setgid`](#setgid)
-    - [sticky bit](#sticky-bit)
+  - [`setgid`](#setgid)
+  - [sticky bit](#sticky-bit)
 - [Find out Linux distribution name](#find-out-linux-distribution-name)
 - [Find module version](#find-module-version)
 - [Disable a service from autostart](#disable-a-service-from-autostart)
 - [Display IP address in shell prompt](#display-ip-address-in-shell-prompt)
 - [Mount/Unmount device](#mountunmount-device)
-    - [`cifs`](#cifs)
+  - [`cifs`](#cifs)
 - [Relabel usb hard drive](#relabel-usb-hard-drive)
 - [Hide default folders in home directory in Ubuntu](#hide-default-folders-in-home-directory-in-ubuntu)
 - [Send email](#send-email)
@@ -27,7 +26,7 @@ Quick productivity tips, shortcuts, command line snippets.
 - [Package files](#package-files)
 - [Download all images from a web page](#download-all-images-from-a-web-page)
 - [Linux process management](#linux-process-management)
-    - [Kill a process](#kill-a-process)
+  - [Kill a process](#kill-a-process)
 
 ## Shortcuts
 
@@ -57,9 +56,9 @@ Ctrl + Shift + Alt + Up         # move window to workspace up
 
 To permanently change the behaviour:
 
-* run `dconf-editor`
-* select `org.gnome.desktop.input-sources`
-* Change `xkb-options` to `['ctrl:nocaps']` (or add it to any existing options)
+- run `dconf-editor`
+- select `org.gnome.desktop.input-sources`
+- Change `xkb-options` to `['ctrl:nocaps']` (or add it to any existing options)
 
 OR
 
@@ -101,7 +100,7 @@ chmod 440 /etc/sudoers.d/gary
 
 ## Change file/directory permissions
 
-* Use capital `X` to add execute/seach permission only on directories, not files, this is effective when you want to add search permission ;
+- Use capital `X` to add execute/seach permission only on directories, not files, this is effective when you want to add search permission ;
 
 ```sh
 ls -l
@@ -138,8 +137,8 @@ ls -dl . newfile newfolder
 # drwxr-sr-x 2 root gary 4096 Nov  7 20:18 newfolder
 ```
 
-* `newfile` inherits its group `gary` from the parent folder;
-* `newfolder` inherits its group `gary`, its `setgid` bit is set as well;
+- `newfile` inherits its group `gary` from the parent folder;
+- `newfolder` inherits its group `gary`, its `setgid` bit is set as well;
 
 ### sticky bit
 
@@ -151,9 +150,8 @@ ls -adl /tmp/
 chmod +t mydir
 ```
 
-* the `t` bit above indicates that files in this folder can only be renamed or deleted by the file owner or the super user;
-* it's a good practice to add it for world-writable directories;
-
+- the `t` bit above indicates that files in this folder can only be renamed or deleted by the file owner or the super user;
+- it's a good practice to add it for world-writable directories;
 
 ## Find out Linux distribution name
 
@@ -170,20 +168,17 @@ cat /etc/os-release
 # VERSION_ID="12.04"
 ```
 
-
 ## Find module version
 
 ```sh
 strings modulename.so | grep "modulename/[0-9]\.[0-9]"
 ```
 
-
 ## Disable a service from autostart
 
 ```sh
 sudo update-rc.d nginx disable
 ```
-
 
 ## Display IP address in shell prompt
 
@@ -193,7 +188,6 @@ add following line to `~/.bashrc`
 MYIP=`ifconfig eth0 | sed -nr 's/^ *inet addr:([0-9.]+) .*$/\1/p'`
 export PS1="\u@$MYIP:\w\$ "
 ```
-
 
 ## Mount/Unmount device
 
@@ -211,9 +205,9 @@ mount           # show mounted devices
 sudo umount /mnt/data
 ```
 
-* system default mounts are stored in `/etc/fstab`;
-* current mounts are in `/etc/mtab`;
-* you can specify mount options using `-o`, options available are different for each file system type;
+- system default mounts are stored in `/etc/fstab`;
+- current mounts are in `/etc/mtab`;
+- you can specify mount options using `-o`, options available are different for each file system type;
 
 ### `cifs`
 
@@ -224,8 +218,7 @@ USER=Administrator mount -o uid=dockeruser,gid=dockeruser,file_mode=0770,dir_mod
 # you can't chown or chmod after the device is mounted
 ```
 
-* `cifs` is an implementation of `smb`, it's outdated, you should use `smb 2` or `smb 3` when possible  (https://www.varonis.com/blog/cifs-vs-smb/)
-
+- `cifs` is an implementation of `smb`, it's outdated, you should use `smb 2` or `smb 3` when possible (https://www.varonis.com/blog/cifs-vs-smb/)
 
 ## Relabel usb hard drive
 
@@ -252,13 +245,11 @@ sudo blkid
 # /dev/sdc1: LABEL="my_passport" UUID="4E1AEA7B1AEA6007" TYPE="ntfs"
 ```
 
-
 ## Hide default folders in home directory in Ubuntu
 
 Ubuntu will create some folders in a user's home directory, such as 'Desktop', 'Music', etc
 
 you can change these folders location by editting `~/.config/user-dirs.dirs`
-
 
 ## Send email
 
@@ -276,7 +267,6 @@ send mail:
 ```sh
 ssmtp jack@gmail.com < msg.txt
 ```
-
 
 ## Work with ps or pdf files
 
@@ -316,7 +306,6 @@ pdftk A=syslog.pdf cat A1 output syslog-firstpage.pdf
 pdftk A=syslog.pdf cat A1-endright output syslog-rotated.pdf
 ```
 
-
 ## SSH login without password
 
 login from `a@A` to `b@B` using ssh withoud password, ref: http://www.linuxproblem.org/art_9.html
@@ -343,7 +332,6 @@ simple:
 $ ssh-copy-id b@B
 ```
 
-
 ## Version number specifications
 
 when you work with `npm` or `composer`, you may encounter various version numbers, refer to:
@@ -351,7 +339,6 @@ when you work with `npm` or `composer`, you may encounter various version number
 ```sh
 npm help 7 semver
 ```
-
 
 ## Lorem ipsum
 
@@ -361,7 +348,6 @@ placeholder text generator, install a perl module `libtext-lorem-perl` and use t
 sudo apt-get install libtext-lorem-perl
 lorem
 ```
-
 
 ## Extract media from Office files (docx,xlsx,pptx)
 
@@ -385,7 +371,6 @@ ls word/media/
 # image10.png  image17.png
 # ...
 ```
-
 
 ## Package files
 
@@ -413,34 +398,31 @@ tar tzf /tmp/test.tgz
 ./top.txt
 ```
 
-
 ## Download all images from a web page
 
 ```sh
 wget --page-requisites --span-hosts --no-directories --accept jpg,png --execute robots=off --domains="images.example.com"  'http://example.com/page1'
 ```
 
-* `--page-requisites` get image files, by default, `wget` do not download images in `<img />` tag
-* `--span-hosts` download from other hosts
-* `--no-directories` do not create separate directory
-* `robots=off` do not follow rules in `robots.txt`
-* `--domains` specify which domains to download files from
-* `--accept` what file types to download
-
+- `--page-requisites` get image files, by default, `wget` do not download images in `<img />` tag
+- `--span-hosts` download from other hosts
+- `--no-directories` do not create separate directory
+- `robots=off` do not follow rules in `robots.txt`
+- `--domains` specify which domains to download files from
+- `--accept` what file types to download
 
 ## Linux process management
 
-* `lsof -i:8080`  list processes listening on port 8080
+- `lsof -i:8080` list processes listening on port 8080
 
 ### Kill a process
 
-* `kill <PID>`
+- `kill <PID>`
 
-    send the `TERM` (a.k.a `-15`) signal to the process, a soft kill;
+  send the `TERM` (a.k.a `-15`) signal to the process, a soft kill;
 
-* `kill -9 <PID>`
+- `kill -9 <PID>`
 
-    `SIGKILL`, terminate immediately/hard kill;
-
+  `SIGKILL`, terminate immediately/hard kill;
 
 [RenameUSBDrive]: [https://help.ubuntu.com/community/RenameUSBDrive]

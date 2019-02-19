@@ -1,56 +1,55 @@
-Docker
-============
+# Docker
 
 - [General](#general)
-    - [Overview](#overview)
-    - [Commands](#commands)
+  - [Overview](#overview)
+  - [Commands](#commands)
 - [Images vs. Containers](#images-vs-containers)
-    - [Images](#images)
-    - [Containers](#containers)
+  - [Images](#images)
+  - [Containers](#containers)
 - [Dockerfile](#dockerfile)
-    - [Example](#example)
-    - [`RUN`](#run)
-    - [`CMD`](#cmd)
-    - [`ENTRYPOINT`](#entrypoint)
-    - [`ENV`](#env)
-    - [`ADD` vs. `COPY`](#add-vs-copy)
-    - [`.dockerignore`](#dockerignore)
+  - [Example](#example)
+  - [`RUN`](#run)
+  - [`CMD`](#cmd)
+  - [`ENTRYPOINT`](#entrypoint)
+  - [`ENV`](#env)
+  - [`ADD` vs. `COPY`](#add-vs-copy)
+  - [`.dockerignore`](#dockerignore)
 - [Data Storage](#data-storage)
-    - [Volumes](#volumes)
-        - [Data Sharing](#data-sharing)
-        - [Backup, restore, or migrate data volumes](#backup-restore-or-migrate-data-volumes)
-        - [Remove volumes](#remove-volumes)
-        - [`-v`, `--mount` and volume driver](#v---mount-and-volume-driver)
-    - [Bind mounts](#bind-mounts)
-        - [Commands](#commands)
-    - [`tmpfs`](#tmpfs)
-    - [Usage](#usage)
+  - [Volumes](#volumes)
+    - [Data Sharing](#data-sharing)
+    - [Backup, restore, or migrate data volumes](#backup-restore-or-migrate-data-volumes)
+    - [Remove volumes](#remove-volumes)
+    - [`-v`, `--mount` and volume driver](#v---mount-and-volume-driver)
+  - [Bind mounts](#bind-mounts)
+    - [Commands](#commands)
+  - [`tmpfs`](#tmpfs)
+  - [Usage](#usage)
 - [Network](#network)
-    - [DNS](#dns)
-    - [Swarm](#swarm)
-    - [Network Driver Types](#network-driver-types)
-    - [Port Publishing Mode](#port-publishing-mode)
+  - [DNS](#dns)
+  - [Swarm](#swarm)
+  - [Network Driver Types](#network-driver-types)
+  - [Port Publishing Mode](#port-publishing-mode)
 - [Docker Compose](#docker-compose)
-    - [`docker-compose.yml`](#docker-composeyml)
-        - [`volumes`](#volumes)
-        - [Variable substitution](#variable-substitution)
-    - [Networking](#networking)
-        - [Custom networks](#custom-networks)
-    - [Name collision issue](#name-collision-issue)
+  - [`docker-compose.yml`](#docker-composeyml)
+    - [`volumes`](#volumes)
+    - [Variable substitution](#variable-substitution)
+  - [Networking](#networking)
+    - [Custom networks](#custom-networks)
+  - [Name collision issue](#name-collision-issue)
 - [Docker machine](#docker-machine)
 - [Swarm mode](#swarm-mode)
-    - [Swarm on a single node](#swarm-on-a-single-node)
-    - [Multi-nodes swarm example](#multi-nodes-swarm-example)
-    - [Multi-service stacks](#multi-service-stacks)
+  - [Swarm on a single node](#swarm-on-a-single-node)
+  - [Multi-nodes swarm example](#multi-nodes-swarm-example)
+  - [Multi-service stacks](#multi-service-stacks)
 - [Configs](#configs)
-    - [Basic usage using `docker config` commands](#basic-usage-using-docker-config-commands)
-    - [Use for Nginx config](#use-for-nginx-config)
-    - [Rotate a config](#rotate-a-config)
-    - [Usage in `compose` files](#usage-in-compose-files)
+  - [Basic usage using `docker config` commands](#basic-usage-using-docker-config-commands)
+  - [Use for Nginx config](#use-for-nginx-config)
+  - [Rotate a config](#rotate-a-config)
+  - [Usage in `compose` files](#usage-in-compose-files)
 - [Secrets](#secrets)
-    - [Example: Use secrets with a WordPress service](#example-use-secrets-with-a-wordpress-service)
-    - [Rotate a secret](#rotate-a-secret)
-    - [Example compose file](#example-compose-file)
+  - [Example: Use secrets with a WordPress service](#example-use-secrets-with-a-wordpress-service)
+  - [Rotate a secret](#rotate-a-secret)
+  - [Example compose file](#example-compose-file)
 - [Tips / Best Practices](#tips--best-practices)
 
 docker basics:
@@ -61,16 +60,15 @@ docker basics:
 
 ### Overview
 
-* docker has a client-server architecture;
-* client and server can be on the same system or different systems;
-* client and server communicates via sockets or a RESTful API;
+- docker has a client-server architecture;
+- client and server can be on the same system or different systems;
+- client and server communicates via sockets or a RESTful API;
 
 ![Docker Architecture Overview](./images/docker-architecture.svg)
 
 a more detailed view of the workflow
 
 ![Docker Workflow](./images/docker-workflow.png)
-
 
 ### Commands
 
@@ -102,116 +100,116 @@ A container is a running instance of an image, when you start an image, you have
 
 ### Images
 
-* created with `docker build`;
-* can be stored in a registry, like Docker Hub;
-* images can't be modified;
-* a image is composed of layers of other images, allowing minimal amount of data to be sent when transferring images over the network;
-  
-    for example, in the following `Dockerfile`, each line creates a new layer above the previous layer
+- created with `docker build`;
+- can be stored in a registry, like Docker Hub;
+- images can't be modified;
+- a image is composed of layers of other images, allowing minimal amount of data to be sent when transferring images over the network;
 
-    ```
-    FROM ubuntu             # This has its own number of layers say "X"
-    MAINTAINER FOO          # This is one layer 
-    RUN mkdir /tmp/foo      # This is one layer 
-    RUN apt-get install vim # This is one layer 
-    ```
+  for example, in the following `Dockerfile`, each line creates a new layer above the previous layer
 
-    ![Docker layers](images/docker-layers.png)
-     
-* commands
-    ```bash
-    # list images
-    docker images
+  ```
+  FROM ubuntu             # This has its own number of layers say "X"
+  MAINTAINER FOO          # This is one layer
+  RUN mkdir /tmp/foo      # This is one layer
+  RUN apt-get install vim # This is one layer
+  ```
 
-    # list images, including intermediate ones
-    docker images -a
+  ![Docker layers](images/docker-layers.png)
 
-    # build an image, from the Dockerfile in the current directory
-    docker build -t einstein:v1 .
+- commands
 
-    # show history (building layers) of an image
-    docker history node:slim
+  ```bash
+  # list images
+  docker images
 
-    # inspect an image
-    docker inspect node:slim
+  # list images, including intermediate ones
+  docker images -a
 
-    # remove image
-    docker rmi [IMAGE_ID]
+  # build an image, from the Dockerfile in the current directory
+  docker build -t einstein:v1 .
 
-    # remove dangling images
-    docker image prune
+  # show history (building layers) of an image
+  docker history node:slim
 
-    # start the image in daemon mode, expose 80, bind it to 8080 on host
-    # '--expose' is optional here, 80 is exposed automatically when you specify the ports mapping
-    docker run [--expose 80] -p 8080:80 -itd my-image echo 'hello'
+  # inspect an image
+  docker inspect node:slim
 
-    # bind only to the 127.0.0.1 network interface on host
-    docker run -p 127.0.0.1:8080:80 -itd my-image echo 'hello'
+  # remove image
+  docker rmi [IMAGE_ID]
 
-    # give the container a meaningful name
-    docker run --name my-hello-container -itd my-image echo 'hello'
+  # remove dangling images
+  docker image prune
 
-    # access the shell of an image
-    docker run -it node:slim bash
-    ```
+  # start the image in daemon mode, expose 80, bind it to 8080 on host
+  # '--expose' is optional here, 80 is exposed automatically when you specify the ports mapping
+  docker run [--expose 80] -p 8080:80 -itd my-image echo 'hello'
 
-* about image tags
+  # bind only to the 127.0.0.1 network interface on host
+  docker run -p 127.0.0.1:8080:80 -itd my-image echo 'hello'
 
-    ```bash
-    docker images
+  # give the container a meaningful name
+  docker run --name my-hello-container -itd my-image echo 'hello'
 
-    REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
-    node                9.7.1               993f38da6c6c        4 months ago        677MB
-    node                8.5.0               de1099630c13        10 months ago       673MB
-    ```
+  # access the shell of an image
+  docker run -it node:slim bash
+  ```
 
-    an image's full tag is of this format `[REGISTRYHOST/][USERNAME/]NAME[:TAG]`, the `REPOSITORY` column above is just the `NAME` part, you specify a tag with `-t` option when building an image, the version tag will be `latest` by default
+- about image tags
+
+  ```bash
+  docker images
+
+  REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+  node                9.7.1               993f38da6c6c        4 months ago        677MB
+  node                8.5.0               de1099630c13        10 months ago       673MB
+  ```
+
+  an image's full tag is of this format `[REGISTRYHOST/][USERNAME/]NAME[:TAG]`, the `REPOSITORY` column above is just the `NAME` part, you specify a tag with `-t` option when building an image, the version tag will be `latest` by default
 
 ### Containers
 
-* conatiners can be started and stopped, the filesystem changes are persisted in a stopped container, they are still there when the container restarts;
+- conatiners can be started and stopped, the filesystem changes are persisted in a stopped container, they are still there when the container restarts;
 
-* you can create a new image from a container's changes with `docker commit`;
-  
-* commands:
+- you can create a new image from a container's changes with `docker commit`;
 
-    ```bash
-    # list running containers
-    docker ps
+- commands:
 
-    # list all containers
-    docker ps -a
+  ```bash
+  # list running containers
+  docker ps
 
-    # inspect a container
-    docker inspect <container>
+  # list all containers
+  docker ps -a
 
-    # get a specific value using a Go template string
-    docker inspect testweb --format="{{.NetworkSettings.IPAddress}}"
+  # inspect a container
+  docker inspect <container>
 
-    # start/stop/restart/pause/unpause/attach
-    # attach: connecting local stdin, stdout, stderr to a running container
-    # pause|unpause: pause or unpause running processes in a container
-    docker start|stop|restart|pause|unpause|attach <container>
+  # get a specific value using a Go template string
+  docker inspect testweb --format="{{.NetworkSettings.IPAddress}}"
 
-    # show the output logs of a container
-    docker logs <container>
+  # start/stop/restart/pause/unpause/attach
+  # attach: connecting local stdin, stdout, stderr to a running container
+  # pause|unpause: pause or unpause running processes in a container
+  docker start|stop|restart|pause|unpause|attach <container>
 
-    # convert a container to an image file
-    docker commit -a 'Albert Einstein <albert@example.com>' -m 'theory of relativity' <container> einstein/relativity:v1
+  # show the output logs of a container
+  docker logs <container>
 
-    # execute a command in a running container
-    docker exec node-box "node" "myapp.js"
+  # convert a container to an image file
+  docker commit -a 'Albert Einstein <albert@example.com>' -m 'theory of relativity' <container> einstein/relativity:v1
 
-    # access the command line of a running container
-    docker exec -it [CONTAINER] bash
+  # execute a command in a running container
+  docker exec node-box "node" "myapp.js"
 
-    # remove a container
-    docker rm [CONTAINER_ID]
+  # access the command line of a running container
+  docker exec -it [CONTAINER] bash
 
-    # force remove a running container
-    docker rm -f [CONTAINER_ID]
-    ```
+  # remove a container
+  docker rm [CONTAINER_ID]
 
+  # force remove a running container
+  docker rm -f [CONTAINER_ID]
+  ```
 
 ## Dockerfile
 
@@ -226,7 +224,7 @@ RUN useradd -ms /bin/bash einstein
 USER einstein
 
 # install required tools, it's a good practice to chain shell commands together, reducing intermediate images created
-RUN apt-get update && \ 
+RUN apt-get update && \
     apt-get install --yes openssh-server
 ```
 
@@ -237,57 +235,55 @@ docker run -u 0 -it <image> /bin/bash
 
 ### `RUN`
 
-* `RUN` will execute commands in a new layer on top of current image and commit the results, the resulting image will be used for the next step in the `Dockerfile`;
-* the command is ran by root user by default, if a `USER` directive is present, following `RUN` commands will be ran by that user;
-
+- `RUN` will execute commands in a new layer on top of current image and commit the results, the resulting image will be used for the next step in the `Dockerfile`;
+- the command is ran by root user by default, if a `USER` directive is present, following `RUN` commands will be ran by that user;
 
 it has two forms:
 
-* `RUN <command>` (*shell* form)
+- `RUN <command>` (_shell_ form)
 
-    * use `/bin/sh -c` by default on Linux;
-    * the default shell can be changed using the `SHELL` command;
-    * you can use a `\` to continue a single instruction on the next line
+  - use `/bin/sh -c` by default on Linux;
+  - the default shell can be changed using the `SHELL` command;
+  - you can use a `\` to continue a single instruction on the next line
 
-        ```
-        RUN /bin/bash -c 'source $HOME/.bashrc; \
-        echo $HOME'
+    ```
+    RUN /bin/bash -c 'source $HOME/.bashrc; \
+    echo $HOME'
 
-        # equivalent to 
-        RUN /bin/bash -c 'source $HOME/.bashrc; echo $HOME'
-        ```
+    # equivalent to
+    RUN /bin/bash -c 'source $HOME/.bashrc; echo $HOME'
+    ```
 
-* `RUN ["executable", "param1", "param2"]` (*exec* form)
+- `RUN ["executable", "param1", "param2"]` (_exec_ form)
 
-    * make it possible to avoid shell string munging, and to `RUN` commands using a base image that does not contain the specified shell executable;
-    * it's parsed as a JSON array, so you must use double-quotes `"`;
+  - make it possible to avoid shell string munging, and to `RUN` commands using a base image that does not contain the specified shell executable;
+  - it's parsed as a JSON array, so you must use double-quotes `"`;
 
 the cache for `RUN` instructions isn't invalidated automatically during the next build, use a `--no-cache` flag to invalidate it
 
 ### `CMD`
 
-* `CMD` sets the command to be executed when running the image, it is not executed at build time;
-* arguments to `docker run` will overide `CMD`;
+- `CMD` sets the command to be executed when running the image, it is not executed at build time;
+- arguments to `docker run` will overide `CMD`;
 
 has three forms:
 
-* `CMD ["executable", "param1", "param2"]` (*exec* from, preferred)
+- `CMD ["executable", "param1", "param2"]` (_exec_ from, preferred)
 
-    * must use double quotes;
-    * the "executable" must be in full path;
+  - must use double quotes;
+  - the "executable" must be in full path;
 
-* `CMD ["param1", "param2"]` (as *default* params to `ENTRYPOINT`)
+- `CMD ["param1", "param2"]` (as _default_ params to `ENTRYPOINT`)
 
-    * in this form, an `ENTRYPOINT` instruction should be specified with the JSON array format;
-    * this form should be used when you want your container to run the same executable every time;
+  - in this form, an `ENTRYPOINT` instruction should be specified with the JSON array format;
+  - this form should be used when you want your container to run the same executable every time;
 
-* `CMD command param1 param2` (*shell* form)
-  
+- `CMD command param1 param2` (_shell_ form)
 
 **differencies to `RUN`**
 
-* `RUN` actually runs a command and commits the result, `CMD` does not execute at build time, but specifies what to be ran when instantiating a container out of the image;
-* there can be multiple `RUN` command in one `Dockerfile`, but there should only be one `CMD`;
+- `RUN` actually runs a command and commits the result, `CMD` does not execute at build time, but specifies what to be ran when instantiating a container out of the image;
+- there can be multiple `RUN` command in one `Dockerfile`, but there should only be one `CMD`;
 
 ### `ENTRYPOINT`
 
@@ -332,7 +328,6 @@ ADD --chown=someuser:somegroup /foo /bar
 COPY --chown=someuser:somegroup /foo /bar
 ```
 
-
 ### `.dockerignore`
 
 config what files and directories should be ignored when sending to the docker daemon and ignored by `ADD` and `COPY`
@@ -357,22 +352,22 @@ config what files and directories should be ignored when sending to the docker d
 
 By default, all files created inside a container are stored on a writable container layer:
 
-* Those data doesn't persist, it's hard to move it out of the container or to another host;
-* A *storage drive* is required to manage the filesystem, **it's slower comparing to writing to the host filesystem using *data volumes***;
-* Docker can store files in the host, using *volumes*, *bind mounts* or *tmpfs (Linux only)*;
+- Those data doesn't persist, it's hard to move it out of the container or to another host;
+- A _storage drive_ is required to manage the filesystem, **it's slower comparing to writing to the host filesystem using _data volumes_**;
+- Docker can store files in the host, using _volumes_, _bind mounts_ or _tmpfs (Linux only)_;
 
 ![Storage types](images/docker-storage.png)
 
 ### Volumes
 
-* Created and managed by Docker;
-* You can create/manage them explicitly using `docker volume` commands;
-* Docker create a volume during container or service creation if the volume does not exist yet;
-* Stored in a Docker managed area on the host filesystem (`/var/lib/docker/volumes` on Linux), non-Docker processes should not modify it;
-* A volume **can be mounted into multiple containers simultaneously**, it doesn't get removed automatically even no running container is using it (**So volumes can be mounted into a container, but they are not depended on any conatiner**);
-* Volumes can be *named* or *anonymous*, an anonymous volume get a randomly generated unique name, otherwise they behave in the same ways;
-* They support *volume drivers*, which **allow you to store data on remote hosts or cloud providers**;
-* *Best way* to persist data in Docker;
+- Created and managed by Docker;
+- You can create/manage them explicitly using `docker volume` commands;
+- Docker create a volume during container or service creation if the volume does not exist yet;
+- Stored in a Docker managed area on the host filesystem (`/var/lib/docker/volumes` on Linux), non-Docker processes should not modify it;
+- A volume **can be mounted into multiple containers simultaneously**, it doesn't get removed automatically even no running container is using it (**So volumes can be mounted into a container, but they are not depended on any conatiner**);
+- Volumes can be _named_ or _anonymous_, an anonymous volume get a randomly generated unique name, otherwise they behave in the same ways;
+- They support _volume drivers_, which **allow you to store data on remote hosts or cloud providers**;
+- _Best way_ to persist data in Docker;
 
 #### Data Sharing
 
@@ -380,20 +375,20 @@ By default, all files created inside a container are stored on a writable contai
 
 If you want to configure multiple replicas of the same service to access the same files, there are two ways:
 
-* Add logic to your application to store data in cloud (e.g. AWS S3);
-* Create volumes with a driver that supports writing files to an external storage system like NFS or AWS S3 (in this way, you can abstract the storage system away from the application logic);
+- Add logic to your application to store data in cloud (e.g. AWS S3);
+- Create volumes with a driver that supports writing files to an external storage system like NFS or AWS S3 (in this way, you can abstract the storage system away from the application logic);
 
 #### Backup, restore, or migrate data volumes
 
 You can use `--volumes-from` to create a container that mounts volumes from another container;
 
-* Backup `dbstore:/dbdata` to current directory
+- Backup `dbstore:/dbdata` to current directory
 
-    ```sh
-    docker run --rm --volumes-from dbstore -v $(pwd):/backup ubuntu tar cvf /backup/backup.tar /dbdata
-    ```
+  ```sh
+  docker run --rm --volumes-from dbstore -v $(pwd):/backup ubuntu tar cvf /backup/backup.tar /dbdata
+  ```
 
-* Restore `backup.tar` in current directory to a new container `dbstore2`
+- Restore `backup.tar` in current directory to a new container `dbstore2`
 
 ```sh
 # create dbstore2 and a new volume with it
@@ -413,7 +408,6 @@ docker run --rm -v /foo -v awesome:/bar busybox top
 # remove all unused volumes
 docker volume prune
 ```
-
 
 #### `-v`, `--mount` and volume driver
 
@@ -444,14 +438,14 @@ docker run -d \
 
 ### Bind mounts
 
-* Available since early days of Docker;
-* A file or directory on the *host machine* is mounted into a container;
-* It **does not** need to exist on the host already, Docker will create it if not exist;
-* Can be anywhere on the host system;
-* May be important system files or directories;
-* Both non-Docker processes on the host or the Docker container can modify them at any time, so it have security implications;
-* Can't be managed by Docker CLI directly;
-* **Consider using named volumes instead**;
+- Available since early days of Docker;
+- A file or directory on the _host machine_ is mounted into a container;
+- It **does not** need to exist on the host already, Docker will create it if not exist;
+- Can be anywhere on the host system;
+- May be important system files or directories;
+- Both non-Docker processes on the host or the Docker container can modify them at any time, so it have security implications;
+- Can't be managed by Docker CLI directly;
+- **Consider using named volumes instead**;
 
 #### Commands
 
@@ -461,24 +455,24 @@ docker run -it -v /home/gary/code/super-app:/app ubuntu
 
 ### `tmpfs`
 
-* Not persisted on disk;
-* Can be used by a container to store non-persistent state or sensitive info;
-    * Swarm services use `tmpfs` to mount secrets into a service's containers;
+- Not persisted on disk;
+- Can be used by a container to store non-persistent state or sensitive info;
+  - Swarm services use `tmpfs` to mount secrets into a service's containers;
 
 ### Usage
 
-* Use `-v` or `--volume` to mount volumes or bind mounts;
-* In Dokcer 17.06+, `--mount` is recommended, syntax is more verbose, and it's required for creating services;
-* Volumes are good for:
-    * Sharing data among multiple running containers;
-    * When the Docker host is not guaranteed to have a given directory or file structure;
-    * Store a container's data on a remote host or a cloud provider;
-    * You need to backup, restore or migrate data from one Docker host to another, you can stop the containers using the volume, then back up the volume's directory (such as `/var/lib/docker/volumes/<volume-name>`);
+- Use `-v` or `--volume` to mount volumes or bind mounts;
+- In Dokcer 17.06+, `--mount` is recommended, syntax is more verbose, and it's required for creating services;
+- Volumes are good for:
 
-* Bind mounts are good for:
-    * Sharing config files from the host machine to containers, by default Docker mount `/etc/resolv.conf` from host to container for DNS resolution;
-    * Sharing source code or build artifacts between a development env on the host and a container (**Your production Dockerfile should copy the production-ready artifacts into the image directly, instead of relying on a bind mount**); 
+  - Sharing data among multiple running containers;
+  - When the Docker host is not guaranteed to have a given directory or file structure;
+  - Store a container's data on a remote host or a cloud provider;
+  - You need to backup, restore or migrate data from one Docker host to another, you can stop the containers using the volume, then back up the volume's directory (such as `/var/lib/docker/volumes/<volume-name>`);
 
+- Bind mounts are good for:
+  - Sharing config files from the host machine to containers, by default Docker mount `/etc/resolv.conf` from host to container for DNS resolution;
+  - Sharing source code or build artifacts between a development env on the host and a container (**Your production Dockerfile should copy the production-ready artifacts into the image directly, instead of relying on a bind mount**);
 
 * If you mount an **empty volume** into a directory in the container in which files or directories exist, these files or directories are copied into the volume, if you start a container and specify a volume which does not already exist, an empty volume is created;
 * If you mount a **bind mount or non-empty volume** into a directory in which soe file or directories exist, these files or directories are obscured by the mount;
@@ -507,8 +501,8 @@ docker run \
         --ip 10.1.0.2 \
         ubuntu:xenial /bin/bash
 
-# OR 
-# connect a running container to a network, 
+# OR
+# connect a running container to a network,
 # you can specify an IP address, and a network scoped alias for the container
 docker network connect \
                 --ip 10.1.0.2 \
@@ -521,32 +515,32 @@ docker network inspect bridge04
 
 ### DNS
 
-* By default, Docker passes the host's DNS config(`/etc/resolv.conf`) to a container;
+- By default, Docker passes the host's DNS config(`/etc/resolv.conf`) to a container;
 
-* You can specify DNS servers by 
-    * Adding command line option `--dns`
+- You can specify DNS servers by
 
-    ```sh
-    # specify DNS servers
-    docker run -d \
-            --dns=8.8.8.8 \
-            --dns=8.8.4.4 \
-            --name testweb \
-            -p 80:80 \
-            httpd
-    ```
+  - Adding command line option `--dns`
 
-    * Adding configs in `/etc/docker/daemon.json` (affects all containers);
+  ```sh
+  # specify DNS servers
+  docker run -d \
+          --dns=8.8.8.8 \
+          --dns=8.8.4.4 \
+          --name testweb \
+          -p 80:80 \
+          httpd
+  ```
 
-    ```js
-    // in /etc/docker/daemon.json 
-    {
-        ...
-        "dns": ["8.8.8.8", "8.8.4.4"]
-        ...
-    }
-    ```
+  - Adding configs in `/etc/docker/daemon.json` (affects all containers);
 
+  ```js
+  // in /etc/docker/daemon.json
+  {
+      ...
+      "dns": ["8.8.8.8", "8.8.4.4"]
+      ...
+  }
+  ```
 
 ### Swarm
 
@@ -584,62 +578,63 @@ docker service create \
 docker network inspect overlay0
 ```
 
-* An overlay network will be available to all nodes in a swarm;
-* If the above service `testweb` runs on `node1.example.com` and `node2.exmaple.com`, you can access it from either domain;
+- An overlay network will be available to all nodes in a swarm;
+- If the above service `testweb` runs on `node1.example.com` and `node2.exmaple.com`, you can access it from either domain;
 
 ### Network Driver Types
 
-* bridge
-    * default on stand-alone Docker hosts;
-    * a private network internal to the host system;
-    * all containers on this host using bridge networking can communicate to each other;
-    * external access is granted by port exposure of the container's services and accessed by the host;
+- bridge
 
-* none
-    * when absolutely no networking is needed;
-    * can only be accessed on the host;
-    * can `docker attach <container-id>` or `docker exec -it <container-id>`;
+  - default on stand-alone Docker hosts;
+  - a private network internal to the host system;
+  - all containers on this host using bridge networking can communicate to each other;
+  - external access is granted by port exposure of the container's services and accessed by the host;
 
-* overlay
-    * allows communication among all Docker Daemons in a Swarm;
-    * it is a 'swarm' scope driver: it extends itself to all daemons in the swarm (building on workers if needed);
-    * allows multiple services in the swarm communicate to each other (regardless of origination or destination);
+- none
 
-* ingress
+  - when absolutely no networking is needed;
+  - can only be accessed on the host;
+  - can `docker attach <container-id>` or `docker exec -it <container-id>`;
 
-    * **A Special overlay network that load balances network traffic amongst a given service's working nodes**;
-    * Maitains a list of all IP addresses from nodes of a service, when a request comes in, routes to one of them;
-    * Provides '**routing mesh**', allows services to be exposed to the external network without having a replica running on every node in the Swarm;
+- overlay
 
-    ![Swarm ingress routing](images/docker-swarm-ingress-routing-mesh.png)
+  - allows communication among all Docker Daemons in a Swarm;
+  - it is a 'swarm' scope driver: it extends itself to all daemons in the swarm (building on workers if needed);
+  - allows multiple services in the swarm communicate to each other (regardless of origination or destination);
 
-* gateway bridge
+- ingress
 
-    * special bridge network that allows overlay networks access to an individual Docker daemon's physical network;
-    * every contianer run within a service is connected to the local Docker daemon's host network;
-    * automatically created when initing or joining a swarm;
-    
+  - **A Special overlay network that load balances network traffic amongst a given service's working nodes**;
+  - Maitains a list of all IP addresses from nodes of a service, when a request comes in, routes to one of them;
+  - Provides '**routing mesh**', allows services to be exposed to the external network without having a replica running on every node in the Swarm;
+
+  ![Swarm ingress routing](images/docker-swarm-ingress-routing-mesh.png)
+
+- gateway bridge
+
+  - special bridge network that allows overlay networks access to an individual Docker daemon's physical network;
+  - every contianer run within a service is connected to the local Docker daemon's host network;
+  - automatically created when initing or joining a swarm;
+
 ### Port Publishing Mode
 
-* Host
+- Host
 
-    * `mode=host` in deployment;
-    * used in single host environment or in environment where you need complete control over routing;
-    * ports for containers are only available on the underlying host system and are NOT avaliable for services which don't have a replica on this host;
-    * in `docker-compose.yml` :
+  - `mode=host` in deployment;
+  - used in single host environment or in environment where you need complete control over routing;
+  - ports for containers are only available on the underlying host system and are NOT avaliable for services which don't have a replica on this host;
+  - in `docker-compose.yml` :
 
-        ```yaml
-        ports:
-        - target: 80
-            published: 8080
-            rotocol: tcp
-            mode: host      # specify mode here
-        ```
+    ```yaml
+    ports:
+    - target: 80
+        published: 8080
+        rotocol: tcp
+        mode: host      # specify mode here
+    ```
 
-* Ingress
-    * provides 'routing mesh', makes all published ports available on all hosts, so that service is accessible from every node regardless whether there is a replica running on it or not;
-
-
+- Ingress
+  - provides 'routing mesh', makes all published ports available on all hosts, so that service is accessible from every node regardless whether there is a replica running on it or not;
 
 ## Docker Compose
 
@@ -651,13 +646,12 @@ Steps for using Compose:
 2. Define the services that make up your app in `docker-compose.yml` so they can be run together (you may need to run `docker-compose build` as well);
 3. Run `docker-compose up` to start your app;
 
-
 ```bash
 # rebuil and updating a container
-docker-compose up -d --build 
+docker-compose up -d --build
 
 # the same as
-docker-compose build 
+docker-compose build
 
 docker-compose up -d
 
@@ -665,22 +659,22 @@ docker-compose up -d
 #  use this when you updated package.json, see '--renew-anon-volumes' below as well
 docker-compose build --force-rm --no-cache
 
-## specicy a project name 
+## specicy a project name
 docker-compose up -p myproject
 ```
 
 ### `docker-compose.yml`
 
-* `docker-compose` use this file to create containers;
-* Options specified in the `Dockerfile`, such as `CMD`, `EXPOSE`, `VOLUME`, `ENV` are respected;
-* `docker stack deploy` use this file to deploy stacks to a swarm as well, the old way is to use `docker service create`, adding all options on the command line;
-* Network and volume definitions are analogous to `docker network create` and `docker volume create`;
-* Options ignored by `docker stack`:
-    * `build`: only pre-build images can be used;
+- `docker-compose` use this file to create containers;
+- Options specified in the `Dockerfile`, such as `CMD`, `EXPOSE`, `VOLUME`, `ENV` are respected;
+- `docker stack deploy` use this file to deploy stacks to a swarm as well, the old way is to use `docker service create`, adding all options on the command line;
+- Network and volume definitions are analogous to `docker network create` and `docker volume create`;
+- Options ignored by `docker stack`:
 
-* Options ignored by `docker-compose`:
-    * `deploy`
+  - `build`: only pre-build images can be used;
 
+- Options ignored by `docker-compose`:
+  - `deploy`
 
 #### `volumes`
 
@@ -688,31 +682,30 @@ docker-compose up -p myproject
 version: "2"
 
 services:
-    app:
-        build: 
-            #...
+  app:
+    build:
+    #...
 
-        volumes:
-            - .:/app                # mount current directory to the container at /app
-            - /app/node_modules     # for "node_modules", use the existing one in the image, don't mount from the host
+    volumes:
+      - .:/app # mount current directory to the container at /app
+      - /app/node_modules # for "node_modules", use the existing one in the image, don't mount from the host
 
-        #...
+    #...
 ```
 
-in the above example, 
+in the above example,
 
-* the mounted volumes will override any existing files in the image, current directory `.` is mounted to `/app`, and will override existing `/app` in the image; 
-* but the image's `/app/node_modules` is preserved, not mounted from the host machine;
+- the mounted volumes will override any existing files in the image, current directory `.` is mounted to `/app`, and will override existing `/app` in the image;
+- but the image's `/app/node_modules` is preserved, not mounted from the host machine;
 
 see details here: [Lessons from Building a Node App in Docker](http://jdlm.info/articles/2016/03/06/lessons-building-node-app-docker.html)
 
-**There is a problem with this config** 
+**There is a problem with this config**
 
 see here: ["docker-compose up" not rebuilding container that has an underlying updated image](https://github.com/docker/compose/issues/4337)
 
-* after you update `package.json` on your local, and run `docker-compose up --build`, the underlying images do get updated, because Docker Compose is using an old anonymous volume for `/app/node_modules` from the old container, so the new package you installed is absent from the new container;
-* add a `--renew-anon-volumes` flag to `docker-compose up --build` will solve this issue;
-
+- after you update `package.json` on your local, and run `docker-compose up --build`, the underlying images do get updated, because Docker Compose is using an old anonymous volume for `/app/node_modules` from the old container, so the new package you installed is absent from the new container;
+- add a `--renew-anon-volumes` flag to `docker-compose up --build` will solve this issue;
 
 #### Variable substitution
 
@@ -723,44 +716,41 @@ db:
 
 `${POSTGRES_VERSION}` get its value from shell environment
 
-
-
 ### Networking
 
 By default:
 
-* Compose sets up a single network, every service is reachable by other services, using the service name as the hostname;
+- Compose sets up a single network, every service is reachable by other services, using the service name as the hostname;
 
-* In this example
+- In this example
 
-    ```yaml
-    # /path/to/myapp/docker-compose.yml
+  ```yaml
+  # /path/to/myapp/docker-compose.yml
 
-    version: "3"
-    services:
-        web:
-            build: .
-            ports:
-                - "8000:8000"
-            links:
-                - "db:database"
-        db:
-            image: mysql 
-            ports:
-                - "8001:3061"
-    ```
+  version: "3"
+  services:
+    web:
+      build: .
+      ports:
+        - "8000:8000"
+      links:
+        - "db:database"
+    db:
+      image: mysql
+      ports:
+        - "8001:3061"
+  ```
 
-    * The network will be called `myapp_default`;
-    * `web` can connect to the `db` thru `db:3061`;
-    * Host can access the `db` thru `<docker_ip>:8001`;
-    * The `links` directive defines an alias, so `db` can be accessed by `database` as well, it is not required;
+  - The network will be called `myapp_default`;
+  - `web` can connect to the `db` thru `db:3061`;
+  - Host can access the `db` thru `<docker_ip>:8001`;
+  - The `links` directive defines an alias, so `db` can be accessed by `database` as well, it is not required;
 
 #### Custom networks
 
 ```yaml
 version: "3"
 services:
-
   proxy:
     build: ./proxy
     networks:
@@ -787,9 +777,9 @@ networks:
       bar: "2"
 ```
 
-* Define custom networks by top-level `networks` directive;
-* Each service can specify which networks to join;
-* In the example above, `proxy` and `db` are isolated to each other, `app` can connect to both;
+- Define custom networks by top-level `networks` directive;
+- Each service can specify which networks to join;
+- In the example above, `proxy` and `db` are isolated to each other, `app` can connect to both;
 
 See https://docs.docker.com/compose/networking/ for configuring the default network and connecting containers to external networks;
 
@@ -802,13 +792,13 @@ for the following example:
 version: "2"
 
 services:
-    app:
-        build: 
-            #...
-        #...
+  app:
+    build:
+      #...
+    #...
 ```
 
-when you run 
+when you run
 
 ```bash
 docker-compose up
@@ -821,7 +811,6 @@ docker-compose --project-name <anotherName> up
 ```
 
 see [Proposal: make project-name persistent](https://github.com/docker/compose/issues/745)
-
 
 ## Docker machine
 
@@ -855,16 +844,15 @@ docker-machine start <machine-name>
 eval $(docker-machine env -u)
 ```
 
-
 ## Swarm mode
 
 ![Swarm-architecture](images/docker-swarm-architecture.png)
 
-* A swarm consists of multiple Docker hosts which run in **swarm mode** and act as managers or/and workers;
-* Advantage over standalone containers: You can modify a service's configuration without manually restart the service;
-* You can run one or more nodes on a single physical computer, in production, nodes are typically distributed over multiple machines;
-* A Docker host can be a manager, a worker or both;
-* You can run both swarm services and standalone containers on the same Docker host;
+- A swarm consists of multiple Docker hosts which run in **swarm mode** and act as managers or/and workers;
+- Advantage over standalone containers: You can modify a service's configuration without manually restart the service;
+- You can run one or more nodes on a single physical computer, in production, nodes are typically distributed over multiple machines;
+- A Docker host can be a manager, a worker or both;
+- You can run both swarm services and standalone containers on the same Docker host;
 
 ```sh
 # init a swarm
@@ -891,7 +879,7 @@ services:
   web:
     image: garylirocks/get-started:part2
     deploy:
-      replicas: 3               # run 3 instance
+      replicas: 3 # run 3 instance
       resources:
         limits:
           cpus: "0.1"
@@ -903,11 +891,11 @@ services:
     networks:
       - webnet
 networks:
-  webnet:                       # this is a load-balanced overlay network
+  webnet: # this is a load-balanced overlay network
 ```
 
-* **service**:  A service only runs one image, but it specifies the way that image runs -- what ports it should use, how many replicas of the container should run, etc;
-* **task**: A single container running in a service is called a task, a service contains multiple tasks;
+- **service**: A service only runs one image, but it specifies the way that image runs -- what ports it should use, how many replicas of the container should run, etc;
+- **task**: A single container running in a service is called a task, a service contains multiple tasks;
 
 ```sh
 # init a swarm
@@ -948,8 +936,8 @@ docker stack rm getstartedlab
 docker swarm leave --force
 ```
 
-* Docker Swarm keeps history of each task, so `docker service ps <service>` will list both running and shutdown services, you can add a filter option to only show running tasks: `docker service ps -f "DESIRED-STATE=Running" <service>`;
-* Or you can use `docker swarm update --task-history-limit <int>` to update the task history limit;
+- Docker Swarm keeps history of each task, so `docker service ps <service>` will list both running and shutdown services, you can add a filter option to only show running tasks: `docker service ps -f "DESIRED-STATE=Running" <service>`;
+- Or you can use `docker swarm update --task-history-limit <int>` to update the task history limit;
 
 ### Multi-nodes swarm example
 
@@ -1000,7 +988,7 @@ docker-demo docker service ps getstartedlab_web
 
 # now, you can visit the app by 192.168.99.100:4000 or 192.168.99.101:4000, it's load-balanced, meaning one node may redirect a request to another node
 
-# you can also: update the app, then rebuild and push the image; 
+# you can also: update the app, then rebuild and push the image;
 #               or, update docker-compose.yml and deploy again;
 
 # tear down the stack
@@ -1011,10 +999,10 @@ docker stack rm getstartedlab
 
 ### Multi-service stacks
 
-Add `visualizer` and `redis` service to the stack, 
+Add `visualizer` and `redis` service to the stack,
 
-* `visualizer` doesn't depend on anything, but it should be run on a manager node;
-* `redis` need data persistence, we put it on the manager node, and add volume mapping as well;
+- `visualizer` doesn't depend on anything, but it should be run on a manager node;
+- `redis` need data persistence, we put it on the manager node, and add volume mapping as well;
 
 ```yml
 version: "3"
@@ -1058,10 +1046,9 @@ services:
         constraints: [node.role == manager]
     command: redis-server --appendonly yes
     networks:
-      - webnet 
+      - webnet
 
-networks:
-  webnet:
+networks: webnet:
 ```
 
 ```sh
@@ -1079,15 +1066,14 @@ docker service ls
 # xzqj0epf49eq        getstartedlab_web          replicated          3/3                 garylirocks/get-started:part2     *:4000->80/tcp
 ```
 
-
 ## Configs
 
-* Store non-sensitive info (e.g. config files) outside image or running containers;
-* **Don't neet to bind-mount**;
-* Added or removed from a service at any time, and services can share a config;
-* Config values can be **generic strings or binary content** (up to 500KB);
-* **Only available to swarm services**, not standalone containers;
-* Configs are managed by swarm managers, when a service been granted access to a config, the config is mounted as a file in the container. (`/<config-name>`), you can sed `uid`, `pid` and `mode` for a config;
+- Store non-sensitive info (e.g. config files) outside image or running containers;
+- **Don't neet to bind-mount**;
+- Added or removed from a service at any time, and services can share a config;
+- Config values can be **generic strings or binary content** (up to 500KB);
+- **Only available to swarm services**, not standalone containers;
+- Configs are managed by swarm managers, when a service been granted access to a config, the config is mounted as a file in the container. (`/<config-name>`), you can sed `uid`, `pid` and `mode` for a config;
 
 ### Basic usage using `docker config` commands
 
@@ -1149,9 +1135,9 @@ docker service create \
 
 in the running container, the following three files now exist:
 
-* `/run/secrets/site.key`
-* `/run/secrets/site.crt`
-* `/etc/nginx/conf.d/site.conf`
+- `/run/secrets/site.key`
+- `/run/secrets/site.crt`
+- `/etc/nginx/conf.d/site.conf`
 
 ### Rotate a config
 
@@ -1161,7 +1147,7 @@ Update `site.conf`:
 # create a new config using the updated file
 docker config create site-v2.conf site.conf
 
-# update the service, removing old config, adding new one 
+# update the service, removing old config, adding new one
 docker service update \
   --config-rm site.conf \
   --config-add source=site-v2.conf,target=/etc/nginx/conf.d/site.conf,mode=0440 \
@@ -1173,72 +1159,71 @@ docker config rm site.conf
 
 ### Usage in `compose` files
 
-* short syntax
+- short syntax
 
-    ```yml
-    version: "3.3"
-    services:
-    redis:
-        image: redis:latest
-        deploy:
-        replicas: 1
-        configs:
-        - my_config
-        - my_other_config
-
+  ```yml
+  version: "3.3"
+  services:
+  redis:
+    image: redis:latest
+    deploy:
+    replicas: 1
     configs:
-    my_config:
-        file: ./my_config.txt
-    my_other_config:
-        external: true
-    ```
+      - my_config
+      - my_other_config
 
-* long syntax
+  configs:
+  my_config:
+    file: ./my_config.txt
+  my_other_config:
+    external: true
+  ```
 
-    ```yml
-    version: "3.3"
-    services:
-    redis:
-        image: redis:latest
-        deploy:
-        replicas: 1
-        configs:
-        - source: my_config
-            target: /redis_config
-            uid: '103'
-            gid: '103'
-            mode: 0440
+- long syntax
 
-    configs:
-    my_config:
-        file: ./my_config.txt
-    my_other_config:
-        external: true
-    ```
+  ```yml
+  version: "3.3"
+  services:
+  redis:
+      image: redis:latest
+      deploy:
+      replicas: 1
+      configs:
+      - source: my_config
+          target: /redis_config
+          uid: '103'
+          gid: '103'
+          mode: 0440
 
+  configs:
+  my_config:
+      file: ./my_config.txt
+  my_other_config:
+      external: true
+  ```
 
 ## Secrets
 
 Sensitive data a container needs at runtime, should not be stored in the image or in source control:
 
-* Usernames and passwords;
-* TLS certificates and keys;
-* SSH keys;
-* Name of a database or internal server;
-* Generic strings or binary content (up to 500kb);
+- Usernames and passwords;
+- TLS certificates and keys;
+- SSH keys;
+- Name of a database or internal server;
+- Generic strings or binary content (up to 500kb);
 
 Usage:
 
-* Secret is encrypted in transition and at rest, it's replicated across all managers;
-* Decrypted secret is mounted into the container in an in-memory filesystem, the mount point defaults to `/run/secrets/<scret_name>`;
-* Management commands:
+- Secret is encrypted in transition and at rest, it's replicated across all managers;
+- Decrypted secret is mounted into the container in an in-memory filesystem, the mount point defaults to `/run/secrets/<scret_name>`;
+- Management commands:
 
-    * `docker secret create`;
-    * `docker secret inspect`;
-    * `docker secret ls`;
-    * `docker secret rm`;
-    * `--secret` flag for `docker service create`;
-    * `--secret-add` and `--secret-rm` flags for `docker service update`;
+  - `docker secret create`;
+  - `docker secret inspect`;
+  - `docker secret ls`;
+  - `docker secret rm`;
+  - `--secret` flag for `docker service create`;
+  - `--secret-add` and `--secret-rm` flags for `docker service update`;
 
 ### Example: Use secrets with a WordPress service
 
@@ -1286,7 +1271,7 @@ docker service create \
 docker service ls
 ```
 
-### Rotate a secret 
+### Rotate a secret
 
 Here we rotate the password of the `wordpress` user, not the root password:
 
@@ -1322,68 +1307,67 @@ docker secret rm mysql_password
 ### Example compose file
 
 ```yaml
-version: '3.1'
+version: "3.1"
 
 services:
-   db:
-     image: mysql:latest
-     volumes:
-       - db_data:/var/lib/mysql
-     environment:
-       MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
-       MYSQL_DATABASE: wordpress
-       MYSQL_USER: wordpress
-       MYSQL_PASSWORD_FILE: /run/secrets/db_password
-     secrets:
-       - db_root_password
-       - db_password
+  db:
+    image: mysql:latest
+    volumes:
+      - db_data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_root_password
+      - db_password
 
-   wordpress:
-     depends_on:
-       - db
-     image: wordpress:latest
-     ports:
-       - "8000:80"
-     environment:
-       WORDPRESS_DB_HOST: db:3306
-       WORDPRESS_DB_USER: wordpress
-       WORDPRESS_DB_PASSWORD_FILE: /run/secrets/db_password
-     secrets:
-       - db_password
+  wordpress:
+    depends_on:
+      - db
+    image: wordpress:latest
+    ports:
+      - "8000:80"
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_password
 
 secrets:
-   db_password:
-     file: db_password.txt
-   db_root_password:
-     file: db_root_password.txt
+  db_password:
+    file: db_password.txt
+  db_root_password:
+    file: db_root_password.txt
 
-volumes:
-    db_data:
+volumes: db_data:
 ```
 
 ## Tips / Best Practices
 
-* on Mac, you can talk to a container through port binding, but you may **NOT** be able to ping the container's IP address;
+- on Mac, you can talk to a container through port binding, but you may **NOT** be able to ping the container's IP address;
 
-* don't but `apt-get update` on a different line than `apt-get install`, the result of the `apt-get update` will get cached and won't run every time, the following is a good example of how this should be done:
+- don't but `apt-get update` on a different line than `apt-get install`, the result of the `apt-get update` will get cached and won't run every time, the following is a good example of how this should be done:
 
-    ```
-    # From https://github.com/docker-library/golang
-    RUN apt-get update && \
-        apt-get install -y --no-install-recommends \
-        g++ \
-        gcc \
-        libc6-dev \
-        make \
-        && rm -rf /var/lib/apt/lists/*
-    ```
+  ```
+  # From https://github.com/docker-library/golang
+  RUN apt-get update && \
+      apt-get install -y --no-install-recommends \
+      g++ \
+      gcc \
+      libc6-dev \
+      make \
+      && rm -rf /var/lib/apt/lists/*
+  ```
 
-* to utilize Docker's caching capability better, install dependencies first before copying over everything, this makes sure other changes don't trigger a rebuild (e.g. non `package.json` changes don't trigger node package downloads)
+- to utilize Docker's caching capability better, install dependencies first before copying over everything, this makes sure other changes don't trigger a rebuild (e.g. non `package.json` changes don't trigger node package downloads)
 
-    ```
-    COPY ./my-app/package.json /home/app/package.json   # copy over dependency config first
-    WORKDIR /home/app/
-    RUN npm install                 # result get cached here
+  ```
+  COPY ./my-app/package.json /home/app/package.json   # copy over dependency config first
+  WORKDIR /home/app/
+  RUN npm install                 # result get cached here
 
-    COPY ./my-app/ /home/app/       # copy over other stuff
-    ```
+  COPY ./my-app/ /home/app/       # copy over other stuff
+  ```

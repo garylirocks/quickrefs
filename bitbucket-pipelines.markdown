@@ -1,5 +1,4 @@
-Bitbucket Pipelines
-=====================
+# Bitbucket Pipelines
 
 - [General](#general)
 - [Demo config](#demo-config)
@@ -15,10 +14,10 @@ add a `bitbucket-pipelines.yml` file in your root directory to config how pipeli
 ## Demo config
 
 ```yaml
-image: atlassian/default-image:2    # specify a global image, can be overriden by each step
+image: atlassian/default-image:2 # specify a global image, can be overriden by each step
 
 pipelines:
-  default:                          # runs on every push, unless another branch/tag pipeline matches
+  default: # runs on every push, unless another branch/tag pipeline matches
     - step:
         name: Build and test
         image: node:8.5.0
@@ -28,7 +27,7 @@ pipelines:
           - npm install
           - npm test
           - npm run build
-        artifacts:                  # artifacts are kept for later steps
+        artifacts: # artifacts are kept for later steps
           - dist/**
           - reports/*.txt
     - step:
@@ -43,29 +42,28 @@ pipelines:
     - step:
         name: Deploy to beanstalk
         image: python:3.5.1
-        trigger: manual             # trigger this step manually
+        trigger: manual # trigger this step manually
         script:
           - python deploy-to-beanstalk.py
   tags:
-    release-*:                      # matchs any 'release-*' tag
+    release-*: # matchs any 'release-*' tag
       - step:
           # ...
           script:
             - echo "Only triggered with 'release-*' tag"
-  custom:                           # manually triggered pipelines
-
+  custom: # manually triggered pipelines
     deployment-to-prod:
       - step:
           #...
-          deployment: production    # enable deployment tracking
+          deployment: production # enable deployment tracking
           script:
             - echo "Manual triggers for deployment"
 
-definitions:                        # defines other containers
+definitions: # defines other containers
   services:
     postgres:
       image: postgres:9.6.4
 ```
 
-* `custom` pipelines and steps with `trigger: manual` are triggered manually;
-* `deployment` can be `test`, `staging`, `production`;
+- `custom` pipelines and steps with `trigger: manual` are triggered manually;
+- `deployment` can be `test`, `staging`, `production`;

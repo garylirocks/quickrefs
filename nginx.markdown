@@ -1,31 +1,30 @@
-Nginx
-==========
+# Nginx
 
 - [How a request is processed](#how-a-request-is-processed)
-    - [`server` block](#server-block)
-    - [`location` block](#location-block)
+  - [`server` block](#server-block)
+  - [`location` block](#location-block)
 - [Directives](#directives)
-    - [`server_name`](#servername)
-        - [Wildcard names](#wildcard-names)
-        - [Regular expression names](#regular-expression-names)
-        - [Default server](#default-server)
-    - [`try_files`](#tryfiles)
-    - [`return`](#return)
-    - [`rewrite`](#rewrite)
-        - [`rewrite` vs. `return`](#rewrite-vs-return)
-    - [`upstream`](#upstream)
-    - [`fastcgi_split_path_info`](#fastcgisplitpathinfo)
+  - [`server_name`](#servername)
+    - [Wildcard names](#wildcard-names)
+    - [Regular expression names](#regular-expression-names)
+    - [Default server](#default-server)
+  - [`try_files`](#tryfiles)
+  - [`return`](#return)
+  - [`rewrite`](#rewrite)
+    - [`rewrite` vs. `return`](#rewrite-vs-return)
+  - [`upstream`](#upstream)
+  - [`fastcgi_split_path_info`](#fastcgisplitpathinfo)
 - [Cheatsheets](#cheatsheets)
-    - [Standardizing domain names](#standardizing-domain-names)
-    - [Add or removing the 'www' prefix](#add-or-removing-the-www-prefix)
-    - [Forcing all request to use SSL/TLS](#forcing-all-request-to-use-ssltls)
-    - [Enabling pretty permalinks for Wordpress](#enabling-pretty-permalinks-for-wordpress)
-    - [Load balancing](#load-balancing)
-    - [CORS rules](#cors-rules)
+  - [Standardizing domain names](#standardizing-domain-names)
+  - [Add or removing the 'www' prefix](#add-or-removing-the-www-prefix)
+  - [Forcing all request to use SSL/TLS](#forcing-all-request-to-use-ssltls)
+  - [Enabling pretty permalinks for Wordpress](#enabling-pretty-permalinks-for-wordpress)
+  - [Load balancing](#load-balancing)
+  - [CORS rules](#cors-rules)
 - [Trivias](#trivias)
 
-
 ## How a request is processed
+
 [How Nginx processes a request](http://nginx.org/en/docs/http/request_processing.html)
 
 ### `server` block
@@ -50,17 +49,17 @@ server {
 }
 ```
 
-* a request's `Host` field determines which server block is used;
-* if no match, the first block is used;
-* a `default_server` param can be used to set explicitly which block should be used:
+- a request's `Host` field determines which server block is used;
+- if no match, the first block is used;
+- a `default_server` param can be used to set explicitly which block should be used:
 
-    ```
-    server {
-        listen      80 default_server;
-        server_name example.net www.example.net;
-        ...
-    }
-    ```
+  ```
+  server {
+      listen      80 default_server;
+      server_name example.net www.example.net;
+      ...
+  }
+  ```
 
 ### `location` block
 
@@ -87,24 +86,21 @@ server {
 }
 ```
 
-
 1. Only the URI part of a request is tested, not the parameters;
 2. Nginx searches for the **MOST SPECIFIC**(longest) prefix location given by literal strings regardless of the listed order (`/` matches every request, it is used if no other matches found);
 3. Then locations given by regular expression are checked in order, the **FIRST** one is used, if no regular expression matches, the most specific prefix location in the first step is used;
 4. `location` blocks can be nested;
 5. Modifiers:
-    1. `~`  case-sensitive regex;
-    2. `~*` case-insensitive regex;
-    3. `=`  exact prefix match, terminates the search;
-    4. `^~` if the longest prefix location has this modifier, don't check regex expressions;
+   1. `~` case-sensitive regex;
+   2. `~*` case-insensitive regex;
+   3. `=` exact prefix match, terminates the search;
+   4. `^~` if the longest prefix location has this modifier, don't check regex expressions;
 6. Regex can contain captures that can be used in other directives;
-
 
 Example:
 
-* `/about.html` is handled by the first location, `/data/www/about.html` is sent to the client if present;
-* in above example, when `\` is requested, if `index.html` is present, it is sent out, if it is not, but `index.php` exists, then the directive does an internal redirect to `/index.php` as if the request comes from a client, it will be handled by the last `location` block;
-
+- `/about.html` is handled by the first location, `/data/www/about.html` is sent to the client if present;
+- in above example, when `\` is requested, if `index.html` is present, it is sent out, if it is not, but `index.php` exists, then the directive does an internal redirect to `/index.php` as if the request comes from a client, it will be handled by the last `location` block;
 
 ## Directives
 
@@ -139,20 +135,20 @@ server {
 When searching for a virtual server by name, if name matches more than one of the specified variants, e.g. both wildcard name and regular expression match, the first matching variant will be chosen, in the following order of precedence:
 
 1. exact name (**use exact names when possible, it is the fastest**)
-2. longest wildcard name starting with an asterisk, e.g. "*.example.org"
-3. longest wildcard name ending with an asterisk, e.g. "mail.*"
+2. longest wildcard name starting with an asterisk, e.g. "\*.example.org"
+3. longest wildcard name ending with an asterisk, e.g. "mail.\*"
 4. first matching regular expression (in order of appearance in a configuration file)
 
 #### Wildcard names
 
-* Can contain one asterisk, need to be either at the start or end, and only bordered with a dot;
-* A special wildcard name `.example.com` can be used to match both the exact name `example.com` and the wildcard name `*.example.com`;
+- Can contain one asterisk, need to be either at the start or end, and only bordered with a dot;
+- A special wildcard name `.example.com` can be used to match both the exact name `example.com` and the wildcard name `*.example.com`;
 
 #### Regular expression names
 
-* PCRE compatible;
-* If the regex contains `{` or `}`, it should be quoted;
-* A named regular expression capture can be used later as a variable;
+- PCRE compatible;
+- If the regex contains `{` or `}`, it should be quoted;
+- A named regular expression capture can be used later as a variable;
 
 ```nginx
 server {
@@ -186,14 +182,14 @@ server {
 
 ### `try_files`
 
-* inside `server` or `location`;
-* it takes one or more files and directories and a final URI;
-    ```nginx
-    try_files file ... uri;
-    ```
-* checks the existence of the files and directories in order (building the full path using `root` and `alias`), serves the first found;
-* if none found, do an internal redirect to the URI defined by the final element;
-* you need to define a `location` block to capture the internal redirect;
+- inside `server` or `location`;
+- it takes one or more files and directories and a final URI;
+  ```nginx
+  try_files file ... uri;
+  ```
+- checks the existence of the files and directories in order (building the full path using `root` and `alias`), serves the first found;
+- if none found, do an internal redirect to the URI defined by the final element;
+- you need to define a `location` block to capture the internal redirect;
 
 ```nginx
 # serve default.gif if the requested image not found
@@ -205,8 +201,6 @@ location = /images/default.gif {
     expires 30s;
 }
 ```
-
-
 
 ### `return`
 
@@ -221,32 +215,30 @@ server {
 }
 ```
 
-* For `3xx` codes, specify a url for redirecting
+- For `3xx` codes, specify a url for redirecting
 
 ```
 return (301 | 302 | 303 | 307) url;
 ```
 
-* For other codes, you can optionally define a text which appears in the body of the response:
+- For other codes, you can optionally define a text which appears in the body of the response:
 
-    ```
-    return (1xx | 2xx | 4xx | 5xx) ["text"];
-    ```
+  ```
+  return (1xx | 2xx | 4xx | 5xx) ["text"];
+  ```
 
-* Pass thru parameters
+- Pass thru parameters
 
-    ```
-    return 301 https://www.example.com$uri$is_args$args;
-    ```
+  ```
+  return 301 https://www.example.com$uri$is_args$args;
+  ```
 
-    `$is_args` is either empty or `?`, `$args` is the paramters string
+  `$is_args` is either empty or `?`, `$args` is the paramters string
 
-* Always use `return` for redirections whenever:
+- Always use `return` for redirections whenever:
 
-    * the rewritten URL is appropriate for every request in a `server` or `location` block;
-    * and you can build the rewritten URL with standard Nginx variables;
-
-
+  - the rewritten URL is appropriate for every request in a `server` or `location` block;
+  - and you can build the rewritten URL with standard Nginx variables;
 
 ### `rewrite`
 
@@ -259,28 +251,28 @@ server {
 }
 ```
 
-* Redirect `domain1.com` to `domain2.com`;
-* Use `redirect` for temporary (301) redirect; `permanent` for 302 redirect;
+- Redirect `domain1.com` to `domain2.com`;
+- Use `redirect` for temporary (301) redirect; `permanent` for 302 redirect;
 
 #### `rewrite` vs. `return`
+
 [https://www.nginx.com/blog/creating-nginx-rewrite-rules/]
 
-* `return` is prefereed to do redirections whenever possible;
-* `rewrite` can only return `301` or `302`;
-* `rewrite` doesn't necessarily halt Nginx's processing of the request as `return` does, and doesn't necessarily send a redirect to the client, see above url for details;
+- `return` is prefereed to do redirections whenever possible;
+- `rewrite` can only return `301` or `302`;
+- `rewrite` doesn't necessarily halt Nginx's processing of the request as `return` does, and doesn't necessarily send a redirect to the client, see above url for details;
 
-    ```nginx
-    server {
-        # ...
-        rewrite ^(/download/.*)/media/(\w+)\.?.*$ $1/mp3/$2.mp3 last;
-        rewrite ^(/download/.*)/audio/(\w+)\.?.*$ $1/mp3/$2.ra  last;
-        return  403;
-        # ...
-    }
-    ```
+  ```nginx
+  server {
+      # ...
+      rewrite ^(/download/.*)/media/(\w+)\.?.*$ $1/mp3/$2.mp3 last;
+      rewrite ^(/download/.*)/audio/(\w+)\.?.*$ $1/mp3/$2.ra  last;
+      return  403;
+      # ...
+  }
+  ```
 
-    the above code do internal rewrites, `last` indicates stop processing other Rewrite-module directives in current block, and start searching for a new matching `location`, if none of the `rewrite` rules match, it will return `403`.
-
+  the above code do internal rewrites, `last` indicates stop processing other Rewrite-module directives in current block, and start searching for a new matching `location`, if none of the `rewrite` rules match, it will return `403`.
 
 ### `upstream`
 
@@ -318,9 +310,8 @@ location ~ ^(.+\.php)(.*)$ {
 
 for this request `/show.php/article/0001`:
 
-* the `SCRIPT_FILENAME` parameter will be equal to `/path/to/php/show.php`;
-* and the `PATH_INFO` parameter will be equal to `/article/0001`;
-
+- the `SCRIPT_FILENAME` parameter will be equal to `/path/to/php/show.php`;
+- and the `PATH_INFO` parameter will be equal to `/article/0001`;
 
 ## Cheatsheets
 
@@ -448,7 +439,6 @@ location / {
 }
 ```
 
-
 ## Trivias
 
-* For a request `/path`, if `path` points to a directory, NGINX does a 301 redirect to `/path/` by default;
+- For a request `/path`, if `path` points to a directory, NGINX does a 301 redirect to `/path/` by default;

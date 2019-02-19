@@ -1,23 +1,19 @@
-WebSocket
-===========
+# WebSocket
 
 - [WebSocket](#websocket)
-    - [Why](#why)
-    - [Intro](#intro)
-    - [basic demo](#basic-demo)
+  - [Why](#why)
+  - [Intro](#intro)
+  - [basic demo](#basic-demo)
 
-
-[WebSocket 教程 - 阮一峰](http://www.ruanyifeng.com/blog/2017/05/websocket.html) 
-
+[WebSocket 教程 - 阮一峰](http://www.ruanyifeng.com/blog/2017/05/websocket.html)
 
 ## Why
 
 Problems with HTTP
 
-* One-way
-* stateless
-* Half-Duplex protocol
-
+- One-way
+- stateless
+- Half-Duplex protocol
 
 ## Intro
 
@@ -25,12 +21,12 @@ It enables the server to push messages to the client
 
 ![WebSocket Protocol](./images/websocket.png)
 
-* based on TCP;
-* compatible with HTTP, using port 80 and 443, using HTTP protocol when in handshaking phase;
-* lightweight, efficient;
-* can send text or binary data;
-* no same-origin limitation, can connect to any server;
-* using `ws`, `wss` as identifier;
+- based on TCP;
+- compatible with HTTP, using port 80 and 443, using HTTP protocol when in handshaking phase;
+- lightweight, efficient;
+- can send text or binary data;
+- no same-origin limitation, can connect to any server;
+- using `ws`, `wss` as identifier;
 
 `ws://example.com:80/some/path`
 

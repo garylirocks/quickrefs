@@ -1,60 +1,59 @@
-Vim cheatsheet
-===============
+# Vim cheatsheet
 
 - [Vim cheatsheet](#vim-cheatsheet)
-    - [Preface](#preface)
-    - [Moving around](#moving-around)
-        - [Jumping](#jumping)
-        - [Scrolling](#scrolling)
-        - [Tags](#tags)
-    - [Search and replace](#search-and-replace)
-        - [Copy from one location, replacing multiple locations](#copy-from-one-location-replacing-multiple-locations)
-        - [Special characters in a replacement pattern](#special-characters-in-a-replacement-pattern)
-    - [Regular Expressions](#regular-expressions)
-        - [Enable ERE (extended regular expression)](#enable-ere-extended-regular-expression)
-        - [About new line](#about-new-line)
-        - [Lookahead/lookbehind modifiers](#lookaheadlookbehind-modifiers)
-    - [Editing](#editing)
-        - [Change a word/sentence](#change-a-wordsentence)
-        - [Change word to uppper/lower case](#change-word-to-uppperlower-case)
-        - [Increase / Decrease numbers](#increase--decrease-numbers)
-        - [Indent lines](#indent-lines)
-        - [Abbreviations](#abbreviations)
-        - [Word completion](#word-completion)
-        - [Command macros](#command-macros)
-    - [Edit multiple files](#edit-multiple-files)
-        - [multiple buffers](#multiple-buffers)
-        - [multiple windows](#multiple-windows)
-        - [tab page](#tab-page)
-        - [tag with windows](#tag-with-windows)
-    - [Record and Play](#record-and-play)
-    - [Copy and Paste](#copy-and-paste)
-    - [Registers](#registers)
-    - [Options](#options)
-    - [Miscs](#miscs)
-        - [Avoid the Esc key](#avoid-the-esc-key)
-        - [Save a readonly file](#save-a-readonly-file)
-        - [Add a new filetype](#add-a-new-filetype)
-        - [Encoding](#encoding)
-        - [Save session](#save-session)
-        - [Folding](#folding)
-    - [Modes](#modes)
-        - [ex mode](#ex-mode)
-        - [visual mode](#visual-mode)
-    - [plugins](#plugins)
-        - [Vundle](#vundle)
+  - [Preface](#preface)
+  - [Moving around](#moving-around)
+    - [Jumping](#jumping)
+    - [Scrolling](#scrolling)
+    - [Tags](#tags)
+  - [Search and replace](#search-and-replace)
+    - [Copy from one location, replacing multiple locations](#copy-from-one-location-replacing-multiple-locations)
+    - [Special characters in a replacement pattern](#special-characters-in-a-replacement-pattern)
+  - [Regular Expressions](#regular-expressions)
+    - [Enable ERE (extended regular expression)](#enable-ere-extended-regular-expression)
+    - [About new line](#about-new-line)
+    - [Lookahead/lookbehind modifiers](#lookaheadlookbehind-modifiers)
+  - [Editing](#editing)
+    - [Change a word/sentence](#change-a-wordsentence)
+    - [Change word to uppper/lower case](#change-word-to-uppperlower-case)
+    - [Increase / Decrease numbers](#increase--decrease-numbers)
+    - [Indent lines](#indent-lines)
+    - [Abbreviations](#abbreviations)
+    - [Word completion](#word-completion)
+    - [Command macros](#command-macros)
+  - [Edit multiple files](#edit-multiple-files)
+    - [multiple buffers](#multiple-buffers)
+    - [multiple windows](#multiple-windows)
+    - [tab page](#tab-page)
+    - [tag with windows](#tag-with-windows)
+  - [Record and Play](#record-and-play)
+  - [Copy and Paste](#copy-and-paste)
+  - [Registers](#registers)
+  - [Options](#options)
+  - [Miscs](#miscs)
+    - [Avoid the Esc key](#avoid-the-esc-key)
+    - [Save a readonly file](#save-a-readonly-file)
+    - [Add a new filetype](#add-a-new-filetype)
+    - [Encoding](#encoding)
+    - [Save session](#save-session)
+    - [Folding](#folding)
+  - [Modes](#modes)
+    - [ex mode](#ex-mode)
+    - [visual mode](#visual-mode)
+  - [plugins](#plugins)
+    - [Vundle](#vundle)
 
 ## Preface
-Some useful tips for vim
-Source: 
 
+Some useful tips for vim
+Source:
 
 ## Moving around
 
 ### Jumping
 
     ^   # move to first nonblank character of current line
-    
+
     m<x>    # create a mark <x> at current position
     `<x>    # jump to mark <x>, can be used to edit/delete a chunk of code
     ``  # move to previous mark or context
@@ -62,7 +61,7 @@ Source:
 
     `.  '. g;  # to the last change position
     `^  '^  # to the position where last Insert mode was stopped
-	g,		# moves back in edit history
+    g,		# moves back in edit history
 
     fx      # move to next occurence of x in current line
     Fx      # move to previous occurence of x in current line
@@ -83,9 +82,9 @@ Source:
 ### Scrolling
 
     z<Enter>    # scroll current line to top of screen
-    z.   # scroll current line to middle of screen 
-    z-   # scroll current line to bottom of screen 
- 
+    z.   # scroll current line to middle of screen
+    z-   # scroll current line to bottom of screen
+
     H    # move cursor to screen top
     M    # move cursor to screen middle
     L    # move cursor to screen bottom
@@ -104,7 +103,6 @@ use tags in Vim:
     :tag <tag-name>     # jump to <tag-name>
     :tags       # show tag stack
 
-
 ## Search and replace
 
 ```
@@ -120,14 +118,14 @@ use tags in Vim:
 ```
 /whereisyou\c                   # ignore case in this search
 
-:%s/old/new/gc                  # confirm before replace 
+:%s/old/new/gc                  # confirm before replace
 
 :g/^$/ d                        # delete all empty lines
 :g/^[[:space:]]*$/ d            # delete all blank lines(only contains spaces)
 :s/.*/\U&/                      # change a line to uppercase
-    
+
 :g/^/ mo 0                     # reverse order of lines in a file (by moving each line to line 1 in order)
-    
+
 :g!/integer/ s/$/ NO-INT/      # append a 'NO-INT' to each line which does not contain 'integer'
 
 :/^Part 2/,/^Part 3/g /^Chapter/ .+2w >> begin  # write the second line of each Chapter in Part 2 to a file named 'begin'
@@ -141,7 +139,7 @@ use tags in Vim:
 &                               # repeat last substitution
 :%&g                            # repeat last substitution globally
 :~                              # similar to `:&`, the search pattern used is the last search pattern used in any command, not just last substition command, example:
-    
+
 :s/red/blue/
 /green
 :~              # replace green to blue
@@ -149,53 +147,48 @@ use tags in Vim:
 
 ### Copy from one location, replacing multiple locations
 
-1. `yiw`                # copy a word
-2. ...                  # move to destination
-3. `ciw<C-r>0<Esc>`     # replace the current one with the yanked one in register 0
+1. `yiw` # copy a word
+2. ... # move to destination
+3. `ciw<C-r>0<Esc>` # replace the current one with the yanked one in register 0
 
 define a map for the last command: `map <leader>rr ciw<C-r>0<Esc>`, so you can just use `<leader>rr` to get the work done;
 
-
 ### Special characters in a replacement pattern
 
-* `&` means the entire string matched by the search pattern: `:s/tab/(&)/`, add parenthesis to 'tab';
+- `&` means the entire string matched by the search pattern: `:s/tab/(&)/`, add parenthesis to 'tab';
 
-* `~` means your last replacement pattern,
-        
+- `~` means your last replacement pattern,
+
 ```
 :s/tab/(&)/     # add parenthesis to 'tab'
 :s/open/~/      # add parenthesis to 'open'
 ```
 
-* `\u`, `\l` causes the following character to upper or lower case
+- `\u`, `\l` causes the following character to upper or lower case
 
 ```
 :s/\(you\)\(.*\)\(he\)/\u\3\2\u\1/      # switch 'you' and 'he', and to 'You' and 'He'
 ```
 
-* `\U`, `\L`, `\e`, `\E` causes characters up to `\e`, `\E` or end of string to change case
+- `\U`, `\L`, `\e`, `\E` causes characters up to `\e`, `\E` or end of string to change case
 
 ```
 :s/should/\U&/g     # change 'should' to upper case
 ```
 
-
-
-
 ## Regular Expressions
 
-* most characters lose their special meaning inside brackets, you don't need to escape them. There are threee characters you still need to escape: `]-/`
+- most characters lose their special meaning inside brackets, you don't need to escape them. There are threee characters you still need to escape: `]-/`
 
-* in vi, `\<` matches the beginning of a word, `\>` matches the end of a word
+- in vi, `\<` matches the beginning of a word, `\>` matches the end of a word
 
-    
 ### Enable ERE (extended regular expression)
 
-by default, vim use basic regular expressions, which means   
+by default, vim use basic regular expressions, which means
 
 `.`, `*`, `\`, `[`, `^`, and `$` are metacharacters
- 
-`+`, `?`, `|`, `{`, `(`, and `)` must be escaped to use their special function. 
+
+`+`, `?`, `|`, `{`, `(`, and `)` must be escaped to use their special function.
 
 to match a string like this `AAAA`, you should use `/A\{4\}`, you can **enable extended regex syntax by prepending the pattern with `\v` (very magic)**, so this pattern can be written as `/\vA{4}`
 
@@ -203,39 +196,38 @@ to match a string like this `AAAA`, you should use `/A\{4\}`, you can **enable e
 
 when searching:
 
-`\n` is newline, `\r` is `CR` (carriage return = Ctrl-M = `^M`) 
+`\n` is newline, `\r` is `CR` (carriage return = Ctrl-M = `^M`)
 
 when replacing:
 
-`\r` is newline, `\n` is a null byte (0x00 = `^@`) 
+`\r` is newline, `\n` is a null byte (0x00 = `^@`)
 
 ### Lookahead/lookbehind modifiers
 
 To find `Gary` in `GaryLi`:
 
-* In PCRE, you use `Gary(?=Li)` 
-* PCRE is not supported in Vim, its syntax (ECE mode): 
+- In PCRE, you use `Gary(?=Li)`
+- PCRE is not supported in Vim, its syntax (ECE mode):
 
-    `Gary(Li)@?=`
+  `Gary(Li)@?=`
 
-* Reference:
+- Reference:
 
-    * `@?=`: positive lookahead;
-    * `@?!`: negative lookahead;
-    * `@?<=`: prositive lookbehind;
-    * `@?<!`: negative lookbehind;
-
+  - `@?=`: positive lookahead;
+  - `@?!`: negative lookahead;
+  - `@?<=`: prositive lookbehind;
+  - `@?<!`: negative lookbehind;
 
 ## Editing
 
 ### Change a word/sentence
 
-	ciw		change current word (only the word is deleted, the spaces after it are keeped)
-	caw		change current word (the space after the word will be deleted too)
+    ciw		change current word (only the word is deleted, the spaces after it are keeped)
+    caw		change current word (the space after the word will be deleted too)
 
-	cis		change current sentence
-	cip		change current passage
-	ci(		change everything in the parenthesis: delete all the content and put you in insert mode
+    cis		change current sentence
+    cip		change current passage
+    ci(		change everything in the parenthesis: delete all the content and put you in insert mode
 
 ### Change word to uppper/lower case
 
@@ -248,10 +240,10 @@ select character you want to change, use the `~` key to change word case
 
 place your crusor on a number:
 
-    Ctrl+a   # increase the number by one 
-    <number>Ctrl+a   # increase the number by <number> 
-    Ctrl+x   # decrease the number by one 
-    <number>Ctrl+x   # decrease the number by <number> 
+    Ctrl+a   # increase the number by one
+    <number>Ctrl+a   # increase the number by <number>
+    Ctrl+x   # decrease the number by one
+    <number>Ctrl+x   # decrease the number by <number>
 
 ### Indent lines
 
@@ -260,7 +252,7 @@ in command mode,
     >>              # increase indentation for current line
     <<              # decrease indentation for current line
 
-in insert mode, 
+in insert mode,
 
     Ctrl + t        # increase indentation
     Ctrl + d        # decrease indentation
@@ -268,7 +260,7 @@ in insert mode,
     0 Ctrl+d        # shift the cursor back to beginning of the line, and reset auto indent level to zero
 
 select lines you want to indent in visual mode, then use `>` to indent them  
-indent a block: place cursor on one of the brackets, then `>%` to indent the block 
+indent a block: place cursor on one of the brackets, then `>%` to indent the block
 
 ### Abbreviations
 
@@ -284,29 +276,28 @@ indent a block: place cursor on one of the brackets, then `>%` to indent the blo
 
 use `Ctrl+X` followed by:
 
-* `Ctrl+F` filename
-* `Ctrl+L` whole line
-* `Ctrl+N/P` word, search current file
-* `Ctrl+K` dictionary, dictionary files is set by `set dictionary`
-	such as `set dictionary=~/.mydict`, put any words you want in the file `~/.mydict`
-* `Ctrl+T` thesaurus file is set by `set thesaurus`
-	such as `set thesaurus=~/.mythesaurus`
-* `Ctrl+I` word, search current file and included files
+- `Ctrl+F` filename
+- `Ctrl+L` whole line
+- `Ctrl+N/P` word, search current file
+- `Ctrl+K` dictionary, dictionary files is set by `set dictionary`
+  such as `set dictionary=~/.mydict`, put any words you want in the file `~/.mydict`
+- `Ctrl+T` thesaurus file is set by `set thesaurus`
+  such as `set thesaurus=~/.mythesaurus`
+- `Ctrl+I` word, search current file and included files
 
-* `Ctrl+N` next
-* `Ctrl+P` previous
+- `Ctrl+N` next
+- `Ctrl+P` previous
 
 dictionary file example:
-	
-    china
-    zhongguo
-    lenovo
+china
+zhongguo
+lenovo
 
 thesaurus file example, in insert mode, when you place the cursor after a word, then `Ctrl+X_Ctrl+T`, a list of synonyms from the thesaurus file would show up:
 
-	fun enjoyable desirable
+    fun enjoyable desirable
     funny hilarious lol lmao
-    retrieve getchar getcwd getdirentries getenv 
+    retrieve getchar getcwd getdirentries getenv
 
 ### Command macros
 
@@ -314,7 +305,7 @@ thesaurus file example, in insert mode, when you place the cursor after a word, 
     :map                        # list all command macros
     :unmap <x>                  # disable <x>
 
-    :map V dwelp               # map V as `dwelp`, which swaps words    
+    :map V dwelp               # map V as `dwelp`, which swaps words
 
     :map =i I<i>^[              # add '<i>' tag at line beginning
     :map =I A</i>^[             # add '</i>' tag at line ending
@@ -325,18 +316,15 @@ thesaurus file example, in insert mode, when you place the cursor after a word, 
 
 keys may be used in user defined commands:
 
-    Letters:        g, K, V 
+    Letters:        g, K, V
     Control keys:   ^A, ^K, ^O, ^W, and ^X
     Symbols:        _, *, \, and =
-    
 
-you can store command sequence in named buffers, and execute it using `@` functions, e.g., 
+you can store command sequence in named buffers, and execute it using `@` functions, e.g.,
 
-    1. input this at a new line 'cwhello world^[', (the last character is an escaped <Esc>) then <Esc> to exit insert mode;  
-    2. "gdd    # put this line in buffer g;  
-    3. place the cursor at beginning of a word, and `@g` will execute the macro in buffer g, and replace the word with 'hello world';  
-    
-
+    1. input this at a new line 'cwhello world^[', (the last character is an escaped <Esc>) then <Esc> to exit insert mode;
+    2. "gdd    # put this line in buffer g;
+    3. place the cursor at beginning of a word, and `@g` will execute the macro in buffer g, and replace the word with 'hello world';
 
 ## Edit multiple files
 
@@ -418,9 +406,7 @@ navigation
     :tabfirst       # switch to first tab
     :tablast        # switch to last tab
 
-
-or try to use `Ctrl + Alt + PageUp/PageDown` to switch tab (may only available in some systems)   
-
+or try to use `Ctrl + Alt + PageUp/PageDown` to switch tab (may only available in some systems)
 
 ### tag with windows
 
@@ -428,14 +414,12 @@ or try to use `Ctrl + Alt + PageUp/PageDown` to switch tab (may only available i
     ^wf     # create a new window, open the file under the cursor
     ^wgf     # create a new tab, open the file under the cursor
 
-
 ## Record and Play
 
 (in normal mode) press `qa` : record macro a  
 do whatever operation you want to be recorded  
 (in normal mode) press `q`, stop recording  
-(in normal mode) press `@a`, replay macro a  
-
+(in normal mode) press `@a`, replay macro a
 
 ## Copy and Paste
 
@@ -448,52 +432,50 @@ named buffers
     "a2yy    # copy two lines to buffer a
     "ap      # paste from buffer a
 
-using ex command    
+using ex command
 
     :7,13ya a   # yank line 7 through 13 to buffer a
     :pu a       # put buffer a after the current line
 
-copy to and paste from system clipboard, in X11 system register '\*' means *PRIMARY* SELECTION, register '\+' means *CLIPBOARD* 
-(ref: [Accessing\_the\_system\_clipboard](http://vim.wikia.com/wiki/Accessing_the_system_clipboard))
+copy to and paste from system clipboard, in X11 system register '\*' means _PRIMARY_ SELECTION, register '\+' means _CLIPBOARD_
+(ref: [Accessing_the_system_clipboard](http://vim.wikia.com/wiki/Accessing_the_system_clipboard))
 
-    "+p     # paste 
-    "+yy    # copy current line 
-    :% y +  # copy all lines 
-
+    "+p     # paste
+    "+yy    # copy current line
+    :% y +  # copy all lines
 
 ## Registers
 
 Registers are used for recording, copying:
 
-* in normal mode:
+- in normal mode:
 
-    * `@x` replays register `x`;
-    * `"xp` pastes content from register `x`;
+  - `@x` replays register `x`;
+  - `"xp` pastes content from register `x`;
 
-* in insert or command mode:
+- in insert or command mode:
 
-    * `Ctrl+R` followd by `x` pastes content from register `x`;
+  - `Ctrl+R` followd by `x` pastes content from register `x`;
 
-* special registers:
+- special registers:
 
-    * `%`: relative path of current file, so `"%p` pastes the current file path;
-    * `#`: relative path of the alternative file;
-    * `_`: blackhole/null register;
-    * `"`: unamed register, deleting, changing and yanking text copies the text to this register, `p` paste from this register;
-    * `0`: yanking text copies it to this register and the unnamed register `"` as well;
+  - `%`: relative path of current file, so `"%p` pastes the current file path;
+  - `#`: relative path of the alternative file;
+  - `_`: blackhole/null register;
+  - `"`: unamed register, deleting, changing and yanking text copies the text to this register, `p` paste from this register;
+  - `0`: yanking text copies it to this register and the unnamed register `"` as well;
 
-* you can edit register contents in command line:
+- you can edit register contents in command line:
 
-	`:let @q = 'macro contents'`
+      	`:let @q = 'macro contents'`
 
-* or show all registers by `:reg` or `:registers`
-
+- or show all registers by `:reg` or `:registers`
 
 ## Options
 
     :set all    # show all options
     :set        # show options you changed, including changes in your .vimrc file or in this session
-    :set option?    # find out current value of the option 
+    :set option?    # find out current value of the option
 
     :set list       # display tab and newline characters
     :5,20 l         # temporarily display tab and newline characters of line 5 through 20
@@ -505,7 +487,7 @@ Registers are used for recording, copying:
     :#       # show current line number
     :-10,$ #    # show the last 10 lines' number
 
-    :set binary     # set vim in binary mode, vim by default writes the file with a final new-line appended, in binary mode this doesn’t happen 
+    :set binary     # set vim in binary mode, vim by default writes the file with a final new-line appended, in binary mode this doesn’t happen
 
     :<C-F>  # edit command history
 
@@ -513,10 +495,9 @@ Registers are used for recording, copying:
 
     ctrl+[, ctrl+c      # escape from edit mode to normal mode, replace the '<Esc>' key
 
-or 
+or
 
     alt+h/j/k/l         # alt followed by any normal mode key, will exit from the insert mode and take the normal mode action
-    
 
 ### Save a readonly file
 
@@ -524,7 +505,7 @@ you opened a file which is readonly to you(you do not add `sudo` to your command
 
     :w !sudo tee %
 
-you can also save to a new file which you have write permission, then move it to the original file    
+you can also save to a new file which you have write permission, then move it to the original file
 
     :w /path/to/another_file
 
@@ -532,7 +513,7 @@ you can also save to a new file which you have write permission, then move it to
 
 e.g. treat `.md` file as markdown files, to use syntax highlighting, add following lines to `~/.vim/filetype.vim`, ref `:help new-filetype`
 
-    $ cat ~/.vim/filetype.vim 
+    $ cat ~/.vim/filetype.vim
     " my filetype file
 
     if exists("did_load_filetypes")
@@ -565,7 +546,6 @@ reenter a session:
 
     za      # open or close folds
 
-
 ## Modes
 
 ### ex mode
@@ -580,11 +560,10 @@ reenter a session:
     !<move><command>    # filtering text selected by <move> using <command>
     <num>!!<command>         # filtering <num> lines using <command>
 
-
 ### visual mode
 
 ```
-viw         # go into visual mode, selecting current word 
+viw         # go into visual mode, selecting current word
 vis         # go into visual mode, selecting current sentence
 vi"         # go into visual mode, selecting current everything inside "
 vi(         # go into visual mode, selecting current everything inside (
@@ -597,48 +576,47 @@ select text objects in visual mode (find more, :help text-objects):
     as, is      # add sentence, or inner sentence
     ap, ip      # add paragraph, or inner paragraph
 
-
 ## plugins
 
 `.vim` files in `.vim/plugin` folder are loaded automatically when vim starts
 
-* ctrl-p
+- ctrl-p
 
-    use `Ctrl-p` to start searching files
+  use `Ctrl-p` to start searching files
 
-    `Ctrl-r` to switch to regex mode
+  `Ctrl-r` to switch to regex mode
 
-    `Ctrl-t`, `Ctrl-v`, `Ctrl-x` to open the file in new tab / vertical split / horizontal split
+  `Ctrl-t`, `Ctrl-v`, `Ctrl-x` to open the file in new tab / vertical split / horizontal split
 
-    `Ctrl-y` to create a new file and its parent directories
+  `Ctrl-y` to create a new file and its parent directories
 
-* nerdtree
+- nerdtree
 
-    file system explorer
+  file system explorer
 
-* nerdtree-tabs
+- nerdtree-tabs
 
-    makes the file system explorer consistent across all tabs
+  makes the file system explorer consistent across all tabs
 
-* vim-airline
+- vim-airline
 
-    beautiful status line
+  beautiful status line
 
-* syntastic
+- syntastic
 
-    syntax checker
+  syntax checker
 
-* easytags
+- easytags
 
-    update tags file automatically
+  update tags file automatically
 
-* tagbar
+- tagbar
 
-    show all tags in a separate window
+  show all tags in a separate window
 
-* vim-surround
+- vim-surround
 
-    easily delete, change and add surroundings in pairs, surroundings can be parentheses, brackets, html/xml tags
+  easily delete, change and add surroundings in pairs, surroundings can be parentheses, brackets, html/xml tags
 
 ```
 Hello World
@@ -706,10 +684,9 @@ to wrap it in another tag, use `V` to select the whole line, then `S<p class="no
 </p>
 ```
 
-* vim-repeat
+- vim-repeat
 
 make `.` to work with plugin actions as well
-
 
 ### Vundle
 
@@ -718,11 +695,9 @@ Vundle is one of the best Vim plugin managers, go to https://github.com/VundleVi
 to use it:
 
     * clone vundle to `~/.vim/bundle/Vundle.vim`
-        
+
             git clone https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim
 
     * configure plugins in `.vimrc`
 
     * Launch vim and run `:PluginInstall`
-
-

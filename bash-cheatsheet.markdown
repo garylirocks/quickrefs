@@ -1,5 +1,4 @@
-Bash Cheatsheet
-===============
+# Bash Cheatsheet
 
 - [Bash Cheatsheet](#bash-cheatsheet)
   - [Preface](#preface)
@@ -38,11 +37,12 @@ Bash Cheatsheet
   - [read lines of a file](#read-lines-of-a-file)
   - [vi editing mode](#vi-editing-mode)
 
-
 ## Preface
+
 This is a bash cheatsheat for quick reference. Code get from [Bash by example][bash by example] on IBM DeveloperWorks by Daniel Robbins.
 
 ## Variables
+
 set, use, unset a variable
 
     $ foo='i am a var'
@@ -65,12 +65,13 @@ or use one line:
 
 **exported variables are copied, not shared, which means any modification in the subroutine will not affect the variable in the parent routine**
 
-'$$' for current shell process id
+'\$\$' for current shell process id
 
     $ echo $$
     24465
 
 ## Command substitution
+
 two syntax:
 
     $ echo `date '+%Y/%m/%d %H:%M:%S'`
@@ -89,6 +90,7 @@ two syntax:
     1  2  3  cats  dogs
 
 ## Strings
+
 basename and dirname
 
     $ basename /home/lee/code/test.php
@@ -165,6 +167,7 @@ example
     fi
 
 ## Command line arguments
+
 create a file named `cmd-args.sh`:
 
     #!/bin/bash
@@ -257,59 +260,58 @@ so, **Always enclose string variables and environment variable in double quotes!
 
 ## `[` vs `[[`
 
-* `[` is a shell builtin command, similar to `test`, but requires a closing `]`, builtin commands executes in the current process;
-* There is a `/bin/[`, which executes in a subshell;
+- `[` is a shell builtin command, similar to `test`, but requires a closing `]`, builtin commands executes in the current process;
+- There is a `/bin/[`, which executes in a subshell;
 
-    ```bash
-    type [
-    # [ is a shell builtin
+  ```bash
+  type [
+  # [ is a shell builtin
 
-    type -p [
-    # [ is /bin/[
+  type -p [
+  # [ is /bin/[
 
-    type '[['
-    # [[ is a reserved word
-    ```
+  type '[['
+  # [[ is a reserved word
+  ```
 
-* `[[` is a Bash extension to `[`, it has some improvements:
+- `[[` is a Bash extension to `[`, it has some improvements:
 
-    * `<`
+  - `<`
 
-        * `[[ a < b ]]`     # works
-        * `[ a \< b]`       # `\` is required, do a redirection otherwise
+    - `[[ a < b ]]` # works
+    - `[ a \< b]` # `\` is required, do a redirection otherwise
 
-    * `&&` and `||`
+  - `&&` and `||`
 
-        * `[[ a = a && b = b ]]`      # works
-        * `[ a = a && b = b ]`        # syntax error
-        * `[ a = a ] && [ b = b ]`        # POSIX recommendation
+    - `[[ a = a && b = b ]]` # works
+    - `[ a = a && b = b ]` # syntax error
+    - `[ a = a ] && [ b = b ]` # POSIX recommendation
 
-    * `(`
+  - `(`
 
-        * `[[ (a = a || a = b) && a = b ]]`     # false
-        * `[ ( a = a ) ]`                       # syntax error, `()` is interpreted as a subshell
-        * `[ \( a = a -o a = b \) -a a = b ]`   # equivalent, but `()` is deprecated by POSIX
-        * `([ a = a ] || [ a = b ]) && [ a = b ]`   # POSIX recommendation
+    - `[[ (a = a || a = b) && a = b ]]` # false
+    - `[ ( a = a ) ]` # syntax error, `()` is interpreted as a subshell
+    - `[ \( a = a -o a = b \) -a a = b ]` # equivalent, but `()` is deprecated by POSIX
+    - `([ a = a ] || [ a = b ]) && [ a = b ]` # POSIX recommendation
 
-    * word splitting
+  - word splitting
 
-        * `x='a b'; [[ $x = 'a b' ]]`   # true, quotes not needed
-        * `x='a b'; [ $x = 'a b' ]`     # syntax error, expands to `[ a b = 'a b' ]`
-        * `x='a b'; [ "$x" = 'a b' ]`   # equivalent
+    - `x='a b'; [[ $x = 'a b' ]]` # true, quotes not needed
+    - `x='a b'; [ $x = 'a b' ]` # syntax error, expands to `[ a b = 'a b' ]`
+    - `x='a b'; [ "$x" = 'a b' ]` # equivalent
 
-    * `=`
+  - `=`
 
-        * `[[ ab = a? ]]`   # true, because it does pattern matching ( `* ? [` are magic). Does not glob expand to files in current directory. (**pattern matching, not regular expression**)
-        * `[ ab = a? ]`     # `a?` glob expands to files in current directory. So may be true or false depending on the files in the current directory.
-        * `[ ab = a\? ]`    # false, not glob expansion
-        * `=` and `==` are the same in both `[` and `[[,` but `==` is a Bash extension.
+    - `[[ ab = a? ]]` # true, because it does pattern matching ( `* ? [` are magic). Does not glob expand to files in current directory. (**pattern matching, not regular expression**)
+    - `[ ab = a? ]` # `a?` glob expands to files in current directory. So may be true or false depending on the files in the current directory.
+    - `[ ab = a\? ]` # false, not glob expansion
+    - `=` and `==` are the same in both `[` and `[[,` but `==` is a Bash extension.
 
-    * `=~`
+  - `=~`
 
-        * `[[ ab =~ ab? ]]`         # true, POSIX extended regular expression match, `?` does not glob expand
-        * `[ a =~ a ]`              # syntax error
-        * `printf 'ab' | grep -Eq 'ab?'`    # POSIX equivalent
-
+    - `[[ ab =~ ab? ]]` # true, POSIX extended regular expression match, `?` does not glob expand
+    - `[ a =~ a ]` # syntax error
+    - `printf 'ab' | grep -Eq 'ab?'` # POSIX equivalent
 
 ## Arithmetic
 
@@ -329,7 +331,7 @@ enclose arithmetic expressions(**integer only**) in `$((` and `))`
 
 ## Array
 
-* Available in Bash, Zsh, not the original Bourne shell;
+- Available in Bash, Zsh, not the original Bourne shell;
 
 ```bash
 arr=(apple banana cherry)
@@ -423,7 +425,6 @@ use file wildcards, variables in word list:
 
 `*` means `default`, `;;` means `break`
 
-
 ## Functions
 
 functions can take arguments just like scripts, use `$1`, `$2`, `$#`, `$@`, etc to access them:
@@ -508,13 +509,11 @@ run the script, you'll get:
 
 **variables defined in functions have global scope, except you declare them as `local` explicitly**
 
-
 ## the source (.) command
 
     . ./script
 
 the source command runs the script in the same shell as the calling script, just like `#include` in C, it can be used to incorporate variable and function definitions to a script, such as set up environment for later commands
-
 
 ## integer or character sequence
 
@@ -571,10 +570,10 @@ ref: [15 Examples To Master Linux Command Line History][15-examples-to-master-li
 
 ### Repeat previous command
 
-* the Up key
-* Ctrl+P
-* `!!`
-* `!-1`
+- the Up key
+- Ctrl+P
+- `!!`
+- `!-1`
 
 ### Execute a specific command
 
@@ -592,7 +591,6 @@ ref: [15 Examples To Master Linux Command Line History][15-examples-to-master-li
     $ !2013
     echo 'hello world'
     hello world
-
 
 ## Bash Invocation
 
@@ -636,12 +634,12 @@ ref: [Zsh/Bash startup files loading order (.bashrc, .zshrc etc.)](https://shree
 
 General rule:
 
-* For bash, put stuff in `~/.bashrc`, and make `~/.bash_profile` source it.
+- For bash, put stuff in `~/.bashrc`, and make `~/.bash_profile` source it.
 
 Typically, most users will only encounter a login shell ony if
 
-* they logged in from a tty, not thru a GUI;
-* they logged in remotely, such as thru ssh;
+- they logged in from a tty, not thru a GUI;
+- they logged in remotely, such as thru ssh;
 
 test whether current shell is a login shell or not:
 
@@ -656,8 +654,6 @@ A login shell is one whose first character of argument zero is a `-`, or one sta
 An interactive shell is one started without non-option arguments and without the `-c` option whose standard input and error are both connected to terminals (as determined by `isatty(3)`), or one started with the `-i` option. `PS1` is set and `$-` includes `i` if bash is interactive, allowing a shell script or a startup file to test this state.
 
 on Ubuntu 14.04, the `Terminal` program starts as login shell, `Terminator` starts as non-login shell
-
-
 
 ### an prompt cannot be changed issue
 
@@ -702,7 +698,6 @@ cat result2.txt
 # hello ${name}
 ```
 
-
 use here documents to edit an file:
 
     $ cat inc
@@ -720,8 +715,6 @@ use here documents to edit an file:
 
     $ cat inc
     BAR
-
-
 
 ## read user input
 
@@ -825,17 +818,15 @@ set debugging flag around problem section in a script:
 
     exit 0
 
-
 ## read lines of a file
 
     $ while read -r line; do echo $line; done < my_file.txt
 
 ## vi editing mode
 
-	set -o vi		# change to vi mode
+    set -o vi		# change to vi mode
 
-	#				# prepend # to the line and send it to the history list
-
+    #				# prepend # to the line and send it to the history list
 
 <a name="end"></a>
 

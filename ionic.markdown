@@ -1,5 +1,4 @@
-Ionic
-===============
+# Ionic
 
 ## detect current platform
 
@@ -16,7 +15,7 @@ or
     ionic.Platform.platforms
     ["browser", "linux"]
 
-or 
+or
 
     ionic.Platform.isIOS()
     ionic.Platform.isAndroid()
@@ -25,5 +24,3 @@ or
     ionic.Platform.isIPad()
     ionic.Platform.isWebView()
     ionic.Platform.isWindowsPhone()
-
-

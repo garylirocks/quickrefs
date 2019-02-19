@@ -1,15 +1,13 @@
-sql cheatsheet
-===============
+# sql cheatsheet
 
 ## Preface
-Some useful tips for sql
-Source: Head First SQL 
 
+Some useful tips for sql
+Source: Head First SQL
 
 ## create user
 
     mysql> CREATE USER 'lee'@'localhost' IDENTIFIED BY '123456';
-
 
 ## drop user
 
@@ -35,8 +33,7 @@ create a table with foreign key and add constraint to it
         -> CONSTRAINT country_id_fk
         -> FOREIGN KEY (country_id)
         -> REFERENCES COUNTRY (id)
-        -> );    
-
+        -> );
 
 ## alter table
 
@@ -44,14 +41,13 @@ add column, primary key:
 
     mysql> ALTER TABLE countries ADD COLUMN id INT NOT NULL AUTO_INCREMENT FIRST, ADD PRIMARY KEY (id);
 
-
-## the case operator    
+## the case operator
 
 you know what, there is `case` expressions in SQL
 
-    mysql> SELECT president, 
-                  CASE 
-                    WHEN LENGTH(president) < 5 THEN 'short' 
+    mysql> SELECT president,
+                  CASE
+                    WHEN LENGTH(president) < 5 THEN 'short'
                     ELSE 'too long a name'
                   END AS is_it_good
                   FROM country;
@@ -64,8 +60,6 @@ you know what, there is `case` expressions in SQL
     +-----------+-----------------+
     3 rows in set (0.00 sec)
 
-    
-
 ## subqueries vs. joins
 
 subqueries can be replaced by joins, for example, find countries which has some news:
@@ -74,13 +68,11 @@ subqueries can be replaced by joins, for example, find countries which has some 
 
     select c.* from country c left join news n on c.id = n.country_id where n.id is not null;
 
-
 ## views
 
 `with check option` ensures that only values match the view can be inserted or updated through this view
 
     mysql> create view asia_countries as select * from country where continent = 'Asia' with check option;
-
 
 ## privileges
 
@@ -93,7 +85,6 @@ create user and grant privileges in a single command:
 revoke privileges:
 
     mysql> revoke select on test.country from 'foo'@'localhost';
-
 
 ## auto increment
 

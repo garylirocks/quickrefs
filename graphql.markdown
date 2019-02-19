@@ -1,5 +1,4 @@
-GraphQL
-==========
+# GraphQL
 
 - [Why](#why)
 - [Schema Definition Language (SDL)](#schema-definition-language-sdl)
@@ -13,12 +12,10 @@ GraphQL
   - [Mutation](#mutation)
   - [Subscriptions](#subscriptions)
 
-
 ## Why
 
-* Return just what is required in the client, avoid underfetching and overfetching;
-* One endpoint, allows rapid front-end iterations (no need to wait for endpoints being added/modified);
-
+- Return just what is required in the client, avoid underfetching and overfetching;
+- One endpoint, allows rapid front-end iterations (no need to wait for endpoints being added/modified);
 
 ## Schema Definition Language (SDL)
 
@@ -60,20 +57,20 @@ type Post {
 }
 ```
 
-* `!` indicates a required field;
-* `[Foo]` a list of `Foo`;
+- `!` indicates a required field;
+- `[Foo]` a list of `Foo`;
 
 ### Fields
 
-* A field can be of a scalar or composite type;
-    * Scalar types include: `Int`, `Float`, `String`, `Boolean`;
-    * A composite type:
-        ```graphql
-        type Post {
-            title: String!
-            author: Person!
-        }
-        ```
+- A field can be of a scalar or composite type;
+  - Scalar types include: `Int`, `Float`, `String`, `Boolean`;
+  - A composite type:
+    ```graphql
+    type Post {
+      title: String!
+      author: Person!
+    }
+    ```
 
 ### Query
 
@@ -81,18 +78,18 @@ Last 2 persons, getting `name` and `age`:
 
 ```graphql
 {
-    allPerson(last: 2) {
-        name
-        age
-    }
+  allPerson(last: 2) {
+    name
+    age
+  }
 }
 
 # it's a good practice to add in operation type and name
 query GetLatestTwoPersons {
-    allPerson(last: 2) {
-        name
-        age
-    }
+  allPerson(last: 2) {
+    name
+    age
+  }
 }
 ```
 
@@ -100,10 +97,10 @@ query GetLatestTwoPersons {
 
 ```graphql
 query GetLatestPersons($count: Int!) {
-    allPerson(last: $count) {
-        name
-        age
-    }
+  allPerson(last: $count) {
+    name
+    age
+  }
 }
 ```
 
@@ -116,14 +113,11 @@ query GetLatestPersons($count: Int!) {
 ### Directives
 
 ```graphql
-query GetLatestPersons(
-    $count: Int!,
-    $includeAge: Boolean!
-) {
-    allPerson(last: $count) {
-        name
-        age @include(if: $includeAge)
-    }
+query GetLatestPersons($count: Int!, $includeAge: Boolean!) {
+  allPerson(last: $count) {
+    name
+    age @include(if: $includeAge)
+  }
 }
 ```
 
@@ -140,23 +134,23 @@ Another common directive is `@skip`, the logic is inversed.
 
 ```graphql
 query GetLatestTwoPersons {
-    allPerson(last: 2) {
-        fullname: name          # use 'fullname' as an alias of 'name'
-        age
-    }
+  allPerson(last: 2) {
+    fullname: name # use 'fullname' as an alias of 'name'
+    age
+  }
 }
 
 # you can have multiple aliases for the same field/query
 query GetLatestPersons {
-    last2: allPerson(last: 2) {
-        name
-        age
-    }
+  last2: allPerson(last: 2) {
+    name
+    age
+  }
 
-    last3: allPerson(last: 3) {
-        name
-        age
-    }
+  last3: allPerson(last: 3) {
+    name
+    age
+  }
 }
 ```
 
@@ -164,18 +158,18 @@ query GetLatestPersons {
 
 ```graphql
 query GetLatestPersons {
-    last2: allPerson(last: 2) {
-        ...PersonInfo
-    }
+  last2: allPerson(last: 2) {
+    ...PersonInfo
+  }
 
-    last3: allPerson(last: 3) {
-        ...PersonInfo
-    }
+  last3: allPerson(last: 3) {
+    ...PersonInfo
+  }
 }
 
 fragment PersonInfo on Person {
-    name
-    age
+  name
+  age
 }
 ```
 
@@ -183,32 +177,31 @@ fragment PersonInfo on Person {
 
 ```graphql
 query GetShapes {
-    shape {
-        ... on Circle {
-            radius
-        }
-        ... on Rectangular {
-            width
-            length
-        }
+  shape {
+    ... on Circle {
+      radius
     }
+    ... on Rectangular {
+      width
+      length
+    }
+  }
 }
 ```
 
 Here `shape` has a union type: either a `Circle` or a `Rectangular`
 
-
 ### Mutation
 
-* All mutation queries starts with the `mutation` keyword;
-* Allows you to mutate and query with the same query;
+- All mutation queries starts with the `mutation` keyword;
+- Allows you to mutate and query with the same query;
 
 ```graphql
 mutation {
-    createPerson(name: "Bob", age: 36) {
-        name
-        age
-    }
+  createPerson(name: "Bob", age: 36) {
+    name
+    age
+  }
 }
 ```
 
@@ -216,9 +209,9 @@ mutation {
 
 ```graphql
 subscription {
-    newPerson {
-        name
-        age
-    }
+  newPerson {
+    name
+    age
+  }
 }
 ```

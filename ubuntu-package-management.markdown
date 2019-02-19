@@ -1,5 +1,4 @@
-Ubuntu Package Management
-==========================
+# Ubuntu Package Management
 
 ## Query package info
 

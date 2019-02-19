@@ -1,5 +1,4 @@
-Composer
-=================
+# Composer
 
 Tips about the Composer package management tool.
 

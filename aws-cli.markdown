@@ -1,5 +1,4 @@
-AWS CLI notes
-=============
+# AWS CLI notes
 
 ## Configure
 
@@ -32,7 +31,3 @@ there are two profiles in this example, you can switch between profiles by setti
 or for one-off usage, add a `--profile` parameter to any command:
 
     aws s3 ls --profile=work
-
-
-
-

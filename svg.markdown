@@ -1,37 +1,35 @@
-SVG
-====
+# SVG
 
 ## Basic
 
-* SVG is an XML language, it's elements and attributes names are case-sensitive;
-* Attributes values must be inside quotes;
-
+- SVG is an XML language, it's elements and attributes names are case-sensitive;
+- Attributes values must be inside quotes;
 
 ## Sizing
 
 ### Units:
 
-* Absolute units: `100pt`, `200cm`;
-* User units: plain numbers like `100`, `200`;
+- Absolute units: `100pt`, `200cm`;
+- User units: plain numbers like `100`, `200`;
 
-    ```xml
-    <svg width="100" height="100">
-    ```
+  ```xml
+  <svg width="100" height="100">
+  ```
 
-    by default, this means 100x100px
+  by default, this means 100x100px
 
 ### SVG element size:
 
-* Default size: `300px x 150px`;
-* Size can be specified by `width` and `height`:
+- Default size: `300px x 150px`;
+- Size can be specified by `width` and `height`:
 
-    ```xml
-    <svg width="200px" height="200px">
-    <svg width="50%" height="200px">
-    <svg width="100vw" height="100vh">
-    ```
+  ```xml
+  <svg width="200px" height="200px">
+  <svg width="50%" height="200px">
+  <svg width="100vw" height="100vh">
+  ```
 
-* Like any other HTML element, you can use CSS to specify the size of a SVG element;
+- Like any other HTML element, you can use CSS to specify the size of a SVG element;
 
 ### `viewbox`
 
@@ -41,16 +39,15 @@ SVG
 </svg>
 ```
 
-* Show top left quarter of the circle;
-* The `svg` element will take the full width of the page be default;
-* When `viewbox` is present, you'd better only specify one of `width` or `height`, the other one can be calculated:
-    ```xml
-    <svg viewbox="0 0 50 50" width="100">
-        <circle cx="50" cy="50" r="50" fill="#aaa" />
-    </svg>
-    ```
-    in the above document, 50 unit is 100px
-
+- Show top left quarter of the circle;
+- The `svg` element will take the full width of the page be default;
+- When `viewbox` is present, you'd better only specify one of `width` or `height`, the other one can be calculated:
+  ```xml
+  <svg viewbox="0 0 50 50" width="100">
+      <circle cx="50" cy="50" r="50" fill="#aaa" />
+  </svg>
+  ```
+  in the above document, 50 unit is 100px
 
 ## CSS
 
@@ -72,112 +69,110 @@ Attributes names are different:
 
 ![SVG CSS attributes](images/svg-css.png)
 
-
 ## Elements
 
-* `<circle>`;
-* `<line>`;
-* `<polyline>`;
-* `<rect>`;
-* `<ellipse>`;
-* `<polygon>`;
-* `<path>`;
+- `<circle>`;
+- `<line>`;
+- `<polyline>`;
+- `<rect>`;
+- `<ellipse>`;
+- `<polygon>`;
+- `<path>`;
 
-    ```xml
-    <svg width="300" height="180">
-    <path d="
-    M 18,3
-    L 46,3
-    L 46,40
-    L 61,40
-    L 32,68
-    L 3,40
-    L 18,40
-    Z
-    "></path>
-    </svg>
-    ```
+  ```xml
+  <svg width="300" height="180">
+  <path d="
+  M 18,3
+  L 46,3
+  L 46,40
+  L 61,40
+  L 32,68
+  L 3,40
+  L 18,40
+  Z
+  "></path>
+  </svg>
+  ```
 
-    Specify an action followed by coordinates:
+  Specify an action followed by coordinates:
 
-    * `M` moveto;
-    * `L` lineto;
-    * `Z` close;
+  - `M` moveto;
+  - `L` lineto;
+  - `Z` close;
 
-* `<text>`
+- `<text>`
 
-    ```xml
-    <svg width="300" height="180">
-        <text x="50" y="25">Hello World</text>
-    </svg>
-    ```
+  ```xml
+  <svg width="300" height="180">
+      <text x="50" y="25">Hello World</text>
+  </svg>
+  ```
 
-    `x`, `y` specify the baseline of the text;
+  `x`, `y` specify the baseline of the text;
 
-* `<use>`
+- `<use>`
 
-    ```xml
-    <svg viewBox="0 0 30 10" height="200">
-        <circle id="myCircle" cx="5" cy="5" r="4"/>
+  ```xml
+  <svg viewBox="0 0 30 10" height="200">
+      <circle id="myCircle" cx="5" cy="5" r="4"/>
 
-        <use href="#myCircle" x="10" y="0" fill="blue" />
-        <use href="#myCircle" x="20" y="2" fill="white" stroke="purple" />
-    </svg>
+      <use href="#myCircle" x="10" y="0" fill="blue" />
+      <use href="#myCircle" x="20" y="2" fill="white" stroke="purple" />
+  </svg>
 
-    <svg viewBox="0 0 10 10" height="200">
-        <use href="#myCircle" x="0" y="0" fill="gold" />
-    </svg>
-    ```
+  <svg viewBox="0 0 10 10" height="200">
+      <use href="#myCircle" x="0" y="0" fill="gold" />
+  </svg>
+  ```
 
-    `href` specifies the source URL (same `svg`, same page or another document), `x` and `y` are relative positions from the original position;
+  `href` specifies the source URL (same `svg`, same page or another document), `x` and `y` are relative positions from the original position;
 
-* `<g>`
+- `<g>`
 
-    Put elements in a group for easy reuse:
+  Put elements in a group for easy reuse:
 
-    ```xml
-    <svg viewBox="0 0 20 10" height="200">
-        <g id="myGroup">
-            <circle cx="5" cy="5" r="4" />
-            <text x="3" y="5" style="font-size: 2px; fill: white">Hello</text>
-        </g>
+  ```xml
+  <svg viewBox="0 0 20 10" height="200">
+      <g id="myGroup">
+          <circle cx="5" cy="5" r="4" />
+          <text x="3" y="5" style="font-size: 2px; fill: white">Hello</text>
+      </g>
 
-        <use href="#myGroup" x=10 y=0 fill="blue" />
-    </svg>
-    ```
+      <use href="#myGroup" x=10 y=0 fill="blue" />
+  </svg>
+  ```
 
-* `<defs>`
+- `<defs>`
 
-    Just for definition, elements in it are not shown
+  Just for definition, elements in it are not shown
 
-    ```xml
-    <svg viewBox="0 0 20 10" height="200">
-        <defs>
-            <g id="myGroup">
-                <circle cx="5" cy="5" r="4" />
-                <text x="3" y="5" style="font-size: 2px; fill: white">Hello</text>
-            </g>
-        </defs>
+  ```xml
+  <svg viewBox="0 0 20 10" height="200">
+      <defs>
+          <g id="myGroup">
+              <circle cx="5" cy="5" r="4" />
+              <text x="3" y="5" style="font-size: 2px; fill: white">Hello</text>
+          </g>
+      </defs>
 
-        <use href="#myGroup" x=0 y=0 fill="blue" />
-    </svg>
-    ```
+      <use href="#myGroup" x=0 y=0 fill="blue" />
+  </svg>
+  ```
 
-* `<pattern>`
-* `<image>`
+- `<pattern>`
+- `<image>`
 
-* `<animate>`
+- `<animate>`
 
-    ```xml
-    <svg width="500px" height="500px">
-        <rect x="0" y="0" width="100" height="100" fill="#feac5e">
-            <animate attributeName="x" from="0" to="500" dur="2s" repeatCount="indefinite" />
-        </rect>
-    </svg>
-    ```
+  ```xml
+  <svg width="500px" height="500px">
+      <rect x="0" y="0" width="100" height="100" fill="#feac5e">
+          <animate attributeName="x" from="0" to="500" dur="2s" repeatCount="indefinite" />
+      </rect>
+  </svg>
+  ```
 
-* `<animateTransform>`
-
+- `<animateTransform>`
 
 ## Clipping
 
@@ -196,15 +191,14 @@ Attributes names are different:
 </svg>
 ```
 
-* Define all the clipping paths in `clipPath` and then reference it by `clip-path`;
-* All areas covered by the clipping path are shown, the rest are hidden;
-
+- Define all the clipping paths in `clipPath` and then reference it by `clip-path`;
+- All areas covered by the clipping path are shown, the rest are hidden;
 
 ## Masking
 
 ![SVG masking](images/svg-masking.png)
 
-* Define gradient and masks first, then apply them on rectangulars;
+- Define gradient and masks first, then apply them on rectangulars;
 
 ```xml
 <svg width="300" height="200" >
@@ -253,22 +247,22 @@ Attributes names are different:
 </svg>
 ```
 
-
 ## JS
 
-* Get SVG DOM
+- Get SVG DOM
 
-    ```js
-    var svgObject = document.getElementById('object').contentDocument;
-    var svgIframe = document.getElementById('iframe').contentDocument;
-    var svgEmbed = document.getElementById('embed').getSVGDocument();
-    ```
+  ```js
+  var svgObject = document.getElementById("object").contentDocument;
+  var svgIframe = document.getElementById("iframe").contentDocument;
+  var svgEmbed = document.getElementById("embed").getSVGDocument();
+  ```
 
-    can't get the DOM if you are using `<img>` tag for a SVG;
+  can't get the DOM if you are using `<img>` tag for a SVG;
 
-* Get the SVG xml string
+- Get the SVG xml string
 
-    ```js
-    var svgString = new XMLSerializer().serializeToString(document.querySelector('svg'));
-    ```
-
+  ```js
+  var svgString = new XMLSerializer().serializeToString(
+    document.querySelector("svg")
+  );
+  ```

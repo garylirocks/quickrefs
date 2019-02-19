@@ -1,14 +1,13 @@
-HTTP/2
-========
+# HTTP/2
 
 - [HTTP/2](#http-2)
-    - [Reference](#reference)
-    - [Server Push](#server-push)
-        - [config it in Nginx](#config-it-in-nginx)
-        - [config it in Apache](#config-it-in-apache)
-        - [push using back-end scripts](#push-using-back-end-scripts)
-            - [in PHP](#in-php)
-            - [in Node.js](#in-nodejs)
+  - [Reference](#reference)
+  - [Server Push](#server-push)
+    - [config it in Nginx](#config-it-in-nginx)
+    - [config it in Apache](#config-it-in-apache)
+    - [push using back-end scripts](#push-using-back-end-scripts)
+      - [in PHP](#in-php)
+      - [in Node.js](#in-nodejs)
 
 ## Reference
 
@@ -17,7 +16,6 @@ HTTP/2
 [HTTP/2 Server Push with Node.js](https://blog.risingstack.com/node-js-http-2-push/)
 
 [Using HTTP/2 Server Push with PHP](https://blog.cloudflare.com/using-http-2-server-push-with-php/)
-
 
 ## Server Push
 
@@ -30,13 +28,13 @@ for a simple html page
 ```html
 <!DOCTYPE html>
 <html>
-<head>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <h1>hello world</h1>
-  <img src="example.png">
-</body>
+  <head>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <h1>hello world</h1>
+    <img src="example.png" />
+  </body>
 </html>
 ```
 
@@ -53,17 +51,18 @@ then after browser parses the html, it will send two other requests:
 the page will be blank before the stylesheet is received
 
 in HTTP/1.1, there are two ways to cut the two requests:
-* inline the stylesheet and image (use Data URL);
-* use 'preload' (this doesn't work in this case)
 
-    ```html
-    <link rel="preload" href="/styles.css" as="style">
-    <link rel="preload" href="/example.png" as="image">
-    ```
+- inline the stylesheet and image (use Data URL);
+- use 'preload' (this doesn't work in this case)
+
+  ```html
+  <link rel="preload" href="/styles.css" as="style" />
+  <link rel="preload" href="/example.png" as="image" />
+  ```
 
 with **server push**, the server can send all `index.html`, `style.css`, `example.png` to the browser in one go
 
-server push is the *only* feature in HTTP/2 that requires manual configuration
+server push is the _only_ feature in HTTP/2 that requires manual configuration
 
 ### config it in Nginx
 
@@ -170,32 +169,29 @@ if the server or browser doesn't support HTTP/2, the browser will see the `Link`
 
 #### in Node.js
 
-use built-in `http2` module, NodeJS is working as the server here, so no need to configure Apache or Nginx 
+use built-in `http2` module, NodeJS is working as the server here, so no need to configure Apache or Nginx
 
 ```node
-const http2 = require('http2')
-const server = http2.createSecureServer(
-  { cert, key },
-  onRequest
-)
+const http2 = require("http2");
+const server = http2.createSecureServer({ cert, key }, onRequest);
 
-function push (stream, filePath) {
-  const { file, headers } = getFile(filePath)
-  const pushHeaders = { [HTTP2_HEADER_PATH]: filePath }
+function push(stream, filePath) {
+  const { file, headers } = getFile(filePath);
+  const pushHeaders = { [HTTP2_HEADER_PATH]: filePath };
 
-  stream.pushStream(pushHeaders, (pushStream) => {
-    pushStream.respondWithFD(file, headers)
-  })
+  stream.pushStream(pushHeaders, pushStream => {
+    pushStream.respondWithFD(file, headers);
+  });
 }
 
-function onRequest (req, res) {
+function onRequest(req, res) {
   // Push files with index.html
-  if (reqPath === '/index.html') {
-    push(res.stream, 'bundle1.js')
-    push(res.stream, 'bundle2.js')
+  if (reqPath === "/index.html") {
+    push(res.stream, "bundle1.js");
+    push(res.stream, "bundle2.js");
   }
 
   // Serve file
-  res.stream.respondWithFD(file.fileDescriptor, file.headers)
+  res.stream.respondWithFD(file.fileDescriptor, file.headers);
 }
 ```

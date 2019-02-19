@@ -1,9 +1,8 @@
-Ruby Cheatsheet
-===============
+# Ruby Cheatsheet
 
 - [Preface](#preface)
 - [Iteration](#iteration)
-    - [each](#each)
+  - [each](#each)
 - [Strings](#strings)
 - [Hashes](#hashes)
 - [Sorting](#sorting)
@@ -13,13 +12,11 @@ Ruby Cheatsheet
 - [lambda](#lambda)
 - [OOP](#oop)
 
-
 ## Preface
 
 Source:
 
-* [CodeCademy Ruby Course][codecademy_ruby]
-
+- [CodeCademy Ruby Course][codecademy_ruby]
 
 ## Iteration
 
@@ -42,7 +39,6 @@ arr.each { |i|
 }
 ```
 
-
 ## Strings
 
 ```ruby
@@ -52,7 +48,6 @@ s.split
 # output
 ["a", "quick", "fox"]
 ```
-
 
 ## Hashes
 
@@ -76,7 +71,6 @@ Maggie: sister
 Abe: grandpa
 Santa's Little Helper: dog
 ```
-
 
 ## Sorting
 
@@ -102,7 +96,6 @@ books.sort! { |firstBook, secondBook| firstBook <=> secondBook }
 # Sort your books in descending order, in-place below
 books.sort! { |firstBook, secondBook| -(firstBook <=> secondBook) }
 ```
-
 
 ## Symbols
 
@@ -159,7 +152,6 @@ puts "Symbol time: #{symbol_time} seconds."
 # Symbol time: 0.020612846 seconds.
 ```
 
-
 ## Blocks
 
 Blocks are delimited by `do..end` or `{}`, which can be provided to method with `yield`
@@ -171,7 +163,6 @@ end
 
 double(100) { |x| x * 2 }
 ```
-
 
 ## Procs
 
@@ -216,7 +207,6 @@ a.map(&:to_s)
 # => ["1", "2", "3"]
 ```
 
-
 ## lambda
 
 ```ruby
@@ -232,8 +222,8 @@ symbols = strings.collect(&symbolize)
 
 lambda and proc comparison:
 
-* lambda checks the number of args, proc does not
-* when lambda returns, it pass control back to the calling method, proc does not
+- lambda checks the number of args, proc does not
+- when lambda returns, it pass control back to the calling method, proc does not
 
 example
 
@@ -287,7 +277,6 @@ call_lambda
 # lambda call
 # after lambda call
 ```
-
 
 ## OOP
 

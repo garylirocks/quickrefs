@@ -1,16 +1,15 @@
-Work with images
-================
+# Work with images
 
 ## image info
 
-    $ identify demo.jpg 
+    $ identify demo.jpg
     demo.jpg JPEG 1660x600 1660x600+0+0 8-bit DirectClass 339KB 0.000u 0:00.000
 
     // show image size
-    $ identify -ping -format "%f | %wx%h \n" red_chair_709x1000.jpg 
+    $ identify -ping -format "%f | %wx%h \n" red_chair_709x1000.jpg
     red_chair_709x1000.jpg | 709x1000
 
-refer to: [ImageMagick format option][imagemagick-format-options] 
+refer to: [ImageMagick format option][imagemagick-format-options]
 
 ## resize image
 
@@ -50,47 +49,38 @@ convert -resize 80x80 -background white -gravity center -extent 80x80 apple.png 
 
 `-path thumbs`: output the result images to `thumbs` folder
 
-
 ## rotate an image
 
 when you rotate an image in Shotwell, seems like it just add an tag `Exif.Image.Orientation` to the image, does not actually do anything with the pixel matrix, and this tag is not consistently honored by all programs handling images, the following command can actually work on the pixels
 
-	convert apple.jpg -rotate 90 apple-after.jpg
+    convert apple.jpg -rotate 90 apple-after.jpg
 
 ## show/edit/remove EXIF data
 
 show metadata:
 
-	exiv2 -p a pr apple.jpg
+    exiv2 -p a pr apple.jpg
 
 delete all metadata:
 
-	exiv2 -d a rm apple.jpg
-
+    exiv2 -d a rm apple.jpg
 
 ## convert image format
 
 convert `png` to `jpg`:
 
-	for f in *png; do echo $f; convert -flatten -background white $f ${f%.*}.jpg; done;
+    for f in *png; do echo $f; convert -flatten -background white $f ${f%.*}.jpg; done;
 
 convert and compress:
 
-	convert -strip -interlace Plane -quality 85% banner.png banner-no-blur.jpg
+    convert -strip -interlace Plane -quality 85% banner.png banner-no-blur.jpg
 
 with Gaussian blur:
 
-	convert -strip -interlace Plane -gaussian-blur 0.05 -quality 85% banner.png banner.jpg
-
+    convert -strip -interlace Plane -gaussian-blur 0.05 -quality 85% banner.png banner.jpg
 
 ## composite, add overlay to an image
 
-	composite overlay.png background.png result.png
-
-
-
-
-
-
+    composite overlay.png background.png result.png
 
 [imagemagick-format-options]: http://www.imagemagick.org/script/escape.php

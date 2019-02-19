@@ -1,50 +1,48 @@
-Wordpress
-============
+# Wordpress
 
 - [Child theme](#child-theme)
 - [Debug](#debug)
 - [WP loading process](#wp-loading-process)
 - [Queries and Loops](#queries-and-loops)
-    - [`get_posts` example](#getposts-example)
-    - [`WP_Query` example](#wpquery-example)
+  - [`get_posts` example](#getposts-example)
+  - [`WP_Query` example](#wpquery-example)
 - [Ajax](#ajax)
 - [Customizer](#customizer)
 - [Images](#images)
-    - [Image sizes](#image-sizes)
-    - [Use SVG images](#use-svg-images)
+  - [Image sizes](#image-sizes)
+  - [Use SVG images](#use-svg-images)
 - [Template hierarchy](#template-hierarchy)
 - [Javascript](#javascript)
 - [Caching](#caching)
 - [Recommended plugins](#recommended-plugins)
 - [Multilanguage Plugins](#multilanguage-plugins)
-    - [One post per language](#one-post-per-language)
-    - [All languages in one post](#all-languages-in-one-post)
-    - [Automatic translation](#automatic-translation)
-    - [Multisite solution](#multisite-solution)
+  - [One post per language](#one-post-per-language)
+  - [All languages in one post](#all-languages-in-one-post)
+  - [Automatic translation](#automatic-translation)
+  - [Multisite solution](#multisite-solution)
 - [Translation](#translation)
-    - [`.pot`, `.po`, `.mo`](#pot-po-mo)
-    - [Woocommerce language file loading order](#woocommerce-language-file-loading-order)
+  - [`.pot`, `.po`, `.mo`](#pot-po-mo)
+  - [Woocommerce language file loading order](#woocommerce-language-file-loading-order)
 - [Snippets](#snippets)
-    - [Get the term object in an archive page:](#get-the-term-object-in-an-archive-page)
-    - [Get post content by ID](#get-post-content-by-id)
-    - [Enable shortcode for widget text](#enable-shortcode-for-widget-text)
-    - [Limit 'prev', 'next' navigation to posts in the same category](#limit-prev-next-navigation-to-posts-in-the-same-category)
+  - [Get the term object in an archive page:](#get-the-term-object-in-an-archive-page)
+  - [Get post content by ID](#get-post-content-by-id)
+  - [Enable shortcode for widget text](#enable-shortcode-for-widget-text)
+  - [Limit 'prev', 'next' navigation to posts in the same category](#limit-prev-next-navigation-to-posts-in-the-same-category)
 - [Quick SQL](#quick-sql)
-    - [Find all menu items](#find-all-menu-items)
-    - [Check and update links](#check-and-update-links)
-    - [Woocommerce](#woocommerce)
+  - [Find all menu items](#find-all-menu-items)
+  - [Check and update links](#check-and-update-links)
+  - [Woocommerce](#woocommerce)
 - [wp-cli](#wp-cli)
-    - [Install Wordpress core](#install-wordpress-core)
-    - [Install and activate plugins](#install-and-activate-plugins)
-    - [Search and Replace](#search-and-replace)
-    - [Quick sql query](#quick-sql-query)
+  - [Install Wordpress core](#install-wordpress-core)
+  - [Install and activate plugins](#install-and-activate-plugins)
+  - [Search and Replace](#search-and-replace)
+  - [Quick sql query](#quick-sql-query)
 - [Migrate a site](#migrate-a-site)
 - [Migrate the media library](#migrate-the-media-library)
 - [Tips](#tips)
-    - [Show all options](#show-all-options)
-    - [Display content of multiple pages on one page](#display-content-of-multiple-pages-on-one-page)
+  - [Show all options](#show-all-options)
+  - [Display content of multiple pages on one page](#display-content-of-multiple-pages-on-one-page)
 - [Reference](#reference)
-
 
 ## Child theme
 
@@ -52,40 +50,39 @@ Wordpress
 
 Create a folder in the `themes` folder, create two files:
 
-* `style.css`: reference parent theme in it:
+- `style.css`: reference parent theme in it:
 
-    ```php
-    /*
-    Theme Name: child-thme-name
-    Template: parent-theme-name
-    */
-    ```
+  ```php
+  /*
+  Theme Name: child-thme-name
+  Template: parent-theme-name
+  */
+  ```
 
-    Parent theme's `style.css` will be overridden, see below to include
+  Parent theme's `style.css` will be overridden, see below to include
 
-* `functions.php`:
+- `functions.php`:
 
-    ```php
-    <?php
-    function theme_enqueue_styles() {
-        wp_enqueue_style('parent-style', get_template_directory_uri() . '/style.css');
+  ```php
+  <?php
+  function theme_enqueue_styles() {
+      wp_enqueue_style('parent-style', get_template_directory_uri() . '/style.css');
 
-        // add styles and scripts here
-        wp_register_style('bootstrap', get_stylesheet_directory_uri() . '/css/bootstrap.min.css', '', '0.3.2');
-        wp_enqueue_style('bootstrap');
+      // add styles and scripts here
+      wp_register_style('bootstrap', get_stylesheet_directory_uri() . '/css/bootstrap.min.css', '', '0.3.2');
+      wp_enqueue_style('bootstrap');
 
-        wp_register_script('bootstrap', get_stylesheet_directory_uri() . '/js/bootstrap.min.js', '', '0.3.2' );
-        wp_enqueue_script('bootstrap');
-    }
+      wp_register_script('bootstrap', get_stylesheet_directory_uri() . '/js/bootstrap.min.js', '', '0.3.2' );
+      wp_enqueue_script('bootstrap');
+  }
 
-    add_action('wp_enqueue_scripts', 'theme_enqueue_styles');
-    ```
+  add_action('wp_enqueue_scripts', 'theme_enqueue_styles');
+  ```
 
-    Notes:
+  Notes:
 
-    * `get_template_directory_uri()` get parent theme directory;
-    * `get_stylesheet_directory_uri()` get current theme directory;
-
+  - `get_template_directory_uri()` get parent theme directory;
+  - `get_stylesheet_directory_uri()` get current theme directory;
 
 ## Debug
 
@@ -108,7 +105,6 @@ define( 'WP_DEBUG_DISPLAY', true );
 define( 'SCRIPT_DEBUG', true );
 ```
 
-
 ## WP loading process
 
 ```
@@ -120,38 +116,37 @@ index.php -> wp-blog-header.php
 
 Important hooks in `wp-settings.php`
 
-* load files in `wp-includes`
-* load must-use plugins
-* load network activated plugins
-* fire **`muplugins_loaded`**
-* ...
-* load active plugins
-* fire **`plugins_loaded`**
-* set global variables: `wp`, `wp_query`, etc
-* fire **`setup_theme`**
-* load locale/text\_domain
-* load child theme (`function.php`) and parent theme
-* fire **`after_setup_thme`**
-* ...
-* set up current user
-* fire **`init`** (WP loads widgets, many plugins instantiate themeselves here)
-* *(WP, all plugins, the theme are fully loaded and instantiated now)*
-* fire **`wp_loaded`**
-
+- load files in `wp-includes`
+- load must-use plugins
+- load network activated plugins
+- fire **`muplugins_loaded`**
+- ...
+- load active plugins
+- fire **`plugins_loaded`**
+- set global variables: `wp`, `wp_query`, etc
+- fire **`setup_theme`**
+- load locale/text_domain
+- load child theme (`function.php`) and parent theme
+- fire **`after_setup_thme`**
+- ...
+- set up current user
+- fire **`init`** (WP loads widgets, many plugins instantiate themeselves here)
+- _(WP, all plugins, the theme are fully loaded and instantiated now)_
+- fire **`wp_loaded`**
 
 ## Queries and Loops
 
 A good article about this: [WordPress Development for Intermediate Users: Queries and Loops](https://premium.wpmudev.org/blog/wordpress-development-intermediate-users-queries-loops)
 [Codex - Query Overview](https://codex.wordpress.org/Query_Overview)
 
-* Wordpress runs a main query depending on what page you are on;
-* If you want to customize the main query, use the `pre_get_posts` filter;
-* You can create new queries in three ways:
-    * `get_posts()` function, fetch all posts;
-    * `get_pages()` function, fetch all pages;
-    * `WP_Query` class, fetch whatever you like;
-* **When using `get_posts()`, `get_pages()`, use `get_the_permalink()`, `get_the_title()` and `get_the_excerpt()` functions in the loop. You can't use `the_permalink()` etc. as those only work in the main loop or one you define with WP_Query**;
-* Try avoid using `query_posts()`;
+- Wordpress runs a main query depending on what page you are on;
+- If you want to customize the main query, use the `pre_get_posts` filter;
+- You can create new queries in three ways:
+  - `get_posts()` function, fetch all posts;
+  - `get_pages()` function, fetch all pages;
+  - `WP_Query` class, fetch whatever you like;
+- **When using `get_posts()`, `get_pages()`, use `get_the_permalink()`, `get_the_title()` and `get_the_excerpt()` functions in the loop. You can't use `the_permalink()` etc. as those only work in the main loop or one you define with WP_Query**;
+- Try avoid using `query_posts()`;
 
 ### `get_posts` example
 
@@ -191,44 +186,43 @@ if  ( $myposts ) { ?>
 ### `WP_Query` example
 
 Notes:
-* **Always use `wp_reset_postdata()` after using `WP_Query`, so Wordpress can reset back to the main query**;
-* Use `rewind_posts()` to rewind a custom loop to use it again;
 
-    ```php
-    // arguments for query
-    $args = array(
-        'post_type' => 'project',
-        'posts_per_page' => 1
-    );
+- **Always use `wp_reset_postdata()` after using `WP_Query`, so Wordpress can reset back to the main query**;
+- Use `rewind_posts()` to rewind a custom loop to use it again;
 
-    // run the query
-    $query = new WP_query( $args );
+  ```php
+  // arguments for query
+  $args = array(
+      'post_type' => 'project',
+      'posts_per_page' => 1
+  );
 
-    // check the query returns posts
-    if ( $query->have_posts() ) { ?>
+  // run the query
+  $query = new WP_query( $args );
 
-        <section class="projects">
+  // check the query returns posts
+  if ( $query->have_posts() ) { ?>
 
-            <?php while ( $query->have_posts() ) : $query->the_post(); ?>
-            <?php //contents of loop ?>
+      <section class="projects">
 
-            <h3>Latest Project - <a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h3>
-            <a href="<?php the_permalink(); ?>"><?php the_post_thumbnail( 'medium' ); ?></a>
-            <?php the_excerpt(); ?>
+          <?php while ( $query->have_posts() ) : $query->the_post(); ?>
+          <?php //contents of loop ?>
 
-            <?php endwhile; ?>
-            <?php wp_reset_postdata(); ?>
+          <h3>Latest Project - <a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h3>
+          <a href="<?php the_permalink(); ?>"><?php the_post_thumbnail( 'medium' ); ?></a>
+          <?php the_excerpt(); ?>
 
-        </section>
+          <?php endwhile; ?>
+          <?php wp_reset_postdata(); ?>
 
-    <?php } ?>
-    ```
+      </section>
 
+  <?php } ?>
+  ```
 
 ## Ajax
 
 [Smashing magazine Wordpress Ajax process](https://www.smashingmagazine.com/2011/10/how-to-use-ajax-in-wordpress/)
-
 
 ## Customizer
 
@@ -284,15 +278,14 @@ add_action( 'gary_header', 'gary_display_contact_details_in_header' );
 
 A quick alternative to add some theme specific settings: `set_theme_mod()`, `get_theme_mod()`.
 
-
 ## Images
 
 ### Image sizes
 
-* [Post Thumbnails](https://codex.wordpress.org/Post_Thumbnails)
-* [Responsive Images in WordPress 4.4](https://make.wordpress.org/core/2015/11/10/responsive-images-in-wordpress-4-4/)
-* [Using Responsive Images (Now)](http://alistapart.com/article/using-responsive-images-now#section2)
-* [get_the_post_thumbnail](https://developer.wordpress.org/reference/functions/get_the_post_thumbnail/)
+- [Post Thumbnails](https://codex.wordpress.org/Post_Thumbnails)
+- [Responsive Images in WordPress 4.4](https://make.wordpress.org/core/2015/11/10/responsive-images-in-wordpress-4-4/)
+- [Using Responsive Images (Now)](http://alistapart.com/article/using-responsive-images-now#section2)
+- [get_the_post_thumbnail](https://developer.wordpress.org/reference/functions/get_the_post_thumbnail/)
 
 By default, Wordpress got `thumbnail`, `medium`, `large` and `full` image sizes, a `medium_large` size is added in Wordpress 4.4 (which is 768px wide by default)
 
@@ -322,9 +315,8 @@ add_filter('image_size_names_choose', 'gary_custom_imagesizes', 11, 1);
 
 By default Wordpress doesn't support uploading SVG images, there are two ways to enable it:
 
-1. Use *SVG Support* plugin;
+1. Use _SVG Support_ plugin;
 2. Add `.svg` as a supported filetype in your custom code;
-
 
 ## Template hierarchy
 
@@ -332,27 +324,24 @@ By default Wordpress doesn't support uploading SVG images, there are two ways to
 
 ![wordpress template hirerarchy map](images/wordpress_template-hierarchy.png)
 
-
 ## Javascript
 
 A list of default JS files and libraries in Wordpress:
 
-* [wp\_register\_script](https://developer.wordpress.org/reference/functions/wp_register_script/)
-* [wp\_enqueue\_script](https://developer.wordpress.org/reference/functions/wp_enqueue_script/)
-
+- [wp_register_script](https://developer.wordpress.org/reference/functions/wp_register_script/)
+- [wp_enqueue_script](https://developer.wordpress.org/reference/functions/wp_enqueue_script/)
 
 ## Caching
 
 1. By default, WP's Object Cache is non-persistent, it only keeps data during one HTTP request, persistent caching can be enabled
-    by install some plugin (Memcached, Redis, etc), which will create a new `wp-content/object-cache.php` file to overwrite
-    default functions;
+   by install some plugin (Memcached, Redis, etc), which will create a new `wp-content/object-cache.php` file to overwrite
+   default functions;
 
 2. All MySQL queries use the Object Cache, to reduce DB queries;
 
 3. The Transient API will use Object Cache if persistent cache is enabled, otherwise it will save data in the `wp-options` table;
 
 4. The Options API always use the options table, since all MySQL queries use Object Cache, so it uses Object Cache as well.
-
 
 ## Recommended plugins
 
@@ -392,7 +381,6 @@ You may need to add this to `wp-config.php` to install plugins automatically:
 define('FS_METHOD', 'direct');
 ```
 
-
 ## Multilanguage Plugins
 
 Ref: [4 WAYS TO TURN WORDPRESS INTO A MULTILINGUAL WEBSITE](http://torquemag.io/2014/05/4-ways-to-turn-wordpress-into-a-multilingual-website/)
@@ -403,13 +391,13 @@ WPML (Premium)
 
 Pros:
 
-* no change to DB
-* clean url
-* support WooCommerce, WordPress SEO
+- no change to DB
+- clean url
+- support WooCommerce, WordPress SEO
 
 Cons:
 
-* complex architecture, needs many hook and filter
+- complex architecture, needs many hook and filter
 
 Alternatives: Polylang, xili-language, Bogo
 
@@ -419,14 +407,14 @@ qTranslate (free)
 
 Pros:
 
-* easy side-by-side editing for posts and pages
-* no additional tables
+- easy side-by-side editing for posts and pages
+- no additional tables
 
 Cons:
 
-* menus and widgets need to be translated via inserting language tags
-* need extra plugin for individual URL for each language
-* uninstall can be complicated
+- menus and widgets need to be translated via inserting language tags
+- need extra plugin for individual URL for each language
+- uninstall can be complicated
 
 Alternatives: qTranslate-X, WPGlobus
 
@@ -438,15 +426,14 @@ Multilingual Press
 
 Pros:
 
-* each site is a regular WordPress install and continues to work on its own
-* language alternatives can have their own URLs and link structure
+- each site is a regular WordPress install and continues to work on its own
+- language alternatives can have their own URLs and link structure
 
 Cons:
 
-* higher needs for management
+- higher needs for management
 
 Alternatives: Multisite Language Switcher, Zanto
-
 
 ## Translation
 
@@ -466,11 +453,10 @@ load_plugin_textdomain( 'woocommerce', false, plugin_basename( dirname( __FILE__
 So it loads in the following order:
 
 1. `WP_LANG_DIR/woocommerce/woocommerce-en_US.mo`
-2. `WP_LANG_DIR/plugins/woocommerce-en_US.mo`			<- `load_plugin_textdomain` try to load this file first, will not load anything else if this file is found
+2. `WP_LANG_DIR/plugins/woocommerce-en_US.mo` <- `load_plugin_textdomain` try to load this file first, will not load anything else if this file is found
 3. `wp-content/plugins/woocommerce/i18n/woocommerce-en_US.mo`
 
 `WP_LANG_DIR` points to `wp-content/languages/` by default
-
 
 ## Snippets
 
@@ -498,7 +484,6 @@ add_filter('widget_text','do_shortcode');
 ### Limit 'prev', 'next' navigation to posts in the same category
 
 <script src="https://gist.github.com/garylirocks/105823094fd21f47cbe4189a6f18ff44.js"></script>
-
 
 ## Quick SQL
 
@@ -543,17 +528,15 @@ UPDATE `wp_postmeta` set meta_value = REPLACE( meta_value, 'XXX', 'YYY' ) WHERE 
 
 - update product price (need to specify product variations' ids to update variation prices)
 
-    **when bulk editing products in the admin page, there is an option to update prices, but seems like it doest not work as expected if either regular price or sale price is absent**
+  **when bulk editing products in the admin page, there is an option to update prices, but seems like it doest not work as expected if either regular price or sale price is absent**
 
         update wp_postmeta set meta_value = meta_value+15 where post_id = 15601 and meta_key like '%price' and meta_value != '';
 
+* disable attribute archive page
 
-- disable attribute archive page
-
-    ```sql
-    update `wp_woocommerce_attribute_taxonomies` set attribute_public = 0;
-    ```
-
+  ```sql
+  update `wp_woocommerce_attribute_taxonomies` set attribute_public = 0;
+  ```
 
 ## wp-cli
 
@@ -590,25 +573,22 @@ wp search-replace 'dev.example.com' 'www.example.com'
 
 **It can even search and replace text in serialized PHP values, do the unserializing and serailizing automatically**
 
-
 ### Quick sql query
 
 ```sh
 wp db query "select * from wp_options where option_name in ('siteurl', 'home')"
 ```
 
-
 ## Migrate a site
 
 1. Dump db;
 2. Import db, change urls in `wp_options` table where `option_name` is `siteurl` or `home`;
-    ```sql
-    select * from wp_options where option_name in ('siteurl', 'home');
-    update wp_options set option_value = 'http://xxx.xxx' where option_name in ('siteurl', 'home');
-    ```
+   ```sql
+   select * from wp_options where option_name in ('siteurl', 'home');
+   update wp_options set option_value = 'http://xxx.xxx' where option_name in ('siteurl', 'home');
+   ```
 3. Change db settings in `wp-config.php`;
 4. Goto admin area, `settings` -> `permalink`, don't change anything, just save;
-
 
 ## Migrate the media library
 
@@ -621,27 +601,26 @@ refer: [Importing WordPress attachments into Media Library](https://timersys.com
 
 Steps:
 
-* Export data for the following two sqls
+- Export data for the following two sqls
 
-    ```sql
-    SELECT * FROM wp_posts WHERE post_type = 'attachment' AND post_parent != '0';
-    SELECT * FROM wp_postmeta WHERE post_id IN ( SELECT ID FROM wp_posts WHERE post_type = 'attachment' AND post_parent != '0' );
-    ```
+  ```sql
+  SELECT * FROM wp_posts WHERE post_type = 'attachment' AND post_parent != '0';
+  SELECT * FROM wp_postmeta WHERE post_id IN ( SELECT ID FROM wp_posts WHERE post_type = 'attachment' AND post_parent != '0' );
+  ```
 
-* For `wp_posts.sql`
+- For `wp_posts.sql`
 
-    * Remove all unnecessary SQL code such as `ALTER TABLE` and `INSERT TABLE` and just keep `INSERT INTO`;
-    * Change all the `INSERT INTO` sentences to `INSERT IGNORE INTO` in case duplicate keys exist;
-    * Modify all image urls to match new domain (not always needed, depending where you are importing from);
-    * Import into new site db;
+  - Remove all unnecessary SQL code such as `ALTER TABLE` and `INSERT TABLE` and just keep `INSERT INTO`;
+  - Change all the `INSERT INTO` sentences to `INSERT IGNORE INTO` in case duplicate keys exist;
+  - Modify all image urls to match new domain (not always needed, depending where you are importing from);
+  - Import into new site db;
 
-* For `wp_postmeta.sql`
+- For `wp_postmeta.sql`
 
-    * Remove all the unnecessary SQL code such as `ALTER TABLE` and `INSERT TABLE` and just keep `INSERT INTO`;
-    * Chang all the `INSERT INTO wp_postmeta (meta_id, post_id, meta_key, meta_value) VALUES ` to `INSERT INTO wp_postmeta (post_id, meta_key, meta_value) VALUES `;
-    * Get rid of th `meta_id` values, using regex, replace `\( ([0-9]+),` with `( `;
-    * Import;
-
+  - Remove all the unnecessary SQL code such as `ALTER TABLE` and `INSERT TABLE` and just keep `INSERT INTO`;
+  - Chang all the `INSERT INTO wp_postmeta (meta_id, post_id, meta_key, meta_value) VALUES` to `INSERT INTO wp_postmeta (post_id, meta_key, meta_value) VALUES`;
+  - Get rid of th `meta_id` values, using regex, replace `\( ([0-9]+),` with `(`;
+  - Import;
 
 ## Tips
 
@@ -653,8 +632,7 @@ This page `http://xx.xx/wp-admin/options.php` will display all setting options
 
 Theme: SCRN
 
-
 ## Reference
 
-* [Wordpress Caching](https://premium.wpmudev.org/blog/wordpress-caching/)
-* [Wordpress Customizer](https://premium.wpmudev.org/blog/wordpress-development-for-intermediate-users-making-your-themes-customizer-ready/)
+- [Wordpress Caching](https://premium.wpmudev.org/blog/wordpress-caching/)
+- [Wordpress Customizer](https://premium.wpmudev.org/blog/wordpress-development-for-intermediate-users-making-your-themes-customizer-ready/)

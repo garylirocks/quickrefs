@@ -1,5 +1,4 @@
-Shell Commands Tips
-===============
+# Shell Commands Tips
 
 - [Preface](#preface)
 - [`cd`](#cd)
@@ -24,12 +23,13 @@ Shell Commands Tips
 - [`find`](#find)
 - [`pushd`, `popd`, `dirs`](#pushd-popd-dirs)
 
-
 ## Preface
+
 Some useful tips of shell commands  
 Source: [团子的小窝][tuanzi]
 
 ## `cd`
+
 usually if `cd` is followed by a relative path, it's relative to current working directory, you can change this by setting environment variable `CDPATH`:
 
     $ pwd
@@ -40,6 +40,7 @@ usually if `cd` is followed by a relative path, it's relative to current working
     /etc/apache2
 
 ## `echo`
+
 useful options, `-e` to enable escaping, `-n` to suppress default-added-newline at the end
 
     $ echo "hello\nworld"
@@ -51,6 +52,7 @@ useful options, `-e` to enable escaping, `-n` to suppress default-added-newline 
     hello\nworld$
 
 ## `sort`
+
 useful options: `-n` sort as number, `-r` sort from big to small, `-u` output only first of equal values
 
 sort according to fields, `-t` for delimiter, `-k` for start and end field, and options of each field  
@@ -62,30 +64,31 @@ for example, sort according to user id from big to small:
     root:x:0:0:root:/root:/bin/bash
 
 **CAUTION** if you want to output sort result to the same file as input file, do not use redirection, this will empty the file, as the file will be emptied even before sorting, use `-o` instead:
-    
-    $ cat input.file 
+  
+ $ cat input.file 
     10
     2
     2314
-    $ sort input.file > input.file 
-    $ cat input.file
-    $  #file emptied
+    $ sort input.file > input.file
+$ cat input.file
+    $ #file emptied
 
-    $ cat > input.file 
+    $ cat > input.file
     10
     2
     2314
-    $ cat input.file 
+    $ cat input.file
     10
     2
     2314
-    $ sort -o input.file input.file # use -o 
-    $ cat input.file 
+    $ sort -o input.file input.file # use -o
+    $ cat input.file
     10
     2
     2314
 
 ## `paste`
+
 merge lines of files, if `-s` is set, merge one file at a time, quite useful for join lines of a file
 
     $ cat text1
@@ -104,7 +107,7 @@ merge lines of files, if `-s` is set, merge one file at a time, quite useful for
     $ paste -s -d',' text1 text2
     hello,world
     happy,new,year
-    
+
 ## `cut`
 
     $ cut -d: -f1,3 --output-delimiter=' ' /etc/passwd | head -2
@@ -115,19 +118,19 @@ merge lines of files, if `-s` is set, merge one file at a time, quite useful for
 
 columnate text
 
-    $ cat temp.txt 
+    $ cat temp.txt
     asia.china
     america.usa
     europe.france
 
-    $ column -s '.' -t temp.txt 
+    $ column -s '.' -t temp.txt
     asia     china
     america  usa
-    europe   france 
+    europe   france
 
 ## `update-alternatives`
 
-installed multiple version of a program in system, such as: 
+installed multiple version of a program in system, such as:
 
     $ sudo update-alternatives --display node
     node - auto mode
@@ -138,7 +141,7 @@ installed multiple version of a program in system, such as:
 
     $ node -v
     v0.10.37
-    
+
 there is only one option for node now, we can add another version:
 
     $ sudo update-alternatives --install /usr/bin/node node /usr/local/n/versions/node/5.4.1/bin/node 80
@@ -148,10 +151,9 @@ there is only one option for node now, we can add another version:
     $ node -v
     v5.4.1
 
-
 ## `rename`
 
-rename multiple files  
+rename multiple files
 
     $ ls
     greatwall-001.jpg  greatwall-002.jpg  greatwall-003.jpg  greatwall-004.jpg
@@ -161,7 +163,7 @@ rename multiple files
     greatwall-002.jpg renamed as greatwall-2.jpg
     greatwall-003.jpg renamed as greatwall-3.jpg
     greatwall-004.jpg renamed as greatwall-4.jpg
-    
+
     $ rename 's/-00/-/' *.jpg
 
     $ ls
@@ -169,30 +171,29 @@ rename multiple files
 
 sanitize filenames
 
-    $ ls 'Hello world (2014) - 720p.mp4' 
+    $ ls 'Hello world (2014) - 720p.mp4'
     Hello world (2014) - 720p.mp4
-    $ rename 's/[ \._()-]+/./g' 'Hello world (2014) - 720p.mp4' 
-    $ ls Hello.world.2014.720p.mp4 
+    $ rename 's/[ \._()-]+/./g' 'Hello world (2014) - 720p.mp4'
+    $ ls Hello.world.2014.720p.mp4
     Hello.world.2014.720p.mp4
 
 change file name extensions to lower case
 
     $ ls hello.world.*
     hello.world.TXT
-    $ rename 's/\.([^.]+)$/.\L$1/' hello.world.TXT 
+    $ rename 's/\.([^.]+)$/.\L$1/' hello.world.TXT
     $ ls hello.world.*
     hello.world.txt
 
 change file name to lowercase:
 
-	$ rename 'y/A-Z/a-z/' Apple.Txt 
-	$ ls
-	apple.txt
+    $ rename 'y/A-Z/a-z/' Apple.Txt
+    $ ls
+    apple.txt
 
-or 
+or
 
     $ rename 's/(.)/\l$1/g' *
-
 
 ## `pwd`
 
@@ -208,7 +209,7 @@ show working directory, use `-P` to ignore symlinks
 
 ## `ls`
 
-ouput one file per line, use `-1` 
+ouput one file per line, use `-1`
 
     $ ls
     bar.txt  foo.txt
@@ -221,13 +222,13 @@ ouput one file per line, use `-1`
 update access and modification times of a file, if a file does not exists, it will be created
 `-a`: change only access time; `-m`: change only modification time, `-t`: update to a specified time instead of current time
 
-**ctime will always be updated to current time** 
+**ctime will always be updated to current time**
 
 atime: file access time  
 mtime: file content modification time  
 ctime: file properties modification time
 
-    $ stat hello.txt 
+    $ stat hello.txt
       File: `hello.txt'
       Size: 0           Blocks: 0          IO Block: 4096   regular empty file
     Device: 801h/2049d  Inode: 145477      Links: 1
@@ -236,7 +237,7 @@ ctime: file properties modification time
     Modify: 2013-05-06 20:03:16.274190365 +0800
     Change: 2013-05-06 20:03:16.274190365 +0800
     $ touch hello.txt
-    $ stat hello.txt 
+    $ stat hello.txt
       File: `hello.txt'
       Size: 0           Blocks: 0          IO Block: 4096   regular empty file
     Device: 801h/2049d  Inode: 145477      Links: 1
@@ -249,7 +250,7 @@ ctime: file properties modification time
 
 `-w`: wildcards, `-s`: limit section
 
-    # search command start with 'wh' 
+    # search command start with 'wh'
     $ whatis -s 1 -w 'wh*'
     whatis (1)           - display manual page descriptions
     whereis (1)          - locate the binary, source, and manual page files for a com...
@@ -278,25 +279,24 @@ ctime: file properties modification time
     $ whereis -m php
     php: /usr/share/man/man1/php.1.gz
 
-
 ## `logrotate`
 
 add a custom logrotate config to `/etc/logrotate.d/`
 
-    $ cat apache-rewrite 
-    /lee/log/rewrite.log { 
+    $ cat apache-rewrite
+    /lee/log/rewrite.log {
         #rotate daily
-        daily    
+        daily
         #rotate if size greater than this
-        size 10M   
+        size 10M
         #if log file missing, go on withoud issuing an error msg
-        missingok    
+        missingok
         #how many log files to keep
-        rotate 365   
+        rotate 365
         #user, group, mod for newly created log file
-        create 640 lee lee   
+        create 640 lee lee
         #add date extension to old log files
-        dateext  
+        dateext
     }
 
 ## `watch`
@@ -308,11 +308,11 @@ execute a program periodically, showing output fullscreen
 
 ## `nc`, `netcat`
 
-using nc to send files 
+using nc to send files
 
 at remote host `dev`:
 
-    $ cat test.txt 
+    $ cat test.txt
     hello world
     $ nc -l 5555 < test.txt
 
@@ -321,16 +321,15 @@ at localhost:
     $ nc dev 5555
     hello world
 
-
 ## `od`
 
 dump files in octal format
 
     # make sure your console is using utf8 encoding
     $ echo 'a 李' > t.utf8
-    $ cat t.utf8 
+    $ cat t.utf8
     a 李
-    
+
     # make a gbk encoded version of the file
     $ iconv -f utf8 -t gbk t.utf8 > t.gbk
     $ cat t.gbk
@@ -343,7 +342,7 @@ dump files in octal format
     11 total
 
     # checkout the actual octals using od
-    $ od -t x1c t.utf8 
+    $ od -t x1c t.utf8
     0000000  61  20  e6  9d  8e  0a
               a     346 235 216  \n
     0000006
@@ -356,7 +355,7 @@ the '李' is encoded as `e6 9d 8e` in utf8, `c0 ee` in gbk
 
 to make ubuntu terminal to correctly display gbk characters, see: http://blog.sina.com.cn/s/blog\_a5b3ccfd0101a0u9.html
 
-## `mktemp` 
+## `mktemp`
 
 create temporary files or folders
 
@@ -366,20 +365,19 @@ create temporary files or folders
     $ mktemp -d /tmp/data-folder.XXXX   # create directory
     /tmp/data-folder.0Fss
 
-
 ## `expand`
 
-expand tabs to whitespace, can be used to align text in columns 
+expand tabs to whitespace, can be used to align text in columns
 
-    $ cat imagesize 
-    a.jpg   469x705 
-    long-name.jpg   705x470 
-    really-really-long-long-name.jpg    705x470 
+    $ cat imagesize
+    a.jpg   469x705
+    long-name.jpg   705x470
+    really-really-long-long-name.jpg    705x470
 
     $ cat imagesize | expand -t 40
-    a.jpg                                   469x705 
-    long-name.jpg                           705x470 
-    really-really-long-long-name.jpg        705x470 
+    a.jpg                                   469x705
+    long-name.jpg                           705x470
+    really-really-long-long-name.jpg        705x470
 
 or use `column`
 
@@ -388,60 +386,56 @@ or use `column`
     long-name.jpg                     705x470
     really-really-long-long-name.jpg  705x470
 
-
 ## `find`
 
-* find files with different extensions
+- find files with different extensions
 
-    ```sh
-    find . -regextype posix-extended -regex '.*(php)|(phtml)'
-    ```
+  ```sh
+  find . -regextype posix-extended -regex '.*(php)|(phtml)'
+  ```
 
-* find all sub directories, excluding itself
+- find all sub directories, excluding itself
 
-    ```sh
-    find . -mindepth 1 -type d
-    ```
-
+  ```sh
+  find . -mindepth 1 -type d
+  ```
 
 ## `pushd`, `popd`, `dirs`
 
 `pushd` can create an dirs stack, which can be inspected by `dirs`, and then you can use `cd ~` to jump between different dirs
 
-	$ pwd
-	/home/lee/playground/testing
+    $ pwd
+    /home/lee/playground/testing
 
-	$ mkdir dir1 dir2
-	$ dirs -v
-	 0  ~/playground/testing
+    $ mkdir dir1 dir2
+    $ dirs -v
+     0  ~/playground/testing
 
-	$ pushd dir1
-	~/playground/testing/dir1 ~/playground/testing
-	$ pushd ../dir2
-	~/playground/testing/dir2 ~/playground/testing/dir1 ~/playground/testing
-	$ pushd .
-	~/playground/testing/dir2 ~/playground/testing/dir2 ~/playground/testing/dir1 ~/playground/testing
+    $ pushd dir1
+    ~/playground/testing/dir1 ~/playground/testing
+    $ pushd ../dir2
+    ~/playground/testing/dir2 ~/playground/testing/dir1 ~/playground/testing
+    $ pushd .
+    ~/playground/testing/dir2 ~/playground/testing/dir2 ~/playground/testing/dir1 ~/playground/testing
 
-	$ dirs -v
-	 0  ~/playground/testing/dir2
-	 1  ~/playground/testing/dir2
-	 2  ~/playground/testing/dir1
-	 3  ~/playground/testing
+    $ dirs -v
+     0  ~/playground/testing/dir2
+     1  ~/playground/testing/dir2
+     2  ~/playground/testing/dir1
+     3  ~/playground/testing
 
-	$ cd ~2
-	$ pwd
-	/home/lee/playground/testing/dir1
+    $ cd ~2
+    $ pwd
+    /home/lee/playground/testing/dir1
 
-	$ dirs -v
-	 0  ~/playground/testing/dir1
-	 1  ~/playground/testing/dir2
-	 2  ~/playground/testing/dir1
-	 3  ~/playground/testing
+    $ dirs -v
+     0  ~/playground/testing/dir1
+     1  ~/playground/testing/dir2
+     2  ~/playground/testing/dir1
+     3  ~/playground/testing
 
-	$ cd ~1
-	$ pwd
-	/home/lee/playground/testing/dir2
-
-
+    $ cd ~1
+    $ pwd
+    /home/lee/playground/testing/dir2
 
 [tuanzi]: http://kodango.com

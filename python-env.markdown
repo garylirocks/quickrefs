@@ -1,7 +1,6 @@
-Python Development Environment
-===============================
+# Python Development Environment
 
-anything related to python dev environment, version/package management: pip/setuptools/virtualenv/easy\_install
+anything related to python dev environment, version/package management: pip/setuptools/virtualenv/easy_install
 
 ## virtualenv
 
@@ -10,7 +9,7 @@ anything related to python dev environment, version/package management: pip/setu
 setup new virtual environment
 
     $ sudo virtualenv /opt/mypy
-    [sudo] password for lee: 
+    [sudo] password for lee:
     New python executable in /opt/mypy/bin/python
     Installing setuptools, pip, wheel...done.
 
@@ -43,7 +42,7 @@ leave this virtual env with:
     virtualenvwrapper.user_scripts creating /opt/pyenvs/django/bin/postactivate
     virtualenvwrapper.user_scripts creating /opt/pyenvs/django/bin/get_env_details
 
-    (django) $ 
+    (django) $
 
 put the following lines to shell startup file `~/.bashrc`
 
@@ -62,7 +61,7 @@ install new package:
 
 list packages:
 
-    (django) $ lssitepackages 
+    (django) $ lssitepackages
     django                  easy_install.py   pip                  pkg_resources  setuptools-20.2.2.dist-info  wheel-0.29.0.dist-info
     Django-1.9.4.dist-info  easy_install.pyc  pip-8.1.0.dist-info  setuptools     wheel
 
@@ -79,11 +78,8 @@ commands:
     cdvirtualenv [subdir]    # change current working directory to $VIRTUAL_ENV
     cssitepackages [subdir] # change current directory to site-packages for $VIRTUAL_ENV
 
-
 projects management:
 
     `mkproject` Create a new virtualenv in the WORKON_HOME and project directory in PROJECT_HOME
     `cdproject` change current directory to the one specified as the project directory for the active virtualenv
     `setvirtualenvproject` bind an existing virtualenv to an existing project
-
-

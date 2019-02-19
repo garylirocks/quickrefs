@@ -1,11 +1,10 @@
-python cheatsheet
-===============
+# python cheatsheet
 
 ## Preface
 
-Source: 
+Source:
 
-* [The Quick Python Book, Second Edition][quick_python_book]
+- [The Quick Python Book, Second Edition][quick_python_book]
 
 ## List
 
@@ -19,7 +18,7 @@ append items to list:
     >>> x + [3, 4]
     [1, 2, 3, 4]
 
-multiply a list: 
+multiply a list:
 
     >>> a = [1, 3]
     >>> a * 2
@@ -45,7 +44,8 @@ by default, nested list are copied by reference, use `copy.deepcopy()` to make a
     [['zero'], 1]
     >>> deep        # deep copy is not affected
     [[0], 1]
-           
+
+
 ## Tuples
 
 **NOTES** tuples are more efficient than lists, they are mostly used as dictionary keys
@@ -67,16 +67,16 @@ tuples can't be modified, but if it contains modifiable elements, those elements
       File "<stdin>", line 1, in <module>
     TypeError: 'tuple' object does not support item assignment
 
-multiple assignments in one line:    
+multiple assignments in one line:
 
     >>> (one, two) = (1, 2)
-    >>> one 
+    >>> one
     1
     >>> two
     2
 
     >>> one, two = 1, 2  # the same, but even more simple
-    >>> one 
+    >>> one
     1
     >>> two
     2
@@ -171,7 +171,7 @@ set operations:
 
 - Encoding/Decoding
 
-    strings can be encoded to bytes, bytes can be decoded to strings
+  strings can be encoded to bytes, bytes can be decoded to strings
 
         In [37]: s = 'a中'
 
@@ -200,7 +200,7 @@ generator funtion:
         while x < 5:
             yield x     # generate a value
             x += 1
-            
+
     for i in gen():
         print(i)
 
@@ -216,7 +216,7 @@ decorators:
     @my_decorator   # decorator's name
     def my_func(x):
         print(x ** 2)
-        
+
     my_func(3)
 
 outputs:
@@ -233,18 +233,16 @@ three forms of import:
     from modulename import name1, name2, ...
     from modulename import *
 
-The * stands for all the exported names in modulename. This imports all public names from modulename—that is, those that don't begin with an underscore, and makes them available to the importing code without the necessity of prepending the module name. But if a list of names called `__all__` exists in the module (or the package's `__init__.py`), then the names are the ones imported, whether they begin with an underscore or not.
-
+The \* stands for all the exported names in modulename. This imports all public names from modulename—that is, those that don't begin with an underscore, and makes them available to the importing code without the necessity of prepending the module name. But if a list of names called `__all__` exists in the module (or the package's `__init__.py`), then the names are the ones imported, whether they begin with an underscore or not.
 
 ## Set Module Searching paths
 
-* set the `PYTHONPATH` environment variable (sucha as in `~/.bashrc`), direcotries in `PYTHONPATH` will be prepend to `sys.path`
-* add to a `sys.path` directory a file like `xxx.pth`, which contains paths you want append to `sys.path`
-
+- set the `PYTHONPATH` environment variable (sucha as in `~/.bashrc`), direcotries in `PYTHONPATH` will be prepend to `sys.path`
+- add to a `sys.path` directory a file like `xxx.pth`, which contains paths you want append to `sys.path`
 
 ## scoping and namespaces
 
-there are always three namespaces in python: *local, global, built-in*
+there are always three namespaces in python: _local, global, built-in_
 
 The global namespace of a function is the global namespace of the containing block of the function (where the function is defined). It's **independent** of the dynamic context from which it's called.
 
@@ -276,69 +274,67 @@ redirect standard out to a file:
     with open('out.log', mode='w', encoding='utf-8') as a_file, RedirectStdoutTo(a_file):
         print('B')
     print('C')
-    
 
 ## filesystem, path related
 
 create dirs
 
-* `os.makedirs` -> create all necessary dirs
-* `os.mkdir` -> do not make any intermediate dirs
+- `os.makedirs` -> create all necessary dirs
+- `os.mkdir` -> do not make any intermediate dirs
 
 remove dirs
 
-* `os.rmdir` -> do not remove non-empty dir
-* `shutil.rmtree` -> remove dirs recursively
+- `os.rmdir` -> do not remove non-empty dir
+- `shutil.rmtree` -> remove dirs recursively
 
 copy dirs
 
-* `shutil.copytree` -> copy dirs recursively
+- `shutil.copytree` -> copy dirs recursively
 
 useful functions:
 
-* `os.getcwd()` Gets the current directory
-* `os.name` Provides generic platform identification
-* `sys.platform` Provides specific platform information
-* `os.environ` Maps the environment
-* `os.listdir(path)` Gets files in a directory
-* `os.chdir(path)` Changes directory
-* `os.path.join(elements)` Combines elements into a path
-* `os.path.split(path)` Splits the path into a base and tail (the last element of the path)
-* `os.path.splitext(path)` Splits the path into a base and a file extension
-* `os.path.basename(path)` Gets the base of the path
-* `os.path.commonprefix(list_of_paths)` Gets the common prefix for all paths on a list
-* `os.path.expanduser(path)` Expands ~ or ~user to a full pathname
-* `os.path.expandvars(path)` Expands environment variables
-* `os.path.exists(path)` Tests to see if a path exists
-* `os.path.isdir(path)` Tests to see if a path is a directory
-* `os.path.isfile(path)` Tests to see if a path is a file
-* `os.path.islink(path)` Tests to see if a path is a symbolic link (not a Windows shortcut)
-* `os.path.ismount(path)` Tests to see if a path is a mount point
-* `os.path.isabs(path)` Tests to see if a path is an absolute path
-* `os.path.samefile(path_1, path_2)` Tests to see if two paths refer to the same file
-* `os.path.getsize(path)` Gets the size of a file
-* `os.path.getmtime(path)` Gets the modification time
-* `os.path.getatime(path)` Gets the access time
-* `os.rename(old_path, new_path)` Renames a file
-* `os.mkdir(path)` Creates a directory
-* `os.makedirs` Creates a directory and any needed parent directories
-* `os.rmdir(path)` Removes a directory
-* `glob.glob(pattern)` Gets matches to a wildcard pattern
-* `os.walk(path)` Gets all filenames in a directory tree
-
+- `os.getcwd()` Gets the current directory
+- `os.name` Provides generic platform identification
+- `sys.platform` Provides specific platform information
+- `os.environ` Maps the environment
+- `os.listdir(path)` Gets files in a directory
+- `os.chdir(path)` Changes directory
+- `os.path.join(elements)` Combines elements into a path
+- `os.path.split(path)` Splits the path into a base and tail (the last element of the path)
+- `os.path.splitext(path)` Splits the path into a base and a file extension
+- `os.path.basename(path)` Gets the base of the path
+- `os.path.commonprefix(list_of_paths)` Gets the common prefix for all paths on a list
+- `os.path.expanduser(path)` Expands ~ or ~user to a full pathname
+- `os.path.expandvars(path)` Expands environment variables
+- `os.path.exists(path)` Tests to see if a path exists
+- `os.path.isdir(path)` Tests to see if a path is a directory
+- `os.path.isfile(path)` Tests to see if a path is a file
+- `os.path.islink(path)` Tests to see if a path is a symbolic link (not a Windows shortcut)
+- `os.path.ismount(path)` Tests to see if a path is a mount point
+- `os.path.isabs(path)` Tests to see if a path is an absolute path
+- `os.path.samefile(path_1, path_2)` Tests to see if two paths refer to the same file
+- `os.path.getsize(path)` Gets the size of a file
+- `os.path.getmtime(path)` Gets the modification time
+- `os.path.getatime(path)` Gets the access time
+- `os.rename(old_path, new_path)` Renames a file
+- `os.mkdir(path)` Creates a directory
+- `os.makedirs` Creates a directory and any needed parent directories
+- `os.rmdir(path)` Removes a directory
+- `glob.glob(pattern)` Gets matches to a wildcard pattern
+- `os.walk(path)` Gets all filenames in a directory tree
 
 ## files
 
 use file object as an iterator, iterate all lines in it:
 
-	file_object = open("myfile", 'r')
+    file_object = open("myfile", 'r')
     count = 0
     for line in file_object:
         count = count + 1
     print(count)
     file_object.close()
 
-read file lines to a list: 
+read file lines to a list:
 
     a = [l.rstrip() for l in open('/path/to/file')]
 
@@ -350,12 +346,11 @@ open and close files using `with` statement:
             line_count += 1
         print(line_count)
 
-
 ## Classes / Object-oriented programming / OOP
 
-* private methods or instance variables: name begin with (but not terminated by) a '\_\_'
+- private methods or instance variables: name begin with (but not terminated by) a '\_\_'
 
-* access private variables:
+- access private variables:
 
         class Foo:
             def __init__(self):
@@ -365,7 +360,7 @@ open and close files using `with` statement:
         print(f._Foo__x)  # you can access a private variable this way
         print(f.__x)      # this will result in an error
 
-* @property
+- @property
 
         class Temperature:
             def __init__(self):
@@ -398,7 +393,7 @@ only syntaxes need attentions are listed here
 
 - `*?`, `+?`, `??`
 
-    by default `*`, `+`, `?` are *greedy*, adding a `?` makes them *un-greedy*
+  by default `*`, `+`, `?` are _greedy_, adding a `?` makes them _un-greedy_
 
         In [37]: re.sub(r'(<.*>).*', '\g<1>', '<h1>Title</h1>')
         Out[37]: '<h1>Title</h1>'
@@ -408,15 +403,15 @@ only syntaxes need attentions are listed here
 
 - `{m, n}?`
 
-    makes the qualifier *un-greedy*
+  makes the qualifier _un-greedy_
 
 - `(...)`
 
-    specify a match group, the content of a group can be *retrived after a match or matched later in the string with the `\number` sequence*
+  specify a match group, the content of a group can be _retrived after a match or matched later in the string with the `\number` sequence_
 
 - `(?aiLmsux)`
 
-    doesn't match anything, just add flags to the pattern, can be placed anywhere in the pattern, better at the beginning
+  doesn't match anything, just add flags to the pattern, can be placed anywhere in the pattern, better at the beginning
 
         In [57]: re.sub(r'a', r'', 'aAbB')
         Out[57]: 'AbB'
@@ -429,77 +424,73 @@ only syntaxes need attentions are listed here
 
 - `(?:...)`
 
-    a non-capturing group
+  a non-capturing group
 
         In [62]: re.sub(r'(?:\D+)(\d+)', r'\1', 'Gary2000')
         Out[62]: '2000'
 
 - `(?P<name>...)`
 
-    a named group
+  a named group
 
-    reference a match group:
+  reference a match group:
 
-    - in the same pattern: `(?P=name)`, `\1`
-    - in the replacement string: `\1`, `\g<1>`, `\g<name>`
-    - when working with match object `m`: `m.group('name')`, `m.end('name')`
+  - in the same pattern: `(?P=name)`, `\1`
+  - in the replacement string: `\1`, `\g<1>`, `\g<name>`
+  - when working with match object `m`: `m.group('name')`, `m.end('name')`
 
 - `(?P=name)`
-    
-    a back reference to a named group
+
+  a back reference to a named group
 
         In [82]: re.sub(r'<(?P<tag>.+?)>(?P<content>.*?)</(?P=tag)>', r'\g<tag>: \g<content>', '<h1>Hello World</h1><p>Python rocks</p>')
         Out[82]: 'h1: Hello World'
 
 - `(?#...)`
 
-    comment
+  comment
 
 - `(?=...)`
 
-    lookahead assertion, matches if `...` matches next, but doesn't consume any of the string
+  lookahead assertion, matches if `...` matches next, but doesn't consume any of the string
 
         In [89]: re.sub(r'Gary(?= Li)', 'XXX', 'Gary Li, Gary Zhang')
         Out[89]: 'XXX Li, Gary Zhang'
 
 - `(?!...)`
 
-    negative lookahead assertion, matches if `...` doesn't match next
+  negative lookahead assertion, matches if `...` doesn't match next
 
 - `(?<=...)`
 
-    positive lookbehind assertion, the pattern need to be in fixed length
+  positive lookbehind assertion, the pattern need to be in fixed length
 
         In [98]: re.sub(r'(?<=Gary )Li', 'XX', 'Gary Li, Tom Li')
         Out[98]: 'Gary XX, Tom Li'
 
 - `(?<!...)`
 
-    negative lookbehind assertion
+  negative lookbehind assertion
 
 - `(?(id/name)yes-pattern|no-pattern)`
 
-    Will try to match with `yes-pattern` if the group with given id or name exists, and with `no-pattern` if it doesn’t. `no-pattern` is optional and can be omitted. For example, `(<)?(\w+@\w+(?:\.\w+)+)(?(1)>|$)` is a poor email matching pattern, which will match with `<user@host.com>` as well as `user@host.com`, but not with `<user@host.com` nor `user@host.com>`.
+  Will try to match with `yes-pattern` if the group with given id or name exists, and with `no-pattern` if it doesn’t. `no-pattern` is optional and can be omitted. For example, `(<)?(\w+@\w+(?:\.\w+)+)(?(1)>|$)` is a poor email matching pattern, which will match with `<user@host.com>` as well as `user@host.com`, but not with `<user@host.com` nor `user@host.com>`.
 
 - `\A`
 
-    matches only at the start of the string
+  matches only at the start of the string
 
-- `\Z` 
+- `\Z`
 
-    matches only at the end of the string
+  matches only at the end of the string
 
-- `\b` 
+- `\b`
 
-    matches only at the beginning or end of a word
+  matches only at the beginning or end of a word
 
-- `\B` 
+- `\B`
 
-    oppposite of `\b`
-
-
-
-
+  oppposite of `\b`
 
 ### compiled vs. simple functions
 
@@ -514,9 +505,9 @@ is equivalent to
 
 ### flags
 
-- `re.A`, `re.ASCII`  
+- `re.A`, `re.ASCII`
 
-     make `\w`, `\W`, `\b`, `\B`, `\D`, `\s`, `\S` perform ASCII-only matching instead of full Unicode matching
+  make `\w`, `\W`, `\b`, `\B`, `\D`, `\s`, `\S` perform ASCII-only matching instead of full Unicode matching
 
         In [26]: re.sub('(\w+).*', '\g<1>', 'a中')
         Out[26]: 'a中'
@@ -530,18 +521,18 @@ is equivalent to
 
 - `re.M`, `re.MULTILINE`
 
-    make `^` and `$` works on eache line, not just the beginning and end of the whole string
+  make `^` and `$` works on eache line, not just the beginning and end of the whole string
 
 - `re.S`, `re.DOTALL`
 
-    make `.` match newline
+  make `.` match newline
 
 - `re.X`, `re.VERBOSE`
 
-    allows you to add comments in your pattern
+  allows you to add comments in your pattern
 
-    the following are equal functionally:
-    
+  the following are equal functionally:
+
         a = re.compile(r"""\d +  # the integral part
                        \.    # the decimal point
                        \d *  # some fractional digits""", re.X)
@@ -562,7 +553,6 @@ use triple quotes as delimiter when you want to include a quote mark in the stri
     In [71]: r"""hello ' " quotes"""
     Out[71]: 'hello \' " quotes'
 
-
 ### functions
 
 - `re.match` matches only at the beginning of the string, `re.search` checks for a match anywhere in the string
@@ -577,18 +567,11 @@ use triple quotes as delimiter when you want to include a quote mark in the stri
         In [106]: re.findall(r'(G\w+)', 'Gary, Jack, Tom, Gigi')
         Out[106]: ['Gary', 'Gigi']
 
-
-
-
-
-
-
-
 ## Python 3
 
 ### encoding
 
-- In Python 3, all strings are sequences of Unicode characters.                    
+- In Python 3, all strings are sequences of Unicode characters.
 - In Python 3, source code's default encoding is UTF-8, it's `ASCII` for Python 2
 
 - Use a different encoding by put an encoding declaration on the first line:
@@ -607,7 +590,7 @@ use triple quotes as delimiter when you want to include a quote mark in the stri
         In [13]: '{info[0]} is {info[1]} years old'.format(info=a)
         Out[13]: 'Gary is 20 years old'
 
-    number formating:
+  number formating:
 
         In [22]: 'the number is {number:8.2f}'.format(number = 12.345)
         Out[22]: 'the number is    12.35'
@@ -615,18 +598,17 @@ use triple quotes as delimiter when you want to include a quote mark in the stri
         In [26]: 'the number is {number:09.2e}'.format(number = 12.345)
         Out[26]: 'the number is 01.23e+01
 
-
 ## Style tips
 
-* Do not use `True|False` in conditional statement, variable name only is ok:
+- Do not use `True|False` in conditional statement, variable name only is ok:
 
         if var:
             pass
         fi
 
-* For Python 3, use `str.format()` to format strings, do not use `%`
+- For Python 3, use `str.format()` to format strings, do not use `%`
 
-* Use `locals()`, `globals()`, `dir()` for debugging
+- Use `locals()`, `globals()`, `dir()` for debugging
 
 ### naming conventions
 
@@ -637,18 +619,15 @@ use triple quotes as delimiter when you want to include a quote mark in the stri
 
     function: lower_case
     global variable: lower_case
-    
+
     constants: ALL_CAPS
 
 ## uninstall a package
 
-	sudo pip uninstall phpsh
+    sudo pip uninstall phpsh
 
 and remove any remaining files
 
-	locate phpsh
-
-
-    
+    locate phpsh
 
 [quick_python_book]: http://www.manning.com/TheQuickPythonBookSecondEdition

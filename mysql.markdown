@@ -1,38 +1,36 @@
-MySQL cheatsheet
-===============
+# MySQL cheatsheet
 
 - [Preface](#preface)
 - [`mysql`](#mysql)
 - [`mysqladmin`](#mysqladmin)
 - [Storage engines](#storage-engines)
-    - [MyISAM](#myisam)
-    - [Innodb](#innodb)
-    - [CSV](#csv)
+  - [MyISAM](#myisam)
+  - [Innodb](#innodb)
+  - [CSV](#csv)
 - [权限级别](#%E6%9D%83%E9%99%90%E7%BA%A7%E5%88%AB)
 - [Data backup and recovery](#data-backup-and-recovery)
-    - [Logical backup](#logical-backup)
-    - [Data recovery](#data-recovery)
+  - [Logical backup](#logical-backup)
+  - [Data recovery](#data-recovery)
 - [Query optimization](#query-optimization)
-    - [GROUP BY](#group-by)
-    - [profiling](#profiling)
+  - [GROUP BY](#group-by)
+  - [profiling](#profiling)
 - [Schema 设计优化](#schema-%E8%AE%BE%E8%AE%A1%E4%BC%98%E5%8C%96)
 - [Transaction isolation levels](#transaction-isolation-levels)
 - [Locking](#locking)
 - [Lock problems](#lock-problems)
 - [Install MySQL from source](#install-mysql-from-source)
-    - [Multiple MySQL server instances on one machine](#multiple-mysql-server-instances-on-one-machine)
+  - [Multiple MySQL server instances on one machine](#multiple-mysql-server-instances-on-one-machine)
 - [Timezone](#timezone)
 - [Quick recipes](#quick-recipes)
-    - [Search and replace text](#search-and-replace-text)
-    - [Duplicate records in a table](#duplicate-records-in-a-table)
-    - [MySQL strict mode](#mysql-strict-mode)
-
+  - [Search and replace text](#search-and-replace-text)
+  - [Duplicate records in a table](#duplicate-records-in-a-table)
+  - [MySQL strict mode](#mysql-strict-mode)
 
 ## Preface
+
 Some useful tips for MySQL
 
 Source: Head First SQL
-
 
 ## `mysql`
 
@@ -42,7 +40,6 @@ Set mysql prompt in an option file, such as `~/.my.cnf`
     prompt=(\\u@\\h) [\\d]>\\_
 
 Edit sql at command line: use `edit` command to open an editor to do this
-
 
 ## `mysqladmin`
 
@@ -77,36 +74,34 @@ mysqladmin -ugary -pmypass processlist
 
 For each table, there are three files:
 
-* .frm   ->  table schema
-* .MYD   ->  data
-* .MYI   ->  index
+- .frm -> table schema
+- .MYD -> data
+- .MYI -> index
 
 Three indexing method:
 
-* B-tree ->  all index data at leaf nodes
-* R-tree ->  only support geometry type
-* Full-text  ->  also B-tree, 解决like查询的低效问题
+- B-tree -> all index data at leaf nodes
+- R-tree -> only support geometry type
+- Full-text -> also B-tree, 解决 like 查询的低效问题
 
 数据存放格式:
 
-* FIXED          ->  all fields have fixed length
-* DYNAMIC        ->  if any variable length field presents
-* COMPRESSED
-
+- FIXED -> all fields have fixed length
+- DYNAMIC -> if any variable length field presents
+- COMPRESSED
 
 ### Innodb
 
-* 事务支持
-* 锁定机制改进, 支持行锁 (行锁的并发比MyISAM的表锁要好)
-* 实现外键
+- 事务支持
+- 锁定机制改进, 支持行锁 (行锁的并发比 MyISAM 的表锁要好)
+- 实现外键
 
 数据存储:
 
 数据和索引存放在一起,
 
-* 共享表空间: 多表共用同一个(或多个)文件
-* 独享表空间: 每个表单独对应一个.idb文件
-
+- 共享表空间: 多表共用同一个(或多个)文件
+- 独享表空间: 每个表单独对应一个.idb 文件
 
 ### CSV
 
@@ -138,121 +133,119 @@ cat hellocsv.CSV
 #   2,"wang"
 ```
 
-
 ## 权限级别
 
 高级别覆盖低级别
 
-* Global
-* Database
-* Table
+- Global
+- Database
+- Table
 
-    ALTER, CREATE, DELETE, DROP, INDEX, INSERT, SELECT, UPDATE
+  ALTER, CREATE, DELETE, DROP, INDEX, INSERT, SELECT, UPDATE
 
-    ```sql
-    GRANT INDEX ON test.t1 TO 'abc'@'%.jianzhaoyang.com';
-    ```
+  ```sql
+  GRANT INDEX ON test.t1 TO 'abc'@'%.jianzhaoyang.com';
+  ```
 
-* Column
+- Column
 
-    INSERT, SELECT, UPDATE
+  INSERT, SELECT, UPDATE
 
-    ```sql
-    GRANT SELECT(id,value) ON test.t2 TO 'abc'@'%.jianzhaoyang.com';
-    ```
+  ```sql
+  GRANT SELECT(id,value) ON test.t2 TO 'abc'@'%.jianzhaoyang.com';
+  ```
 
-* Routine
+- Routine
 
-    EXECUTE, ALTER ROUTINE
+  EXECUTE, ALTER ROUTINE
 
-    ```sql
-    GRANT EXECUTE ON test.p1 to 'abc'@'localhost';
-    ```
-
+  ```sql
+  GRANT EXECUTE ON test.p1 to 'abc'@'localhost';
+  ```
 
 ## Data backup and recovery
 
 ### Logical backup
 
-* `mysqldump`
+- `mysqldump`
 
-    **数据可能不一致**
+  **数据可能不一致**
 
-    useful options: `--single-transcation`, `--lock-tables`, `--lock-all-tables`, `--no-data`, `--where` (when dump a single table)
+  useful options: `--single-transcation`, `--lock-tables`, `--lock-all-tables`, `--no-data`, `--where` (when dump a single table)
 
-    ```sql
-    /* `-t` for only dumping data, no structure */
-    mysqldump -ugary -p test -t --table news > news.sql
-    ```
+  ```sql
+  /* `-t` for only dumping data, no structure */
+  mysqldump -ugary -p test -t --table news > news.sql
+  ```
 
-* CSV file
+- CSV file
 
-    Save data to a file: `SELECT * INTO OUTFILE 'file-path' FROM ...`
+  Save data to a file: `SELECT * INTO OUTFILE 'file-path' FROM ...`
 
-    ```sql
-    SELECT * FROM country;
-    /*
-    +----+-----------+---------------+-----------+
-    | id | name      | continent     | president |
-    +----+-----------+---------------+-----------+
-    |  1 | zhongguo  | Asia          | Xi        |
-    |  3 | US        | North America | Obama     |
-    |  4 | UK        | Europe        | Cameron   |
-    | 10 | Japan     | Asia          | Abe       |
-    +----+-----------+---------------+-----------+
-    4 rows in set (0.00 sec)
-    */
+  ```sql
+  SELECT * FROM country;
+  /*
+  +----+-----------+---------------+-----------+
+  | id | name      | continent     | president |
+  +----+-----------+---------------+-----------+
+  |  1 | zhongguo  | Asia          | Xi        |
+  |  3 | US        | North America | Obama     |
+  |  4 | UK        | Europe        | Cameron   |
+  | 10 | Japan     | Asia          | Abe       |
+  +----+-----------+---------------+-----------+
+  4 rows in set (0.00 sec)
+  */
 
-    SELECT * INTO OUTFILE '/tmp/country.out' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"' LINES TERMINATED BY '\n' FROM country;
-    /*
-    Query OK, 5 rows affected (0.00 sec)
-    */
-    ```
+  SELECT * INTO OUTFILE '/tmp/country.out' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"' LINES TERMINATED BY '\n' FROM country;
+  /*
+  Query OK, 5 rows affected (0.00 sec)
+  */
+  ```
 
-    ```sh
-    cat /tmp/country.out
-    #     1,"zhongguo","Asia","Xi"
-    #     3,"US","North America","Obama"
-    #     4,"UK","Europe","Cameron"
-    #     10,"Japan","Asia","Abe"
-    ```
+  ```sh
+  cat /tmp/country.out
+  #     1,"zhongguo","Asia","Xi"
+  #     3,"US","North America","Obama"
+  #     4,"UK","Europe","Cameron"
+  #     10,"Japan","Asia","Abe"
+  ```
 
-    Or, use `mysqldump`, this will generate table structure and data in different files
+  Or, use `mysqldump`, this will generate table structure and data in different files
 
-    ```sh
-    mysqldump -uroot -p -T/tmp test country --fields-enclosed-by='"' --fields-terminated-by=,
+  ```sh
+  mysqldump -uroot -p -T/tmp test country --fields-enclosed-by='"' --fields-terminated-by=,
 
-    ll /tmp/country.*
-    #     -rw-r--r-- 1 root  root  1485 Sep  7 17:18 /tmp/country.sql
-    #     -rw-rw-rw- 1 mysql mysql  143 Sep  7 17:18 /tmp/country.txt
+  ll /tmp/country.*
+  #     -rw-r--r-- 1 root  root  1485 Sep  7 17:18 /tmp/country.sql
+  #     -rw-rw-rw- 1 mysql mysql  143 Sep  7 17:18 /tmp/country.txt
 
-    cat /tmp/country.sql
-    #     ...
-    #
-    #     --
-    #     -- Table structure for table `country`
-    #     --
-    #
-    #     DROP TABLE IF EXISTS `country`;
-    #     /*!40101 SET @saved_cs_client     = @@character_set_client */;
-    #     /*!40101 SET character_set_client = utf8 */;
-    #     CREATE TABLE `country` (
-    #       `id` int(11) NOT NULL AUTO_INCREMENT,
-    #       `name` varchar(20) NOT NULL,
-    #       `continent` varchar(16) DEFAULT NULL,
-    #       `president` varchar(30) NOT NULL,
-    #       PRIMARY KEY (`id`)
-    #     ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=latin1;
-    #     /*!40101 SET character_set_client = @saved_cs_client */;
-    #
-    #     ...
+  cat /tmp/country.sql
+  #     ...
+  #
+  #     --
+  #     -- Table structure for table `country`
+  #     --
+  #
+  #     DROP TABLE IF EXISTS `country`;
+  #     /*!40101 SET @saved_cs_client     = @@character_set_client */;
+  #     /*!40101 SET character_set_client = utf8 */;
+  #     CREATE TABLE `country` (
+  #       `id` int(11) NOT NULL AUTO_INCREMENT,
+  #       `name` varchar(20) NOT NULL,
+  #       `continent` varchar(16) DEFAULT NULL,
+  #       `president` varchar(30) NOT NULL,
+  #       PRIMARY KEY (`id`)
+  #     ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=latin1;
+  #     /*!40101 SET character_set_client = @saved_cs_client */;
+  #
+  #     ...
 
-    cat /tmp/country.txt
-    #     "1","zhongguo","Asia","Xi"
-    #     "3","US","North America","Obama"
-    #     "4","UK","Europe","Cameron"
-    #     "10","Japan","Asia","Abe"
-    ```
+  cat /tmp/country.txt
+  #     "1","zhongguo","Asia","Xi"
+  #     "3","US","North America","Obama"
+  #     "4","UK","Europe","Cameron"
+  #     "10","Japan","Asia","Abe"
+  ```
 
 ### Data recovery
 
@@ -268,7 +261,6 @@ OR
 LOAD DATA INFILE '/tmp/test_outfile.txt' INTO TABLE test_outfile FIELDS TERMINATED BY '"' ENCLOSED BY ',';
 ```
 
-
 ## Query optimization
 
 基本思路和原则:
@@ -283,8 +275,8 @@ LOAD DATA INFILE '/tmp/test_outfile.txt' INTO TABLE test_outfile FIELDS TERMINAT
 8. 只取出自己需要的 Columns;
 9. 仅仅使用最有效的过滤条件;
 10. 尽可能避免复杂的 JOIN 和子查询;
-    * 复杂的JOIN占用资源多，可能需要等待或者会让其它线程等待，可能比多个简单的查询还慢;
-    * Mysql对子查询的优化不佳，可能有索引而没被利用;
+    - 复杂的 JOIN 占用资源多，可能需要等待或者会让其它线程等待，可能比多个简单的查询还慢;
+    - Mysql 对子查询的优化不佳，可能有索引而没被利用;
 
 ### GROUP BY
 
@@ -364,125 +356,120 @@ Query OK, 0 rows affected (0.00 sec)
 */
 ```
 
-
 ## Schema 设计优化
 
-* 适度冗余 - 让 Query 尽量减少Join
+- 适度冗余 - 让 Query 尽量减少 Join
 
-    如在帖子表存储用户昵称, 这样用户更新昵称的时候要更新多个表，但用户更新昵称是个不频繁的操作
+  如在帖子表存储用户昵称, 这样用户更新昵称的时候要更新多个表，但用户更新昵称是个不频繁的操作
 
-* 大字段垂直分拆
+- 大字段垂直分拆
 
-    将访问频率低的大字段分拆成独立的表, 如帖子表中分离出帖子的内容为单独的表
+  将访问频率低的大字段分拆成独立的表, 如帖子表中分离出帖子的内容为单独的表
 
-* 大表水平分拆 - 基于类型的分拆优化
+- 大表水平分拆 - 基于类型的分拆优化
 
-* 统计表 - 准实时优化
+- 统计表 - 准实时优化
 
-    通过定时统计数据来替代实时统计查询
-
+  通过定时统计数据来替代实时统计查询
 
 ## Transaction isolation levels
 
-* READ UNCOMMITTED
+- READ UNCOMMITTED
 
-    trx A can read uncommitted data from trx B, can cause dirty read
+  trx A can read uncommitted data from trx B, can cause dirty read
 
-* READ COMMITTED
+- READ COMMITTED
 
-    trx A can read committed data from trx B, can cause read-not-repeatable, violates I (isolation) of ACID
+  trx A can read committed data from trx B, can cause read-not-repeatable, violates I (isolation) of ACID
 
-* REPEATABLE READ
+- REPEATABLE READ
 
-    what trx A reads is not affected by other trx (always the same in a trx), default setting for InnoDB in MySQL
-
+  what trx A reads is not affected by other trx (always the same in a trx), default setting for InnoDB in MySQL
 
 ## Locking
 
 Levels:
 
-* row-level
+- row-level
 
-    * 粒度小，并发高，获取锁资源消耗大，易死锁;
-    * Innodb
+  - 粒度小，并发高，获取锁资源消耗大，易死锁;
+  - Innodb
 
-* table-level
+- table-level
 
-    * 粒度大，并发低，获取锁资源消耗少;
-    * MyISAM, Memory, CSV
+  - 粒度大，并发低，获取锁资源消耗少;
+  - MyISAM, Memory, CSV
 
-* page-level
+- page-level
 
-    * 介于上面二者之间;
-    * BerkeleyDB
-
+  - 介于上面二者之间;
+  - BerkeleyDB
 
 ## Lock problems
 
-* 丢失更新 (lost update)
+- 丢失更新 (lost update)
 
-    * 读取数据时加上X锁
+  - 读取数据时加上 X 锁
 
-        ```sql
-        SELECT cash INTO @cash FROM account WHERE user = pUser FOR UPDATE;
-        ```
+    ```sql
+    SELECT cash INTO @cash FROM account WHERE user = pUser FOR UPDATE;
+    ```
 
-* 脏读
+- 脏读
 
-    * 事务隔离级别为READ UNCOMMITTED会产生，隔离级别为READ COMMITTED时不会有该问题;
+  - 事务隔离级别为 READ UNCOMMITTED 会产生，隔离级别为 READ COMMITTED 时不会有该问题;
 
-* 不可重复读
+- 不可重复读
 
-    * 同一事务中相同查询多次运行的结果不一样;
-    * 事务隔离级别为READ COMMITTED会产生，隔离级别为REPEATABLE READ时不会有该问题;
-
+  - 同一事务中相同查询多次运行的结果不一样;
+  - 事务隔离级别为 READ COMMITTED 会产生，隔离级别为 REPEATABLE READ 时不会有该问题;
 
 ## Install MySQL from source
 
 ref: http://dev.mysql.com/doc/refman/5.6/en/installing-source-distribution.html
 
-* Download the source tar ball from mysql.com
+- Download the source tar ball from mysql.com
 
-* Install configure/compile tools
+- Install configure/compile tools
 
-    ```sh
-    sudo apt-get install cmake
-    ```
+  ```sh
+  sudo apt-get install cmake
+  ```
 
-* Configure / compile / install
+- Configure / compile / install
 
-    ```sh
-    tar xzf mysql-5.6.15.tar.gz
-    cd mysql-5.6.15/
+  ```sh
+  tar xzf mysql-5.6.15.tar.gz
+  cd mysql-5.6.15/
 
-    # configure, specify installation base directory, all options available through 'cmake . -LAH'
-    cmake . -DCMAKE_INSTALL_PREFIX=/opt/mysql
+  # configure, specify installation base directory, all options available through 'cmake . -LAH'
+  cmake . -DCMAKE_INSTALL_PREFIX=/opt/mysql
 
-    # compile and install
-    make
-    sudo make install DESTDIR="/opt/mysql"
-    ```
+  # compile and install
+  make
+  sudo make install DESTDIR="/opt/mysql"
+  ```
 
-* Post installation steps
+- Post installation steps
 
-    ```sh
-    # create a link
-    cd /opt
-    sudo mv mysql/ mysql-5.6.15
-    sudo ln -s mysql-5.6.15/ mysql
+  ```sh
+  # create a link
+  cd /opt
+  sudo mv mysql/ mysql-5.6.15
+  sudo ln -s mysql-5.6.15/ mysql
 
-    cd mysql
-    sudo chown -R mysql:mysql .
+  cd mysql
+  sudo chown -R mysql:mysql .
 
-    # use the '--no-defaults' flag to suppress using default conf file
-    sudo ./scripts/mysql_install_db --user=mysql --no-defaults
+  # use the '--no-defaults' flag to suppress using default conf file
+  sudo ./scripts/mysql_install_db --user=mysql --no-defaults
 
-    sudo chown -R root .
-    sudo chown -R mysql data
+  sudo chown -R root .
+  sudo chown -R mysql data
 
-    # edit the config file, start the server
-    sudo bin/mysqld_safe --defaults-file=my-new.cnf
-    ```
+  # edit the config file, start the server
+  sudo bin/mysqld_safe --defaults-file=my-new.cnf
+  ```
 
 ### Multiple MySQL server instances on one machine
 
@@ -527,15 +514,13 @@ Repeat above steps for more mysql server instances
 
 **OR, use `mysqld_multi` to manage multiple instances**
 
-
 ## Timezone
 
 Timezone variables:
 
-* `system_time_zone`: default to system timezone setting, can not be changed;
-* `global.time_zone`: default to 'SYSTEM';
-* `session.time_zone`: default to `global.time_zone`, can be changed per session, results of `now()` depend on this;
-
+- `system_time_zone`: default to system timezone setting, can not be changed;
+- `global.time_zone`: default to 'SYSTEM';
+- `session.time_zone`: default to `global.time_zone`, can be changed per session, results of `now()` depend on this;
 
 ```sql
 MYSQL> select @@system_time_zone;
@@ -616,4 +601,3 @@ MySQL introduced 'strict' mode from v5.6, to turn it off, add the following line
 ```
 sql_mode=""
 ```
-

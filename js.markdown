@@ -1,5 +1,4 @@
-Javascript
-===============
+# Javascript
 
 General topics about Javascript and front-end develpoment.
 
@@ -45,31 +44,31 @@ General topics about Javascript and front-end develpoment.
 
 ## Data types in JS
 
-* undefined
-* null
-* boolean
-* number
-* string
-* object
-* symbol	-> introduced in ES6
+- undefined
+- null
+- boolean
+- number
+- string
+- object
+- symbol -> introduced in ES6
 
 string and number got accompanying wrapper object (`String` and `Number`)
 
 please note:
 
-* **`String('abc')` is the same as `'abc'`, they are both of primitive string value**
-* **`String('abc')` is different from `new String('abc')`, the later is an object**
+- **`String('abc')` is the same as `'abc'`, they are both of primitive string value**
+- **`String('abc')` is different from `new String('abc')`, the later is an object**
 
 example
 
 ```javascript
-typeof 'abc'  			// 'string'
-typeof String('abc')	// 'string'
-'abc' === String('abc') // true
+typeof "abc"; // 'string'
+typeof String("abc"); // 'string'
+"abc" === String("abc"); // true
 
-s = new String('abc') 	// [String: 'abc']
-typeof s				// 'object'
-s === 'abc'				// false
+s = new String("abc"); // [String: 'abc']
+typeof s; // 'object'
+s === "abc"; // false
 ```
 
 ### Type casting and coercion
@@ -84,17 +83,17 @@ parseInt("42", 10) -> 42;
 
 ### Truesy and falsey
 
-* falsey values:
+- falsey values:
 
-	`false`, `null`, `undefined`, `''`, `0`, `NaN`
+      	`false`, `null`, `undefined`, `''`, `0`, `NaN`
 
-* trusey values:
+- trusey values:
 
-	`'0'`, `'false'`, `[]`, `{}`, ...
+      	`'0'`, `'false'`, `[]`, `{}`, ...
 
 ## Objects
 
-* define object using object literal
+- define object using object literal
 
 ```javascript
 var circle = {
@@ -102,22 +101,22 @@ var circle = {
 };
 ```
 
-* define object using Object constructor:
+- define object using Object constructor:
 
 ```javascript
 var circle = new Object();
 circle.radius = 2;
 ```
 
-* define objects using custom constructor:
+- define objects using custom constructor:
 
 ```javascript
 var Circle = function(radius) {
-    this.radius = radius;
-    this.area = function () {
-        return Math.PI * this.radius * this.radius;
-    };
-}
+  this.radius = radius;
+  this.area = function() {
+    return Math.PI * this.radius * this.radius;
+  };
+};
 
 var circle = new Circle(2);
 ```
@@ -127,15 +126,15 @@ var circle = new Circle(2);
 ## Prototype
 
 ```javascript
-function Dog (breed) {
-    this.breed = breed;
-};
+function Dog(breed) {
+  this.breed = breed;
+}
 
 var buddy = new Dog("golden Retriever");
 
 // add a method to prototype of Dog
 Dog.prototype.bark = function() {
-    console.log("Woof");
+  console.log("Woof");
 };
 ```
 
@@ -145,45 +144,45 @@ Dog.prototype.bark = function() {
 
 ```javascript
 function Gizmo(id) {
-    this.id = id;
+  this.id = id;
 }
 
 Gizmo.prototype.toString = function() {
-    return "gizmo " + this.id;
-}
+  return "gizmo " + this.id;
+};
 var g = new Gizmo(1);
 ```
 
 ![Object](./images/js_obj.png)
 
-* `Gizmo` is a Function Object, which has a `prototype` property points to another Object;
-* `Gizmo.prototype` has a `constructor` property points to `Gizmo`, a `__proto__` property points to `Object.prototype`;
-* `g` does **not** have a `prototype` property, but has a `__proto__` property, which points to `Gizmo.prototype`
+- `Gizmo` is a Function Object, which has a `prototype` property points to another Object;
+- `Gizmo.prototype` has a `constructor` property points to `Gizmo`, a `__proto__` property points to `Object.prototype`;
+- `g` does **not** have a `prototype` property, but has a `__proto__` property, which points to `Gizmo.prototype`
 
 ```javascript
 g.__proto__ === Gizmo.prototype; // true
 Gizmo.prototype.__proto__ === Object.prototype; // true
 ```
 
-* then add a Hoozit constructor:
+- then add a Hoozit constructor:
 
 ```javascript
 function Hoozit(id) {
-    this.id = id;
+  this.id = id;
 }
 Hoozit.prototype = new Gizmo();
-Hoozit.prototype.test = function (id) {
-    return this.id === id;
-}
+Hoozit.prototype.test = function(id) {
+  return this.id === id;
+};
 var h = new Hoozit(2);
 ```
 
-* **only functions have `prototype` property;**
-* **every object has an `__proto__` property;**
-* `(new Foo).__proto__ === Foo.prototype`, so the `prototype` of a function is used to build the `__proto__` chain;
-* **everytime a function is defined, it got a prototype object, `Foo` is an object, `Foo.prototype` is another object;**
+- **only functions have `prototype` property;**
+- **every object has an `__proto__` property;**
+- `(new Foo).__proto__ === Foo.prototype`, so the `prototype` of a function is used to build the `__proto__` chain;
+- **everytime a function is defined, it got a prototype object, `Foo` is an object, `Foo.prototype` is another object;**
 
-* when using `new Foo()` to create an object, the function `Foo()` will always be run, although `Foo.prototype.constructor` can point to another function
+- when using `new Foo()` to create an object, the function `Foo()` will always be run, although `Foo.prototype.constructor` can point to another function
 
         > function Animal(name, age) {
         ... this.name = name;
@@ -209,27 +208,27 @@ another illustration created by myself:
 
 ## Javascript: The Good Parts
 
-* **`var`**
+- **`var`**
 
 ```js
 var a = 0; //local to function scope
-b = 0;     //global scope
+b = 0; //global scope
 ```
 
 the following statement:
 
 ```js
-var a=b=0;
+var a = (b = 0);
 ```
 
 equals to:
 
 ```js
-b = 0;      // b becomes global !!!
+b = 0; // b becomes global !!!
 var a = b;
 ```
 
-* **variable scope**
+- **variable scope**
 
 javascript is **function scoped**, not block scoped, so:
 
@@ -254,7 +253,7 @@ function foo() {
 }
 ```
 
-* **`let` statement**
+- **`let` statement**
 
 `let` statement respect block scoping, so the following code does what it seems to do:
 
@@ -262,44 +261,43 @@ function foo() {
 foo(let i=0; ...} {}
 ```
 
-* **numbers**
+- **numbers**
 
-    * javascript only has one number type, which is 64bit double;
-    * `NaN` is a number;
-    * `NaN` is not equal to anything, including `NaN` itself;
-    * any arithmetic operation with `NaN` will result in `NaN`;
+  - javascript only has one number type, which is 64bit double;
+  - `NaN` is a number;
+  - `NaN` is not equal to anything, including `NaN` itself;
+  - any arithmetic operation with `NaN` will result in `NaN`;
 
-    ```js
-    0.1 + 0.2 !== 0.3; // this can cause problems when dealing with money
-    (a + b) + c === a + (b + c);  // can be false, this is not a js specific problem
+  ```js
+  0.1 + 0.2 !== 0.3; // this can cause problems when dealing with money
+  a + b + c === a + (b + c); // can be false, this is not a js specific problem
 
-    Infinity + 1 === Infinity; // true
-    Number.MAX_VALUE + 1 === Number.MAX_VALUE;  // true
-    ```
+  Infinity + 1 === Infinity; // true
+  Number.MAX_VALUE + 1 === Number.MAX_VALUE; // true
+  ```
 
-* **`null` isn't anything**
+- **`null` isn't anything**
 
-    ```js
-    typeof null === 'object'; // null's type is 'object'
-    ```
+  ```js
+  typeof null === "object"; // null's type is 'object'
+  ```
 
-* **`undefined`: default value for uninitialized variables and parameters**
+- **`undefined`: default value for uninitialized variables and parameters**
 
-	always use `typeof x === 'undefined'` to check if a variable exists or not,
+      	always use `typeof x === 'undefined'` to check if a variable exists or not,
 
-    Comparison with `null`:
+  Comparison with `null`:
 
-    * `undefined` is a super global variable, you can override it: `let undefined = 'foo'`, while `null` is a keyword;
-    * `undeined` is of type `undefined`, `null` is of type `object`;
-
+  - `undefined` is a super global variable, you can override it: `let undefined = 'foo'`, while `null` is a keyword;
+  - `undeined` is of type `undefined`, `null` is of type `object`;
 
 * **`typeof`**
 
-    ```js
-    var a = [1, 2];
-    typeof a === 'object'; // typeof array returns 'object'
-    Array.isArray(a);      // true, use this to check arrays
-    ```
+  ```js
+  var a = [1, 2];
+  typeof a === "object"; // typeof array returns 'object'
+  Array.isArray(a); // true, use this to check arrays
+  ```
 
 * **`+`**
 
@@ -310,26 +308,25 @@ foo(let i=0; ...} {}
             convert to string and concatenate
         end
 
-    ```js
-    2 + '3' -> '23'
-    ```
+  ```js
+  2 + '3' -> '23'
+  ```
 
 * **`%`**
 
-    `%` is a remainder operator, takes sign from the first operator, not a modulo operator, which takes sign from the second operator
+  `%` is a remainder operator, takes sign from the first operator, not a modulo operator, which takes sign from the second operator
 
 ```js
 -1 % 8 -> -1;
 ```
 
-* **`&&`** , **`||`**
+- **`&&`** , **`||`**
 
-    **not necessarily return boolean values**, just return values of one operand
+  **not necessarily return boolean values**, just return values of one operand
 
-* **`!!`**
+- **`!!`**
 
-    convert truesy value to `true`, falsy value to `false`
-
+  convert truesy value to `true`, falsy value to `false`
 
 ## Functions
 
@@ -338,7 +335,7 @@ foo(let i=0; ...} {}
 var foo = function() {};
 
 // function statement
-function foo() {};
+function foo() {}
 
 // function statement is a short-hand for var statement, which will expand to:
 var foo = undefined;
@@ -348,18 +345,18 @@ foo = function() {};
 the difference between these two methods of defining functions:
 
 ```javascript
-console.log(typeof statementFoo);   // function
-statementFoo();    // NOTE this function runs fine here
+console.log(typeof statementFoo); // function
+statementFoo(); // NOTE this function runs fine here
 
-console.log(typeof expressionFoo);  // undefined
-expressionFoo();   // NOTE throws an error, expressionFoo is still undefined here
+console.log(typeof expressionFoo); // undefined
+expressionFoo(); // NOTE throws an error, expressionFoo is still undefined here
 
 function statementFoo() {
-    console.log("an statement function");
+  console.log("an statement function");
 }
 
 var expressionFoo = function() {
-    console.log("an expression function");
+  console.log("an expression function");
 };
 ```
 
@@ -367,34 +364,33 @@ var expressionFoo = function() {
 
 ### the `arguments` parameter
 
-* each function receives two pseudo parameters: `arguments` and `this`;
+- each function receives two pseudo parameters: `arguments` and `this`;
 
-* `arguments` is an **array-like object** which has an `length` property and contains all the parameters;
+- `arguments` is an **array-like object** which has an `length` property and contains all the parameters;
 
-* it is recommended to use rest syntax instead of `arguments`;
+- it is recommended to use rest syntax instead of `arguments`;
 
 ```javascript
 // use arguments to create a function with variable length parameters
 function sum() {
-    var i,
-        n = arguments.length,
-        total = 0;
-    for (i=0; i<n; i++) {
-        total += arguments[i];
-    }
-    return total;
+  var i,
+    n = arguments.length,
+    total = 0;
+  for (i = 0; i < n; i++) {
+    total += arguments[i];
+  }
+  return total;
 }
 
 console.log(sum(1, 2, 3, 4));
 
 // with rest syntax
 function sum(...args) {
-    return args.reduce((total, e) => total + e, 0);
+  return args.reduce((total, e) => total + e, 0);
 }
 
 console.log(sum(1, 2, 3, 4));
 ```
-
 
 ## The `this` keyword
 
@@ -402,26 +398,26 @@ every function receives an implicit `this` parameter, which is bound at invocati
 
 four ways to call a function:
 
-* Function form
+- Function form
 
-    * `this` binds to the global object, which cause problems
-    * in ES5/Strict, `this` binds to `undefined`
-    * outer `this` is not accessible from inner functions, use `var that = this;` to pass it
+  - `this` binds to the global object, which cause problems
+  - in ES5/Strict, `this` binds to `undefined`
+  - outer `this` is not accessible from inner functions, use `var that = this;` to pass it
 
 ```javascript
 functionObject(arguments);
 ```
 
-* Method form
+- Method form
 
 `this` binds to `thisObject`
 
 ```javascript
 thisObject.methodName(arguments);
-thisObject['methodName'](arguments);
+thisObject["methodName"](arguments);
 ```
 
-* Constructor form
+- Constructor form
 
 a new object is created and assigned to `this`, if not an explicit return value, then `this` will be returned
 
@@ -429,7 +425,7 @@ a new object is created and assigned to `this`, if not an explicit return value,
 new FunctionObject(arguments);
 ```
 
-* Apply form
+- Apply form
 
 explicitly bind an object to 'this'
 
@@ -438,62 +434,74 @@ functionObject.apply(thisObject, arguements);
 functionObject.call(thisObject, arg1, arg2, ...);
 ```
 
-* `this` scope example
+- `this` scope example
 
 ```javascript
 var person = {
-    'name': 'Gary',
-    'hobbies': ['tennis', 'badminton', 'hiking'],
+  name: "Gary",
+  hobbies: ["tennis", "badminton", "hiking"],
 
-    // 'this' scope error, will be undefined
-    'print': function(){
-        console.log("// Wrong, \'this\' will be undefined.");
-        this.hobbies.forEach(function(hobby){
-            console.log(this.name + ' likes ' + hobby);
-        });
-    },
+  // 'this' scope error, will be undefined
+  print: function() {
+    console.log("// Wrong, 'this' will be undefined.");
+    this.hobbies.forEach(function(hobby) {
+      console.log(this.name + " likes " + hobby);
+    });
+  },
 
-    // use '_this' to pass the correct context this in
-    'print2': function(){
-        var _this = this;
-        console.log("// use '_this' to pass the correct context this in");
-        this.hobbies.forEach(function(hobby){
-            console.log(_this.name + ' likes ' + hobby);
-        });
-    },
+  // use '_this' to pass the correct context this in
+  print2: function() {
+    var _this = this;
+    console.log("// use '_this' to pass the correct context this in");
+    this.hobbies.forEach(function(hobby) {
+      console.log(_this.name + " likes " + hobby);
+    });
+  },
 
-    // use 'bind' to get the correct this
-    'print3': function(){
-        console.log("// use 'bind' to get the correct this");
-        this.hobbies.forEach(function(hobby){
-            console.log(this.name + ' likes ' + hobby);
-        }.bind(this));
-    },
+  // use 'bind' to get the correct this
+  print3: function() {
+    console.log("// use 'bind' to get the correct this");
+    this.hobbies.forEach(
+      function(hobby) {
+        console.log(this.name + " likes " + hobby);
+      }.bind(this)
+    );
+  },
 
-    // use arrow function syntax, this is the recommended way
-    'print4': function(){
-        console.log("// use arrow function syntax");
-        this.hobbies.forEach(hobby => {
-            console.log(this.name + ' likes ' + hobby);
-        });
-    }
-}
+  // use arrow function syntax, this is the recommended way
+  print4: function() {
+    console.log("// use arrow function syntax");
+    this.hobbies.forEach(hobby => {
+      console.log(this.name + " likes " + hobby);
+    });
+  }
+};
 ```
-
 
 ## Closures
 
-When a function gets declared, it contains a function definition and *a closure*. The closure is a collection of all the variables in scope at the time of creation of the function.
+When a function gets declared, it contains a function definition and _a closure_. The closure is a collection of all the variables in scope at the time of creation of the function.
 
 Think of a closure as a backpack, it is attached to the function, when a function get passed around, the backpack get passed around with it.
 
 ```javascript
-var digit_name = (function(){
-    var names = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
-    return function(n){
-        return names[n];
-    };
-}());
+var digit_name = (function() {
+  var names = [
+    "zero",
+    "one",
+    "two",
+    "three",
+    "four",
+    "five",
+    "six",
+    "seven",
+    "eight",
+    "nine"
+  ];
+  return function(n) {
+    return names[n];
+  };
+})();
 
 console.log(digit_name(2));
 ```
@@ -505,7 +513,7 @@ console.log(digit_name(2));
 const arr = [10, 12, 15, 21];
 for (var i = 0; i < arr.length; i++) {
   setTimeout(function() {
-    console.log('Index: ' + i + ', element: ' + arr[i]);
+    console.log("Index: " + i + ", element: " + arr[i]);
   }, 300);
 }
 ```
@@ -524,10 +532,14 @@ you can fix this by add a separate closure for each loop iteration, in this case
 ```js
 const arr = [10, 12, 15, 21];
 for (var i = 0; i < arr.length; i++) {
-    setTimeout((function(i) {
-        return function() {
-            console.log('The index of this number is: ' + i);}
-    })(i), 300);
+  setTimeout(
+    (function(i) {
+      return function() {
+        console.log("The index of this number is: " + i);
+      };
+    })(i),
+    300
+  );
 }
 ```
 
@@ -540,7 +552,7 @@ for (let i = 0; i < arr.length; i++) {
   // every single time the function is called
   // read more here: http://exploringjs.com/es6/ch_variables.html#sec_let-const-loop-heads
   setTimeout(function() {
-    console.log('The index of this number is: ' + i);
+    console.log("The index of this number is: " + i);
   }, 300);
 }
 ```
@@ -549,25 +561,26 @@ for (let i = 0; i < arr.length; i++) {
 
 See [let - MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/let) for details
 
-* `var` declarations will be hoisted to the top of **function scope**, and the value is `undefined`;
-* `let` bindings are created at the top of the **block scope**, but unlike `var`, you can't read or write it, you get a `ReferenceError` if using it before the definition is evaluated;
+- `var` declarations will be hoisted to the top of **function scope**, and the value is `undefined`;
+- `let` bindings are created at the top of the **block scope**, but unlike `var`, you can't read or write it, you get a `ReferenceError` if using it before the definition is evaluated;
 
 ```js
 function do_something() {
-    console.log(bar); // undefined
-    console.log(foo); // ReferenceError, in 'Temporal Dead Zone'
-    var bar = 1;
-    let foo = 2;
+  console.log(bar); // undefined
+  console.log(foo); // ReferenceError, in 'Temporal Dead Zone'
+  var bar = 1;
+  let foo = 2;
 }
 ```
 
 the `foo` in `(foo + 55)` is the `foo` in the `if` block, not the `foo` declared by `var`
+
 ```js
-function test(){
-    var foo = 33;
-    if (true) {
-        let foo = (foo + 55); // ReferenceError
-    }
+function test() {
+  var foo = 33;
+  if (true) {
+    let foo = foo + 55; // ReferenceError
+  }
 }
 test();
 ```
@@ -576,10 +589,10 @@ test();
 
 ### named groups
 
-*ES 2018*
+_ES 2018_
 
 ```js
-const date = '2018-05-16';
+const date = "2018-05-16";
 const re = /(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})/u;
 const result = re.exec(date);
 console.log(result);
@@ -591,7 +604,7 @@ console.log(result);
 //  input: '2018-05-16',
 //  groups: { year: '2018', month: '05', day: '16' } ]
 
-console.log(result.groups.year);       // get the value of a matched group
+console.log(result.groups.year); // get the value of a matched group
 //2018
 ```
 
@@ -601,9 +614,9 @@ back reference named groups in a regular expression
 const re = /(?<fruit>apple|orange) == \k<fruit>/u;
 
 console.log(
-    re.test('apple == apple'),      // true
-    re.test('orange == orange'),    // true
-    re.test('apple == orange'),     // false
+  re.test("apple == apple"), // true
+  re.test("orange == orange"), // true
+  re.test("apple == orange") // false
 );
 ```
 
@@ -612,14 +625,12 @@ use named groups in string repalcing
 ```js
 const re = /(?<firstName>[a-zA-Z]+) (?<lastName>[a-zA-Z]+)/u;
 
-console.log('Arya Stark'.replace(re, '$<lastName>, $<firstName>'));     // Stark, Arya
+console.log("Arya Stark".replace(re, "$<lastName>, $<firstName>")); // Stark, Arya
 ```
-
 
 ## Style guide
 
 please refer to the specific note on JS Coding Styles
-
 
 ## Module Systems
 
@@ -631,9 +642,9 @@ asynchronous, unblocking
 
 ```js
 // this is an AMD module
-define(function () {
-    return something
-})
+define(function() {
+  return something;
+});
 ```
 
 ### CommonJS (CJS)
@@ -642,7 +653,7 @@ synchronous, blocking, easier to understand
 
 ```js
 // and this is CommonJS
-module.exports = something
+module.exports = something;
 ```
 
 ### ES6
@@ -651,65 +662,62 @@ example, `lib.js`:
 
 ```js
 let person = {
-    'name': 'gary',
-    'age': 30,
+  name: "gary",
+  age: 30
 };
 
 let position = {
-    'x': 20,
-    'y': 30,
+  x: 20,
+  y: 30
 };
 
 export default person;
-export {position};
+export { position };
 ```
 
 `app.js`:
 
 ```js
-import theDefault from './lib';
-import {position as p, imaginedVar} from './lib';
-import * as all from './lib';
+import theDefault from "./lib";
+import { position as p, imaginedVar } from "./lib";
+import * as all from "./lib";
 
-console.log('theDefault:');
+console.log("theDefault:");
 console.log(theDefault);
 
-console.log('position:');
+console.log("position:");
 console.log(p);
 
-console.log('imaginedVar:');
+console.log("imaginedVar:");
 console.log(imaginedVar);
 
-console.log('all:');
+console.log("all:");
 console.log(all);
 ```
 
-
 run `app.js`:
 
-	theDefault:
-	{ name: 'gary', age: 30 }
-	position:
-	{ x: 20, y: 30 }
-	imaginedVar:
-	undefined
-	all:
-	{ default: { name: 'gary', age: 30 },
-	  position: { x: 20, y: 30 } }
-
+    theDefault:
+    { name: 'gary', age: 30 }
+    position:
+    { x: 20, y: 30 }
+    imaginedVar:
+    undefined
+    all:
+    { default: { name: 'gary', age: 30 },
+      position: { x: 20, y: 30 } }
 
 or you can put everything on one line:
 
 ```js
-import theDefault, {position as p, imaginedVar} from './lib';
+import theDefault, { position as p, imaginedVar } from "./lib";
 ```
 
 if you just want to trigger the side effect, do not actually import any binding:
 
 ```js
-import './myModule';
+import "./myModule";
 ```
-
 
 ## Symbol
 
@@ -719,69 +727,68 @@ Symbol is a new primitive value type in ES6
 
 There are three different flavors of symbols - each flavor is accessed in a different way:
 
-1. **local symbols**
+1.  **local symbols**
 
-	you can obtain a reference to them directly;
+    you can obtain a reference to them directly;
 
-	create a local symbol:
-
-    ```js
-    let s = Symbol('a desc');
-    ```
-
-	**you can NOT use `new Symbol()` to create a symbol value**
-
-	local symbols are **immutable** and **unique**
+    create a local symbol:
 
     ```js
-    Symbol() === Symbol()   // false
+    let s = Symbol("a desc");
     ```
 
-	you can add a description when creating symbols, it's just for debugging purpose
+    **you can NOT use `new Symbol()` to create a symbol value**
+
+    local symbols are **immutable** and **unique**
 
     ```js
-    s = Symbol('gary symbol')   // Symbol(gary symbol)
+    Symbol() === Symbol(); // false
     ```
 
-2. **global registry symbols**
+    you can add a description when creating symbols, it's just for debugging purpose
 
-	you can place symbols to the global registry and access them across realms;
+    ```js
+    s = Symbol("gary symbol"); // Symbol(gary symbol)
+    ```
 
-	create a global symbol by `Symbol.for(key)`:
+2.  **global registry symbols**
 
-			let s = Symbol.for('Gary');
+    you can place symbols to the global registry and access them across realms;
 
-	it's **idempotent**, which means for any given key, you will always get the exactly same symbol:
+    create a global symbol by `Symbol.for(key)`:
 
-			Symbol.for('Gary') === Symbol.for('Gary');
+        	let s = Symbol.for('Gary');
 
-	get the key of a symbol:
+    it's **idempotent**, which means for any given key, you will always get the exactly same symbol:
 
-			let key = Symbol.keyFor(s);
+        	Symbol.for('Gary') === Symbol.for('Gary');
 
+    get the key of a symbol:
 
-3. **"Well-known" symbols**
+        	let key = Symbol.keyFor(s);
 
-	they exist across realms, but you can't create them and they're not on the global registry;
+3) **"Well-known" symbols**
 
-	**these actually are NOT well-known at all**, they are JS built-ins, and they are used to control parts of the language, they weren't exposed to user code before ES6.
+   they exist across realms, but you can't create them and they're not on the global registry;
 
-	refer to this [MDN - Symbol](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Symbol) page to see a full list:
+   **these actually are NOT well-known at all**, they are JS built-ins, and they are used to control parts of the language, they weren't exposed to user code before ES6.
 
-	* `Symbol.hasInstance`
-	* `Symbol.isConcatSpreadable`
-	* `Symbol.iterator`
-	* `Symbol.match`
-	* `Symbol.prototype`
-	* `Symbol.replace`
-	* `Symbol.search`
-	* `Symbol.species`
-	* `Symbol.split`
-	* `Symbol.toPrimitive`
-	* `Symbol.toStringTag`
-	* `Symbol.unscopables`
+   refer to this [MDN - Symbol](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Symbol) page to see a full list:
 
-	one of the most useful symbols is `Symbol.iterator`, which can be used to define the `@@iterator` method on an object, convert it to be `iterable`, it's just like implementing the `Iterable` interface in other languages
+   - `Symbol.hasInstance`
+   - `Symbol.isConcatSpreadable`
+   - `Symbol.iterator`
+   - `Symbol.match`
+   - `Symbol.prototype`
+   - `Symbol.replace`
+   - `Symbol.search`
+   - `Symbol.species`
+   - `Symbol.split`
+   - `Symbol.toPrimitive`
+   - `Symbol.toStringTag`
+   - `Symbol.unscopables`
+
+   one of the most useful symbols is `Symbol.iterator`, which can be used to define the `@@iterator` method on an object, convert it to be `iterable`, it's just like implementing the `Iterable` interface in other languages
 
 
     ```js
@@ -813,58 +820,56 @@ There are three different flavors of symbols - each flavor is accessed in a diff
 
 Main usages for symbols:
 
-1. **as property keys**
+1.  **as property keys**
 
-	as each symbol is unique, it can be used to avoid name clashes
+    as each symbol is unique, it can be used to avoid name clashes
 
-2. **Privacy ?**
+2.  **Privacy ?**
 
-	symbol keys can not be accessed by `Object.keys`, `Object.getOwnPropertyNames`, `JSON.stringify`, and `for .. in` loops
+    symbol keys can not be accessed by `Object.keys`, `Object.getOwnPropertyNames`, `JSON.stringify`, and `for .. in` loops
 
-		> let obj = {
-			[Symbol('name')]: 1,
-			[Symbol('name')]: 2,
-			[Symbol.for('age')]: 10,
-			color: 'red'
-			}
+        > let obj = {
+        	[Symbol('name')]: 1,
+        	[Symbol('name')]: 2,
+        	[Symbol.for('age')]: 10,
+        	color: 'red'
+        	}
 
-		> Object.keys(obj)
-		[ 'color' ]
+        > Object.keys(obj)
+        [ 'color' ]
 
-		> console.log(Object.getOwnPropertyNames(obj))
-		[ 'color' ]
+        > console.log(Object.getOwnPropertyNames(obj))
+        [ 'color' ]
 
-		> console.log(JSON.stringify(obj))
-		{"color":"red"}
+        > console.log(JSON.stringify(obj))
+        {"color":"red"}
 
-		> for (let key in obj) {
-			console.log(key);
-			}
-		color
+        > for (let key in obj) {
+        	console.log(key);
+        	}
+        color
 
 
-	but you can access them thru `Object.getOwnPropertySymbols`
+    but you can access them thru `Object.getOwnPropertySymbols`
 
-		> console.log(Object.getOwnPropertySymbols(obj))
-		[ Symbol(name), Symbol(name), Symbol(age) ]
-
+    	> console.log(Object.getOwnPropertySymbols(obj))
+    	[ Symbol(name), Symbol(name), Symbol(age) ]
 
 3. **Defining Protocols**
 
-	just like there's `Symbol.iterator` which allows you to define how an object can be iterated
-
+   just like there's `Symbol.iterator` which allows you to define how an object can be iterated
 
 ## Iterations
 
-* `for..of` loop
+- `for..of` loop
 
 ```javascript
-'use strict';
+"use strict";
 
-let characters = ['Jon', 'Sansa', 'Arya', 'Tyrion', 'Cercei'];
+let characters = ["Jon", "Sansa", "Arya", "Tyrion", "Cercei"];
 
 for (let c of characters) {
-    console.log(c);
+  console.log(c);
 }
 // Jon
 // Sansa
@@ -872,10 +877,9 @@ for (let c of characters) {
 // Tyrion
 // Cercei
 
-
 // NOTE compare with the for..in loop
 for (let c in characters) {
-    console.log(c);
+  console.log(c);
 }
 // 0
 // 1
@@ -884,13 +888,20 @@ for (let c in characters) {
 // 4
 ```
 
-* iterate an object's properties
+- iterate an object's properties
 
 ```javascript
-let o = {5e5: '$500K', 1e6: '$1M', 2e6: '$2M', 3e6: '$3M', 5e6: '$5M', 10e6: '$10M'};
+let o = {
+  5e5: "$500K",
+  1e6: "$1M",
+  2e6: "$2M",
+  3e6: "$3M",
+  5e6: "$5M",
+  10e6: "$10M"
+};
 
 for (let [n, v] of Object.entries(o)) {
-    console.log(n, v);
+  console.log(n, v);
 }
 
 // 500000 $500K
@@ -899,41 +910,40 @@ for (let [n, v] of Object.entries(o)) {
 // 3000000 $3M
 // 5000000 $5M
 // 10000000 $10M
-
 ```
 
-* custom iterator
+- custom iterator
 
-    you can add a custom iterator to an object:
+  you can add a custom iterator to an object:
 
-    * using the `Symbol.iterator` property, which should be a function, this function executes once when the iteration starts, and returns an object containing a `next` method;
+  - using the `Symbol.iterator` property, which should be a function, this function executes once when the iteration starts, and returns an object containing a `next` method;
 
-    * this `next` method should instead return an object that contains two properties: `done` and `value`, the `done` property is checked to see if the iteration finished;
+  - this `next` method should instead return an object that contains two properties: `done` and `value`, the `done` property is checked to see if the iteration finished;
 
 example
 
 ```javascript
 // NOTE you can define a custom iteration function for an object
-'use strict';
+"use strict";
 
 // a custom id maker that generates ids from 100 to 105
 let idMaker = {
-    [Symbol.iterator]() {
-        let currentId = 100;
-        let maxId = 105;
+  [Symbol.iterator]() {
+    let currentId = 100;
+    let maxId = 105;
+    return {
+      next() {
         return {
-            next() {
-                return {
-                    done: currentId > maxId,
-                    value: currentId++,
-                };
-            }
+          done: currentId > maxId,
+          value: currentId++
         };
-    }
+      }
+    };
+  }
 };
 
 for (let id of idMaker) {
-    console.log(id);
+  console.log(id);
 }
 // 100
 // 101
@@ -947,8 +957,8 @@ let iter = idMaker[Symbol.iterator]();
 let next = iter.next();
 
 while (!next.done) {
-    console.log(next.value);
-    next = iter.next();
+  console.log(next.value);
+  next = iter.next();
 }
 // 100
 // 101
@@ -960,7 +970,7 @@ while (!next.done) {
 
 ## Promise
 
-JS uses callbacks a lot, if not handled properly, it will lead to [Callback Hell][callback-hell], Promise was introduced in ES6, it's a way to simplify asynchronous programming by making code *look* synchronous and avoid callback hell.
+JS uses callbacks a lot, if not handled properly, it will lead to [Callback Hell][callback-hell], Promise was introduced in ES6, it's a way to simplify asynchronous programming by making code _look_ synchronous and avoid callback hell.
 
 [A Simple Guide to ES6 Promises](https://codeburst.io/a-simple-guide-to-es6-promises-d71bacd2e13a)
 
@@ -969,20 +979,23 @@ JS uses callbacks a lot, if not handled properly, it will lead to [Callback Hell
 [this page][callback-hell] explains what is callback hell and how to avoid it, by **giving callback functions a name, moving them to the top level of a file or a separate file**
 
 ```js
-var form = document.querySelector('form');
+var form = document.querySelector("form");
 
-form.onsubmit = function (submitEvent) {
-  var name = document.querySelector('input').value
-  request({
-    uri: "http://example.com/upload",
-    body: name,
-    method: "POST"
-  }, function (err, response, body) {
-    var statusMessage = document.querySelector('.status')
-    if (err) return statusMessage.value = err
-    statusMessage.value = body
-  })
-}
+form.onsubmit = function(submitEvent) {
+  var name = document.querySelector("input").value;
+  request(
+    {
+      uri: "http://example.com/upload",
+      body: name,
+      method: "POST"
+    },
+    function(err, response, body) {
+      var statusMessage = document.querySelector(".status");
+      if (err) return (statusMessage.value = err);
+      statusMessage.value = body;
+    }
+  );
+};
 ```
 
 refactor the above code by moving the callback functions to a separate module
@@ -990,27 +1003,30 @@ refactor the above code by moving the callback functions to a separate module
 ```js
 module.exports.submit = formSubmit;
 
-function formSubmit (submitEvent) {
-  var name = document.querySelector('input').value
-  request({
-    uri: "http://example.com/upload",
-    body: name,
-    method: "POST"
-  }, postResponse)
+function formSubmit(submitEvent) {
+  var name = document.querySelector("input").value;
+  request(
+    {
+      uri: "http://example.com/upload",
+      body: name,
+      method: "POST"
+    },
+    postResponse
+  );
 }
 
-function postResponse (err, response, body) {
-  var statusMessage = document.querySelector('.status')
-  if (err) return statusMessage.value = err
-  statusMessage.value = body
+function postResponse(err, response, body) {
+  var statusMessage = document.querySelector(".status");
+  if (err) return (statusMessage.value = err);
+  statusMessage.value = body;
 }
 ```
 
 then import it in the main file
 
 ```js
-var formUploader = require('formuploader');
-document.querySelector('form').onsubmit = formUploader.submit;
+var formUploader = require("formuploader");
+document.querySelector("form").onsubmit = formUploader.submit;
 ```
 
 ### resolved vs. rejected
@@ -1019,50 +1035,47 @@ please see here for detailed examples about when a promise is resolved or reject
 
 take note:
 
-* it is recommended to only pass the resolved callback to   `.then()`, use `.catch()` to handle errors;
-* always use a `.catch()`;
-
-
+- it is recommended to only pass the resolved callback to `.then()`, use `.catch()` to handle errors;
+- always use a `.catch()`;
 
 ## Generator
 
-	'use strict';
+    'use strict';
 
-	// NOTE define an infinite generator
-	let idMaker = function* () {
-		let nextId = 100;
+    // NOTE define an infinite generator
+    let idMaker = function* () {
+    	let nextId = 100;
 
-		while(true) {
-			yield nextId++;
-		}
-	};
+    	while(true) {
+    		yield nextId++;
+    	}
+    };
 
-	// NOTE generator function returns an iterable
-	for (let id of idMaker()) {
-		if (id > 105) {
-			break;
-		}
-		console.log(id);
-	}
+    // NOTE generator function returns an iterable
+    for (let id of idMaker()) {
+    	if (id > 105) {
+    		break;
+    	}
+    	console.log(id);
+    }
 
 you can even yield into another iterable within a generator:
 
-	// NOTE yield another iterable in a generator
-	let myGenerator = function* () {
-		yield 'start';
-		yield* [1, 2, 3];       // <- yield into another iterable
-		yield 'end';			// <- back to the main loop
-	};
+    // NOTE yield another iterable in a generator
+    let myGenerator = function* () {
+    	yield 'start';
+    	yield* [1, 2, 3];       // <- yield into another iterable
+    	yield 'end';			// <- back to the main loop
+    };
 
-	for (let i of myGenerator()) {
-		console.log(i);
-	}
-	// start
-	// 1
-	// 2
-	// 3
-	// end
-
+    for (let i of myGenerator()) {
+    	console.log(i);
+    }
+    // start
+    // 1
+    // 2
+    // 3
+    // end
 
 ## Async/Await
 
@@ -1070,22 +1083,22 @@ you can even yield into another iterable within a generator:
 
 ```javascript
 function resolveAfter2Seconds(x) {
-    return new Promise(resolve => {
-        setTimeout(() => {
-            resolve(x);
-        }, 2000);
-    });
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve(x);
+    }, 2000);
+  });
 }
 
 async function f1() {
-    try {
-        // the compiler pauses here, when the promise resolves, the value is assigned to x,
-        //  if the promise is rejected, an error is thrown
-        var x = await resolveAfter2Seconds(10);
-        console.log(x); // 10
-    } catch (e) {
-        console.log(e);
-    }
+  try {
+    // the compiler pauses here, when the promise resolves, the value is assigned to x,
+    //  if the promise is rejected, an error is thrown
+    var x = await resolveAfter2Seconds(10);
+    console.log(x); // 10
+  } catch (e) {
+    console.log(e);
+  }
 }
 
 f1();
@@ -1093,32 +1106,30 @@ f1();
 
 See the Pen <a href='https://codepen.io/garylirocks/pen/yKRzeM/'>async/await</a>
 
-* `await` can only be used in `async` functions
-* `await` is followed by a Promise, if it resolves, it returns the resolved value, or it can throw an error
-
+- `await` can only be used in `async` functions
+- `await` is followed by a Promise, if it resolves, it returns the resolved value, or it can throw an error
 
 ## Immutability
 
-* [Immutability in React: There’s nothing wrong with mutating objects](https://blog.logrocket.com/immutability-in-react-ebe55253a1cc)
-* [Immutability in JavaScript: A Contrarian View](http://desalasworks.com/article/immutability-in-javascript-a-contrarian-view/)
-
+- [Immutability in React: There’s nothing wrong with mutating objects](https://blog.logrocket.com/immutability-in-react-ebe55253a1cc)
+- [Immutability in JavaScript: A Contrarian View](http://desalasworks.com/article/immutability-in-javascript-a-contrarian-view/)
 
 ### What is immutability ?
 
 the `string` primitive type is immutable in JS, whenever you do any manipulation on a string, a new string get created
 
-but the `String` object type *is* immutable
+but the `String` object type _is_ immutable
 
 ```js
-const s = new String('hello');
+const s = new String("hello");
 //undefined
 
-s
+s;
 //[String: 'hello']
 
 // add a new property to a String object
-s.name = 'gary';
-s
+s.name = "gary";
+s;
 // { [String: 'hello'] name: 'gary' }
 ```
 
@@ -1127,13 +1138,13 @@ s
 two references are equal when they refer to the same value if this value is immutable:
 
 ```js
-var str1 = 'abc';
-var str2 = 'abc';
-str1 === str2;      // true
+var str1 = "abc";
+var str2 = "abc";
+str1 === str2; // true
 
 var n1 = 1;
 var n2 = 1;
-n1 === n2;          // also true
+n1 === n2; // also true
 ```
 
 ![js_equality_immutable](./images/js_equality_immutable.png)
@@ -1141,13 +1152,13 @@ n1 === n2;          // also true
 but if the value is mutable, the two references are not equal:
 
 ```js
-var str1 =  new String('abc');
-var str2 = new String('abc');
-str1 === str2;      // false
+var str1 = new String("abc");
+var str2 = new String("abc");
+str1 === str2; // false
 
 var arr1 = [];
 var arr2 = [];
-arr1 === arr2;      // false
+arr1 === arr2; // false
 ```
 
 ![js_equality_mutable](./images/js_equality_mutable.png)
@@ -1156,218 +1167,226 @@ You need to use your custom methods or something like `_.isEqual` from Lo-Dash t
 
 ### Immutability tools
 
-* [Redux Ecosystem - Immutable Data](https://github.com/markerikson/redux-ecosystem-links/blob/master/immutable-data.md#immutable-update-utilities)
+- [Redux Ecosystem - Immutable Data](https://github.com/markerikson/redux-ecosystem-links/blob/master/immutable-data.md#immutable-update-utilities)
 
 #### [The JS way](https://github.com/reduxjs/redux/blob/master/docs/recipes/reducers/ImmutableUpdatePatterns.md)
 
-* Updating Nested Objects
+- Updating Nested Objects
 
-    if you want to update deeply nested state, it's become quite verbose and hard to read:
-    ```js
-    function updateVeryNestedField(state, action) {
-        return {
-            ...state,
-            first : {
-                ...state.first,
-                second : {
-                    ...state.first.second,
-                    [action.someId] : {
-                        ...state.first.second[action.someId],
-                        fourth : action.someValue
-                    }
-                }
-            }
+  if you want to update deeply nested state, it's become quite verbose and hard to read:
+
+  ```js
+  function updateVeryNestedField(state, action) {
+    return {
+      ...state,
+      first: {
+        ...state.first,
+        second: {
+          ...state.first.second,
+          [action.someId]: {
+            ...state.first.second[action.someId],
+            fourth: action.someValue
+          }
         }
-    }
-    ```
+      }
+    };
+  }
+  ```
 
-    **it's recommended to keep your state flattened, and compose reducers as much as possible, so you only need to update flat objects or arrays**
+  **it's recommended to keep your state flattened, and compose reducers as much as possible, so you only need to update flat objects or arrays**
 
-* Appending/Prepending/Inserting/Removing/Replacing/Updating Items in arrays
+- Appending/Prepending/Inserting/Removing/Replacing/Updating Items in arrays
 
-    ```js
-    // append item
-    function appendItem(array, action) {
-        return array.concat(action.item);
-    }
+  ```js
+  // append item
+  function appendItem(array, action) {
+    return array.concat(action.item);
+  }
 
-    // prepend item
-    function prependItem(array, action) {
-        return action.item.concat(array);
-    }
+  // prepend item
+  function prependItem(array, action) {
+    return action.item.concat(array);
+  }
 
-    // insert item
-    function insertItem(array, action) {
-        let newArray = array.slice();
-        newArray.splice(action.index, 0, action.item);
-        return newArray;
-    }
+  // insert item
+  function insertItem(array, action) {
+    let newArray = array.slice();
+    newArray.splice(action.index, 0, action.item);
+    return newArray;
+  }
 
-    // remove item
-    function removeItem(array, action) {
-        let newArray = array.slice();
-        newArray.splice(action.index, 1);
-        return newArray;
-    }
+  // remove item
+  function removeItem(array, action) {
+    let newArray = array.slice();
+    newArray.splice(action.index, 1);
+    return newArray;
+  }
 
-    // remove item (alternative way)
-    function removeItem(array, action) {
-        return array.filter( (item, index) => index !== action.index );
-    }
+  // remove item (alternative way)
+  function removeItem(array, action) {
+    return array.filter((item, index) => index !== action.index);
+  }
 
-    // replace item
-    function replaceItem(array, action) {
-        let newArray = array.slice();
-        newArray.splice(action.index, 1, action.item);
-        return newArray;
-    }
+  // replace item
+  function replaceItem(array, action) {
+    let newArray = array.slice();
+    newArray.splice(action.index, 1, action.item);
+    return newArray;
+  }
 
-    // update item
-    function removeItem(array, action) {
-        return array.map( (item, index) => {
-            if (index !== action.index) {
-                return item;
-            }
+  // update item
+  function removeItem(array, action) {
+    return array.map((item, index) => {
+      if (index !== action.index) {
+        return item;
+      }
 
-            // update the one we want
-            return {
-                ...item,
-                ...action.item,
-            };
-        });
-    }
-    ```
+      // update the one we want
+      return {
+        ...item,
+        ...action.item
+      };
+    });
+  }
+  ```
 
 #### [Immutable.js](https://facebook.github.io/immutable-js/)
 
-* Fully-featured data structures library;
-* Using [persistent data structures](http://en.wikipedia.org/wiki/Persistent_data_structure);
-* Using structural sharing via [hash maps tries](http://en.wikipedia.org/wiki/Hash_array_mapped_trie) and [vector tries](http://hypirion.com/musings/understanding-persistent-vector-pt-1);
-* Provides data structures including: `List`, `Stack`, `Map`, `OrderedMap`, `Set`, `OrderedSet` and `Record`;
+- Fully-featured data structures library;
+- Using [persistent data structures](http://en.wikipedia.org/wiki/Persistent_data_structure);
+- Using structural sharing via [hash maps tries](http://en.wikipedia.org/wiki/Hash_array_mapped_trie) and [vector tries](http://hypirion.com/musings/understanding-persistent-vector-pt-1);
+- Provides data structures including: `List`, `Stack`, `Map`, `OrderedMap`, `Set`, `OrderedSet` and `Record`;
 
 #### [Immer](https://github.com/mweststrate/immer)
 
-* A tiny package, based on the [`copy-on-write`](https://en.wikipedia.org/wiki/Copy-on-write) mechanism;
-* Idea: all changes are applied to a temporary *draftState* (a proxy of the *currentState*), once all mutations are done, `Immer` will produce the *nextState*;
+- A tiny package, based on the [`copy-on-write`](https://en.wikipedia.org/wiki/Copy-on-write) mechanism;
+- Idea: all changes are applied to a temporary _draftState_ (a proxy of the _currentState_), once all mutations are done, `Immer` will produce the _nextState_;
 
-    ![immer-idea](images/js-immer-how-it-works.png)
+  ![immer-idea](images/js-immer-how-it-works.png)
 
-* Auto freezing
+- Auto freezing
 
-    * Immer automatically freezes any state trees that are modified using `produce`, this protects against any accidental modifications of the state tree outside of a producer;
-    * It impacts performance, by default it is turned on during local develpoment, off in production;
-    * Use `setAutoFreeze(true/false)` to control it explicitly;
+  - Immer automatically freezes any state trees that are modified using `produce`, this protects against any accidental modifications of the state tree outside of a producer;
+  - It impacts performance, by default it is turned on during local develpoment, off in production;
+  - Use `setAutoFreeze(true/false)` to control it explicitly;
 
-* Read the doc for:
+- Read the doc for:
 
-    * Limitations;
-    * TypeScript or Flow;
-    * Patches;
-    * `this`, `void`;
-    * Performance;
-    * More examples;
+  - Limitations;
+  - TypeScript or Flow;
+  - Patches;
+  - `this`, `void`;
+  - Performance;
+  - More examples;
 
-* API
+- API
 
-    `produce(currentState, producer: (draftState) => void): nextState`
+  `produce(currentState, producer: (draftState) => void): nextState`
 
-* basic usage:
+- basic usage:
 
-    ```js
-    import produce from 'immer';
+  ```js
+  import produce from 'immer';
 
-    cosnt a = {name: 'Gary', age: 20};
-    // { name: 'Gary', age: 20 }
+  cosnt a = {name: 'Gary', age: 20};
+  // { name: 'Gary', age: 20 }
 
-    // update draft in whatever way you like, and no need to return anything
-    const b = produce(a, draft => {
-        draft.name = 'Federer';
-    });
-    // { name: 'Federer', age: 20 }
+  // update draft in whatever way you like, and no need to return anything
+  const b = produce(a, draft => {
+      draft.name = 'Federer';
+  });
+  // { name: 'Federer', age: 20 }
 
-    console.log(`${a.name} vs. ${b.name}`);
-    // Gary vs. Federer
-    ```
+  console.log(`${a.name} vs. ${b.name}`);
+  // Gary vs. Federer
+  ```
 
-* React `setState`
+- React `setState`
 
-    ```js
-    increaseAge = () => {
-        this.setState(
-            produce(draft => {
-                draft.user.age += 1
-            });
-        );
+  ```js
+  increaseAge = () => {
+      this.setState(
+          produce(draft => {
+              draft.user.age += 1
+          });
+      );
+  }
+  ```
+
+- Redux reducers
+
+  ```js
+  import produce from "immer";
+
+  const byId = produce(
+    (draft, action) => {
+      switch (action.type) {
+        case RECEIVE_PRODUCTS:
+          action.products.forEach(product => {
+            draft[product.id] = product;
+          });
+          return;
+      }
+    },
+    {
+      1: { id: 1, name: "product-1" }
     }
-    ```
-
-* Redux reducers
-
-    ```js
-    import produce from "immer"
-
-    const byId = produce(
-        (draft, action) => {
-            switch (action.type) {
-                case RECEIVE_PRODUCTS:
-                    action.products.forEach(product => {
-                        draft[product.id] = product
-                    })
-                    return
-            }
-        },
-        {
-            1: {id: 1, name: "product-1"}
-        }
-    )
-    ```
+  );
+  ```
 
 #### [immutability-helper](https://github.com/kolodny/immutability-helper)
 
-* Provides a simple immutability helper, `update()`;
-* It's syntax is inspired by MongoDB's query language;
-* Commands:
-    * `{$push: array}` `push()` all the items in `array` on the target.
-    * `{$unshift: array}` `unshift()` all the items in `array` on the target.
-    * `{$splice: array of arrays}` for each item in `arrays` call `splice()` on the target with the parameters provided by the item. **Note**: *The items in the array are applied sequentially, so the order matters. The indices of the target may change during the operation.*
-    * `{$set: any}` replace the target entirely.
-    * `{$toggle: array of strings}` toggles a list of boolean fields from the target object.
-    * `{$unset: array of strings}` remove the list of keys in a`rray from the target object.
-    * `{$merge: object}` merge the keys of object with the target.
-    * `{$apply: function}` passes in the current value to the function and updates it with the new returned value.
-    * `{$add: array of objects}` add a value to a `Map` or `Set`. When adding to a Set you pass in an array of objects to add, when adding to a Map, you pass in `[key, value]` arrays like so: `update(myMap, {$add: [['foo', 'bar'], ['baz', 'boo']]})`.
-    * `{$remove: array of strings}` remove the list of keys in array from a `Map` or `Set`.
+- Provides a simple immutability helper, `update()`;
+- It's syntax is inspired by MongoDB's query language;
+- Commands:
 
-* You can define you own commands;
-* Baisc examples:
+  - `{$push: array}` `push()` all the items in `array` on the target.
+  - `{$unshift: array}` `unshift()` all the items in `array` on the target.
+  - `{$splice: array of arrays}` for each item in `arrays` call `splice()` on the target with the parameters provided by the item. **Note**: _The items in the array are applied sequentially, so the order matters. The indices of the target may change during the operation._
+  - `{$set: any}` replace the target entirely.
+  - `{$toggle: array of strings}` toggles a list of boolean fields from the target object.
+  - `{$unset: array of strings}` remove the list of keys in a`rray from the target object.
+  - `{$merge: object}` merge the keys of object with the target.
+  - `{$apply: function}` passes in the current value to the function and updates it with the new returned value.
+  - `{$add: array of objects}` add a value to a `Map` or `Set`. When adding to a Set you pass in an array of objects to add, when adding to a Map, you pass in `[key, value]` arrays like so: `update(myMap, {$add: [['foo', 'bar'], ['baz', 'boo']]})`.
+  - `{$remove: array of strings}` remove the list of keys in array from a `Map` or `Set`.
 
-    ```js
-    // push
-    const initialArray = [1, 2, 3];
-    const newArray = update(initialArray, {$push: [4]}); // => [1, 2, 3, 4]
+- You can define you own commands;
+- Baisc examples:
 
-    // nested
-    const collection = [1, 2, {a: [12, 17, 15]}];
-    const newCollection = update(collection, {2: {a: {$splice: [[1, 1, 13, 14]]}}});
-    // => [1, 2, {a: [12, 13, 14, 15]}]
+  ```js
+  // push
+  const initialArray = [1, 2, 3];
+  const newArray = update(initialArray, { $push: [4] }); // => [1, 2, 3, 4]
 
-    // merge
-    const obj = {a: 5, b: 3};
-    const newObj = update(obj, {$merge: {b: 6, c: 7}}); // => {a: 5, b: 6, c: 7}
+  // nested
+  const collection = [1, 2, { a: [12, 17, 15] }];
+  const newCollection = update(collection, {
+    2: { a: { $splice: [[1, 1, 13, 14]] } }
+  });
+  // => [1, 2, {a: [12, 13, 14, 15]}]
 
-    // update based on current value
-    const obj = {a: 5, b: 3};
-    const newObj = update(obj, {b: {$apply: function(x) {return x * 2;}}});
-    // => {a: 5, b: 6}
-    ```
+  // merge
+  const obj = { a: 5, b: 3 };
+  const newObj = update(obj, { $merge: { b: 6, c: 7 } }); // => {a: 5, b: 6, c: 7}
 
+  // update based on current value
+  const obj = { a: 5, b: 3 };
+  const newObj = update(obj, {
+    b: {
+      $apply: function(x) {
+        return x * 2;
+      }
+    }
+  });
+  // => {a: 5, b: 6}
+  ```
 
 ## ECMAScript
 
 The language specification is managed by ECMA's TC39 committee now, the general process of making changes to the specification is here: [TC39 Process]
 
 There are 5 stages, from 0 to 4, all finished proposals (reached stage 4) are here: https://github.com/tc39/proposals/blob/master/finished-proposals.md
-
 
 ## Tricks
 
@@ -1379,21 +1398,23 @@ in the following code, the `updateLayout` function will only run after the `resi
 
 ```javascript
 // debounce the resize event
-$(window).on('resize', function() {
-    clearTimeout(window.resizedFinished);
-    window.resizedFinished = setTimeout(function(){
-        updateLayout();
-    }, 250);
+$(window).on("resize", function() {
+  clearTimeout(window.resizedFinished);
+  window.resizedFinished = setTimeout(function() {
+    updateLayout();
+  }, 250);
 });
 ```
 
 ### Initialize an array with a value range
 
-* https://itnext.io/heres-why-mapping-a-constructed-array-doesn-t-work-in-javascript-f1195138615a
-* https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/from
+- https://itnext.io/heres-why-mapping-a-constructed-array-doesn-t-work-in-javascript-f1195138615a
+- https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/from
 
 ```js
-let a = Array(100).fill().map((e, i) => i);
+let a = Array(100)
+  .fill()
+  .map((e, i) => i);
 /*
 Array(100) creates an empty array
 {
@@ -1403,18 +1424,14 @@ you need to call fill() before map()
 */
 
 // or
-let a = Array.from({length: 100}, (e, i) => i);
+let a = Array.from({ length: 100 }, (e, i) => i);
 ```
-
 
 ## Reference
 
 [JavaScript Symbols, Iterators, Generators, Async/Await, and Async Iterators — All Explained Simply
 ][symbol-iterator-etc]: **Read this one to fully understand the relations between Symbols, Iterators, Generators, Async/Await and Aync Iterators**
 
-
-
-
 [callback-hell]: http://callbackhell.com/
 [symbol-iterator-etc]: https://medium.freecodecamp.org/some-of-javascripts-most-useful-features-can-be-tricky-let-me-explain-them-4003d7bbed32
-[TC39 Process]: https://tc39.github.io/process-document/
+[tc39 process]: https://tc39.github.io/process-document/

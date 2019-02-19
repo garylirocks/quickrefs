@@ -1,11 +1,12 @@
-awk cheatsheet
-===============
+# awk cheatsheet
 
 ## Preface
+
 Some useful tips of awk  
 Source: [sed & awk, 2nd Edition][sedawk2_book], [团子的小窝][tuanzi]
 
 ## basic usage
+
 ### sample input file:
 
     $ cat list
@@ -20,7 +21,7 @@ Source: [sed & awk, 2nd Edition][sedawk2_book], [团子的小窝][tuanzi]
 
 ### simple use
 
-awk treats each line as a record consisting of fields separated by delimiter(default to spaces or tabs), `$0` represents the entire line, `$1` refers to the first field, `$2` the second, ...   
+awk treats each line as a record consisting of fields separated by delimiter(default to spaces or tabs), `$0` represents the entire line, `$1` refers to the first field, `$2` the second, ...  
 the delimiter can be specified by the `-F` option
 
 ```sh
@@ -57,9 +58,9 @@ Terry Kalkas
 output state and names in each state  
 put commands in a script named `nameByState.sh`
 
-    $ cat nameByState.sh 
+    $ cat nameByState.sh
     #!/bin/bash
-    
+
     sed '
     s/ CA/, California/
     s/ MA/, Massachusetts/
@@ -102,7 +103,7 @@ run the script:
 ## Records and Fields
 
 matching a field
-    
+  
 if field 5 matches `/MA/`:
 
 ```awk
@@ -110,7 +111,7 @@ $5 ~ /MA/ {
     print $0
 }
 ```
-    
+
 if field 5 does not matche `/MA/`:
 
 ```awk
@@ -136,12 +137,11 @@ each variable has a string value(default to '') and a numeric value(default to 0
     # equivalent to
     z = "HelloWorld"
 
-
 supply command line variables with `-v`, this will make the variable available in the `BEGIN` section:
-    
-    $ awk -v var=1 'BEGIN {print var, "in BEGIN"} {print var, "in main"}' test
-    1 in BEGIN
-    1 in main
+  
+ \$ awk -v var=1 'BEGIN {print var, "in BEGIN"} {print var, "in main"}' test
+1 in BEGIN
+1 in main
 
 ## System variables
 
@@ -154,7 +154,7 @@ supply command line variables with `-v`, this will make the variable available i
     NR      number of current record
     FNR     number of current record in current input file
 
-    FILENAME    current input file name   
+    FILENAME    current input file name
 
     CONVFMT     controls how numbers are converted to strings, default to '%.6g' e.g. 100.12345678 will be converted to 100.123
     OFMT        controls how numbers output by the `print` statement
@@ -166,14 +166,14 @@ supply command line variables with `-v`, this will make the variable available i
 ## Output formatting
 
 variable specifier:
-    
-    %-width.precision format-specifier
-    %-10.5s     -> a field of width 10, left justified, 5 chars at most
+  
+ %-width.precision format-specifier
+%-10.5s -> a field of width 10, left justified, 5 chars at most
 
     # specify width and precision dynamically
     printf("%*.*g\n", 5, 3, myvar);
 
-`printf` do not output newline automatically, while `print` does    
+`printf` do not output newline automatically, while `print` does
 
 direct output to file:
 
@@ -240,33 +240,33 @@ a function example(temp, i, j are intended for local use):
 
 ## `getline`
 
-`next`  get the next line from input and return to top of the script
+`next` get the next line from input and return to top of the script
 
-`getline`  get the next line from input and continue the script, assigns `$0` and parse it to fields, 
-    `NF`, `NR`, `FNR` are set, the newline becomes the current line
+`getline` get the next line from input and continue the script, assigns `$0` and parse it to fields,
+`NF`, `NR`, `FNR` are set, the newline becomes the current line
 
-`getline` can read from normal input stream, 
+`getline` can read from normal input stream,
 
-* or from a file:
+- or from a file:
 
         while ( (getline < "data") > 0 ) # read all lines from the file "data"
             print
 
-* or, from standard input:
+- or, from standard input:
 
         BEGIN { printf "Enter your name: "
             getline < "-"
             print
         }
 
-* or from a pipe:
+- or from a pipe:
 
         "who am i" | getline me
 
         while ("who" | getline) # read multiple lines, 'who' is executed only once
             who_out[++i] = $0
 
-*read a newline to a variable*, in this case, the `$0` is not changed, `NF` not affected, but `NR` and `NFR`
+_read a newline to a variable_, in this case, the `$0` is not changed, `NF` not affected, but `NR` and `NFR`
 are incremented
 
     BEGIN { printf "Enter your name: "
@@ -274,14 +274,9 @@ are incremented
         print name
     }
 
-
 ## Misc
 
 **`BEGIN` only executes once, even for multiple input files**
-
-
-
-
 
 [tuanzi]: http://kodango.com
 [sedawk2_book]: http://shop.oreilly.com/product/9781565922259.do

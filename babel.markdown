@@ -1,5 +1,4 @@
-Babel
-============
+# Babel
 
 - [Install](#install)
   - [Include babel in browser](#include-babel-in-browser)
@@ -9,26 +8,25 @@ Babel
 - [Compile](#compile)
 - [Debugging](#debugging)
 
-
 ## Install
 
-* Node
+- Node
 
-    ```bash
-    sudo npm install babel babel-cli
+  ```bash
+  sudo npm install babel babel-cli
 
-    # after v7
-    sudo npm install @babel/core @babel/cli @babel/preset-env
-    ```
+  # after v7
+  sudo npm install @babel/core @babel/cli @babel/preset-env
+  ```
 
-* Working with webpack
+- Working with webpack
 
-    ```bash
-    npm init
+  ```bash
+  npm init
 
-    sudo npm install webpack
-    sudo npm install --save-dev babel-loader
-    ```
+  sudo npm install webpack
+  sudo npm install --save-dev babel-loader
+  ```
 
 **NOTE**: it's not a good idea to install Babel globally, that would make your project dependent on a specific system env;
 
@@ -37,9 +35,11 @@ Babel
 **Make sure the `charset="utf-8"` attribute is included**
 
 ```html
-<script src="https://unpkg.com/babel-core@5.8.38/browser.min.js" charset="utf-8"></script>
+<script
+  src="https://unpkg.com/babel-core@5.8.38/browser.min.js"
+  charset="utf-8"
+></script>
 ```
-
 
 ## Babel Configs
 
@@ -69,30 +69,29 @@ The old method for configs, put the following in `.babelrc` to use the latest Ba
 
 ```json
 {
-    "presets": ["env"],
+  "presets": ["env"]
 }
 ```
 
-
 ## Compile
 
-* compile for browser
+- compile for browser
 
-    ```bash
-    babel script.js --watch --out-file script-compiled.js
-    ```
+  ```bash
+  babel script.js --watch --out-file script-compiled.js
+  ```
 
-* run node js script
+- run node js script
 
-    ```bash
-    babel-node node-script.js
-    ```
+  ```bash
+  babel-node node-script.js
+  ```
 
-* or use webpack
+- or use webpack
 
-    ```bash
-    webpack --watch
-    ```
+  ```bash
+  webpack --watch
+  ```
 
 ## Debugging
 

@@ -1,5 +1,4 @@
-Regular Expression cheatsheet
-===============
+# Regular Expression cheatsheet
 
 ## BRE & ERE & PCRE
 
@@ -7,18 +6,18 @@ Regular expression on Linux/Mac command line/Vim has different flavors, be aware
 
 1. **BRE**, basic regular expression
 
-    `+ ? | ( ) { }` are literals, don't have special meaning by default, need to be escaped to be special
+   `+ ? | ( ) { }` are literals, don't have special meaning by default, need to be escaped to be special
 
-    usage: `grep`, `sed`, *vim search*
+   usage: `grep`, `sed`, _vim search_
 
 2. **ERE**, extended regular expression
 
-    `+ ? | ( ) { }` are metacharacters by default
+   `+ ? | ( ) { }` are metacharacters by default
 
-    usage: `grep -E`, `egrep`, `sed -r` (Linux), `sed -E` (Mac), `awk`
+   usage: `grep -E`, `egrep`, `sed -r` (Linux), `sed -E` (Mac), `awk`
 
 3. **PCRE**: Perl compatible regular expression, looks like not working on Mac;
 
-    `\d`, `\w`, etc are supported
+   `\d`, `\w`, etc are supported
 
-    usage: `grep -P`, *vim search with `\v`*
+   usage: `grep -P`, _vim search with `\v`_

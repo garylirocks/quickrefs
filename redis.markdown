@@ -1,5 +1,4 @@
-Redis
-===============
+# Redis
 
 - [CLI test](#cli-test)
 
