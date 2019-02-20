@@ -75,7 +75,7 @@ read [Dan Abramov's article](https://medium.com/@dan_abramov/smart-and-dumb-comp
 
   it's called '**stateless**' component
 
-  **have `props`, no `state`**
+  **they can have states when using hooks**
 
 - class components
 
@@ -406,6 +406,8 @@ then use it to wrap other components
 
 ### State Hooks
 
+Previously if you want to add state to a function component, you need to convert it to a class.
+
 ```js
 function ExampleWithManyStates() {
   // Declare multiple state variables!
@@ -431,15 +433,18 @@ function ExampleWithManyStates() {
 
 - Provide initial state to `useState`, it can be of any type;
 - `useState` returns an array, first element is the state, second is the function to update the state;
-- The state value is kept when component re-renders;
 - By passing a function to `useState`, you can lazy initialize a state variable, the function only get called when the variable is first used;
+- The state value is kept when component re-renders;
+- The value-updating function replace the variable, instead of merging it as `this.setState` does;
 
 ### Effect Hooks
 
 - Data fetching, subscriptions, manually changing the DOM: these are "side effects", they can affect other components and can't be done during rendering;
 - The Effect Hook `useEffect` performs side effects from a function component;
 - The code in an effect runs after every render, equivalent to `componentDidMount`, `componentDidUpdate`;
-- If you return a function from an effect, it runs when the component unmounts (`componentWillUnmount`), as well as before subsequent render;
+- A second param to `useEffect` tells React to only run an effect when the param changes;
+- If an effect requires cleanup, you can return a function from it, it runs when the component unmounts (`componentWillUnmount`), as well as before subsequent render;
+- React defers running `useEffect` until after the browser has painted;
 
 ```js
 function FriendStatusWithCounter(props) {
@@ -460,6 +465,11 @@ function FriendStatusWithCounter(props) {
             ChatAPI.unsubscribeFromFriendStatus(props.friend.id, handleStatusChange);
         };
     });
+
+    // only run when props.friend.id changes
+    useEffect(() => {
+      // ...
+    }, [props.friend.id]);
 
     function handleStatusChange(status) {
         setIsOnline(status.isOnline);
