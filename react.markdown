@@ -17,6 +17,7 @@
   - [Before v16.3](#before-v163)
 - [PropTypes](#proptypes)
 - [JSX Syntaxes](#jsx-syntaxes)
+- [Context](#context)
 - [Refs and the DOM](#refs-and-the-dom)
   - [`ref` on DOM element](#ref-on-dom-element)
   - [`ref` on Components](#ref-on-components)
@@ -304,6 +305,59 @@ export class Book extends React.Component {
 
           <div htmlFor="nameField" className="wide" style={{border: "1px solid #000", backgroundColor: 'red'}}>a demo div</div>
 
+## Context
+
+- Context allows you to pass data down the component tree without having to pass props down manually at every level;
+- Suitable for "global" data, such as current authenticated user, theme, or preferred language;
+
+```js
+// create a context object, with a default value
+const ThemeContext = React.createContext("light");
+
+class ContextDemo extends React.Component {
+  render() {
+    // use a context provider, with a value,
+    // providers can be nested, a consumer will get the nearest one's value
+    return (
+      <ThemeContext.Provider value="#f00">
+        <Wrapper />
+      </ThemeContext.Provider>
+    );
+  }
+}
+
+// an intermediate component, don't need to worry about context
+function Wrapper(props) {
+  return (
+    <div>
+      <InnerText />
+    </div>
+  );
+}
+
+class InnerText extends React.Component {
+  // For class component, specify which context to use by a static property
+  // React will find the closest Provider above and make its value available as this.context
+  static contextType = ThemeContext;
+
+  render() {
+    return (
+      <div style={{ color: this.context }}>
+        Current Context Value: {this.context}
+      </div>
+    );
+  }
+}
+```
+
+For function component, use `Context.Consumer`
+
+```js
+<MyContext.Consumer>
+  {value => /* render something based on the context value */}
+</MyContext.Consumer>
+```
+
 ## Refs and the DOM
 
 [Official Doc](https://reactjs.org/docs/refs-and-the-dom.html)
@@ -433,7 +487,7 @@ function ExampleWithManyStates() {
 
 - Provide initial state to `useState`, it can be of any type;
 - `useState` returns an array, first element is the state, second is the function to update the state;
-- By passing a function to `useState`, you can lazy initialize a state variable, the function only get called when the variable is first used;
+- By passing a function to `useState`, you can **lazy initialize** a state variable, the function only get called when the variable is first used;
 - The state value is kept when component re-renders;
 - The value-updating function replace the variable, instead of merging it as `this.setState` does;
 
@@ -442,9 +496,9 @@ function ExampleWithManyStates() {
 - Data fetching, subscriptions, manually changing the DOM: these are "side effects", they can affect other components and can't be done during rendering;
 - The Effect Hook `useEffect` performs side effects from a function component;
 - The code in an effect runs after every render, equivalent to `componentDidMount`, `componentDidUpdate`;
-- A second param to `useEffect` tells React to only run an effect when the param changes;
 - If an effect requires cleanup, you can return a function from it, it runs when the component unmounts (`componentWillUnmount`), as well as before subsequent render;
 - React defers running `useEffect` until after the browser has painted;
+- A second param to `useEffect` tells React to **only run an effect when the param changes**, if this param is `[]`, then the effect is only run on mount and clean up on unmount;
 
 ```js
 function FriendStatusWithCounter(props) {
@@ -528,7 +582,7 @@ function FriendListItem(props) {
 
 ### Other Hooks
 
-- `useContext`: subscribe to React context without introducing nesting:
+- `useContext`: subscribe to React context without introducing nesting, a rerender is triggered when provider updates:
 
 ```js
 function Example() {
@@ -546,10 +600,19 @@ function Todos() {
     // ...
 ```
 
+- `useCallback`
+- `useMemo`
+- `useRef`
+- `useImperativeHandle`
+- `useLayoutEffect`
+- `useDebugValue`
+
 ### Rules of Hooks
 
+React relies on the order in which Hooks are called, so you should:
+
 - Only call Hooks at the top level, don't call them inside loops, conditions or nested functions;
-- Only call Hooks from React function components, not from regular functions;
+- Only call Hooks from React function components (or custom Hooks), not from regular functions;
 
 ## Styling
 
