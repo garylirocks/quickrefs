@@ -4,7 +4,9 @@
 - [Configurations](#configurations)
 - [Python](#python)
 - [Graphic Drivers](#graphic-drivers)
-- [Thinkpad Trackpoint configuration](#thinkpad-trackpoint-configuration)
+- [Thinkpad X1 Carbon Configs](#thinkpad-x1-carbon-configs)
+  - [Ubuntu 16.04 + X1C Gen5 Trackpoint configuration](#ubuntu-1604--x1c-gen5-trackpoint-configuration)
+  - [Ubuntu 18.04 + X1C Gen6](#ubuntu-1804--x1c-gen6)
 
 Most of the configs needed are already in https://github.com/garylirocks/dotfiles
 
@@ -141,7 +143,9 @@ Nvidia Drivers:
 - http://www.webupd8.org/2016/06/how-to-install-latest-nvidia-drivers-in.html
 - http://www.geforce.com/drivers
 
-## Thinkpad Trackpoint configuration
+## Thinkpad X1 Carbon Configs
+
+### Ubuntu 16.04 + X1C Gen5 Trackpoint configuration
 
 Use middle button for scrolling
 
@@ -158,3 +162,41 @@ ref: http://www.thinkwiki.org/wiki/How_to_configure_the_TrackPoint
   ```
 
 - Use it as an autostart script;
+
+### Ubuntu 18.04 + X1C Gen6
+
+ref: https://blog.pedropombeiro.com/running-ubuntu-18-04-on-a-thinkpad-x1-carbon-6th-gen/
+
+- Touchpad buttons, TrackPoint and right button action don’t work:
+
+  - Comment out `i2c_i801` line from `/etc/modprobe.d/blacklist.conf`;
+  - Add `psmouse.synaptics_intertouch=1` to boot options in `/etc/default/grub`. Line should look something like this:
+    `GRUB_CMDLINE_LINUX_DEFAULT="quiet splash psmouse.synaptics_intertouch=1"`;
+  - Save file and run sudo `update-grub` so that the config file is regenerated;
+
+- Battery Issue:
+
+  - In BIOS, change the sleep mode to Linux;
+
+
+### Ubuntu 18.04 - change resolv.conf
+
+Install the resolvconf package.
+
+```sh
+sudo apt install resolvconf
+```
+
+Edit `/etc/resolvconf/resolv.conf.d/head` and add the following:
+
+
+```
+nameserver 8.8.4.4
+nameserver 8.8.8.8
+```
+
+Restart the resolvconf service
+
+```sh
+sudo service resolvconf restart
+```
