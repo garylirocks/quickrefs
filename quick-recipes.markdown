@@ -76,7 +76,11 @@ see method at this link: http://askubuntu.com/a/633539
 sudo vi /etc/default/keyboard
 
 # edit the XKBOPTIONS line as below
+# XKBOPTIONS="ctrl:nocaps"
+
+# OR, swap Caps with Ctrl
 # XKBOPTIONS="ctrl:swapcaps"
+
 
 sudo dpkg-reconfigure keyboard-configuration
 ```
