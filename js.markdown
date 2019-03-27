@@ -40,6 +40,7 @@ General topics about Javascript and front-end develpoment.
 - [Tricks](#tricks)
   - [Deboucing an event](#deboucing-an-event)
   - [Initialize an array with a value range](#initialize-an-array-with-a-value-range)
+  - [Bind a function multiple times](#bind-a-function-multiple-times)
 - [Reference](#reference)
 
 ## Data types in JS
@@ -62,13 +63,13 @@ please note:
 example
 
 ```javascript
-typeof "abc"; // 'string'
-typeof String("abc"); // 'string'
-"abc" === String("abc"); // true
+typeof 'abc'; // 'string'
+typeof String('abc'); // 'string'
+'abc' === String('abc'); // true
 
-s = new String("abc"); // [String: 'abc']
+s = new String('abc'); // [String: 'abc']
 typeof s; // 'object'
-s === "abc"; // false
+s === 'abc'; // false
 ```
 
 ### Type casting and coercion
@@ -130,11 +131,11 @@ function Dog(breed) {
   this.breed = breed;
 }
 
-var buddy = new Dog("golden Retriever");
+var buddy = new Dog('golden Retriever');
 
 // add a method to prototype of Dog
 Dog.prototype.bark = function() {
-  console.log("Woof");
+  console.log('Woof');
 };
 ```
 
@@ -148,7 +149,7 @@ function Gizmo(id) {
 }
 
 Gizmo.prototype.toString = function() {
-  return "gizmo " + this.id;
+  return 'gizmo ' + this.id;
 };
 var g = new Gizmo(1);
 ```
@@ -279,7 +280,7 @@ foo(let i=0; ...} {}
 - **`null` isn't anything**
 
   ```js
-  typeof null === "object"; // null's type is 'object'
+  typeof null === 'object'; // null's type is 'object'
   ```
 
 - **`undefined`: default value for uninitialized variables and parameters**
@@ -295,7 +296,7 @@ foo(let i=0; ...} {}
 
   ```js
   var a = [1, 2];
-  typeof a === "object"; // typeof array returns 'object'
+  typeof a === 'object'; // typeof array returns 'object'
   Array.isArray(a); // true, use this to check arrays
   ```
 
@@ -352,11 +353,11 @@ console.log(typeof expressionFoo); // undefined
 expressionFoo(); // NOTE throws an error, expressionFoo is still undefined here
 
 function statementFoo() {
-  console.log("an statement function");
+  console.log('an statement function');
 }
 
 var expressionFoo = function() {
-  console.log("an expression function");
+  console.log('an expression function');
 };
 ```
 
@@ -414,7 +415,7 @@ functionObject(arguments);
 
 ```javascript
 thisObject.methodName(arguments);
-thisObject["methodName"](arguments);
+thisObject['methodName'](arguments);
 ```
 
 - Constructor form
@@ -438,14 +439,14 @@ functionObject.call(thisObject, arg1, arg2, ...);
 
 ```javascript
 var person = {
-  name: "Gary",
-  hobbies: ["tennis", "badminton", "hiking"],
+  name: 'Gary',
+  hobbies: ['tennis', 'badminton', 'hiking'],
 
   // 'this' scope error, will be undefined
   print: function() {
     console.log("// Wrong, 'this' will be undefined.");
     this.hobbies.forEach(function(hobby) {
-      console.log(this.name + " likes " + hobby);
+      console.log(this.name + ' likes ' + hobby);
     });
   },
 
@@ -454,7 +455,7 @@ var person = {
     var _this = this;
     console.log("// use '_this' to pass the correct context this in");
     this.hobbies.forEach(function(hobby) {
-      console.log(_this.name + " likes " + hobby);
+      console.log(_this.name + ' likes ' + hobby);
     });
   },
 
@@ -463,16 +464,16 @@ var person = {
     console.log("// use 'bind' to get the correct this");
     this.hobbies.forEach(
       function(hobby) {
-        console.log(this.name + " likes " + hobby);
+        console.log(this.name + ' likes ' + hobby);
       }.bind(this)
     );
   },
 
   // use arrow function syntax, this is the recommended way
   print4: function() {
-    console.log("// use arrow function syntax");
+    console.log('// use arrow function syntax');
     this.hobbies.forEach(hobby => {
-      console.log(this.name + " likes " + hobby);
+      console.log(this.name + ' likes ' + hobby);
     });
   }
 };
@@ -487,16 +488,16 @@ Think of a closure as a backpack, it is attached to the function, when a functio
 ```javascript
 var digit_name = (function() {
   var names = [
-    "zero",
-    "one",
-    "two",
-    "three",
-    "four",
-    "five",
-    "six",
-    "seven",
-    "eight",
-    "nine"
+    'zero',
+    'one',
+    'two',
+    'three',
+    'four',
+    'five',
+    'six',
+    'seven',
+    'eight',
+    'nine'
   ];
   return function(n) {
     return names[n];
@@ -513,7 +514,7 @@ console.log(digit_name(2));
 const arr = [10, 12, 15, 21];
 for (var i = 0; i < arr.length; i++) {
   setTimeout(function() {
-    console.log("Index: " + i + ", element: " + arr[i]);
+    console.log('Index: ' + i + ', element: ' + arr[i]);
   }, 300);
 }
 ```
@@ -535,7 +536,7 @@ for (var i = 0; i < arr.length; i++) {
   setTimeout(
     (function(i) {
       return function() {
-        console.log("The index of this number is: " + i);
+        console.log('The index of this number is: ' + i);
       };
     })(i),
     300
@@ -552,7 +553,7 @@ for (let i = 0; i < arr.length; i++) {
   // every single time the function is called
   // read more here: http://exploringjs.com/es6/ch_variables.html#sec_let-const-loop-heads
   setTimeout(function() {
-    console.log("The index of this number is: " + i);
+    console.log('The index of this number is: ' + i);
   }, 300);
 }
 ```
@@ -592,7 +593,7 @@ test();
 _ES 2018_
 
 ```js
-const date = "2018-05-16";
+const date = '2018-05-16';
 const re = /(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})/u;
 const result = re.exec(date);
 console.log(result);
@@ -614,9 +615,9 @@ back reference named groups in a regular expression
 const re = /(?<fruit>apple|orange) == \k<fruit>/u;
 
 console.log(
-  re.test("apple == apple"), // true
-  re.test("orange == orange"), // true
-  re.test("apple == orange") // false
+  re.test('apple == apple'), // true
+  re.test('orange == orange'), // true
+  re.test('apple == orange') // false
 );
 ```
 
@@ -625,7 +626,7 @@ use named groups in string repalcing
 ```js
 const re = /(?<firstName>[a-zA-Z]+) (?<lastName>[a-zA-Z]+)/u;
 
-console.log("Arya Stark".replace(re, "$<lastName>, $<firstName>")); // Stark, Arya
+console.log('Arya Stark'.replace(re, '$<lastName>, $<firstName>')); // Stark, Arya
 ```
 
 ## Style guide
@@ -662,7 +663,7 @@ example, `lib.js`:
 
 ```js
 let person = {
-  name: "gary",
+  name: 'gary',
   age: 30
 };
 
@@ -678,20 +679,20 @@ export { position };
 `app.js`:
 
 ```js
-import theDefault from "./lib";
-import { position as p, imaginedVar } from "./lib";
-import * as all from "./lib";
+import theDefault from './lib';
+import { position as p, imaginedVar } from './lib';
+import * as all from './lib';
 
-console.log("theDefault:");
+console.log('theDefault:');
 console.log(theDefault);
 
-console.log("position:");
+console.log('position:');
 console.log(p);
 
-console.log("imaginedVar:");
+console.log('imaginedVar:');
 console.log(imaginedVar);
 
-console.log("all:");
+console.log('all:');
 console.log(all);
 ```
 
@@ -710,13 +711,13 @@ run `app.js`:
 or you can put everything on one line:
 
 ```js
-import theDefault, { position as p, imaginedVar } from "./lib";
+import theDefault, { position as p, imaginedVar } from './lib';
 ```
 
 if you just want to trigger the side effect, do not actually import any binding:
 
 ```js
-import "./myModule";
+import './myModule';
 ```
 
 ## Symbol
@@ -734,7 +735,7 @@ There are three different flavors of symbols - each flavor is accessed in a diff
     create a local symbol:
 
     ```js
-    let s = Symbol("a desc");
+    let s = Symbol('a desc');
     ```
 
     **you can NOT use `new Symbol()` to create a symbol value**
@@ -748,7 +749,7 @@ There are three different flavors of symbols - each flavor is accessed in a diff
     you can add a description when creating symbols, it's just for debugging purpose
 
     ```js
-    s = Symbol("gary symbol"); // Symbol(gary symbol)
+    s = Symbol('gary symbol'); // Symbol(gary symbol)
     ```
 
 2.  **global registry symbols**
@@ -864,9 +865,9 @@ Main usages for symbols:
 - `for..of` loop
 
 ```javascript
-"use strict";
+'use strict';
 
-let characters = ["Jon", "Sansa", "Arya", "Tyrion", "Cercei"];
+let characters = ['Jon', 'Sansa', 'Arya', 'Tyrion', 'Cercei'];
 
 for (let c of characters) {
   console.log(c);
@@ -892,12 +893,12 @@ for (let c in characters) {
 
 ```javascript
 let o = {
-  5e5: "$500K",
-  1e6: "$1M",
-  2e6: "$2M",
-  3e6: "$3M",
-  5e6: "$5M",
-  10e6: "$10M"
+  5e5: '$500K',
+  1e6: '$1M',
+  2e6: '$2M',
+  3e6: '$3M',
+  5e6: '$5M',
+  10e6: '$10M'
 };
 
 for (let [n, v] of Object.entries(o)) {
@@ -924,7 +925,7 @@ example
 
 ```javascript
 // NOTE you can define a custom iteration function for an object
-"use strict";
+'use strict';
 
 // a custom id maker that generates ids from 100 to 105
 let idMaker = {
@@ -979,18 +980,18 @@ JS uses callbacks a lot, if not handled properly, it will lead to [Callback Hell
 [this page][callback-hell] explains what is callback hell and how to avoid it, by **giving callback functions a name, moving them to the top level of a file or a separate file**
 
 ```js
-var form = document.querySelector("form");
+var form = document.querySelector('form');
 
 form.onsubmit = function(submitEvent) {
-  var name = document.querySelector("input").value;
+  var name = document.querySelector('input').value;
   request(
     {
-      uri: "http://example.com/upload",
+      uri: 'http://example.com/upload',
       body: name,
-      method: "POST"
+      method: 'POST'
     },
     function(err, response, body) {
-      var statusMessage = document.querySelector(".status");
+      var statusMessage = document.querySelector('.status');
       if (err) return (statusMessage.value = err);
       statusMessage.value = body;
     }
@@ -1004,19 +1005,19 @@ refactor the above code by moving the callback functions to a separate module
 module.exports.submit = formSubmit;
 
 function formSubmit(submitEvent) {
-  var name = document.querySelector("input").value;
+  var name = document.querySelector('input').value;
   request(
     {
-      uri: "http://example.com/upload",
+      uri: 'http://example.com/upload',
       body: name,
-      method: "POST"
+      method: 'POST'
     },
     postResponse
   );
 }
 
 function postResponse(err, response, body) {
-  var statusMessage = document.querySelector(".status");
+  var statusMessage = document.querySelector('.status');
   if (err) return (statusMessage.value = err);
   statusMessage.value = body;
 }
@@ -1025,8 +1026,8 @@ function postResponse(err, response, body) {
 then import it in the main file
 
 ```js
-var formUploader = require("formuploader");
-document.querySelector("form").onsubmit = formUploader.submit;
+var formUploader = require('formuploader');
+document.querySelector('form').onsubmit = formUploader.submit;
 ```
 
 ### resolved vs. rejected
@@ -1121,14 +1122,14 @@ the `string` primitive type is immutable in JS, whenever you do any manipulation
 but the `String` object type _is_ immutable
 
 ```js
-const s = new String("hello");
+const s = new String('hello');
 //undefined
 
 s;
 //[String: 'hello']
 
 // add a new property to a String object
-s.name = "gary";
+s.name = 'gary';
 s;
 // { [String: 'hello'] name: 'gary' }
 ```
@@ -1138,8 +1139,8 @@ s;
 two references are equal when they refer to the same value if this value is immutable:
 
 ```js
-var str1 = "abc";
-var str2 = "abc";
+var str1 = 'abc';
+var str2 = 'abc';
 str1 === str2; // true
 
 var n1 = 1;
@@ -1152,8 +1153,8 @@ n1 === n2; // also true
 but if the value is mutable, the two references are not equal:
 
 ```js
-var str1 = new String("abc");
-var str2 = new String("abc");
+var str1 = new String('abc');
+var str2 = new String('abc');
 str1 === str2; // false
 
 var arr1 = [];
@@ -1316,7 +1317,7 @@ You need to use your custom methods or something like `_.isEqual` from Lo-Dash t
 - Redux reducers
 
   ```js
-  import produce from "immer";
+  import produce from 'immer';
 
   const byId = produce(
     (draft, action) => {
@@ -1329,7 +1330,7 @@ You need to use your custom methods or something like `_.isEqual` from Lo-Dash t
       }
     },
     {
-      1: { id: 1, name: "product-1" }
+      1: { id: 1, name: 'product-1' }
     }
   );
   ```
@@ -1398,7 +1399,7 @@ in the following code, the `updateLayout` function will only run after the `resi
 
 ```javascript
 // debounce the resize event
-$(window).on("resize", function() {
+$(window).on('resize', function() {
   clearTimeout(window.resizedFinished);
   window.resizedFinished = setTimeout(function() {
     updateLayout();
@@ -1425,6 +1426,57 @@ you need to call fill() before map()
 
 // or
 let a = Array.from({ length: 100 }, (e, i) => i);
+```
+
+### Bind a function multiple times
+
+If you bind a function multiple times, for each parameter(inclding `this`) in the original function, only the first bound value is used, any later bound values will be disarded, put it in another way, **you can only bind a value to each parameter once**
+
+```js
+function foo(arg1) {
+  console.log(this);
+  console.log(arg1);
+}
+
+const fooBound = foo.bind({ name: 'gary' }); // this bound
+const fooBound2 = fooBound.bind({ name: 'jack' }, 'hello'); // 'hello' bound to arg1
+const fooBound3 = fooBound2.bind({}, 'hola'); // both {} and 'hola' are discarded
+
+fooBound('bar');
+// {name: "gary"}
+// bar
+
+fooBound2('bar');
+// {name: "gary"}
+// hello
+
+fooBound3();
+// {name: "gary"}
+// hello
+
+console.log('foo.name: ' + foo.name + ', foo.length: ' + foo.length);
+// foo.name: foo, foo.length: 1
+
+console.log(
+  'fooBound.name: ' + fooBound.name + ', fooBound.length: ' + fooBound.length
+);
+// fooBound.name: bound foo, fooBound.length: 1
+
+console.log(
+  'fooBound2.name: ' +
+    fooBound2.name +
+    ', fooBound2.length: ' +
+    fooBound2.length
+);
+// fooBound2.name: bound bound foo, fooBound2.length: 0
+
+console.log(
+  'fooBound3.name: ' +
+    fooBound3.name +
+    ', fooBound3.length: ' +
+    fooBound3.length
+);
+// fooBound3.name: bound bound bound foo, fooBound3.length: 0
 ```
 
 ## Reference
