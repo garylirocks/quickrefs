@@ -176,7 +176,7 @@ of Batman. When you stop to think about how Batman had anything to do \
 with this, you would get nowhere \
 fast.';
 
-// bad
+// bad (Google Guide suggests this)
 const errorMessage = 'This is a super long error that was thrown because ' +
   'of Batman. When you stop to think about how Batman had anything to do ' +
   'with this, you would get nowhere fast.';
@@ -998,7 +998,7 @@ const hasAge = !!age;
 
 * use camelCase when naming objects, functions and instances
 
-* use PascalCase only when naming constructors or classes
+* use PascalCase (upper camel case) only when naming constructors or classes
 
 * don't use leading underscores to denotate "private", there is no privacy in JS
 
@@ -1084,6 +1084,16 @@ const requests = [
   // ...
 ];
 ```
+
+**Google suggests differently**
+
+| Prose form              | Correct           | Incorrect                         |
+| ----------------------- | ----------------- | --------------------------------- |
+| "XML HTTP request"      | XmlHttpRequest    | XMLHTTPRequest                    |
+| "new customer ID"       | newCustomerId     | newCustomerID                     |
+| "inner stopwatch"       | innerStopwatch    | innerStopWatch                    |
+| "supports IPv6 on iOS?" | supportsIpv6OnIos | supportsIPv6OnIOS                 |
+| "YouTube importer"      | YouTubeImporter   | YoutubeImporter (not recommended) |
 
 * optionally uppercase a constant only if it (1) is exported, (2) is a const (it can not be reassigned), and (3) the programmer can trust it (and its nested properties) to never change
 
