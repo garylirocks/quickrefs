@@ -1,32 +1,34 @@
 JS Style Guide
 ==============
 
+- [Refs](#refs)
+- [Variable declaration](#variable-declaration)
+- [Object](#object)
+- [Arrays](#arrays)
+- [Destructuring](#destructuring)
+- [Strings](#strings)
+- [Functions](#functions)
+- [Arrow functions](#arrow-functions)
+- [Modules](#modules)
+- [Iterators and Generators](#iterators-and-generators)
+- [Properties](#properties)
+- [Variables](#variables)
+- [Comparison Operators & Equality](#comparison-operators--equality)
+- [Comments](#comments)
+- [Whitespace](#whitespace)
+- [Semicolons](#semicolons)
+- [Type casting & Coercion](#type-casting--coercion)
+- [Naming Conventions](#naming-conventions)
+- [Events](#events)
+- [jQuery](#jquery)
+- [Standard Library](#standard-library)
+- [Test](#test)
+
+## Refs
+
 * [Airbnb JavaScript Style Guide](https://github.com/airbnb/javascript/blob/master/README.md#airbnb-javascript-style-guide-)
+* [Google JavaScript Style Guide](https://google.github.io/styleguide/jsguide.html)
 * [Popular JS Coding Convention on GitHub](http://sideeffect.kr/popularconvention/#javascript)
-
-- [JS Style Guide](#js-style-guide)
-  - [Variable declaration](#variable-declaration)
-  - [Object](#object)
-  - [Arrays](#arrays)
-  - [Destructuring](#destructuring)
-  - [Strings](#strings)
-  - [Functions](#functions)
-  - [Arrow functions](#arrow-functions)
-  - [Modules](#modules)
-  - [Iterators and Generators](#iterators-and-generators)
-  - [Properties](#properties)
-  - [Variables](#variables)
-  - [Comparison Operators & Equality](#comparison-operators-equality)
-  - [Comments](#comments)
-  - [Whitespace](#whitespace)
-  - [Semicolons](#semicolons)
-  - [Type casting & Coercion](#type-casting-coercion)
-  - [Naming Conventions](#naming-conventions)
-  - [Events](#events)
-  - [jQuery](#jquery)
-  - [Standard Library](#standard-library)
-  - [Test](#test)
-
 
 ## Variable declaration
 
@@ -69,7 +71,7 @@ const obj = {
 
 * prefer object spread operator over `Object.assign` to shallow-copy objects, and get new object without certain properties:
 
-```javascript 
+```javascript
 const original = { a: 1, b: 2 };
 const copy = { ...original, c: 3 }; // copy => { a: 1, b: 2, c: 3 }
 
@@ -150,7 +152,7 @@ function foo() {
     return [x, y, z];
 }
 
-const [x, __, z] = foo();   // caller needs to know the order 
+const [x, __, z] = foo();   // caller needs to know the order
 
 // good
 function foo() {
@@ -373,7 +375,7 @@ export function foo() {}
 export default function foo() {}        // <- use default
 ```
 
-* it's fine to use multiline imports 
+* it's fine to use multiline imports
 
 ```javascript
 // bad
@@ -669,7 +671,7 @@ class Calculator extends Abacus {
 }
 ```
 
-## Whitespace 
+## Whitespace
 
 * use soft tabs (space character) set to **2 spaces**
 
@@ -688,7 +690,7 @@ dog.set('attr', {                   // <- one space before the brace
 });
 ```
 
-* 1 space before the opening parenthesis in control statements (`if`, `while` etc), but **no space** between the function name and the argument list    
+* 1 space before the opening parenthesis in control statements (`if`, `while` etc), but **no space** between the function name and the argument list
 
 ```javascript
 // good
@@ -1085,7 +1087,7 @@ const requests = [
 
 * optionally uppercase a constant only if it (1) is exported, (2) is a const (it can not be reassigned), and (3) the programmer can trust it (and its nested properties) to never change
 
-    * constants within a file should not be uppercased 
+    * constants within a file should not be uppercased
     * for exported objects, only uppercase at the top level of export (e.g. `EXPORTED_OBJECTS.key`)
 
 ```javascript
