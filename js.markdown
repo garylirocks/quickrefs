@@ -1119,7 +1119,7 @@ See the Pen <a href='https://codepen.io/garylirocks/pen/yKRzeM/'>async/await</a>
 
 the `string` primitive type is immutable in JS, whenever you do any manipulation on a string, a new string get created
 
-but the `String` object type _is_ immutable
+but the `String` object type _is mutable_
 
 ```js
 const s = new String('hello');
@@ -1268,6 +1268,7 @@ You need to use your custom methods or something like `_.isEqual` from Lo-Dash t
 - Auto freezing
 
   - Immer automatically freezes any state trees that are modified using `produce`, this protects against any accidental modifications of the state tree outside of a producer;
+  - It's a **deep freeze**, while `Object.freeze` only does a **shalow freeze**;
   - It impacts performance, by default it is turned on during local develpoment, off in production;
   - Use `setAutoFreeze(true/false)` to control it explicitly;
 
