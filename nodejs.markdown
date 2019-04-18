@@ -10,6 +10,8 @@
   - [Symlink a package folder](#symlink-a-package-folder)
 - [Module System - CommonJs vs. ES6 Modules](#module-system---commonjs-vs-es6-modules)
   - [Current status in Node 9/10](#current-status-in-node-910)
+- [CLI](#cli)
+  - [Limit memory usage](#limit-memory-usage)
 - [Debugging](#debugging)
   - [Remote debugging](#remote-debugging)
 - [Barebone HTTP server](#barebone-http-server)
@@ -160,6 +162,24 @@ if you want to use ES Module syntax with Node (not Babel transpiling)
   ```node
   node --experimental-modules test.mjs
   ```
+
+
+## CLI
+
+### Limit memory usage
+
+https://nodejs.org/dist/latest-v10.x/docs/api/cli.html
+
+Use V8 option `--max-old-space-size` to limit Node's memory usage (the number is in MB):
+
+```sh
+# set it in NODE_OPTIONS environment variable
+NODE_OPTIONS='--max-old-space-size=100' node script.js
+
+# or set it directly in the command line
+node --max-old-space-size=100 script.js
+```
+
 
 ## Debugging
 
