@@ -27,6 +27,7 @@ Quick productivity tips, shortcuts, command line snippets.
 - [Download all images from a web page](#download-all-images-from-a-web-page)
 - [Linux process management](#linux-process-management)
   - [Kill a process](#kill-a-process)
+- [Limit Google Chrome memory usage](#limit-google-chrome-memory-usage)
 
 ## Shortcuts
 
@@ -430,3 +431,11 @@ wget --page-requisites --span-hosts --no-directories --accept jpg,png --execute 
   `SIGKILL`, terminate immediately/hard kill;
 
 [RenameUSBDrive]: [https://help.ubuntu.com/community/RenameUSBDrive]
+
+
+## Limit Google Chrome memory usage
+
+```sh
+# limit per tab memory usage to be 200MB
+google-chrome --js-flags='--max-old-space-size=200'
+```
