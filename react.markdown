@@ -125,7 +125,7 @@ read [Dan Abramov's article](https://medium.com/@dan_abramov/smart-and-dumb-comp
 
 ```js
 class A {
-  static color = "red";
+  static color = 'red';
   counter = 0;
 
   handleClick = () => {
@@ -154,7 +154,7 @@ class A {
     this.counter++;
   }
 }
-A.color = "red";
+A.color = 'red';
 ```
 
 General Rules:
@@ -312,7 +312,7 @@ export class Book extends React.Component {
 
 ```js
 // create a context object, with a default value
-const ThemeContext = React.createContext("light");
+const ThemeContext = React.createContext('light');
 
 class ContextDemo extends React.Component {
   render() {
@@ -466,8 +466,8 @@ Previously if you want to add state to a function component, you need to convert
 function ExampleWithManyStates() {
   // Declare multiple state variables!
   const [age, setAge] = useState(42);
-  const [fruit, setFruit] = useState("banana");
-  const [todos, setTodos] = useState([{ text: "Learn Hooks" }]);
+  const [fruit, setFruit] = useState('banana');
+  const [todos, setTodos] = useState([{ text: 'Learn Hooks' }]);
 
   // Lazy initilize a state variable
   const [lazy, setLazy] = useState(() => longOperation());
@@ -537,7 +537,7 @@ function FriendStatusWithCounter(props) {
 - Accomplish the same as higher-order components and render props;
 
 ```js
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 
 function useFriendStatus(friendID) {
   const [isOnline, setIsOnline] = useState(null);
@@ -564,9 +564,9 @@ function FriendStatus(props) {
   const isOnline = useFriendStatus(props.friend.id);
 
   if (isOnline === null) {
-    return "Loading...";
+    return 'Loading...';
   }
-  return isOnline ? "Online" : "Offline";
+  return isOnline ? 'Online' : 'Offline';
 }
 ```
 
@@ -575,7 +575,7 @@ function FriendListItem(props) {
   const isOnline = useFriendStatus(props.friend.id);
 
   return (
-    <li style={{ color: isOnline ? "green" : "black" }}>{props.friend.name}</li>
+    <li style={{ color: isOnline ? 'green' : 'black' }}>{props.friend.name}</li>
   );
 }
 ```
@@ -759,8 +759,8 @@ in webpack config file, add a `modules` parameter for the css loader:
 
 - `renderToStaticMarkup`
 
-  - Similar to `renderToStaticMarkup`;
-  - Generate statick markup without extra DOM attributes used by React;
+  - Similar to `renderToString`;
+  - Generate static markup without extra DOM attributes used by React;
   - `ReactDOM.hydrate()` won't work on the generated markup;
 
 ## SSR - Server Side Rendering
@@ -779,23 +779,23 @@ A good step by step guide: [Demystifying server-side rendering in React](https:/
 
 ```js
 // server.js
-import express from "express";
-import path from "path";
+import express from 'express';
+import path from 'path';
 
-import React from "react";
-import { renderToString } from "react-dom/server";
-import { StaticRouter, matchPath } from "react-router-dom";
-import { Provider as ReduxProvider } from "react-redux";
-import Helmet from "react-helmet";
-import routes from "./routes";
-import Layout from "./components/Layout";
-import createStore, { initializeSession } from "./store";
+import React from 'react';
+import { renderToString } from 'react-dom/server';
+import { StaticRouter, matchPath } from 'react-router-dom';
+import { Provider as ReduxProvider } from 'react-redux';
+import Helmet from 'react-helmet';
+import routes from './routes';
+import Layout from './components/Layout';
+import createStore, { initializeSession } from './store';
 
 const app = express();
 
-app.use(express.static(path.resolve(__dirname, "../dist")));
+app.use(express.static(path.resolve(__dirname, '../dist')));
 
-app.get("/*", (req, res) => {
+app.get('/*', (req, res) => {
   const context = {};
   const store = createStore();
 
@@ -819,7 +819,7 @@ app.get("/*", (req, res) => {
     const reduxState = store.getState();
     const helmetData = Helmet.renderStatic();
 
-    res.writeHead(200, { "Content-Type": "text/html" });
+    res.writeHead(200, { 'Content-Type': 'text/html' });
     res.end(htmlTemplate(reactDom, reduxState, helmetData));
   });
 });
@@ -851,13 +851,13 @@ function htmlTemplate(reactDom, reduxState, helmetData) {
 
 ```js
 // client.js
-import React from "react";
-import ReactDOM from "react-dom";
-import { BrowserRouter as Router } from "react-router-dom";
-import { Provider as ReduxProvider } from "react-redux";
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { BrowserRouter as Router } from 'react-router-dom';
+import { Provider as ReduxProvider } from 'react-redux';
 
-import Layout from "./components/Layout";
-import createStore from "./store";
+import Layout from './components/Layout';
+import createStore from './store';
 
 const store = createStore(window.REDUX_DATA);
 
@@ -869,7 +869,7 @@ const jsx = (
   </ReduxProvider>
 );
 
-const app = document.getElementById("app");
+const app = document.getElementById('app');
 ReactDOM.hydrate(jsx, app);
 ```
 
@@ -877,9 +877,9 @@ In order for the server to use ES modules and JSX, require `babel-register` at t
 
 ```js
 // index.js
-require("babel-register")({
-  presets: ["env"]
+require('babel-register')({
+  presets: ['env']
 });
 
-require("./src/server");
+require('./src/server');
 ```
