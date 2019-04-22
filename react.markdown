@@ -15,6 +15,7 @@
 - [Example with lifecycle functions](#example-with-lifecycle-functions)
   - [v16.4](#v164)
   - [Before v16.3](#before-v163)
+- [Performance Optimization](#performance-optimization)
 - [PropTypes](#proptypes)
 - [JSX Syntaxes](#jsx-syntaxes)
 - [Context](#context)
@@ -249,6 +250,27 @@ see this **[CodeSandbox example](https://codesandbox.io/s/2jxjn85n0j)** to under
       document.getElementById('root')
     );
 
+## Performance Optimization
+
+https://reactjs.org/docs/optimizing-performance.html
+
+Identify problems:
+
+- Use the 'Highlight Updates' feature in DevTools to highlight any rerendering
+  - Use `React.PureComponent` or `React.memo` to make a component pure;
+    - `React.PureComponent` implements `shouldComponentUpdate()` and do a shallow comparison of current and previous props and state;
+    - `React.memo` memoize last render result, shallow compares props, return last result if nothing changes;
+- DevTools Profiler;
+  - May be able to identify unnecessary rendering;
+- Use Chrome Performance Tab (disable React DevTools temporarily);
+  - Find any expensive computation that reduces FPS;
+
+Solutions:
+
+- Use Production build for production;
+- Use Immutable Data Structures: a change will always result in a new object so only need to check if the reference to the object has changed, this allows you to use `React.PureComponent` and `React.memo` easily;
+- Virtualize Long Lists ('windowing': only render a small subset of rows at any given time);
+
 ## PropTypes
 
 we can use static class variables within class definition to define `defaultProps` and `propTypes`
@@ -334,9 +356,12 @@ function Wrapper(props) {
     </div>
   );
 }
+```
 
+For class component, use a static `contextType` property, it makes the context value accessible thru `this.context`:
+
+```js
 class InnerText extends React.Component {
-  // For class component, specify which context to use by a static property
   // React will find the closest Provider above and make its value available as this.context
   static contextType = ThemeContext;
 
@@ -353,10 +378,18 @@ class InnerText extends React.Component {
 For function component, use `Context.Consumer`
 
 ```js
-<MyContext.Consumer>
-  {value => /* render something based on the context value */}
-</MyContext.Consumer>
+function InnerText(props) {
+  return (
+    <ThemeContext.Consumer>
+      {value => (
+        <div style={{ color: value }}>Current Context Value: {value}</div>
+      )}
+    </ThemeContext.Consumer>
+  );
+}
 ```
+
+**Context updates trigger rerendering of all its consumers**
 
 ## Refs and the DOM
 
