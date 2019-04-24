@@ -8,8 +8,14 @@
   - [Avoid installing packages globally](#avoid-installing-packages-globally)
   - [Publish package to NPM](#publish-package-to-npm)
   - [Symlink a package folder](#symlink-a-package-folder)
-- [Module System - CommonJs vs. ES6 Modules](#module-system---commonjs-vs-es6-modules)
-  - [Current status in Node 9/10](#current-status-in-node-910)
+- [Module System](#module-system)
+  - [Resolving](#resolving)
+  - [Parent-child relation](#parent-child-relation)
+  - [CommonJs vs. ES6 Modules](#commonjs-vs-es6-modules)
+  - [ECMAScript Modules in Node 11](#ecmascript-modules-in-node-11)
+    - [Enabling](#enabling)
+    - [Features](#features)
+    - [Differences between `import` and `require`](#differences-between-import-and-require)
 - [CLI](#cli)
   - [Limit memory usage](#limit-memory-usage)
 - [Debugging](#debugging)
@@ -141,28 +147,154 @@ cd ~/code/myApp
 npm link ../myLibrary   # use 'my-library' in code of myApp
 ```
 
-## Module System - CommonJs vs. ES6 Modules
+## Module System
+
+[Medium - Samer Buna - Requiring modules in Node.js: Everything you need to know](https://medium.freecodecamp.org/requiring-modules-in-node-js-everything-you-need-to-know-e7fbd119be8)
+
+
+- Node modules have a one-to-one relation with files;
+- Requiring a module means laoding the content of a file into memory;
+- Node uses two modules: `require` and `module` to mnanage module dependencies;
+- The main object exported by `require` module is the `require` function;
+- When `require()` is invoked, Node goes thru the following sequence of steps:
+  - **Resolving**: find the absolute path;
+  - **Loading**: determine the type of the file content;
+  - **Wrapping**: give the file its private scope, this makes both `require` and `module` local to every file we require;
+  - **Evaluating**;
+  - **Caching**;
+
+### Resolving
+
+```js
+// without a path
+require('mod-a');
+
+// with a relative path
+require('./mod-a');
+
+// with an absolute path
+require('/lib/mod-a');
+```
+
+- When you require a module without a path, Node searchs all paths in `module.paths` in order:
+  ```sh
+  ➜  learn-node node
+  > module.paths
+  [ '/home/gary/code/learn-node/repl/node_modules',
+    '/home/gary/code/learn-node/node_modules',
+    '/home/gary/code/node_modules',
+    '/home/gary/node_modules',
+    '/home/node_modules',
+    '/node_modules',
+    '/home/gary/.node_modules',
+    '/home/gary/.node_libraries',
+    '/home/gary/.nvm/versions/node/v10.6.0/lib/node' ]
+  ```
+
+- If `mod-a` is a folder, it will resolve to `mod-a/index.js` by default, but you can specify another file in `mod-a/package.json`:
+  ```js
+  {
+    "name": "mod-a",
+    "main": "start.js",  // resolve to this file
+    ...
+  }
+  ```
+
+- **`require.resolve`** can be used to get the full path of a module, it only does the resolving step, doesn't actually load the file, can be used to check whether a package is installed or not:
+
+  ```sh
+  > require.resolve('./mod-a')
+  '/home/gary/code/learn-node/mod-a.js'
+  ```
+
+  If `mod-a` is a package in `./node_modules/` and its main file is `start.js`:
+
+  ```sh
+  > require.resolve('mod-a')
+  '/home/gary/code/learn-node/node_modules/mod-a/start.js'
+  ```
+
+### Parent-child relation
+
+```js
+// main.js
+require('./mod-a');
+console.log(module);
+```
+
+```js
+// mod-a.js
+// empty
+```
+
+```sh
+➜  learn-node node main.js
+Module {
+  id: '.',
+  exports: {},
+  parent: undefined,
+  filename: '/home/gary/code/learn-node/main.js',
+  loaded: false,
+  children:
+   [ Module {
+       id: '/home/gary/code/learn-node/mod-a.js',
+       exports: {},
+       parent: [Circular],
+       filename: '/home/gary/code/learn-node/mod-a.js',
+       loaded: true,
+       children: [],
+       paths: [Array] } ],
+  paths:
+   [ '/home/gary/code/learn-node/node_modules',
+     '/home/gary/code/node_modules',
+     '/home/gary/node_modules',
+     '/home/node_modules',
+     '/node_modules' ] }
+```
+
+- `mod-a.js` is a child of `main.js`;
+- `module.id` of the entry file is '.', of any other module is its full path;
+- `module.paths` is an array of module search paths;
+
+
+
+### CommonJs vs. ES6 Modules
 
 this blog post explains the implementation difference between the two module systems: [An Update on ES6 Modules in Node.js](https://medium.com/the-node-js-collection/an-update-on-es6-modules-in-node-js-42c958b890c)
 
 - core difference: **ES Module loading is asynchronous, while CommonJS module loading is synchronous**;
 - Babel/webpack load ES Modules _synchronously_, while the ECMAScript specs specify _asynchronous_ loading;
 
-### Current status in Node 9/10
+### ECMAScript Modules in Node 11
 
-details are here https://nodejs.org/docs/latest-v9.x/api/esm.html
+Details are here https://nodejs.org/docs/latest-v11.x/api/esm.html
 
-more info: https://medium.com/@giltayar/native-es-modules-in-nodejs-status-and-future-directions-part-i-ee5ea3001f71
+#### Enabling
 
-if you want to use ES Module syntax with Node (not Babel transpiling)
+If you want to use ES Module syntax with Node (not Babel transpiling)
 
 - end your ES Module file with `.mjs`;
 - use `--experimental-modules` flag in your command;
 
   ```node
-  node --experimental-modules test.mjs
+  node --experimental-modules my-app.mjs
   ```
 
+#### Features
+
+- In a ESM module, `import.meta` metaproperty is an object containing the absolute `file:` URL of the module:
+
+  ```js
+  { url: 'file:///home/gary/code/nodejs/foo.mjs' }
+  ```
+
+- This syntax `require('./foo.mjs')` is not supported;
+
+#### Differences between `import` and `require`
+
+- `NODE_PATH` is not used by `import` (use symlinks if needed);
+- `require.extensions` is not used by `import`;
+- `require.cache` is not used by `import`;
 
 ## CLI
 
@@ -179,7 +311,6 @@ NODE_OPTIONS='--max-old-space-size=100' node script.js
 # or set it directly in the command line
 node --max-old-space-size=100 script.js
 ```
-
 
 ## Debugging
 
@@ -215,16 +346,16 @@ then connect to `9221` on local using any debugging client.
 ## Barebone HTTP server
 
 ```js
-var http = require("http");
+var http = require('http');
 
 var server = http.createServer(function(req, resp) {
-  resp.writeHead(200, { "Content-Type": "text/plain" });
-  resp.end("Hello World");
+  resp.writeHead(200, { 'Content-Type': 'text/plain' });
+  resp.end('Hello World');
 });
 
 server.listen(8000);
 
-console.log("Server running at http://localhost:8000");
+console.log('Server running at http://localhost:8000');
 ```
 
 ## Streams and pipes
@@ -256,11 +387,11 @@ it's recommended to use either the `pipe` method or consume streams with events,
 ### read
 
 ```node
-var fs = require("fs");
+var fs = require('fs');
 var stream;
-stream = fs.createReadStream("/data/test.txt");
+stream = fs.createReadStream('/data/test.txt');
 
-stream.on("data", function(data) {
+stream.on('data', function(data) {
   var chunk = data.toString();
   console.log(chunk);
 });
@@ -269,21 +400,21 @@ stream.on("data", function(data) {
 ### write
 
 ```node
-var fs = require("fs");
+var fs = require('fs');
 var stream;
-stream = fs.createWriteStream("/data/test.txt");
+stream = fs.createWriteStream('/data/test.txt');
 
-stream.write("Node.js");
-stream.write("Hello World");
+stream.write('Node.js');
+stream.write('Hello World');
 ```
 
 ### pipe
 
 ```node
-var fs = require("fs");
+var fs = require('fs');
 
-var readStream = fs.createReadStream("/data/input.txt");
-var writeStream = fs.createwriteStream("/data/output.txt");
+var readStream = fs.createReadStream('/data/input.txt');
+var writeStream = fs.createwriteStream('/data/output.txt');
 
 readStream.pipe(writeStream);
 ```
@@ -291,11 +422,11 @@ readStream.pipe(writeStream);
 or server a large file
 
 ```node
-const fs = require("fs");
-const server = require("http").createServer();
+const fs = require('fs');
+const server = require('http').createServer();
 
-server.on("request", (req, res) => {
-  const src = fs.createReadStream("./big.file");
+server.on('request', (req, res) => {
+  const src = fs.createReadStream('./big.file');
   src.pipe(res);
 });
 
@@ -305,15 +436,15 @@ server.listen(8000);
 ### events
 
 ```node
-var events = require("events");
+var events = require('events');
 
 var eventEmitter = new events.EventEmitter();
 
 // add a listener
-eventEmitter.on("data_received", function() {
-  console.log("data received succesfully.");
+eventEmitter.on('data_received', function() {
+  console.log('data received succesfully.');
 });
 
 // trigger an event
-eventEmitter.emit("data_received");
+eventEmitter.emit('data_received');
 ```
