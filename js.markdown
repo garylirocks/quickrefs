@@ -17,10 +17,6 @@ General topics about Javascript and front-end develpoment.
 - [Regular Expression](#regular-expression)
   - [named groups](#named-groups)
 - [Style guide](#style-guide)
-- [Module Systems](#module-systems)
-  - [AMD (Asynchronous Module Design)](#amd-asynchronous-module-design)
-  - [CommonJS (CJS)](#commonjs-cjs)
-  - [ES6](#es6)
 - [Symbol](#symbol)
 - [Iterations](#iterations)
 - [Promise](#promise)
@@ -37,6 +33,10 @@ General topics about Javascript and front-end develpoment.
     - [Immer](#immer)
     - [immutability-helper](#immutability-helper)
 - [ECMAScript](#ecmascript)
+- [Module Systems](#module-systems)
+  - [AMD (Asynchronous Module Design)](#amd-asynchronous-module-design)
+  - [CommonJS (CJS)](#commonjs-cjs)
+  - [ES6](#es6)
 - [Tricks](#tricks)
   - [Deboucing an event](#deboucing-an-event)
   - [Initialize an array with a value range](#initialize-an-array-with-a-value-range)
@@ -632,93 +632,6 @@ console.log('Arya Stark'.replace(re, '$<lastName>, $<firstName>')); // Stark, Ar
 ## Style guide
 
 please refer to the specific note on JS Coding Styles
-
-## Module Systems
-
-https://www.airpair.com/javascript/posts/the-mind-boggling-universe-of-javascript-modules
-
-### AMD (Asynchronous Module Design)
-
-asynchronous, unblocking
-
-```js
-// this is an AMD module
-define(function() {
-  return something;
-});
-```
-
-### CommonJS (CJS)
-
-synchronous, blocking, easier to understand
-
-```js
-// and this is CommonJS
-module.exports = something;
-```
-
-### ES6
-
-example, `lib.js`:
-
-```js
-let person = {
-  name: 'gary',
-  age: 30
-};
-
-let position = {
-  x: 20,
-  y: 30
-};
-
-export default person;
-export { position };
-```
-
-`app.js`:
-
-```js
-import theDefault from './lib';
-import { position as p, imaginedVar } from './lib';
-import * as all from './lib';
-
-console.log('theDefault:');
-console.log(theDefault);
-
-console.log('position:');
-console.log(p);
-
-console.log('imaginedVar:');
-console.log(imaginedVar);
-
-console.log('all:');
-console.log(all);
-```
-
-run `app.js`:
-
-    theDefault:
-    { name: 'gary', age: 30 }
-    position:
-    { x: 20, y: 30 }
-    imaginedVar:
-    undefined
-    all:
-    { default: { name: 'gary', age: 30 },
-      position: { x: 20, y: 30 } }
-
-or you can put everything on one line:
-
-```js
-import theDefault, { position as p, imaginedVar } from './lib';
-```
-
-if you just want to trigger the side effect, do not actually import any binding:
-
-```js
-import './myModule';
-```
 
 ## Symbol
 
@@ -1389,6 +1302,79 @@ You need to use your custom methods or something like `_.isEqual` from Lo-Dash t
 The language specification is managed by ECMA's TC39 committee now, the general process of making changes to the specification is here: [TC39 Process]
 
 There are 5 stages, from 0 to 4, all finished proposals (reached stage 4) are here: https://github.com/tc39/proposals/blob/master/finished-proposals.md
+
+
+## Module Systems
+
+https://www.airpair.com/javascript/posts/the-mind-boggling-universe-of-javascript-modules
+
+### AMD (Asynchronous Module Design)
+
+asynchronous, unblocking
+
+```js
+// this is an AMD module
+define(function() {
+  return something;
+});
+```
+
+### CommonJS (CJS)
+
+synchronous, blocking, easier to understand
+
+```js
+// and this is CommonJS
+module.exports = something;
+```
+
+### ES6
+
+```js
+// mod-a.js
+const person = {
+  name: 'gary',
+  age: 30
+};
+
+export const a = 20;  // one syntax
+const b = 30;
+
+export default person;
+export { b };       // another way
+```
+
+`app.js`:
+
+```js
+// main.js
+import theDefault from './mod-a';
+import * as all from './mod-a';
+
+console.log('theDefault:', theDefault);
+console.log('all:', all);
+```
+
+```sh
+theDefault: { name: 'gary', age: 30 }
+all: [Module] { a: 20, b: 30, default: { name: 'gary', age: 30 } }
+```
+
+- For both default and named exports, you can put `export`, `export default` directly before the variable definition or do it at the end of file, in the above example, both `a`, `b` are exported;
+
+- Or you can import everything on one line:
+
+  ```js
+  import theDefault, { a as myA, b } from './mod-a';
+  ```
+
+- If you just want to trigger the side effect, do not actually import any binding:
+
+  ```js
+  import './mod-a';
+  ```
+
+
 
 ## Tricks
 
