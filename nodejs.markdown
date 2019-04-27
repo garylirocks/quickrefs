@@ -9,13 +9,21 @@
   - [Publish package to NPM](#publish-package-to-npm)
   - [Symlink a package folder](#symlink-a-package-folder)
 - [Module System](#module-system)
-  - [Resolving](#resolving)
-  - [Parent-child relation](#parent-child-relation)
-  - [CommonJs vs. ES6 Modules](#commonjs-vs-es6-modules)
+  - [Resolving: `module.paths`, `module.resolve`](#resolving-modulepaths-moduleresolve)
+  - [Parent-child relation: `module.parent`, `module.children`](#parent-child-relation-moduleparent-modulechildren)
+  - [`module.loaded`](#moduleloaded)
+  - [`exports`, `module.exports`](#exports-moduleexports)
+  - [Synchronicity](#synchronicity)
+  - [Circular dependency](#circular-dependency)
+  - [JSON and C/C++ Addons](#json-and-cc-addons)
+  - [Module Wrapping](#module-wrapping)
+  - [The `require` object](#the-require-object)
+  - [Module Caching](#module-caching)
   - [ECMAScript Modules in Node 11](#ecmascript-modules-in-node-11)
     - [Enabling](#enabling)
     - [Features](#features)
     - [Differences between `import` and `require`](#differences-between-import-and-require)
+  - [CommonJs vs. ES6 Modules](#commonjs-vs-es6-modules)
 - [CLI](#cli)
   - [Limit memory usage](#limit-memory-usage)
 - [Debugging](#debugging)
@@ -153,6 +161,7 @@ npm link ../myLibrary   # use 'my-library' in code of myApp
 
 
 - Node modules have a one-to-one relation with files;
+- A module can be put into a directory with a `package.json` file, such as packages from NPM;
 - Requiring a module means laoding the content of a file into memory;
 - Node uses two modules: `require` and `module` to mnanage module dependencies;
 - The main object exported by `require` module is the `require` function;
@@ -163,7 +172,7 @@ npm link ../myLibrary   # use 'my-library' in code of myApp
   - **Evaluating**;
   - **Caching**;
 
-### Resolving
+### Resolving: `module.paths`, `module.resolve`
 
 ```js
 // without a path
@@ -174,9 +183,12 @@ require('./mod-a');
 
 // with an absolute path
 require('/lib/mod-a');
+
+// a builtin module
+require('http');
 ```
 
-- When you require a module without a path, Node searchs all paths in `module.paths` in order:
+- When you require a module without a path, Node searchs all paths in `module.paths` in order (builtin modules always take precedence):
   ```sh
   ➜  learn-node node
   > module.paths
@@ -214,7 +226,14 @@ require('/lib/mod-a');
   '/home/gary/code/learn-node/node_modules/mod-a/start.js'
   ```
 
-### Parent-child relation
+  Doesn't show a full path for a builtin module:
+
+  ```sh
+  > require.resolve('http')
+  'http'
+  ```
+
+### Parent-child relation: `module.parent`, `module.children`
 
 ```js
 // main.js
@@ -245,25 +264,306 @@ Module {
        children: [],
        paths: [Array] } ],
   paths:
-   [ '/home/gary/code/learn-node/node_modules',
-     '/home/gary/code/node_modules',
-     '/home/gary/node_modules',
-     '/home/node_modules',
-     '/node_modules' ] }
+   [ ... ] }
 ```
 
 - `mod-a.js` is a child of `main.js`;
 - `module.id` of the entry file is '.', of any other module is its full path;
-- `module.paths` is an array of module search paths;
 
+### `module.loaded`
 
+```js
+// main.js
+console.log(`Sync: ${module.loaded}`);
+setImmediate(() => console.log(`Next tick: ${module.loaded}`));
+```
 
-### CommonJs vs. ES6 Modules
+```sh
+➜  learn-node node main.js
+Sync: false
+Next tick: true
+```
 
-this blog post explains the implementation difference between the two module systems: [An Update on ES6 Modules in Node.js](https://medium.com/the-node-js-collection/an-update-on-es6-modules-in-node-js-42c958b890c)
+The value of `module.loaded` is `false` while the module is being loaded, and becomes `true` after been loaded.
 
-- core difference: **ES Module loading is asynchronous, while CommonJS module loading is synchronous**;
-- Babel/webpack load ES Modules _synchronously_, while the ECMAScript specs specify _asynchronous_ loading;
+### `exports`, `module.exports`
+
+Add attributes to exports:
+
+```js
+// main.js
+exports.id = 20;
+exports.foo = a => a * 2;
+
+module.exports.NAME = 'gary';
+```
+
+```sh
+> require('./main.js')
+{ id: 20, foo: [Function], NAME: 'gary' }
+```
+
+`exports` is an alias of `module.exports`, if you assign a new object to `exports`, it doesn't work, but you can assign a new object to `module.exports`.
+
+```js
+// main.js
+
+// !DON'T DO THIS
+exports = {
+  id: 20,
+};
+
+// DO IT THIS WAY
+module.exports = { NAME: 'gary' };
+```
+
+```sh
+> require('./main.js')
+{ NAME: 'gary' }
+```
+
+So, the best practice is either using `exports` to add attributes one by one throughout the file or using `module.exports` at the end of a file.
+
+### Synchronicity
+
+```js
+// main.js
+module.exports = { id: 20 };
+
+// !DON'T DO THIS
+setImmediate(() => {
+  module.exports = { name: 'gary' };
+});
+```
+
+```sh
+> require('./main.js')
+{ id: 20 }
+
+> require('./main.js')
+{ name: 'gary' }
+```
+
+First `require` gives you the synchronous export, which gets changed later, but you **SHOULD NOT** change a module's exports asynchronously.
+
+### Circular dependency
+
+Let's create two files which require each other:
+
+```js
+// mod-a.js
+console.log('mod-a loading starts');
+exports.id = 1;
+
+const modB = require('./mod-b');
+console.log('modB in mod-a:', modB);
+
+exports.name = 'gary';
+console.log('mod-a loaded');
+```
+
+```js
+// mod-b.js
+console.log('mod-b loading starts');
+exports.id = 2;
+
+// Loading a partially loaded module here
+const modA = require('./mod-a');
+console.log('modA in mod-b:', modA);
+
+exports.name = 'Arya';
+console.log('mod-b loaded');
+```
+
+```sh
+➜  learn-node node mod-a.js
+mod-a loading starts
+mod-b loading starts
+modA in mod-b: { id: 1 }
+mod-b loaded
+modB in mod-a: { id: 2, name: 'Arya' }
+mod-a loaded
+```
+
+We starts with `mod-a`, it requires `mod-b`, when `mod-b` requires `mod-a`, `mod-a` is partially loaded, so the partial exports are returned.
+
+So the take away here is you can require a module before it's fully loaded, and you'll just get partial exports.
+
+### JSON and C/C++ Addons
+
+```sh
+> require.extensions
+{ '.js': [Function],
+  '.json': [Function],
+  '.node': [Function],
+  '.mjs': [Function] }
+
+> require.extensions['.json'].toString()
+'function(module, filename) {\n  var content = fs.readFileSync(filename, \'utf8\');\n  try {\n    module.exports = JSON.parse(stripBOM(content));\n  } catch (err) {\n    err.message = filename + \': \' + err.message;\n    throw err;\n  }\n}'
+```
+
+- You can get a list of supported extensions of Node in `require.extensions`, if you don't specify a file extension, Node will try to resolve it as a `.js` file, then a `.json` file, then a binary `.node` file;
+- Node reads a `.json` file's content as a string, and try to parse it with `JSON.parse`;
+- You can use the `node-gyp` package to compile and build a `.cc` file into a `.node` addon file;
+
+### Module Wrapping
+
+In Node, a module's code is executed in a function scope, we can inspect this wrapper function like this:
+
+```sh
+> require('module').wrapper
+[ '(function (exports, require, module, __filename, __dirname) { ',
+  '\n});' ]
+```
+
+`require('module').wrap` is a function:
+```js
+function(script) {
+  return Module.wrapper[0] + script + Module.wrapper[1];
+}
+```
+
+This is why we have access to `exports`, `require`, `module`, `__filename` and `__diranme` in a module.
+
+- `exports` is a reference to `module.exports`;
+- `require` is an object associated with the current file, its not global;
+- `module` is another object associated with the current file, not global as well, `module.exports` is the wrapping function's return value;
+- `__filename/__dirname` are the file's path and its directory path;
+
+We can access all arguments like this as well:
+
+```js
+// main.js
+console.log(arguments);
+```
+
+```sh
+➜  learn-node node main.js
+[Arguments] {
+  '0': {},
+  '1':
+   { [Function: require]
+     resolve: { [Function: resolve] paths: [Function: paths] },
+     main:
+      Module {
+        id: '.',
+        exports: {},
+        parent: undefined,
+        filename: '/home/gary/code/learn-node/main.js',
+        loaded: false,
+        children: [],
+        paths: [Array] },
+     extensions:
+      { '.js': [Function],
+        '.json': [Function],
+        '.node': [Function],
+        '.mjs': [Function] },
+     cache: { '/home/gary/code/learn-node/main.js': [Module] } },
+  '2':
+   Module {
+     id: '.',
+     exports: {},
+     parent: undefined,
+     filename: '/home/gary/code/learn-node/main.js',
+     loaded: false,
+     children: [],
+     paths:
+      [ ... ] },
+  '3': '/home/gary/code/learn-node/main.js',
+  '4': '/home/gary/code/learn-node' }
+```
+
+### The `require` object
+
+```js
+// main.js
+console.log(require);
+```
+
+```sh
+➜  learn-node node main.js
+{ [Function: require]
+  resolve: { [Function: resolve] paths: [Function: paths] },
+  main:
+   Module {
+     id: '.',
+     exports: {},
+     parent: undefined,
+     filename: '/home/gary/code/learn-node/main.js',
+     loaded: false,
+     children: [],
+     paths:
+      [ ... ] },
+  extensions:
+   { '.js': [Function],
+     '.json': [Function],
+     '.node': [Function],
+     '.mjs': [Function] },
+  cache:
+   { '/home/gary/code/learn-node/main.js':
+      Module {
+        id: '.',
+        exports: {},
+        parent: undefined,
+        filename: '/home/gary/code/learn-node/main.js',
+        loaded: false,
+        children: [],
+        paths: [Array] } } }
+```
+
+`require` is a function, and it has its properties as well:
+
+- You can override it: `require = () => { mocked: true };`, this allows you to mock any module;
+- `require.resolve` is a function that returns full path of a module;
+- `require.extensions` contains loading functions for all supported file types;
+- `require.main` is a reference to the entry module of current process, it can be used to check whether a module is being ran directly or being required;
+
+  ```js
+  // mod-a.js
+  const print = name => {
+    console.log(`Hello ${name}`);
+  };
+
+  if (require.main === module) {
+    print(process.argv[2]); // print directly if this is the main file
+  } else {
+    module.exports = print;
+  }
+  ```
+
+  ```sh
+  ➜  learn-node node mod-a.js Gary
+  Hello Gary
+  ```
+
+### Module Caching
+
+```js
+// mod-a.js
+console.log('Running mod-a');
+console.log(require.cache);
+```
+
+```sh
+> require('./mod-a')  # first require, module gets loaded and cached
+
+Running mod-a
+{ '/home/gary/code/learn-node/mod-a.js':
+   Module {
+     id: '/home/gary/code/learn-node/mod-a.js',
+     exports: {},
+     parent:
+      Module { ... },
+     filename: '/home/gary/code/learn-node/mod-a.js',
+     loaded: false,
+     children: [],
+     paths:
+      [ ... ] } }
+
+> require('./mod-a')  # doesn't load again
+```
+
+Node caches modules in `require.cache`, so if you `require` a module again, it just returns the cached exports, doesn't run the module code again.
 
 ### ECMAScript Modules in Node 11
 
@@ -295,6 +595,13 @@ If you want to use ES Module syntax with Node (not Babel transpiling)
 - `NODE_PATH` is not used by `import` (use symlinks if needed);
 - `require.extensions` is not used by `import`;
 - `require.cache` is not used by `import`;
+
+### CommonJs vs. ES6 Modules
+
+This blog post explains the implementation difference between the two module systems: [An Update on ES6 Modules in Node.js](https://medium.com/the-node-js-collection/an-update-on-es6-modules-in-node-js-42c958b890c)
+
+- core difference: **ES Module loading is asynchronous, while CommonJS module loading is synchronous**;
+- Babel/webpack load ES Modules _synchronously_, while the ECMAScript specs specify _asynchronous_ loading;
 
 ## CLI
 
