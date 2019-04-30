@@ -1,52 +1,45 @@
 # Vim cheatsheet
 
-- [Vim cheatsheet](#vim-cheatsheet)
-  - [Preface](#preface)
-  - [Moving around](#moving-around)
-    - [Jumping](#jumping)
-    - [Scrolling](#scrolling)
-    - [Tags](#tags)
-  - [Search and replace](#search-and-replace)
-    - [Copy from one location, replacing multiple locations](#copy-from-one-location-replacing-multiple-locations)
-    - [Special characters in a replacement pattern](#special-characters-in-a-replacement-pattern)
-  - [Regular Expressions](#regular-expressions)
-    - [Enable ERE (extended regular expression)](#enable-ere-extended-regular-expression)
-    - [About new line](#about-new-line)
-    - [Lookahead/lookbehind modifiers](#lookaheadlookbehind-modifiers)
-  - [Editing](#editing)
-    - [Change a word/sentence](#change-a-wordsentence)
-    - [Change word to uppper/lower case](#change-word-to-uppperlower-case)
-    - [Increase / Decrease numbers](#increase--decrease-numbers)
-    - [Indent lines](#indent-lines)
-    - [Abbreviations](#abbreviations)
-    - [Word completion](#word-completion)
-    - [Command macros](#command-macros)
-  - [Edit multiple files](#edit-multiple-files)
-    - [multiple buffers](#multiple-buffers)
-    - [multiple windows](#multiple-windows)
-    - [tab page](#tab-page)
-    - [tag with windows](#tag-with-windows)
-  - [Record and Play](#record-and-play)
-  - [Copy and Paste](#copy-and-paste)
-  - [Registers](#registers)
-  - [Options](#options)
-  - [Miscs](#miscs)
-    - [Avoid the Esc key](#avoid-the-esc-key)
-    - [Save a readonly file](#save-a-readonly-file)
-    - [Add a new filetype](#add-a-new-filetype)
-    - [Encoding](#encoding)
-    - [Save session](#save-session)
-    - [Folding](#folding)
-  - [Modes](#modes)
-    - [ex mode](#ex-mode)
-    - [visual mode](#visual-mode)
-  - [plugins](#plugins)
-    - [Vundle](#vundle)
-
-## Preface
-
-Some useful tips for vim
-Source:
+- [Moving around](#moving-around)
+  - [Jumping](#jumping)
+  - [Scrolling](#scrolling)
+  - [Tags](#tags)
+- [Search and replace](#search-and-replace)
+  - [Copy from one location, replacing multiple locations](#copy-from-one-location-replacing-multiple-locations)
+  - [Special characters in a replacement pattern](#special-characters-in-a-replacement-pattern)
+- [Regular Expressions](#regular-expressions)
+  - [Enable ERE (extended regular expression)](#enable-ere-extended-regular-expression)
+  - [About new line](#about-new-line)
+  - [Lookahead/lookbehind modifiers](#lookaheadlookbehind-modifiers)
+- [Editing](#editing)
+  - [Change a word/sentence](#change-a-wordsentence)
+  - [Change word to uppper/lower case](#change-word-to-uppperlower-case)
+  - [Increase / Decrease numbers](#increase--decrease-numbers)
+  - [Indent lines](#indent-lines)
+  - [Abbreviations](#abbreviations)
+  - [Word completion](#word-completion)
+  - [Command macros](#command-macros)
+- [Edit multiple files](#edit-multiple-files)
+  - [multiple buffers](#multiple-buffers)
+  - [multiple windows](#multiple-windows)
+  - [tab page](#tab-page)
+  - [tag with windows](#tag-with-windows)
+- [Record and Play](#record-and-play)
+- [Copy and Paste](#copy-and-paste)
+- [Registers](#registers)
+- [Options](#options)
+- [Miscs](#miscs)
+  - [Avoid the Esc key](#avoid-the-esc-key)
+  - [Save a readonly file](#save-a-readonly-file)
+  - [Add a new filetype](#add-a-new-filetype)
+  - [Encoding](#encoding)
+  - [Save session](#save-session)
+  - [Folding](#folding)
+- [Modes](#modes)
+  - [ex mode](#ex-mode)
+  - [visual mode](#visual-mode)
+- [plugins](#plugins)
+  - [Vundle](#vundle)
 
 ## Moving around
 
@@ -259,7 +252,7 @@ in insert mode,
     ^ Ctrl+d        # shift the cursor back to beginning of the line
     0 Ctrl+d        # shift the cursor back to beginning of the line, and reset auto indent level to zero
 
-select lines you want to indent in visual mode, then use `>` to indent them  
+select lines you want to indent in visual mode, then use `>` to indent them
 indent a block: place cursor on one of the brackets, then `>%` to indent the block
 
 ### Abbreviations
@@ -416,9 +409,9 @@ or try to use `Ctrl + Alt + PageUp/PageDown` to switch tab (may only available i
 
 ## Record and Play
 
-(in normal mode) press `qa` : record macro a  
-do whatever operation you want to be recorded  
-(in normal mode) press `q`, stop recording  
+(in normal mode) press `qa` : record macro a
+do whatever operation you want to be recorded
+(in normal mode) press `q`, stop recording
 (in normal mode) press `@a`, replay macro a
 
 ## Copy and Paste
