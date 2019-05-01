@@ -1,9 +1,23 @@
 # Vim cheatsheet
 
-- [Moving around](#moving-around)
-  - [Jumping](#jumping)
+- [Motions](#motions)
+  - [Left-right motions](#left-right-motions)
+  - [Up-down motions](#up-down-motions)
+  - [Word motions](#word-motions)
+  - [Text object motions](#text-object-motions)
+  - [Marks](#marks)
+  - [Jumps](#jumps)
   - [Scrolling](#scrolling)
   - [Tags](#tags)
+- [Editing](#editing)
+  - [Operators](#operators)
+  - [Text objects](#text-objects)
+  - [Examples](#examples)
+  - [Increase / Decrease numbers](#increase--decrease-numbers)
+  - [Indent lines](#indent-lines)
+  - [Abbreviations](#abbreviations)
+  - [Word completion](#word-completion)
+  - [Command macros](#command-macros)
 - [Search and replace](#search-and-replace)
   - [Copy from one location, replacing multiple locations](#copy-from-one-location-replacing-multiple-locations)
   - [Special characters in a replacement pattern](#special-characters-in-a-replacement-pattern)
@@ -11,14 +25,6 @@
   - [Enable ERE (extended regular expression)](#enable-ere-extended-regular-expression)
   - [About new line](#about-new-line)
   - [Lookahead/lookbehind modifiers](#lookaheadlookbehind-modifiers)
-- [Editing](#editing)
-  - [Change a word/sentence](#change-a-wordsentence)
-  - [Change word to uppper/lower case](#change-word-to-uppperlower-case)
-  - [Increase / Decrease numbers](#increase--decrease-numbers)
-  - [Indent lines](#indent-lines)
-  - [Abbreviations](#abbreviations)
-  - [Word completion](#word-completion)
-  - [Command macros](#command-macros)
 - [Edit multiple files](#edit-multiple-files)
   - [multiple buffers](#multiple-buffers)
   - [multiple windows](#multiple-windows)
@@ -41,34 +47,75 @@
 - [plugins](#plugins)
   - [Vundle](#vundle)
 
-## Moving around
+## Motions
 
-### Jumping
+### Left-right motions
 
-    ^   # move to first nonblank character of current line
+```
+[count]h/l
+0, <Home>       # first character of the line
+^               # first non-blank character of the line
+$, <End>        # end of the line
+g0, g^, g$      # moves on the screen line when lines wrap
+[count]|        # to screen column [count]
+[count]f{char}  # to [count]'th occurence of {char} to the right
+[count]F{char}  # to [count]'th occurence of {char} to the left
+[count]t{char}  # till before [count]'th occurence of {char} to the right
+[count]T{char}  # till after [count]'th occurence of {char} to the left
+;               # repeat lastest f/F/t/T motion
+,               # repeat lastest f/F/t/T motion in opposite direction
+```
 
-    m<x>    # create a mark <x> at current position
-    `<x>    # jump to mark <x>, can be used to edit/delete a chunk of code
-    ``  # move to previous mark or context
-    ''  # move to line beginning of previous mark or context
+### Up-down motions
+
+```
+[count]j/k
+gj, gk          # [count] display lines up/down when line wraps
+-, +            # up/down to first non-blank character
+G               # Goto last line
+gg              # Goto first line
+[count]G/gg     # Goto line [count]
+:[range]        # go to last line in [range], which can be ":22", ":+5" or ":'mark"
+{count}%        # go to {count} percentage of the file
+```
+
+### Word motions
+
+```
+[count]w/W      # [count] words/WORDS forward
+[count]e/E      # forward to the end of word/WORD [count]
+[count]b/B      # [count] words/WORDS backward
+```
+
+_a WORD consists of any non-blank characters_
+
+### Text object motions
+
+```
+(       # to beginning of current sentence
+)       # to beginning of next sentence
+{       # to beginning of current paragraph
+}       # to beginning of next paragraph
+[[      # to beginning of current section
+]]      # to beginning of next section
+```
+
+### Marks
+
+```
+m<x>    # create a mark <x> at current position
+`<x>    # jump to mark <x>, can be used to edit/delete a chunk of code
+``      # move to previous mark or context
+''      # move to line beginning of previous mark or context
+```
+
+### Jumps
 
     `.  '. g;  # to the last change position
     `^  '^  # to the position where last Insert mode was stopped
     g,		# moves back in edit history
 
-    fx      # move to next occurence of x in current line
-    Fx      # move to previous occurence of x in current line
-    tx      # move to just before next occurence of x in current line
-    Tx      # move to just after  previous occurence of x in current line
-    ;       # repeat previous find in same direction
-    ,       # repeat previous find in opposite direction
 
-    (   # to beginning of current sentence
-    )   # to beginning of next sentence
-    {   # to beginning of current paragraph
-    }   # to beginning of next paragraph
-    [[   # to beginning of current section
-    ]]   # to beginning of next section
 
     %    # when the cursor is on a bracket, it will jump to the matching one; else it will jump to a bracket character
 
@@ -95,6 +142,168 @@ use tags in Vim:
 
     :tag <tag-name>     # jump to <tag-name>
     :tags       # show tag stack
+
+## Editing
+
+[Talk on going mouseless with Vim, Tmux and Hotkeys](https://youtu.be/E-ZbrtoSuzw)
+
+Think _operators_, _text objects_, and _motions_, _operators_ acts upon _text objects_ and _motions_;
+
+### Operators
+
+```
+:h operator
+
+c   change
+d   delete
+y   yank into register (does not change the text)
+~   swap case (only if 'tildeop' is set)
+g~  swap case
+gu  make lowercase
+gU  make uppercase
+!   filter through an external program
+=   indent
+>   shift right
+<   shift left
+```
+
+### Text objects
+
+```
+:h text-object
+
+aw              a word (including following whitespace)
+iw              inner word (don't include whitespace)
+
+aW              a WORD (including all non-blank characters)
+iW              inner WORD
+
+ap              a paragraph (including following empty line)
+ip              inner paragraph
+
+as              a sentence
+is              inner sentence
+
+at              HTML/XML tag block
+it              inner tag block
+
+a(, a), ab
+i(, i), ib      () block
+
+a], a[
+i], i[          [] block
+
+a<, a>
+i<, i>          <> block
+
+a{, a}, aB
+i{, i}, iB      {} Block
+
+a", a', a`
+i", i', i`      quote block
+```
+
+### Examples
+
+```
+ciw     change current word (only the word is deleted, the spaces after it are keeped)
+caw     change current word (the space after the word will be deleted too)
+
+cis     change current sentence
+ci(     change everything in the parenthesis: delete all the content and put you in insert mode
+
+gUiw    change word to UPPERCASE
+```
+
+### Increase / Decrease numbers
+
+place your crusor on a number:
+
+    Ctrl+a   # increase the number by one
+    <number>Ctrl+a   # increase the number by <number>
+    Ctrl+x   # decrease the number by one
+    <number>Ctrl+x   # decrease the number by <number>
+
+### Indent lines
+
+in command mode,
+
+    >>              # increase indentation for current line
+    <<              # decrease indentation for current line
+
+in insert mode,
+
+    Ctrl + t        # increase indentation
+    Ctrl + d        # decrease indentation
+    ^ Ctrl+d        # shift the cursor back to beginning of the line
+    0 Ctrl+d        # shift the cursor back to beginning of the line, and reset auto indent level to zero
+
+select lines you want to indent in visual mode, then use `>` to indent them
+indent a block: place cursor on one of the brackets, then `>%` to indent the block
+
+### Abbreviations
+
+**Turn off paste mode** for this abbreviations to work
+
+    :ab <abbr> <phrase>     # when in insert mode, <abbr> inputted as a whole word will be expanded to <phrase> automatically
+    :ab                     # list all abbreviations
+    :unab <abbr>            # disable <abbr> abbreviation
+
+    :ab DB Database         # input 'DB' to get 'Database'
+
+### Word completion
+
+use `Ctrl+X` followed by:
+
+- `Ctrl+F` filename
+- `Ctrl+L` whole line
+- `Ctrl+N/P` word, search current file
+- `Ctrl+K` dictionary, dictionary files is set by `set dictionary`
+  such as `set dictionary=~/.mydict`, put any words you want in the file `~/.mydict`
+- `Ctrl+T` thesaurus file is set by `set thesaurus`
+  such as `set thesaurus=~/.mythesaurus`
+- `Ctrl+I` word, search current file and included files
+
+- `Ctrl+N` next
+- `Ctrl+P` previous
+
+dictionary file example:
+china
+zhongguo
+lenovo
+
+thesaurus file example, in insert mode, when you place the cursor after a word, then `Ctrl+X_Ctrl+T`, a list of synonyms from the thesaurus file would show up:
+
+    fun enjoyable desirable
+    funny hilarious lol lmao
+    retrieve getchar getcwd getdirentries getenv
+
+### Command macros
+
+    :map <x> <sequence>         # define <x> as a macro for command <sequence>, <x> may be function keys, `#1` for F1
+    :map                        # list all command macros
+    :unmap <x>                  # disable <x>
+
+    :map V dwelp               # map V as `dwelp`, which swaps words
+
+    :map =i I<i>^[              # add '<i>' tag at line beginning
+    :map =I A</i>^[             # add '</i>' tag at line ending
+
+`map!`, `unmap!` for define and remove key mappings in insert mode
+
+    :map! =b <b></b>^[F<i       # define `=b` as insert '<b></b>' in current editing position and place the input cursor in between(which can not be done by abbreviation)
+
+keys may be used in user defined commands:
+
+    Letters:        g, K, V
+    Control keys:   ^A, ^K, ^O, ^W, and ^X
+    Symbols:        _, *, \, and =
+
+you can store command sequence in named buffers, and execute it using `@` functions, e.g.,
+
+    1. input this at a new line 'cwhello world^[', (the last character is an escaped <Esc>) then <Esc> to exit insert mode;
+    2. "gdd    # put this line in buffer g;
+    3. place the cursor at beginning of a word, and `@g` will execute the macro in buffer g, and replace the word with 'hello world';
 
 ## Search and replace
 
@@ -210,114 +419,6 @@ To find `Gary` in `GaryLi`:
   - `@?!`: negative lookahead;
   - `@?<=`: prositive lookbehind;
   - `@?<!`: negative lookbehind;
-
-## Editing
-
-### Change a word/sentence
-
-    ciw		change current word (only the word is deleted, the spaces after it are keeped)
-    caw		change current word (the space after the word will be deleted too)
-
-    cis		change current sentence
-    cip		change current passage
-    ci(		change everything in the parenthesis: delete all the content and put you in insert mode
-
-### Change word to uppper/lower case
-
-select character you want to change, use the `~` key to change word case
-
-    g~iw    change word case of the word you cursor is on
-    g~ip    change word case of the paragraph you cursor is on
-
-### Increase / Decrease numbers
-
-place your crusor on a number:
-
-    Ctrl+a   # increase the number by one
-    <number>Ctrl+a   # increase the number by <number>
-    Ctrl+x   # decrease the number by one
-    <number>Ctrl+x   # decrease the number by <number>
-
-### Indent lines
-
-in command mode,
-
-    >>              # increase indentation for current line
-    <<              # decrease indentation for current line
-
-in insert mode,
-
-    Ctrl + t        # increase indentation
-    Ctrl + d        # decrease indentation
-    ^ Ctrl+d        # shift the cursor back to beginning of the line
-    0 Ctrl+d        # shift the cursor back to beginning of the line, and reset auto indent level to zero
-
-select lines you want to indent in visual mode, then use `>` to indent them
-indent a block: place cursor on one of the brackets, then `>%` to indent the block
-
-### Abbreviations
-
-**Turn off paste mode** for this abbreviations to work
-
-    :ab <abbr> <phrase>     # when in insert mode, <abbr> inputted as a whole word will be expanded to <phrase> automatically
-    :ab                     # list all abbreviations
-    :unab <abbr>            # disable <abbr> abbreviation
-
-    :ab DB Database         # input 'DB' to get 'Database'
-
-### Word completion
-
-use `Ctrl+X` followed by:
-
-- `Ctrl+F` filename
-- `Ctrl+L` whole line
-- `Ctrl+N/P` word, search current file
-- `Ctrl+K` dictionary, dictionary files is set by `set dictionary`
-  such as `set dictionary=~/.mydict`, put any words you want in the file `~/.mydict`
-- `Ctrl+T` thesaurus file is set by `set thesaurus`
-  such as `set thesaurus=~/.mythesaurus`
-- `Ctrl+I` word, search current file and included files
-
-- `Ctrl+N` next
-- `Ctrl+P` previous
-
-dictionary file example:
-china
-zhongguo
-lenovo
-
-thesaurus file example, in insert mode, when you place the cursor after a word, then `Ctrl+X_Ctrl+T`, a list of synonyms from the thesaurus file would show up:
-
-    fun enjoyable desirable
-    funny hilarious lol lmao
-    retrieve getchar getcwd getdirentries getenv
-
-### Command macros
-
-    :map <x> <sequence>         # define <x> as a macro for command <sequence>, <x> may be function keys, `#1` for F1
-    :map                        # list all command macros
-    :unmap <x>                  # disable <x>
-
-    :map V dwelp               # map V as `dwelp`, which swaps words
-
-    :map =i I<i>^[              # add '<i>' tag at line beginning
-    :map =I A</i>^[             # add '</i>' tag at line ending
-
-`map!`, `unmap!` for define and remove key mappings in insert mode
-
-    :map! =b <b></b>^[F<i       # define `=b` as insert '<b></b>' in current editing position and place the input cursor in between(which can not be done by abbreviation)
-
-keys may be used in user defined commands:
-
-    Letters:        g, K, V
-    Control keys:   ^A, ^K, ^O, ^W, and ^X
-    Symbols:        _, *, \, and =
-
-you can store command sequence in named buffers, and execute it using `@` functions, e.g.,
-
-    1. input this at a new line 'cwhello world^[', (the last character is an escaped <Esc>) then <Esc> to exit insert mode;
-    2. "gdd    # put this line in buffer g;
-    3. place the cursor at beginning of a word, and `@g` will execute the macro in buffer g, and replace the word with 'hello world';
 
 ## Edit multiple files
 
@@ -460,7 +561,7 @@ Registers are used for recording, copying:
 
 - you can edit register contents in command line:
 
-      	`:let @q = 'macro contents'`
+          `:let @q = 'macro contents'`
 
 - or show all registers by `:reg` or `:registers`
 
