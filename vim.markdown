@@ -6,13 +6,14 @@
   - [Word motions](#word-motions)
   - [Text object motions](#text-object-motions)
   - [Marks](#marks)
+    - [Examples](#examples)
   - [Jumps](#jumps)
   - [Scrolling](#scrolling)
   - [Tags](#tags)
 - [Editing](#editing)
   - [Operators](#operators)
   - [Text objects](#text-objects)
-  - [Examples](#examples)
+  - [Examples](#examples-1)
   - [Increase / Decrease numbers](#increase--decrease-numbers)
   - [Indent lines](#indent-lines)
   - [Abbreviations](#abbreviations)
@@ -96,17 +97,47 @@ _a WORD consists of any non-blank characters_
 )       # to beginning of next sentence
 {       # to beginning of current paragraph
 }       # to beginning of next paragraph
-[[      # to beginning of current section
-]]      # to beginning of next section
+[[      # sections backward or to the previous '{' in the first column, can be used to find methods
+]]      # sections forward or to the next '{' in the first column
 ```
 
 ### Marks
 
 ```
-m<x>    # create a mark <x> at current position
-`<x>    # jump to mark <x>, can be used to edit/delete a chunk of code
-``      # move to previous mark or context
-''      # move to line beginning of previous mark or context
+m{a-zA-Z}   # create a mark at current position
+m' or m`    # set previous context mark, can be jumped to with "''" or "``"
+
+:[range]ma[rk] {a-zA-Z'}
+:[range]k{a-zA-Z'}      # set mark
+:marks                  # show marks
+:marks {arg}            # args can be "ab", "{A-Z}" etc
+:delm[arks] {marks}     # delete marks
+:delm[arks]!            # delete marks for current buffer
+```
+
+```
+'{a-z} `{a-z}       # jump to the mark
+
+''  ``              # the position before the latest jump, or where "m'" or "m`" was given
+
+'[ '] `[ `]         # the first/last line of previously changed or yanked text
+'< `< '> `>         # the first/last char/line of last selected Visual area
+'" `"               # cursor position when last exiting the current buffer
+'^ `^               # last Insert mode postion
+'. `.               # last chnage position
+```
+
+- Marks are NOT the same as named registers;
+- Types of marks
+  - `'{a-z}` lowercase marks, valid within a file;
+  - `'{A-Z}` uppercase marks, valid between files;
+  - `'{0-9}` numbered marks, set from .viminfo file;
+
+#### Examples
+
+```
+d`a         # delete until mark `a
+10yy']      # yanking 10 lines and go to the last line
 ```
 
 ### Jumps
