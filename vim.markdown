@@ -8,7 +8,7 @@
   - [Marks](#marks)
     - [Examples](#examples)
   - [Jumps](#jumps)
-  - [Scrolling](#scrolling)
+  - [Various motions](#various-motions)
   - [Tags](#tags)
 - [Editing](#editing)
   - [Operators](#operators)
@@ -20,15 +20,15 @@
   - [Word completion](#word-completion)
   - [Command macros](#command-macros)
 - [Search and replace](#search-and-replace)
-  - [Copy from one location, replacing multiple locations](#copy-from-one-location-replacing-multiple-locations)
   - [Special characters in a replacement pattern](#special-characters-in-a-replacement-pattern)
+  - [Copy from one location, replacing multiple locations](#copy-from-one-location-replacing-multiple-locations)
 - [Regular Expressions](#regular-expressions)
   - [Enable ERE (extended regular expression)](#enable-ere-extended-regular-expression)
   - [About new line](#about-new-line)
   - [Lookahead/lookbehind modifiers](#lookaheadlookbehind-modifiers)
 - [Edit multiple files](#edit-multiple-files)
-  - [multiple buffers](#multiple-buffers)
-  - [multiple windows](#multiple-windows)
+  - [Multiple buffers](#multiple-buffers)
+  - [Multiple windows](#multiple-windows)
   - [tab page](#tab-page)
   - [tag with windows](#tag-with-windows)
 - [Record and Play](#record-and-play)
@@ -45,8 +45,9 @@
 - [Modes](#modes)
   - [ex mode](#ex-mode)
   - [visual mode](#visual-mode)
-- [plugins](#plugins)
+- [Plugins](#plugins)
   - [Vundle](#vundle)
+- [Refs](#refs)
 
 ## Motions
 
@@ -142,41 +143,65 @@ d`a         # delete until mark `a
 
 ### Jumps
 
-    `.  '. g;  # to the last change position
-    `^  '^  # to the position where last Insert mode was stopped
-    g,		# moves back in edit history
+- Vim keeps a jump list and a change list (for each window), you can go back and forth in them;
+- Each window has its own jump list, which can span multiple files, if you start editing a new file, you can still jump back to the old file;
+- A "jump" is one of the following commands: "'", "`", "G", "/", "?", "n", "N", "%", "(", ")", "[[", "]]", "{", "}", ":s", ":tag", "L", "M", "H" and the commands that start editing a new file;
 
+```
+CTRL-O          # go back in jump list
+CTRL-I, <Tab>   # go forward in jump list
 
+g;              # go back in change list
+g,              # go forward in change list
 
-    %    # when the cursor is on a bracket, it will jump to the matching one; else it will jump to a bracket character
+:jumps          # jump list
+:changes        # change list
+```
 
-### Scrolling
+### Various motions
 
-    z<Enter>    # scroll current line to top of screen
-    z.   # scroll current line to middle of screen
-    z-   # scroll current line to bottom of screen
+```
+%               # jumps to matching bracket (customizable with `matchpairs' option)
 
-    H    # move cursor to screen top
-    M    # move cursor to screen middle
-    L    # move cursor to screen bottom
+H               # (High) move cursor to screen top
+M               # (Middle) move cursor to screen middle
+L               # (Low) move cursor to screen bottom
+
+CTRL-E          # scroll down one line
+CTRL-Y          # scroll up one line
+CTRL-B          # scroll Back
+CTRL-F          # scroll Forward
+CTRL-D          # scroll Down (half a window by default)
+CTRL-U          # scroll Up (half a window by default)
+
+z<Enter> / zt   # scroll current line to top of screen
+z. / zz         # scroll current line to middle of screen
+z- / zb         # scroll current line to bottom of screen
+```
 
 ### Tags
 
-in project root dir, create tags file (`.TAGS`) for all php files, you should add the `.TAGS` to svn ignore (add it to `~/.subversion/config`)
+In project root dir, create a tags file (`.TAGS`) for all your code files, this tags file should be ignored by Git.
 
-    $ etags -R -h '.php' -f .TAGS .
+```sh
+# find '.php' files recursively in current directory and create a tag file '.TAGS'
+etags -R -h '.php' -f .TAGS .
 
-use tags in Vim:
+# list supported languages
+etags --list-languages
+```
 
-    Ctrl+]      # jump to the tag your cursor is on
-    Ctrl+T      # jump back
+Use tags in Vim:
 
-    :tag <tag-name>     # jump to <tag-name>
-    :tags       # show tag stack
+```
+CTRL-]              # jump to the tag your cursor is on
+CTRL-T              # jump back
+
+:tag <tag-name>     # jump to <tag-name>
+:tags               # show tag stack
+```
 
 ## Editing
-
-[Talk on going mouseless with Vim, Tmux and Hotkeys](https://youtu.be/E-ZbrtoSuzw)
 
 Think _operators_, _text objects_, and _motions_, _operators_ acts upon _text objects_ and _motions_;
 
@@ -236,6 +261,8 @@ i", i', i`      quote block
 
 ### Examples
 
+![Vim motions](./images/vim_motions.png)
+
 ```
 ciw     change current word (only the word is deleted, the spaces after it are keeped)
 caw     change current word (the space after the word will be deleted too)
@@ -248,66 +275,74 @@ gUiw    change word to UPPERCASE
 
 ### Increase / Decrease numbers
 
-place your crusor on a number:
-
-    Ctrl+a   # increase the number by one
-    <number>Ctrl+a   # increase the number by <number>
-    Ctrl+x   # decrease the number by one
-    <number>Ctrl+x   # decrease the number by <number>
+```
+[count]CTRL-a   # increase the number by [count]
+[count]CTRL-x   # decrease the number by [count]
+```
 
 ### Indent lines
 
-in command mode,
+```
+>>              # increase indentation for current line
+<<              # decrease indentation for current line
+```
 
-    >>              # increase indentation for current line
-    <<              # decrease indentation for current line
+- In insert mode:
 
-in insert mode,
+  ```
+  CTRL-t          # increase indentation
+  CTRL-d          # decrease indentation
+  ```
 
-    Ctrl + t        # increase indentation
-    Ctrl + d        # decrease indentation
-    ^ Ctrl+d        # shift the cursor back to beginning of the line
-    0 Ctrl+d        # shift the cursor back to beginning of the line, and reset auto indent level to zero
-
-select lines you want to indent in visual mode, then use `>` to indent them
-indent a block: place cursor on one of the brackets, then `>%` to indent the block
+- Visual mode: select lines, use `>` to indent them;
+- Indent a block: place cursor on one of the brackets, then `>%` to indent the block;
 
 ### Abbreviations
 
 **Turn off paste mode** for this abbreviations to work
 
-    :ab <abbr> <phrase>     # when in insert mode, <abbr> inputted as a whole word will be expanded to <phrase> automatically
-    :ab                     # list all abbreviations
-    :unab <abbr>            # disable <abbr> abbreviation
+```
+:ab <abbr> <phrase>     # when in insert mode, <abbr> inputted as a whole word will be expanded to <phrase> automatically
+:ab                     # list all abbreviations
+:unab <abbr>            # disable <abbr> abbreviation
+```
 
-    :ab DB Database         # input 'DB' to get 'Database'
+Example:
+
+```
+:ab DB Database         # input 'DB' to get 'Database'
+```
 
 ### Word completion
 
-use `Ctrl+X` followed by:
+Use `CTRL-X` followed by:
 
-- `Ctrl+F` filename
-- `Ctrl+L` whole line
-- `Ctrl+N/P` word, search current file
-- `Ctrl+K` dictionary, dictionary files is set by `set dictionary`
-  such as `set dictionary=~/.mydict`, put any words you want in the file `~/.mydict`
-- `Ctrl+T` thesaurus file is set by `set thesaurus`
+- `CTRL-F` filename
+- `CTRL-L` whole line
+- `CTRL-N/P` word, search current file
+- `CTRL-K` dictionary, dictionary files is set by `set dictionary` such as `set dictionary=~/.mydict`, put any words you want in the file `~/.mydict`
+- `CTRL-T` thesaurus file is set by `set thesaurus`
   such as `set thesaurus=~/.mythesaurus`
-- `Ctrl+I` word, search current file and included files
+- `CTRL-I` word, search current file and included files
 
-- `Ctrl+N` next
-- `Ctrl+P` previous
+- `CTRL-N` next
+- `CTRL-P` previous
 
-dictionary file example:
+Dictionary file example:
+
+```
 china
 zhongguo
 lenovo
+```
 
-thesaurus file example, in insert mode, when you place the cursor after a word, then `Ctrl+X_Ctrl+T`, a list of synonyms from the thesaurus file would show up:
+Thesaurus file example, in insert mode, when you place the cursor after a word, then `Ctrl+X Ctrl+T`, a list of synonyms from this file would show up:
 
-    fun enjoyable desirable
-    funny hilarious lol lmao
-    retrieve getchar getcwd getdirentries getenv
+```
+fun enjoyable desirable
+funny hilarious lol lmao
+retrieve getchar getcwd getdirentries getenv
+```
 
 ### Command macros
 
@@ -346,45 +381,43 @@ you can store command sequence in named buffers, and execute it using `@` functi
 
 ```
 *                # search for the word under cursor
+#                # same as above, opposite direction
+gd               # go to local declaration
 ```
 
 ```
 /whereisyou\c                   # ignore case in this search
 
 :%s/old/new/gc                  # confirm before replace
+:s/.*/\U&/                      # change a line to uppercase
+:s/\<file\>/&s/                 # add 's' to a 'file', '\<' means word start, '\>' means word end, '&' in relace string represents text matched
 
 :g/^$/ d                        # delete all empty lines
 :g/^[[:space:]]*$/ d            # delete all blank lines(only contains spaces)
-:s/.*/\U&/                      # change a line to uppercase
 
 :g/^/ mo 0                     # reverse order of lines in a file (by moving each line to line 1 in order)
+
+:g/hint mode/ s/open/OPEN/gc    # replace only in lines match 'hint mode'
 
 :g!/integer/ s/$/ NO-INT/      # append a 'NO-INT' to each line which does not contain 'integer'
 
 :/^Part 2/,/^Part 3/g /^Chapter/ .+2w >> begin  # write the second line of each Chapter in Part 2 to a file named 'begin'
+```
 
-:s/\<file\>/&s/  # '&' in relace string represents text matched
-
-:g/hint mode/ s/open/OPEN/gc    # replace only in lines match 'hint mode'
-
+```
 :s                              # the same as `:s//~/`, repeat last substitution
+
 :&                              # repeat last substitution
-&                               # repeat last substitution
+&                               # same as above
+
 :%&g                            # repeat last substitution globally
+
 :~                              # similar to `:&`, the search pattern used is the last search pattern used in any command, not just last substition command, example:
 
 :s/red/blue/
 /green
-:~              # replace green to blue
+:~                              # replace 'green' to 'blue'
 ```
-
-### Copy from one location, replacing multiple locations
-
-1. `yiw` # copy a word
-2. ... # move to destination
-3. `ciw<C-r>0<Esc>` # replace the current one with the yanked one in register 0
-
-define a map for the last command: `map <leader>rr ciw<C-r>0<Esc>`, so you can just use `<leader>rr` to get the work done;
 
 ### Special characters in a replacement pattern
 
@@ -408,6 +441,14 @@ define a map for the last command: `map <leader>rr ciw<C-r>0<Esc>`, so you can j
 ```
 :s/should/\U&/g     # change 'should' to upper case
 ```
+
+### Copy from one location, replacing multiple locations
+
+1. `yiw` # copy a word
+2. ... # move to destination
+3. `ciw<C-r>0<Esc>` # replace the current one with the yanked one in register 0
+
+define a map for the last command: `map <leader>rr ciw<C-r>0<Esc>`, so you can just use `<leader>rr` to get the work done;
 
 ## Regular Expressions
 
@@ -453,29 +494,42 @@ To find `Gary` in `GaryLi`:
 
 ## Edit multiple files
 
-### multiple buffers
+### Multiple buffers
 
-    :e              # open another file
+```
+:e[dit] {file}          # open another file
+gf                      # go to file under cursor
+:fin[d] {file}          # find a file in 'path' and edit it
 
-    :next           # switch to next file/buffer
-    :prev[ious]     # switch to previous file/buffer
-    :first          # switch to the first file
-    :last           # switch to the last file
+:bo[tright] term        # open a terminal window at the bottom
+```
 
-    :ls, :files, :buffers   # list all buffers
+```
+:ls, :files, :buffers   # list all buffers
 
-    :buffer <n>         # move to buffer <n>
-    :sbuffer <n>         # opens a new window for buffer <n>
+:next                   # switch to next file/buffer
+:prev[ious]             # switch to previous file/buffer
+:first                  # switch to the first file
+:last                   # switch to the last file
 
-    :windo <cmd>        # executes <cmd> in each window
-    :bufdo <cmd>        # executes <cmd> in each buffer
+:buffer <n>             # move to buffer <n>
+:sbuffer <n>            # opens a new window for buffer <n>
 
-vi has two special filenames, `%` means current filename, `#` means alternative filename, these can be used for easy file switching between two files
+CTRL-^                  # edit the alternate file
 
-    :e #            # switch to last file you were editting, you can also use Ctrl+^
-    :w %.new        # save a copy of current file, with a '.new' appended to the current filename
+:windo <cmd>            # executes <cmd> in each window
+:bufdo <cmd>            # executes <cmd> in each buffer
+```
 
-### multiple windows
+Vi has two special filenames, `%` means current filename, `#` means alternative filename, these can be used for easy file switching between two files
+
+```
+
+:e #                    # switch to last file you were editting, you can also use Ctrl+^
+:w %.new                # save a copy of current file, with a '.new' appended to the current filename
+```
+
+### Multiple windows
 
 open multiple files in multiple windows, use the `-o` option
 
@@ -701,7 +755,7 @@ select text objects in visual mode (find more, :help text-objects):
     as, is      # add sentence, or inner sentence
     ap, ip      # add paragraph, or inner paragraph
 
-## plugins
+## Plugins
 
 `.vim` files in `.vim/plugin` folder are loaded automatically when vim starts
 
@@ -826,3 +880,7 @@ to use it:
     * configure plugins in `.vimrc`
 
     * Launch vim and run `:PluginInstall`
+
+## Refs
+
+[Talk on going mouseless with Vim, Tmux and Hotkeys](https://youtu.be/E-ZbrtoSuzw)
