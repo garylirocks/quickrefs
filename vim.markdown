@@ -18,23 +18,32 @@
   - [Indent lines](#indent-lines)
   - [Abbreviations](#abbreviations)
   - [Word completion](#word-completion)
-  - [Command macros](#command-macros)
 - [Search and replace](#search-and-replace)
   - [Special characters in a replacement pattern](#special-characters-in-a-replacement-pattern)
   - [Copy from one location, replacing multiple locations](#copy-from-one-location-replacing-multiple-locations)
 - [Regular Expressions](#regular-expressions)
   - [Enable ERE (extended regular expression)](#enable-ere-extended-regular-expression)
   - [About new line](#about-new-line)
-  - [Lookahead/lookbehind modifiers](#lookaheadlookbehind-modifiers)
-- [Edit multiple files](#edit-multiple-files)
+  - [Lookahead / Lookbehind modifiers](#lookahead--lookbehind-modifiers)
+- [Buffer, Window and Tab](#buffer-window-and-tab)
+  - [Concepts](#concepts)
   - [Multiple buffers](#multiple-buffers)
+  - [arglist](#arglist)
   - [Multiple windows](#multiple-windows)
-  - [tab page](#tab-page)
-  - [tag with windows](#tag-with-windows)
+  - [Tabs](#tabs)
+  - [Tag with windows](#tag-with-windows)
 - [Record and Play](#record-and-play)
 - [Copy and Paste](#copy-and-paste)
+- [Command macros](#command-macros)
 - [Registers](#registers)
 - [Options](#options)
+- [Modes](#modes)
+  - [ex mode](#ex-mode)
+  - [visual mode](#visual-mode)
+- [Plugins](#plugins)
+  - [Vundle](#vundle)
+  - [Useful Plugins](#useful-plugins)
+  - [vim-surround](#vim-surround)
 - [Miscs](#miscs)
   - [Avoid the Esc key](#avoid-the-esc-key)
   - [Save a readonly file](#save-a-readonly-file)
@@ -42,11 +51,6 @@
   - [Encoding](#encoding)
   - [Save session](#save-session)
   - [Folding](#folding)
-- [Modes](#modes)
-  - [ex mode](#ex-mode)
-  - [visual mode](#visual-mode)
-- [Plugins](#plugins)
-  - [Vundle](#vundle)
 - [Refs](#refs)
 
 ## Motions
@@ -317,16 +321,14 @@ Example:
 
 Use `CTRL-X` followed by:
 
-- `CTRL-F` filename
-- `CTRL-L` whole line
 - `CTRL-N/P` word, search current file
+- `CTRL-L` whole line
+- `CTRL-F` filename
+
+- `CTRL-I` word, search current file and included files
 - `CTRL-K` dictionary, dictionary files is set by `set dictionary` such as `set dictionary=~/.mydict`, put any words you want in the file `~/.mydict`
 - `CTRL-T` thesaurus file is set by `set thesaurus`
   such as `set thesaurus=~/.mythesaurus`
-- `CTRL-I` word, search current file and included files
-
-- `CTRL-N` next
-- `CTRL-P` previous
 
 Dictionary file example:
 
@@ -336,40 +338,13 @@ zhongguo
 lenovo
 ```
 
-Thesaurus file example, in insert mode, when you place the cursor after a word, then `Ctrl+X Ctrl+T`, a list of synonyms from this file would show up:
+Thesaurus file example, in insert mode, when you place the cursor after a word, then `CTRL-X CTRL-T`, a list of synonyms from this file would show up:
 
 ```
 fun enjoyable desirable
 funny hilarious lol lmao
 retrieve getchar getcwd getdirentries getenv
 ```
-
-### Command macros
-
-    :map <x> <sequence>         # define <x> as a macro for command <sequence>, <x> may be function keys, `#1` for F1
-    :map                        # list all command macros
-    :unmap <x>                  # disable <x>
-
-    :map V dwelp               # map V as `dwelp`, which swaps words
-
-    :map =i I<i>^[              # add '<i>' tag at line beginning
-    :map =I A</i>^[             # add '</i>' tag at line ending
-
-`map!`, `unmap!` for define and remove key mappings in insert mode
-
-    :map! =b <b></b>^[F<i       # define `=b` as insert '<b></b>' in current editing position and place the input cursor in between(which can not be done by abbreviation)
-
-keys may be used in user defined commands:
-
-    Letters:        g, K, V
-    Control keys:   ^A, ^K, ^O, ^W, and ^X
-    Symbols:        _, *, \, and =
-
-you can store command sequence in named buffers, and execute it using `@` functions, e.g.,
-
-    1. input this at a new line 'cwhello world^[', (the last character is an escaped <Esc>) then <Esc> to exit insert mode;
-    2. "gdd    # put this line in buffer g;
-    3. place the cursor at beginning of a word, and `@g` will execute the macro in buffer g, and replace the word with 'hello world';
 
 ## Search and replace
 
@@ -446,9 +421,9 @@ gd               # go to local declaration
 
 1. `yiw` # copy a word
 2. ... # move to destination
-3. `ciw<C-r>0<Esc>` # replace the current one with the yanked one in register 0
+3. `ciw<CTRL-R>0<Esc>` # replace the current one with the yanked one in register 0
 
-define a map for the last command: `map <leader>rr ciw<C-r>0<Esc>`, so you can just use `<leader>rr` to get the work done;
+define a map for the last command: `map <leader>rr ciw<CTRL-R>0<Esc>`, so you can just use `<leader>rr` to get the work done;
 
 ## Regular Expressions
 
@@ -476,7 +451,7 @@ when replacing:
 
 `\r` is newline, `\n` is a null byte (0x00 = `^@`)
 
-### Lookahead/lookbehind modifiers
+### Lookahead / Lookbehind modifiers
 
 To find `Gary` in `GaryLi`:
 
@@ -492,13 +467,20 @@ To find `Gary` in `GaryLi`:
   - `@?<=`: prositive lookbehind;
   - `@?<!`: negative lookbehind;
 
-## Edit multiple files
+## Buffer, Window and Tab
+
+### Concepts
+
+Tabs for window containers;
+Windows for buffer viewports;
+Buffers for file proxies;
 
 ### Multiple buffers
 
 ```
+gf                      # open file under cursor
+
 :e[dit] {file}          # open another file
-gf                      # go to file under cursor
 :fin[d] {file}          # find a file in 'path' and edit it
 
 :bo[tright] term        # open a terminal window at the bottom
@@ -507,136 +489,240 @@ gf                      # go to file under cursor
 ```
 :ls, :files, :buffers   # list all buffers
 
-:next                   # switch to next file/buffer
-:prev[ious]             # switch to previous file/buffer
-:first                  # switch to the first file
-:last                   # switch to the last file
+:bn / :bp               # switch to next/previous buffer
 
-:buffer <n>             # move to buffer <n>
-:sbuffer <n>            # opens a new window for buffer <n>
+:b <n>                  # move to buffer <n>
+:sb[uffer] <n>          # opens a new window for buffer <n>
 
 CTRL-^                  # edit the alternate file
 
-:windo <cmd>            # executes <cmd> in each window
-:bufdo <cmd>            # executes <cmd> in each buffer
+:bufdo <cmd>            # executes <cmd> in all buffers
 ```
 
-Vi has two special filenames, `%` means current filename, `#` means alternative filename, these can be used for easy file switching between two files
+Vim has special filenames:
+
+- `%` means current filename;
+- `#` means alternative filename, these can be used for easy file switching between two files;
+- `##` all files in the arglist;
 
 ```
-
-:e #                    # switch to last file you were editting, you can also use Ctrl+^
+:e #                    # switch to last file you were editting, you can also use CTRL-^
 :w %.new                # save a copy of current file, with a '.new' appended to the current filename
+```
+
+### arglist
+
+- When starging Vim with more than one file names, the list is remembered as the argument list;
+- It's different from buffer list, arglist was already in Vi, and buffer list is new in Vim;
+- Every file in arglis is also in buffer list, but buffer list commonly has more files;
+- There is a global arglist used by all windows, and it's possible to create a new arglist local to a window;
+
+```
+:args               # print arglist
+:args {arglist}     # define {arglist} as the new arglist
+
+:arga {name}        # add {name} to the arglist
+
+:n[ext]             # edit next file in the arglist
+:wn[ext]            # write current file and start editing the next
+:wp[revious]        # write current file and start editing the previous file
+
+:first / :last      # switch to the first/last buffer
+
+:argdo {cmd}        # execute {cmd} for each file the arglist
+```
+
+Local arglist
+
+```
+:argl[ocal]         # make a local copy of the global arglist
+
+:argg[lobal]        # use the global arglist for current window
+```
+
+When a window is split, the new window inherits the arglist from current window.
+
+Example:
+
+Replace word "my_foo" to "My_Foo" in all `*.c` and `*.h` files, and save the files
+
+```
+:args *.[ch]
+:argdo %s/\<my_foo\>/My_Foo/ge | update
 ```
 
 ### Multiple windows
 
-open multiple files in multiple windows, use the `-o` option
+Open multiple files in multiple windows, use the `-o` option
 
-    $ vi -o file1 file2
-    $ vi -o4 file1 file2    # open 4 windows at once, the last two will be empty
-    $ vi -O file1 file2     # split windows vertically
+```sh
+vi -o file1 file2
+vi -O file1 file2     # split windows vertically
 
-in vim:
+vi -o4 file1 file2    # open 4 windows at once, the last two will be empty
+```
 
-    :split [<file>],  :new,  ^ws     # split window horizontally
-    :vsplit [<file>], :vnew, ^wv     # split window vertically
-    :close [<file>],         ^wc     # close a window
-    :only,                   ^wo     # make current window the only one
+In vim:
 
-    ^w[hjkl]            # move between windows
-    ^ww                 # cycle through all windows
-    ^wp                 # go to previous window
-    ^wt                 # go to the top window
-    ^wb                 # go to the bottom window
+```
+:split [<file>],  :new,  ^ws     # split window horizontally
+:vsplit [<file>], :vnew, ^wv     # split window vertically
+:close [<file>],         ^wc     # close a window
+:only,                   ^wo     # make current window the only one
 
-    ^wr                 # rotate windows
-    ^wR                 # rotate windows in opposite direction
-    ^wx                 # exchange windows
-    ^w<n>x              # exchange with the <n>th windows
+^w[hjkl]            # move between windows
+^ww                 # cycle through all windows
+^wp                 # go to previous window
+^wt                 # go to the top window
+^wb                 # go to the bottom window
 
-    ^w[HJKL]            # move and reflow windows, 'H' move current window to left most and make it take full height of the screen
-    ^wT                 # move current window to a new tab
+^wr                 # rotate windows
+^wR                 # rotate windows in opposite direction
 
-    ^w-                 # decrease windows height by one line
-    ^w+                 # increase windows height by one line
-    ^w[<>]                 # decrease/increase windows width
-    ^w|                 # make current window widest size possible
-    :resize [-+]n      # decrease/increase windows height by <n> lines
-    :resize n      # set windows height to n lines
+^wx                 # exchange windows
+^w<n>x              # exchange with the <n>th windows
 
-### tab page
+^w[HJKL]            # move and reflow windows, 'H' move current window to left most and make it take full height of the screen
+^wT                 # move current window to a new tab
 
-**different tabs are like multiple desktops, multiple windows can be opened in one tab**
+^w-                 # decrease windows height by one line
+^w+                 # increase windows height by one line
+^w[<>]              # decrease/increase windows width
+^w|                 # make current window widest size possible
+:resize [-+]n       # decrease/increase windows height by <n> lines
+:resize n           # set windows height to n lines
 
-open and close tab page
+:windo <cmd>        # executes <cmd> in each window
+:sf {file}          # split window and :find {file}
+:vert {cmd}         # make any split {cmd} vertical
+```
 
-    $ vim -p file_1 file_2  # open each file in a tab page
-    :tabe file_name         # open file in a new tab
-    :tabc                   # close current tab
+Example:
 
-navigation
+```
+:args *.js              # use all *.js as the arglist
+:vert sall              # split all in arglist vertically
+:windo diffthis         # show diff
+```
 
-    gt / gT         # go to next / previous tab in normal mode
-    :tabn           # switch to next tab
-    :tabp           # switch to previous tab
+### Tabs
 
-    :tabs           # list all tabs
-    :tabfirst       # switch to first tab
-    :tablast        # switch to last tab
+**Different tabs are like multiple desktops, multiple windows can be opened in one tab**
 
-or try to use `Ctrl + Alt + PageUp/PageDown` to switch tab (may only available in some systems)
+Open and close tab page
 
-### tag with windows
+```
+$ vim -p file1 file2    # open each file in a tab page
 
-    ^wg]    # create a new window, open the file containing tag under the cursor
-    ^wf     # create a new window, open the file under the cursor
-    ^wgf     # create a new tab, open the file under the cursor
+:tabe file_name         # open file in a new tab
+:tabc                   # close current tab
+:tabo                   # close all other tabs
+```
+
+Navigation
+
+```
+gt / gT         # go to next / previous tab in normal mode
+
+:tabs           # list all tabs
+:tabn           # switch to next tab
+:tabp           # switch to previous tab
+:tabfirst       # switch to first tab
+:tablast        # switch to last tab
+```
+
+or try to use `CTRL-ALT-PageUp/PageDown` to switch tab (may only available in some systems)
+
+### Tag with windows
+
+```
+^wg]        # create a new window, open the file containing tag under the cursor
+
+^wf         # create a new window, open the file under the cursor
+^wgf        # create a new tab, open the file under the cursor
+```
 
 ## Record and Play
 
-(in normal mode) press `qa` : record macro a
-do whatever operation you want to be recorded
-(in normal mode) press `q`, stop recording
-(in normal mode) press `@a`, replay macro a
+1. (in normal mode) press `qa` : start recording, then do whatever operation you want to be recorded;
+2. (in normal mode) press `q`, stop recording;
+3. (in normal mode) press `@a`, replay macro a;
+4. Use `@@` to repeat last replay;
 
 ## Copy and Paste
 
-if you paste some text, and the indentation screwed up, use the following command before you actually paste anything
+If you paste some text, and the indentation screwed up, use the following command before you actually paste anything
 
-    :set paste
+```
+:set paste
+```
 
-named buffers
+Copy to named registers
 
-    "a2yy    # copy two lines to buffer a
-    "ap      # paste from buffer a
+```
+"a2yy    # copy two lines to buffer a
+"ap      # paste from buffer a
+```
 
-using ex command
+Using ex command
 
-    :7,13ya a   # yank line 7 through 13 to buffer a
-    :pu a       # put buffer a after the current line
+```
+:7,13ya a   # yank line 7 through 13 to buffer a
+:pu a       # put buffer a after the current line
+```
 
-copy to and paste from system clipboard, in X11 system register '\*' means _PRIMARY_ SELECTION, register '\+' means _CLIPBOARD_
-(ref: [Accessing_the_system_clipboard](http://vim.wikia.com/wiki/Accessing_the_system_clipboard))
+Copy to and paste from system clipboard, in X11 system register `*` means _PRIMARY_ SELECTION, register `+` means _CLIPBOARD_
+(Ref: [Accessing_the_system_clipboard](http://vim.wikia.com/wiki/Accessing_the_system_clipboard))
 
-    "+p     # paste
-    "+yy    # copy current line
-    :% y +  # copy all lines
+```
+"+p         # paste
+"+yy        # copy current line
+:% y +      # copy all lines
+```
+
+## Command macros
+
+```
+:map <x> <sequence>         # define <x> as a macro for command <sequence>, <x> may be function keys, `#1` for F1
+:map                        # list all command macros
+:unmap <x>                  # disable <x>
+
+:map V dwelp                # map V as `dwelp`, which swaps words
+
+:map =i I<i>^[              # add '<i>' tag at line beginning
+:map =I A</i>^[             # add '</i>' tag at line ending
+```
+
+`map!`, `unmap!` for define and remove key mappings in insert mode
+
+    :map! =b <b></b>^[F<i       # define `=b` as insert '<b></b>' in current editing position and place the input cursor in between(which can not be done by abbreviation)
+
+Keys may be used in user defined commands:
+
+- Letters: `g`, `K`, `V`
+- Control keys: `^A`, `^K`, `^O`, `^W`, `^X`
+- Symbols: `_`, `*`, `\`, `=`
+
+You can store command sequence in named buffers, and execute it using `@` functions, e.g.,
+
+1. Input this at a new line `cwhello world^[`, (the last character is an escaped <Esc>) then <Esc> to exit insert mode;
+2. `"gdd` put this line in buffer `g`;
+3. Place the cursor at beginning of a word, and `@g` will execute the macro in buffer g, and replace the word with `hello world`;
 
 ## Registers
 
 Registers are used for recording, copying:
 
-- in normal mode:
+- In normal mode:
 
   - `@x` replays register `x`;
   - `"xp` pastes content from register `x`;
 
-- in insert or command mode:
+- In insert or command mode:
 
-  - `Ctrl+R` followd by `x` pastes content from register `x`;
+  - `CTRL-R` followd by `x` pastes content from register `x`;
 
-- special registers:
+- Special registers:
 
   - `%`: relative path of current file, so `"%p` pastes the current file path;
   - `#`: relative path of the alternative file;
@@ -644,100 +730,35 @@ Registers are used for recording, copying:
   - `"`: unamed register, deleting, changing and yanking text copies the text to this register, `p` paste from this register;
   - `0`: yanking text copies it to this register and the unnamed register `"` as well;
 
-- you can edit register contents in command line:
-
-          `:let @q = 'macro contents'`
-
-- or show all registers by `:reg` or `:registers`
+- You can edit register contents in command line: `:let @q = 'macro contents'`
+- Or show all registers by `:reg[isters]`;
 
 ## Options
 
-    :set all    # show all options
-    :set        # show options you changed, including changes in your .vimrc file or in this session
-    :set option?    # find out current value of the option
+```
+:set all        # show all options
+:set            # show options you changed, including changes in your .vimrc file or in this session
+:set option?    # find out current value of an option
 
-    :set list       # display tab and newline characters
-    :5,20 l         # temporarily display tab and newline characters of line 5 through 20
-
-## Miscs
-
-    <C-g>   # show file info
-    :=       # show line numbers of file
-    :#       # show current line number
-    :-10,$ #    # show the last 10 lines' number
-
-    :set binary     # set vim in binary mode, vim by default writes the file with a final new-line appended, in binary mode this doesn’t happen
-
-    :<C-F>  # edit command history
-
-### Avoid the Esc key
-
-    ctrl+[, ctrl+c      # escape from edit mode to normal mode, replace the '<Esc>' key
-
-or
-
-    alt+h/j/k/l         # alt followed by any normal mode key, will exit from the insert mode and take the normal mode action
-
-### Save a readonly file
-
-you opened a file which is readonly to you(you do not add `sudo` to your command), made some changes, when you save, you got an error, to save this file as root, do this:
-
-    :w !sudo tee %
-
-you can also save to a new file which you have write permission, then move it to the original file
-
-    :w /path/to/another_file
-
-### Add a new filetype
-
-e.g. treat `.md` file as markdown files, to use syntax highlighting, add following lines to `~/.vim/filetype.vim`, ref `:help new-filetype`
-
-    $ cat ~/.vim/filetype.vim
-    " my filetype file
-
-    if exists("did_load_filetypes")
-      finish
-    endif
-
-    augroup filetypedetect
-      au! BufRead,BufNewFile *.md       setfiletype markdown
-    augroup END
-
-### Encoding
-
-use fencview.vim plugin to autodetect encodings, which provides two commands:
-
-    :FencView           -> let you select an encoding for the buffer
-    :FencAutoDetect     -> auto detect and convert encodings automatically
-
-### Save session
-
-save session info in a file
-
-    :mksession ~/myVimSession.vim
-
-reenter a session:
-
-    $ vi
-    :source ~/myVimSession.vim
-
-### Folding
-
-    za      # open or close folds
+:set list       # display tab and newline characters
+:5,20 l         # temporarily display tab and newline characters of line 5 through 20
+```
 
 ## Modes
 
 ### ex mode
 
-    Q               # go to ex mode
-    :vi             # go back to vi mode
+```
+Q                   # go to ex mode
+:vi                 # go back to vi mode
 
-    :sh             # create a shell withoud exiting vi, go back to vi using Ctrl+D
-    :r !sort file       # read in file in sorted order
-    :31,34!sort -n      # sort lines from 31 through 34 as numbers
+:sh                 # create a shell without exiting vi, go back to vi using CTRL-D
+:r !sort file       # read in file in sorted order
+:31,34!sort -n      # sort lines from 31 through 34 as numbers
 
-    !<move><command>    # filtering text selected by <move> using <command>
-    <num>!!<command>         # filtering <num> lines using <command>
+!<move><command>    # filtering text selected by <move> using <command>
+<num>!!<command>    # filtering <num> lines using <command>
+```
 
 ### visual mode
 
@@ -748,26 +769,53 @@ vi"         # go into visual mode, selecting current everything inside "
 vi(         # go into visual mode, selecting current everything inside (
 ```
 
-select text objects in visual mode (find more, :help text-objects):
+Select text objects in visual mode:
 
-    <count>aw   # select <count> words(delimited by punctuations)
-    <count>aW   # select <count> words(delimited by white space)
-    as, is      # add sentence, or inner sentence
-    ap, ip      # add paragraph, or inner paragraph
+```
+<count>aw   # select <count> words(delimited by punctuations)
+<count>aW   # select <count> words(delimited by white space)
+as, is      # add sentence, or inner sentence
+ap, ip      # add paragraph, or inner paragraph
+```
+
+Blockwise mode
+
+```
+CTRL-V      # select a rectangular area
+```
+
+If you used `CTRL-V` for pasting in your terminal program, you may need `CTRL-SHIFT-V`
 
 ## Plugins
 
-`.vim` files in `.vim/plugin` folder are loaded automatically when vim starts
+- `.vim` files in `.vim/plugin` folder are loaded automatically when Vim starts;
+
+### Vundle
+
+Vundle is one of the best Vim plugin managers, go to https://github.com/VundleVim/Vundle.vim for details
+
+To use it:
+
+1. Clone vundle to `~/.vim/bundle/Vundle.vim`
+
+```sh
+git clone https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim
+```
+
+2. Configure plugins in `.vimrc`
+3. Launch vim and run `:PluginInstall`
+
+### Useful Plugins
 
 - ctrl-p
 
-  use `Ctrl-p` to start searching files
+  Use `CTRL-P` to start searching files
 
-  `Ctrl-r` to switch to regex mode
+  `CTRL-R` to switch to regex mode
 
-  `Ctrl-t`, `Ctrl-v`, `Ctrl-x` to open the file in new tab / vertical split / horizontal split
+  `CTRL-T`, `CTRL-V`, `CTRL-X` to open the file in new tab / vertical split / horizontal split
 
-  `Ctrl-y` to create a new file and its parent directories
+  `CTRL-Y` to create a new file and its parent directories
 
 - nerdtree
 
@@ -795,7 +843,13 @@ select text objects in visual mode (find more, :help text-objects):
 
 - vim-surround
 
-  easily delete, change and add surroundings in pairs, surroundings can be parentheses, brackets, html/xml tags
+- vim-repeat
+
+  make vim-surround actions repeatable with `.`
+
+### vim-surround
+
+easily delete, change and add surroundings in pairs, surroundings can be parentheses, brackets, html/xml tags
 
 ```
 Hello World
@@ -863,23 +917,73 @@ to wrap it in another tag, use `V` to select the whole line, then `S<p class="no
 </p>
 ```
 
-- vim-repeat
+## Miscs
 
-make `.` to work with plugin actions as well
+```
+CTRL-G          # show file info
+:=              # show line numbers of file
+:#              # show current line number
+:-10,$ #        # show the last 10 lines' number
 
-### Vundle
+:set binary     # set vim in binary mode, vim by default writes the file with a final new-line appended, in binary mode this doesn’t happen
 
-Vundle is one of the best Vim plugin managers, go to https://github.com/VundleVim/Vundle.vim for details
+:CTRL-F         # edit command history
+```
 
-to use it:
+### Avoid the Esc key
 
-    * clone vundle to `~/.vim/bundle/Vundle.vim`
+    CTRL-[, CTRL-c      # escape from edit mode to normal mode, replace the '<Esc>' key
 
-            git clone https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim
+or
 
-    * configure plugins in `.vimrc`
+    alt+h/j/k/l         # alt followed by any normal mode key, will exit from the insert mode and take the normal mode action
 
-    * Launch vim and run `:PluginInstall`
+### Save a readonly file
+
+you opened a file which is readonly to you(you do not add `sudo` to your command), made some changes, when you save, you got an error, to save this file as root, do this:
+
+    :w !sudo tee %
+
+you can also save to a new file which you have write permission, then move it to the original file
+
+    :w /path/to/another_file
+
+### Add a new filetype
+
+e.g. treat `.md` file as markdown files, to use syntax highlighting, add following lines to `~/.vim/filetype.vim`, ref `:help new-filetype`
+
+    $ cat ~/.vim/filetype.vim
+    " my filetype file
+
+    if exists("did_load_filetypes")
+      finish
+    endif
+
+    augroup filetypedetect
+      au! BufRead,BufNewFile *.md       setfiletype markdown
+    augroup END
+
+### Encoding
+
+use fencview.vim plugin to autodetect encodings, which provides two commands:
+
+    :FencView           -> let you select an encoding for the buffer
+    :FencAutoDetect     -> auto detect and convert encodings automatically
+
+### Save session
+
+save session info in a file
+
+    :mksession ~/myVimSession.vim
+
+reenter a session:
+
+    $ vi
+    :source ~/myVimSession.vim
+
+### Folding
+
+    za      # open or close folds
 
 ## Refs
 
