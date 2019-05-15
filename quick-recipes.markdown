@@ -28,6 +28,7 @@ Quick productivity tips, shortcuts, command line snippets.
 - [Linux process management](#linux-process-management)
   - [Kill a process](#kill-a-process)
 - [Limit Google Chrome memory usage](#limit-google-chrome-memory-usage)
+- [Chrom DevTools](#chrom-devtools)
 
 ## Shortcuts
 
@@ -432,10 +433,15 @@ wget --page-requisites --span-hosts --no-directories --accept jpg,png --execute 
 
 [RenameUSBDrive]: [https://help.ubuntu.com/community/RenameUSBDrive]
 
-
 ## Limit Google Chrome memory usage
 
 ```sh
 # limit per tab memory usage to be 200MB
 google-chrome --js-flags='--max-old-space-size=200'
 ```
+
+## Chrom DevTools
+
+- Filter out extension resources in the 'Network' tab:
+
+  `-scheme:chrome-extension`
