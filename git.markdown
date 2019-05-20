@@ -29,6 +29,7 @@
 - [checkout](#checkout)
 - [rebase](#rebase)
 - [ignore files](#ignore-files)
+  - [Negate pattern](#negate-pattern)
 - [Hooks](#hooks)
 - [Merge & Diff](#merge--diff)
 - [Split a subfolder out into a new repository](#split-a-subfolder-out-into-a-new-repository)
@@ -661,9 +662,43 @@ global ignore files, `~/.gitignore`, then make it a global ignore file with:
 
 local ignore files, `$PROJECT/.gitignore`, `$PROJECT/info/exclude`
 
-ignore an already tracked file, remove them from the index, and add them to .gitignore:
+Ignore an already tracked file,
 
-    $ git rm --cached <file> ...
+1. Remove them from the index:
+
+   ```sh
+   git rm --cached <file> ...
+   ```
+
+2. And add them to `.gitignore`;
+
+### Negate pattern
+
+For a git repo like this:
+
+```
+.
+└── top
+    ├── sub
+    │   └── a.txt
+    └── sub-2
+        ├── c.txt
+        └── d.txt
+```
+
+If you want to ignore everything except `a.txt`, you need to do it like this:
+
+```
+#.gitignore
+
+top/*
+!top/sub/
+
+top/sub/*
+!top/sub/a.txt
+```
+
+See here for details: https://stackoverflow.com/questions/5533050/gitignore-exclude-folder-but-include-specific-subfolder
 
 ## Hooks
 
