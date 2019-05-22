@@ -7,6 +7,7 @@
 - [Thinkpad X1 Carbon Configs](#thinkpad-x1-carbon-configs)
   - [Ubuntu 16.04 + X1C Gen5 Trackpoint configuration](#ubuntu-1604--x1c-gen5-trackpoint-configuration)
   - [Ubuntu 18.04 + X1C Gen6](#ubuntu-1804--x1c-gen6)
+  - [Ubuntu 18.04 - change resolv.conf](#ubuntu-1804---change-resolvconf)
 
 Most of the configs needed are already in https://github.com/garylirocks/dotfiles
 
@@ -62,6 +63,17 @@ Most of the configs needed are already in https://github.com/garylirocks/dotfile
   # set preferences
   ibus-setup
   ```
+
+- Gnome shell extensions (For Gnome based desktop)
+
+  - Install Chrome Gnome Shell extension;
+  - Install connector:
+
+    ```sh
+    sudo apt-get install chrome-gnome-shell
+    ```
+
+  - Install System Monitor (https://extensions.gnome.org/extension/120/system-monitor/)
 
 ## Configurations
 
@@ -178,7 +190,6 @@ ref: https://blog.pedropombeiro.com/running-ubuntu-18-04-on-a-thinkpad-x1-carbon
 
   - In BIOS, change the sleep mode to Linux;
 
-
 ### Ubuntu 18.04 - change resolv.conf
 
 Install the resolvconf package.
@@ -188,7 +199,6 @@ sudo apt install resolvconf
 ```
 
 Edit `/etc/resolvconf/resolv.conf.d/head` and add the following:
-
 
 ```
 nameserver 8.8.4.4
