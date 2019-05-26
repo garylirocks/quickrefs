@@ -1,6 +1,7 @@
 # HTML
 
 - [DOM Events](#dom-events)
+  - [Assign event handler](#assign-event-handler)
   - [Event Bubbling and Capturing](#event-bubbling-and-capturing)
     - [Bubbling](#bubbling)
     - [Capturing](#capturing)
@@ -10,6 +11,28 @@
 ## DOM Events
 
 - You can only call `preventDefault` on `cancelable` event;
+
+### Assign event handler
+
+There are 3 ways to assign event handlers:
+
+- HTML attribute: `onclick="myHandler(this)"`;
+
+  - Not recommended;
+  - `onclick` here is case-insensitive, it can be `onClick`, `ONCLICK`;
+
+- DOM property: `elem.onclick = myHandler`;
+
+  - Case sensitive;
+  - Can only assign one handler for each type of event;
+  - Some events are not supported, such as `transitioned` and `DOMContentLoaded`;
+
+- Methods: `elem.addEventListener(event, handler[, phase])` to add, `removeEventListener` to remove;
+
+  - Most flexible;
+  - Support all event types;
+  - Can add multiple handler for same event;
+  - `handler` can be an object, then its `handleEvent` is called;
 
 ### Event Bubbling and Capturing
 
@@ -30,9 +53,9 @@
 - Use the third parameter to add handler to the capturing phase:
 
   ```js
-  element.addEventListener("click", handler, true);
+  element.addEventListener('click', handler, true);
   // or
-  element.addEventListener("click", handler, { capture: true });
+  element.addEventListener('click', handler, { capture: true });
   ```
 
 ### Passive Event Listeners
@@ -44,7 +67,7 @@
   ```js
   // 'preventDefault' here will prevent scrolling
   // if there is no 'preventDefault', scrolling is still blocked on this event listener
-  document.addEventListener("wheel", e => {
+  document.addEventListener('wheel', e => {
     e.preventDefault();
   });
   ```
@@ -53,7 +76,7 @@
 
   ```js
   // call 'preventDefault' in handler will have no effects and result in an error
-  document.addEventListener("wheel", handler, { passive: true });
+  document.addEventListener('wheel', handler, { passive: true });
   ```
 
 - This is a breaking change to the `addEventListener` method, previously the third param is of boolean type, indicating whether respond in `capture` phase, so you may need to add a polyfill or do a feature detection;
