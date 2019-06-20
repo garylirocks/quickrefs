@@ -1,41 +1,41 @@
 # Git Cheatsheet
 
-- [Preface](#preface)
-- [Basics](#basics)
-  - [First Commit](#first-commit)
-  - [Staging area](#staging-area)
-- [Stashing](#stashing)
-  - [Creating a Branch from a Stash](#creating-a-branch-from-a-stash)
-- [Log](#log)
+- [Preface](#Preface)
+- [Basics](#Basics)
+  - [First Commit](#First-Commit)
+  - [Staging area](#Staging-area)
+- [Stashing](#Stashing)
+  - [Creating a Branch from a Stash](#Creating-a-Branch-from-a-Stash)
+- [Log](#Log)
   - [limiting log output](#limiting-log-output)
-  - [a GUI to visualize log](#a-gui-to-visualize-log)
+  - [a GUI to visualize log](#a-GUI-to-visualize-log)
   - [show log for a specific commit](#show-log-for-a-specific-commit)
-- [Configs](#configs)
-- [Command Aliases](#command-aliases)
-- [History](#history)
-- [Tags](#tags)
+- [Configs](#Configs)
+- [Command Aliases](#Command-Aliases)
+- [History](#History)
+- [Tags](#Tags)
   - [sharing tags](#sharing-tags)
-- [Undoing changes](#undoing-changes)
-- [Branches](#branches)
+- [Undoing changes](#Undoing-changes)
+- [Branches](#Branches)
   - [set a local branch to track a remote branch](#set-a-local-branch-to-track-a-remote-branch)
-- [Remotes](#remotes)
+- [Remotes](#Remotes)
   - [push](#push)
-  - [Add a local branch that tracks a remote branch](#add-a-local-branch-that-tracks-a-remote-branch)
+  - [Add a local branch that tracks a remote branch](#Add-a-local-branch-that-tracks-a-remote-branch)
   - [add a remote](#add-a-remote)
   - [clone a repo to remote](#clone-a-repo-to-remote)
-- [Revision Selection](#revision-selection)
-  - [Commit Ranges](#commit-ranges)
+- [Revision Selection](#Revision-Selection)
+  - [Commit Ranges](#Commit-Ranges)
 - [diff](#diff)
 - [checkout](#checkout)
 - [rebase](#rebase)
 - [ignore files](#ignore-files)
-  - [Negate pattern](#negate-pattern)
-- [Hooks](#hooks)
-- [Merge & Diff](#merge--diff)
-- [Split a subfolder out into a new repository](#split-a-subfolder-out-into-a-new-repository)
-- [Multiple accounts setup for Bitbucket/Github](#multiple-accounts-setup-for-bitbucketgithub)
-- [Misc](#misc)
-- [NOTICES](#notices)
+  - [Negate pattern](#Negate-pattern)
+- [Hooks](#Hooks)
+- [Merge & Diff](#Merge--Diff)
+- [Split a subfolder out into a new repository](#Split-a-subfolder-out-into-a-new-repository)
+- [Multiple accounts setup for Bitbucket/Github](#Multiple-accounts-setup-for-BitbucketGithub)
+- [Misc](#Misc)
+- [NOTICES](#NOTICES)
 
 ## Preface
 
@@ -839,6 +839,13 @@ in `.ssh/config`
 
   ```bash
   git add -u    # --update
+  ```
+
+- prune obsolete remote branches
+
+  ```sh
+  # add -n for dry run
+  git remote prune [-n] origin
   ```
 
 ## NOTICES
