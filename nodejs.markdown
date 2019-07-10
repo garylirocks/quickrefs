@@ -1,35 +1,35 @@
 # NodeJS notes
 
-- [Multiple versions of Node.js](#multiple-versions-of-nodejs)
-- [Blocking vs non-blocking](#blocking-vs-non-blocking)
-- [NPM](#npm)
+- [Multiple versions of Node.js](#Multiple-versions-of-Nodejs)
+- [Blocking vs non-blocking](#Blocking-vs-non-blocking)
+- [NPM](#NPM)
   - [`package.json`](#packagejson)
-  - [Yarn](#yarn)
-  - [Avoid installing packages globally](#avoid-installing-packages-globally)
-  - [Publish package to NPM](#publish-package-to-npm)
-  - [Symlink a package folder](#symlink-a-package-folder)
-- [Module System](#module-system)
-  - [Resolving: `module.paths`, `module.resolve`](#resolving-modulepaths-moduleresolve)
-  - [Parent-child relation: `module.parent`, `module.children`](#parent-child-relation-moduleparent-modulechildren)
+  - [Yarn](#Yarn)
+  - [Avoid installing packages globally](#Avoid-installing-packages-globally)
+  - [Publish package to NPM](#Publish-package-to-NPM)
+  - [Symlink a package folder](#Symlink-a-package-folder)
+- [Module System](#Module-System)
+  - [Resolving: `module.paths`, `module.resolve`](#Resolving-modulepaths-moduleresolve)
+  - [Parent-child relation: `module.parent`, `module.children`](#Parent-child-relation-moduleparent-modulechildren)
   - [`module.loaded`](#moduleloaded)
   - [`exports`, `module.exports`](#exports-moduleexports)
-  - [Synchronicity](#synchronicity)
-  - [Circular dependency](#circular-dependency)
-  - [JSON and C/C++ Addons](#json-and-cc-addons)
-  - [Module Wrapping](#module-wrapping)
-  - [The `require` object](#the-require-object)
-  - [Module Caching](#module-caching)
-  - [ECMAScript Modules in Node 11](#ecmascript-modules-in-node-11)
-    - [Enabling](#enabling)
-    - [Features](#features)
-    - [Differences between `import` and `require`](#differences-between-import-and-require)
-  - [CommonJs vs. ES6 Modules](#commonjs-vs-es6-modules)
-- [CLI](#cli)
-  - [Limit memory usage](#limit-memory-usage)
-- [Debugging](#debugging)
-  - [Remote debugging](#remote-debugging)
-- [Barebone HTTP server](#barebone-http-server)
-- [Streams and pipes](#streams-and-pipes)
+  - [Synchronicity](#Synchronicity)
+  - [Circular dependency](#Circular-dependency)
+  - [JSON and C/C++ Addons](#JSON-and-CC-Addons)
+  - [Module Wrapping](#Module-Wrapping)
+  - [The `require` object](#The-require-object)
+  - [Module Caching](#Module-Caching)
+  - [ECMAScript Modules in Node 11](#ECMAScript-Modules-in-Node-11)
+    - [Enabling](#Enabling)
+    - [Features](#Features)
+    - [Differences between `import` and `require`](#Differences-between-import-and-require)
+  - [CommonJs vs. ES6 Modules](#CommonJs-vs-ES6-Modules)
+- [CLI](#CLI)
+  - [Limit memory usage](#Limit-memory-usage)
+- [Debugging](#Debugging)
+  - [Remote debugging](#Remote-debugging)
+- [Barebone HTTP server](#Barebone-HTTP-server)
+- [Streams and pipes](#Streams-and-pipes)
   - [read](#read)
   - [write](#write)
   - [pipe](#pipe)
@@ -88,6 +88,13 @@ yarn add -D [packages ...]
 
 # make sure the installed files are matching the specified version
 yarn add --check-files [packages ...]
+
+# upgrade packages to their latest versions, package.json is updated as well
+yarn upgrade pkg1 pkg2 --latest
+yarn upgrade --scope @pkg-namespace --latest
+
+# the above is not working somehow, used the following line
+yarn upgrade pkg1@latest pkg2@latest
 ```
 
 ### Avoid installing packages globally
@@ -159,7 +166,6 @@ npm link ../myLibrary   # use 'my-library' in code of myApp
 
 [Medium - Samer Buna - Requiring modules in Node.js: Everything you need to know](https://medium.freecodecamp.org/requiring-modules-in-node-js-everything-you-need-to-know-e7fbd119be8)
 
-
 - Node modules have a one-to-one relation with files;
 - A module can be put into a directory with a `package.json` file, such as packages from NPM;
 - Requiring a module means laoding the content of a file into memory;
@@ -189,6 +195,7 @@ require('http');
 ```
 
 - When you require a module without a path, Node searchs all paths in `module.paths` in order (builtin modules always take precedence):
+
   ```sh
   ➜  learn-node node
   > module.paths
@@ -204,6 +211,7 @@ require('http');
   ```
 
 - If `mod-a` is a folder, it will resolve to `mod-a/index.js` by default, but you can specify another file in `mod-a/package.json`:
+
   ```js
   {
     "name": "mod-a",
@@ -310,7 +318,7 @@ module.exports.NAME = 'gary';
 
 // !DON'T DO THIS
 exports = {
-  id: 20,
+  id: 20
 };
 
 // DO IT THIS WAY
@@ -417,6 +425,7 @@ In Node, a module's code is executed in a function scope, we can inspect this wr
 ```
 
 `require('module').wrap` is a function:
+
 ```js
 function(script) {
   return Module.wrapper[0] + script + Module.wrapper[1];
@@ -585,7 +594,9 @@ If you want to use ES Module syntax with Node (not Babel transpiling)
 - In a ESM module, `import.meta` metaproperty is an object containing the absolute `file:` URL of the module:
 
   ```js
-  { url: 'file:///home/gary/code/nodejs/foo.mjs' }
+  {
+    url: 'file:///home/gary/code/nodejs/foo.mjs';
+  }
   ```
 
 - This syntax `require('./foo.mjs')` is not supported;
