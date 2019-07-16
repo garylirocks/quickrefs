@@ -1,20 +1,19 @@
 # Webpack
 
-- [Webpack](#webpack)
-  - [Install](#install)
-    - [Default Behaviour](#default-behaviour)
-    - [Add building commands to `package.json`](#add-building-commands-to-packagejson)
-  - [Configs](#configs)
-    - [Demo config file](#demo-config-file)
-    - [Mode](#mode)
-    - [Config directives](#config-directives)
-    - [Optimization](#optimization)
-  - [Plugins](#plugins)
-  - [Loaders](#loaders)
-  - [Build a library](#build-a-library)
-  - [Webpack 1 vs. Webpack 3](#webpack-1-vs-webpack-3)
-    - [Webpack 1](#webpack-1)
-    - [Webpack 3](#webpack-3)
+- [Install](#Install)
+  - [Default Behaviour](#Default-Behaviour)
+  - [Add building commands to `package.json`](#Add-building-commands-to-packagejson)
+- [Configs](#Configs)
+  - [Demo config file](#Demo-config-file)
+  - [Mode](#Mode)
+  - [Config directives](#Config-directives)
+  - [Optimization](#Optimization)
+- [Plugins](#Plugins)
+- [Loaders](#Loaders)
+- [Build a library](#Build-a-library)
+- [Webpack 1 vs. Webpack 3](#Webpack-1-vs-Webpack-3)
+  - [Webpack 1](#Webpack-1)
+  - [Webpack 3](#Webpack-3)
 
 Most content based on Webpack 4, if not specified specifically.
 
@@ -60,14 +59,14 @@ yarn build
 
 ```js
 // webpack v4
-const path = require("path");
-const ExtractTextPlugin = require("extract-text-webpack-plugin");
-const HtmlWebpackPlugin = require("html-webpack-plugin");
+const path = require('path');
+const ExtractTextPlugin = require('extract-text-webpack-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 module.exports = {
-  entry: { main: "./src/index.js" },
+  entry: { main: './src/index.js' },
   output: {
-    path: path.resolve(__dirname, "dist"),
-    filename: "main.js"
+    path: path.resolve(__dirname, 'dist'),
+    filename: 'main.js'
   },
   module: {
     rules: [
@@ -75,25 +74,25 @@ module.exports = {
         test: /\.js$/,
         exclude: /node_modules/,
         use: {
-          loader: "babel-loader"
+          loader: 'babel-loader'
         }
       },
       {
         test: /\.scss$/,
         use: ExtractTextPlugin.extract({
-          fallback: "style-loader",
-          use: ["css-loader", "sass-loader"]
+          fallback: 'style-loader',
+          use: ['css-loader', 'sass-loader']
         })
       }
     ]
   },
   plugins: [
-    new ExtractTextPlugin({ filename: "style.css" }),
+    new ExtractTextPlugin({ filename: 'style.css' }),
     new HtmlWebpackPlugin({
       inject: false,
       hash: true,
-      template: "./src/index.html",
-      filename: "index.html"
+      template: './src/index.html',
+      filename: 'index.html'
     })
   ]
 };
@@ -105,7 +104,7 @@ in config file
 
 ```js
 module.exports = {
-  mode: "development"
+  mode: 'development'
 };
 ```
 
@@ -132,16 +131,16 @@ see [Webpack concepts - Mode](https://webpack.js.org/concepts/mode/)
   module.exports = {
     //...
     externals: {
-      react: "react" // react will be available as 'react' in global env
+      react: 'react' // react will be available as 'react' in global env
     },
 
     // or
 
     externals: {
       lodash: {
-        commonjs: "lodash", // in commonjs context, it will be available as 'lodash'
-        amd: "lodash", // same as above
-        root: "_" // available as '_' global variable
+        commonjs: 'lodash', // in commonjs context, it will be available as 'lodash'
+        amd: 'lodash', // same as above
+        root: '_' // available as '_' global variable
       }
     },
 
@@ -149,7 +148,7 @@ see [Webpack concepts - Mode](https://webpack.js.org/concepts/mode/)
 
     externals: {
       subtract: {
-        root: ["math", "subtract"] // will be available as window['math']['subtract']
+        root: ['math', 'subtract'] // will be available as window['math']['subtract']
       }
     }
   };
@@ -190,21 +189,21 @@ see [Webpack concepts - Mode](https://webpack.js.org/concepts/mode/)
   you can create an isomophic library by bundling two separate configurations:
 
   ```node
-  const path = require("path");
+  const path = require('path');
   const serverConfig = {
-    target: "node",
+    target: 'node',
     output: {
-      path: path.resolve(__dirname, "dist"),
-      filename: "lib.node.js"
+      path: path.resolve(__dirname, 'dist'),
+      filename: 'lib.node.js'
     }
     //…
   };
 
   const clientConfig = {
-    target: "web", // <=== can be omitted as default is 'web'
+    target: 'web', // <=== can be omitted as default is 'web'
     output: {
-      path: path.resolve(__dirname, "dist"),
-      filename: "lib.js"
+      path: path.resolve(__dirname, 'dist'),
+      filename: 'lib.js'
     }
     //…
   };
@@ -230,7 +229,7 @@ see [Webpack concepts - Mode](https://webpack.js.org/concepts/mode/)
     //...
     output: {
       devtoolModuleFilenameTemplate:
-        "webpack://[namespace]/[resource-path]?[loaders]"
+        'webpack://[namespace]/[resource-path]?[loaders]'
     }
   };
   ```
@@ -281,7 +280,7 @@ understand how code splitting works:
   // webpack.config.js
   new webpack.DefinePlugin({
     IS_DEBUG: true,
-    VERSION: "2.3.1"
+    VERSION: '2.3.1'
   });
   ```
 
@@ -290,8 +289,8 @@ understand how code splitting works:
   ```js
   // app.js
   if (IS_DEBUG) {
-    console.log("version: " + VERSION);
-    console.log("debugging: xxxx");
+    console.log('version: ' + VERSION);
+    console.log('debugging: xxxx');
   }
   ```
 
@@ -300,15 +299,15 @@ understand how code splitting works:
   is a shorthand for using `DefinePlugin` on `process.env` keys
 
   ```js
-  new webpack.EnvironmentPlugin(["NODE_ENV", "DEBUG"]);
+  new webpack.EnvironmentPlugin(['NODE_ENV', 'DEBUG']);
   ```
 
   is equivalent as
 
   ```js
   new webpack.DefinePlugin({
-    "process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV),
-    "process.env.DEBUG": JSON.stringify(process.env.DEBUG)
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
+    'process.env.DEBUG': JSON.stringify(process.env.DEBUG)
   });
   ```
 
@@ -316,7 +315,7 @@ understand how code splitting works:
 
   ```js
   new webpack.EnvironmentPlugin({
-    NODE_ENV: "development", // use 'development' unless process.env.NODE_ENV is defined
+    NODE_ENV: 'development', // use 'development' unless process.env.NODE_ENV is defined
     DEBUG: false
   });
   ```
@@ -361,25 +360,25 @@ understand how code splitting works:
 `webpack.config.js`
 
 ```js
-var path = require("path");
+var path = require('path');
 
 module.exports = {
-  entry: "./src/index.js",
+  entry: './src/index.js',
 
   output: {
-    path: path.resolve(__dirname, "dist"),
-    filename: "webpack-numbers.js",
-    library: "webpackNumbers", // name of the global variable when imported
-    libraryTarget: "umd" // consumer can include in CommonJS, ES2015, and as a global variable
+    path: path.resolve(__dirname, 'dist'),
+    filename: 'webpack-numbers.js',
+    library: 'webpackNumbers', // name of the global variable when imported
+    libraryTarget: 'var|window|umd' // how the library is exposed
   },
 
   // exclude lodash from the final library file, it should be a dependency
   externals: {
     lodash: {
-      commonjs: "lodash",
-      commonjs2: "lodash",
-      amd: "lodash",
-      root: "_"
+      commonjs: 'lodash',
+      commonjs2: 'lodash',
+      amd: 'lodash',
+      root: '_'
     }
   }
 };
@@ -408,20 +407,20 @@ in `package.json`
 `webpack.config.js`
 
 ```js
-var webpack = require("webpack");
+var webpack = require('webpack');
 
 module.exports = {
-  entry: "./src/index.js",
+  entry: './src/index.js',
 
   output: {
-    path: "./dist/assets/",
-    filename: "bundle.js",
-    publicPath: "assets"
+    path: './dist/assets/',
+    filename: 'bundle.js',
+    publicPath: 'assets'
   },
 
   devServer: {
     inline: true,
-    contentBase: "./dist",
+    contentBase: './dist',
     port: 3000
   },
 
@@ -430,26 +429,26 @@ module.exports = {
       {
         test: /\.js$/,
         exclude: /(node_modules)/,
-        loader: ["babel-loader"],
+        loader: ['babel-loader'],
         query: {
           // query for a loader
-          presets: ["latest", "stage-0", "react"]
+          presets: ['latest', 'stage-0', 'react']
         }
       },
       {
         test: /\.json$/,
         exclude: /(node_modules)/,
-        loader: "json-loader" // NOTE: loader can be an array or a string
+        loader: 'json-loader' // NOTE: loader can be an array or a string
       },
       {
         test: /\.css$/,
         exclude: /(node_modules)/,
-        loader: "style-loader!css-loader!autoprefixer-loader"
+        loader: 'style-loader!css-loader!autoprefixer-loader'
       },
       {
         test: /\.scss$/,
         exclude: /(node_modules)/,
-        loader: "style-loader!css-loader!autoprefixer-loader!sass-loader"
+        loader: 'style-loader!css-loader!autoprefixer-loader!sass-loader'
       }
     ]
   }
@@ -464,18 +463,18 @@ and you should use a `.babelrc` file
 `webpack.config.js`
 
 ```js
-var webpack = require("webpack");
+var webpack = require('webpack');
 
 module.exports = {
-  entry: "./src/index.js",
+  entry: './src/index.js',
 
   output: {
-    filename: "bundle.js"
+    filename: 'bundle.js'
   },
 
   devServer: {
     inline: true,
-    contentBase: "./dist",
+    contentBase: './dist',
     port: 3000
   },
 
@@ -485,25 +484,25 @@ module.exports = {
       {
         test: /\.js$/,
         exclude: /(node_modules)/,
-        loader: "babel-loader",
+        loader: 'babel-loader',
         query: {
-          presets: ["env", "react"] // use 'env' here
+          presets: ['env', 'react'] // use 'env' here
         }
       },
       {
         test: /\.json$/,
         exclude: /(node_modules)/,
-        loader: "json-loader"
+        loader: 'json-loader'
       },
       {
         test: /\.css$/,
         exclude: /(node_modules)/,
-        loader: "style-loader!css-loader!autoprefixer-loader"
+        loader: 'style-loader!css-loader!autoprefixer-loader'
       },
       {
         test: /\.scss$/,
         exclude: /(node_modules)/,
-        loader: "style-loader!css-loader!autoprefixer-loader!sass-loader" // <- loaders are applied from right to left
+        loader: 'style-loader!css-loader!autoprefixer-loader!sass-loader' // <- loaders are applied from right to left
       }
     ]
   }
