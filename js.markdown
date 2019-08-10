@@ -37,6 +37,10 @@ General topics about Javascript and front-end develpoment.
   - [AMD (Asynchronous Module Design)](#amd-asynchronous-module-design)
   - [CommonJS (CJS)](#commonjs-cjs)
   - [ES6](#es6)
+- [Error Handling](#error-handling)
+  - [`try...catch...finally`](#trycatchfinally)
+  - [Promise](#promise-1)
+  - [async/await](#asyncawait)
 - [Tricks](#tricks)
   - [Deboucing an event](#deboucing-an-event)
   - [Initialize an array with a value range](#initialize-an-array-with-a-value-range)
@@ -1303,7 +1307,6 @@ The language specification is managed by ECMA's TC39 committee now, the general 
 
 There are 5 stages, from 0 to 4, all finished proposals (reached stage 4) are here: https://github.com/tc39/proposals/blob/master/finished-proposals.md
 
-
 ## Module Systems
 
 https://www.airpair.com/javascript/posts/the-mind-boggling-universe-of-javascript-modules
@@ -1337,11 +1340,11 @@ const person = {
   age: 30
 };
 
-export const a = 20;  // one syntax
+export const a = 20; // one syntax
 const b = 30;
 
 export default person;
-export { b };       // another way
+export { b }; // another way
 ```
 
 `app.js`:
@@ -1374,7 +1377,126 @@ all: [Module] { a: 20, b: 30, default: { name: 'gary', age: 30 } }
   import './mod-a';
   ```
 
+## Error Handling
 
+### `try...catch...finally`
+
+- [MDN - try...catch](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/try...catch)
+- [MDN - onerror](https://developer.mozilla.org/en-US/docs/Web/API/GlobalEventHandlers/onerror)
+
+1. the catch block only catches synchronous errors, not async ones:
+
+   ```js
+   try {
+     setTimeout(() => {
+       console.log('in setTimeout');
+       throw new Error('throw in setTimeout'); // this error is not caught
+     });
+     console.log('in try');
+   } catch (e) {
+     console.log('in catch');
+   } finally {
+     console.log('in finally');
+   }
+   ```
+
+2. in a browser, when there is an unhandled error, it goes to `window.onerror`, it can be used for error logging;
+
+3. `finally` block always executes, if it returns a value, it becomes the entire block's return value, regardless of any return statement or error thrown in `try` and `catch` blocks;
+
+   ```js
+   function foo() {
+     try {
+       throw new Error('xx');
+       return 1;
+     } catch (e) {
+       console.log('in catch');
+       throw e;
+       return 2;
+     } finally {
+       console.log('in finally');
+       return 3; // would throw an error if there is no 'return' here
+     }
+
+     return 100;
+     console.log('after try...catch');
+   }
+
+   console.log(foo());
+   ```
+
+   outputs:
+
+   ```
+   in catch
+   in finally
+   3
+   ```
+
+### Promise
+
+[javascript.info - Promise error handling](https://javascript.info/promise-error-handling)
+[MDN - unhandledrejection](https://developer.mozilla.org/en-US/docs/Web/API/Window/unhandledrejection_event)
+
+```js
+new Promise((resolve, reject) => {
+  reject('reject it');
+  .finally(() => {
+    console.log('in first finally');
+  })
+  .then(res => {
+    console.log('in then: ', res);
+  })
+  .catch(e => {
+    console.log('in catch: ', e);
+    throw e;
+  })
+  .finally(() => {
+    console.log('in last finally');
+  });
+```
+
+outputs:
+
+```
+in first finally
+in catch:  reject it
+in last finally
+
+Uncaught (in promise) reject it
+```
+
+1. a `finally` block always executes, it doesn't have access to the resolved result or the rejection error;
+2. a `catch` block returns a resolved promise, unless it throws an error it self;
+3. in a browser, any unhandledrejection goes to the `unhandledrejection` event handler on `window`, it can be used for error logging;
+
+### async/await
+
+[javascript.info - async/await](https://javascript.info/async-await)
+
+```js
+const loadSomething = () => {
+  return fetchSomeData()
+    .then(data => doSomethingWith(data))
+    .catch(error => logAndReport(error));
+};
+```
+
+is the same as:
+
+```js
+const loadSomething = async () => {
+  try {
+    const data = await fetchSomeData();
+    return doSomethingWith(data);
+  } catch (error) {
+    logAndReport(error);
+  }
+};
+```
+
+1. the promise after `await` either resolves and return a value or throws an error;
+2. you should use normal `try...catch..finally` block to handle errors;
 
 ## Tricks
 
