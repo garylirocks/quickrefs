@@ -38,6 +38,7 @@ General topics about Javascript and front-end develpoment.
   - [CommonJS (CJS)](#commonjs-cjs)
   - [ES6](#es6)
 - [Error Handling](#error-handling)
+  - [Error](#error)
   - [`try...catch...finally`](#trycatchfinally)
   - [Promise](#promise-1)
   - [async/await](#asyncawait)
@@ -1379,12 +1380,51 @@ all: [Module] { a: 20, b: 30, default: { name: 'gary', age: 30 } }
 
 ## Error Handling
 
+### Error
+
+1. Common builtin Errors in JS
+
+   ```js
+   a // ReferrenceError: not defined
+   @@  // SyntaxError: invalid or unexpected token
+   'a'.foo() // TypeError: not a function
+   Array(-2) // RangeError: bad arguments
+   ```
+
+2. You can create your own custom Error classes extending the builtin ones:
+
+   ```js
+   class MyError extends Error {
+     consturctor(message) {
+       super(message);
+       this.name = 'MyError';
+     }
+   }
+   ```
+
+3. A `throw` statement terminates current code block (like `return`, `break`, `continue`), and passes control to the first `catch` block, you can throw **any value**, not just `Error` object;
+
 ### `try...catch...finally`
 
 - [MDN - try...catch](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/try...catch)
 - [MDN - onerror](https://developer.mozilla.org/en-US/docs/Web/API/GlobalEventHandlers/onerror)
 
-1. the catch block only catches synchronous errors, not async ones:
+1. Check error type using `instanceof`
+
+   ```js
+   try {
+     foo.bar();
+   } catch (e) {
+     if (e instanceof EvalError) {
+       console.log(e.name + ': ' + e.message);
+     } else if (e instanceof RangeError) {
+       console.log(e.name + ': ' + e.message);
+     }
+     // ... etc
+   }
+   ```
+
+2. the catch block only catches synchronous errors, not async ones (**you should use a promise chain to catch async errors**):
 
    ```js
    try {
@@ -1395,14 +1435,12 @@ all: [Module] { a: 20, b: 30, default: { name: 'gary', age: 30 } }
      console.log('in try');
    } catch (e) {
      console.log('in catch');
-   } finally {
-     console.log('in finally');
    }
    ```
 
-2. in a browser, when there is an unhandled error, it goes to `window.onerror`, it can be used for error logging;
+3. in a browser, when there is an unhandled error, it goes to `window.onerror`, it can be used for error logging;
 
-3. `finally` block always executes, if it returns a value, it becomes the entire block's return value, regardless of any return statement or error thrown in `try` and `catch` blocks;
+4. `finally` block always executes, if it returns a value, it becomes the entire block's return value, regardless of any return statement or error thrown in `try` and `catch` blocks;
 
    ```js
    function foo() {
@@ -1469,6 +1507,7 @@ Uncaught (in promise) reject it
 1. a `finally` block always executes, it doesn't have access to the resolved result or the rejection error;
 2. a `catch` block returns a resolved promise, unless it throws an error it self;
 3. in a browser, any unhandledrejection goes to the `unhandledrejection` event handler on `window`, it can be used for error logging;
+4. you should **always** add a `catch` to your promise chain;
 
 ### async/await
 
