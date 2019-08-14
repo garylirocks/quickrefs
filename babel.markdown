@@ -5,6 +5,8 @@
 - [Babel Configs](#babel-configs)
   - [`babel.config.js`](#babelconfigjs)
   - [`.babelrc`](#babelrc)
+  - [Plugins vs. Presets](#plugins-vs-presets)
+    - [Executing order](#executing-order)
 - [Compile](#compile)
 - [Debugging](#debugging)
 
@@ -72,6 +74,34 @@ The old method for configs, put the following in `.babelrc` to use the latest Ba
   "presets": ["env"]
 }
 ```
+
+### Plugins vs. Presets
+
+Presets are just pre-defined collections of plugins, you can define your own presets:
+
+```js
+module.exports = function() {
+  return {
+    plugins: ['pluginA', 'pluginB', 'pluginC']
+  };
+};
+```
+
+then use it like this:
+
+```js
+{
+  "presets": ["./myProject/myPreset"]
+}
+```
+
+#### Executing order
+
+https://babeljs.io/docs/en/plugins#plugin-ordering
+
+1. Plugins run before Presets.
+1. Plugin ordering is first to last.
+1. Preset ordering is reversed (last to first).
 
 ## Compile
 
