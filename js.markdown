@@ -1402,7 +1402,7 @@ all: [Module] { a: 20, b: 30, default: { name: 'gary', age: 30 } }
    }
    ```
 
-3. A `throw` statement terminates current code block (like `return`, `break`, `continue`), and passes control to the first `catch` block, you can throw **any value**, not just `Error` object;
+3. A `throw` statement terminates current code block (like `return`, `break`, `continue`), and passes control to the first `catch` block (you can throw any value, not just `Error` object, but it should be avoided);
 
 ### `try...catch...finally`
 
