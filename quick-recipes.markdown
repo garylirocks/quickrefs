@@ -508,13 +508,13 @@ cgroups can be used to limit a process groups resource(memory/cpu/...) usage
   chmod 755 /etc/init.d/cgconf
 
   # register the service
-  update-rc.d cgconf defaults
+  sudo update-rc.d cgconf defaults
 
   # start the service
-  service cgconf start
+  sudo /etc/init.d/cgconf start
 
   # check the status
-  service cgconf status
+  sudo /etc/init.d/cgconf status
   ```
 
 - Then the cgroup should be applied when the system starts
