@@ -2,33 +2,34 @@
 
 Quick productivity tips, shortcuts, command line snippets.
 
-- [Shortcuts](#Shortcuts)
-  - [Ubuntu](#Ubuntu)
-- [Update keyboard layout](#Update-keyboard-layout)
-- [Add a user as sudoer](#Add-a-user-as-sudoer)
-- [Change file/directory permissions](#Change-filedirectory-permissions)
+- [Shortcuts](#shortcuts)
+  - [Ubuntu](#ubuntu)
+- [Update keyboard layout](#update-keyboard-layout)
+- [Add a user as sudoer](#add-a-user-as-sudoer)
+- [Change file/directory permissions](#change-filedirectory-permissions)
   - [`setgid`](#setgid)
   - [sticky bit](#sticky-bit)
-- [Find out Linux distribution name](#Find-out-Linux-distribution-name)
-- [Find module version](#Find-module-version)
-- [Disable a service from autostart](#Disable-a-service-from-autostart)
-- [Display IP address in shell prompt](#Display-IP-address-in-shell-prompt)
-- [Mount/Unmount device](#MountUnmount-device)
+- [Find out Linux distribution name](#find-out-linux-distribution-name)
+- [Find module version](#find-module-version)
+- [Disable a service from autostart](#disable-a-service-from-autostart)
+- [Display IP address in shell prompt](#display-ip-address-in-shell-prompt)
+- [Mount/Unmount device](#mountunmount-device)
   - [`cifs`](#cifs)
-- [Relabel usb hard drive](#Relabel-usb-hard-drive)
-- [Hide default folders in home directory in Ubuntu](#Hide-default-folders-in-home-directory-in-Ubuntu)
-- [Send email](#Send-email)
-- [Work with ps or pdf files](#Work-with-ps-or-pdf-files)
-- [SSH login without password](#SSH-login-without-password)
-- [Version number specifications](#Version-number-specifications)
-- [Lorem ipsum](#Lorem-ipsum)
-- [Extract media from Office files (docx,xlsx,pptx)](#Extract-media-from-Office-files-docxxlsxpptx)
-- [Package files](#Package-files)
-- [Download all images from a web page](#Download-all-images-from-a-web-page)
-- [Linux process management](#Linux-process-management)
-  - [Kill a process](#Kill-a-process)
-- [Limit Google Chrome memory usage](#Limit-Google-Chrome-memory-usage)
-- [Chrom DevTools](#Chrom-DevTools)
+- [Relabel usb hard drive](#relabel-usb-hard-drive)
+- [Hide default folders in home directory in Ubuntu](#hide-default-folders-in-home-directory-in-ubuntu)
+- [Send email](#send-email)
+- [Work with ps or pdf files](#work-with-ps-or-pdf-files)
+- [SSH login without password](#ssh-login-without-password)
+- [Version number specifications](#version-number-specifications)
+- [Lorem ipsum](#lorem-ipsum)
+- [Extract media from Office files (docx,xlsx,pptx)](#extract-media-from-office-files-docxxlsxpptx)
+- [Package files](#package-files)
+- [Download all images from a web page](#download-all-images-from-a-web-page)
+- [Linux process management](#linux-process-management)
+  - [Kill a process](#kill-a-process)
+- [Limit Google Chrome memory usage](#limit-google-chrome-memory-usage)
+- [Chrom DevTools](#chrom-devtools)
+- [Limit memory/cpu usage using cgroups](#limit-memorycpu-usage-using-cgroups)
 
 ## Shortcuts
 
@@ -435,6 +436,8 @@ wget --page-requisites --span-hosts --no-directories --accept jpg,png --execute 
 
 ## Limit Google Chrome memory usage
 
+**Seems like this limit only applies to the initial page load, a tab can exceed this limit later on**, see the `cgroup` section
+
 ```sh
 # limit per tab memory usage to be 200MB
 google-chrome --js-flags='--max-old-space-size=200'
@@ -445,3 +448,73 @@ google-chrome --js-flags='--max-old-space-size=200'
 - Filter out extension resources in the 'Network' tab:
 
   `-scheme:chrome-extension`
+
+## Limit memory/cpu usage using cgroups
+
+- [cgroups - ArchWiki](https://wiki.archlinux.org/index.php/cgroups)
+- [cgroup - Install cgconfig in Ubuntu 16.04 - Ask Ubuntu](https://askubuntu.com/questions/836469/install-cgconfig-in-ubuntu-16-04)
+- [using cgroups to limit browser memory+cpu usage](https://gist.github.com/hardfire/7e5d9e7ce218dcf2f510329c16517331)
+
+cgroups can be used to limit a process groups resource(memory/cpu/...) usage
+
+- Install tools
+
+  ```sh
+  sudo apt-get install cgroup-tools
+  ```
+
+- Create config files
+
+  ```
+  # /etc/cgconf.conf
+
+  group chrome {
+      perm {
+          admin {
+              uid = gary;
+          }
+          task {
+              uid = gary;
+          }
+      }
+
+      cpu {
+          cpu.shares = "1000";  # 1000 out of 1024
+      }
+
+      memory {
+          memory.limit_in_bytes = "1000M";
+      }
+  }
+  ```
+
+  ```
+  # /etc/cgrules.conf
+
+  #user:process                            subsystems          groups
+  gary:/opt/google/chrome/chrome           cpu,memory          chrome
+  ```
+
+  ```
+  # /etc/init.d/cgconf
+
+  # ... as in the gist
+  ```
+
+- Install and enable the service
+
+  ```
+  # make the script executable
+  chmod 755 /etc/init.d/cgconf
+
+  # register the service
+  update-rc.d cgconf defaults
+
+  # start the service
+  service cgconf start
+
+  # check the status
+  service cgconf status
+  ```
+
+- Then the cgroup should be applied when the system starts
