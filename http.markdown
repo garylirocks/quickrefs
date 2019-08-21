@@ -4,6 +4,7 @@
   - [Cache Validating](#cache-validating)
   - [`Cache-Control`](#cache-control)
   - [Invalidating and updating cached responses](#invalidating-and-updating-cached-responses)
+  - [Heuristic freshness](#heuristic-freshness)
   - [Caching checklist](#caching-checklist)
   - [Nginx server configs](#nginx-server-configs)
 
@@ -75,6 +76,12 @@ You can use the above diagram to define the optimal cache policy for your resour
 - The HTML is marked with `no-cache`, so the browser always revalidate it on every request. Since the markup contains static resource urls with fingerprint, so whenever one of those static resources updates, the HTML file changes, it will be downloaded again; A `304` status code is returned if nothing changed;
 - The CSS is allowed to be cached by the browser and intermediate caches for 1 year, whenever it updates, the fingerprint will change, which triggers the HTML change, so it will be re-downloaded;
 - The JS file is similar to the CSS file, however it is marked as `private`, can only be cached by the browser;
+
+### Heuristic freshness
+
+If a response doesn't set `Cache-Control: max-age` or `Expires`, HTTP still allows it to be cached using what’s called _heuristic freshness_, often based on `Last-Modified` header, see https://webmasters.stackexchange.com/a/111299;
+
+Looks like this behaviour is not consistent across broswers (Firefox will always refetch the resource, Chrome may just load it from the cache)
 
 ### Caching checklist
 
