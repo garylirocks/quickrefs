@@ -1,35 +1,39 @@
 # NodeJS notes
 
-- [Multiple versions of Node.js](#Multiple-versions-of-Nodejs)
-- [Blocking vs non-blocking](#Blocking-vs-non-blocking)
-- [NPM](#NPM)
+- [Multiple versions of Node.js](#multiple-versions-of-nodejs)
+- [Blocking vs non-blocking](#blocking-vs-non-blocking)
+- [NPM](#npm)
   - [`package.json`](#packagejson)
-  - [Yarn](#Yarn)
-  - [Avoid installing packages globally](#Avoid-installing-packages-globally)
-  - [Publish package to NPM](#Publish-package-to-NPM)
-  - [Symlink a package folder](#Symlink-a-package-folder)
-- [Module System](#Module-System)
-  - [Resolving: `module.paths`, `module.resolve`](#Resolving-modulepaths-moduleresolve)
-  - [Parent-child relation: `module.parent`, `module.children`](#Parent-child-relation-moduleparent-modulechildren)
+  - [Yarn](#yarn)
+  - [Avoid installing packages globally](#avoid-installing-packages-globally)
+  - [Publish package to NPM](#publish-package-to-npm)
+  - [Symlink a package folder](#symlink-a-package-folder)
+- [Module System](#module-system)
+  - [Resolving: `module.paths`, `module.resolve`](#resolving-modulepaths-moduleresolve)
+  - [Parent-child relation: `module.parent`, `module.children`](#parent-child-relation-moduleparent-modulechildren)
   - [`module.loaded`](#moduleloaded)
   - [`exports`, `module.exports`](#exports-moduleexports)
-  - [Synchronicity](#Synchronicity)
-  - [Circular dependency](#Circular-dependency)
-  - [JSON and C/C++ Addons](#JSON-and-CC-Addons)
-  - [Module Wrapping](#Module-Wrapping)
-  - [The `require` object](#The-require-object)
-  - [Module Caching](#Module-Caching)
-  - [ECMAScript Modules in Node 11](#ECMAScript-Modules-in-Node-11)
-    - [Enabling](#Enabling)
-    - [Features](#Features)
-    - [Differences between `import` and `require`](#Differences-between-import-and-require)
-  - [CommonJs vs. ES6 Modules](#CommonJs-vs-ES6-Modules)
-- [CLI](#CLI)
-  - [Limit memory usage](#Limit-memory-usage)
-- [Debugging](#Debugging)
-  - [Remote debugging](#Remote-debugging)
-- [Barebone HTTP server](#Barebone-HTTP-server)
-- [Streams and pipes](#Streams-and-pipes)
+  - [Synchronicity](#synchronicity)
+  - [Circular dependency](#circular-dependency)
+  - [JSON and C/C++ Addons](#json-and-cc-addons)
+  - [Module Wrapping](#module-wrapping)
+  - [The `require` object](#the-require-object)
+  - [Module Caching](#module-caching)
+  - [ECMAScript Modules in Node 11](#ecmascript-modules-in-node-11)
+    - [Enabling](#enabling)
+    - [Features](#features)
+    - [Differences between `import` and `require`](#differences-between-import-and-require)
+  - [CommonJs vs. ES6 Modules](#commonjs-vs-es6-modules)
+- [CLI](#cli)
+  - [Limit memory usage](#limit-memory-usage)
+- [Error Handling](#error-handling)
+  - [Operational errors vs. programmer errors](#operational-errors-vs-programmer-errors)
+  - [Handling operational errors](#handling-operational-errors)
+  - [Programmer errors](#programmer-errors)
+- [Debugging](#debugging)
+  - [Remote debugging](#remote-debugging)
+- [Barebone HTTP server](#barebone-http-server)
+- [Streams and pipes](#streams-and-pipes)
   - [read](#read)
   - [write](#write)
   - [pipe](#pipe)
@@ -629,6 +633,66 @@ NODE_OPTIONS='--max-old-space-size=100' node script.js
 # or set it directly in the command line
 node --max-old-space-size=100 script.js
 ```
+
+## Error Handling
+
+[Error Handling | Joyent](https://www.joyent.com/node-js/production/design/errors)
+
+1. An _error_ is any instance of the `Error` class, it becomes an _exception_ when you `throw` it;
+
+1. Main ways of delivering an error:
+
+   1. `throw` it;
+   1. pass it to a _callback_ function, which handles both errors and results of a async operation;
+   1. pass it a a _reject_ promise function;
+   1. emit an `"error"` event on an EventEmitter;
+
+1. In Node, because most errors are async, it's more common to use a callback function to handle errors, instead of `try...catch`, unlike Java or C++;
+
+### Operational errors vs. programmer errors
+
+- **Operational errors** are not bugs, they are external problems faced by correct programs at runtime, they can't be avoided by changing the program, such as:
+
+  - invalid user input
+  - failed to connect to server / resolve a hostname
+  - server returned a 500 response
+  - system out of memory
+
+- **Programmer errors** are bugs in the program, can be avoided by changing the code, they can't be handled properly:
+  - read 'undefined' property
+  - pass a 'string' where an object is expected
+
+An programmer error in a server program usually means an operational error for a client program; and another way around, if you don't handle an operational error(i.e. network failure) properly, then the whole program crashes, this becomes a programmer error.
+
+### Handling operational errors
+
+- Any code that does anything which may fail(opening a file, connecting to a server, etc) _has_ to consider how to deal with a failed operation;
+- You may need to deal with the same error at several levels of the stack, sometimes only the top-level caller knows how to deal with an error;
+
+For any given error, you might:
+
+- **Deal with it directly**, when it's clear what you have to do:
+
+  - creating a log file first when it is not found;
+  - try to reconnect a failed persistent connection to a db server;
+
+- **Propagate the failure to your client**, you don't know how to deal with the error, then you should abort the operation, clean up whatever you've started and deliver an error back, this is often appropriate when you expect the cause of the error is not changing soon:
+
+  - failed to parse invalid JSON input;
+
+- **Retry**, sometimes useful for network and remote service errors
+
+  - You should document clearly how many times you may retry and how long you'll wait between retries;
+  - And don't retry at every level of the stack;
+
+- **Crash**, when something representing programmer errors happened, or there's nothing you can do.
+
+- **Log the error and do nothing**, when something happend, you can do nothing and there's no need to crash the program, you should just log a message and proceed.
+
+### Programmer errors
+
+- The best way to recover from programmer errors is to **crash immediately**;
+- You should run your program using a restarter to automatically restart the program in the event of a crash;
 
 ## Debugging
 
