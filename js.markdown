@@ -24,6 +24,9 @@ General topics about Javascript and front-end develpoment.
   - [resolved vs. rejected](#resolved-vs-rejected)
 - [Generator](#generator)
 - [Async/Await](#asyncawait)
+- [Event Loop](#event-loop)
+  - [`setTimout`](#settimout)
+  - [Multiple runtimes](#multiple-runtimes)
 - [Immutability](#immutability)
   - [What is immutability ?](#what-is-immutability)
   - [Reference equality vs. value equality](#reference-equality-vs-value-equality)
@@ -1027,6 +1030,39 @@ See the Pen <a href='https://codepen.io/garylirocks/pen/yKRzeM/'>async/await</a>
 
 - `await` can only be used in `async` functions
 - `await` is followed by a Promise, if it resolves, it returns the resolved value, or it can throw an error
+
+## Event Loop
+
+[Concurrency model and Event Loop - JavaScript | MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop)
+
+* **Run-to-completion**: Each message in the loop is processed completely before any other message is processed;
+
+
+### `setTimout`
+
+The time argument for setTimout only indicates the **minimum** delay after which the message will be pushed into the queue, it only runs only when other messages before it have been cleared;
+
+
+```js
+const s = new Date().getSeconds();
+
+setTimeout(function() {
+  // prints out "2", meaning that the callback is not called immediately after 500 milliseconds.
+  console.log("Ran after " + (new Date().getSeconds() - s) + " seconds");
+}, 500);
+
+while(true) {
+  if(new Date().getSeconds() - s >= 2) {
+    console.log("Good, looped for 2 seconds");
+    break;
+  }
+}
+```
+
+### Multiple runtimes
+
+A _web worker_ or a cross-origin _iframe_ has its own stack, heap, and message queue. Two distinct runtimes can only communicate through sending messages via the `postMessage` method. This method adds a message to the other runtime if the latter listens to message events.
+
 
 ## Immutability
 
