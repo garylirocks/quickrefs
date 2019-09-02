@@ -1,13 +1,16 @@
 # NodeJS notes
 
-- [Multiple versions of Node.js](#multiple-versions-of-nodejs)
+- [Basic concepts](#basic-concepts)
+  - [Node dependencies](#node-dependencies)
 - [Blocking vs non-blocking](#blocking-vs-non-blocking)
-- [NPM](#npm)
-  - [`package.json`](#packagejson)
-  - [Yarn](#yarn)
-  - [Avoid installing packages globally](#avoid-installing-packages-globally)
-  - [Publish package to NPM](#publish-package-to-npm)
-  - [Symlink a package folder](#symlink-a-package-folder)
+  - [What is blocking ?](#what-is-blocking)
+  - [Concurrency](#concurrency)
+- [Event loop](#event-loop)
+- [Streams and pipes](#streams-and-pipes)
+  - [read](#read)
+  - [write](#write)
+  - [pipe](#pipe)
+  - [events](#events)
 - [Module System](#module-system)
   - [Resolving: `module.paths`, `module.resolve`](#resolving-modulepaths-moduleresolve)
   - [Parent-child relation: `module.parent`, `module.children`](#parent-child-relation-moduleparent-modulechildren)
@@ -24,8 +27,6 @@
     - [Features](#features)
     - [Differences between `import` and `require`](#differences-between-import-and-require)
   - [CommonJs vs. ES6 Modules](#commonjs-vs-es6-modules)
-- [CLI](#cli)
-  - [Limit memory usage](#limit-memory-usage)
 - [Error Handling](#error-handling)
   - [Operational errors vs. programmer errors](#operational-errors-vs-programmer-errors)
   - [Handling operational errors](#handling-operational-errors)
@@ -33,137 +34,141 @@
 - [Debugging](#debugging)
   - [Remote debugging](#remote-debugging)
 - [Barebone HTTP server](#barebone-http-server)
-- [Streams and pipes](#streams-and-pipes)
-  - [read](#read)
-  - [write](#write)
-  - [pipe](#pipe)
-  - [events](#events)
+- [CLI](#cli)
+  - [Limit memory usage](#limit-memory-usage)
+- [Tools](#tools)
+  - [`nvm` - manage multiple versions of Node](#nvm---manage-multiple-versions-of-node)
+  - [NPM](#npm)
+    - [`package.json`](#packagejson)
+    - [Avoid installing packages globally](#avoid-installing-packages-globally)
+    - [Publish package to NPM](#publish-package-to-npm)
+    - [Symlink a package folder](#symlink-a-package-folder)
+  - [Yarn](#yarn)
 
-## Multiple versions of Node.js
+## Basic concepts
 
-use [nvm](https://github.com/creationix/nvm) to manage multiple versions of Node
+### Node dependencies
 
-```shell
-# list installed versions
-nvm ls
+Libs:
 
-# list all available versions
-nvm ls-remote
-```
+- V8 - JS engine, Node controls it via V8 C++ API;
+- libuv - a C library that provides a consistent interface for non-blocking I/O operations(e.g. file system, network, DNS, child processes, pipes, signal handling, polling, streaming) across all supported platforms;
+- http-parser - lightweight C lib for HTTP parsing;
+- c-ares - for some async DNS requests;
+- OpenSSL - `tls` and `crypto`;
+- zlib - compressions and decompression;
+
+Tools: npm, gyp, gtest
 
 ## Blocking vs non-blocking
 
-- All of the I/O methods in the Node.js standard library provide asynchronous versions, which are **non-blocking**, and accept callback functions. Some methods also have **blocking** counter parts, which have names that end with `Sync`.
+### What is blocking ?
 
-- JavaScript execution in Node.js is single threaded, so concurrency refers to the event loop's capacity to execute JavaScript call back functions after completing other work.
+- It happens when a Node process can not continue JavaScript execution until a non-JavaScript operation completes;
 
-## NPM
+- Most commonly blocking operations are synchronous methods from the Node standard library that use libuv, native modules may also have **blocking** methods;
 
-npm's config file is at `~/.npmrc`, can be updated with `npm config set`
+- CPU intensive JS operations are not typically referred to as **blocking**;
 
-```shell
-# save dependencies to `package.json` file when installing
-npm config set save=true
+- All of the I/O methods in the Node standard library provide asynchronous versions, which are **non-blocking**, and accept callback functions. Some methods also have **blocking** counterparts, which have names that end with `Sync`;
 
-# save the exact version
-npm config set save-exact=true
+### Concurrency
+
+- JavaScript execution in Node is **single threaded**, so concurrency refers to the event loop's capacity to execute JavaScript call back functions after completing other work;
+
+- Other languages may create additional threads to handle concurrent work;
+
+## Event loop
+
+## Streams and pipes
+
+Node makes extensive use of streams, there are fundamental stream types in Node:
+
+- **Readable**: such as `fs.createReadStream`;
+- **Writable**: such as `fs.createWriteStream`;
+- **Duplex**: both readable and writable, such as a TCP socket;
+- **Transform**: a duplex stream that can be used to modify or transfer the data, such as `zlib.createGzip`;
+
+all streams are instances of `EventEmitter`, they emit events that can be used to read and write data, however, we can consume streams data in a simpler way using the `pipe` method
+
+```node
+readableSrc.pipe(writableDest);
 ```
 
-### `package.json`
+or
 
-- it's a JSON file, comments are **NOT** allowed;
-- you can use `//` key for comments, since duplicate keys are removed after you run any `npm` command, so make sure only use `//` once per block, or append something after `//` for each comment key to be unique:
-
-```json
-{
-  "scripts": {
-    "// --- comment ---": "echo this is a comment",
-    "build": "echo building"
-  },
-  "//": ["first line", "second line"]
-}
+```node
+readableSrc
+  .pipe(transformStream1)
+  .pipe(transformStream2)
+  .pipe(finalWrtitableDest);
 ```
 
-### Yarn
+it's recommended to use either the `pipe` method or consume streams with events, but don't mix them
 
-```bash
-# save to devDependencies
-yarn add -D [packages ...]
+### read
 
-# make sure the installed files are matching the specified version
-yarn add --check-files [packages ...]
+```node
+var fs = require('fs');
+var stream;
+stream = fs.createReadStream('/data/test.txt');
 
-# upgrade packages to their latest versions, package.json is updated as well
-yarn upgrade pkg1 pkg2 --latest
-yarn upgrade --scope @pkg-namespace --latest
-
-# the above is not working somehow, used the following line
-yarn upgrade pkg1@latest pkg2@latest
+stream.on('data', function(data) {
+  var chunk = data.toString();
+  console.log(chunk);
+});
 ```
 
-### Avoid installing packages globally
+### write
 
-_Since npm 5.2, there is a tool `npx` bundled with npm_, you can use it to run some scripts without installing a global package, such as
+```node
+var fs = require('fs');
+var stream;
+stream = fs.createWriteStream('/data/test.txt');
 
-    npx create-react-app my-app
-
-[The Issue With Global Node Packages](https://www.smashingmagazine.com/2016/01/issue-with-global-node-npm-packages/)
-
-some notes:
-
-- installing all dependencies of a project locally (with `--save`, `--save-dev`);
-- all the binary tools should be available in `node_modules/.bin/`, you can add `./node_modules/.bin/` to your `$PATH`, but then you can only run these tools in the root directory of the project;
-- a good practice is adding these tools as alias in `package.json`
-
-  ```json
-  {
-      …
-      "scripts": {
-          "build": "browserify main.js > bundle.js"
-      }
-      …
-  }
-  ```
-
-  then you just need to run `npm run build`, you can add options to the original tool by adding them following `--`: `npm run build -- --debug`
-
-### Publish package to NPM
-
-(https://docs.npmjs.com/getting-started/publishing-npm-packages)
-
-- Create an account on NPM;
-- Review the package directory:
-  - everything in the directory will be included unless ignored by `.gitignore` or `.npmignore`;
-  - review `package.json`;
-  - choose a name;
-  - include a `readme.md` file;
-- `npm publish`;
-
-update a package:
-
-- `npm version (patch|minor|major)`
-  it will change the version number in `package.json`, (will also add a tag to the linked git repo)
-- `npm publish`
-
-### Symlink a package folder
-
-make one local package available to another project, quite useful for developing and testing a library package
-
-two steps process:
-
-```bash
-cd ~/code/myLibrary
-npm link                # symlinks this to a global folder
-
-cd ~/code/myApp
-npm link my-library     # link to this package, use the 'name' in package.json, not the directory name
+stream.write('Node.js');
+stream.write('Hello World');
 ```
 
-or a shortcut:
+### pipe
 
-```bash
-cd ~/code/myApp
-npm link ../myLibrary   # use 'my-library' in code of myApp
+```node
+var fs = require('fs');
+
+var readStream = fs.createReadStream('/data/input.txt');
+var writeStream = fs.createwriteStream('/data/output.txt');
+
+readStream.pipe(writeStream);
+```
+
+or server a large file
+
+```node
+const fs = require('fs');
+const server = require('http').createServer();
+
+server.on('request', (req, res) => {
+  const src = fs.createReadStream('./big.file');
+  src.pipe(res);
+});
+
+server.listen(8000);
+```
+
+### events
+
+```node
+var events = require('events');
+
+var eventEmitter = new events.EventEmitter();
+
+// add a listener
+eventEmitter.on('data_received', function() {
+  console.log('data received succesfully.');
+});
+
+// trigger an event
+eventEmitter.emit('data_received');
 ```
 
 ## Module System
@@ -618,22 +623,6 @@ This blog post explains the implementation difference between the two module sys
 - core difference: **ES Module loading is asynchronous, while CommonJS module loading is synchronous**;
 - Babel/webpack load ES Modules _synchronously_, while the ECMAScript specs specify _asynchronous_ loading;
 
-## CLI
-
-### Limit memory usage
-
-https://nodejs.org/dist/latest-v10.x/docs/api/cli.html
-
-Use V8 option `--max-old-space-size` to limit Node's memory usage (the number is in MB):
-
-```sh
-# set it in NODE_OPTIONS environment variable
-NODE_OPTIONS='--max-old-space-size=100' node script.js
-
-# or set it directly in the command line
-node --max-old-space-size=100 script.js
-```
-
 ## Error Handling
 
 [Error Handling | Joyent](https://www.joyent.com/node-js/production/design/errors)
@@ -705,7 +694,7 @@ node --inspect demo.js
 node --inspect-brk demo.js
 ```
 
-by default the Node.js process listens via WebSocket on `127.0.0.1:9229` for debugging messages, a debugger programe then connect to this url (e.g. `ws://127.0.0.1:9229/0f2c936f-b1cd-4ac9-aab3-f63b0f33d55e`). You can also get metadata about the program via a HTTP endpoint (`http://[host:port]/json/list`).
+by default the Node process listens via WebSocket on `127.0.0.1:9229` for debugging messages, a debugger programe then connect to this url (e.g. `ws://127.0.0.1:9229/0f2c936f-b1cd-4ac9-aab3-f63b0f33d55e`). You can also get metadata about the program via a HTTP endpoint (`http://[host:port]/json/list`).
 
 ### Remote debugging
 
@@ -740,93 +729,143 @@ server.listen(8000);
 console.log('Server running at http://localhost:8000');
 ```
 
-## Streams and pipes
 
-Node makes extensive use of streams, there are fundamental stream types in Node.js:
+## CLI
 
-- **Readable**: such as `fs.createReadStream`;
-- **Writable**: such as `fs.createWriteStream`;
-- **Duplex**: both readable and writable, such as a TCP socket;
-- **Transform**: a duplex stream that can be used to modify or transfer the data, such as `zlib.createGzip`;
+### Limit memory usage
 
-all streams are instances of `EventEmitter`, they emit events that can be used to read and write data, however, we can consume streams data in a simpler way using the `pipe` method
+https://nodejs.org/dist/latest-v10.x/docs/api/cli.html
 
-```node
-readableSrc.pipe(writableDest);
+Use V8 option `--max-old-space-size` to limit Node's memory usage (the number is in MB):
+
+```sh
+# set it in NODE_OPTIONS environment variable
+NODE_OPTIONS='--max-old-space-size=100' node script.js
+
+# or set it directly in the command line
+node --max-old-space-size=100 script.js
 ```
 
-or
+## Tools
 
-```node
-readableSrc
-  .pipe(transformStream1)
-  .pipe(transformStream2)
-  .pipe(finalWrtitableDest);
+### `nvm` - manage multiple versions of Node
+
+You can use [nvm](https://github.com/creationix/nvm) to manage multiple versions of Node
+
+```shell
+# list installed versions
+nvm ls
+
+# list all available versions
+nvm ls-remote
 ```
 
-it's recommended to use either the `pipe` method or consume streams with events, but don't mix them
+### NPM
 
-### read
+npm's config file is at `~/.npmrc`, can be updated with `npm config set`
 
-```node
-var fs = require('fs');
-var stream;
-stream = fs.createReadStream('/data/test.txt');
+```shell
+# save dependencies to `package.json` file when installing
+npm config set save=true
 
-stream.on('data', function(data) {
-  var chunk = data.toString();
-  console.log(chunk);
-});
+# save the exact version
+npm config set save-exact=true
 ```
 
-### write
+#### `package.json`
 
-```node
-var fs = require('fs');
-var stream;
-stream = fs.createWriteStream('/data/test.txt');
+- it's a JSON file, comments are **NOT** allowed;
+- you can use `//` key for comments, since duplicate keys are removed after you run any `npm` command, so make sure only use `//` once per block, or append something after `//` for each comment key to be unique:
 
-stream.write('Node.js');
-stream.write('Hello World');
+```json
+{
+  "scripts": {
+    "// --- comment ---": "echo this is a comment",
+    "build": "echo building"
+  },
+  "//": ["first line", "second line"]
+}
 ```
 
-### pipe
 
-```node
-var fs = require('fs');
+#### Avoid installing packages globally
 
-var readStream = fs.createReadStream('/data/input.txt');
-var writeStream = fs.createwriteStream('/data/output.txt');
+_Since npm 5.2, there is a tool `npx` bundled with npm_, you can use it to run some scripts without installing a global package, such as
 
-readStream.pipe(writeStream);
+    npx create-react-app my-app
+
+[The Issue With Global Node Packages](https://www.smashingmagazine.com/2016/01/issue-with-global-node-npm-packages/)
+
+Notes:
+
+- Install all dependencies of a project locally (with `--save`, `--save-dev`);
+- All the binary tools should be available in `node_modules/.bin/`, you can add `./node_modules/.bin/` to your `$PATH`, but then you can only run these tools in the root directory of the project;
+- A good practice is adding these tools as alias in `package.json`
+
+  ```json
+  {
+      …
+      "scripts": {
+          "build": "browserify main.js > bundle.js"
+      }
+      …
+  }
+  ```
+
+  then you just need to run `npm run build`, you can add options to the original tool by adding them following `--`: `npm run build -- --debug`
+
+#### Publish package to NPM
+
+(https://docs.npmjs.com/getting-started/publishing-npm-packages)
+
+- Create an account on NPM;
+- Review the package directory:
+  - everything in the directory will be included unless ignored by `.gitignore` or `.npmignore`;
+  - review `package.json`;
+  - choose a name;
+  - include a `readme.md` file;
+- `npm publish`;
+
+update a package:
+
+- `npm version (patch|minor|major)`
+  it will change the version number in `package.json`, (will also add a tag to the linked git repo)
+- `npm publish`
+
+#### Symlink a package folder
+
+make one local package available to another project, quite useful for developing and testing a library package
+
+two steps process:
+
+```bash
+cd ~/code/myLibrary
+npm link                # symlinks this to a global folder
+
+cd ~/code/myApp
+npm link my-library     # link to this package, use the 'name' in package.json, not the directory name
 ```
 
-or server a large file
+or a shortcut:
 
-```node
-const fs = require('fs');
-const server = require('http').createServer();
-
-server.on('request', (req, res) => {
-  const src = fs.createReadStream('./big.file');
-  src.pipe(res);
-});
-
-server.listen(8000);
+```bash
+cd ~/code/myApp
+npm link ../myLibrary   # use 'my-library' in code of myApp
 ```
 
-### events
+### Yarn
 
-```node
-var events = require('events');
+```bash
+# save to devDependencies
+yarn add -D [packages ...]
 
-var eventEmitter = new events.EventEmitter();
+# make sure the installed files are matching the specified version
+yarn add --check-files [packages ...]
 
-// add a listener
-eventEmitter.on('data_received', function() {
-  console.log('data received succesfully.');
-});
+# upgrade packages to their latest versions, package.json is updated as well
+yarn upgrade pkg1 pkg2 --latest
+yarn upgrade --scope @pkg-namespace --latest
 
-// trigger an event
-eventEmitter.emit('data_received');
+# the above is not working somehow, used the following line
+yarn upgrade pkg1@latest pkg2@latest
 ```
