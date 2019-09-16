@@ -21,11 +21,12 @@
 - [`mktemp`](#mktemp)
 - [`expand`](#expand)
 - [`find`](#find)
+- [`xargs`](#xargs)
 - [`pushd`, `popd`, `dirs`](#pushd-popd-dirs)
 
 ## Preface
 
-Some useful tips of shell commands  
+Some useful tips of shell commands
 Source: [团子的小窝][tuanzi]
 
 ## `cd`
@@ -55,7 +56,7 @@ useful options, `-e` to enable escaping, `-n` to suppress default-added-newline 
 
 useful options: `-n` sort as number, `-r` sort from big to small, `-u` output only first of equal values
 
-sort according to fields, `-t` for delimiter, `-k` for start and end field, and options of each field  
+sort according to fields, `-t` for delimiter, `-k` for start and end field, and options of each field
 for example, sort according to user id from big to small:
 
     $ sort -t':' -k3nr,3 /etc/passwd | tail -3
@@ -64,8 +65,8 @@ for example, sort according to user id from big to small:
     root:x:0:0:root:/root:/bin/bash
 
 **CAUTION** if you want to output sort result to the same file as input file, do not use redirection, this will empty the file, as the file will be emptied even before sorting, use `-o` instead:
-  
- $ cat input.file 
+
+ $ cat input.file
     10
     2
     2314
@@ -224,8 +225,8 @@ update access and modification times of a file, if a file does not exists, it wi
 
 **ctime will always be updated to current time**
 
-atime: file access time  
-mtime: file content modification time  
+atime: file access time
+mtime: file content modification time
 ctime: file properties modification time
 
     $ stat hello.txt
@@ -388,17 +389,75 @@ or use `column`
 
 ## `find`
 
-- find files with different extensions
+```sh
+# use extended RegEx
+find . -regextype posix-extended -regex '.*(php)|(phtml)'
 
-  ```sh
-  find . -regextype posix-extended -regex '.*(php)|(phtml)'
-  ```
+# exclude current directory (at least one level deep)
+find . -mindepth 1 -type d
 
-- find all sub directories, excluding itself
+# exclude a directory (prune './images1', find '*.png' in other directories)
+find . -path './images1' -prune -o -name '*.png' -print
 
-  ```sh
-  find . -mindepth 1 -type d
-  ```
+# execute a command on matched files
+# `{}` is a placeholder for matched files, `\;` is required
+find . -type f -regex '\./[1-9]+' -exec cp {} dest \;
+
+# use with xargs, and use null as separator, to handle file names containing white spaces
+find . -name '*.png' -print0 | xargs -0 ls -al
+```
+
+## `xargs`
+
+Some shell commands don't take standard input, `xargs` allow you to convert standard input to arguments;
+
+* Print/Confirm commands
+
+    ```sh
+    # Print out commands before execution
+    echo A B C | xargs -t echo
+    # echo A B C
+    # A B C
+
+    # Confirm before execution
+    echo A B C | xargs -p echo
+    # echo A B C ?...y
+    # A B C
+    ```
+
+* How to split inputs
+
+    ```sh
+    # By default, all input lines are concatenated:
+    echo -e 'a\nb\nc' | xargs -t echo
+    # echo a b c
+    # a b c
+
+    # You can run one command per input line:
+    echo -e 'a\nb\nc' | xargs -t -L 1 echo
+    # echo a
+    # a
+    # echo b
+    # b
+    # echo c
+    # c
+
+    # Or, you can specify how many arguments per command line:
+    echo {0..5} | xargs -t -n 2 echo
+    # echo 0 1
+    # 0 1
+    # echo 2 3
+    # 2 3
+    # echo 4 5
+    # 4 5
+    ```
+
+* Run multiple processes
+
+    ```sh
+    # run multiple processes at the same time to speed up
+    docker ps -q | xargs -n 1 --max-procs 2 docker kill
+    ```
 
 ## `pushd`, `popd`, `dirs`
 
@@ -437,5 +496,7 @@ or use `column`
     $ cd ~1
     $ pwd
     /home/lee/playground/testing/dir2
+
+
 
 [tuanzi]: http://kodango.com
