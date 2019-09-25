@@ -420,9 +420,13 @@ wget --page-requisites --span-hosts --no-directories --accept jpg,png --execute 
 
 ## Linux process management
 
-- `lsof -i:8080` list processes listening on port 8080
+- `pgrep -a chrome` find processes using RegExp matching
+- `lsof -i:8080` list processes listening on port 8080 (`lsof` means list open files)
+- `pstree` display a process tree
 
 ### Kill a process
+
+See `man 7 signal` for a full signal list
 
 - `kill <PID>`
 
