@@ -1,45 +1,177 @@
 # Bash Cheatsheet
 
-- [Bash Cheatsheet](#bash-cheatsheet)
-  - [Preface](#preface)
-  - [Variables](#variables)
-  - [Command substitution](#command-substitution)
-  - [brace expansion](#brace-expansion)
-  - [Strings](#strings)
-  - [`if` statement](#if-statement)
-  - [Command line arguments](#command-line-arguments)
-  - [Conditional](#conditional)
-  - [`[` vs `[[`](#vs)
-  - [Arithmetic](#arithmetic)
-  - [Array](#array)
-  - [Looping](#looping)
-  - [`case` statements](#case-statements)
-  - [Functions](#functions)
-  - [Variable scope](#variable-scope)
-  - [the source (.) command](#the-source--command)
-  - [integer or character sequence](#integer-or-character-sequence)
-  - [get directory of a script you're running](#get-directory-of-a-script-youre-running)
+- [Resources](#resources)
+- [Interactive use](#interactive-use)
   - [History](#history)
-    - [Search history using Ctrl+R](#search-history-using-ctrlr)
-    - [Repeat previous command](#repeat-previous-command)
-    - [Execute a specific command](#execute-a-specific-command)
-  - [Bash Invocation](#bash-invocation)
-    - [an prompt cannot be changed issue](#an-prompt-cannot-be-changed-issue)
-  - [Multiple commands on a single line](#multiple-commands-on-a-single-line)
-  - [Here documents](#here-documents)
-  - [read user input](#read-user-input)
-  - [expr](#expr)
-  - [printf](#printf)
-  - [set](#set)
-  - [shift](#shift)
-  - [Generate random numbers](#generate-random-numbers)
-  - [Debugging scripts](#debugging-scripts)
-  - [read lines of a file](#read-lines-of-a-file)
-  - [vi editing mode](#vi-editing-mode)
+  - [VI Mode](#vi-mode)
+    - [Insert mode](#insert-mode)
+    - [Command mode](#command-mode)
+- [Bash Invocation](#bash-invocation)
+  - [Login vs. non-login](#login-vs-non-login)
+  - [Interactive vs. non-interactive](#interactive-vs-non-interactive)
+  - [Startup files](#startup-files)
+  - [A prompt-unchangeable issue](#a-prompt-unchangeable-issue)
+- [Variables](#variables)
+- [Command substitution](#command-substitution)
+- [brace expansion](#brace-expansion)
+- [Strings](#strings)
+- [`if` statement](#if-statement)
+- [Command line arguments](#command-line-arguments)
+- [Conditional](#conditional)
+- [`[` vs `[[`](#vs)
+- [Arithmetic](#arithmetic)
+- [Array](#array)
+- [Looping](#looping)
+- [`case` statements](#case-statements)
+- [Functions](#functions)
+- [Variable scope](#variable-scope)
+- [the source (.) command](#the-source--command)
+- [integer or character sequence](#integer-or-character-sequence)
+- [get directory of a script you're running](#get-directory-of-a-script-youre-running)
+- [Multiple commands on a single line](#multiple-commands-on-a-single-line)
+- [Here documents](#here-documents)
+- [read user input](#read-user-input)
+- [expr](#expr)
+- [printf](#printf)
+- [set](#set)
+- [shift](#shift)
+- [Generate random numbers](#generate-random-numbers)
+- [Debugging](#debugging)
+- [read lines of a file](#read-lines-of-a-file)
 
-## Preface
+## Resources
 
-This is a bash cheatsheat for quick reference. Code get from [Bash by example][bash by example] on IBM DeveloperWorks by Daniel Robbins.
+- [Bash by example][bash by example] on IBM DeveloperWorks by Daniel Robbins
+- [The Art of Command Line][the-art-of-command-line]
+- [15 Examples To Master Linux Command Line History][15-examples-to-master-linux-command-line-history]
+
+
+## Interactive use
+
+The interactive line editing is handled by the readline library, see `man readline` for editing shortcuts.
+
+### History
+
+- Search history: `Ctrl-R`
+- Repeat previous command
+    - the Up key
+    - `Ctrl-P`
+    - `!!`
+    - `!-1`
+
+- Execute a specific command
+    ```sh
+    # find the number of the command
+    $ history | grep echo
+        1437  echo $VISUAL
+        1438  echo $EDITOR
+        1439  echo $GIT_EDITOR
+        2013  echo 'hello world'
+        2014  echo 'hi'
+        2016  echo 'hi'
+        2020  history | grep echo
+
+    # execute the specific command
+    $ !2013
+    echo 'hello world'
+    hello world
+    ```
+
+### VI Mode
+
+Run `set -o vi` to change to VI mode
+
+#### Insert mode
+
+- `C-W` delete word backward
+- `C-[` switch to command mode
+
+#### Command mode
+
+- `-`, `k` previous history
+- `+`, `j` next history
+- `C-K` kill line
+- `/`, `?` search history
+- `n`, `N` next/previous search result
+- `#`  comment out current command and keep it in the history
+
+## Bash Invocation
+
+### Login vs. non-login
+
+Typically, you are using a non-login shell, unless
+
+- logged in from a tty, not thru a GUI;
+- logged in remotely, such as thru ssh;
+
+
+A login shell is one whose first character of first argument is a `-`, or one started with the `--login` option, you can test whether your current shell is a login shell or not:
+
+```sh
+prompt> echo $0
+-bash               # "-" is the first character. Therefore, this is a login shell.
+
+prompt> echo $0
+bash                # a non-login shell.
+```
+
+### Interactive vs. non-interactive
+
+An interactive shell is:
+- Started without non-option arguments and without the `-c` option whose standard input and error are both connected to terminals (as determined by `isatty(3)`);
+- Or one started with the `-i` option;
+- `PS1` is set, and `$-` includes `i` if bash is interactive, allowing a shell script or a startup file to test this state;
+
+### Startup files
+
+Ref: [Zsh/Bash startup files loading order (.bashrc, .zshrc etc.)](https://shreevatsa.wordpress.com/2008/03/30/zshbash-startup-files-loading-order-bashrc-zshrc-etc/)
+
+```
++----------------+-----------+-----------+------+
+|                |Interactive|Interactive|Script|
+|                |login      |non-login  |      |
++----------------+-----------+-----------+------+
+|/etc/profile    |   A       |           |      |
++----------------+-----------+-----------+------+
+|/etc/bash.bashrc|           |    A      |      |
++----------------+-----------+-----------+------+
+|~/.bashrc       |           |    B      |      |
++----------------+-----------+-----------+------+
+|~/.bash_profile |   B1      |           |      |
++----------------+-----------+-----------+------+
+|~/.bash_login   |   B2      |           |      |
++----------------+-----------+-----------+------+
+|~/.profile      |   B3      |           |      |
++----------------+-----------+-----------+------+
+|BASH_ENV        |           |           |  A   |
++----------------+-----------+-----------+------+
+|                |           |           |      |
++----------------+-----------+-----------+------+
+|                |           |           |      |
++----------------+-----------+-----------+------+
+|~/.bash_logout  |    C      |           |      |
++----------------+-----------+-----------+------+
+```
+
+Login shell (both interactive or not):
+
+1. read `/etc/profile` (if exists);
+2. read first readable: `~/.bash_profile`, `~/.bash_login`, `~/.profile`;
+3. ...
+4. when exits, exec `~/.bash_loggout` (if exists)
+
+Interactive non-login shell:
+
+1. read both `/etc/bash.bashrc`, `~/.bashrc` (if exist)
+
+General rule:
+
+- For bash, put stuff in `~/.bashrc`, and make `~/.bash_profile` source it.
+
+### A prompt-unchangeable issue
+
+    2016-02-09: a `PS1` prompt problem: it cannot be changed, `PS1` settings in ~/.bashrc got no effect, set `PS1` in command line cannot change it, but it got git branchs in it
+    finally found the reason: `/etc/bash_completion.d/git-prompt`, which sourced `/usr/lib/git-core/git-sh-prompt`
 
 ## Variables
 
@@ -555,111 +687,6 @@ ref: http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-direct
 
     DIR=$( cd "$( dirname "$0" )" && pwd )
 
-## History
-
-ref: [15 Examples To Master Linux Command Line History][15-examples-to-master-linux-command-line-history]
-
-### Search history using Ctrl+R
-
-    # press Ctrl+R, enter the keyword you want to search
-    (reverse-i-search)`yes': date -d 'yesterday'
-
-    # press Tab (or Left/Right) to edit the command, then Enter to execute
-    $ date -d 'yesterday'
-    Sat Jun  1 10:15:23 CST 2013
-
-### Repeat previous command
-
-- the Up key
-- Ctrl+P
-- `!!`
-- `!-1`
-
-### Execute a specific command
-
-    # find the number of the command
-    $ history | grep echo
-     1437  echo $VISUAL
-     1438  echo $EDITOR
-     1439  echo $GIT_EDITOR
-     2013  echo 'hello world'
-     2014  echo 'hi'
-     2016  echo 'hi'
-     2020  history | grep echo
-
-    # execute the specific command
-    $ !2013
-    echo 'hello world'
-    hello world
-
-## Bash Invocation
-
-login shell (both interactive or not):
-
-    1. read /etc/profile  (if exists)
-    2. read first readable: ~/.bash_profile, ~/.bash_login, ~/.profile
-    3. ...
-    4. when exits, exec ~/.bash_loggout (if exists)
-
-interactive non-login shell:
-
-    1. read both /etc/bash.bashrc, ~/.bashrc (if exist)
-
-ref: [Zsh/Bash startup files loading order (.bashrc, .zshrc etc.)](https://shreevatsa.wordpress.com/2008/03/30/zshbash-startup-files-loading-order-bashrc-zshrc-etc/)
-
-    +----------------+-----------+-----------+------+
-    |                |Interactive|Interactive|Script|
-    |                |login      |non-login  |      |
-    +----------------+-----------+-----------+------+
-    |/etc/profile    |   A       |           |      |
-    +----------------+-----------+-----------+------+
-    |/etc/bash.bashrc|           |    A      |      |
-    +----------------+-----------+-----------+------+
-    |~/.bashrc       |           |    B      |      |
-    +----------------+-----------+-----------+------+
-    |~/.bash_profile |   B1      |           |      |
-    +----------------+-----------+-----------+------+
-    |~/.bash_login   |   B2      |           |      |
-    +----------------+-----------+-----------+------+
-    |~/.profile      |   B3      |           |      |
-    +----------------+-----------+-----------+------+
-    |BASH_ENV        |           |           |  A   |
-    +----------------+-----------+-----------+------+
-    |                |           |           |      |
-    +----------------+-----------+-----------+------+
-    |                |           |           |      |
-    +----------------+-----------+-----------+------+
-    |~/.bash_logout  |    C      |           |      |
-    +----------------+-----------+-----------+------+
-
-General rule:
-
-- For bash, put stuff in `~/.bashrc`, and make `~/.bash_profile` source it.
-
-Typically, most users will only encounter a login shell ony if
-
-- they logged in from a tty, not thru a GUI;
-- they logged in remotely, such as thru ssh;
-
-test whether current shell is a login shell or not:
-
-    prompt> echo $0
-    -bash # "-" is the first character. Therefore, this is a login shell.
-
-    prompt> echo $0
-    bash # "-" is NOT the first character. This is NOT a login shell.
-
-A login shell is one whose first character of argument zero is a `-`, or one started with the `--login` option.
-
-An interactive shell is one started without non-option arguments and without the `-c` option whose standard input and error are both connected to terminals (as determined by `isatty(3)`), or one started with the `-i` option. `PS1` is set and `$-` includes `i` if bash is interactive, allowing a shell script or a startup file to test this state.
-
-on Ubuntu 14.04, the `Terminal` program starts as login shell, `Terminator` starts as non-login shell
-
-### an prompt cannot be changed issue
-
-    2016-02-09: a `PS1` prompt problem: it cannot be changed, `PS1` settings in ~/.bashrc got no effect, set `PS1` in command line cannot change it, but it got git branchs in it
-    finally found the reason: `/etc/bash_completion.d/git-prompt`, which sourced `/usr/lib/git-core/git-sh-prompt`
-
 ## Multiple commands on a single line
 
 all three commands will execute even some fails
@@ -783,52 +810,60 @@ shift paramters off the left, can be used to scan parameters
     $ echo $RANDOM
     21661
 
-## Debugging scripts
+## Debugging
 
-Checks for syntax errors only; doesn’t execute commands
+Some useful options for debugging:
 
-    set -o noexec
-    set -n
+```sh
+# Checks for syntax errors only; doesn’t execute commands
+set -n          # same as:  set -o noexec
 
-Echoes commands before running them
+# Echoes commands before running them
+set -v          # same as: set -o verbose
 
-    set -o verbose
-    set -v
+# Echoes commands after processing on the command line
+set -x          # same as: set -o xtrace
 
-Echoes commands after processing on the command line
+# Gives an error message when an undefined variable is used
+set -u          # same as: set -o nounset
 
-    set -o xtrace
-    set -x
+# Abort on errors, otherwise the script would continue
+set -e
 
-Gives an error message when an undefined variable is used
+set -o pipefail     # abort on errors within pipes
+```
 
-    set -o nounset
-    set -u
+It's a good practice to start a script like this, which will detect undefined variables, abort on errors and print a message:
 
-set debugging flag around problem section in a script:
+```sh
+set -euo pipefail
+trap "echo 'error: Script failed: see failed command above'" ERR
+```
 
-    #!/bin/bash
+Example:
 
-    set -x          # start debugging
-    foo='bar'
-    echo $foo
+```sh
+#!/bin/bash
+set -euo pipefail
+trap "echo 'error: Script failed: see failed command above'" ERR
 
-    echo $bar
-    set +x          # end debugging
+set -x          # start debugging
+foo='bar'
+echo $foo
 
-    exit 0
+echo $bar
+set +x          # end debugging
+
+exit 0
+```
 
 ## read lines of a file
 
     $ while read -r line; do echo $line; done < my_file.txt
 
-## vi editing mode
-
-    set -o vi		# change to vi mode
-
-    #				# prepend # to the line and send it to the history list
 
 <a name="end"></a>
 
 [bash by example]: http://www.ibm.com/developerworks/linux/library/l-bash/index.html
 [15-examples-to-master-linux-command-line-history]: http://www.thegeekstuff.com/2008/08/15-examples-to-master-linux-command-line-history/
+[the-art-of-command-line]: (https://github.com/jlevy/the-art-of-command-line)
