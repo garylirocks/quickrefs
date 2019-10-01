@@ -252,7 +252,7 @@ server {
 ```
 
 - Redirect `domain1.com` to `domain2.com`;
-- Use `redirect` for temporary (301) redirect; `permanent` for 302 redirect;
+- Use `redirect` for temporary (302) redirect; `permanent` for 301 redirect;
 
 #### `rewrite` vs. `return`
 
@@ -442,3 +442,8 @@ location / {
 ## Trivias
 
 - For a request `/path`, if `path` points to a directory, NGINX does a 301 redirect to `/path/` by default;
+
+  Two related directives to this:
+
+  - `absolute_redirect` controls whether absolute or relative path is used in the response headers;
+  - `server_name_in_redirect` if on, the primary server name (specified by the `server_name` directive) is used in the absolute redirect url, otherwise it uses the name from the `Host` request header, if this field is not present, then the IP address of the server is used (this may leak internal IP address, which is a security vulnerability CVE-2000-0649);
