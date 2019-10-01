@@ -21,7 +21,7 @@
     - [Remove volumes](#remove-volumes)
     - [`-v`, `--mount` and volume driver](#v---mount-and-volume-driver)
   - [Bind mounts](#bind-mounts)
-    - [Commands](#commands)
+    - [Commands](#commands-1)
   - [`tmpfs`](#tmpfs)
   - [Usage](#usage)
 - [Network](#network)
@@ -601,6 +601,7 @@ docker network inspect overlay0
   - allows communication among all Docker Daemons in a Swarm;
   - it is a 'swarm' scope driver: it extends itself to all daemons in the swarm (building on workers if needed);
   - allows multiple services in the swarm communicate to each other (regardless of origination or destination);
+  - **all the containers on all the nodes in the swarm get an ip of this overlay network, they can connect to each other**;
 
 - ingress
 
@@ -679,7 +680,7 @@ docker-compose up -p myproject
 #### `volumes`
 
 ```yaml
-version: "2"
+version: '2'
 
 services:
   app:
@@ -711,7 +712,7 @@ see here: ["docker-compose up" not rebuilding container that has an underlying u
 
 ```yaml
 db:
-  image: "postgres:${POSTGRES_VERSION}"
+  image: 'postgres:${POSTGRES_VERSION}'
 ```
 
 `${POSTGRES_VERSION}` get its value from shell environment
@@ -727,18 +728,18 @@ By default:
   ```yaml
   # /path/to/myapp/docker-compose.yml
 
-  version: "3"
+  version: '3'
   services:
     web:
       build: .
       ports:
-        - "8000:8000"
+        - '8000:8000'
       links:
-        - "db:database"
+        - 'db:database'
     db:
       image: mysql
       ports:
-        - "8001:3061"
+        - '8001:3061'
   ```
 
   - The network will be called `myapp_default`;
@@ -749,7 +750,7 @@ By default:
 #### Custom networks
 
 ```yaml
-version: "3"
+version: '3'
 services:
   proxy:
     build: ./proxy
@@ -773,8 +774,8 @@ networks:
     # Use a custom driver which takes special options
     driver: custom-driver-2
     driver_opts:
-      foo: "1"
-      bar: "2"
+      foo: '1'
+      bar: '2'
 ```
 
 - Define custom networks by top-level `networks` directive;
@@ -789,7 +790,7 @@ for the following example:
 
 ```yaml
 # /path/to/MyProject/docker-compose.yml
-version: "2"
+version: '2'
 
 services:
   app:
@@ -874,7 +875,7 @@ docker swarm leave
 ### Swarm on a single node
 
 ```yaml
-version: "3"
+version: '3'
 services:
   web:
     image: garylirocks/get-started:part2
@@ -882,12 +883,12 @@ services:
       replicas: 3 # run 3 instance
       resources:
         limits:
-          cpus: "0.1"
+          cpus: '0.1'
           memory: 50M
       restart_policy:
         condition: on-failure
     ports:
-      - "4000:80"
+      - '4000:80'
     networks:
       - webnet
 networks:
@@ -1005,7 +1006,7 @@ Add `visualizer` and `redis` service to the stack,
 - `redis` need data persistence, we put it on the manager node, and add volume mapping as well;
 
 ```yml
-version: "3"
+version: '3'
 services:
   web:
     # replace username/repo:tag with your name and image details
@@ -1016,19 +1017,19 @@ services:
         condition: on-failure
       resources:
         limits:
-          cpus: "0.1"
+          cpus: '0.1'
           memory: 50M
     ports:
-      - "80:80"
+      - '80:80'
     networks:
       - webnet
 
   visualizer:
     image: dockersamples/visualizer:stable
     ports:
-      - "8080:8080"
+      - '8080:8080'
     volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock"
+      - '/var/run/docker.sock:/var/run/docker.sock'
     deploy:
       placement:
         constraints: [node.role == manager]
@@ -1038,9 +1039,9 @@ services:
   redis:
     image: redis
     ports:
-      - "6379:6379"
+      - '6379:6379'
     volumes:
-      - "/home/docker/data:/data"
+      - '/home/docker/data:/data'
     deploy:
       placement:
         constraints: [node.role == manager]
@@ -1162,7 +1163,7 @@ docker config rm site.conf
 - short syntax
 
   ```yml
-  version: "3.3"
+  version: '3.3'
   services:
   redis:
     image: redis:latest
@@ -1307,7 +1308,7 @@ docker secret rm mysql_password
 ### Example compose file
 
 ```yaml
-version: "3.1"
+version: '3.1'
 
 services:
   db:
@@ -1328,7 +1329,7 @@ services:
       - db
     image: wordpress:latest
     ports:
-      - "8000:80"
+      - '8000:80'
     environment:
       WORDPRESS_DB_HOST: db:3306
       WORDPRESS_DB_USER: wordpress
