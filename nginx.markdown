@@ -20,6 +20,7 @@
   - [Forcing all request to use SSL/TLS](#forcing-all-request-to-use-ssltls)
   - [Enabling pretty permalinks for Wordpress](#enabling-pretty-permalinks-for-wordpress)
   - [Load balancing](#load-balancing)
+  - [Get real client ip](#get-real-client-ip)
   - [CORS rules](#cors-rules)
 - [Trivias](#trivias)
 
@@ -398,6 +399,15 @@ server {
         proxy_pass http://backend;
     }
 }
+```
+
+### Get real client ip
+
+When Nginx server is behind a load balancer or a proxy, it's not getting the real client ip address, you need to add some directives to enable it, see: http://nginx.org/en/docs/http/ngx_http_realip_module.html
+
+```nginx
+real_ip_header    X-Forwarded-For;
+set_real_ip_from  10.0.0.0/8;
 ```
 
 ### CORS rules
