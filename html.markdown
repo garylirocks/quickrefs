@@ -84,6 +84,7 @@ There are 3 ways to assign event handlers:
 ## History API
 
 - HTML5 supports history API;
-- You can manipulate the history by `pushState`, `replaceState`, and listen for `popstate` event;
-- `pushState(state: any, title: string, path?: string)`, this add a new entry to the history object, and attach a `state` object to it, you can update the `path` at the same time, which doesn't send a query to the server;
-- `popstate` happens when you use `back`, `forward`, `go`;
+- You can manipulate the history by `pushState` and `replaceState`
+  - `pushState(state: any, title: string, path?: string)`, this add a new entry to the history object, and attach a `state` object to it, you can update the `path` at the same time, which doesn't send a query to the server;
+- `popstate` event is triggered when you use `back`, `forward` or `go` method;
+- Hash change triggers both `hashchange` and `popstate` event;
