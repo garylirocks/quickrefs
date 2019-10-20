@@ -32,6 +32,7 @@
 - [Docker Compose](#docker-compose)
   - [`docker-compose.yml`](#docker-composeyml)
     - [`volumes`](#volumes)
+    - [`deploy`](#deploy)
     - [Variable substitution](#variable-substitution)
   - [Networking](#networking)
     - [Custom networks](#custom-networks)
@@ -666,16 +667,17 @@ docker-compose up -p myproject
 
 ### `docker-compose.yml`
 
-- `docker-compose` use this file to create containers;
+- `docker-compose up|run` use this file to create containers;
+- `docker stack deploy` use this file to deploy stacks to a swarm as well (the old way is to use `docker service create`, adding all options on the command line);
 - Options specified in the `Dockerfile`, such as `CMD`, `EXPOSE`, `VOLUME`, `ENV` are respected;
-- `docker stack deploy` use this file to deploy stacks to a swarm as well, the old way is to use `docker service create`, adding all options on the command line;
 - Network and volume definitions are analogous to `docker network create` and `docker volume create`;
-- Options ignored by `docker stack`:
+- Options for `docker-compose up|run` only:
 
-  - `build`: only pre-build images can be used;
+  - `build`: options applied at build time, if `image` is specified, it will be used as the name of the built image;
 
-- Options ignored by `docker-compose`:
-  - `deploy`
+- Options for `docker stack deploy` only:
+
+  - `deploy`: config the deployment and running of services;
 
 #### `volumes`
 
@@ -707,6 +709,17 @@ see here: ["docker-compose up" not rebuilding container that has an underlying u
 
 - after you update `package.json` on your local, and run `docker-compose up --build`, the underlying images do get updated, because Docker Compose is using an old anonymous volume for `/app/node_modules` from the old container, so the new package you installed is absent from the new container;
 - add a `--renew-anon-volumes` flag to `docker-compose up --build` will solve this issue;
+
+#### `deploy`
+
+- `restart_policy`
+  - `condition`
+    - `none` - never restart containers;
+    - `on-failure` - when container exited with error;
+    - `any` - always restart container, even when the host rebooted;
+  - `max_attempts`
+  - `delay`
+  - `window`
 
 #### Variable substitution
 
@@ -1348,9 +1361,9 @@ volumes: db_data:
 
 ## Tips / Best Practices
 
-- on Mac, you can talk to a container through port binding, but you may **NOT** be able to ping the container's IP address;
+- On Mac, you can talk to a container through port binding, but you may **NOT** be able to ping the container's IP address;
 
-- don't but `apt-get update` on a different line than `apt-get install`, the result of the `apt-get update` will get cached and won't run every time, the following is a good example of how this should be done:
+- Don't put `apt-get update` on a different line than `apt-get install`, the result of the `apt-get update` will get cached and won't run every time, the following is a good example of how this should be done:
 
   ```
   # From https://github.com/docker-library/golang
@@ -1363,7 +1376,7 @@ volumes: db_data:
       && rm -rf /var/lib/apt/lists/*
   ```
 
-- to utilize Docker's caching capability better, install dependencies first before copying over everything, this makes sure other changes don't trigger a rebuild (e.g. non `package.json` changes don't trigger node package downloads)
+- To utilize Docker's caching capability better, install dependencies first before copying over everything, this makes sure other changes don't trigger a rebuild (e.g. non `package.json` changes don't trigger node package downloads)
 
   ```
   COPY ./my-app/package.json /home/app/package.json   # copy over dependency config first
