@@ -329,6 +329,21 @@ ADD --chown=someuser:somegroup /foo /bar
 COPY --chown=someuser:somegroup /foo /bar
 ```
 
+Syntax:
+
+For either `<src>` or `<dest>`, if its a directory, add a trailings slash to avoid any confusion:
+
+```
+# copy a file to a folder
+copy package.json /app/
+
+# only copy the files in src/ to /var/www/, not src/ folder itself
+COPY src/ /var/www/
+
+# this will create /var/www/src/ folder in the image
+COPY src/ /var/www/src/
+```
+
 ### `.dockerignore`
 
 config what files and directories should be ignored when sending to the docker daemon and ignored by `ADD` and `COPY`
@@ -1087,7 +1102,7 @@ docker service ls
 - Added or removed from a service at any time, and services can share a config;
 - Config values can be **generic strings or binary content** (up to 500KB);
 - **Only available to swarm services**, not standalone containers;
-- Configs are managed by swarm managers, when a service been granted access to a config, the config is mounted as a file in the container. (`/<config-name>`), you can sed `uid`, `pid` and `mode` for a config;
+- Configs are managed by swarm managers, when a service been granted access to a config, the config is mounted as a file in the container. (`/<config-name>`), you can set `uid`, `pid` and `mode` for a config;
 
 ### Basic usage using `docker config` commands
 
@@ -1114,7 +1129,7 @@ docker config rm my-config
 
 ### Use for Nginx config
 
-You have already got tow secret files: `site.key`, `site.crt` and on config file `site.conf`:
+You have already got two secret files: `site.key`, `site.crt` and a config file `site.conf`:
 
 ```nginx
 server {
