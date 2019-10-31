@@ -218,9 +218,9 @@ server {
 
 - For `3xx` codes, specify a url for redirecting
 
-```
-return (301 | 302 | 303 | 307) url;
-```
+  ```
+  return (301 | 302 | 303 | 307) url;
+  ```
 
 - For other codes, you can optionally define a text which appears in the body of the response:
 
@@ -254,6 +254,26 @@ server {
 
 - Redirect `domain1.com` to `domain2.com`;
 - Use `redirect` for temporary (302) redirect; `permanent` for 301 redirect;
+
+Use rewrite for site maintenance:
+
+```
+location / {
+    return 503;
+}
+
+error_page 503 @maintenance;
+
+location @maintenance {
+    # NOTE: *the new url here is not a full url, and no `redirect` or `permanent` flag, so it's an internal redirection only*
+    # looks like if the replacement is a file, it will be used directly, NO further location matching is performed
+    # otherwise it will do further location matching
+    rewrite ^(.*)$ /503.html break;
+}
+```
+
+this will ensure every request gets a 503 response code, and the content of `503.html` is used.
+
 
 #### `rewrite` vs. `return`
 
