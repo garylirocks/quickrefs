@@ -7,6 +7,8 @@
     - [Capturing](#capturing)
   - [Passive Event Listeners](#passive-event-listeners)
 - [History API](#history-api)
+- [Web Performance](#web-performance)
+  - [JS loading best practices](#js-loading-best-practices)
 
 ## DOM Events
 
@@ -88,3 +90,34 @@ There are 3 ways to assign event handlers:
   - `pushState(state: any, title: string, path?: string)`, this add a new entry to the history object, and attach a `state` object to it, you can update the `path` at the same time, which doesn't send a query to the server;
 - `popstate` event is triggered when you use `back`, `forward` or `go` method;
 - Hash change triggers both `hashchange` and `popstate` event;
+
+## Web Performance
+
+[Google web performance tips on Youtube](https://www.youtube.com/playlist?list=PLNYkxOF6rcICVl6Vb-AFlw81bQLuv6a_P)
+
+### JS loading best practices
+
+In a HTML page, any referenced JS files need to be loaded, parsed and executed, by default, browsers load scripts synchronously during HTML parsing, so it blocks visible content rendering.
+
+Solutions:
+
+- Good:
+
+  Put most JS tags at the end of `<body>`, so they won't block visible content rendering, but browsers still tend to load them early;
+
+- Better:
+
+  - Set `async` attribute: allow async loading of the script, this means they are loaded at the same time of page rendering, once downloaded, the browser stop everthing else and execute the script;
+  - Set `defer` attribute: similar to `async` and does even more, indicating the script should be executed after the HTML is parsed, but before firing `DOMContentLoaded`;
+
+  But broswer still loads them concurrently with other resources, such as images;
+
+- Best:
+
+  Load script after the page is rendered:
+
+  ```js
+  $(window).on('load', function() {
+    $('body').append('<script src="script.js">');
+  });
+  ```
