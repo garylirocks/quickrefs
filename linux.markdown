@@ -1,10 +1,38 @@
 # Linux
 
+- [Shell](#shell)
+  - [Concepts](#concepts)
 - [Service management](#service-management)
   - [System V init](#system-v-init)
     - [Usage](#usage)
   - [systemd](#systemd)
-    - [Usage](#usage)
+    - [Usage](#usage-1)
+
+## Shell
+
+### Concepts
+
+[The TTY demystified](https://www.linusakesson.net/programming/tty/)
+
+- **Terminal** hardware, connects to a mainframe or large computer
+
+  - **TeleTypewriter** was the first kind of terminal, it's a typewriter that connects to a remote computer:
+
+    ![terminal](image/../images/linux_terminal.png)
+
+  - **Console** - used to mean a piece of furniture, in the computer world, a console is like:
+
+    ![console](image/../images/linux_console.png)
+
+- **Terminal Emulator (TTY)** emulates a terminal, in Linux, press `Ctrl+Alt+Fn` you'll be in one, type `w` command, you'll see it's run by a `tty` (`tty` comes from TeleTYpewriter);
+
+  ![tty-model](image/../images/linux_console_model.png)
+
+- **Pseudo-Terminal (PTY)** implemented as master/slave pairs (slave is called `pts`), used by GUI terminal and SSH;
+
+  ![pty-model](image/../images/linux_pty_model.png)
+
+- **Shell** a command line interpreter which is run on login, such as bash/zsh;
 
 ## Service management
 
@@ -36,7 +64,7 @@
   update-rc.d foobar disable
   ```
 
-- you can use the an init script directly or the `service` command to manage a service
+- you can use an init script directly or the `service` command to manage a service
 
   ```sh
   /etc/init.d/apache2 status
