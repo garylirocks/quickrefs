@@ -2,14 +2,18 @@
 
 General topics about Javascript and front-end develpoment.
 
-- [Data types in JS](#data-types-in-js)
+- [Data types](#data-types)
   - [Type casting and coercion](#type-casting-and-coercion)
   - [Truesy and falsey](#truesy-and-falsey)
+- [Operators](#operators)
 - [Objects](#objects)
+  - [Define an object](#define-an-object)
+  - [Property order](#property-order)
 - [Prototype](#prototype)
   - [Inheritance by Prototype](#inheritance-by-prototype)
 - [Javascript: The Good Parts](#javascript-the-good-parts)
 - [Functions](#functions)
+  - [Function expression vs. function statement](#function-expression-vs-function-statement)
   - [the `arguments` parameter](#the-arguments-parameter)
 - [The `this` keyword](#the-this-keyword)
 - [Closures](#closures)
@@ -18,6 +22,9 @@ General topics about Javascript and front-end develpoment.
   - [named groups](#named-groups)
 - [Style guide](#style-guide)
 - [Symbol](#symbol)
+  - [Main usages](#main-usages)
+  - [`Symbol.iterator`](#symboliterator)
+  - [`Symbol.toPrimitive`](#symboltoprimitive)
 - [Iterations](#iterations)
 - [Promise](#promise)
   - [Callback hell](#callback-hell)
@@ -51,33 +58,42 @@ General topics about Javascript and front-end develpoment.
   - [Bind a function multiple times](#bind-a-function-multiple-times)
 - [Reference](#reference)
 
-## Data types in JS
+## Data types
 
 - undefined
+  - if a variable is declared but not assigned, then its value is `undefined`;
+  - if you want to assign an empty value to a variable, it's better using `null`;
 - null
+  - a special value representing nothing;
+  - `typeof null` is `object`, this is an error in the language;
 - boolean
 - number
+  - special numeric values: `Infinity`, `-Infinity`, `NaN`;
+  - math operations are **safe**, you can do anthing: divide by zero, treat non-numeric strings as numbers, you may get `NaN`, but the script will not crash;
+- bigint
+  - can represent numbers out of the -2<sup>53</sup> and 2<sup>53</sup> range;
+  - define it by adding an `n` to the end of an integer literal: `const a = 1234567890123456789012345678901234567890n;`
 - string
 - object
-- symbol -> introduced in ES6
+- symbol
+  - introduced in ES6
 
-string and number got accompanying wrapper object (`String` and `Number`)
+Notes:
 
-please note:
-
+- string and number got accompanying wrapper object (`String` and `Number`)
 - **`String('abc')` is the same as `'abc'`, they are both of primitive string value**
 - **`String('abc')` is different from `new String('abc')`, the later is an object**
 
-example
+Example:
 
 ```javascript
-typeof 'abc'; // 'string'
-typeof String('abc'); // 'string'
-'abc' === String('abc'); // true
+typeof "abc"; // 'string'
+typeof String("abc"); // 'string'
+"abc" === String("abc"); // true
 
-s = new String('abc'); // [String: 'abc']
+s = new String("abc"); // [String: 'abc']
 typeof s; // 'object'
-s === 'abc'; // false
+s === "abc"; // false
 ```
 
 ### Type casting and coercion
@@ -94,43 +110,72 @@ parseInt("42", 10) -> 42;
 
 - falsey values:
 
-      	`false`, `null`, `undefined`, `''`, `0`, `NaN`
+  `false`, `null`, `undefined`, `''`, `0`, `NaN`
 
 - trusey values:
 
-      	`'0'`, `'false'`, `[]`, `{}`, ...
+  `'0'`, `'false'`, `[]`, `{}`, ...
+
+## Operators
+
+- `-` can be:
+  - unary, negate a number;
+  - binary, subtract one number from another;
+- `+` can be:
+  - unary, convert a value to number, same as `Number()`;
+  - binary, sums two number;
+  - binary, concatenate two strings;
+- `=` is an operator as well, it assigns a value to a variable and returns the value;
+- `,` is an operator dividing several expressions, the value of the last one is returned;
+-
 
 ## Objects
 
-- define object using object literal
+### Define an object
 
-```javascript
-var circle = {
-    radius: 2;
-};
-```
+- object literal
 
-- define object using Object constructor:
-
-```javascript
-var circle = new Object();
-circle.radius = 2;
-```
-
-- define objects using custom constructor:
-
-```javascript
-var Circle = function(radius) {
-  this.radius = radius;
-  this.area = function() {
-    return Math.PI * this.radius * this.radius;
+  ```javascript
+  var circle = {
+      radius: 2;
   };
-};
+  ```
 
-var circle = new Circle(2);
+- the `Object` constructor:
+
+  ```javascript
+  var circle = new Object();
+  circle.radius = 2;
+  ```
+
+- custom constructor:
+
+  ```javascript
+  var Circle = function(radius) {
+    this.radius = radius;
+    this.area = function() {
+      return Math.PI * this.radius * this.radius;
+    };
+  };
+
+  var circle = new Circle(2);
+  ```
+
+  - It's a good practice to capitalize the first letter of constructor name and always call it with `new`;
+  - **constructor function return `this` if no explicit `return`**
+
+### Property order
+
+```js
+a = { 64: "NZ", 1: "US", name: "gary", age: 20 };
+
+Object.keys(a);
+// ["1", "64", "name", "age"]
 ```
 
-**constructor function return `this` if no explicit `return`**
+Integer properties are ordered, others appear in creation order, so `1` comes before `64` when iterating through all the properties;
+
+_a property key can only be a string or a symbol_, when you use a number as property key, it's converted to a string;
 
 ## Prototype
 
@@ -139,11 +184,11 @@ function Dog(breed) {
   this.breed = breed;
 }
 
-var buddy = new Dog('golden Retriever');
+var buddy = new Dog("golden Retriever");
 
 // add a method to prototype of Dog
 Dog.prototype.bark = function() {
-  console.log('Woof');
+  console.log("Woof");
 };
 ```
 
@@ -157,7 +202,7 @@ function Gizmo(id) {
 }
 
 Gizmo.prototype.toString = function() {
-  return 'gizmo ' + this.id;
+  return "gizmo " + this.id;
 };
 var g = new Gizmo(1);
 ```
@@ -288,34 +333,35 @@ foo(let i=0; ...} {}
 - **`null` isn't anything**
 
   ```js
-  typeof null === 'object'; // null's type is 'object'
+  typeof null === "object"; // null's type is 'object'
   ```
 
 - **`undefined`: default value for uninitialized variables and parameters**
 
-      	always use `typeof x === 'undefined'` to check if a variable exists or not,
+  - Always use `typeof x === 'undefined'` to check if a variable exists or not;
+  - Comparison with `null`:
 
-  Comparison with `null`:
-
-  - `undefined` is a super global variable, you can override it: `let undefined = 'foo'`, while `null` is a keyword;
-  - `undeined` is of type `undefined`, `null` is of type `object`;
+    - `undefined` is a super global variable, you can override it: `let undefined = 'foo'`, while `null` is a keyword;
+    - `undeined` is of type `undefined`, `null` is of type `object`;
 
 * **`typeof`**
 
   ```js
   var a = [1, 2];
-  typeof a === 'object'; // typeof array returns 'object'
+  typeof a === "object"; // typeof array returns 'object'
   Array.isArray(a); // true, use this to check arrays
   ```
 
 * **`+`**
 
-        if both operands are numbers
-        then
-            add them
-        else
-            convert to string and concatenate
-        end
+  ```
+  if both operands are numbers
+  then
+      add them
+  else
+      convert to string and concatenate
+  end
+  ```
 
   ```js
   2 + '3' -> '23'
@@ -325,9 +371,9 @@ foo(let i=0; ...} {}
 
   `%` is a remainder operator, takes sign from the first operator, not a modulo operator, which takes sign from the second operator
 
-```js
--1 % 8 -> -1;
-```
+  ```js
+  -1 % 8 -> -1;
+  ```
 
 - **`&&`** , **`||`**
 
@@ -339,15 +385,20 @@ foo(let i=0; ...} {}
 
 ## Functions
 
+- A function is a value representing an "action";
+- `typeof` a function is `function`, but it's just a special type of `object`;
+
+### Function expression vs. function statement
+
 ```javascript
 // function expression
 var foo = function() {};
 
-// function statement
+// function statement/declaration
 function foo() {}
 
 // function statement is a short-hand for var statement, which will expand to:
-var foo = undefined;
+var foo;
 foo = function() {};
 ```
 
@@ -361,15 +412,18 @@ console.log(typeof expressionFoo); // undefined
 expressionFoo(); // NOTE throws an error, expressionFoo is still undefined here
 
 function statementFoo() {
-  console.log('an statement function');
+  console.log("an statement function");
 }
 
 var expressionFoo = function() {
-  console.log('an expression function');
+  console.log("an expression function");
 };
 ```
 
-**don't put function statement in a block, such as `if` block, since the function name will also be hoisted**
+If a function statement/declaration is inside a code block (e.g. `if` block):
+
+- in unstrict mode, the function name is hoisted, it's visible outside of the code block, but it's value would be empty until the declaration runs;
+- in strict mode, the function is block-scoped, it's only visible inside the block;
 
 ### the `arguments` parameter
 
@@ -403,89 +457,108 @@ console.log(sum(1, 2, 3, 4));
 
 ## The `this` keyword
 
-every function receives an implicit `this` parameter, which is bound at invocation time
+Every function receives an implicit `this` parameter, which is bound at invocation time
 
-four ways to call a function:
+Four ways to call a function:
 
 - Function form
+
+  ```javascript
+  foo(arguments);
+  ```
 
   - `this` binds to the global object, which cause problems
   - in ES5/Strict, `this` binds to `undefined`
   - outer `this` is not accessible from inner functions, use `var that = this;` to pass it
 
-```javascript
-functionObject(arguments);
-```
+* Method form
 
-- Method form
+  ```javascript
+  thisObject.methodName(arguments);
+  thisObject["methodName"](arguments);
+  ```
 
-`this` binds to `thisObject`
+  `this` binds to `thisObject`
 
-```javascript
-thisObject.methodName(arguments);
-thisObject['methodName'](arguments);
-```
+  **CAUTION** if you assign the method to a variable and call it, it doesn't have access to `this`
+
+  ```js
+  const a = {
+    name: "gary",
+    sayHi() {
+      console.log("Hi " + this.name);
+    }
+  };
+  // {name: "gary", sayHi: ƒ}
+  a.sayHi();
+  // Hi gary
+
+  const foo = a.sayHi;
+  foo(); // `this` is undefined in foo
+  ```
+
+  So, although `foo === a.sayHi`, but `a.sayHi()` has `a` as `this`, `foo()` doesn't, see https://javascript.info/object-methods#internals-reference-type
 
 - Constructor form
 
-a new object is created and assigned to `this`, if not an explicit return value, then `this` will be returned
+  ```javascript
+  new Foo(arguments);
+  ```
 
-```javascript
-new FunctionObject(arguments);
-```
+  a new object is created and assigned to `this`, if not an explicit return value, then `this` will be returned
 
-- Apply form
+* Apply form
 
-explicitly bind an object to 'this'
+  ```javascript
+  foo.apply(thisObject, arguements);
+  foo.call(thisObject, arg1, arg2, ...);
+  ```
 
-```javascript
-functionObject.apply(thisObject, arguements);
-functionObject.call(thisObject, arg1, arg2, ...);
-```
+  explicitly bind an object to 'this'
 
 - `this` scope example
 
-```javascript
-var person = {
-  name: 'Gary',
-  hobbies: ['tennis', 'badminton', 'hiking'],
+  ```javascript
+  var person = {
+    name: "Gary",
+    hobbies: ["tennis", "badminton", "hiking"],
 
-  // 'this' scope error, will be undefined
-  print: function() {
-    console.log("// Wrong, 'this' will be undefined.");
-    this.hobbies.forEach(function(hobby) {
-      console.log(this.name + ' likes ' + hobby);
-    });
-  },
+    print: function() {
+      // when run person.print(), `this` is person here
+      this.hobbies.forEach(function(hobby) {
+        // but 'this' is undefined here
+        console.log(this.name + " likes " + hobby);
+      });
+    },
 
-  // use '_this' to pass the correct context this in
-  print2: function() {
-    var _this = this;
-    console.log("// use '_this' to pass the correct context this in");
-    this.hobbies.forEach(function(hobby) {
-      console.log(_this.name + ' likes ' + hobby);
-    });
-  },
+    // use '_this' to pass the correct context this in
+    print2: function() {
+      var _this = this;
+      console.log("// use '_this' to pass the correct context this in");
+      this.hobbies.forEach(function(hobby) {
+        console.log(_this.name + " likes " + hobby);
+      });
+    },
 
-  // use 'bind' to get the correct this
-  print3: function() {
-    console.log("// use 'bind' to get the correct this");
-    this.hobbies.forEach(
-      function(hobby) {
-        console.log(this.name + ' likes ' + hobby);
-      }.bind(this)
-    );
-  },
+    // use 'bind' to get the correct this
+    print3: function() {
+      console.log("// use 'bind' to get the correct this");
+      this.hobbies.forEach(
+        function(hobby) {
+          console.log(this.name + " likes " + hobby);
+        }.bind(this)
+      );
+    },
 
-  // use arrow function syntax, this is the recommended way
-  print4: function() {
-    console.log('// use arrow function syntax');
-    this.hobbies.forEach(hobby => {
-      console.log(this.name + ' likes ' + hobby);
-    });
-  }
-};
-```
+    // recommended way: use arrow function, which uses `this` from the outer context
+    print4: function() {
+      console.log("// use arrow function syntax");
+      this.hobbies.forEach(hobby => {
+        console.log(this.name + " likes " + hobby);
+      });
+    }
+  };
+  ```
 
 ## Closures
 
@@ -496,16 +569,16 @@ Think of a closure as a backpack, it is attached to the function, when a functio
 ```javascript
 var digit_name = (function() {
   var names = [
-    'zero',
-    'one',
-    'two',
-    'three',
-    'four',
-    'five',
-    'six',
-    'seven',
-    'eight',
-    'nine'
+    "zero",
+    "one",
+    "two",
+    "three",
+    "four",
+    "five",
+    "six",
+    "seven",
+    "eight",
+    "nine"
   ];
   return function(n) {
     return names[n];
@@ -522,7 +595,7 @@ console.log(digit_name(2));
 const arr = [10, 12, 15, 21];
 for (var i = 0; i < arr.length; i++) {
   setTimeout(function() {
-    console.log('Index: ' + i + ', element: ' + arr[i]);
+    console.log("Index: " + i + ", element: " + arr[i]);
   }, 300);
 }
 ```
@@ -544,7 +617,7 @@ for (var i = 0; i < arr.length; i++) {
   setTimeout(
     (function(i) {
       return function() {
-        console.log('The index of this number is: ' + i);
+        console.log("The index of this number is: " + i);
       };
     })(i),
     300
@@ -557,11 +630,11 @@ or use `let`, it creates a new block binding for each iteration (**this is becau
 ```javascript
 const arr = [10, 12, 15, 21];
 for (let i = 0; i < arr.length; i++) {
-  // using the ES6 let syntax, it creates a new binding
-  // every single time the function is called
+  // using let, it creates a new binding
+  // every single time the function is created
   // read more here: http://exploringjs.com/es6/ch_variables.html#sec_let-const-loop-heads
   setTimeout(function() {
-    console.log('The index of this number is: ' + i);
+    console.log("The index of this number is: " + i);
   }, 300);
 }
 ```
@@ -601,7 +674,7 @@ test();
 _ES 2018_
 
 ```js
-const date = '2018-05-16';
+const date = "2018-05-16";
 const re = /(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})/u;
 const result = re.exec(date);
 console.log(result);
@@ -623,9 +696,9 @@ back reference named groups in a regular expression
 const re = /(?<fruit>apple|orange) == \k<fruit>/u;
 
 console.log(
-  re.test('apple == apple'), // true
-  re.test('orange == orange'), // true
-  re.test('apple == orange') // false
+  re.test("apple == apple"), // true
+  re.test("orange == orange"), // true
+  re.test("apple == orange") // false
 );
 ```
 
@@ -634,7 +707,7 @@ use named groups in string repalcing
 ```js
 const re = /(?<firstName>[a-zA-Z]+) (?<lastName>[a-zA-Z]+)/u;
 
-console.log('Arya Stark'.replace(re, '$<lastName>, $<firstName>')); // Stark, Arya
+console.log("Arya Stark".replace(re, "$<lastName>, $<firstName>")); // Stark, Arya
 ```
 
 ## Style guide
@@ -645,150 +718,183 @@ please refer to the specific note on JS Coding Styles
 
 ref: [ES6 Symbols in Depth](https://ponyfoo.com/articles/es6-symbols-in-depth#the-runtime-wide-symbol-registry)
 
-Symbol is a new primitive value type in ES6
+Symbol is a new primitive value type in ES6, there are three different flavors of symbols - each flavor is accessed in a different way:
 
-There are three different flavors of symbols - each flavor is accessed in a different way:
+1.  Local symbols
 
-1.  **local symbols**
-
-    you can obtain a reference to them directly;
-
-    create a local symbol:
+    Create a local symbol:
 
     ```js
-    let s = Symbol('a desc');
+    let s = Symbol("gary symbol");
+
+    console.log(s.description);
+    // 'gary symbol'
     ```
 
-    **you can NOT use `new Symbol()` to create a symbol value**
+    - 'gary symbol' is a description of the symbol, it's just for debugging purpose;
+    - **you can NOT use `new Symbol()` to create a symbol value**
+    - local symbols are **immutable** and **unique**
 
-    local symbols are **immutable** and **unique**
+      ```js
+      Symbol() === Symbol(); // false
+      ```
+
+2.  Global symbols
+
+    these symbols exist in a _global symbol registry_, you can get one by using `Symbol.for()` (create if absent):
 
     ```js
-    Symbol() === Symbol(); // false
+    let s = Symbol.for("Gary");
     ```
 
-    you can add a description when creating symbols, it's just for debugging purpose
+    - it's **idempotent**, which means for any given key, you will always get the exactly same symbol:
 
-    ```js
-    s = Symbol('gary symbol'); // Symbol(gary symbol)
-    ```
+      ```js
+      Symbol.for("Gary") === Symbol.for("Gary");
+      ```
 
-2.  **global registry symbols**
+    - get the key of a symbol:
 
-    you can place symbols to the global registry and access them across realms;
+      ```js
+      let key = Symbol.keyFor(s);
+      ```
 
-    create a global symbol by `Symbol.for(key)`:
+3.  "Well-known" symbols
 
-        	let s = Symbol.for('Gary');
+    - They exist across realms, but you can't create them and they're not on the global registry;
 
-    it's **idempotent**, which means for any given key, you will always get the exactly same symbol:
+    - These **actually are NOT well-known at all**, they are JS built-ins, and they are used to control parts of the language, they weren't exposed to user code before ES6;
 
-        	Symbol.for('Gary') === Symbol.for('Gary');
+    - Refer to this [MDN - Symbol](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Symbol) page to see a full list:
 
-    get the key of a symbol:
+      - `Symbol.hasInstance`
+      - `Symbol.isConcatSpreadable`
+      - `Symbol.iterator`
+      - `Symbol.match`
+      - `Symbol.prototype`
+      - `Symbol.replace`
+      - `Symbol.search`
+      - `Symbol.species`
+      - `Symbol.split`
+      - `Symbol.toPrimitive`
+      - `Symbol.toStringTag`
+      - `Symbol.unscopables`
 
-        	let key = Symbol.keyFor(s);
+### Main usages
 
-3) **"Well-known" symbols**
+1.  **As property keys**
 
-   they exist across realms, but you can't create them and they're not on the global registry;
-
-   **these actually are NOT well-known at all**, they are JS built-ins, and they are used to control parts of the language, they weren't exposed to user code before ES6.
-
-   refer to this [MDN - Symbol](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Symbol) page to see a full list:
-
-   - `Symbol.hasInstance`
-   - `Symbol.isConcatSpreadable`
-   - `Symbol.iterator`
-   - `Symbol.match`
-   - `Symbol.prototype`
-   - `Symbol.replace`
-   - `Symbol.search`
-   - `Symbol.species`
-   - `Symbol.split`
-   - `Symbol.toPrimitive`
-   - `Symbol.toStringTag`
-   - `Symbol.unscopables`
-
-   one of the most useful symbols is `Symbol.iterator`, which can be used to define the `@@iterator` method on an object, convert it to be `iterable`, it's just like implementing the `Iterable` interface in other languages
-
-
-    ```js
-    var foo = {
-        [Symbol.iterator]: () => ({
-            items: ['p', 'o', 'n', 'y', 'f', 'o', 'o'],
-            next: function next () {
-                return {
-                    done: this.items.length === 0,
-                    value: this.items.shift()
-                }
-            }
-        })
-    }
-
-    for (let p of foo) {
-        console.log(p)
-    }
-    // p
-    // o
-    // n
-    // y
-    // f
-    // o
-    // o
-    ```
-
-    see [this article][symbol-iterator-etc] for defining a custom search function on any object
-
-Main usages for symbols:
-
-1.  **as property keys**
-
-    as each symbol is unique, it can be used to avoid name clashes
+    as each symbol is unique, it can be used to avoid name clashes: if you do `obj[Symbol('id')] = 1;`, you are guaranteed it won't overwrite anything;
 
 2.  **Privacy ?**
 
-    symbol keys can not be accessed by `Object.keys`, `Object.getOwnPropertyNames`, `JSON.stringify`, and `for .. in` loops
+    symbol keys can not be accessed by `Object.keys`, `Object.getOwnPropertyNames`, `JSON.stringify`, and `for..in` loops
 
-        > let obj = {
-        	[Symbol('name')]: 1,
-        	[Symbol('name')]: 2,
-        	[Symbol.for('age')]: 10,
-        	color: 'red'
-        	}
+    ```js
+    let obj = {
+      [Symbol("name")]: 1,
+      [Symbol("name")]: 2,
+      [Symbol.for("age")]: 10,
+      color: "red"
+    };
 
-        > Object.keys(obj)
-        [ 'color' ]
+    Object.keys(obj);
+    // [ 'color' ]
 
-        > console.log(Object.getOwnPropertyNames(obj))
-        [ 'color' ]
+    console.log(Object.getOwnPropertyNames(obj));
+    // [ 'color' ]
 
-        > console.log(JSON.stringify(obj))
-        {"color":"red"}
+    console.log(JSON.stringify(obj));
+    // {"color":"red"}
 
-        > for (let key in obj) {
-        	console.log(key);
-        	}
-        color
-
+    for (let key in obj) {
+      console.log(key);
+    }
+    // color
+    ```
 
     but you can access them thru `Object.getOwnPropertySymbols`
 
-    	> console.log(Object.getOwnPropertySymbols(obj))
-    	[ Symbol(name), Symbol(name), Symbol(age) ]
+    ```js
+    console.log(Object.getOwnPropertySymbols(obj));
+    // [ Symbol(name), Symbol(name), Symbol(age) ]
+    ```
 
-3. **Defining Protocols**
+3.  **Defining Protocols**
 
-   just like there's `Symbol.iterator` which allows you to define how an object can be iterated
+    just like there's `Symbol.iterator` which allows you to define how an object can be iterated
+
+### `Symbol.iterator`
+
+One of the most useful symbols is `Symbol.iterator`, which can be used to define the `@@iterator` method on an object, convert it to be `iterable`, it's just like implementing the `Iterable` interface in other languages
+
+```js
+var foo = {
+  [Symbol.iterator]: () => ({
+    items: ["p", "o", "n", "y", "f", "o", "o"],
+    next: function next() {
+      return {
+        done: this.items.length === 0,
+        value: this.items.shift()
+      };
+    }
+  })
+};
+
+for (let p of foo) {
+  console.log(p);
+}
+// p
+// o
+// n
+// y
+// f
+// o
+// o
+```
+
+### `Symbol.toPrimitive`
+
+see https://javascript.info/object-toprimitive
+
+When an object is used in a context where a primitive value is expected, JS tries to:
+
+1. Call `obj[Symbol.toPrimitive](hint)`, if such method exists;
+2. Otherwise if hint is "string"
+   try `obj.toString()` and `obj.valueOf()`, whatever exists;
+3. Otherwise if hint is "number" or "default"
+   try `obj.valueOf()` and `obj.toString()`, whatever exists;
+
+```js
+const gary = {
+  name: "Gary",
+  age: 20,
+  [Symbol.toPrimitive](hint) {
+    console.log(hint);
+    return hint === "string" ? `{name: ${this.name}}` : this.age;
+  }
+};
+console.log(`${gary}`);
+// string
+// {name: Gary}
+
+console.log(gary + 30);
+// default
+// 50
+
+console.log(gary * 2);
+// number
+// 40
+```
 
 ## Iterations
 
 - `for..of` loop
 
 ```javascript
-'use strict';
+"use strict";
 
-let characters = ['Jon', 'Sansa', 'Arya', 'Tyrion', 'Cercei'];
+let characters = ["Jon", "Sansa", "Arya", "Tyrion", "Cercei"];
 
 for (let c of characters) {
   console.log(c);
@@ -814,12 +920,12 @@ for (let c in characters) {
 
 ```javascript
 let o = {
-  5e5: '$500K',
-  1e6: '$1M',
-  2e6: '$2M',
-  3e6: '$3M',
-  5e6: '$5M',
-  10e6: '$10M'
+  5e5: "$500K",
+  1e6: "$1M",
+  2e6: "$2M",
+  3e6: "$3M",
+  5e6: "$5M",
+  10e6: "$10M"
 };
 
 for (let [n, v] of Object.entries(o)) {
@@ -846,7 +952,7 @@ example
 
 ```javascript
 // NOTE you can define a custom iteration function for an object
-'use strict';
+"use strict";
 
 // a custom id maker that generates ids from 100 to 105
 let idMaker = {
@@ -901,18 +1007,18 @@ JS uses callbacks a lot, if not handled properly, it will lead to [Callback Hell
 [this page][callback-hell] explains what is callback hell and how to avoid it, by **giving callback functions a name, moving them to the top level of a file or a separate file**
 
 ```js
-var form = document.querySelector('form');
+var form = document.querySelector("form");
 
 form.onsubmit = function(submitEvent) {
-  var name = document.querySelector('input').value;
+  var name = document.querySelector("input").value;
   request(
     {
-      uri: 'http://example.com/upload',
+      uri: "http://example.com/upload",
       body: name,
-      method: 'POST'
+      method: "POST"
     },
     function(err, response, body) {
-      var statusMessage = document.querySelector('.status');
+      var statusMessage = document.querySelector(".status");
       if (err) return (statusMessage.value = err);
       statusMessage.value = body;
     }
@@ -926,19 +1032,19 @@ refactor the above code by moving the callback functions to a separate module
 module.exports.submit = formSubmit;
 
 function formSubmit(submitEvent) {
-  var name = document.querySelector('input').value;
+  var name = document.querySelector("input").value;
   request(
     {
-      uri: 'http://example.com/upload',
+      uri: "http://example.com/upload",
       body: name,
-      method: 'POST'
+      method: "POST"
     },
     postResponse
   );
 }
 
 function postResponse(err, response, body) {
-  var statusMessage = document.querySelector('.status');
+  var statusMessage = document.querySelector(".status");
   if (err) return (statusMessage.value = err);
   statusMessage.value = body;
 }
@@ -947,8 +1053,8 @@ function postResponse(err, response, body) {
 then import it in the main file
 
 ```js
-var formUploader = require('formuploader');
-document.querySelector('form').onsubmit = formUploader.submit;
+var formUploader = require("formuploader");
+document.querySelector("form").onsubmit = formUploader.submit;
 ```
 
 ### resolved vs. rejected
@@ -1035,13 +1141,11 @@ See the Pen <a href='https://codepen.io/garylirocks/pen/yKRzeM/'>async/await</a>
 
 [Concurrency model and Event Loop - JavaScript | MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop)
 
-* **Run-to-completion**: Each message in the loop is processed completely before any other message is processed;
-
+- **Run-to-completion**: Each message in the loop is processed completely before any other message is processed;
 
 ### `setTimout`
 
 The time argument for setTimout only indicates the **minimum** delay after which the message will be pushed into the queue, it only runs only when other messages before it have been cleared;
-
 
 ```js
 const s = new Date().getSeconds();
@@ -1051,8 +1155,8 @@ setTimeout(function() {
   console.log("Ran after " + (new Date().getSeconds() - s) + " seconds");
 }, 500);
 
-while(true) {
-  if(new Date().getSeconds() - s >= 2) {
+while (true) {
+  if (new Date().getSeconds() - s >= 2) {
     console.log("Good, looped for 2 seconds");
     break;
   }
@@ -1062,7 +1166,6 @@ while(true) {
 ### Multiple runtimes
 
 A _web worker_ or a cross-origin _iframe_ has its own stack, heap, and message queue. Two distinct runtimes can only communicate through sending messages via the `postMessage` method. This method adds a message to the other runtime if the latter listens to message events.
-
 
 ## Immutability
 
@@ -1076,14 +1179,14 @@ the `string` primitive type is immutable in JS, whenever you do any manipulation
 but the `String` object type _is mutable_
 
 ```js
-const s = new String('hello');
+const s = new String("hello");
 //undefined
 
 s;
 //[String: 'hello']
 
 // add a new property to a String object
-s.name = 'gary';
+s.name = "gary";
 s;
 // { [String: 'hello'] name: 'gary' }
 ```
@@ -1093,8 +1196,8 @@ s;
 two references are equal when they refer to the same value if this value is immutable:
 
 ```js
-var str1 = 'abc';
-var str2 = 'abc';
+var str1 = "abc";
+var str2 = "abc";
 str1 === str2; // true
 
 var n1 = 1;
@@ -1107,8 +1210,8 @@ n1 === n2; // also true
 but if the value is mutable, the two references are not equal:
 
 ```js
-var str1 = new String('abc');
-var str2 = new String('abc');
+var str1 = new String("abc");
+var str2 = new String("abc");
 str1 === str2; // false
 
 var arr1 = [];
@@ -1272,7 +1375,7 @@ You need to use your custom methods or something like `_.isEqual` from Lo-Dash t
 - Redux reducers
 
   ```js
-  import produce from 'immer';
+  import produce from "immer";
 
   const byId = produce(
     (draft, action) => {
@@ -1285,7 +1388,7 @@ You need to use your custom methods or something like `_.isEqual` from Lo-Dash t
       }
     },
     {
-      1: { id: 1, name: 'product-1' }
+      1: { id: 1, name: "product-1" }
     }
   );
   ```
@@ -1373,7 +1476,7 @@ module.exports = something;
 ```js
 // mod-a.js
 const person = {
-  name: 'gary',
+  name: "gary",
   age: 30
 };
 
@@ -1388,11 +1491,11 @@ export { b }; // another way
 
 ```js
 // main.js
-import theDefault from './mod-a';
-import * as all from './mod-a';
+import theDefault from "./mod-a";
+import * as all from "./mod-a";
 
-console.log('theDefault:', theDefault);
-console.log('all:', all);
+console.log("theDefault:", theDefault);
+console.log("all:", all);
 ```
 
 ```sh
@@ -1405,13 +1508,13 @@ all: [Module] { a: 20, b: 30, default: { name: 'gary', age: 30 } }
 - Or you can import everything on one line:
 
   ```js
-  import theDefault, { a as myA, b } from './mod-a';
+  import theDefault, { a as myA, b } from "./mod-a";
   ```
 
 - If you just want to trigger the side effect, do not actually import any binding:
 
   ```js
-  import './mod-a';
+  import "./mod-a";
   ```
 
 ## Error Handling
@@ -1421,10 +1524,10 @@ all: [Module] { a: 20, b: 30, default: { name: 'gary', age: 30 } }
 1. Common builtin Errors in JS
 
    ```js
-   a // ReferrenceError: not defined
-   @@  // SyntaxError: invalid or unexpected token
-   'a'.foo() // TypeError: not a function
-   Array(-2) // RangeError: bad arguments
+   a; // ReferrenceError: not defined
+   @@; // SyntaxError: invalid or unexpected token
+   "a".foo(); // TypeError: not a function
+   Array(-2); // RangeError: bad arguments
    ```
 
 2. You can create your own custom Error classes extending the builtin ones:
@@ -1433,7 +1536,7 @@ all: [Module] { a: 20, b: 30, default: { name: 'gary', age: 30 } }
    class MyError extends Error {
      consturctor(message) {
        super(message);
-       this.name = 'MyError';
+       this.name = "MyError";
      }
    }
    ```
@@ -1452,9 +1555,9 @@ all: [Module] { a: 20, b: 30, default: { name: 'gary', age: 30 } }
      foo.bar();
    } catch (e) {
      if (e instanceof EvalError) {
-       console.log(e.name + ': ' + e.message);
+       console.log(e.name + ": " + e.message);
      } else if (e instanceof RangeError) {
-       console.log(e.name + ': ' + e.message);
+       console.log(e.name + ": " + e.message);
      }
      // ... etc
    }
@@ -1465,12 +1568,12 @@ all: [Module] { a: 20, b: 30, default: { name: 'gary', age: 30 } }
    ```js
    try {
      setTimeout(() => {
-       console.log('in setTimeout');
-       throw new Error('throw in setTimeout'); // this error is not caught
+       console.log("in setTimeout");
+       throw new Error("throw in setTimeout"); // this error is not caught
      });
-     console.log('in try');
+     console.log("in try");
    } catch (e) {
-     console.log('in catch');
+     console.log("in catch");
    }
    ```
 
@@ -1481,19 +1584,19 @@ all: [Module] { a: 20, b: 30, default: { name: 'gary', age: 30 } }
    ```js
    function foo() {
      try {
-       throw new Error('xx');
+       throw new Error("xx");
        return 1;
      } catch (e) {
-       console.log('in catch');
+       console.log("in catch");
        throw e;
        return 2;
      } finally {
-       console.log('in finally');
+       console.log("in finally");
        return 3; // would throw an error if there is no 'return' here
      }
 
      return 100;
-     console.log('after try...catch');
+     console.log("after try...catch");
    }
 
    console.log(foo());
@@ -1583,7 +1686,7 @@ in the following code, the `updateLayout` function will only run after the `resi
 
 ```javascript
 // debounce the resize event
-$(window).on('resize', function() {
+$(window).on("resize", function() {
   clearTimeout(window.resizedFinished);
   window.resizedFinished = setTimeout(function() {
     updateLayout();
@@ -1622,15 +1725,15 @@ function foo(arg1) {
   console.log(arg1);
 }
 
-const fooBound = foo.bind({ name: 'gary' }); // this bound
-const fooBound2 = fooBound.bind({ name: 'jack' }, 'hello'); // 'hello' bound to arg1
-const fooBound3 = fooBound2.bind({}, 'hola'); // both {} and 'hola' are discarded
+const fooBound = foo.bind({ name: "gary" }); // this bound
+const fooBound2 = fooBound.bind({ name: "jack" }, "hello"); // 'hello' bound to arg1
+const fooBound3 = fooBound2.bind({}, "hola"); // both {} and 'hola' are discarded
 
-fooBound('bar');
+fooBound("bar");
 // {name: "gary"}
 // bar
 
-fooBound2('bar');
+fooBound2("bar");
 // {name: "gary"}
 // hello
 
@@ -1638,26 +1741,26 @@ fooBound3();
 // {name: "gary"}
 // hello
 
-console.log('foo.name: ' + foo.name + ', foo.length: ' + foo.length);
+console.log("foo.name: " + foo.name + ", foo.length: " + foo.length);
 // foo.name: foo, foo.length: 1
 
 console.log(
-  'fooBound.name: ' + fooBound.name + ', fooBound.length: ' + fooBound.length
+  "fooBound.name: " + fooBound.name + ", fooBound.length: " + fooBound.length
 );
 // fooBound.name: bound foo, fooBound.length: 1
 
 console.log(
-  'fooBound2.name: ' +
+  "fooBound2.name: " +
     fooBound2.name +
-    ', fooBound2.length: ' +
+    ", fooBound2.length: " +
     fooBound2.length
 );
 // fooBound2.name: bound bound foo, fooBound2.length: 0
 
 console.log(
-  'fooBound3.name: ' +
+  "fooBound3.name: " +
     fooBound3.name +
-    ', fooBound3.length: ' +
+    ", fooBound3.length: " +
     fooBound3.length
 );
 // fooBound3.name: bound bound bound foo, fooBound3.length: 0
