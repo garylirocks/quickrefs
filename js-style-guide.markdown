@@ -2,7 +2,6 @@ JS Style Guide
 ==============
 
 - [Refs](#refs)
-- [Variable declaration](#variable-declaration)
 - [Object](#object)
 - [Arrays](#arrays)
 - [Destructuring](#destructuring)
@@ -29,10 +28,6 @@ JS Style Guide
 * [Airbnb JavaScript Style Guide](https://github.com/airbnb/javascript/blob/master/README.md#airbnb-javascript-style-guide-)
 * [Google JavaScript Style Guide](https://google.github.io/styleguide/jsguide.html)
 * [Popular JS Coding Convention on GitHub](http://sideeffect.kr/popularconvention/#javascript)
-
-## Variable declaration
-
-always use `const` or `let`, **DO NOT** use `var`
 
 
 ## Object
@@ -431,6 +426,8 @@ const foo = function* () {
 
 ## Variables
 
+* always use `const` or `let`, **DO NOT** use `var`
+
 * use one `const` or `let` declaration per variable
 
 > easier to debug, easier when adding new variables
@@ -487,6 +484,15 @@ console.log(c); // throws ReferenceError
 
 // the same applies for `const`
 ```
+
+* use all capital letters and underscore to name a constant if it's a hard coded value, otherwise use camelCase:
+
+  ```javaScript
+  const MAX_LENGTH = 10;
+
+  const loadTime = /* a constant, but determined in run time */
+  ```
+
 
 ## Comparison Operators & Equality
 
