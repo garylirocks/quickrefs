@@ -453,6 +453,8 @@ google-chrome --js-flags='--max-old-space-size=200'
 
   `-scheme:chrome-extension`
 
+- In the console, use `Shift + Enter` to enter multiple lines of code;
+
 ## Limit memory/cpu usage using cgroups
 
 - [cgroups - ArchWiki](https://wiki.archlinux.org/index.php/cgroups)
