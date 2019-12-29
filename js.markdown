@@ -3,15 +3,26 @@
 General topics about Javascript and front-end develpoment.
 
 - [Data types](#data-types)
-  - [Type casting and coercion](#type-casting-and-coercion)
   - [Truesy and falsey](#truesy-and-falsey)
-- [Operators](#operators)
+  - [Type casting and coercion](#type-casting-and-coercion)
+  - [Wrapper objects](#wrapper-objects)
+  - [Operators](#operators)
+- [Numbers](#numbers)
+  - [`toString(base)` and `parseInt(str, base)`](#tostringbase-and-parseintstr-base)
+- [Strings](#strings)
+  - [Comparison](#comparison)
+  - [Surrogate pairs](#surrogate-pairs)
+  - [Diacritical marks and normalization](#diacritical-marks-and-normalization)
 - [Objects](#objects)
   - [Define an object](#define-an-object)
   - [Property order](#property-order)
 - [Prototype](#prototype)
   - [Inheritance by Prototype](#inheritance-by-prototype)
-- [Javascript: The Good Parts](#javascript-the-good-parts)
+- [Arrays](#arrays)
+  - [Methods](#methods)
+  - [`length`](#length)
+  - [Array-like](#array-like)
+  - [Initialize an array with a value range](#initialize-an-array-with-a-value-range)
 - [Functions](#functions)
   - [Function expression vs. function statement](#function-expression-vs-function-statement)
   - [the `arguments` parameter](#the-arguments-parameter)
@@ -20,7 +31,6 @@ General topics about Javascript and front-end develpoment.
   - [Temporal Dead Zone](#temporal-dead-zone)
 - [Regular Expression](#regular-expression)
   - [named groups](#named-groups)
-- [Style guide](#style-guide)
 - [Symbol](#symbol)
   - [Main usages](#main-usages)
   - [`Symbol.iterator`](#symboliterator)
@@ -52,10 +62,11 @@ General topics about Javascript and front-end develpoment.
   - [`try...catch...finally`](#trycatchfinally)
   - [Promise](#promise-1)
   - [async/await](#asyncawait)
+- [Javascript: The Good Parts](#javascript-the-good-parts)
 - [Tricks](#tricks)
   - [Deboucing an event](#deboucing-an-event)
-  - [Initialize an array with a value range](#initialize-an-array-with-a-value-range)
   - [Bind a function multiple times](#bind-a-function-multiple-times)
+  - [`Object.is()`](#objectis)
 - [Reference](#reference)
 
 ## Data types
@@ -78,11 +89,35 @@ General topics about Javascript and front-end develpoment.
 - symbol
   - introduced in ES6
 
-Notes:
+### Truesy and falsey
 
-- string and number got accompanying wrapper object (`String` and `Number`)
-- **`String('abc')` is the same as `'abc'`, they are both of primitive string value**
-- **`String('abc')` is different from `new String('abc')`, the later is an object**
+- falsey values:
+
+  `false`, `null`, `undefined`, `''`, `0`, `NaN`
+
+- trusey values:
+
+  `'0'`, `'false'`, `[]`, `{}`, ...
+
+### Type casting and coercion
+
+```javascript
++"42" -> 42;
+Number("42") -> 42;
+
+// always use a radix here
+parseInt("42", 10) -> 42;
+```
+
+### Wrapper objects
+
+see https://javascript.info/primitives-methods
+
+JS allows you to use some primitives as objects, such as in `'abc'.toUpperCase()`, JS creates wrapper objects internally to accomplish this;
+
+- Object wrappers: `String`, `Number`, `Boolean` and `Symbol`;
+- They can be used to convert a value to the corresponding type: `Number('2.5')`;
+- But **don't** use them as constructors;
 
 Example:
 
@@ -96,27 +131,7 @@ typeof s; // 'object'
 s === "abc"; // false
 ```
 
-### Type casting and coercion
-
-```javascript
-+"42" -> 42;
-Number("42") -> 42;
-
-// always use a radix here
-parseInt("42", 10) -> 42;
-```
-
-### Truesy and falsey
-
-- falsey values:
-
-  `false`, `null`, `undefined`, `''`, `0`, `NaN`
-
-- trusey values:
-
-  `'0'`, `'false'`, `[]`, `{}`, ...
-
-## Operators
+### Operators
 
 - `-` can be:
   - unary, negate a number;
@@ -127,7 +142,127 @@ parseInt("42", 10) -> 42;
   - binary, concatenate two strings;
 - `=` is an operator as well, it assigns a value to a variable and returns the value;
 - `,` is an operator dividing several expressions, the value of the last one is returned;
--
+
+## Numbers
+
+- JS uses double precision floating point numbers;
+- It's 64-bit, 52 bits for digits, 11 for the position of the decimal point, and 1 for the sign, can represent numbers between -2<sup>53</sup> and 2<sup>53</sup>;
+
+### `toString(base)` and `parseInt(str, base)`
+
+```js
+const n = 4;
+
+n.toString(2);
+// 100
+
+// opposite operation
+parseInt("100", 2);
+// 4
+```
+
+## Strings
+
+### Comparison
+
+use `str.localeCompare` to compare strings properly:
+
+```js
+"Zealand" > "Österreich";
+// false
+
+"Zealand".localeCompare("Österreich");
+// 1
+```
+
+### Surrogate pairs
+
+JS uses UTF-16 as internal format for strings, most frequently used characters have 2-byte codes, that covers 65536 symbols, some rare symbols are encoded with a pair of 2-byte characters called a _surrogate pair_;
+
+The first character of a surrogate pair has code in range `0xd800..0xdbff`, the second one must be in range `0xdc00..0xdfff`, these intervals are reserved for surrogate pairs, so they should always come in pairs, an individual one means nothing;
+
+Surrogate pairs didn't exist when JS was created, so they are not processed correctly sometimes:
+
+```js
+"a".length;
+// 1
+
+const s = "𩷶";
+
+// one symbol, but the length is 2
+s.length;
+// 2
+
+// `slice` doesn't work properly
+s.slice(0, 1);
+// '�'
+
+// #### `charCodeAt/fromCharCode` are not surrogate-pair aware, you can get each code in the pair
+s.charCodeAt(0).toString(16);
+// 'd867'
+s.charCodeAt(1).toString(16);
+// 'ddf6
+```
+
+The following functions work on surrogate pairs correctly:
+
+```js
+// #### the newer functions `codePointAt/fromCodePoint` are surrogate-pair aware
+s.codePointAt(0).toString(16);
+// '29df6'
+
+s.split(); // [ '𩷶' ]
+
+Array.from(s); // [ '𩷶' ]
+
+for (let char of s) {
+  console.log(char);
+}
+// 𩷶
+
+// #### get the correct length of a string
+Array.from(s).length; // 1
+```
+
+### Diacritical marks and normalization
+
+In Unicode, there are characters that decorate other characters, such as diacritical marks. For example, `\u0307` adds a 'dot above' the preceding character, `\u0323` means 'dot below'.
+
+```js
+"S\u0307";
+// 'Ṡ'
+
+"S\u0307\u0323";
+// 'Ṩ'
+```
+
+This causes a problem: a symbol with multiple decorations can be represented in different ways.
+
+```js
+const s1 = "S\u0307\u0323";
+const s2 = "S\u0323\u0307";
+
+// s1 and s2 looks the same 'Ṩ', but they are not equal
+s1 === s2; // false
+```
+
+There is a "unicode normalization" algorithm that brings each string to a single "normal" form.
+
+```js
+// #### 'Ṩ' has its own code \u1e68 in Unicode
+const normalizedS = "S\u0307\u0323".normalize();
+
+normalizedS.length; // 1
+normalizedS.codePointAt(0).toString(16); // '1e68'
+
+// #### 'Q̣̇' don't have its own code, normalization will put \u0323 before \u0307
+const normalizedQ = "Q\u0307\u0323";
+
+normalizedQ.length; // 3
+normalizedQ.codePointAt(0).toString(16); // '51'
+normalizedQ.codePointAt(1).toString(16); // '323'
+normalizedQ.codePointAt(2).toString(16); // '307'
+```
 
 ## Objects
 
@@ -260,128 +395,123 @@ another illustration created by myself:
 
 ![JS prototype system](./images/JavaScript.object.prototype.system.png)
 
-## Javascript: The Good Parts
+## Arrays
 
-- **`var`**
-
-```js
-var a = 0; //local to function scope
-b = 0; //global scope
-```
-
-the following statement:
-
-```js
-var a = (b = 0);
-```
-
-equals to:
-
-```js
-b = 0; // b becomes global !!!
-var a = b;
-```
-
-- **variable scope**
-
-javascript is **function scoped**, not block scoped, so:
-
-```js
-// declaration of variable i will be hoisted to the beggining of the function
-// so, it is available at any place inside foo, not just the for loop
-function foo() {
-    ...
-    for(var i=0; ...) {}
-    ...
-}
-```
-
-you should **put variable declaration in the begining of a function**:
-
-```js
-function foo() {
-    var i = 0;
-    ...
-    for(i=0; ...) {}
-    ...
-}
-```
-
-- **`let` statement**
-
-`let` statement respect block scoping, so the following code does what it seems to do:
-
-```js
-foo(let i=0; ...} {}
-```
-
-- **numbers**
-
-  - javascript only has one number type, which is 64bit double;
-  - `NaN` is a number;
-  - `NaN` is not equal to anything, including `NaN` itself;
-  - any arithmetic operation with `NaN` will result in `NaN`;
+- An array is a special kind of object, the syntax `arr[index]` is esentially the same as `obj[key]`;
+- JS engines do optimizations for arrays, but if you use an array as a regular object, those optimizations will be turned off, so don't do:
 
   ```js
-  0.1 + 0.2 !== 0.3; // this can cause problems when dealing with money
-  a + b + c === a + (b + c); // can be false, this is not a js specific problem
+  // add a non-numeric property
+  arr.test = 5;
 
-  Infinity + 1 === Infinity; // true
-  Number.MAX_VALUE + 1 === Number.MAX_VALUE; // true
+  // make holes
+  const arr2 = [];
+  arr2[100] = 100;
   ```
 
-- **`null` isn't anything**
+### Methods
+
+- `splice`
+
+  can be used to remove, insert, replace elements of an array
+  `arr.splice(index[, deleteCount, elem1, ..., elemN])`
 
   ```js
-  typeof null === "object"; // null's type is 'object'
+  a = ["Amy", "Gary", "Jack", "Zoe"];
+
+  // #### removing
+  a.splice(1, 1);
+  // [ 'Gary' ]
+  a;
+  // [ 'Amy', 'Jack', 'Zoe' ]
+
+  // #### replacing
+  a.splice(2, 1, "Zolo");
+  // [ 'Zoe' ]
+  a;
+  // [ 'Amy', 'Jack', 'Zolo' ]
+
+  // #### inserting
+  a.splice(2, 0, "Nick", "Peter");
+  // []
+  a;
+  // [ 'Amy', 'Jack', 'Nick', 'Peter', 'Zolo' ]
   ```
 
-- **`undefined`: default value for uninitialized variables and parameters**
+### `length`
 
-  - Always use `typeof x === 'undefined'` to check if a variable exists or not;
-  - Comparison with `null`:
-
-    - `undefined` is a super global variable, you can override it: `let undefined = 'foo'`, while `null` is a keyword;
-    - `undeined` is of type `undefined`, `null` is of type `object`;
-
-* **`typeof`**
+- `length` is not actually the count of values in the array, but the greatest numeric index plus one;
 
   ```js
-  var a = [1, 2];
-  typeof a === "object"; // typeof array returns 'object'
-  Array.isArray(a); // true, use this to check arrays
+  const a = [];
+  a[99] = "nighty nine"; // NOTE: we should not leave holes in an array like this
+
+  a.forEach(x => console.log(x));
+  // nighty nine
+
+  a.length;
+  // 100
   ```
 
-* **`+`**
-
-  ```
-  if both operands are numbers
-  then
-      add them
-  else
-      convert to string and concatenate
-  end
-  ```
+- `length` is writable, so you can clear an array by setting its `length` to 0
 
   ```js
-  2 + '3' -> '23'
+  const a = ["gary", "jack", "nick"];
+  a.length = 1;
+
+  a;
+  // [ 'gary' ]
+
+  a.length = 0;
+  a;
+  // []
   ```
 
-* **`%`**
+### Array-like
 
-  `%` is a remainder operator, takes sign from the first operator, not a modulo operator, which takes sign from the second operator
+If an object has indexed properties and `length` is an array-like object, such as strings and `arguments`;
 
-  ```js
-  -1 % 8 -> -1;
-  ```
+You can create one yourself, you can access it's property like an array `arrLike[0]`, but it doesn't have methods like `pop`, `push` etc;
 
-- **`&&`** , **`||`**
+```js
+// #### Create an array-like object
+const arr = {
+  0: "gary",
+  1: "jack",
+  length: 2
+};
 
-  **not necessarily return boolean values**, just return values of one operand
+const names = ["amy"];
 
-- **`!!`**
+names.concat(arr);
+// [ 'amy', { '0': 'gary', '1': 'jack', length: 2 } ]
 
-  convert truesy value to `true`, falsy value to `false`
+// #### Make the array-like object spreadable in concatenation
+arr[Symbol.isConcatSpreadable] = true;
+names.concat(arr);
+// [ 'amy', 'gary', 'jack' ]
+```
+
+`Array.from()` can turn an array-like or iterable object into a real array, see below.
+
+### Initialize an array with a value range
+
+- https://itnext.io/heres-why-mapping-a-constructed-array-doesn-t-work-in-javascript-f1195138615a
+- https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/from
+
+```js
+let a = Array(100)
+  .fill()
+  .map((e, i) => i);
+/*
+`Array(100)` creates an empty array, which don't have any value, but a `length` property;
+`fill()` creates all the elements, all of them are `undefined`;
+`map()` creates a new array;
+*/
+
+// or
+let a = Array.from({ length: 100 }, (e, i) => i);
+```
 
 ## Functions
 
@@ -710,10 +840,6 @@ const re = /(?<firstName>[a-zA-Z]+) (?<lastName>[a-zA-Z]+)/u;
 console.log("Arya Stark".replace(re, "$<lastName>, $<firstName>")); // Stark, Arya
 ```
 
-## Style guide
-
-please refer to the specific note on JS Coding Styles
-
 ## Symbol
 
 ref: [ES6 Symbols in Depth](https://ponyfoo.com/articles/es6-symbols-in-depth#the-runtime-wide-symbol-registry)
@@ -826,32 +952,7 @@ Symbol is a new primitive value type in ES6, there are three different flavors o
 
 ### `Symbol.iterator`
 
-One of the most useful symbols is `Symbol.iterator`, which can be used to define the `@@iterator` method on an object, convert it to be `iterable`, it's just like implementing the `Iterable` interface in other languages
-
-```js
-var foo = {
-  [Symbol.iterator]: () => ({
-    items: ["p", "o", "n", "y", "f", "o", "o"],
-    next: function next() {
-      return {
-        done: this.items.length === 0,
-        value: this.items.shift()
-      };
-    }
-  })
-};
-
-for (let p of foo) {
-  console.log(p);
-}
-// p
-// o
-// n
-// y
-// f
-// o
-// o
-```
+One of the most useful symbols, can be used to make an object iterable, it's just like implementing the `Iterable` interface in other languages, see the [Iterations](#Iterations) section
 
 ### `Symbol.toPrimitive`
 
@@ -889,58 +990,79 @@ console.log(gary * 2);
 
 ## Iterations
 
-- `for..of` loop
+- `Object.keys`, `Object.values` and `Object.entries`
 
-```javascript
-"use strict";
+  ```javascript
+  let o = {
+    5e5: "$500K",
+    1e6: "$1M",
+    2e6: "$2M"
+  };
 
-let characters = ["Jon", "Sansa", "Arya", "Tyrion", "Cercei"];
+  Object.keys(o);
+  // [ '500000', '1000000', '2000000' ]
 
-for (let c of characters) {
-  console.log(c);
-}
-// Jon
-// Sansa
-// Arya
-// Tyrion
-// Cercei
+  Object.values(o);
+  // [ '$500K', '$1M', '$2M' ]
 
-// NOTE compare with the for..in loop
-for (let c in characters) {
-  console.log(c);
-}
-// 0
-// 1
-// 2
-// 3
-// 4
-```
+  Object.entries(o).forEach(([k, v]) => {
+    console.log(k, v);
+  });
 
-- iterate an object's properties
+  // 500000 $500K
+  // 1000000 $1M
+  // 2000000 $2M
+  ```
 
-```javascript
-let o = {
-  5e5: "$500K",
-  1e6: "$1M",
-  2e6: "$2M",
-  3e6: "$3M",
-  5e6: "$5M",
-  10e6: "$10M"
-};
+* `for..of` and `for..in`
 
-for (let [n, v] of Object.entries(o)) {
-  console.log(n, v);
-}
+  ```javascript
+  "use strict";
 
-// 500000 $500K
-// 1000000 $1M
-// 2000000 $2M
-// 3000000 $3M
-// 5000000 $5M
-// 10000000 $10M
-```
+  let characters = ["Jon", "Sansa", "Arya", "Tyrion", "Cercei"];
 
-- custom iterator
+  for (let c of characters) {
+    console.log(c);
+  }
+  // Jon
+  // Sansa
+  // Arya
+  // Tyrion
+  // Cercei
+
+  // for..in
+  for (let c in characters) {
+    console.log(c);
+  }
+  // 0
+  // 1
+  // 2
+  // 3
+  // 4
+
+  // loop an object
+  const obj = {
+    name: "gary",
+    age: 20
+  };
+
+  obj.__proto__.job = "IT";
+
+  for (let k in obj) {
+    console.log(k);
+  }
+  // name
+  // age
+  // job
+  ```
+
+  Note:
+
+  - `for..in` is optimized for generic objects, not arrays, it's slower than `for..of` on arrays;
+  - `for..in` iterates over all properties, not only the numeric ones, and it gets keys from the prototype chain as well;
+  - Both `for..in` and `for..of` are not necessary anymore, other looping structures are better;
+
+* custom iterator
 
   you can add a custom iterator to an object:
 
@@ -948,53 +1070,53 @@ for (let [n, v] of Object.entries(o)) {
 
   - this `next` method should instead return an object that contains two properties: `done` and `value`, the `done` property is checked to see if the iteration finished;
 
-example
+  example
 
-```javascript
-// NOTE you can define a custom iteration function for an object
-"use strict";
+  ```javascript
+  // NOTE you can define a custom iteration function for an object
+  "use strict";
 
-// a custom id maker that generates ids from 100 to 105
-let idMaker = {
-  [Symbol.iterator]() {
-    let currentId = 100;
-    let maxId = 105;
-    return {
-      next() {
-        return {
-          done: currentId > maxId,
-          value: currentId++
-        };
-      }
-    };
+  // a custom id maker that generates ids from 100 to 105
+  let idMaker = {
+    [Symbol.iterator]() {
+      let currentId = 100;
+      let maxId = 105;
+      return {
+        next() {
+          return {
+            done: currentId > maxId,
+            value: currentId++
+          };
+        }
+      };
+    }
+  };
+
+  for (let id of idMaker) {
+    console.log(id);
   }
-};
+  // 100
+  // 101
+  // 102
+  // 103
+  // 104
+  // 105
 
-for (let id of idMaker) {
-  console.log(id);
-}
-// 100
-// 101
-// 102
-// 103
-// 104
-// 105
+  // NOTE another way to iterate through the id maker object
+  let iter = idMaker[Symbol.iterator]();
+  let next = iter.next();
 
-// NOTE another way to iterate through the id maker object
-let iter = idMaker[Symbol.iterator]();
-let next = iter.next();
-
-while (!next.done) {
-  console.log(next.value);
-  next = iter.next();
-}
-// 100
-// 101
-// 102
-// 103
-// 104
-// 105
-```
+  while (!next.done) {
+    console.log(next.value);
+    next = iter.next();
+  }
+  // 100
+  // 101
+  // 102
+  // 103
+  // 104
+  // 105
+  ```
 
 ## Promise
 
@@ -1676,6 +1798,129 @@ const loadSomething = async () => {
 1. the promise after `await` either resolves and return a value or throws an error;
 2. you should use normal `try...catch..finally` block to handle errors;
 
+## Javascript: The Good Parts
+
+- **`var`**
+
+  ```js
+  var a = 0; //local to function scope
+  b = 0; //global scope
+  ```
+
+  the following statement:
+
+  ```js
+  var a = (b = 0);
+  ```
+
+  equals to:
+
+  ```js
+  b = 0; // b becomes global !!!
+  var a = b;
+  ```
+
+- **variable scope**
+
+  JS is **function scoped**, not block scoped, so:
+
+  ```js
+  // declaration of variable i will be hoisted to the beggining of the function
+  // so, it is available at any place inside foo, not just the for loop
+  function foo() {
+      ...
+      for(var i=0; ...) {}
+      ...
+  }
+  ```
+
+  you should **put variable declaration in the begining of a function**:
+
+  ```js
+  function foo() {
+      var i = 0;
+      ...
+      for(i=0; ...) {}
+      ...
+  }
+  ```
+
+- **`let` statement**
+
+  `let` statement respect block scoping, so the following code does what it seems to do:
+
+  ```js
+  foo(let i=0; ...} {}
+  ```
+
+- **numbers**
+
+  - javascript only has one number type, which is 64bit double;
+  - `NaN` is a number;
+  - `NaN` is not equal to anything, including `NaN` itself;
+  - any arithmetic operation with `NaN` will result in `NaN`;
+
+  ```js
+  0.1 + 0.2 !== 0.3; // this can cause problems when dealing with money
+  a + b + c === a + (b + c); // can be false, this is not a js specific problem
+
+  Infinity + 1 === Infinity; // true
+  Number.MAX_VALUE + 1 === Number.MAX_VALUE; // true
+  ```
+
+- **`null` isn't anything**
+
+  ```js
+  typeof null === "object"; // null's type is 'object'
+  ```
+
+- **`undefined`: default value for uninitialized variables and parameters**
+
+  - Always use `typeof x === 'undefined'` to check if a variable exists or not;
+  - Comparison with `null`:
+
+    - `undefined` is a super global variable, you can override it: `let undefined = 'foo'`, while `null` is a keyword;
+    - `undeined` is of type `undefined`, `null` is of type `object`;
+
+* **`typeof`**
+
+  ```js
+  var a = [1, 2];
+  typeof a === "object"; // typeof array returns 'object'
+  Array.isArray(a); // true, use this to check arrays
+  ```
+
+* **`+`**
+
+  ```
+  if both operands are numbers
+  then
+      add them
+  else
+      convert to string and concatenate
+  end
+  ```
+
+  ```js
+  2 + '3' -> '23'
+  ```
+
+* **`%`**
+
+  `%` is a remainder operator, takes sign from the first operator, not a modulo operator, which takes sign from the second operator
+
+  ```js
+  -1 % 8 -> -1;
+  ```
+
+- **`&&`** , **`||`**
+
+  **not necessarily return boolean values**, just return values of one operand
+
+- **`!!`**
+
+  convert truesy value to `true`, falsy value to `false`
+
 ## Tricks
 
 ### Deboucing an event
@@ -1692,27 +1937,6 @@ $(window).on("resize", function() {
     updateLayout();
   }, 250);
 });
-```
-
-### Initialize an array with a value range
-
-- https://itnext.io/heres-why-mapping-a-constructed-array-doesn-t-work-in-javascript-f1195138615a
-- https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/from
-
-```js
-let a = Array(100)
-  .fill()
-  .map((e, i) => i);
-/*
-Array(100) creates an empty array
-{
-    length: 100
-},
-you need to call fill() before map()
-*/
-
-// or
-let a = Array.from({ length: 100 }, (e, i) => i);
 ```
 
 ### Bind a function multiple times
@@ -1764,6 +1988,18 @@ console.log(
     fooBound3.length
 );
 // fooBound3.name: bound bound bound foo, fooBound3.length: 0
+```
+
+### `Object.is()`
+
+It's identical to `===` in most cases, except:
+
+```js
+NaN === NaN;
+// false
+
+Object.is(NaN, NaN);
+// true
 ```
 
 ## Reference
