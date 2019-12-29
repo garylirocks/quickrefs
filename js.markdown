@@ -1,14 +1,12 @@
 # Javascript
 
-General topics about Javascript and front-end develpoment.
-
 - [Data types](#data-types)
   - [Truesy and falsey](#truesy-and-falsey)
   - [Type casting and coercion](#type-casting-and-coercion)
   - [Wrapper objects](#wrapper-objects)
   - [Operators](#operators)
 - [Numbers](#numbers)
-  - [`toString(base)` and `parseInt(str, base)`](#tostringbase-and-parseintstr-base)
+  - [toString(base) and parseInt(str, base)](#tostringbase-and-parseintstr-base)
 - [Strings](#strings)
   - [Comparison](#comparison)
   - [Surrogate pairs](#surrogate-pairs)
@@ -16,25 +14,34 @@ General topics about Javascript and front-end develpoment.
 - [Objects](#objects)
   - [Define an object](#define-an-object)
   - [Property order](#property-order)
+  - [Transforming objects](#transforming-objects)
 - [Prototype](#prototype)
   - [Inheritance by Prototype](#inheritance-by-prototype)
+- [Symbol](#symbol)
+  - [Main usages](#main-usages)
+  - [Symbol.iterator](#symboliterator)
+  - [Symbol.toPrimitive](#symboltoprimitive)
 - [Arrays](#arrays)
   - [Methods](#methods)
-  - [`length`](#length)
+  - [length](#length)
   - [Array-like](#array-like)
-  - [Initialize an array with a value range](#initialize-an-array-with-a-value-range)
+  - [Create a number range array](#create-a-number-range-array)
+- [Map and Set](#map-and-set)
+  - [Map](#map)
+  - [Set](#set)
+- [WeakMap and WeakSet](#weakmap-and-weakset)
+  - [Garbage collection](#garbage-collection)
+  - [WeakMap](#weakmap)
+  - [WeakMap usage: caching](#weakmap-usage-caching)
+  - [WeakSet](#weakset)
 - [Functions](#functions)
   - [Function expression vs. function statement](#function-expression-vs-function-statement)
-  - [the `arguments` parameter](#the-arguments-parameter)
-- [The `this` keyword](#the-this-keyword)
+  - [the arguments parameter](#the-arguments-parameter)
+- [The this keyword](#the-this-keyword)
 - [Closures](#closures)
   - [Temporal Dead Zone](#temporal-dead-zone)
 - [Regular Expression](#regular-expression)
   - [named groups](#named-groups)
-- [Symbol](#symbol)
-  - [Main usages](#main-usages)
-  - [`Symbol.iterator`](#symboliterator)
-  - [`Symbol.toPrimitive`](#symboltoprimitive)
 - [Iterations](#iterations)
 - [Promise](#promise)
   - [Callback hell](#callback-hell)
@@ -42,7 +49,7 @@ General topics about Javascript and front-end develpoment.
 - [Generator](#generator)
 - [Async/Await](#asyncawait)
 - [Event Loop](#event-loop)
-  - [`setTimout`](#settimout)
+  - [setTimout](#settimout)
   - [Multiple runtimes](#multiple-runtimes)
 - [Immutability](#immutability)
   - [What is immutability ?](#what-is-immutability)
@@ -59,14 +66,15 @@ General topics about Javascript and front-end develpoment.
   - [ES6](#es6)
 - [Error Handling](#error-handling)
   - [Error](#error)
-  - [`try...catch...finally`](#trycatchfinally)
+  - [try...catch...finally](#trycatchfinally)
   - [Promise](#promise-1)
   - [async/await](#asyncawait)
 - [Javascript: The Good Parts](#javascript-the-good-parts)
 - [Tricks](#tricks)
   - [Deboucing an event](#deboucing-an-event)
   - [Bind a function multiple times](#bind-a-function-multiple-times)
-  - [`Object.is()`](#objectis)
+  - [Object.is()](#objectis)
+  - [JSON.stringify and JSON.parse](#jsonstringify-and-jsonparse)
 - [Reference](#reference)
 
 ## Data types
@@ -310,7 +318,20 @@ Object.keys(a);
 
 Integer properties are ordered, others appear in creation order, so `1` comes before `64` when iterating through all the properties;
 
-_a property key can only be a string or a symbol_, when you use a number as property key, it's converted to a string;
+_A property key can only be a string or a symbol_, when you use a number as property key, it's converted to a string;
+
+### Transforming objects
+
+Use `Object.entries` and `Object.fromEntries` to convert an object to and from an array:
+
+```js
+const ages = { gary: 20, jack: 30 };
+
+const newAges = Object.fromEntries(
+  Object.entries(ages).map(([key, value]) => [key, value + 1])
+);
+// { gary: 21, jack: 31 }
+```
 
 ## Prototype
 
@@ -394,451 +415,6 @@ var h = new Hoozit(2);
 another illustration created by myself:
 
 ![JS prototype system](./images/JavaScript.object.prototype.system.png)
-
-## Arrays
-
-- An array is a special kind of object, the syntax `arr[index]` is esentially the same as `obj[key]`;
-- JS engines do optimizations for arrays, but if you use an array as a regular object, those optimizations will be turned off, so don't do:
-
-  ```js
-  // add a non-numeric property
-  arr.test = 5;
-
-  // make holes
-  const arr2 = [];
-  arr2[100] = 100;
-  ```
-
-### Methods
-
-- `splice`
-
-  can be used to remove, insert, replace elements of an array
-  `arr.splice(index[, deleteCount, elem1, ..., elemN])`
-
-  ```js
-  a = ["Amy", "Gary", "Jack", "Zoe"];
-
-  // #### removing
-  a.splice(1, 1);
-  // [ 'Gary' ]
-  a;
-  // [ 'Amy', 'Jack', 'Zoe' ]
-
-  // #### replacing
-  a.splice(2, 1, "Zolo");
-  // [ 'Zoe' ]
-  a;
-  // [ 'Amy', 'Jack', 'Zolo' ]
-
-  // #### inserting
-  a.splice(2, 0, "Nick", "Peter");
-  // []
-  a;
-  // [ 'Amy', 'Jack', 'Nick', 'Peter', 'Zolo' ]
-  ```
-
-### `length`
-
-- `length` is not actually the count of values in the array, but the greatest numeric index plus one;
-
-  ```js
-  const a = [];
-  a[99] = "nighty nine"; // NOTE: we should not leave holes in an array like this
-
-  a.forEach(x => console.log(x));
-  // nighty nine
-
-  a.length;
-  // 100
-  ```
-
-- `length` is writable, so you can clear an array by setting its `length` to 0
-
-  ```js
-  const a = ["gary", "jack", "nick"];
-  a.length = 1;
-
-  a;
-  // [ 'gary' ]
-
-  a.length = 0;
-  a;
-  // []
-  ```
-
-### Array-like
-
-If an object has indexed properties and `length` is an array-like object, such as strings and `arguments`;
-
-You can create one yourself, you can access it's property like an array `arrLike[0]`, but it doesn't have methods like `pop`, `push` etc;
-
-```js
-// #### Create an array-like object
-const arr = {
-  0: "gary",
-  1: "jack",
-  length: 2
-};
-
-const names = ["amy"];
-
-names.concat(arr);
-// [ 'amy', { '0': 'gary', '1': 'jack', length: 2 } ]
-
-// #### Make the array-like object spreadable in concatenation
-arr[Symbol.isConcatSpreadable] = true;
-names.concat(arr);
-// [ 'amy', 'gary', 'jack' ]
-```
-
-`Array.from()` can turn an array-like or iterable object into a real array, see below.
-
-### Initialize an array with a value range
-
-- https://itnext.io/heres-why-mapping-a-constructed-array-doesn-t-work-in-javascript-f1195138615a
-- https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/from
-
-```js
-let a = Array(100)
-  .fill()
-  .map((e, i) => i);
-/*
-`Array(100)` creates an empty array, which don't have any value, but a `length` property;
-`fill()` creates all the elements, all of them are `undefined`;
-`map()` creates a new array;
-*/
-
-// or
-let a = Array.from({ length: 100 }, (e, i) => i);
-```
-
-## Functions
-
-- A function is a value representing an "action";
-- `typeof` a function is `function`, but it's just a special type of `object`;
-
-### Function expression vs. function statement
-
-```javascript
-// function expression
-var foo = function() {};
-
-// function statement/declaration
-function foo() {}
-
-// function statement is a short-hand for var statement, which will expand to:
-var foo;
-foo = function() {};
-```
-
-the difference between these two methods of defining functions:
-
-```javascript
-console.log(typeof statementFoo); // function
-statementFoo(); // NOTE this function runs fine here
-
-console.log(typeof expressionFoo); // undefined
-expressionFoo(); // NOTE throws an error, expressionFoo is still undefined here
-
-function statementFoo() {
-  console.log("an statement function");
-}
-
-var expressionFoo = function() {
-  console.log("an expression function");
-};
-```
-
-If a function statement/declaration is inside a code block (e.g. `if` block):
-
-- in unstrict mode, the function name is hoisted, it's visible outside of the code block, but it's value would be empty until the declaration runs;
-- in strict mode, the function is block-scoped, it's only visible inside the block;
-
-### the `arguments` parameter
-
-- each function receives two pseudo parameters: `arguments` and `this`;
-
-- `arguments` is an **array-like object** which has an `length` property and contains all the parameters;
-
-- it is recommended to use rest syntax instead of `arguments`;
-
-```javascript
-// use arguments to create a function with variable length parameters
-function sum() {
-  var i,
-    n = arguments.length,
-    total = 0;
-  for (i = 0; i < n; i++) {
-    total += arguments[i];
-  }
-  return total;
-}
-
-console.log(sum(1, 2, 3, 4));
-
-// with rest syntax
-function sum(...args) {
-  return args.reduce((total, e) => total + e, 0);
-}
-
-console.log(sum(1, 2, 3, 4));
-```
-
-## The `this` keyword
-
-Every function receives an implicit `this` parameter, which is bound at invocation time
-
-Four ways to call a function:
-
-- Function form
-
-  ```javascript
-  foo(arguments);
-  ```
-
-  - `this` binds to the global object, which cause problems
-  - in ES5/Strict, `this` binds to `undefined`
-  - outer `this` is not accessible from inner functions, use `var that = this;` to pass it
-
-* Method form
-
-  ```javascript
-  thisObject.methodName(arguments);
-  thisObject["methodName"](arguments);
-  ```
-
-  `this` binds to `thisObject`
-
-  **CAUTION** if you assign the method to a variable and call it, it doesn't have access to `this`
-
-  ```js
-  const a = {
-    name: "gary",
-    sayHi() {
-      console.log("Hi " + this.name);
-    }
-  };
-  // {name: "gary", sayHi: ƒ}
-  a.sayHi();
-  // Hi gary
-
-  const foo = a.sayHi;
-  foo(); // `this` is undefined in foo
-  ```
-
-  So, although `foo === a.sayHi`, but `a.sayHi()` has `a` as `this`, `foo()` doesn't, see https://javascript.info/object-methods#internals-reference-type
-
-- Constructor form
-
-  ```javascript
-  new Foo(arguments);
-  ```
-
-  a new object is created and assigned to `this`, if not an explicit return value, then `this` will be returned
-
-* Apply form
-
-  ```javascript
-  foo.apply(thisObject, arguements);
-  foo.call(thisObject, arg1, arg2, ...);
-  ```
-
-  explicitly bind an object to 'this'
-
-- `this` scope example
-
-  ```javascript
-  var person = {
-    name: "Gary",
-    hobbies: ["tennis", "badminton", "hiking"],
-
-    print: function() {
-      // when run person.print(), `this` is person here
-      this.hobbies.forEach(function(hobby) {
-        // but 'this' is undefined here
-        console.log(this.name + " likes " + hobby);
-      });
-    },
-
-    // use '_this' to pass the correct context this in
-    print2: function() {
-      var _this = this;
-      console.log("// use '_this' to pass the correct context this in");
-      this.hobbies.forEach(function(hobby) {
-        console.log(_this.name + " likes " + hobby);
-      });
-    },
-
-    // use 'bind' to get the correct this
-    print3: function() {
-      console.log("// use 'bind' to get the correct this");
-      this.hobbies.forEach(
-        function(hobby) {
-          console.log(this.name + " likes " + hobby);
-        }.bind(this)
-      );
-    },
-
-    // recommended way: use arrow function, which uses `this` from the outer context
-    print4: function() {
-      console.log("// use arrow function syntax");
-      this.hobbies.forEach(hobby => {
-        console.log(this.name + " likes " + hobby);
-      });
-    }
-  };
-  ```
-
-## Closures
-
-When a function gets declared, it contains a function definition and _a closure_. The closure is a collection of all the variables in scope at the time of creation of the function.
-
-Think of a closure as a backpack, it is attached to the function, when a function get passed around, the backpack get passed around with it.
-
-```javascript
-var digit_name = (function() {
-  var names = [
-    "zero",
-    "one",
-    "two",
-    "three",
-    "four",
-    "five",
-    "six",
-    "seven",
-    "eight",
-    "nine"
-  ];
-  return function(n) {
-    return names[n];
-  };
-})();
-
-console.log(digit_name(2));
-```
-
-[A Tricky JavaScript Interview Question Asked by Google and Amazon](https://medium.com/coderbyte/a-tricky-javascript-interview-question-asked-by-google-and-amazon-48d212890703)
-
-```javascript
-// interviewer: what will the following code output?
-const arr = [10, 12, 15, 21];
-for (var i = 0; i < arr.length; i++) {
-  setTimeout(function() {
-    console.log("Index: " + i + ", element: " + arr[i]);
-  }, 300);
-}
-```
-
-output:
-
-    Index: 4, element: undefined
-    Index: 4, element: undefined
-    Index: 4, element: undefined
-    Index: 4, element: undefined
-
-when the anonymous function executes, the value of `i` is `4`
-
-you can fix this by add a separate closure for each loop iteration, in this case, the `i` is separate for each closure
-
-```js
-const arr = [10, 12, 15, 21];
-for (var i = 0; i < arr.length; i++) {
-  setTimeout(
-    (function(i) {
-      return function() {
-        console.log("The index of this number is: " + i);
-      };
-    })(i),
-    300
-  );
-}
-```
-
-or use `let`, it creates a new block binding for each iteration (**this is because `let` is block scoped, a new 'backpack' is created for each iteration, in contrast, `var` is function scoped, so the `i` is shared in the first example**)
-
-```javascript
-const arr = [10, 12, 15, 21];
-for (let i = 0; i < arr.length; i++) {
-  // using let, it creates a new binding
-  // every single time the function is created
-  // read more here: http://exploringjs.com/es6/ch_variables.html#sec_let-const-loop-heads
-  setTimeout(function() {
-    console.log("The index of this number is: " + i);
-  }, 300);
-}
-```
-
-### Temporal Dead Zone
-
-See [let - MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/let) for details
-
-- `var` declarations will be hoisted to the top of **function scope**, and the value is `undefined`;
-- `let` bindings are created at the top of the **block scope**, but unlike `var`, you can't read or write it, you get a `ReferenceError` if using it before the definition is evaluated;
-
-```js
-function do_something() {
-  console.log(bar); // undefined
-  console.log(foo); // ReferenceError, in 'Temporal Dead Zone'
-  var bar = 1;
-  let foo = 2;
-}
-```
-
-the `foo` in `(foo + 55)` is the `foo` in the `if` block, not the `foo` declared by `var`
-
-```js
-function test() {
-  var foo = 33;
-  if (true) {
-    let foo = foo + 55; // ReferenceError
-  }
-}
-test();
-```
-
-## Regular Expression
-
-### named groups
-
-_ES 2018_
-
-```js
-const date = "2018-05-16";
-const re = /(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})/u;
-const result = re.exec(date);
-console.log(result);
-//[ '2018-05-16',
-//  '2018',
-//  '05',
-//  '16',
-//  index: 0,
-//  input: '2018-05-16',
-//  groups: { year: '2018', month: '05', day: '16' } ]
-
-console.log(result.groups.year); // get the value of a matched group
-//2018
-```
-
-back reference named groups in a regular expression
-
-```js
-const re = /(?<fruit>apple|orange) == \k<fruit>/u;
-
-console.log(
-  re.test("apple == apple"), // true
-  re.test("orange == orange"), // true
-  re.test("apple == orange") // false
-);
-```
-
-use named groups in string repalcing
-
-```js
-const re = /(?<firstName>[a-zA-Z]+) (?<lastName>[a-zA-Z]+)/u;
-
-console.log("Arya Stark".replace(re, "$<lastName>, $<firstName>")); // Stark, Arya
-```
 
 ## Symbol
 
@@ -988,7 +564,600 @@ console.log(gary * 2);
 // 40
 ```
 
+``
+
+## Arrays
+
+- An array is a special kind of object, the syntax `arr[index]` is esentially the same as `obj[key]`;
+- JS engines do optimizations for arrays, but if you use an array as a regular object, those optimizations will be turned off, so don't do:
+
+  ```js
+  // add a non-numeric property
+  arr.test = 5;
+
+  // make holes
+  const arr2 = [];
+  arr2[100] = 100;
+  ```
+
+### Methods
+
+- `splice`
+
+  can be used to remove, insert, replace elements of an array
+  `arr.splice(index[, deleteCount, elem1, ..., elemN])`
+
+  ```js
+  a = ["Amy", "Gary", "Jack", "Zoe"];
+
+  // #### removing
+  a.splice(1, 1);
+  // [ 'Gary' ]
+  a;
+  // [ 'Amy', 'Jack', 'Zoe' ]
+
+  // #### replacing
+  a.splice(2, 1, "Zolo");
+  // [ 'Zoe' ]
+  a;
+  // [ 'Amy', 'Jack', 'Zolo' ]
+
+  // #### inserting
+  a.splice(2, 0, "Nick", "Peter");
+  // []
+  a;
+  // [ 'Amy', 'Jack', 'Nick', 'Peter', 'Zolo' ]
+  ```
+
+### `length`
+
+- `length` is not actually the count of values in the array, but the greatest numeric index plus one;
+
+  ```js
+  const a = [];
+  a[99] = "nighty nine"; // NOTE: we should not leave holes in an array like this
+
+  a.forEach(x => console.log(x));
+  // nighty nine
+
+  a.length;
+  // 100
+  ```
+
+- `length` is writable, so you can clear an array by setting its `length` to 0
+
+  ```js
+  const a = ["gary", "jack", "nick"];
+  a.length = 1;
+
+  a;
+  // [ 'gary' ]
+
+  a.length = 0;
+  a;
+  // []
+  ```
+
+### Array-like
+
+If an object has indexed properties and `length` is an array-like object, such as strings and `arguments`;
+
+You can create one yourself, you can access it's property like an array `arrLike[0]`, but it doesn't have methods like `pop`, `push` etc;
+
+```js
+// #### Create an array-like object
+const arr = {
+  0: "gary",
+  1: "jack",
+  length: 2
+};
+
+const names = ["amy"];
+
+names.concat(arr);
+// [ 'amy', { '0': 'gary', '1': 'jack', length: 2 } ]
+
+// #### Make the array-like object spreadable in concatenation
+arr[Symbol.isConcatSpreadable] = true;
+names.concat(arr);
+// [ 'amy', 'gary', 'jack' ]
+```
+
+`Array.from()` can turn an array-like or iterable object into a real array, see below.
+
+### Create a number range array
+
+- https://itnext.io/heres-why-mapping-a-constructed-array-doesn-t-work-in-javascript-f1195138615a
+- https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/from
+
+```js
+let a = Array(100)
+  .fill()
+  .map((e, i) => i);
+/*
+`Array(100)` creates an empty array, which don't have any value, but a `length` property;
+`fill()` creates all the elements, all of them are `undefined`;
+`map()` creates a new array;
+*/
+
+// or
+let a = Array.from({ length: 100 }, (e, i) => i);
+```
+
+## Map and Set
+
+### Map
+
+- Map is a collection of keyed data items, like `Object`, the main difference is that `Map` allows keys of any type;
+
+  ```js
+  const gary = { name: "Gary" };
+  const myMap = new Map();
+
+  myMap.set(gary, 1);
+  myMap.get(gary);
+  // 1
+  ```
+
+- Map uses the algorithm [SameValueZero](https://tc39.github.io/ecma262/#sec-samevaluezero) to test keys for equivalence, roughly the same as strict equality `===`, but it considers `NaN` equal to `NaN` as well;
+
+- Iteration
+
+  - `map.keys()`
+  - `map.values()`
+  - `map.entries()` gets an array of `[key, value]`
+  - `for..of` iterates over `[key, value]` pairs
+  - `forEach((value, key, map) => {...})`
+
+- Maps from/to objects
+
+  ```js
+  const obj = { name: "Gary", age: 20 };
+
+  const myMap = new Map(Object.entries(obj));
+  // Map { 'name' => 'Gary', 'age' => 20 }
+
+  const newObj = Object.fromEntries(myMap);
+  // { name: 'Gary', age: 20 }
+  ```
+
+### Set
+
+- For compatiblity, all iteration methods on map are also available for set, values are used as keys:
+
+  - `map.keys()` gets values
+  - `map.values()` gets values as well
+  - `map.entries()` gets an array of `[value, value]`
+  - `for..of` iterates over `[value, value]` pairs
+  - `forEach((value, value, map) => {...})`
+
+## WeakMap and WeakSet
+
+### Garbage collection
+
+JS engines clear unreachable objects from memory.
+
+```js
+let gary = { name: "Gary" };
+
+// overwrite the reference
+gary = null;
+
+// then there is no reference to the object, it's unreachable, so the object will be cleared from the memory
+```
+
+If an object is in an array, or used as a map key, while the array/map is alive, it won't be cleared:
+
+```js
+let gary = { name: "Gary" };
+let jack = { name: "Jack" };
+
+let myArray = [gary];
+let myMap = new Map();
+myMap.set(jack, 1);
+
+// overwrite the reference
+gary = null;
+jack = null;
+
+// the array and map are still alive, so the objects won't be cleared
+```
+
+### WeakMap
+
+- WeakMap keys must be objects;
+- WeakMap does not support `size`, `keys()`, `values()` and `entries()`, so you can't get all keys or values from it;
+- For WeakMap keys, if there are no other references to them, they will be garbage collected;
+
+### WeakMap usage: caching
+
+```js
+// cache.js
+let cache = new WeakMap();
+
+// calculate and remember the result
+function process(obj) {
+  if (!cache.has(obj)) {
+    let result = /* calculate the result for */ obj;
+
+    cache.set(obj, result);
+  }
+
+  return cache.get(obj);
+}
+
+// main.js
+let obj = {
+  /* some object */
+};
+
+let result1 = process(obj);
+let result2 = process(obj); // the result is cached
+
+// when obj set to null, it will be cleared from the WeakMap cache as well
+obj = null;
+```
+
+### WeakSet
+
+- Only allow objects;
+- Supports `add`, `has` and `delete`, but not `size` and iteration methods such as `keys()`, etc;
+- If an element doesn't have other references, it will be cleared from the WeakSet;
+
+Usage: keep track those who visited a site:
+
+```js
+let visitedSet = new WeakSet();
+
+let john = { name: "John" };
+let pete = { name: "Pete" };
+let mary = { name: "Mary" };
+
+visitedSet.add(john); // John visited us
+visitedSet.add(pete); // Then Pete
+visitedSet.add(john); // John again
+
+// check if John visited?
+visitedSet.has(john); // true
+
+// check if Mary visited?
+visitedSet.has(mary); // false
+
+john = null;
+
+// John will be cleared from the set
+```
+
+## Functions
+
+- A function is a value representing an "action";
+- `typeof` a function is `function`, but it's just a special type of `object`;
+
+### Function expression vs. function statement
+
+```javascript
+// function expression
+var foo = function() {};
+
+// function statement/declaration
+function foo() {}
+
+// function statement is a short-hand for var statement, which will expand to:
+var foo;
+foo = function() {};
+```
+
+the difference between these two methods of defining functions:
+
+```javascript
+console.log(typeof statementFoo); // function
+statementFoo(); // NOTE this function runs fine here
+
+console.log(typeof expressionFoo); // undefined
+expressionFoo(); // NOTE throws an error, expressionFoo is still undefined here
+
+function statementFoo() {
+  console.log("an statement function");
+}
+
+var expressionFoo = function() {
+  console.log("an expression function");
+};
+```
+
+If a function statement/declaration is inside a code block (e.g. `if` block):
+
+- in unstrict mode, the function name is hoisted, it's visible outside of the code block, but it's value would be empty until the declaration runs;
+- in strict mode, the function is block-scoped, it's only visible inside the block;
+
+### the `arguments` parameter
+
+- each function receives two pseudo parameters: `arguments` and `this`;
+
+- `arguments` is an **array-like object** which has an `length` property and contains all the parameters;
+
+- it is recommended to use rest syntax instead of `arguments`;
+
+```javascript
+// use arguments to create a function with variable length parameters
+function sum() {
+  var i,
+    n = arguments.length,
+    total = 0;
+  for (i = 0; i < n; i++) {
+    total += arguments[i];
+  }
+  return total;
+}
+
+console.log(sum(1, 2, 3, 4));
+
+// with rest syntax
+function sum(...args) {
+  return args.reduce((total, e) => total + e, 0);
+}
+
+console.log(sum(1, 2, 3, 4));
+```
+
+## The `this` keyword
+
+Every function receives an implicit `this` parameter, which is bound at invocation time
+
+Four ways to call a function:
+
+- Function form
+
+  ```javascript
+  foo(arguments);
+  ```
+
+  - `this` binds to the global object, which cause problems
+  - in ES5/Strict, `this` binds to `undefined`
+  - outer `this` is not accessible from inner functions, use `var that = this;` to pass it
+
+- Method form
+
+  ```javascript
+  thisObject.methodName(arguments);
+  thisObject["methodName"](arguments);
+  ```
+
+  `this` binds to `thisObject`
+
+  **CAUTION** if you assign the method to a variable and call it, it doesn't have access to `this`
+
+  ```js
+  const a = {
+    name: "gary",
+    sayHi() {
+      console.log("Hi " + this.name);
+    }
+  };
+  // {name: "gary", sayHi: ƒ}
+  a.sayHi();
+  // Hi gary
+
+  const foo = a.sayHi;
+  foo(); // `this` is undefined in foo
+  ```
+
+  So, although `foo === a.sayHi`, but `a.sayHi()` has `a` as `this`, `foo()` doesn't, see https://javascript.info/object-methods#internals-reference-type
+
+- Constructor form
+
+  ```javascript
+  new Foo(arguments);
+  ```
+
+  a new object is created and assigned to `this`, if not an explicit return value, then `this` will be returned
+
+- Apply form
+
+  ```javascript
+  foo.apply(thisObject, arguements);
+  foo.call(thisObject, arg1, arg2, ...);
+  ```
+
+  explicitly bind an object to 'this'
+
+- `this` scope example
+
+  ```javascript
+  var person = {
+    name: "Gary",
+    hobbies: ["tennis", "badminton", "hiking"],
+
+    print: function() {
+      // when run person.print(), `this` is person here
+      this.hobbies.forEach(function(hobby) {
+        // but 'this' is undefined here
+        console.log(this.name + " likes " + hobby);
+      });
+    },
+
+    // use '_this' to pass the correct context this in
+    print2: function() {
+      var _this = this;
+      console.log("// use '_this' to pass the correct context this in");
+      this.hobbies.forEach(function(hobby) {
+        console.log(_this.name + " likes " + hobby);
+      });
+    },
+
+    // use 'bind' to get the correct this
+    print3: function() {
+      console.log("// use 'bind' to get the correct this");
+      this.hobbies.forEach(
+        function(hobby) {
+          console.log(this.name + " likes " + hobby);
+        }.bind(this)
+      );
+    },
+
+    // recommended way: use arrow function, which uses `this` from the outer context
+    print4: function() {
+      console.log("// use arrow function syntax");
+      this.hobbies.forEach(hobby => {
+        console.log(this.name + " likes " + hobby);
+      });
+    }
+  };
+  ```
+
+## Closures
+
+When a function gets declared, it contains a function definition and _a closure_. The closure is a collection of all the variables in scope at the time of creation of the function.
+
+Think of a closure as a backpack, it is attached to the function, when a function get passed around, the backpack get passed around with it.
+
+```javascript
+var digit_name = (function() {
+  var names = [
+    "zero",
+    "one",
+    "two",
+    "three",
+    "four",
+    "five",
+    "six",
+    "seven",
+    "eight",
+    "nine"
+  ];
+  return function(n) {
+    return names[n];
+  };
+})();
+
+console.log(digit_name(2));
+```
+
+[A Tricky JavaScript Interview Question Asked by Google and Amazon](https://medium.com/coderbyte/a-tricky-javascript-interview-question-asked-by-google-and-amazon-48d212890703)
+
+```javascript
+// interviewer: what will the following code output?
+const arr = [10, 12, 15, 21];
+for (var i = 0; i < arr.length; i++) {
+  setTimeout(function() {
+    console.log("Index: " + i + ", element: " + arr[i]);
+  }, 300);
+}
+```
+
+output:
+
+    Index: 4, element: undefined
+    Index: 4, element: undefined
+    Index: 4, element: undefined
+    Index: 4, element: undefined
+
+when the anonymous function executes, the value of `i` is `4`
+
+you can fix this by add a separate closure for each loop iteration, in this case, the `i` is separate for each closure
+
+```js
+const arr = [10, 12, 15, 21];
+for (var i = 0; i < arr.length; i++) {
+  setTimeout(
+    (function(i) {
+      return function() {
+        console.log("The index of this number is: " + i);
+      };
+    })(i),
+    300
+  );
+}
+```
+
+or use `let`, it creates a new block binding for each iteration (**this is because `let` is block scoped, a new 'backpack' is created for each iteration, in contrast, `var` is function scoped, so the `i` is shared in the first example**)
+
+```javascript
+const arr = [10, 12, 15, 21];
+for (let i = 0; i < arr.length; i++) {
+  // using let, it creates a new binding
+  // every single time the function is created
+  // read more here: http://exploringjs.com/es6/ch_variables.html#sec_let-const-loop-heads
+  setTimeout(function() {
+    console.log("The index of this number is: " + i);
+  }, 300);
+}
+```
+
+### Temporal Dead Zone
+
+See [let - MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/let) for details
+
+- `var` declarations will be hoisted to the top of **function scope**, and the value is `undefined`;
+- `let` bindings are created at the top of the **block scope**, but unlike `var`, you can't read or write it, you get a `ReferenceError` if using it before the definition is evaluated;
+
+```js
+function do_something() {
+  console.log(bar); // undefined
+  console.log(foo); // ReferenceError, in 'Temporal Dead Zone'
+  var bar = 1;
+  let foo = 2;
+}
+```
+
+the `foo` in `(foo + 55)` is the `foo` in the `if` block, not the `foo` declared by `var`
+
+````js
+function test() {
+  var foo = 33;
+  if (true) {
+    let foo = foo + 55; // ReferenceError
+  }
+}
+test();
+```
+
+## Regular Expression
+
+### named groups
+
+_ES 2018_
+
+```js
+const date = "2018-05-16";
+const re = /(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})/u;
+const result = re.exec(date);
+console.log(result);
+//[ '2018-05-16',
+//  '2018',
+//  '05',
+//  '16',
+//  index: 0,
+//  input: '2018-05-16',
+//  groups: { year: '2018', month: '05', day: '16' } ]
+
+console.log(result.groups.year); // get the value of a matched group
+//2018
+````
+
+back reference named groups in a regular expression
+
+```js
+const re = /(?<fruit>apple|orange) == \k<fruit>/u;
+
+console.log(
+  re.test("apple == apple"), // true
+  re.test("orange == orange"), // true
+  re.test("apple == orange") // false
+);
+```
+
+use named groups in string repalcing
+
+```js
+const re = /(?<firstName>[a-zA-Z]+) (?<lastName>[a-zA-Z]+)/u;
+
+console.log("Arya Stark".replace(re, "$<lastName>, $<firstName>")); // Stark, Arya
+```
+
 ## Iterations
+
+Iterations over any iterables: Objects, Arrays, strings, Maps, Set etc.
 
 - `Object.keys`, `Object.values` and `Object.entries`
 
@@ -1043,7 +1212,8 @@ console.log(gary * 2);
   // loop an object
   const obj = {
     name: "gary",
-    age: 20
+    age: 20,
+    [Symbol("a")]: "a symbol"
   };
 
   obj.__proto__.job = "IT";
@@ -1059,18 +1229,17 @@ console.log(gary * 2);
   Note:
 
   - `for..in` is optimized for generic objects, not arrays, it's slower than `for..of` on arrays;
-  - `for..in` iterates over all properties, not only the numeric ones, and it gets keys from the prototype chain as well;
-  - Both `for..in` and `for..of` are not necessary anymore, other looping structures are better;
+  - `for..in` iterates over all properties, it gets keys from the prototype chain as well, but not symbol properties;
 
-* custom iterator
+* Custom iterator
 
-  you can add a custom iterator to an object:
+  You can add a custom iterator to an object:
 
-  - using the `Symbol.iterator` property, which should be a function, this function executes once when the iteration starts, and returns an object containing a `next` method;
+  - Using the `Symbol.iterator` property, which should be a function, this function executes once when the iteration starts, and returns an object containing a `next` method;
 
-  - this `next` method should instead return an object that contains two properties: `done` and `value`, the `done` property is checked to see if the iteration finished;
+  - This `next` method should instead return an object that contains two properties: `done` and `value`, the `done` property is checked to see if the iteration finished;
 
-  example
+  Example
 
   ```javascript
   // NOTE you can define a custom iteration function for an object
@@ -2001,6 +2170,56 @@ NaN === NaN;
 Object.is(NaN, NaN);
 // true
 ```
+
+### `JSON.stringify` and `JSON.parse`
+
+- If an object has a custom `toJSON` method, it's used to convert the object to JSON string:
+
+  ```js
+  const o = {
+    id: 202,
+    name: "Gary",
+    toJSON() {
+      return this.id;
+    }
+  };
+
+  JSON.stringify(o);
+  // '202'
+  ```
+
+- Use replacer function in `JSON.stringify` to deal with circular referencing issue:
+
+  ```js
+  const member = { name: "Gary" };
+  const team = { name: "Dev" };
+  member.team = team;
+  team.members = [member];
+
+  team;
+  // { name: 'Dev', members: [ { name: 'Gary', team: [Circular] } ] }
+
+  JSON.stringify(team); // throws an error: circular references
+
+  // #### using replacer function to ignore the 'team' key
+  JSON.stringify(team, (key, value) => (key === "team" ? undefined : value));
+  // '{"name":"Dev","members":[{"name":"Gary"}]}'
+  ```
+
+- Use a reviver function to parse a string to a `Date` object
+
+  ```js
+  // #### JSON.stringify converts a Date to a string
+  const s = JSON.stringify({ name: "JS Conf", date: new Date() });
+  // '{"name":"JS Conf","date":"2019-12-29T08:16:31.262Z"}'
+
+  // #### JSON.parse doesn't convert a Date to a string
+  JSON.parse(s);
+  // { name: 'JS Conf', date: '2019-12-29T08:16:31.262Z' }
+
+  // #### JSON.parse accepts a reviver function to do any data conversions
+  JSON.parse(s, (key, value) => (key === "date" ? new Date(value) : value));
+  ```
 
 ## Reference
 
