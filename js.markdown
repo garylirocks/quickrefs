@@ -36,12 +36,14 @@
   - [WeakSet](#weakset)
 - [Functions](#functions)
   - [Function expression vs. function statement](#function-expression-vs-function-statement)
-  - [the arguments parameter](#the-arguments-parameter)
+  - [Function properties](#function-properties)
+  - [Named Function Expressions (NFE)](#named-function-expressions-nfe)
+  - [The arguments parameter](#the-arguments-parameter)
+  - [Arrow functions](#arrow-functions)
 - [The this keyword](#the-this-keyword)
 - [Closures](#closures)
   - [Temporal Dead Zone](#temporal-dead-zone)
-- [Regular Expression](#regular-expression)
-  - [named groups](#named-groups)
+  - [Lexical environment](#lexical-environment)
 - [Iterations](#iterations)
 - [Promise](#promise)
   - [Callback hell](#callback-hell)
@@ -49,16 +51,8 @@
 - [Generator](#generator)
 - [Async/Await](#asyncawait)
 - [Event Loop](#event-loop)
-  - [setTimout](#settimout)
+  - [setTimout and setInterval](#settimout-and-setinterval)
   - [Multiple runtimes](#multiple-runtimes)
-- [Immutability](#immutability)
-  - [What is immutability ?](#what-is-immutability)
-  - [Reference equality vs. value equality](#reference-equality-vs-value-equality)
-  - [Immutability tools](#immutability-tools)
-    - [The JS way](#the-js-way)
-    - [Immutable.js](#immutablejs)
-    - [Immer](#immer)
-    - [immutability-helper](#immutability-helper)
 - [ECMAScript](#ecmascript)
 - [Module Systems](#module-systems)
   - [AMD (Asynchronous Module Design)](#amd-asynchronous-module-design)
@@ -69,6 +63,16 @@
   - [try...catch...finally](#trycatchfinally)
   - [Promise](#promise-1)
   - [async/await](#asyncawait)
+- [Regular Expression](#regular-expression)
+  - [Named groups](#named-groups)
+- [Immutability](#immutability)
+  - [What is immutability ?](#what-is-immutability)
+  - [Reference equality vs. value equality](#reference-equality-vs-value-equality)
+  - [Immutability tools](#immutability-tools)
+    - [The JS way](#the-js-way)
+    - [Immutable.js](#immutablejs)
+    - [Immer](#immer)
+    - [immutability-helper](#immutability-helper)
 - [Javascript: The Good Parts](#javascript-the-good-parts)
 - [Tricks](#tricks)
   - [Deboucing an event](#deboucing-an-event)
@@ -835,19 +839,7 @@ john = null;
 
 ### Function expression vs. function statement
 
-```javascript
-// function expression
-var foo = function() {};
-
-// function statement/declaration
-function foo() {}
-
-// function statement is a short-hand for var statement, which will expand to:
-var foo;
-foo = function() {};
-```
-
-the difference between these two methods of defining functions:
+For a function statement, its definition is hoisted to the top.
 
 ```javascript
 console.log(typeof statementFoo); // function
@@ -856,10 +848,12 @@ statementFoo(); // NOTE this function runs fine here
 console.log(typeof expressionFoo); // undefined
 expressionFoo(); // NOTE throws an error, expressionFoo is still undefined here
 
+// function statement/declaration
 function statementFoo() {
   console.log("an statement function");
 }
 
+// function expression
 var expressionFoo = function() {
   console.log("an expression function");
 };
@@ -867,18 +861,58 @@ var expressionFoo = function() {
 
 If a function statement/declaration is inside a code block (e.g. `if` block):
 
-- in unstrict mode, the function name is hoisted, it's visible outside of the code block, but it's value would be empty until the declaration runs;
-- in strict mode, the function is block-scoped, it's only visible inside the block;
+- In unstrict mode, the function name is hoisted, it's visible outside of the code block, but it's value would be empty until the declaration, like `var`;
+- In strict mode, the function is block-scoped, it's only visible inside the block, like `let`;
 
-### the `arguments` parameter
+### Function properties
 
-- each function receives two pseudo parameters: `arguments` and `this`;
+```js
+let foo = function(a, b, ...rest) {
+  // do something
+};
 
-- `arguments` is an **array-like object** which has an `length` property and contains all the parameters;
+foo.name;
+// 'foo'
 
-- it is recommended to use rest syntax instead of `arguments`;
+foo.length; // the ...rest parameter doesn't count
+// 2
+```
 
-```javascript
+### Named Function Expressions (NFE)
+
+```js
+let foo = function hello(name) {
+  if (name) {
+    console.log(`Hello ${name}`);
+  } else {
+    hello("Guest");
+  }
+};
+
+foo.name;
+// 'hello'
+
+foo();
+```
+
+- `hello` is the name of the function;
+- It allows the function to call itself;
+- It is only visible inside the function;
+
+There is no way to add an "internal" name for a function statement.
+
+### The `arguments` parameter
+
+Each function receives two pseudo parameters: `arguments` and `this`;
+
+| `argument`           | ...rest parameters  |
+| -------------------- | ------------------- |
+| all arguments        | only rest arguments |
+| array-like, iterable | array               |
+
+**Always use ...rest parameters when possible**
+
+```js
 // use arguments to create a function with variable length parameters
 function sum() {
   var i,
@@ -898,6 +932,42 @@ function sum(...args) {
 }
 
 console.log(sum(1, 2, 3, 4));
+```
+
+### Arrow functions
+
+- Do not have `this`;
+- Do not have `arguments`;
+- Can't be called with `new`;
+
+They don't have their own "context", but rather work in the current one.
+
+```js
+function defer(f, ms) {
+  return function() {
+    setTimeout(() => f.apply(this, arguments), ms); // `this` and `arguments` come from outer context
+  };
+}
+
+function sayHi(who) {
+  alert("Hello, " + who);
+}
+
+let sayHiDeferred = defer(sayHi, 2000);
+sayHiDeferred("John"); // Hello, John after 2 seconds
+```
+
+Without an arrow function, it would look like:
+
+```js
+function defer(f, ms) {
+  return function(...args) {
+    let ctx = this;
+    setTimeout(function() {
+      return f.apply(ctx, args); // pass in `this` and `arguments` from outer context
+    }, ms);
+  };
+}
 ```
 
 ## The `this` keyword
@@ -1054,55 +1124,65 @@ output:
 
 when the anonymous function executes, the value of `i` is `4`
 
-you can fix this by add a separate closure for each loop iteration, in this case, the `i` is separate for each closure
+You can fix this by:
 
-```js
-const arr = [10, 12, 15, 21];
-for (var i = 0; i < arr.length; i++) {
-  setTimeout(
-    (function(i) {
-      return function() {
-        console.log("The index of this number is: " + i);
-      };
-    })(i),
-    300
-  );
-}
-```
+- Adding a separate closure for each loop iteration, in this case, the `i` is separate for each closure;
 
-or use `let`, it creates a new block binding for each iteration (**this is because `let` is block scoped, a new 'backpack' is created for each iteration, in contrast, `var` is function scoped, so the `i` is shared in the first example**)
+  ```js
+  const arr = [10, 12, 15, 21];
+  for (var i = 0; i < arr.length; i++) {
+    setTimeout(
+      (function(i) {
+        return function() {
+          console.log("The index of this number is: " + i);
+        };
+      })(i),
+      300
+    );
+  }
+  ```
 
-```javascript
-const arr = [10, 12, 15, 21];
-for (let i = 0; i < arr.length; i++) {
-  // using let, it creates a new binding
-  // every single time the function is created
-  // read more here: http://exploringjs.com/es6/ch_variables.html#sec_let-const-loop-heads
-  setTimeout(function() {
-    console.log("The index of this number is: " + i);
-  }, 300);
-}
-```
+- Or using `let`, which creates a new block binding for each iteration
+
+  - **`let` is block scoped**, a new 'backpack' is created for each iteration, in contrast, `var` is function scoped, so the `i` is shared in the first example;
+  - Although `let i` is outside of `{...}`, but `for` construct is special, the declaration is still considered a part of the block;
+  - Read more here: http://exploringjs.com/es6/ch_variables.html#sec_let-const-loop-heads
+
+  ```javascript
+  const arr = [10, 12, 15, 21];
+  for (let i = 0; i < arr.length; i++) {
+    setTimeout(function() {
+      console.log("The index of this number is: " + i);
+    }, 300);
+  }
+  ```
 
 ### Temporal Dead Zone
 
 See [let - MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/let) for details
 
-- `var` declarations will be hoisted to the top of **function scope**, and the value is `undefined`;
-- `let` bindings are created at the top of the **block scope**, but unlike `var`, you can't read or write it, you get a `ReferenceError` if using it before the definition is evaluated;
+- `var` declarations will be hoisted to the top of **function scope**, but the value assignment is not, so the value is `undefined` before assignment;
+- `let` bindings are created at the top of the **block scope**, but unlike `var`, you can't read or write it, you get a `ReferenceError` if using it before the declaration;
 
 ```js
 function do_something() {
   console.log(bar); // undefined
+  console.log(baz); // undefined
   console.log(foo); // ReferenceError, in 'Temporal Dead Zone'
+
   var bar = 1;
+
+  if (false) {
+    var baz = 10; // this will never be executed, but the `baz` declaration is still hoisted
+  }
+
   let foo = 2;
 }
 ```
 
 the `foo` in `(foo + 55)` is the `foo` in the `if` block, not the `foo` declared by `var`
 
-````js
+```js
 function test() {
   var foo = 33;
   if (true) {
@@ -1112,52 +1192,23 @@ function test() {
 test();
 ```
 
-## Regular Expression
+### Lexical environment
 
-### named groups
+- In JS, every function, code block `{...}` and the script as whole have an internal associated object known as the `Lexical Environment`, which saves all local variables and a reference to the outer lexical environment;
+- All functions have a hidden property `[[Environment]]`, which remembers the Lexical Environment in which the function was created;
 
-_ES 2018_
+  ![Lexical Environment](./images/js_lexical_environment.png)
 
-```js
-const date = "2018-05-16";
-const re = /(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})/u;
-const result = re.exec(date);
-console.log(result);
-//[ '2018-05-16',
-//  '2018',
-//  '05',
-//  '16',
-//  index: 0,
-//  input: '2018-05-16',
-//  groups: { year: '2018', month: '05', day: '16' } ]
-
-console.log(result.groups.year); // get the value of a matched group
-//2018
-````
-
-back reference named groups in a regular expression
-
-```js
-const re = /(?<fruit>apple|orange) == \k<fruit>/u;
-
-console.log(
-  re.test("apple == apple"), // true
-  re.test("orange == orange"), // true
-  re.test("apple == orange") // false
-);
-```
-
-use named groups in string repalcing
-
-```js
-const re = /(?<firstName>[a-zA-Z]+) (?<lastName>[a-zA-Z]+)/u;
-
-console.log("Arya Stark".replace(re, "$<lastName>, $<firstName>")); // Stark, Arya
-```
+- After `makeCounter` finishes, the lexical environment is still available thru `counter.[[Environment]]`, so it won't be garbage collected, if you do `counter = null;`, then the lexical environment will be cleared;
+- For `for (let i = 0; i < 10; i++){ }`, a new lexical environment is created for every run of the code in `{...}`, each one has its own `i` variable;
+- In theory, all outer variables of a function should be available as long as the function is alive, but some JS engines (V8) try to optimize that, a side effect is that such variable will become unavailable in debugging;
 
 ## Iterations
 
 Iterations over any iterables: Objects, Arrays, strings, Maps, Set etc.
+
+- `Array.from()` converts any iterable or array-like value into an array;
+- `...` spread operator works on any iterable;
 
 - `Object.keys`, `Object.values` and `Object.entries`
 
@@ -1230,6 +1281,7 @@ Iterations over any iterables: Objects, Arrays, strings, Maps, Set etc.
 
   - `for..in` is optimized for generic objects, not arrays, it's slower than `for..of` on arrays;
   - `for..in` iterates over all properties, it gets keys from the prototype chain as well, but not symbol properties;
+  - `for..of` works on any iterable value;
 
 * Custom iterator
 
@@ -1434,29 +1486,338 @@ See the Pen <a href='https://codepen.io/garylirocks/pen/yKRzeM/'>async/await</a>
 
 - **Run-to-completion**: Each message in the loop is processed completely before any other message is processed;
 
-### `setTimout`
+### `setTimout` and `setInterval`
 
-The time argument for setTimout only indicates the **minimum** delay after which the message will be pushed into the queue, it only runs only when other messages before it have been cleared;
+- The time argument for `setTimout` only indicates the **minimum** delay after which the message will be pushed into the queue, it only runs only when other messages before it have been cleared;
 
-```js
-const s = new Date().getSeconds();
+  ```js
+  const s = new Date().getSeconds();
 
-setTimeout(function() {
-  // prints out "2", meaning that the callback is not called immediately after 500 milliseconds.
-  console.log("Ran after " + (new Date().getSeconds() - s) + " seconds");
-}, 500);
+  setTimeout(function() {
+    // prints out "2", meaning that the callback is not called immediately after 500 milliseconds.
+    console.log("Ran after " + (new Date().getSeconds() - s) + " seconds");
+  }, 500);
 
-while (true) {
-  if (new Date().getSeconds() - s >= 2) {
-    console.log("Good, looped for 2 seconds");
-    break;
+  while (true) {
+    if (new Date().getSeconds() - s >= 2) {
+      console.log("Good, looped for 2 seconds");
+      break;
+    }
   }
-}
-```
+  ```
+
+- Nested `setTimeout` vs. `setInterval`
+
+  Nested `setTimeout` can set the execution delay more precisely than `setInterval`:
+
+  ```js
+  // setInterval
+  let i = 1;
+  setInterval(function() {
+    func(i++);
+  }, 100);
+  ```
+
+  ![setInterval](./images/js_set_interval.png)
+
+  ```js
+  // nested setTimeout
+  let j = 1;
+  setTimeout(function run() {
+    func(j++);
+    setTimeout(run, 100);
+  }, 100);
+  ```
+
+  ![nested setTimeout](./images/js_set_timeout_nested.png)
+
+- Garbage collection
+
+  - When a function is passed in `setTimeout/setInterval`, an internal reference is created, so it won't be garbage collected;
+  - For `setInterval` the function will be cleared when `clearInterval` is called;
+  - Since a function references the outer lexical environment, that takes memory, so it's better to **cancel a timer when it's not needed**;
 
 ### Multiple runtimes
 
 A _web worker_ or a cross-origin _iframe_ has its own stack, heap, and message queue. Two distinct runtimes can only communicate through sending messages via the `postMessage` method. This method adds a message to the other runtime if the latter listens to message events.
+
+## ECMAScript
+
+The language specification is managed by ECMA's TC39 committee now, the general process of making changes to the specification is here: [TC39 Process]
+
+There are 5 stages, from 0 to 4, all finished proposals (reached stage 4) are here: https://github.com/tc39/proposals/blob/master/finished-proposals.md
+
+## Module Systems
+
+https://www.airpair.com/javascript/posts/the-mind-boggling-universe-of-javascript-modules
+
+### AMD (Asynchronous Module Design)
+
+asynchronous, unblocking
+
+```js
+// this is an AMD module
+define(function() {
+  return something;
+});
+```
+
+### CommonJS (CJS)
+
+synchronous, blocking, easier to understand
+
+```js
+// and this is CommonJS
+module.exports = something;
+```
+
+### ES6
+
+```js
+// mod-a.js
+const person = {
+  name: "gary",
+  age: 30
+};
+
+export const a = 20; // one syntax
+const b = 30;
+
+export default person;
+export { b }; // another way
+```
+
+`app.js`:
+
+```js
+// main.js
+import theDefault from "./mod-a";
+import * as all from "./mod-a";
+
+console.log("theDefault:", theDefault);
+console.log("all:", all);
+```
+
+```sh
+theDefault: { name: 'gary', age: 30 }
+all: [Module] { a: 20, b: 30, default: { name: 'gary', age: 30 } }
+```
+
+- For both default and named exports, you can put `export`, `export default` directly before the variable definition or do it at the end of file, in the above example, both `a`, `b` are exported;
+
+- Or you can import everything on one line:
+
+  ```js
+  import theDefault, { a as myA, b } from "./mod-a";
+  ```
+
+- If you just want to trigger the side effect, do not actually import any binding:
+
+  ```js
+  import "./mod-a";
+  ```
+
+## Error Handling
+
+### Error
+
+1. Common builtin Errors in JS
+
+   ```js
+   a; // ReferrenceError: not defined
+   @@; // SyntaxError: invalid or unexpected token
+   "a".foo(); // TypeError: not a function
+   Array(-2); // RangeError: bad arguments
+   ```
+
+2. You can create your own custom Error classes extending the builtin ones:
+
+   ```js
+   class MyError extends Error {
+     consturctor(message) {
+       super(message);
+       this.name = "MyError";
+     }
+   }
+   ```
+
+3. A `throw` statement terminates current code block (like `return`, `break`, `continue`), and passes control to the first `catch` block (you can throw any value, not just `Error` object, but it should be avoided);
+
+### `try...catch...finally`
+
+- [MDN - try...catch](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/try...catch)
+- [MDN - onerror](https://developer.mozilla.org/en-US/docs/Web/API/GlobalEventHandlers/onerror)
+
+1. Check error type using `instanceof`
+
+   ```js
+   try {
+     foo.bar();
+   } catch (e) {
+     if (e instanceof EvalError) {
+       console.log(e.name + ": " + e.message);
+     } else if (e instanceof RangeError) {
+       console.log(e.name + ": " + e.message);
+     }
+     // ... etc
+   }
+   ```
+
+2. the catch block only catches synchronous errors, not async ones (**you should use a promise chain to catch async errors**):
+
+   ```js
+   try {
+     setTimeout(() => {
+       console.log("in setTimeout");
+       throw new Error("throw in setTimeout"); // this error is not caught
+     });
+     console.log("in try");
+   } catch (e) {
+     console.log("in catch");
+   }
+   ```
+
+3. in a browser, when there is an unhandled error, it goes to `window.onerror`, it can be used for error logging;
+
+4. `finally` block always executes, if it returns a value, it becomes the entire block's return value, regardless of any return statement or error thrown in `try` and `catch` blocks;
+
+   ```js
+   function foo() {
+     try {
+       throw new Error("xx");
+       return 1;
+     } catch (e) {
+       console.log("in catch");
+       throw e;
+       return 2;
+     } finally {
+       console.log("in finally");
+       return 3; // would throw an error if there is no 'return' here
+     }
+
+     return 100;
+     console.log("after try...catch");
+   }
+
+   console.log(foo());
+   ```
+
+   outputs:
+
+   ```
+   in catch
+   in finally
+   3
+   ```
+
+### Promise
+
+[javascript.info - Promise error handling](https://javascript.info/promise-error-handling)
+[MDN - unhandledrejection](https://developer.mozilla.org/en-US/docs/Web/API/Window/unhandledrejection_event)
+
+```js
+new Promise((resolve, reject) => {
+  reject('reject it');
+  .finally(() => {
+    console.log('in first finally');
+  })
+  .then(res => {
+    console.log('in then: ', res);
+  })
+  .catch(e => {
+    console.log('in catch: ', e);
+    throw e;
+  })
+  .finally(() => {
+    console.log('in last finally');
+  });
+```
+
+outputs:
+
+```
+in first finally
+in catch:  reject it
+in last finally
+
+Uncaught (in promise) reject it
+```
+
+1. a `finally` block always executes, it doesn't have access to the resolved result or the rejection error;
+2. a `catch` block returns a resolved promise, unless it throws an error it self;
+3. in a browser, any unhandledrejection goes to the `unhandledrejection` event handler on `window`, it can be used for error logging;
+4. you should **always** add a `catch` to your promise chain;
+
+### async/await
+
+[javascript.info - async/await](https://javascript.info/async-await)
+
+```js
+const loadSomething = () => {
+  return fetchSomeData()
+    .then(data => doSomethingWith(data))
+    .catch(error => logAndReport(error));
+};
+```
+
+is the same as:
+
+```js
+const loadSomething = async () => {
+  try {
+    const data = await fetchSomeData();
+    return doSomethingWith(data);
+  } catch (error) {
+    logAndReport(error);
+  }
+};
+```
+
+1. the promise after `await` either resolves and return a value or throws an error;
+2. you should use normal `try...catch..finally` block to handle errors;
+
+## Regular Expression
+
+### Named groups
+
+_ES 2018_
+
+```js
+const date = "2018-05-16";
+const re = /(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})/u;
+const result = re.exec(date);
+console.log(result);
+//[ '2018-05-16',
+//  '2018',
+//  '05',
+//  '16',
+//  index: 0,
+//  input: '2018-05-16',
+//  groups: { year: '2018', month: '05', day: '16' } ]
+
+console.log(result.groups.year); // get the value of a matched group
+//2018
+```
+
+back reference named groups in a regular expression
+
+```js
+const re = /(?<fruit>apple|orange) == \k<fruit>/u;
+
+console.log(
+  re.test("apple == apple"), // true
+  re.test("orange == orange"), // true
+  re.test("apple == orange") // false
+);
+```
+
+use named groups in string repalcing
+
+```js
+const re = /(?<firstName>[a-zA-Z]+) (?<lastName>[a-zA-Z]+)/u;
+
+console.log("Arya Stark".replace(re, "$<lastName>, $<firstName>")); // Stark, Arya
+```
 
 ## Immutability
 
@@ -1731,241 +2092,6 @@ You need to use your custom methods or something like `_.isEqual` from Lo-Dash t
   });
   // => {a: 5, b: 6}
   ```
-
-## ECMAScript
-
-The language specification is managed by ECMA's TC39 committee now, the general process of making changes to the specification is here: [TC39 Process]
-
-There are 5 stages, from 0 to 4, all finished proposals (reached stage 4) are here: https://github.com/tc39/proposals/blob/master/finished-proposals.md
-
-## Module Systems
-
-https://www.airpair.com/javascript/posts/the-mind-boggling-universe-of-javascript-modules
-
-### AMD (Asynchronous Module Design)
-
-asynchronous, unblocking
-
-```js
-// this is an AMD module
-define(function() {
-  return something;
-});
-```
-
-### CommonJS (CJS)
-
-synchronous, blocking, easier to understand
-
-```js
-// and this is CommonJS
-module.exports = something;
-```
-
-### ES6
-
-```js
-// mod-a.js
-const person = {
-  name: "gary",
-  age: 30
-};
-
-export const a = 20; // one syntax
-const b = 30;
-
-export default person;
-export { b }; // another way
-```
-
-`app.js`:
-
-```js
-// main.js
-import theDefault from "./mod-a";
-import * as all from "./mod-a";
-
-console.log("theDefault:", theDefault);
-console.log("all:", all);
-```
-
-```sh
-theDefault: { name: 'gary', age: 30 }
-all: [Module] { a: 20, b: 30, default: { name: 'gary', age: 30 } }
-```
-
-- For both default and named exports, you can put `export`, `export default` directly before the variable definition or do it at the end of file, in the above example, both `a`, `b` are exported;
-
-- Or you can import everything on one line:
-
-  ```js
-  import theDefault, { a as myA, b } from "./mod-a";
-  ```
-
-- If you just want to trigger the side effect, do not actually import any binding:
-
-  ```js
-  import "./mod-a";
-  ```
-
-## Error Handling
-
-### Error
-
-1. Common builtin Errors in JS
-
-   ```js
-   a; // ReferrenceError: not defined
-   @@; // SyntaxError: invalid or unexpected token
-   "a".foo(); // TypeError: not a function
-   Array(-2); // RangeError: bad arguments
-   ```
-
-2. You can create your own custom Error classes extending the builtin ones:
-
-   ```js
-   class MyError extends Error {
-     consturctor(message) {
-       super(message);
-       this.name = "MyError";
-     }
-   }
-   ```
-
-3. A `throw` statement terminates current code block (like `return`, `break`, `continue`), and passes control to the first `catch` block (you can throw any value, not just `Error` object, but it should be avoided);
-
-### `try...catch...finally`
-
-- [MDN - try...catch](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/try...catch)
-- [MDN - onerror](https://developer.mozilla.org/en-US/docs/Web/API/GlobalEventHandlers/onerror)
-
-1. Check error type using `instanceof`
-
-   ```js
-   try {
-     foo.bar();
-   } catch (e) {
-     if (e instanceof EvalError) {
-       console.log(e.name + ": " + e.message);
-     } else if (e instanceof RangeError) {
-       console.log(e.name + ": " + e.message);
-     }
-     // ... etc
-   }
-   ```
-
-2. the catch block only catches synchronous errors, not async ones (**you should use a promise chain to catch async errors**):
-
-   ```js
-   try {
-     setTimeout(() => {
-       console.log("in setTimeout");
-       throw new Error("throw in setTimeout"); // this error is not caught
-     });
-     console.log("in try");
-   } catch (e) {
-     console.log("in catch");
-   }
-   ```
-
-3. in a browser, when there is an unhandled error, it goes to `window.onerror`, it can be used for error logging;
-
-4. `finally` block always executes, if it returns a value, it becomes the entire block's return value, regardless of any return statement or error thrown in `try` and `catch` blocks;
-
-   ```js
-   function foo() {
-     try {
-       throw new Error("xx");
-       return 1;
-     } catch (e) {
-       console.log("in catch");
-       throw e;
-       return 2;
-     } finally {
-       console.log("in finally");
-       return 3; // would throw an error if there is no 'return' here
-     }
-
-     return 100;
-     console.log("after try...catch");
-   }
-
-   console.log(foo());
-   ```
-
-   outputs:
-
-   ```
-   in catch
-   in finally
-   3
-   ```
-
-### Promise
-
-[javascript.info - Promise error handling](https://javascript.info/promise-error-handling)
-[MDN - unhandledrejection](https://developer.mozilla.org/en-US/docs/Web/API/Window/unhandledrejection_event)
-
-```js
-new Promise((resolve, reject) => {
-  reject('reject it');
-  .finally(() => {
-    console.log('in first finally');
-  })
-  .then(res => {
-    console.log('in then: ', res);
-  })
-  .catch(e => {
-    console.log('in catch: ', e);
-    throw e;
-  })
-  .finally(() => {
-    console.log('in last finally');
-  });
-```
-
-outputs:
-
-```
-in first finally
-in catch:  reject it
-in last finally
-
-Uncaught (in promise) reject it
-```
-
-1. a `finally` block always executes, it doesn't have access to the resolved result or the rejection error;
-2. a `catch` block returns a resolved promise, unless it throws an error it self;
-3. in a browser, any unhandledrejection goes to the `unhandledrejection` event handler on `window`, it can be used for error logging;
-4. you should **always** add a `catch` to your promise chain;
-
-### async/await
-
-[javascript.info - async/await](https://javascript.info/async-await)
-
-```js
-const loadSomething = () => {
-  return fetchSomeData()
-    .then(data => doSomethingWith(data))
-    .catch(error => logAndReport(error));
-};
-```
-
-is the same as:
-
-```js
-const loadSomething = async () => {
-  try {
-    const data = await fetchSomeData();
-    return doSomethingWith(data);
-  } catch (error) {
-    logAndReport(error);
-  }
-};
-```
-
-1. the promise after `await` either resolves and return a value or throws an error;
-2. you should use normal `try...catch..finally` block to handle errors;
 
 ## Javascript: The Good Parts
 
