@@ -14,9 +14,17 @@
 - [Objects](#objects)
   - [Define an object](#define-an-object)
   - [Property order](#property-order)
+  - [Property flags/descriptors](#property-flagsdescriptors)
+  - [Seal/freeze an object](#sealfreeze-an-object)
+  - [Accessor properties](#accessor-properties)
   - [Transforming objects](#transforming-objects)
 - [Prototype](#prototype)
   - [Inheritance by Prototype](#inheritance-by-prototype)
+  - [What is this](#what-is-this)
+  - [Native prototypes](#native-prototypes)
+    - [Polyfilling](#polyfilling)
+    - [Borrowing from prototypes](#borrowing-from-prototypes)
+  - [Plain objects](#plain-objects)
 - [Symbol](#symbol)
   - [Main usages](#main-usages)
   - [Symbol.iterator](#symboliterator)
@@ -280,36 +288,54 @@ normalizedQ.codePointAt(2).toString(16); // '307'
 
 ### Define an object
 
-- object literal
+- Object literal
 
-  ```javascript
-  var circle = {
-      radius: 2;
+  ```js
+  let circle = {
+    radius: 2;
   };
   ```
 
-- the `Object` constructor:
+- The `Object` constructor
 
-  ```javascript
-  var circle = new Object();
+  ```js
+  let circle = new Object();
   circle.radius = 2;
   ```
 
-- custom constructor:
+- Constructor function
 
-  ```javascript
-  var Circle = function(radius) {
+  ```js
+  let Circle = function(radius) {
     this.radius = radius;
     this.area = function() {
       return Math.PI * this.radius * this.radius;
     };
   };
 
-  var circle = new Circle(2);
+  let circle = new Circle(2);
   ```
 
   - It's a good practice to capitalize the first letter of constructor name and always call it with `new`;
   - **constructor function return `this` if no explicit `return`**
+
+- `Object.create`
+
+  ```js
+  let shape = { x: 0 };
+
+  // #### create an object using shape as the prototype
+  let circle = Object.create(shape, { radius: { value: 10 } });
+
+  c.radius;
+  // 10
+
+  // #### copy all properties and the right [[Prototype]]
+  let clone = Object.create(
+    Object.getPrototypeOf(obj),
+    Object.getOwnPropertyDescriptors(obj)
+  );
+  ```
 
 ### Property order
 
@@ -323,6 +349,104 @@ Object.keys(a);
 Integer properties are ordered, others appear in creation order, so `1` comes before `64` when iterating through all the properties;
 
 _A property key can only be a string or a symbol_, when you use a number as property key, it's converted to a string;
+
+### Property flags/descriptors
+
+- `writable`
+- `enumerable`
+- `configurable` whether the property can be deleted and flags can be modified:
+  - If a property is non-configurable, you can't change it back;
+  - A non-configurable property can still be writable;
+
+You can get these flags by `Object.getOwnPropertyDescriptor` and change them using `Object.defineProperty`
+
+There are `Object.getOwnPropertyDescriptors` and `Object.defineProperties`, which allows you to define and access multiple properties' flags at once;
+
+```js
+let clone = Object.defineProperties({}, Object.getOwnPropertyDescriptors(obj));
+```
+
+This allows you to copy all properties of an object, including symbolic properties and all property flags.
+
+### Seal/freeze an object
+
+- `Object.preventExtensions(obj)`: forbids adding new properties;
+- `Object.seal(obj)`: forbids adding/removing of properties, sets `configurable: false` for all properties;
+- `Object.freeze(obj)`: forbids adding/removing/changing of properties, sets `configurable: false, writable: false` for all properties;
+
+There are methods to check an objects
+
+### Accessor properties
+
+There are two kinds of properties:
+
+|                    | Data properties | Accessor properties |
+| ------------------ | --------------- | ------------------- |
+| Unique Descriptors | value, writable | get, set            |
+
+- A property can be either a data property or an accessor property, not both;
+
+Usages:
+
+- Use an accessor property as a wrapper for a data property, so you can control what value is allowed for the data property;
+- For compatiblity;
+
+```js
+"use strict";
+
+// #### define fullName as an accessor property
+var person = {
+  firstName: "Gary",
+  lastName: "Li",
+  age: 20,
+  get fullName() {
+    return this.firstName + " " + this.lastName;
+  },
+
+  set fullName(value) {
+    [this.firstName, this.lastName] = value.split(" ");
+  }
+};
+
+person.fullName;
+// 'Gary Li'
+person.fullName = "Joe Doe";
+// 'Joe Doe'
+
+// #### can't define a getter function for an existing data property, this has no effect
+Object.defineProperty(person, "age", {
+  get age() {
+    return 100;
+  }
+});
+
+// #### use defineProperty
+let o = {};
+Object.defineProperty(o, "name", {
+  get: function() {
+    // ...
+  },
+
+  set: function(value) {
+    // ...
+  }
+});
+```
+
+Refactor the person object above, add a `birthday` property, and convert `age` to an accessor property for compatibility, so it's still available:
+
+```js
+var person = {
+  firstName: "Gary",
+  lastName: "Li",
+  birthday: new Date("2000-01-01"),
+
+  get age() {
+    return new Date().getFullYear() - this.birthday.getFullYear();
+  }
+  // ...
+};
+```
 
 ### Transforming objects
 
@@ -339,18 +463,9 @@ const newAges = Object.fromEntries(
 
 ## Prototype
 
-```javascript
-function Dog(breed) {
-  this.breed = breed;
-}
-
-var buddy = new Dog("golden Retriever");
-
-// add a method to prototype of Dog
-Dog.prototype.bark = function() {
-  console.log("Woof");
-};
-```
+- In JS, objects have a special hidden property `[[Prototype]]`, which can be `null` or another object;
+- `__proto__` is an accessor property of `Object.prototype`, a historical getter/setter for `[[Prototype]]`, you should use newer functions `Object.getPrototypeOf/Object.setPrototypeOf` when possible;
+- Although you can get/set `[[Prototype]]` at anytime, but usually we only set it once at the object creation time, changing an object's prototype is very slow and will break internal optimizations;
 
 ### Inheritance by Prototype
 
@@ -364,61 +479,158 @@ function Gizmo(id) {
 Gizmo.prototype.toString = function() {
   return "gizmo " + this.id;
 };
-var g = new Gizmo(1);
+
+let g = new Gizmo(1);
 ```
 
 ![Object](./images/js_obj.png)
 
-- `Gizmo` is a Function Object, which has a `prototype` property points to another Object;
-- `Gizmo.prototype` has a `constructor` property points to `Gizmo`, a `__proto__` property points to `Object.prototype`;
-- `g` does **not** have a `prototype` property, but has a `__proto__` property, which points to `Gizmo.prototype`
+- `Gizmo` is a function object, which has a `prototype` property;
+- `Gizmo.prototype` has a `constructor` property pointing back to `Gizmo`, `[[Prototype]]` pointing to `Object.prototype`;
+- `g` is a plain object, does **not** have a `prototype` property, its `[[Prototype]]` points to `Gizmo.prototype`
 
-```javascript
-g.__proto__ === Gizmo.prototype; // true
-Gizmo.prototype.__proto__ === Object.prototype; // true
-```
+  ```js
+  g.__proto__ === Gizmo.prototype; // true
+  Gizmo.prototype.__proto__ === Object.prototype; // true
+  ```
 
-- then add a Hoozit constructor:
+In general:
 
-```javascript
-function Hoozit(id) {
-  this.id = id;
-}
-Hoozit.prototype = new Gizmo();
-Hoozit.prototype.test = function(id) {
-  return this.id === id;
-};
-var h = new Hoozit(2);
-```
+- **Every function (not arrow functions) has a `prototype` property, this is a normal property, not the hidden `[[Prototype]]` property;**
+- **`Foo.prototype` is used to build the prototype chain, `(new Foo).__proto__ === Foo.prototype`;**
+- When using `new Foo()` to create an object, the function `Foo` will always be run, although `Foo.prototype` may have been changed to point to something else;
 
-- **only functions have `prototype` property;**
-- **every object has an `__proto__` property;**
-- `(new Foo).__proto__ === Foo.prototype`, so the `prototype` of a function is used to build the `__proto__` chain;
-- **everytime a function is defined, it got a prototype object, `Foo` is an object, `Foo.prototype` is another object;**
+  ```js
+  function Animal(name, age) {
+    this.name = name;
+    this.age = age;
+  }
 
-- when using `new Foo()` to create an object, the function `Foo()` will always be run, although `Foo.prototype.constructor` can point to another function
+  Animal.prototype.constructor === Animal; // 'constructor' points to the function now
+  // true
 
-        > function Animal(name, age) {
-        ... this.name = name;
-        ... this.age = age;
-        ... }
-        undefined
+  Animal.prototype = { x: 10 }; // 'prototype' can be changed to point to another object
 
-        > Animal.prototype.constructor === Animal   // 'constructor' points to the function now
-        true
+  Animal.prototype.constructor === Animal; // Animal.prototype.constructor does not point to Animal anymore
+  // false
 
-        > Animal.prototype = {} // 'prototype' can be changed to point to another object
-        {}
+  a = new Animal("Snowball", 5); // Animal is always used to create the object
+  // { name: 'Snowball', age: 5 }
 
-        > Animal.prototype.constructor
-        [Function: Object]
+  a.__proto__; // a.__proto__ always points to Animal.prototype
+  // { x: 10 }
+  ```
 
-        > a = new Animal('Snowball', 5) // although Animal.prototype does not point to Animal now, Animal is still used when creating an object
-        { name: 'Snowball', age: 5 }
-
-another illustration created by myself:
+Another illustration created by myself:
 
 ![JS prototype system](./images/JavaScript.object.prototype.system.png)
+
+### What is `this`
+
+```js
+let user = {
+  name: "John",
+  surname: "Smith",
+
+  set fullName(value) {
+    [this.name, this.surname] = value.split(" ");
+  },
+
+  get fullName() {
+    return `${this.name} ${this.surname}`;
+  }
+};
+
+// admin inherits from user
+let admin = {
+  __proto__: user,
+  isAdmin: true
+};
+
+admin.fullName = "Gary Li";
+// 'Gary Li'
+
+admin;
+// { isAdmin: true, name: 'Gary', surname: 'Li' }
+
+user;
+// { name: 'John', surname: 'Smith', fullName: [Getter/Setter] }
+```
+
+When you call `admin.fullName`, `this` refers to `admin`, not `user`, so `name` and `surname` is added to `admin`;
+
+**No matter where the method is found: in an object or its prototype. In a method call, `this` is always the object before the dot.**
+
+### Native prototypes
+
+Native constructors have their own prototypes:
+
+- `Object.prototype`
+- `Function.prototype`
+- `Array.prototype`
+- `Date.prototype`
+- `Number.prototype`
+- `String.prototype`
+- `Boolean.prototype`
+- `Symbol.prototype`
+
+![object prototype](./images/js_native_prototypes.png)
+
+- For primitive values such as numbers, strings and booleans, when you try to access their properties, temporary wrapper objects are created using built-in constructors `String`, `Number` and `Boolean`;
+- `null` and `undefined` don't have wrapper objects and prototypes;
+
+#### Polyfilling
+
+It's generally a bad idea to modify a native prototype except for polyfilling:
+
+```js
+if (!String.prototype.repeat) {
+  // if there's no such method add it to the prototype
+
+  String.prototype.repeat = function(n) {
+    // actually, the code should be a little bit more complex than that
+    // (the full algorithm is in the specification)
+    // but even an imperfect polyfill is often considered good enough
+    return new Array(n + 1).join(this);
+  };
+}
+
+alert("La".repeat(3)); // LaLaLa
+```
+
+#### Borrowing from prototypes
+
+```js
+// #### o is an array-like object
+// #### it doesn't have methods from Array.prototype
+let o = { 0: "Hello", 1: "world", length: 2 };
+
+// #### 1) call the prototype method directly
+Array.prototype.join.call(o, " | ");
+// 'Hello | world'
+
+// #### 2) borrow the prototype method
+o.join = Array.prototype.join;
+o.join(" | ");
+// 'Hello | world'
+```
+
+### Plain objects
+
+Normally an object has `[[Prototype]]`, and you can access it thru the accessor property `__proto__`. But, if you want to use an object as a dictionary, then `__proto__` can't be used as a key, to avoid this, either:
+
+- Use `Map`;
+- Or use a "very plain" or "pure dictionary" object:
+
+  ```js
+  // #### use null as [[Prototype]] to create a very plain object
+  let obj = Object.create(null);
+
+  obj.__proto__ = 10; // now __proto__ becomes a plain property
+
+  obj.toString(); // but it doesn't have access to Object.prototype methods anymore
+  // TypeError
+  ```
 
 ## Symbol
 
@@ -871,11 +1083,14 @@ let foo = function(a, b, ...rest) {
   // do something
 };
 
-foo.name;
-// 'foo'
+Object.getOwnPropertyNames(X);
+// [ 'length', 'name', 'arguments', 'caller', 'prototype' ]
 
 foo.length; // the ...rest parameter doesn't count
 // 2
+
+foo.name;
+// 'foo'
 ```
 
 ### Named Function Expressions (NFE)
@@ -1281,6 +1496,7 @@ Iterations over any iterables: Objects, Arrays, strings, Maps, Set etc.
 
   - `for..in` is optimized for generic objects, not arrays, it's slower than `for..of` on arrays;
   - `for..in` iterates over all properties, it gets keys from the prototype chain as well, but not symbol properties;
+  - If a property is not enumerable, it will not be listed, that's why you don's see properties from `Object.prototype`;
   - `for..of` works on any iterable value;
 
 * Custom iterator
