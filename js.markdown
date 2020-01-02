@@ -52,6 +52,15 @@
 - [Closures](#closures)
   - [Temporal Dead Zone](#temporal-dead-zone)
   - [Lexical environment](#lexical-environment)
+- [Classes](#classes)
+  - [Class vs. constructor function](#class-vs-constructor-function)
+  - [Getters/setters](#getterssetters)
+  - [Class inheritance](#class-inheritance)
+    - [Built-in classes](#built-in-classes)
+    - [Constructors](#constructors)
+    - [How super works](#how-super-works)
+  - [Static properties/methods](#static-propertiesmethods)
+  - [Mixins](#mixins)
 - [Iterations](#iterations)
 - [Promise](#promise)
   - [Callback hell](#callback-hell)
@@ -142,13 +151,13 @@ JS allows you to use some primitives as objects, such as in `'abc'.toUpperCase()
 Example:
 
 ```javascript
-typeof "abc"; // 'string'
-typeof String("abc"); // 'string'
-"abc" === String("abc"); // true
+typeof 'abc'; // 'string'
+typeof String('abc'); // 'string'
+'abc' === String('abc'); // true
 
-s = new String("abc"); // [String: 'abc']
+s = new String('abc'); // [String: 'abc']
 typeof s; // 'object'
-s === "abc"; // false
+s === 'abc'; // false
 ```
 
 ### Operators
@@ -177,7 +186,7 @@ n.toString(2);
 // 100
 
 // opposite operation
-parseInt("100", 2);
+parseInt('100', 2);
 // 4
 ```
 
@@ -188,10 +197,10 @@ parseInt("100", 2);
 use `str.localeCompare` to compare strings properly:
 
 ```js
-"Zealand" > "Österreich";
+'Zealand' > 'Österreich';
 // false
 
-"Zealand".localeCompare("Österreich");
+'Zealand'.localeCompare('Österreich');
 // 1
 ```
 
@@ -204,10 +213,10 @@ The first character of a surrogate pair has code in range `0xd800..0xdbff`, the 
 Surrogate pairs didn't exist when JS was created, so they are not processed correctly sometimes:
 
 ```js
-"a".length;
+'a'.length;
 // 1
 
-const s = "𩷶";
+const s = '𩷶';
 
 // one symbol, but the length is 2
 s.length;
@@ -249,18 +258,18 @@ Array.from(s).length; // 1
 In Unicode, there are characters that decorate other characters, such as diacritical marks. For example, `\u0307` adds a 'dot above' the preceding character, `\u0323` means 'dot below'.
 
 ```js
-"S\u0307";
+'S\u0307';
 // 'Ṡ'
 
-"S\u0307\u0323";
+'S\u0307\u0323';
 // 'Ṩ'
 ```
 
 This causes a problem: a symbol with multiple decorations can be represented in different ways.
 
 ```js
-const s1 = "S\u0307\u0323";
-const s2 = "S\u0323\u0307";
+const s1 = 'S\u0307\u0323';
+const s2 = 'S\u0323\u0307';
 
 // s1 and s2 looks the same 'Ṩ', but they are not equal
 s1 === s2; // false
@@ -270,13 +279,13 @@ There is a "unicode normalization" algorithm that brings each string to a single
 
 ```js
 // #### 'Ṩ' has its own code \u1e68 in Unicode
-const normalizedS = "S\u0307\u0323".normalize();
+const normalizedS = 'S\u0307\u0323'.normalize();
 
 normalizedS.length; // 1
 normalizedS.codePointAt(0).toString(16); // '1e68'
 
 // #### 'Q̣̇' don't have its own code, normalization will put \u0323 before \u0307
-const normalizedQ = "Q\u0307\u0323";
+const normalizedQ = 'Q\u0307\u0323';
 
 normalizedQ.length; // 3
 normalizedQ.codePointAt(0).toString(16); // '51'
@@ -340,7 +349,7 @@ normalizedQ.codePointAt(2).toString(16); // '307'
 ### Property order
 
 ```js
-a = { 64: "NZ", 1: "US", name: "gary", age: 20 };
+a = { 64: 'NZ', 1: 'US', name: 'gary', age: 20 };
 
 Object.keys(a);
 // ["1", "64", "name", "age"]
@@ -392,29 +401,29 @@ Usages:
 - For compatiblity;
 
 ```js
-"use strict";
+'use strict';
 
 // #### define fullName as an accessor property
 var person = {
-  firstName: "Gary",
-  lastName: "Li",
+  firstName: 'Gary',
+  lastName: 'Li',
   age: 20,
   get fullName() {
-    return this.firstName + " " + this.lastName;
+    return this.firstName + ' ' + this.lastName;
   },
 
   set fullName(value) {
-    [this.firstName, this.lastName] = value.split(" ");
+    [this.firstName, this.lastName] = value.split(' ');
   }
 };
 
 person.fullName;
 // 'Gary Li'
-person.fullName = "Joe Doe";
+person.fullName = 'Joe Doe';
 // 'Joe Doe'
 
 // #### can't define a getter function for an existing data property, this has no effect
-Object.defineProperty(person, "age", {
+Object.defineProperty(person, 'age', {
   get age() {
     return 100;
   }
@@ -422,7 +431,7 @@ Object.defineProperty(person, "age", {
 
 // #### use defineProperty
 let o = {};
-Object.defineProperty(o, "name", {
+Object.defineProperty(o, 'name', {
   get: function() {
     // ...
   },
@@ -437,9 +446,9 @@ Refactor the person object above, add a `birthday` property, and convert `age` t
 
 ```js
 var person = {
-  firstName: "Gary",
-  lastName: "Li",
-  birthday: new Date("2000-01-01"),
+  firstName: 'Gary',
+  lastName: 'Li',
+  birthday: new Date('2000-01-01'),
 
   get age() {
     return new Date().getFullYear() - this.birthday.getFullYear();
@@ -477,7 +486,7 @@ function Gizmo(id) {
 }
 
 Gizmo.prototype.toString = function() {
-  return "gizmo " + this.id;
+  return 'gizmo ' + this.id;
 };
 
 let g = new Gizmo(1);
@@ -514,7 +523,7 @@ In general:
   Animal.prototype.constructor === Animal; // Animal.prototype.constructor does not point to Animal anymore
   // false
 
-  a = new Animal("Snowball", 5); // Animal is always used to create the object
+  a = new Animal('Snowball', 5); // Animal is always used to create the object
   // { name: 'Snowball', age: 5 }
 
   a.__proto__; // a.__proto__ always points to Animal.prototype
@@ -529,11 +538,11 @@ Another illustration created by myself:
 
 ```js
 let user = {
-  name: "John",
-  surname: "Smith",
+  name: 'John',
+  surname: 'Smith',
 
   set fullName(value) {
-    [this.name, this.surname] = value.split(" ");
+    [this.name, this.surname] = value.split(' ');
   },
 
   get fullName() {
@@ -547,7 +556,7 @@ let admin = {
   isAdmin: true
 };
 
-admin.fullName = "Gary Li";
+admin.fullName = 'Gary Li';
 // 'Gary Li'
 
 admin;
@@ -595,7 +604,7 @@ if (!String.prototype.repeat) {
   };
 }
 
-alert("La".repeat(3)); // LaLaLa
+alert('La'.repeat(3)); // LaLaLa
 ```
 
 #### Borrowing from prototypes
@@ -603,15 +612,15 @@ alert("La".repeat(3)); // LaLaLa
 ```js
 // #### o is an array-like object
 // #### it doesn't have methods from Array.prototype
-let o = { 0: "Hello", 1: "world", length: 2 };
+let o = { 0: 'Hello', 1: 'world', length: 2 };
 
 // #### 1) call the prototype method directly
-Array.prototype.join.call(o, " | ");
+Array.prototype.join.call(o, ' | ');
 // 'Hello | world'
 
 // #### 2) borrow the prototype method
 o.join = Array.prototype.join;
-o.join(" | ");
+o.join(' | ');
 // 'Hello | world'
 ```
 
@@ -643,7 +652,7 @@ Symbol is a new primitive value type in ES6, there are three different flavors o
     Create a local symbol:
 
     ```js
-    let s = Symbol("gary symbol");
+    let s = Symbol('gary symbol');
 
     console.log(s.description);
     // 'gary symbol'
@@ -662,13 +671,13 @@ Symbol is a new primitive value type in ES6, there are three different flavors o
     these symbols exist in a _global symbol registry_, you can get one by using `Symbol.for()` (create if absent):
 
     ```js
-    let s = Symbol.for("Gary");
+    let s = Symbol.for('Gary');
     ```
 
     - it's **idempotent**, which means for any given key, you will always get the exactly same symbol:
 
       ```js
-      Symbol.for("Gary") === Symbol.for("Gary");
+      Symbol.for('Gary') === Symbol.for('Gary');
       ```
 
     - get the key of a symbol:
@@ -710,10 +719,10 @@ Symbol is a new primitive value type in ES6, there are three different flavors o
 
     ```js
     let obj = {
-      [Symbol("name")]: 1,
-      [Symbol("name")]: 2,
-      [Symbol.for("age")]: 10,
-      color: "red"
+      [Symbol('name')]: 1,
+      [Symbol('name')]: 2,
+      [Symbol.for('age')]: 10,
+      color: 'red'
     };
 
     Object.keys(obj);
@@ -760,11 +769,11 @@ When an object is used in a context where a primitive value is expected, JS trie
 
 ```js
 const gary = {
-  name: "Gary",
+  name: 'Gary',
   age: 20,
   [Symbol.toPrimitive](hint) {
     console.log(hint);
-    return hint === "string" ? `{name: ${this.name}}` : this.age;
+    return hint === 'string' ? `{name: ${this.name}}` : this.age;
   }
 };
 console.log(`${gary}`);
@@ -804,7 +813,7 @@ console.log(gary * 2);
   `arr.splice(index[, deleteCount, elem1, ..., elemN])`
 
   ```js
-  a = ["Amy", "Gary", "Jack", "Zoe"];
+  a = ['Amy', 'Gary', 'Jack', 'Zoe'];
 
   // #### removing
   a.splice(1, 1);
@@ -813,13 +822,13 @@ console.log(gary * 2);
   // [ 'Amy', 'Jack', 'Zoe' ]
 
   // #### replacing
-  a.splice(2, 1, "Zolo");
+  a.splice(2, 1, 'Zolo');
   // [ 'Zoe' ]
   a;
   // [ 'Amy', 'Jack', 'Zolo' ]
 
   // #### inserting
-  a.splice(2, 0, "Nick", "Peter");
+  a.splice(2, 0, 'Nick', 'Peter');
   // []
   a;
   // [ 'Amy', 'Jack', 'Nick', 'Peter', 'Zolo' ]
@@ -831,7 +840,7 @@ console.log(gary * 2);
 
   ```js
   const a = [];
-  a[99] = "nighty nine"; // NOTE: we should not leave holes in an array like this
+  a[99] = 'nighty nine'; // NOTE: we should not leave holes in an array like this
 
   a.forEach(x => console.log(x));
   // nighty nine
@@ -843,7 +852,7 @@ console.log(gary * 2);
 - `length` is writable, so you can clear an array by setting its `length` to 0
 
   ```js
-  const a = ["gary", "jack", "nick"];
+  const a = ['gary', 'jack', 'nick'];
   a.length = 1;
 
   a;
@@ -863,12 +872,12 @@ You can create one yourself, you can access it's property like an array `arrLike
 ```js
 // #### Create an array-like object
 const arr = {
-  0: "gary",
-  1: "jack",
+  0: 'gary',
+  1: 'jack',
   length: 2
 };
 
-const names = ["amy"];
+const names = ['amy'];
 
 names.concat(arr);
 // [ 'amy', { '0': 'gary', '1': 'jack', length: 2 } ]
@@ -907,7 +916,7 @@ let a = Array.from({ length: 100 }, (e, i) => i);
 - Map is a collection of keyed data items, like `Object`, the main difference is that `Map` allows keys of any type;
 
   ```js
-  const gary = { name: "Gary" };
+  const gary = { name: 'Gary' };
   const myMap = new Map();
 
   myMap.set(gary, 1);
@@ -928,7 +937,7 @@ let a = Array.from({ length: 100 }, (e, i) => i);
 - Maps from/to objects
 
   ```js
-  const obj = { name: "Gary", age: 20 };
+  const obj = { name: 'Gary', age: 20 };
 
   const myMap = new Map(Object.entries(obj));
   // Map { 'name' => 'Gary', 'age' => 20 }
@@ -954,7 +963,7 @@ let a = Array.from({ length: 100 }, (e, i) => i);
 JS engines clear unreachable objects from memory.
 
 ```js
-let gary = { name: "Gary" };
+let gary = { name: 'Gary' };
 
 // overwrite the reference
 gary = null;
@@ -965,8 +974,8 @@ gary = null;
 If an object is in an array, or used as a map key, while the array/map is alive, it won't be cleared:
 
 ```js
-let gary = { name: "Gary" };
-let jack = { name: "Jack" };
+let gary = { name: 'Gary' };
+let jack = { name: 'Jack' };
 
 let myArray = [gary];
 let myMap = new Map();
@@ -1025,9 +1034,9 @@ Usage: keep track those who visited a site:
 ```js
 let visitedSet = new WeakSet();
 
-let john = { name: "John" };
-let pete = { name: "Pete" };
-let mary = { name: "Mary" };
+let john = { name: 'John' };
+let pete = { name: 'Pete' };
+let mary = { name: 'Mary' };
 
 visitedSet.add(john); // John visited us
 visitedSet.add(pete); // Then Pete
@@ -1062,12 +1071,12 @@ expressionFoo(); // NOTE throws an error, expressionFoo is still undefined here
 
 // function statement/declaration
 function statementFoo() {
-  console.log("an statement function");
+  console.log('an statement function');
 }
 
 // function expression
 var expressionFoo = function() {
-  console.log("an expression function");
+  console.log('an expression function');
 };
 ```
 
@@ -1100,7 +1109,7 @@ let foo = function hello(name) {
   if (name) {
     console.log(`Hello ${name}`);
   } else {
-    hello("Guest");
+    hello('Guest');
   }
 };
 
@@ -1151,7 +1160,7 @@ console.log(sum(1, 2, 3, 4));
 
 ### Arrow functions
 
-- Do not have `this`;
+- Do not have `this` or `super`;
 - Do not have `arguments`;
 - Can't be called with `new`;
 
@@ -1165,11 +1174,11 @@ function defer(f, ms) {
 }
 
 function sayHi(who) {
-  alert("Hello, " + who);
+  alert('Hello, ' + who);
 }
 
 let sayHiDeferred = defer(sayHi, 2000);
-sayHiDeferred("John"); // Hello, John after 2 seconds
+sayHiDeferred('John'); // Hello, John after 2 seconds
 ```
 
 Without an arrow function, it would look like:
@@ -1205,7 +1214,7 @@ Four ways to call a function:
 
   ```javascript
   thisObject.methodName(arguments);
-  thisObject["methodName"](arguments);
+  thisObject['methodName'](arguments);
   ```
 
   `this` binds to `thisObject`
@@ -1214,9 +1223,9 @@ Four ways to call a function:
 
   ```js
   const a = {
-    name: "gary",
+    name: 'gary',
     sayHi() {
-      console.log("Hi " + this.name);
+      console.log('Hi ' + this.name);
     }
   };
   // {name: "gary", sayHi: ƒ}
@@ -1250,14 +1259,14 @@ Four ways to call a function:
 
   ```javascript
   var person = {
-    name: "Gary",
-    hobbies: ["tennis", "badminton", "hiking"],
+    name: 'Gary',
+    hobbies: ['tennis', 'badminton', 'hiking'],
 
     print: function() {
       // when run person.print(), `this` is person here
       this.hobbies.forEach(function(hobby) {
         // but 'this' is undefined here
-        console.log(this.name + " likes " + hobby);
+        console.log(this.name + ' likes ' + hobby);
       });
     },
 
@@ -1266,7 +1275,7 @@ Four ways to call a function:
       var _this = this;
       console.log("// use '_this' to pass the correct context this in");
       this.hobbies.forEach(function(hobby) {
-        console.log(_this.name + " likes " + hobby);
+        console.log(_this.name + ' likes ' + hobby);
       });
     },
 
@@ -1275,16 +1284,16 @@ Four ways to call a function:
       console.log("// use 'bind' to get the correct this");
       this.hobbies.forEach(
         function(hobby) {
-          console.log(this.name + " likes " + hobby);
+          console.log(this.name + ' likes ' + hobby);
         }.bind(this)
       );
     },
 
     // recommended way: use arrow function, which uses `this` from the outer context
     print4: function() {
-      console.log("// use arrow function syntax");
+      console.log('// use arrow function syntax');
       this.hobbies.forEach(hobby => {
-        console.log(this.name + " likes " + hobby);
+        console.log(this.name + ' likes ' + hobby);
       });
     }
   };
@@ -1299,16 +1308,16 @@ Think of a closure as a backpack, it is attached to the function, when a functio
 ```javascript
 var digit_name = (function() {
   var names = [
-    "zero",
-    "one",
-    "two",
-    "three",
-    "four",
-    "five",
-    "six",
-    "seven",
-    "eight",
-    "nine"
+    'zero',
+    'one',
+    'two',
+    'three',
+    'four',
+    'five',
+    'six',
+    'seven',
+    'eight',
+    'nine'
   ];
   return function(n) {
     return names[n];
@@ -1325,7 +1334,7 @@ console.log(digit_name(2));
 const arr = [10, 12, 15, 21];
 for (var i = 0; i < arr.length; i++) {
   setTimeout(function() {
-    console.log("Index: " + i + ", element: " + arr[i]);
+    console.log('Index: ' + i + ', element: ' + arr[i]);
   }, 300);
 }
 ```
@@ -1349,7 +1358,7 @@ You can fix this by:
     setTimeout(
       (function(i) {
         return function() {
-          console.log("The index of this number is: " + i);
+          console.log('The index of this number is: ' + i);
         };
       })(i),
       300
@@ -1367,7 +1376,7 @@ You can fix this by:
   const arr = [10, 12, 15, 21];
   for (let i = 0; i < arr.length; i++) {
     setTimeout(function() {
-      console.log("The index of this number is: " + i);
+      console.log('The index of this number is: ' + i);
     }, 300);
   }
   ```
@@ -1418,6 +1427,226 @@ test();
 - For `for (let i = 0; i < 10; i++){ }`, a new lexical environment is created for every run of the code in `{...}`, each one has its own `i` variable;
 - In theory, all outer variables of a function should be available as long as the function is alive, but some JS engines (V8) try to optimize that, a side effect is that such variable will become unavailable in debugging;
 
+## Classes
+
+### Class vs. constructor function
+
+```js
+class MyClass {
+  consturctor(name) {
+    this.name = name;
+  }
+
+  show() {
+    console.log(this.name);
+  }
+}
+
+typeof MyClass; // MyClass is actually a function
+// 'function'
+
+MyClass.prototype.constructor === MyClass;
+// true
+
+MyClass.prototype.show; // class method is on the class prototype
+// [Function: show]
+```
+
+The `class MyClass {}` construct actually creates a function, it's very similar to creating a constructor function `function MyClass () {}`, with a few differences:
+
+1. A class function is labelled by a special internal property `[[FunctionKind]]:"classConstructor"`, it must by called with `new`;
+2. Class methods are non-enumerable;
+3. All code inside the class construct is always in _strict mode_;
+
+### Getters/setters
+
+```js
+class User {
+  age = 20;
+
+  constructor(name) {
+    // invokes the setter
+    this.name = name;
+  }
+
+  get name() {
+    return this._name;
+  }
+
+  set name(value) {
+    if (value.length < 4) {
+      alert('Name is too short.');
+      return;
+    }
+    this._name = value;
+  }
+}
+
+let user = new User('John');
+user;
+// User { age: 20, _name: 'John' }
+```
+
+- Class property `age` is not in `User.prototype`, instead it is created by `new` before calling the constructor, it's a property of the created object `user`;
+- `name` is an accessor property of `User.prototype`, if an accessor only has the getter, not the setter, then it's read-only;
+- `_name` is in the created object;
+
+### Class inheritance
+
+```js
+class Animal {
+  constructor(name) {
+    this.name = name;
+  }
+
+  // ...
+}
+
+class Rabbit extends Animal {
+  constructor(name, earLength) {
+    super(name);
+    this.name = name;
+  }
+
+  // ...
+}
+
+Rabbit.prototype.__proto__ === Animal.prototype;
+// true
+
+Rabbit.__proto__ === Animal;
+// true
+
+Animal.__proto__ === Function.prototype;
+// true
+```
+
+![class inheritance](./images/js_class_inheritance.png)
+
+Not only `Rabbit.prototype` extends `Animal.prototype`, **`Rabbit` itself extends `Animal` as well !**
+
+#### Built-in classes
+
+![builtin classes](./images/js_builtin_inheritance.png)
+
+Although `Date.prototype` extends `Object.prototype`, but `Date` doesn't extend `Object`, so there is `Object.keys()` but no `Date.keys()`;
+
+#### Constructors
+
+An inheriting class doesn't need to define a constructor explicitly, but if it does, then **it must call `super()` and do it before using `this`**, because a derived constructor has a special internal label: `[[ConstructorKind]]:"derived"`, which affects its behavior with `new`:
+
+- When a regular function is executed with `new`, it creates an empty object and assigns it to `this`;
+- But when a derived consturctor runs, it expects the parent constructor to create `this`;
+
+#### How `super` works
+
+- JS has another internal property for functions called `[[HomeObject]]`, when a function is specified as a class or object methods, its `[[HomeObject]]` points to that object, `super` uses this to resolve the parent prototype;
+- Function properties don't have `[[HomeObject]]`;
+- Arrow functions don't have `super`;
+
+```js
+let animal = {
+  name: 'Animal',
+  sleep: function() {
+    // this is a function property, not a method
+  },
+
+  eat() {
+    // animal.eat.[[HomeObject]] == animal
+    alert(`${this.name} eats.`);
+  },
+
+  run() {
+    console.log('Running');
+  }
+};
+
+let rabbit = {
+  __proto__: animal,
+  name: 'Rabbit',
+  sleep: function() {
+    // this is a function property, not a method,
+    // no [[HomeOjbect]], you can't call `super.sleep()` here
+  },
+
+  eat() {
+    // rabbit.eat.[[HomeObject]] == rabbit
+    super.eat();
+  },
+
+  run() {
+    // arrow functions don't have its own `this` or `super`, it's gettings `super` from the context
+    setTimeout(() => super.run(), 1000);
+  }
+};
+```
+
+### Static properties/methods
+
+```js
+class Article {
+  static publisher = 'Foo Books';
+
+  constructor(title, date) {
+    this.title = title;
+    this.date = date;
+  }
+
+  static createTodays() {
+    // remember, this = Article
+    return new this("Today's digest", new Date());
+  }
+}
+
+let article = Article.createTodays();
+```
+
+- Static properties/methods belong to the class (constructor function), not the created object instance;
+- It's a good way to create factory method, use `new this()` in a static method to create an instance;
+- When `class Child extends Parent { }`, then `Child.__proto__ === Parent`, so all static properties/methods are inherited by `Child`;
+
+### Mixins
+
+In JS, a class can only extends one other class, if there is something else you want to extend, you can use a "mixin".
+
+```js
+let sayMixin = {
+  say(phrase) {
+    alert(phrase);
+  }
+};
+
+// **sayHiMixin extends sayMixin**
+let sayHiMixin = {
+  __proto__: sayMixin, // (or we could use Object.create to set the prototype here)
+
+  sayHi() {
+    // call parent method
+    super.say(`Hello ${this.name}`); // (*)
+  },
+
+  sayBye() {
+    super.say(`Bye ${this.name}`); // (*)
+  }
+};
+
+class User {
+  constructor(name) {
+    this.name = name;
+  }
+}
+
+// ** copy the methods **
+Object.assign(User.prototype, sayHiMixin);
+
+// now User can say hi
+new User('Dude').sayHi(); // Hello Dude!
+```
+
+`super` in `sayHiMixin` methods always refers to `sayMixin`
+
+![js mixins](./images/js_mixin.png)
+
 ## Iterations
 
 Iterations over any iterables: Objects, Arrays, strings, Maps, Set etc.
@@ -1429,9 +1658,9 @@ Iterations over any iterables: Objects, Arrays, strings, Maps, Set etc.
 
   ```javascript
   let o = {
-    5e5: "$500K",
-    1e6: "$1M",
-    2e6: "$2M"
+    5e5: '$500K',
+    1e6: '$1M',
+    2e6: '$2M'
   };
 
   Object.keys(o);
@@ -1452,9 +1681,9 @@ Iterations over any iterables: Objects, Arrays, strings, Maps, Set etc.
 * `for..of` and `for..in`
 
   ```javascript
-  "use strict";
+  'use strict';
 
-  let characters = ["Jon", "Sansa", "Arya", "Tyrion", "Cercei"];
+  let characters = ['Jon', 'Sansa', 'Arya', 'Tyrion', 'Cercei'];
 
   for (let c of characters) {
     console.log(c);
@@ -1477,12 +1706,12 @@ Iterations over any iterables: Objects, Arrays, strings, Maps, Set etc.
 
   // loop an object
   const obj = {
-    name: "gary",
+    name: 'gary',
     age: 20,
-    [Symbol("a")]: "a symbol"
+    [Symbol('a')]: 'a symbol'
   };
 
-  obj.__proto__.job = "IT";
+  obj.__proto__.job = 'IT';
 
   for (let k in obj) {
     console.log(k);
@@ -1511,7 +1740,7 @@ Iterations over any iterables: Objects, Arrays, strings, Maps, Set etc.
 
   ```javascript
   // NOTE you can define a custom iteration function for an object
-  "use strict";
+  'use strict';
 
   // a custom id maker that generates ids from 100 to 105
   let idMaker = {
@@ -1566,18 +1795,18 @@ JS uses callbacks a lot, if not handled properly, it will lead to [Callback Hell
 [this page][callback-hell] explains what is callback hell and how to avoid it, by **giving callback functions a name, moving them to the top level of a file or a separate file**
 
 ```js
-var form = document.querySelector("form");
+var form = document.querySelector('form');
 
 form.onsubmit = function(submitEvent) {
-  var name = document.querySelector("input").value;
+  var name = document.querySelector('input').value;
   request(
     {
-      uri: "http://example.com/upload",
+      uri: 'http://example.com/upload',
       body: name,
-      method: "POST"
+      method: 'POST'
     },
     function(err, response, body) {
-      var statusMessage = document.querySelector(".status");
+      var statusMessage = document.querySelector('.status');
       if (err) return (statusMessage.value = err);
       statusMessage.value = body;
     }
@@ -1591,19 +1820,19 @@ refactor the above code by moving the callback functions to a separate module
 module.exports.submit = formSubmit;
 
 function formSubmit(submitEvent) {
-  var name = document.querySelector("input").value;
+  var name = document.querySelector('input').value;
   request(
     {
-      uri: "http://example.com/upload",
+      uri: 'http://example.com/upload',
       body: name,
-      method: "POST"
+      method: 'POST'
     },
     postResponse
   );
 }
 
 function postResponse(err, response, body) {
-  var statusMessage = document.querySelector(".status");
+  var statusMessage = document.querySelector('.status');
   if (err) return (statusMessage.value = err);
   statusMessage.value = body;
 }
@@ -1612,8 +1841,8 @@ function postResponse(err, response, body) {
 then import it in the main file
 
 ```js
-var formUploader = require("formuploader");
-document.querySelector("form").onsubmit = formUploader.submit;
+var formUploader = require('formuploader');
+document.querySelector('form').onsubmit = formUploader.submit;
 ```
 
 ### resolved vs. rejected
@@ -1711,12 +1940,12 @@ See the Pen <a href='https://codepen.io/garylirocks/pen/yKRzeM/'>async/await</a>
 
   setTimeout(function() {
     // prints out "2", meaning that the callback is not called immediately after 500 milliseconds.
-    console.log("Ran after " + (new Date().getSeconds() - s) + " seconds");
+    console.log('Ran after ' + (new Date().getSeconds() - s) + ' seconds');
   }, 500);
 
   while (true) {
     if (new Date().getSeconds() - s >= 2) {
-      console.log("Good, looped for 2 seconds");
+      console.log('Good, looped for 2 seconds');
       break;
     }
   }
@@ -1792,7 +2021,7 @@ module.exports = something;
 ```js
 // mod-a.js
 const person = {
-  name: "gary",
+  name: 'gary',
   age: 30
 };
 
@@ -1807,11 +2036,11 @@ export { b }; // another way
 
 ```js
 // main.js
-import theDefault from "./mod-a";
-import * as all from "./mod-a";
+import theDefault from './mod-a';
+import * as all from './mod-a';
 
-console.log("theDefault:", theDefault);
-console.log("all:", all);
+console.log('theDefault:', theDefault);
+console.log('all:', all);
 ```
 
 ```sh
@@ -1824,13 +2053,13 @@ all: [Module] { a: 20, b: 30, default: { name: 'gary', age: 30 } }
 - Or you can import everything on one line:
 
   ```js
-  import theDefault, { a as myA, b } from "./mod-a";
+  import theDefault, { a as myA, b } from './mod-a';
   ```
 
 - If you just want to trigger the side effect, do not actually import any binding:
 
   ```js
-  import "./mod-a";
+  import './mod-a';
   ```
 
 ## Error Handling
@@ -1842,7 +2071,7 @@ all: [Module] { a: 20, b: 30, default: { name: 'gary', age: 30 } }
    ```js
    a; // ReferrenceError: not defined
    @@; // SyntaxError: invalid or unexpected token
-   "a".foo(); // TypeError: not a function
+   'a'.foo(); // TypeError: not a function
    Array(-2); // RangeError: bad arguments
    ```
 
@@ -1852,7 +2081,7 @@ all: [Module] { a: 20, b: 30, default: { name: 'gary', age: 30 } }
    class MyError extends Error {
      consturctor(message) {
        super(message);
-       this.name = "MyError";
+       this.name = 'MyError';
      }
    }
    ```
@@ -1871,9 +2100,9 @@ all: [Module] { a: 20, b: 30, default: { name: 'gary', age: 30 } }
      foo.bar();
    } catch (e) {
      if (e instanceof EvalError) {
-       console.log(e.name + ": " + e.message);
+       console.log(e.name + ': ' + e.message);
      } else if (e instanceof RangeError) {
-       console.log(e.name + ": " + e.message);
+       console.log(e.name + ': ' + e.message);
      }
      // ... etc
    }
@@ -1884,12 +2113,12 @@ all: [Module] { a: 20, b: 30, default: { name: 'gary', age: 30 } }
    ```js
    try {
      setTimeout(() => {
-       console.log("in setTimeout");
-       throw new Error("throw in setTimeout"); // this error is not caught
+       console.log('in setTimeout');
+       throw new Error('throw in setTimeout'); // this error is not caught
      });
-     console.log("in try");
+     console.log('in try');
    } catch (e) {
-     console.log("in catch");
+     console.log('in catch');
    }
    ```
 
@@ -1900,19 +2129,19 @@ all: [Module] { a: 20, b: 30, default: { name: 'gary', age: 30 } }
    ```js
    function foo() {
      try {
-       throw new Error("xx");
+       throw new Error('xx');
        return 1;
      } catch (e) {
-       console.log("in catch");
+       console.log('in catch');
        throw e;
        return 2;
      } finally {
-       console.log("in finally");
+       console.log('in finally');
        return 3; // would throw an error if there is no 'return' here
      }
 
      return 100;
-     console.log("after try...catch");
+     console.log('after try...catch');
    }
 
    console.log(foo());
@@ -1999,7 +2228,7 @@ const loadSomething = async () => {
 _ES 2018_
 
 ```js
-const date = "2018-05-16";
+const date = '2018-05-16';
 const re = /(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})/u;
 const result = re.exec(date);
 console.log(result);
@@ -2021,9 +2250,9 @@ back reference named groups in a regular expression
 const re = /(?<fruit>apple|orange) == \k<fruit>/u;
 
 console.log(
-  re.test("apple == apple"), // true
-  re.test("orange == orange"), // true
-  re.test("apple == orange") // false
+  re.test('apple == apple'), // true
+  re.test('orange == orange'), // true
+  re.test('apple == orange') // false
 );
 ```
 
@@ -2032,7 +2261,7 @@ use named groups in string repalcing
 ```js
 const re = /(?<firstName>[a-zA-Z]+) (?<lastName>[a-zA-Z]+)/u;
 
-console.log("Arya Stark".replace(re, "$<lastName>, $<firstName>")); // Stark, Arya
+console.log('Arya Stark'.replace(re, '$<lastName>, $<firstName>')); // Stark, Arya
 ```
 
 ## Immutability
@@ -2047,14 +2276,14 @@ the `string` primitive type is immutable in JS, whenever you do any manipulation
 but the `String` object type _is mutable_
 
 ```js
-const s = new String("hello");
+const s = new String('hello');
 //undefined
 
 s;
 //[String: 'hello']
 
 // add a new property to a String object
-s.name = "gary";
+s.name = 'gary';
 s;
 // { [String: 'hello'] name: 'gary' }
 ```
@@ -2064,8 +2293,8 @@ s;
 two references are equal when they refer to the same value if this value is immutable:
 
 ```js
-var str1 = "abc";
-var str2 = "abc";
+var str1 = 'abc';
+var str2 = 'abc';
 str1 === str2; // true
 
 var n1 = 1;
@@ -2078,8 +2307,8 @@ n1 === n2; // also true
 but if the value is mutable, the two references are not equal:
 
 ```js
-var str1 = new String("abc");
-var str2 = new String("abc");
+var str1 = new String('abc');
+var str2 = new String('abc');
 str1 === str2; // false
 
 var arr1 = [];
@@ -2243,7 +2472,7 @@ You need to use your custom methods or something like `_.isEqual` from Lo-Dash t
 - Redux reducers
 
   ```js
-  import produce from "immer";
+  import produce from 'immer';
 
   const byId = produce(
     (draft, action) => {
@@ -2256,7 +2485,7 @@ You need to use your custom methods or something like `_.isEqual` from Lo-Dash t
       }
     },
     {
-      1: { id: 1, name: "product-1" }
+      1: { id: 1, name: 'product-1' }
     }
   );
   ```
@@ -2382,7 +2611,7 @@ You need to use your custom methods or something like `_.isEqual` from Lo-Dash t
 - **`null` isn't anything**
 
   ```js
-  typeof null === "object"; // null's type is 'object'
+  typeof null === 'object'; // null's type is 'object'
   ```
 
 - **`undefined`: default value for uninitialized variables and parameters**
@@ -2397,7 +2626,7 @@ You need to use your custom methods or something like `_.isEqual` from Lo-Dash t
 
   ```js
   var a = [1, 2];
-  typeof a === "object"; // typeof array returns 'object'
+  typeof a === 'object'; // typeof array returns 'object'
   Array.isArray(a); // true, use this to check arrays
   ```
 
@@ -2442,7 +2671,7 @@ in the following code, the `updateLayout` function will only run after the `resi
 
 ```javascript
 // debounce the resize event
-$(window).on("resize", function() {
+$(window).on('resize', function() {
   clearTimeout(window.resizedFinished);
   window.resizedFinished = setTimeout(function() {
     updateLayout();
@@ -2460,15 +2689,15 @@ function foo(arg1) {
   console.log(arg1);
 }
 
-const fooBound = foo.bind({ name: "gary" }); // this bound
-const fooBound2 = fooBound.bind({ name: "jack" }, "hello"); // 'hello' bound to arg1
-const fooBound3 = fooBound2.bind({}, "hola"); // both {} and 'hola' are discarded
+const fooBound = foo.bind({ name: 'gary' }); // this bound
+const fooBound2 = fooBound.bind({ name: 'jack' }, 'hello'); // 'hello' bound to arg1
+const fooBound3 = fooBound2.bind({}, 'hola'); // both {} and 'hola' are discarded
 
-fooBound("bar");
+fooBound('bar');
 // {name: "gary"}
 // bar
 
-fooBound2("bar");
+fooBound2('bar');
 // {name: "gary"}
 // hello
 
@@ -2476,26 +2705,26 @@ fooBound3();
 // {name: "gary"}
 // hello
 
-console.log("foo.name: " + foo.name + ", foo.length: " + foo.length);
+console.log('foo.name: ' + foo.name + ', foo.length: ' + foo.length);
 // foo.name: foo, foo.length: 1
 
 console.log(
-  "fooBound.name: " + fooBound.name + ", fooBound.length: " + fooBound.length
+  'fooBound.name: ' + fooBound.name + ', fooBound.length: ' + fooBound.length
 );
 // fooBound.name: bound foo, fooBound.length: 1
 
 console.log(
-  "fooBound2.name: " +
+  'fooBound2.name: ' +
     fooBound2.name +
-    ", fooBound2.length: " +
+    ', fooBound2.length: ' +
     fooBound2.length
 );
 // fooBound2.name: bound bound foo, fooBound2.length: 0
 
 console.log(
-  "fooBound3.name: " +
+  'fooBound3.name: ' +
     fooBound3.name +
-    ", fooBound3.length: " +
+    ', fooBound3.length: ' +
     fooBound3.length
 );
 // fooBound3.name: bound bound bound foo, fooBound3.length: 0
@@ -2520,7 +2749,7 @@ Object.is(NaN, NaN);
   ```js
   const o = {
     id: 202,
-    name: "Gary",
+    name: 'Gary',
     toJSON() {
       return this.id;
     }
@@ -2533,8 +2762,8 @@ Object.is(NaN, NaN);
 - Use replacer function in `JSON.stringify` to deal with circular referencing issue:
 
   ```js
-  const member = { name: "Gary" };
-  const team = { name: "Dev" };
+  const member = { name: 'Gary' };
+  const team = { name: 'Dev' };
   member.team = team;
   team.members = [member];
 
@@ -2544,7 +2773,7 @@ Object.is(NaN, NaN);
   JSON.stringify(team); // throws an error: circular references
 
   // #### using replacer function to ignore the 'team' key
-  JSON.stringify(team, (key, value) => (key === "team" ? undefined : value));
+  JSON.stringify(team, (key, value) => (key === 'team' ? undefined : value));
   // '{"name":"Dev","members":[{"name":"Gary"}]}'
   ```
 
@@ -2552,7 +2781,7 @@ Object.is(NaN, NaN);
 
   ```js
   // #### JSON.stringify converts a Date to a string
-  const s = JSON.stringify({ name: "JS Conf", date: new Date() });
+  const s = JSON.stringify({ name: 'JS Conf', date: new Date() });
   // '{"name":"JS Conf","date":"2019-12-29T08:16:31.262Z"}'
 
   // #### JSON.parse doesn't convert a Date to a string
@@ -2560,7 +2789,7 @@ Object.is(NaN, NaN);
   // { name: 'JS Conf', date: '2019-12-29T08:16:31.262Z' }
 
   // #### JSON.parse accepts a reviver function to do any data conversions
-  JSON.parse(s, (key, value) => (key === "date" ? new Date(value) : value));
+  JSON.parse(s, (key, value) => (key === 'date' ? new Date(value) : value));
   ```
 
 ## Reference
