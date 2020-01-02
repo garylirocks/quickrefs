@@ -20,9 +20,9 @@
 - [JSX Syntaxes](#jsx-syntaxes)
 - [Context](#context)
 - [Refs and the DOM](#refs-and-the-dom)
-  - [`ref` on DOM element](#ref-on-dom-element)
-  - [`ref` on Components](#ref-on-components)
-  - [Another way to create `ref` since v16.3](#another-way-to-create-ref-since-v163)
+  - [ref on DOM element](#ref-on-dom-element)
+  - [ref on Components](#ref-on-components)
+  - [Another way to create ref since v16.3](#another-way-to-create-ref-since-v163)
   - [Error Handling](#error-handling)
 - [Hooks](#hooks)
   - [State Hooks](#state-hooks)
@@ -31,7 +31,7 @@
   - [Other Hooks](#other-hooks)
   - [Rules of Hooks](#rules-of-hooks)
 - [Styling](#styling)
-- [`ReactDOMServer`](#reactdomserver)
+- [ReactDOMServer](#reactdomserver)
 - [SSR - Server Side Rendering](#ssr---server-side-rendering)
 
 ## General Ideas
@@ -127,25 +127,26 @@ read [Dan Abramov's article](https://medium.com/@dan_abramov/smart-and-dumb-comp
 ```js
 class A {
   static color = 'red';
-  counter = 0;
 
+  counter = 0;
   handleClick = () => {
+    // this is actually a property, which is an arrow function
     this.counter++;
   };
 
+  // this is a class method
   handleLongClick() {
     this.counter++;
   }
 }
 ```
 
-are transpiled(with the help of `babel-plugin-transform-class-properties`) into
+is transpiled (with the help of `babel-plugin-transform-class-properties`) into
 
 ```js
 class A {
   constructor() {
     this.counter = 0;
-
     this.handleClick = () => {
       this.counter++;
     };
@@ -161,7 +162,7 @@ A.color = 'red';
 General Rules:
 
 - **Don't bind all class methods**, only bind those ones that you're going to pass around;
-- Arrow functions in class properties are transpiled into the constructor, so it's not in the prototype chain, not available in `super`, not shared, it's created for each instance;
+- Arrow functions properties are transpiled into the constructor, so it's not in the prototype chain, it's created for each instance;
 - Arrow functions is almost the same as do binding manually in the constructor, but for binding functions, the bound one is in the instance, the original function is still in the prototype;
 - Arrow functions and bound functions are **slower** than usual methods;
 
