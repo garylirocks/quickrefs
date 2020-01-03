@@ -66,7 +66,9 @@
   - [Callback hell](#callback-hell)
   - [resolved vs. rejected](#resolved-vs-rejected)
 - [Generator](#generator)
-- [Async/Await](#asyncawait)
+  - [Async generators](#async-generators)
+  - [Using generators for iterables](#using-generators-for-iterables)
+- [Async/await](#asyncawait)
 - [Event Loop](#event-loop)
   - [setTimout and setInterval](#settimout-and-setinterval)
   - [Multiple runtimes](#multiple-runtimes)
@@ -79,7 +81,7 @@
   - [Error](#error)
   - [try...catch...finally](#trycatchfinally)
   - [Promise](#promise-1)
-  - [async/await](#asyncawait)
+  - [async/await errors](#asyncawait-errors)
 - [Regular Expression](#regular-expression)
   - [Named groups](#named-groups)
 - [Immutability](#immutability)
@@ -1786,116 +1788,182 @@ Iterations over any iterables: Objects, Arrays, strings, Maps, Set etc.
 
 ## Promise
 
-JS uses callbacks a lot, if not handled properly, it will lead to [Callback Hell][callback-hell], Promise was introduced in ES6, it's a way to simplify asynchronous programming by making code _look_ synchronous and avoid callback hell.
+JS uses callbacks a lot, if not handled properly, it will lead to Callback Hell, Promise was introduced in ES6, it's a way to simplify asynchronous programming by making code _look_ synchronous and avoid callback hell.
 
 [A Simple Guide to ES6 Promises](https://codeburst.io/a-simple-guide-to-es6-promises-d71bacd2e13a)
 
 ### Callback hell
 
-[this page][callback-hell] explains what is callback hell and how to avoid it, by **giving callback functions a name, moving them to the top level of a file or a separate file**
+When there are multiple nested callbacks, the code becomes quite hard to read and understand
 
 ```js
-var form = document.querySelector('form');
-
-form.onsubmit = function(submitEvent) {
-  var name = document.querySelector('input').value;
-  request(
-    {
-      uri: 'http://example.com/upload',
-      body: name,
-      method: 'POST'
-    },
-    function(err, response, body) {
-      var statusMessage = document.querySelector('.status');
-      if (err) return (statusMessage.value = err);
-      statusMessage.value = body;
-    }
-  );
-};
+loadScript('1.js', function(error, script) {
+  if (error) {
+    handleError(error);
+  } else {
+    // ...
+    loadScript('2.js', function(error, script) {
+      if (error) {
+        handleError(error);
+      } else {
+        // ...
+        loadScript('3.js', function(error, script) {
+          if (error) {
+            handleError(error);
+          } else {
+            // ...continue after all scripts are loaded (*)
+          }
+        });
+      }
+    });
+  }
+});
 ```
 
-refactor the above code by moving the callback functions to a separate module
+rewrite `loadScript` to return a promise:
 
 ```js
-module.exports.submit = formSubmit;
-
-function formSubmit(submitEvent) {
-  var name = document.querySelector('input').value;
-  request(
-    {
-      uri: 'http://example.com/upload',
-      body: name,
-      method: 'POST'
-    },
-    postResponse
-  );
-}
-
-function postResponse(err, response, body) {
-  var statusMessage = document.querySelector('.status');
-  if (err) return (statusMessage.value = err);
-  statusMessage.value = body;
-}
-```
-
-then import it in the main file
-
-```js
-var formUploader = require('formuploader');
-document.querySelector('form').onsubmit = formUploader.submit;
+loadScript('1.js')
+  .then(() => loadScript('2.js'))
+  .then(() => loadScript('3.js'))
+  .catch(e => {
+    // handle error
+  });
 ```
 
 ### resolved vs. rejected
 
-please see here for detailed examples about when a promise is resolved or rejected: https://github.com/garylirocks/js-es6/tree/master/promises
+Please see here for detailed examples about when a promise is resolved or rejected: https://github.com/garylirocks/js-es6/tree/master/promises
 
-take note:
+Take note:
 
-- it is recommended to only pass the resolved callback to `.then()`, use `.catch()` to handle errors;
-- always use a `.catch()`;
+- It is recommended to only pass the resolved callback to `.then()`, use `.catch()` to handle errors;
+- Always use a `.catch()`;
 
 ## Generator
 
-    'use strict';
+```js
+'use strict';
 
-    // NOTE define an infinite generator
-    let idMaker = function* () {
-    	let nextId = 100;
+// NOTE define an infinite generator
+let idMaker = function*() {
+  let nextId = 100;
 
-    	while(true) {
-    		yield nextId++;
-    	}
-    };
+  while (true) {
+    yield nextId++;
+  }
+};
 
-    // NOTE generator function returns an iterable
-    for (let id of idMaker()) {
-    	if (id > 105) {
-    		break;
-    	}
-    	console.log(id);
-    }
+// NOTE generator function returns an iterable
+for (let id of idMaker()) {
+  if (id > 105) {
+    break;
+  }
+  console.log(id);
+}
+```
 
 you can even yield into another iterable within a generator:
 
-    // NOTE yield another iterable in a generator
-    let myGenerator = function* () {
-    	yield 'start';
-    	yield* [1, 2, 3];       // <- yield into another iterable
-    	yield 'end';			// <- back to the main loop
-    };
+```js
+// NOTE yield another iterable in a generator
+let myGenerator = function*() {
+  yield 'start';
+  yield* [1, 2, 3]; // <- yield into another iterable
+  yield 'end'; // <- back to the main loop
+};
 
-    for (let i of myGenerator()) {
-    	console.log(i);
+for (let i of myGenerator()) {
+  console.log(i);
+}
+// start
+// 1
+// 2
+// 3
+// end
+```
+
+### Async generators
+
+```js
+async function* generateSequence(start, end) {
+  for (let i = start; i <= end; i++) {
+    // yay, can use await!
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    yield i;
+  }
+}
+
+(async () => {
+  let generator = generateSequence(1, 5);
+  for await (let value of generator) {
+    alert(value); // 1, then 2, then 3, then 4, then 5
+  }
+})();
+```
+
+- Use `async`;
+- Use `for await..of` to iterate thru the results;
+
+### Using generators for iterables
+
+- Sync iterators
+
+  ```js
+  let range = {
+    from: 1,
+    to: 5,
+
+    *[Symbol.iterator]() {
+      // a shorthand for [Symbol.iterator]: function*()
+      for (let value = this.from; value <= this.to; value++) {
+        yield value;
+      }
     }
-    // start
-    // 1
-    // 2
-    // 3
-    // end
+  };
 
-## Async/Await
+  alert([...range]); // 1,2,3,4,5
+  ```
+
+- Async iterables
+
+  ```js
+  let range = {
+    from: 1,
+    to: 5,
+
+    async *[Symbol.asyncIterator]() {
+      // same as [Symbol.asyncIterator]: async function* ()
+      for (let value = this.from; value <= this.to; value++) {
+        // wait 1 second
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        yield value;
+      }
+    }
+  };
+
+  (async () => {
+    for await (let value of range) {
+      alert(value); // 1, then 2, then 3, then 4, then 5
+    }
+  })();
+  ```
+
+## Async/await
 
 [Ref - Hackernoon](https://hackernoon.com/6-reasons-why-javascripts-async-await-blows-promises-away-tutorial-c7ec10518dd9)
+
+```js
+async function f() {
+  return 1;
+}
+
+f().then(alert); // 1
+```
+
+`async` makes the following function return a promise.
 
 ```javascript
 function resolveAfter2Seconds(x) {
@@ -2093,22 +2161,28 @@ all: [Module] { a: 20, b: 30, default: { name: 'gary', age: 30 } }
 - [MDN - try...catch](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/try...catch)
 - [MDN - onerror](https://developer.mozilla.org/en-US/docs/Web/API/GlobalEventHandlers/onerror)
 
-1. Check error type using `instanceof`
+1. Catch should only process expected errors and "rethrow" all others:
 
    ```js
    try {
-     foo.bar();
-   } catch (e) {
-     if (e instanceof EvalError) {
-       console.log(e.name + ': ' + e.message);
-     } else if (e instanceof RangeError) {
-       console.log(e.name + ': ' + e.message);
+     let user = JSON.parse(json);
+     if (!user.name) {
+       throw new SyntaxError('Imcomplete dat: no name');
      }
-     // ... etc
+
+     notExistingFunction(); // unexpected error
+   } catch (e) {
+     if (e instanceof SyntaxErrorn) {
+       // **handle known errors**
+       console.log(e.name + ': ' + e.message);
+     } else {
+       throw e; // **rethrow unexpected errors here**
+     }
    }
    ```
 
-2. the catch block only catches synchronous errors, not async ones (**you should use a promise chain to catch async errors**):
+2. It only catches run-time errors, not parse-time errors;
+3. It only catches synchronous errors, **not async ones** (you need `try..catch` inside the async code, or a promise chain):
 
    ```js
    try {
@@ -2122,9 +2196,7 @@ all: [Module] { a: 20, b: 30, default: { name: 'gary', age: 30 } }
    }
    ```
 
-3. in a browser, when there is an unhandled error, it goes to `window.onerror`, it can be used for error logging;
-
-4. `finally` block always executes, if it returns a value, it becomes the entire block's return value, regardless of any return statement or error thrown in `try` and `catch` blocks;
+4. `finally` block always executes, if it returns a value, it becomes the entire function's return value, regardless of any return statement or error thrown in `try` and `catch` blocks;
 
    ```js
    function foo() {
@@ -2155,6 +2227,8 @@ all: [Module] { a: 20, b: 30, default: { name: 'gary', age: 30 } }
    3
    ```
 
+5. In a browser, when there is an unhandled error, it goes to `window.onerror`, it can be used for error logging;
+
 ### Promise
 
 [javascript.info - Promise error handling](https://javascript.info/promise-error-handling)
@@ -2163,6 +2237,7 @@ all: [Module] { a: 20, b: 30, default: { name: 'gary', age: 30 } }
 ```js
 new Promise((resolve, reject) => {
   reject('reject it');
+})
   .finally(() => {
     console.log('in first finally');
   })
@@ -2188,38 +2263,35 @@ in last finally
 Uncaught (in promise) reject it
 ```
 
-1. a `finally` block always executes, it doesn't have access to the resolved result or the rejection error;
-2. a `catch` block returns a resolved promise, unless it throws an error it self;
-3. in a browser, any unhandledrejection goes to the `unhandledrejection` event handler on `window`, it can be used for error logging;
-4. you should **always** add a `catch` to your promise chain;
+1. A `finally` block always executes, it doesn't have access to the resolved result or the rejection error;
+2. A `catch` block returns a resolved promise, unless it throws an error it self;
+3. You should **always** add a `catch` to your promise chain;
+4. In a browser, any unhandled rejection goes to the `unhandledrejection` event handler on `window`, it can be used for error logging;
 
-### async/await
+### async/await errors
 
 [javascript.info - async/await](https://javascript.info/async-await)
 
 ```js
-const loadSomething = () => {
-  return fetchSomeData()
-    .then(data => doSomethingWith(data))
-    .catch(error => logAndReport(error));
-};
-```
-
-is the same as:
-
-```js
 const loadSomething = async () => {
   try {
+    // **wrap try..catch around await
     const data = await fetchSomeData();
     return doSomethingWith(data);
   } catch (error) {
     logAndReport(error);
   }
 };
+
+// **top level .catch
+loadSomething().catch(() => {
+  // ...
+});
 ```
 
-1. the promise after `await` either resolves and return a value or throws an error;
-2. you should use normal `try...catch..finally` block to handle errors;
+1. The promise after `await` either resolves returning a value or throws an error;
+2. You should use normal `try...catch..finally` block to handle errors in `async` function;
+3. At the top level, `await` is not allowed, so you still need a `.catch` there to handle falling-through errors;
 
 ## Regular Expression
 
@@ -2797,6 +2869,5 @@ Object.is(NaN, NaN);
 [JavaScript Symbols, Iterators, Generators, Async/Await, and Async Iterators — All Explained Simply
 ][symbol-iterator-etc]: **Read this one to fully understand the relations between Symbols, Iterators, Generators, Async/Await and Aync Iterators**
 
-[callback-hell]: http://callbackhell.com/
 [symbol-iterator-etc]: https://medium.freecodecamp.org/some-of-javascripts-most-useful-features-can-be-tricky-let-me-explain-them-4003d7bbed32
 [tc39 process]: https://tc39.github.io/process-document/
