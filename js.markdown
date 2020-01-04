@@ -76,7 +76,9 @@
 - [Module Systems](#module-systems)
   - [AMD (Asynchronous Module Design)](#amd-asynchronous-module-design)
   - [CommonJS (CJS)](#commonjs-cjs)
-  - [ES6](#es6)
+  - [ES](#es)
+  - [Re-export](#re-export)
+  - [Modules in browsers](#modules-in-browsers)
 - [Error Handling](#error-handling)
   - [Error](#error)
   - [try...catch...finally](#trycatchfinally)
@@ -2084,7 +2086,7 @@ synchronous, blocking, easier to understand
 module.exports = something;
 ```
 
-### ES6
+### ES
 
 ```js
 // mod-a.js
@@ -2129,6 +2131,55 @@ all: [Module] { a: 20, b: 30, default: { name: 'gary', age: 30 } }
   ```js
   import './mod-a';
   ```
+
+### Re-export
+
+```js
+export { login, logout } from './helpers.js';
+export { default as User } from './user.js';
+
+export * from './foo.js'; // to re-export named exports
+export { default } from './foo.js'; // to re-export the default export
+```
+
+- Rexporting is a good way to consolidate multipe exports into a single entry point;
+- `import * from './foo.js';'` includes `default`, but `export * from './foo.js';` only re-exports named exports, not including `default`, some people don't use `export default` to avoid this oddity;
+
+### Modules in browsers
+
+If you want to use ES modules directly (without Webpack) in broswer:
+
+```html
+<!DOCTYPE html>
+<script type="module">
+  import { sayHi } from './say.js';
+  import { foo } from 'foo'; // ** no path, not allowed
+  document.body.innerHTML = sayHi('John');
+
+  let name = 'module 1'; // ** module-scope
+
+  alert(this); // ** undefined
+</script>
+
+<script type="module">
+  alert(name); // Error, name not defined
+</script>
+```
+
+- Use `<script type="module">` to indicate it's a module;
+- Strict mode is implied for modules;
+- Top level variables is in module scope;
+- A module is evaluated only the first time when imported;
+- `this` is undefined, insted of `window`;
+- Module scripts are always deferred, for both external and inline scripts:
+  - Downloading external module scripts doesn't block HTML processing, they load in parallel with other resources;
+  - They are run after HTML is fully ready, this has implications:
+    - Module scripts can access the whole document;
+    - User may see the page before JS app is ready, you need 'loading indicators';
+  - They are executed according to their order in the document;
+- If an inline module script has `async` attribute, it loads independently of other scripts or the HTML, runs immediately when ready;
+- External scripts from another origin requires CORS headers;
+- A moudle must have a path;
 
 ## Error Handling
 
