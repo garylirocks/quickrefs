@@ -95,6 +95,8 @@ There are 3 ways to assign event handlers:
 
 [Google web performance tips on Youtube](https://www.youtube.com/playlist?list=PLNYkxOF6rcICVl6Vb-AFlw81bQLuv6a_P)
 
+[Running Your JavaScript at the Right Time](https://www.kirupa.com/html5/running_your_code_at_the_right_time.htm)
+
 ### JS loading best practices
 
 In a HTML page, any referenced JS files need to be loaded, parsed and executed, by default, browsers load scripts synchronously during HTML parsing, so it blocks visible content rendering.
@@ -107,7 +109,7 @@ Solutions:
 
 - Better:
 
-  - Set `async` attribute: allow async loading of the script, this means they are loaded at the same time of page rendering, once downloaded, the browser stop everthing else and execute the script;
+  - Set `async` attribute: allow async loading of the script, this means they are loaded independently of other scripts or the HTML document, once downloaded, the browser stop everthing else and execute the script;
   - Set `defer` attribute: similar to `async` and does even more, indicating the script should be executed after the HTML is parsed, but before firing `DOMContentLoaded`;
 
   But broswer still loads them concurrently with other resources, such as images;
@@ -121,3 +123,5 @@ Solutions:
     $('body').append('<script src="script.js">');
   });
   ```
+
+![js script loading](images/js_script_loading.png)
