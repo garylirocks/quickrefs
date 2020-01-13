@@ -1,5 +1,8 @@
 # HTML
 
+- [DOM](#dom)
+  - [Overview](#overview)
+  - [DOM](#dom-1)
 - [DOM Events](#dom-events)
   - [Assign event handler](#assign-event-handler)
   - [Event Bubbling and Capturing](#event-bubbling-and-capturing)
@@ -9,6 +12,34 @@
 - [History API](#history-api)
 - [Web Performance](#web-performance)
   - [JS loading best practices](#js-loading-best-practices)
+
+## DOM
+
+### Overview
+
+JS was initially created for browsers, now it can run in different host environments, each environment provides own objects and functions additional to the language core.
+
+Here is an overview of the browser environment for JS:
+
+![broswer_js_overview](images/js_browser_js_overview.png)
+
+- `window` is the global object and represents the browser window;
+- `DOM` - Document Object Model
+  - `document` is the "entry point" to the page, it can be used to add/change anything on the page;
+  - `DOM` can be used in other envs (e.g. Node) to process a HTML document as well;
+- `BOM` - Browser Object Model
+  - Provides additional objects about the host env;
+  - `alert/confirm/prompt` are a part of BOM;
+  - Is part of HTML specification;
+
+### DOM
+
+Everything in HTML is represented by objects in the DOM tree, there are 12 types of nodes, common ones include:
+
+- `document` - `DOCUMENT_NODE`;
+- element nodes;
+- text nodes - new lines and spaces between tags are text nodes as well;
+- comments;
 
 ## DOM Events
 
