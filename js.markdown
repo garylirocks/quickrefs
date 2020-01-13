@@ -85,7 +85,12 @@
   - [Promise](#promise-1)
   - [async/await errors](#asyncawait-errors)
 - [Regular Expression](#regular-expression)
-  - [Named groups](#named-groups)
+  - [Methods](#methods-1)
+  - [Capturing groups](#capturing-groups)
+    - [Named groups](#named-groups)
+    - [Non-capturing groups](#non-capturing-groups)
+  - [Unicode](#unicode)
+  - [Escaping](#escaping)
 - [Immutability](#immutability)
   - [What is immutability ?](#what-is-immutability)
   - [Reference equality vs. value equality](#reference-equality-vs-value-equality)
@@ -98,7 +103,9 @@
 - [Tricks](#tricks)
   - [Deboucing an event](#deboucing-an-event)
   - [Bind a function multiple times](#bind-a-function-multiple-times)
+  - [Currying](#currying)
   - [Object.is()](#objectis)
+  - [Object property iteration methods comparison](#object-property-iteration-methods-comparison)
   - [JSON.stringify and JSON.parse](#jsonstringify-and-jsonparse)
 - [Reference](#reference)
 
@@ -2346,46 +2353,152 @@ loadSomething().catch(() => {
 
 ## Regular Expression
 
-### Named groups
+### Methods
 
-_ES 2018_
+- `str.match`
+
+  ```js
+  // ** with 'g', returns an array of all matches, no capturing groups
+  'hello world'.match(/(.)o/g);
+  // [ 'lo', 'wo' ]
+
+  // ** without 'g', returns an array, containing the first match , capturing groups, and additional properties
+  'hello world'.match(/(.)o/);
+  // [ 'lo', 'l', index: 3, input: 'hello world', groups: undefined ]
+
+  // ** no match, returns null
+  'hello world'.match(/x/);
+  // null
+  ```
+
+- `str.matchAll`
+
+  ```js
+  const matches = 'hello world'.matchAll(/(.)o/g);
+  // Object [RegExp String Iterator] {}
+
+  [...matches];
+  // [
+  //   [ 'lo', 'l', index: 3, input: 'hello world', groups: undefined ],
+  //   [ 'wo', 'w', index: 6, input: 'hello world', groups: undefined ]
+  // ]
+  ```
+
+  This is an improved version of `match`, it:
+
+  - Returns an iterable object, instead of an array, this is for optimization purpose: it doesn't perform the search initially, only do it each time you iterate over it;
+  - Contains the full result of each match, including capturing groups;
+
+### Capturing groups
+
+#### Named groups
+
+- Use `(?<groupName>)` for named groups
+
+  ```js
+  const date = '2018-05-16';
+  const re = /(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})/;
+  const result = re.exec(date);
+
+  console.log(result);
+  //[ '2018-05-16',
+  //  '2018',
+  //  '05',
+  //  '16',
+  //  index: 0,
+  //  input: '2018-05-16',
+  //  groups: { year: '2018', month: '05', day: '16' } ]
+
+  console.log(result.groups.year); // get the value of a matched group
+  //2018
+  ```
+
+- Use `\k<groupName>` for back referencing
+
+  ```js
+  const re = /(?<fruit>apple|orange) == \k<fruit>/;
+
+  console.log(
+    re.test('apple == apple'), // true
+    re.test('apple == orange') // false
+  );
+  ```
+
+  - Use `$<groupName>` in replacing string
+
+  ```js
+  const re = /(?<firstName>[a-zA-Z]+) (?<lastName>[a-zA-Z]+)/;
+
+  console.log('Arya Stark'.replace(re, '$<lastName>, $<firstName>'));
+  // Stark, Arya
+  ```
+
+#### Non-capturing groups
+
+Use `(?:)` for a non-capturing group, you can still have quantifiers on it, but it won't be captured in a separate result item
 
 ```js
-const date = '2018-05-16';
-const re = /(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})/u;
-const result = re.exec(date);
-console.log(result);
-//[ '2018-05-16',
-//  '2018',
-//  '05',
-//  '16',
-//  index: 0,
-//  input: '2018-05-16',
-//  groups: { year: '2018', month: '05', day: '16' } ]
-
-console.log(result.groups.year); // get the value of a matched group
-//2018
+'gogogo gary'.match(/(?:go)+ (gary)/);
+// [
+//   'gogogo gary',
+//   'gary',
+//   index: 0,
+//   input: 'gogogo gary',
+//   groups: undefined
+// ]
 ```
 
-back reference named groups in a regular expression
+### Unicode
+
+The `u` flag enables full unicode support:
+
+- Handle 4-byte characters correctly,
+
+  ```js
+  '😄'.match(/./g);
+  // [ '�', '�' ]
+
+  '😄'.match(/./gu); // with `u`, 4-byte characters are processed correctlyk
+  // [ '😄' ]
+  ```
+
+- Make Unicode property search available:
+
+  Every character in Unicode has a lot of properties, such as `Letter`, `Number`, `Punctuation` etc., we can use `\p{..}` to match characters with paticular properties.
+
+  Common character categories:
+
+  - Letter `Lettter` `L`
+    - lowercase `Ll`
+    - uppercase `Lu`
+  - Number `Number` `N`
+  - Punctuation `Punctuation` `P`
+    - dash `Pd`
+    - ...
+  - Hexadecimal `Hex_Digit`
+  - ...
+
+  ```js
+  'H-'.match(/\p{Letter}\p{Pd}/gu);
+  // [ 'H-' ]
+
+  // match chinese hieroglyphs
+  '你好'.match(/\p{Script=Han}/gu);
+  // [ '你', '好' ]
+  ```
+
+### Escaping
 
 ```js
-const re = /(?<fruit>apple|orange) == \k<fruit>/u;
+/\d\/\d/.test('2/3');
+// true
 
-console.log(
-  re.test('apple == apple'), // true
-  re.test('orange == orange'), // true
-  re.test('apple == orange') // false
-);
+new RegExp('\\d/\\d').test('2/3');
+// true
 ```
 
-use named groups in string repalcing
-
-```js
-const re = /(?<firstName>[a-zA-Z]+) (?<lastName>[a-zA-Z]+)/u;
-
-console.log('Arya Stark'.replace(re, '$<lastName>, $<firstName>')); // Stark, Arya
-```
+- Forward slash '/' needs to be escaped in a regex literal as `\/`, not in `new RegExp()`;
+- `\d` in a regex literal needs to be `'\\d'` in `new RegExp()` construct, since `'\d' === 'd'`;
 
 ## Immutability
 
@@ -2853,6 +2966,33 @@ console.log(
 // fooBound3.name: bound bound bound foo, fooBound3.length: 0
 ```
 
+### Currying
+
+```js
+function curry(func) {
+  return function curried(...args) {
+    if (args.length >= func.length) {
+      return func.apply(this, args); // enough parameters, run
+    } else {
+      // otherwise return a function
+      return function(...args2) {
+        return curried.apply(this, args.concat(args2));
+      };
+    }
+  };
+}
+
+function sum(a, b, c) {
+  return a + b + c;
+}
+
+let curriedSum = curry(sum);
+
+curriedSum(1, 2, 3); // 6, still callable normally
+curriedSum(1)(2, 3); // 6, currying of 1st arg
+curriedSum(1)(2)(3); // 6, full currying
+```
+
 ### `Object.is()`
 
 It's identical to `===` in most cases, except:
@@ -2864,6 +3004,13 @@ NaN === NaN;
 Object.is(NaN, NaN);
 // true
 ```
+
+### Object property iteration methods comparison
+
+- `Object.getOwnPropertyNames(obj)` returns non-symbol keys;
+- `Object.getOwnPropertySymbols(obj)` returns symbol keys;
+- `Object.keys/values()` returns non-symbol keys/values with enumerable flag;
+- `for..in` loops over non-symbol keys with enumerable flag, and also prototype keys;
 
 ### `JSON.stringify` and `JSON.parse`
 
