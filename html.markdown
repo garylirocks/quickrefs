@@ -2,7 +2,12 @@
 
 - [DOM](#dom)
   - [Overview](#overview)
-  - [DOM](#dom-1)
+  - [Node classes](#node-classes)
+  - [Navigation](#navigation)
+    - [DOM collections](#dom-collections)
+  - [Attributes and Properties](#attributes-and-properties)
+  - [Classes and Styles](#classes-and-styles)
+  - [Element Size and Scrolling](#element-size-and-scrolling)
 - [DOM Events](#dom-events)
   - [Assign event handler](#assign-event-handler)
   - [Event Bubbling and Capturing](#event-bubbling-and-capturing)
@@ -25,21 +30,107 @@ Here is an overview of the browser environment for JS:
 
 - `window` is the global object and represents the browser window;
 - `DOM` - Document Object Model
-  - `document` is the "entry point" to the page, it can be used to add/change anything on the page;
+  - `document` is the "entry point" to DOM, all DOM operations start with it;
   - `DOM` can be used in other envs (e.g. Node) to process a HTML document as well;
 - `BOM` - Browser Object Model
   - Provides additional objects about the host env;
   - `alert/confirm/prompt` are a part of BOM;
   - Is part of HTML specification;
 
-### DOM
+### Node classes
 
-Everything in HTML is represented by objects in the DOM tree, there are 12 types of nodes, common ones include:
+Everything in HTML is represented by objects in the DOM tree, there are 12 types of nodes, here is the built-in node classes hierarchy:
 
-- `document` - `DOCUMENT_NODE`;
-- element nodes;
-- text nodes - new lines and spaces between tags are text nodes as well;
-- comments;
+![node classes hierarchy](images/js_node_class_hierarchy.png)
+
+- Commmon Node types:
+  - `HTMLDocument` - the `document` object;
+  - element nodes - different elements may belong to different built-in classes;
+  - `Text` text nodes - texts within tags or spaces/newlines between tags;
+  - `Attr` - attribute nodes;
+  - `Comment` - comments;
+- `EventTarget`, `Node`, etc are abstract classes;
+- `HTMLInputElement`, `HTMLBodyElement`, etc are concrete classes, each has some specific properties;
+- Common node properties: `nodeType`, `nodeName`, `data` (the text for `Text` or `Comment` nodes);
+- Common element properties: `tagName`, `innerHTML`, `outerHTML`, `textContent`;
+
+### Navigation
+
+![dom_navigation](images/js_dom_navigation.png)
+
+- `document.documentElement` -> `<html>`
+- `document.head` -> `<head>`
+- `document.body` -> `<body>`
+- `document.querySelectorAll(css)` -> a collection
+- `document.querySelector(css)` -> first match
+
+- `elem.closest(css)` -> nearest ancestor matching the css, can be itself
+- `elem.matches(css)` -> check whether an element matches the css selector
+
+#### DOM collections
+
+`node.childNodes` is an instance of `NodeList`, `elem.children` is an instance of `HTMLCollection`:
+
+- They are array-like objects, not real arrays, array methods (`map`, `filter`, etc) don't work;
+- Iterable, can be iterated using `for..of`;
+- Can be converted to real arrays using `Array.from()`, `...`;
+- Read-only;
+- Live, if you keep a reference to it, and add/remove nodes into DOM, they appear in the collection directly;
+
+### Attributes and Properties
+
+- Standard attributes of an element are created as properties in the corresponding DOM object:
+
+  ```html
+  <body id="body" type="...">
+    <input id="input" type="text" />
+    <script>
+      alert(input.type); // text
+      alert(body.type); // undefined: 'type` is non-standard for <body>
+    </script>
+  </body>
+  ```
+
+  |       | Attributes                    | Properties                                                                                                    |
+  | ----- | ----------------------------- | ------------------------------------------------------------------------------------------------------------- |
+  | Name  | case-insensitive (`id`, `ID`) | lower-case (`id`)                                                                                             |
+  | Type  | always strings                | can be other types: (`checked` is boolean, `style` is object)                                                 |
+  | Value | as in the HTML                | can be different (`href` attribute of `<a>` may be a relative path, the `href` property is always a full URL) |
+
+- Attributes and properties are synced most of the time, but there are exceptions, such as `value` for `input`;
+
+  - `inputElement.getAttribute('value')` is the initial value for the input, and is the initial value of `inputElement.value`;
+  - `inputElement.value` is what you see on the page, if you change it, the attribute doesn't change;
+
+- `data-` attributes
+
+  - Reserved for programmers' use, available in the `dataset` property;
+    - `data-name` attribute is available as `dataset.name`;
+    - `data-last-name` is available as `dataset.lastName`;
+
+### Classes and Styles
+
+- `class` attribute can be accessed in JS with:
+
+  - `elem.className`: a string;
+  - `elem.classList`: an iterable, array-like object, supports `add/remove/toggle/contains` methods;
+
+- `style` attribute is available in `elem.style`:
+
+  - you can update any style property: `elem.style.fontSize = '20px'`;
+  - reset by assigning an empty string: `elem.style.fontSize = ''`;
+
+- `getComputedStyle`
+
+  - `getComputedStyle(element, [pseudo])`, returns an object like `elem.style`, with respect to all CSS rules and inheritance;
+  - Used to return _computed_ values, but nowadays it returns _resolved_ values:
+    - A _computed style_ value refers to the result of CSS cascade, e.g.: `height: 1em` or `font-size: 125%`;
+    - A _resolved style_ value refers to the final value applied to the element, it's has fixed and absolute units, e.g.: `height: 20px` or `font-size: 16px`;
+  - You'd better use full property names like `getComputedStyle(elem).paddingLeft` instead of short names like `padding`;
+  - Styles applied to `:visited` links are hidden, for example, if a visited link has a special color, it can't be accessed by `getComputedStyle`, this is for privacy reason;
+    - And there is a limitation in CSS that forbids applying geometry-changing styles in `:visited`;
+
+### Element Size and Scrolling
 
 ## DOM Events
 
