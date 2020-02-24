@@ -1,57 +1,57 @@
 # Vim cheatsheet
 
-- [Motions](#Motions)
-  - [Left-right motions](#Left-right-motions)
-  - [Up-down motions](#Up-down-motions)
-  - [Word motions](#Word-motions)
-  - [Text object motions](#Text-object-motions)
-  - [Marks](#Marks)
-    - [Examples](#Examples)
-  - [Jumps](#Jumps)
-  - [Various motions](#Various-motions)
-  - [Tags](#Tags)
-- [Editing](#Editing)
-  - [Operators](#Operators)
-  - [Text objects](#Text-objects)
-  - [Examples](#Examples-1)
-  - [Increase / Decrease numbers](#Increase--Decrease-numbers)
-  - [Indent lines](#Indent-lines)
-  - [Abbreviations](#Abbreviations)
-  - [Word completion](#Word-completion)
-- [Search and replace](#Search-and-replace)
-  - [Special characters in a replacement pattern](#Special-characters-in-a-replacement-pattern)
-  - [Copy from one location, replacing multiple locations](#Copy-from-one-location-replacing-multiple-locations)
-- [Regular Expressions](#Regular-Expressions)
-  - [Enable ERE (extended regular expression)](#Enable-ERE-extended-regular-expression)
-  - [About new line](#About-new-line)
-  - [Lookahead / Lookbehind modifiers](#Lookahead--Lookbehind-modifiers)
-- [Buffer, Window and Tab](#Buffer-Window-and-Tab)
-  - [Concepts](#Concepts)
-  - [Multiple buffers](#Multiple-buffers)
+- [Motions](#motions)
+  - [Left-right motions](#left-right-motions)
+  - [Up-down motions](#up-down-motions)
+  - [Word motions](#word-motions)
+  - [Text object motions](#text-object-motions)
+  - [Marks](#marks)
+    - [Examples](#examples)
+  - [Jumps](#jumps)
+  - [Various motions](#various-motions)
+  - [Tags](#tags)
+- [Editing](#editing)
+  - [Operators](#operators)
+  - [Text objects](#text-objects)
+  - [Examples](#examples-1)
+  - [Increase / Decrease numbers](#increase--decrease-numbers)
+  - [Indent lines](#indent-lines)
+  - [Abbreviations](#abbreviations)
+  - [Word completion](#word-completion)
+- [Search and replace](#search-and-replace)
+  - [Special characters in a replacement pattern](#special-characters-in-a-replacement-pattern)
+  - [Copy from one location, replacing multiple locations](#copy-from-one-location-replacing-multiple-locations)
+- [Regular Expressions](#regular-expressions)
+  - [Enable ERE (extended regular expression)](#enable-ere-extended-regular-expression)
+  - [About new line](#about-new-line)
+  - [Lookahead / Lookbehind modifiers](#lookahead--lookbehind-modifiers)
+- [Buffer, Window and Tab](#buffer-window-and-tab)
+  - [Concepts](#concepts)
+  - [Multiple buffers](#multiple-buffers)
   - [arglist](#arglist)
-  - [Multiple windows](#Multiple-windows)
-  - [Tabs](#Tabs)
-  - [Tag with windows](#Tag-with-windows)
-- [Record and Play](#Record-and-Play)
-- [Copy and Paste](#Copy-and-Paste)
-- [Command macros](#Command-macros)
-- [Registers](#Registers)
-- [Options](#Options)
-- [Modes](#Modes)
+  - [Multiple windows](#multiple-windows)
+  - [Tabs](#tabs)
+  - [Tag with windows](#tag-with-windows)
+- [Record and Play](#record-and-play)
+- [Copy and Paste](#copy-and-paste)
+- [Command macros](#command-macros)
+- [Registers](#registers)
+- [Options](#options)
+- [Modes](#modes)
   - [ex mode](#ex-mode)
   - [visual mode](#visual-mode)
-- [Plugins](#Plugins)
-  - [Vundle](#Vundle)
-  - [Useful Plugins](#Useful-Plugins)
+- [Plugins](#plugins)
+  - [Vundle](#vundle)
+  - [Useful Plugins](#useful-plugins)
   - [vim-surround](#vim-surround)
-- [Miscs](#Miscs)
-  - [Avoid the Esc key](#Avoid-the-Esc-key)
-  - [Save a readonly file](#Save-a-readonly-file)
-  - [Add a new filetype](#Add-a-new-filetype)
-  - [Encoding](#Encoding)
-  - [Save session](#Save-session)
-  - [Folding](#Folding)
-- [Refs](#Refs)
+- [Miscs](#miscs)
+  - [Avoid the Esc key](#avoid-the-esc-key)
+  - [Save a readonly file](#save-a-readonly-file)
+  - [Add a new filetype](#add-a-new-filetype)
+  - [Encoding](#encoding)
+  - [Save session](#save-session)
+  - [Line ending](#line-ending)
+- [Refs](#refs)
 
 ## Motions
 
@@ -83,6 +83,8 @@ gg              # Goto first line
 [count]G/gg     # Goto line [count]
 :[range]        # go to last line in [range], which can be ":22", ":+5" or ":'mark"
 {count}%        # go to {count} percentage of the file
+
+za              # open or close folds
 ```
 
 ### Word motions
@@ -987,9 +989,15 @@ reenter a session:
     $ vi
     :source ~/myVimSession.vim
 
-### Folding
+### Line ending
 
-    za      # open or close folds
+see https://stackoverflow.com/a/45459733/434540
+
+- When Vim reads a file into its buffer, it detects line endings, and set `fileformat` to either `dos`, `mac` or `unix`, all the eol chars are replaced with its own internal representation;
+- If you run `:set list` command, it will show `$` at the end of each line, depending on the `fileformat`, this `$` may represents `\r\n`, `\r` or `\n`, so even you opened a file with `\r\n` eol, you won't see `\r`;
+- If you want to see the `\r`, you need to forcibly load a `dos` file as a `unix` one by this command: `:e ++ff=unix`, then `\r` will be shown as `^M`;
+- And if you want to input a `\r`, use `CTRL-V` followed by `Enter` in insert mode;
+
 
 ## Refs
 
