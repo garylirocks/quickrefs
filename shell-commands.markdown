@@ -6,6 +6,7 @@
 - [`sort`](#sort)
 - [`paste`](#paste)
 - [`cut`](#cut)
+- [`tr`](#tr)
 - [`column`](#column)
 - [`update-alternatives`](#update-alternatives)
 - [`rename`](#rename)
@@ -114,6 +115,22 @@ merge lines of files, if `-s` is set, merge one file at a time, quite useful for
     $ cut -d: -f1,3 --output-delimiter=' ' /etc/passwd | head -2
     root 0
     daemon 1
+
+## `tr`
+
+```sh
+# replace multiple occurence of a character to one
+echo 'a-------------b' | tr -d '-'
+# ab
+
+# delete a charater
+echo 'a-------------b' | tr -s '-'
+# a-b
+
+# lower to upper case
+echo 'ab' | tr -s '[:lower:]' '[:upper:]'
+# AB
+```
 
 ## `column`
 
