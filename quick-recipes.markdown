@@ -93,7 +93,7 @@ sudo dpkg-reconfigure keyboard-configuration
 add the user to the `sudo` group
 
 ```sh
-# login as root, add gary to the sudo group
+# login as root, add gary to the sudo group (or 'wheel' group for CentOS)
 usermod -a -G sudo gary
 
 # login as gary, confirm it had been added to the sudo group
@@ -103,6 +103,9 @@ id
 # crete a file in /etc/sudoers.d/ with the same name of your username
 echo "gary ALL=(ALL) ALL" > /etc/sudoers.d/gary
 chmod 440 /etc/sudoers.d/gary
+
+# to allow no-password sudo, add this to the end of '/etc/sudoers', using visudo
+gary ALL=(ALL) NOPASSWD: ALL
 ```
 
 ## Change file/directory permissions
