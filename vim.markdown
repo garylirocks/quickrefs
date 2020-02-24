@@ -14,6 +14,7 @@
   - [Operators](#operators)
   - [Text objects](#text-objects)
   - [Examples](#examples-1)
+  - [Column mode](#column-mode)
   - [Increase / Decrease numbers](#increase--decrease-numbers)
   - [Indent lines](#indent-lines)
   - [Abbreviations](#abbreviations)
@@ -278,6 +279,13 @@ ci(     change everything in the parenthesis: delete all the content and put you
 
 gUiw    change word to UPPERCASE
 ```
+
+### Column mode
+
+1. `CTRL-v`/`CTRL-SHIFT-v` to go into column mode;
+2. Select the columns and rows;
+3. `SHIFT-i` to go into insert mode;
+4. Type in text, only the first row is chaning, after `ESC`, changes where be applied to each row;
 
 ### Increase / Decrease numbers
 
