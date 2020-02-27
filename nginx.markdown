@@ -22,6 +22,7 @@
   - [Load balancing](#load-balancing)
   - [Get real client ip](#get-real-client-ip)
   - [CORS rules](#cors-rules)
+  - [Serving protected files](#serving-protected-files)
 - [Trivias](#trivias)
 
 ## How a request is processed
@@ -468,6 +469,24 @@ location / {
      }
 }
 ```
+
+### Serving protected files
+
+https://www.nginx.com/resources/wiki/start/topics/examples/x-accel/
+
+To server protected files, you want to have backend script to handle authentication, logging etc, and then have NGINX handling serving contents from redirected location to the end user.
+
+1. Configure the backend to send a header like `X-Accel-Redirect: /var/files/apple.jpg`;
+2. Add this in NGINX conf
+
+    ```nginx
+    location /var/files {
+        internal;          # this indicate this is an internal location
+        alias /var/files;
+    }
+    ```
+3. Then NINGX will serve `apple.jpg`;
+
 
 ## Trivias
 
