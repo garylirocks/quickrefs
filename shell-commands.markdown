@@ -119,11 +119,11 @@ merge lines of files, if `-s` is set, merge one file at a time, quite useful for
 ## `tr`
 
 ```sh
-# replace multiple occurence of a character to one
+# delete a charater
 echo 'a-------------b' | tr -d '-'
 # ab
 
-# delete a charater
+# condense multiple occurence of a character to one
 echo 'a-------------b' | tr -s '-'
 # a-b
 
