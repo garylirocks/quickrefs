@@ -496,3 +496,17 @@ To server protected files, you want to have backend script to handle authenticat
 
   - `absolute_redirect` controls whether absolute or relative path is used in the response headers;
   - `server_name_in_redirect` if on, the primary server name (specified by the `server_name` directive) is used in the absolute redirect url, otherwise it uses the name from the `Host` request header, if this field is not present, then the IP address of the server is used (this may leak internal IP address, which is a security vulnerability CVE-2000-0649);
+
+- Redirect based on the query string (`location` only matches the uri, not including the query string)
+
+    ```nginx
+    location / {
+        if ($args ~* "foo=1") {
+            return 301 https://example.com/foo;
+        }
+
+        ...
+    }
+    ```
+
+    [If is Evil](https://www.nginx.com/resources/wiki/start/topics/depth/ifisevil/), but it's safe in this case
