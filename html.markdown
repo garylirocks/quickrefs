@@ -8,6 +8,8 @@
   - [Attributes and Properties](#attributes-and-properties)
   - [Classes and Styles](#classes-and-styles)
   - [Element Size and Scrolling](#element-size-and-scrolling)
+    - [Be careful](#be-careful)
+  - [Window sizes and scrolling](#window-sizes-and-scrolling)
 - [DOM Events](#dom-events)
   - [Assign event handler](#assign-event-handler)
   - [Event Bubbling and Capturing](#event-bubbling-and-capturing)
@@ -123,7 +125,7 @@ Everything in HTML is represented by objects in the DOM tree, there are 12 types
 - `getComputedStyle`
 
   - `getComputedStyle(element, [pseudo])`, returns an object like `elem.style`, with respect to all CSS rules and inheritance;
-  - Used to return _computed_ values, but nowadays it returns _resolved_ values:
+  - Used to return _computed_ values, but nowadays it returns **resolved values**:
     - A _computed style_ value refers to the result of CSS cascade, e.g.: `height: 1em` or `font-size: 125%`;
     - A _resolved style_ value refers to the final value applied to the element, it's has fixed and absolute units, e.g.: `height: 20px` or `font-size: 16px`;
   - You'd better use full property names like `getComputedStyle(elem).paddingLeft` instead of short names like `padding`;
@@ -131,6 +133,80 @@ Everything in HTML is represented by objects in the DOM tree, there are 12 types
     - And there is a limitation in CSS that forbids applying geometry-changing styles in `:visited`;
 
 ### Element Size and Scrolling
+
+![exmaple element](images/html_element_sizing_example.png)
+
+- If a browser reserves space for a scrollbar (some only show on hover), the space (16px above) is taking from the content width;
+  - Scrollbar is between padding and border;
+- `padding-bottom` may be filled with text (you can only see the bottom padding when you scroll to the end);
+
+![sizing](images/html_element_geometry.png)
+
+- `offsetParent`, `offsetLeft/Top`
+
+  The offsetParent is the nearest ancestor that the browser uses for calculating coordinates during rendering. That’s the nearest ancestor that is one of the following:
+
+  - CSS-positioned (position is `absolute`, `relative`, `fixed` or `sticky`), or
+  - `<td>`, `<th>`, or `<table>`, or
+  - `<body>`
+
+- `offsetWidth/Height`
+
+  The full size of an element, including borders, not including margins.
+
+- `clientLeft/Top`
+
+  Usually the same as left/top border width, unless the document is right-to-left and there is a scrollbar.
+
+- `clientWidth/Height`
+
+  Include content and paddings, without scrollbar.
+
+- `scrollWidth/Height`
+
+  Similar to `clientWidth/Height` but includes scrolled out parts.
+
+- `scrollLeft/Top`
+
+  How much have been scrolled out, can be modified to scroll an element.
+
+#### Be careful
+
+- **If an element is not in the document or has `display: none`, then all its geometry properties are 0, and `offsetParent` is `null`**
+  - `!elem.offsetWidth && !elem.offsetHeight` can tell if an element is hidden (or take no space);
+- Don't take width/height from CSS
+  - CSS `width/height` depends on another property `box-sizing`;
+  - CSS `width/height` may be `auto`;
+  - When read `getComputedStyle(elem).width`, browsers behave differently regarding whether scrollbar width is included;
+
+### Window sizes and scrolling
+
+- Use `document.documentElement.clientWidth/Height` to get the width/height of visible part of a document, (scrollbar size excluded);
+
+  - `window.innerWidth/Height` include scrollbar size;
+  - `window.outerWidth/Height` is the broswer width/height;
+
+- To get the full size of a doucment, including scrolled out part, due to browser inconsistencies, you need
+
+  ```js
+  let scrollHeight = Math.max(
+    document.body.scrollHeight,
+    document.documentElement.scrollHeight,
+    document.body.offsetHeight,
+    document.documentElement.offsetHeight,
+    document.body.clientHeight,
+    document.documentElement.clientHeight
+  );
+  ```
+
+- To get scroll position of the document, it's better to use `window.pageXOffset/pageYOffset`, because `document.documentElement.scrollLeft/Top` is not consistent across browsers:
+
+  ```js
+  alert('Current scroll from the top: ' + window.pageYOffset);
+  alert('Current scroll from the left: ' + window.pageXOffset);
+  ```
+
+- Use `window.scrollBy(x,y)` and `window.scrollTo(pageX,pageY)` to scroll a document.
 
 ## DOM Events
 
