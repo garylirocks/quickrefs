@@ -149,6 +149,23 @@ Looks like this behaviour is not consistent across browsers (Firefox will always
 
 For NginX, you need to put both of the certificate and the private key file's path in the server config.
 
+```nginx
+ssl_certificate file;
+ssl_certificate_key file;
+```
+
+*the server's cert and any intermediate CA's cert should be put into the same file like*
+
+```
+-----BEGIN CERTIFICATE-----
+// server cert
+-----END CERTIFICATE-----
+-----BEGIN CERTIFICATE-----
+// intermediate CA cert
+-----END CERTIFICATE-----
+```
+
+
 ### How does it work
 
 ![HTTP encryption process](images/http-encryption-process.jpg)
@@ -159,6 +176,7 @@ For NginX, you need to put both of the certificate and the private key file's pa
   - Different algorithms are used for encryption and signing, and generally you should use a separate pair of keys for each;
 - In step 3, client verifies the server's certificate against its pre-loaded Root CA certs;
   - If the server's certificate claims it's from CA Foo, the client can verify the certificate with CA Foo's public key, which is in Foo's certificate;
+  - If the server's certificate is issued by an intermediate CA, the intermediate CA's cert should come with the server's certificate, and the client verifies them all the way up to a root CA;
 - Start from step 6, client and server only use the symmetric key for encryption;
 
 ## CORS
