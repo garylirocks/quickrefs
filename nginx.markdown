@@ -14,6 +14,7 @@
     - [`rewrite` vs. `return`](#rewrite-vs-return)
   - [`upstream`](#upstream)
   - [`fastcgi_split_path_info`](#fastcgisplitpathinfo)
+  - [`map`](#map)
 - [Cheatsheets](#cheatsheets)
   - [Standardizing domain names](#standardizing-domain-names)
   - [Add or removing the 'www' prefix](#add-or-removing-the-www-prefix)
@@ -23,7 +24,7 @@
   - [Get real client ip](#get-real-client-ip)
   - [CORS rules](#cors-rules)
   - [Serving protected files](#serving-protected-files)
-- [Trivias](#trivias)
+- [Trivia](#trivia)
 
 ## How a request is processed
 
@@ -280,7 +281,7 @@ this will ensure every request gets a 503 response code, and the content of `503
 
 [https://www.nginx.com/blog/creating-nginx-rewrite-rules/]
 
-- `return` is prefereed to do redirections whenever possible;
+- `return` is preferred to do redirections whenever possible;
 - `rewrite` can only return `301` or `302`;
 - `rewrite` doesn't necessarily halt Nginx's processing of the request as `return` does, and doesn't necessarily send a redirect to the client, see above url for details;
 
@@ -334,6 +335,20 @@ for this request `/show.php/article/0001`:
 
 - the `SCRIPT_FILENAME` parameter will be equal to `/path/to/php/show.php`;
 - and the `PATH_INFO` parameter will be equal to `/article/0001`;
+
+### `map`
+
+Define a new variables whose value depends on a source variable:
+
+```nginx
+map $http_host $myVar {
+    hostnames;              # indicates source values can be hostnames with prefix/suffix mask
+    
+    .domain.com     1;      # matches domain.com and xxx.domain.com
+    *.net           2;
+}
+```
+
 
 ## Cheatsheets
 
@@ -488,7 +503,7 @@ To server protected files, you want to have backend script to handle authenticat
 3. Then NINGX will serve `apple.jpg`;
 
 
-## Trivias
+## Trivia
 
 - For a request `/path`, if `path` points to a directory, NGINX does a 301 redirect to `/path/` by default;
 
