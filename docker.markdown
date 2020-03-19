@@ -25,13 +25,14 @@
   - [`tmpfs`](#tmpfs)
   - [Usage](#usage)
 - [Network](#network)
+  - [Basic commands](#basic-commands)
   - [DNS](#dns)
   - [Swarm](#swarm)
   - [Network Driver Types](#network-driver-types)
   - [Port Publishing Mode](#port-publishing-mode)
 - [Docker Compose](#docker-compose)
   - [`docker-compose.yml`](#docker-composeyml)
-    - [`volumes`](#volumes)
+    - [`volumes`](#volumes-1)
     - [`deploy`](#deploy)
     - [Variable substitution](#variable-substitution)
   - [Networking](#networking)
@@ -495,7 +496,7 @@ docker run -it -v /home/gary/code/super-app:/app ubuntu
 
 ## Network
 
-Basic commands
+### Basic commands
 
 ```bash
 # list networks
@@ -560,7 +561,7 @@ docker network inspect bridge04
 
 ### Swarm
 
-After `docker swarm init`, Docker will create an overlay network called `ingress` and a bridge network called `docker_gwbridge`
+After `docker swarm init`, Docker will create an overlay network called `ingress` and a bridge network called `docker_gwbridge` on every node.
 
 ```sh
 docker network ls
@@ -602,8 +603,15 @@ docker network inspect overlay0
 - bridge
 
   - default on stand-alone Docker hosts;
-  - a private network internal to the host system;
-  - all containers on this host using bridge networking can communicate to each other;
+    - The default bridge network is `docker0` on the host, which has config:
+      ```
+      {
+          "Subnet": "172.17.0.0/16",
+          "Gateway": "172.17.0.1"
+      }
+      ``` 
+    - The host is the gateway, has ip `172.17.0.1`;
+  - all containers on this host will use this network by default, getting ips within `172.17.0.0/16`;
   - external access is granted by port exposure of the container's services and accessed by the host;
 
 - none
@@ -612,26 +620,31 @@ docker network inspect overlay0
   - can only be accessed on the host;
   - can `docker attach <container-id>` or `docker exec -it <container-id>`;
 
+- gateway bridge
+
+  - automatically created when initing or joining a swarm;
+  - special bridge network that allows overlay networks access to an individual Docker daemon's physical network;
+  - all service containers running on a node is in this network;
+
 - overlay
 
-  - allows communication among all Docker Daemons in a Swarm;
   - it is a 'swarm' scope driver: it extends itself to all daemons in the swarm (building on workers if needed);
-  - allows multiple services in the swarm communicate to each other (regardless of origination or destination);
-  - **all the containers on all the nodes in the swarm get an ip of this overlay network, they can connect to each other**;
 
 - ingress
 
   - **A Special overlay network that load balances network traffic amongst a given service's working nodes**;
-  - Maitains a list of all IP addresses from nodes of a service, when a request comes in, routes to one of them;
+  - Maintains a list of all IP addresses from nodes of a service, when a request comes in, routes to one of them;
   - Provides '**routing mesh**', allows services to be exposed to the external network without having a replica running on every node in the Swarm;
 
-  ![Swarm ingress routing](images/docker-swarm-ingress-routing-mesh.png)
+![Swarm networking](images/docker-swarm-networking.png)
 
-- gateway bridge
-
-  - special bridge network that allows overlay networks access to an individual Docker daemon's physical network;
-  - every contianer run within a service is connected to the local Docker daemon's host network;
-  - automatically created when initing or joining a swarm;
+- When init/join a swarm, `docker_gwbridge` and `ingress` networks are created on each node, and there is a virtual `ingress-endpoint` container, which is part of both networks;
+- When creating a service `web`, its containers are attached to both the `docker_gwbridge` and `ingress` network;
+- When deploying a stack `xStack`, which have two services `s1` (2 replicas) and `s2` (1 replica), all three containers are in the `ingress` network, and the `docker_gwbridge` network of respective owning host;
+  - There is an additional overlay network `xStack_default`, which is non-ingress;
+  - Inside the stack, services are accessible by name `s1` and `s2`, so in `xStack_s1.1` you can `ping s2`;
+  - But in `web.1`, you can't `ping s2`;
+- Let's say `web` has a port binding `9000:80`, then when you visit `192.168.0.1:9000`, thru the `docker_gwbridge` network, it reaches `ingress-endpoint`, which keeps record of all ips of the `web` service, thru the `ingress` network, it routes the request to either `web.1` (10.0.0.6) or `web.2` (10.0.0.5);
 
 ### Port Publishing Mode
 
