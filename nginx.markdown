@@ -446,6 +446,8 @@ real_ip_header    X-Forwarded-For;
 set_real_ip_from  10.0.0.0/8;
 ```
 
+This allows Nginx to log the real ip, and do some access restrictions based on it.
+
 ### CORS rules
 
 [CORS on Nginx](https://enable-cors.org/server_nginx.html)
