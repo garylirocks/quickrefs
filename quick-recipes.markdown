@@ -224,11 +224,11 @@ sudo umount /mnt/data
 ```sh
 # for cifs, specify server user, client uid/gid, file_mode and dir _mode
 USER=Administrator mount -o uid=dockeruser,gid=dockeruser,file_mode=0770,dir_mode=0700 //192.168.88.3/data /home/dockeruser/test/mpoint
-
-# you can't chown or chmod after the device is mounted
 ```
 
-- `cifs` is an implementation of `smb`, it's outdated, you should use `smb 2` or `smb 3` when possible (https://www.varonis.com/blog/cifs-vs-smb/)
+- CIFS is commonly supported in Linux by the cifs module in the kernel;
+- If the server does not suppport Unix Extension, then all the files/folders under the mount point are getting user/group and permissions from the mount options, and you can't `chown` or `chmod` after the device is mounted;
+- For detailed info, check `man mount.cifs`;
 
 ## Relabel usb hard drive
 
