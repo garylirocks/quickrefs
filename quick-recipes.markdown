@@ -202,16 +202,15 @@ export PS1="\u@$MYIP:\w\$ "
 ## Mount/Unmount device
 
 ```sh
-sudo mkdir -p /mnt/data
-sudo mount -t smbfs //Administrator@192.168.88.3/data  /mnt/data
-
-sudo ls /mnt/data
-# ...
-
 mount           # show mounted devices
 # ...
 # //Administrator@192.168.88.3/data on /mnt/data (smbfs)
 
+# create a mount point and mount a network share to it
+sudo mkdir -p /mnt/data
+sudo mount -t smbfs //Administrator@192.168.88.3/data  /mnt/data
+
+# unmount whatever is mounted at this point
 sudo umount /mnt/data
 ```
 
