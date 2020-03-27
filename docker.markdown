@@ -34,11 +34,13 @@
   - [`docker-compose.yml`](#docker-composeyml)
     - [`volumes`](#volumes-1)
     - [`deploy`](#deploy)
-    - [Variable substitution](#variable-substitution)
+  - [`env_file`](#envfile)
+  - [Variable substitution](#variable-substitution)
   - [Networking](#networking)
     - [Custom networks](#custom-networks)
   - [Name collision issue](#name-collision-issue)
 - [Docker machine](#docker-machine)
+- [Context](#context)
 - [Swarm mode](#swarm-mode)
   - [Swarm on a single node](#swarm-on-a-single-node)
   - [Multi-nodes swarm example](#multi-nodes-swarm-example)
@@ -609,7 +611,7 @@ docker network inspect overlay0
           "Subnet": "172.17.0.0/16",
           "Gateway": "172.17.0.1"
       }
-      ``` 
+      ```
     - The host is the gateway, has ip `172.17.0.1`;
   - all containers on this host will use this network by default, getting ips within `172.17.0.0/16`;
   - external access is granted by port exposure of the container's services and accessed by the host;
@@ -677,7 +679,7 @@ Steps for using Compose:
 3. Run `docker-compose up` to start your app;
 
 ```bash
-# rebuil and updating a container
+# rebuild and updating a container
 docker-compose up -d --build
 
 # the same as
@@ -691,6 +693,9 @@ docker-compose build --force-rm --no-cache
 
 ## specicy a project name
 docker-compose up -p myproject
+
+# you can specify multiple config files, this allows you extending base configs in different environments
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 ```
 
 ### `docker-compose.yml`
@@ -749,14 +754,60 @@ see here: ["docker-compose up" not rebuilding container that has an underlying u
   - `delay`
   - `window`
 
-#### Variable substitution
+### `env_file`
+
+```sh
+# api.env
+NODE_ENV=test
+```
+
+```yaml
+version: '3'
+services:
+  api:
+    image: 'node:6-alpine'
+
+    env_file:
+     - ./api.env
+
+    environment:
+     - NODE_ENV=production
+     - APP_VERSION          # get this value from shell env
+```
+
+This allows you provide a set of environment variables to the container, the precedence order of env variables:
+
+1. Compose file;
+2. Shell environment variable;
+3. `env_file`;
+4. Dockerfile;
+
+In the above example, inside the container, `NODE_ENV` will be 'production', and `APP_VERSION` will be whatever value in the shell when you start the container;
+
+### Variable substitution
 
 ```yaml
 db:
   image: 'postgres:${POSTGRES_VERSION}'
+  extra_hosts:
+    sql: ${SQL}
 ```
 
-`${POSTGRES_VERSION}` get its value from shell environment
+```sh
+# .env
+
+POSTGRES_VERSION=10.2
+SQL=1.2.3.4
+```
+
+Variables in a compose file get their value from either the running shell, or `.env` file.
+
+Please note:
+
+  - **Values in `.env` are used for variable substitution automatically, but they don't get set in the container's environment if you don't specify it with `env_file` in the compose file**;
+  - In later versions of `docker-compose`, there is a new CLI option `--env-file`, which allows you to specify another file instead of `.env`, it's not the same as the `env_file` option in compose file;
+  - `.env` file **doesn't** work with `docker stack deploy`;
+
 
 ### Networking
 
@@ -885,6 +936,10 @@ docker-machine start <machine-name>
 # unset 'DOCKER_' envs
 eval $(docker-machine env -u)
 ```
+
+## Context
+
+TODO
 
 ## Swarm mode
 
