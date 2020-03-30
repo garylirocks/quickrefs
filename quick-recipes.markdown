@@ -30,6 +30,7 @@ Quick productivity tips, shortcuts, command line snippets.
 - [Limit Google Chrome memory usage](#limit-google-chrome-memory-usage)
 - [Chrom DevTools](#chrom-devtools)
 - [Limit memory/cpu usage using cgroups](#limit-memorycpu-usage-using-cgroups)
+- [`resolve.conf`](#resolveconf)
 
 ## Shortcuts
 
@@ -526,3 +527,16 @@ cgroups can be used to limit a process groups resource(memory/cpu/...) usage
   ```
 
 - Then the cgroup should be applied when the system starts
+
+## `resolve.conf`
+
+  ```
+  search a.com b.com
+  nameserver 172.24.16.11
+  nameserver 10.10.39.65
+  # domain proworkflow.com
+  ```
+
+  If you try to query a non FQDN, such as `app`, then it will append domains in the `search` line to it, so it will query `app.a.com`, `app.b.com` in turn;
+
+  `domain` directive is obsolete, replaced by `search`
