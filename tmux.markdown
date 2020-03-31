@@ -4,21 +4,24 @@
 
 Some useful tips for tmux
 
-**WARNING**: _Some of the keybindings maybe overrided by your `~/.tmux.conf` file_
+**WARNING**: _Some of the keybindings may be overridden by your `~/.tmux.conf` file_
 
 ## Run
 
 reassume previous session:
 
-    tmux attach
+```sh
+tmux attach
+```
 
 ## Configs
 
-personal configuration file is `~/.tmux.conf`
+Personal configuration file is `~/.tmux.conf`
 
-change key binding prefix to `Ctrl-a`
-  
- set -g prefix C-a
+```sh
+# change key binding prefix to `Ctrl-a`
+set -g prefix C-a
+```
 
 ## Vi mode
 
