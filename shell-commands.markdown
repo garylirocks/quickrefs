@@ -18,12 +18,15 @@
 - [`logrotate`](#logrotate)
 - [`watch`](#watch)
 - [`nc`, `netcat`](#nc-netcat)
+  - [Port scanning](#port-scanning)
+  - [Data transfer](#data-transfer)
 - [`od`](#od)
 - [`mktemp`](#mktemp)
 - [`expand`](#expand)
 - [`find`](#find)
 - [`xargs`](#xargs)
 - [`pushd`, `popd`, `dirs`](#pushd-popd-dirs)
+- [`rsync`](#rsync)
 
 ## Preface
 
@@ -326,6 +329,14 @@ execute a program periodically, showing output fullscreen
 
 ## `nc`, `netcat`
 
+### Port scanning
+
+```sh
+nc -zv host.example.com 20-30
+```
+
+### Data transfer
+
 using nc to send files
 
 at remote host `dev`:
@@ -514,6 +525,17 @@ Some shell commands don't take standard input, `xargs` allow you to convert stan
     $ pwd
     /home/lee/playground/testing/dir2
 
+## `rsync`
 
+```sh
+# sync everything in src/ folder to dest/ folder
+rsync -avp src/ ./dest
+
+# sync everything including src/ folder to dest/
+rsync -avp src ./dest
+
+# everything only in dest/ will be deleted
+rsync -avp --delete src/ ./dest
+```
 
 [tuanzi]: http://kodango.com
