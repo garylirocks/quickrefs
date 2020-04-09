@@ -12,11 +12,14 @@
   - [Startup files](#startup-files)
   - [A prompt-unchangeable issue](#a-prompt-unchangeable-issue)
 - [Variables](#variables)
+  - [String manipulation](#string-manipulation)
+  - [Environment variables](#environment-variables)
+  - [Special variables](#special-variables)
+  - [Command line arguments](#command-line-arguments)
 - [Command substitution](#command-substitution)
-- [brace expansion](#brace-expansion)
-- [Strings](#strings)
+- [Brace expansion](#brace-expansion)
+  - [Integer or character sequence](#integer-or-character-sequence)
 - [`if` statement](#if-statement)
-- [Command line arguments](#command-line-arguments)
 - [Conditional](#conditional)
 - [`[` vs `[[`](#vs)
 - [Arithmetic](#arithmetic)
@@ -25,19 +28,25 @@
 - [`case` statements](#case-statements)
 - [Functions](#functions)
 - [Variable scope](#variable-scope)
-- [the source (.) command](#the-source--command)
-- [integer or character sequence](#integer-or-character-sequence)
-- [get directory of a script you're running](#get-directory-of-a-script-youre-running)
-- [Multiple commands on a single line](#multiple-commands-on-a-single-line)
 - [Here documents](#here-documents)
-- [read user input](#read-user-input)
-- [expr](#expr)
-- [printf](#printf)
-- [set](#set)
-- [shift](#shift)
-- [Generate random numbers](#generate-random-numbers)
-- [Debugging](#debugging)
-- [read lines of a file](#read-lines-of-a-file)
+- [Builtins](#builtins)
+  - [`source`, `.`](#source)
+  - [`read`](#read)
+  - [`expr`](#expr)
+  - [`printf`](#printf)
+  - [`set`](#set)
+  - [`shift`](#shift)
+- [Scripting best practices](#scripting-best-practices)
+  - [Options](#options)
+  - [`IFS`](#ifs)
+  - [`trap`](#trap)
+  - ['strict' mode](#strict-mode)
+- [Quick recipes](#quick-recipes)
+  - [Read lines of a file](#read-lines-of-a-file)
+  - [Generate random numbers](#generate-random-numbers)
+  - [Multiple commands on a single line](#multiple-commands-on-a-single-line)
+  - [Basename and dirname](#basename-and-dirname)
+  - [Get the directory of a script you're running](#get-the-directory-of-a-script-youre-running)
 
 ## Resources
 
@@ -177,99 +186,181 @@ General rule:
 
 set, use, unset a variable
 
-    $ foo='i am a var'
-    $ echo "hello${foo}world"
-    helloi am a varworld
-    $ unset foo
-    $ echo "hello${foo}world"
-    helloworld
+```sh
+$ foo='i am a var'
+$ echo "hello ${foo} world"
+hello i am a var world
 
-Environment variables is that they are a standard part of the UNIX process model. This means that environment variables not only are exclusive to shell scripts, but can be used by standard compiled programs as well. When we "export" an environment variable under bash, any subsequent program that we run can read our setting, whether it is a shell script or not.
+$ unset foo
+$ echo "hello ${foo} world"
+hello world
+```
 
-export a variable
+```sh
+$ echo $foo         # foo is undefined
 
-    foo='i am a var'
-    export foo
+$ echo ${foo:-FOO}  # output FOO, because foo is undefined, doesn't change foo
+FOO
 
-or use one line:
+$ echo $foo         # foo is still undefined
 
-    export foo='i am a var'
+$ echo ${foo:=FOO}  # set `foo` as 'FOO' and output
+FOO
 
-**exported variables are copied, not shared, which means any modification in the subroutine will not affect the variable in the parent routine**
+$ echo ${foo:+BAR}  # foo is not null, out put BAR
+BAR
+```
 
-'\$\$' for current shell process id
+### String manipulation
 
-    $ echo $$
-    24465
+String length
 
-## Command substitution
+```sh
+$ a='hello world'
+$ echo ${#a}
+11
+```
 
-two syntax:
+chopping strings, `##`,`#` to chop from beginning, `%%`,`%` to chop from the end, `##`, `%%` for longest matching, `#`, `%` for first matching
 
-    $ echo `date '+%Y/%m/%d %H:%M:%S'`
-    2013/01/10 10:43:56
-    $ echo $(date '+%Y/%m/%d %H:%M:%S')
-    2013/01/10 10:44:05
+```sh
+$ foo='hello-hello.world.jpg'
 
-## brace expansion
+$ echo ${foo##*hello}
+.world.jpg
 
-    $ touch {dog,cat}s
-    $ ls
-    cats  dogs
+$ echo ${foo#*hello}
+-hello.world.jpg
 
-    $ touch {1..3}
-    $ ls
-    1  2  3  cats  dogs
+$ echo ${foo%%.*}
+hello-hello
 
-## Strings
-
-basename and dirname
-
-    $ basename /home/lee/code/test.php
-    test.php
-    $ dirname /home/lee/code/test.php
-    /home/lee/code
-
-string length
-
-    $ a='hello world'
-    $ echo ${#a}
-    11
-
-string sorting
-
-    if [ "$a" > "$b" ]
-    if [ "$a" == "$b" ]
-
-chopping strings, '##','#' to chop from beginning, '%%','%' to chop from the end, '##', '%%' for longest matching, '#', '%' for first matching
-
-    $ foo='hello-hello.world.jpg'
-    $ echo ${foo##*hello}
-    .world.jpg
-    $ echo ${foo#*hello}
-    -hello.world.jpg
-    $ echo ${foo%%.*}
-    hello-hello
-    $ echo ${foo%.*}
-    hello-hello.world
+$ echo ${foo%.*}
+hello-hello.world
+```
 
 substring
 
-    $ foo='hello-world.jpg'
-    $ echo ${foo:6:5}
-    world
+```sh
+$ foo='hello-world.jpg'
+$ echo ${foo:6:5}
+world
+```
 
-default values for a variable `${param:-default}`, ouput default if param is null
+### Environment variables
 
-    $ echo $foo
+Part of the UNIX process model. This means that environment variables are not exclusive to shell scripts, but can be used by compiled programs as well. When we `export` an environment variable under bash, any subsequent programs we run can read it, whether it is a shell script or not.
 
-    $ echo ${foo:-FOO}
-    FOO
-    $ echo $foo
+export a variable
 
-`${foo:=FOO}` set `foo` as 'FOO' if foo is null
+```sh
+foo='i am a var'
+export foo
+```
 
-`${foo:+BAR}` returns 'BAR' if `foo` is NOT null
+or use a one-liner: `export foo='i am a var'`
+
+**exported variables are copied, not shared**, which means any modification in the subroutine will not affect the variable in the parent routine
+
+### Special variables
+
+- `$$` current process id;
+- `$?` exit code of last command;
+
+### Command line arguments
+
+```sh
+#!/bin/bash
+
+echo "name of script is '$0'"
+echo "first argument is '$1'"
+echo "second argument is '$2'"
+echo "seventeenth argument is '${17}'"
+echo "number of arguments is '$#'"
+echo "all arguments: "
+for arg in "$@"
+do
+    echo $arg
+done
+```
+
+test it out:
+
+```sh
+$ ./cmd-args.sh hello world is-fun
+name of script is './cmd-args.sh'
+first argument is 'hello'
+second argument is 'world'
+seventeenth argument is ''
+number of arguments is '3'
+all arguments:
+hello
+world
+is-fun
+```
+
+## Command substitution
+
+Use back ticks or `$(...)` to get the output of a command
+
+```sh
+$ echo `date '+%Y/%m/%d %H:%M:%S'`
+2013/01/10 10:43:56
+
+$ echo $(date '+%Y/%m/%d %H:%M:%S')
+2013/01/10 10:44:05
+```
+
+## Brace expansion
+
+```sh
+$ touch {dog,cat}s
+$ ls
+cats  dogs
+```
+
+### Integer or character sequence
+
+```sh
+$ echo {1..5} #number sequence
+1 2 3 4 5
+
+$ echo {a..h} #character sequence
+a b c d e f g h
+
+$ echo {10..1} #reversed sequence
+10 9 8 7 6 5 4 3 2 1
+
+$ echo {1..10..3} #sequence with increment interval
+1 4 7 10
+
+$ echo {0..9}{0..9} #echo 00 to 99
+00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99
+```
+
+brace expansion is performed before any other expansion, so `{1..$VAR}` would not work as expected, use `seq start end` or `for` loop instead:
+
+```sh
+$ END=5
+$ for i in {1..$END}; do echo $i; done
+{1..5}
+
+$ for i in `seq 1 $END`; do echo $i; done
+1
+2
+3
+4
+5
+
+$ for ((i=0;i<=$END;i++)) do echo $i; done
+0
+1
+2
+3
+4
+5
+```
+
 
 ## `if` statement
 
@@ -297,36 +388,6 @@ example
     else
         echo 'At first glance, this does not appear to be a tarball.'
     fi
-
-## Command line arguments
-
-create a file named `cmd-args.sh`:
-
-    #!/bin/bash
-
-    echo "name of script is '$0'"
-    echo "first argument is '$1'"
-    echo "second argument is '$2'"
-    echo "seventeenth argument is '${17}'"
-    echo "number of arguments is '$#'"
-    echo "all arguments: "
-    for arg in "$@"
-    do
-        echo $arg
-    done
-
-test it out:
-
-    $ ./cmd-args.sh hello world is-fun
-    name of script is './cmd-args.sh'
-    first argument is 'hello'
-    second argument is 'world'
-    seventeenth argument is ''
-    number of arguments is '3'
-    all arguments:
-    hello
-    world
-    is-fun
 
 ## Conditional
 
@@ -641,65 +702,7 @@ run the script, you'll get:
 
 **variables defined in functions have global scope, except you declare them as `local` explicitly**
 
-## the source (.) command
 
-    . ./script
-
-the source command runs the script in the same shell as the calling script, just like `#include` in C, it can be used to incorporate variable and function definitions to a script, such as set up environment for later commands
-
-## integer or character sequence
-
-    $ echo {1..5} #number sequence
-    1 2 3 4 5
-    $ echo {a..h} #character sequence
-    a b c d e f g h
-    $ echo {10..1} #reversed sequence
-    10 9 8 7 6 5 4 3 2 1
-    $ echo {1..10..3} #sequence with increment interval
-    1 4 7 10
-    $ echo {0..9}{0..9} #echo 00 to 99
-    00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99
-
-brace expansion is performed before any other expansion, so `{1..$VAR}` would not work as expected, use `seq start end` or `for` loop instead:
-
-    $ END=5
-    $ for i in {1..$END}; do echo $i; done
-    {1..5}
-
-    $ for i in `seq 1 $END`; do echo $i; done
-    1
-    2
-    3
-    4
-    5
-
-    $ for ((i=0;i<=$END;i++)) do echo $i; done
-    0
-    1
-    2
-    3
-    4
-    5
-
-## get directory of a script you're running
-
-ref: http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
-
-    DIR=$( cd "$( dirname "$0" )" && pwd )
-
-## Multiple commands on a single line
-
-all three commands will execute even some fails
-
-    $ make ; make install ; make clean
-
-only proceed to the next command when the preceding one succeeded
-
-    $ make && make install && make clean
-
-stop execution after the first successed
-
-    $ cat file1 || cat file2 || cat file3
 
 ## Here documents
 
@@ -743,123 +746,289 @@ use here documents to edit an file:
     $ cat inc
     BAR
 
-## read user input
+## Builtins
 
-    $ echo 'your name?'; read name
-    your name?
-    lee
-    $ echo $name
-    lee
+### `source`, `.`
 
-## expr
+```sh
+source ./script
+# or
+# . ./script
+```
 
-usually used for simple arithmetic, normally replaced with more efficient `$((...))`
+the `source` command runs the script in the same shell as the calling script, just like `#include` in C, it can be used to incorporate variable and function definitions to a script, such as set up environment for later commands.
 
-    $ x=$(expr 2 - 1)
-    $ echo $x
-    1
+### `read`
 
-## printf
+```sh
+$ echo 'your name?'; read name
+your name?
+lee
+
+$ echo $name
+lee
+```
+
+### `expr`
+
+Usually used for simple arithmetic, normally replaced by more efficient `$((...))`
+
+```sh
+$ x=$(expr 2 - 1)
+$ echo $x
+1
+```
+
+### `printf`
 
 X/Open suggests it should be used in preference to `echo` for generating fomatted output, usage is similar to that in C
 
-    $ printf '%10s\t%-10d\n' 'lee' 20
-           lee  20
+```sh
+$ printf '%10s\t%-10d\n' 'lee' 20
+        lee  20
+```
 
-## set
+### `set`
 
 used to set shell options and positional parameters
 
-    $ set foo bar lol
-    $ echo $1 $3
-    foo lol
+```sh
+$ set foo bar lol
+$ echo $1 $3
+foo lol
+```
 
 a trick: using `set` to get fields of a command's ouput
 
-    $ date
-    Tue Sep  9 09:48:17 CST 2014
-    $ set $(date)
-    $ echo $1 $2
-    Tue Sep
+```sh
+$ date
+Tue Sep  9 09:48:17 CST 2014
+$ set $(date)
+$ echo $1 $2
+Tue Sep
+```
 
-this is just an example, you should not use this in reality to extract `date` ouput, you should use format strings
+*this is just an example, you should not actually use this to extract `date` ouput, you should use format strings*
 
-## shift
+### `shift`
 
 shift paramters off the left, can be used to scan parameters
 
-    $ set foo bar hah   # set paramters
-    $ echo $@
-    foo bar hah
-
-    $ shift
-
-    $ echo $@
-    bar hah
-    $ echo $#
-    2
-
-## Generate random numbers
-
-    $ echo $RANDOM
-    12521
-    $ echo $RANDOM
-    15828
-    $ echo $RANDOM
-    18324
-    $ echo $RANDOM
-    21661
-
-## Debugging
-
-Some useful options for debugging:
-
 ```sh
-# Checks for syntax errors only; doesn’t execute commands
-set -n          # same as:  set -o noexec
+$ set foo bar hah   # set paramters
+$ echo $@
+foo bar hah
 
-# Echoes commands before running them
-set -v          # same as: set -o verbose
+$ shift
 
-# Echoes commands after processing on the command line
-set -x          # same as: set -o xtrace
-
-# Gives an error message when an undefined variable is used
-set -u          # same as: set -o nounset
-
-# Abort on errors, otherwise the script would continue
-set -e
-
-set -o pipefail     # abort on errors within pipes
+$ echo $@
+bar hah
+$ echo $#
+2
 ```
 
-It's a good practice to start a script like this, which will detect undefined variables, abort on errors and print a message:
+## Scripting best practices
+
+### Options
+
+- `set -n`
+
+    same as: `set -o noexec`, checks for syntax errors only, doesn’t execute commands;
+
+- `set -v`
+
+    same as: `set -o verbose`, echoes commands before running them;
+
+- `set -x`
+
+    same as: `set -o xtrace`, print commands and their arguments as they are executed (after variable expansions);
+
+- `set -u`
+
+    same as: `set -o nounset`, exit when an undefined variable is used, otherwise it's silently ignored;
+
+    - use a default value when necessary: `NAME=${1:-gary}`, if `$1` is undefined, `NAME` will be `gary`;
+
+- `set -e`
+
+    abort on errors (non-zero exit code), otherwise the script would continue. By default, bash doesn't exit on errors, which makes sense in an interactive shell context, but not in a script;
+
+    - NOTE: when using `&&`, if a non-last command fails, although the exit code of the whole line is not 0, the script doesn't exit, this may or may not be expected:
+
+        ```sh
+        set -eu
+
+        foo && echo 'after foo' # foo fails but the script doesn't exit
+        echo $? # output 127
+
+        echo 'end' # runs
+        ```
+
+        The `&&` and `if` structure may seem the same, but their exit codes are different:
+
+        ```sh
+        [ -f /x ] && echo 'done'
+        echo $?
+        # 1
+
+        if [ -f /x ]; then
+            echo 'done';
+        fi
+        echo $?
+        # 0
+        ```
+
+- `set -o pipefail`
+
+    abort on errors within pipes
+
+    ```sh
+    ls /point/to/nowhere | sort
+    # ls: cannot access '/point/to/nowhere': No such file or directory
+
+    echo $?
+    # 0
+    ```
+
+    without the flag, `ls` has empty stdout and a message in stderr, sort takes the empty stdout, and executes successfully, its exit code 0 becomes the whole command exit code;
+
+    ```sh
+    set -o pipefail
+    ls /point/to/nowhere | sort
+    # ls: cannot access '/point/to/nowhere': No such file or directory
+
+    echo $?
+    # 2
+    ```
+
+    with the flag, `sort` still executes, but `ls`'s exit code becomes the whole command's exit code, with `set -e`, the script exits;
+
+### `IFS`
+
+`IFS` stands for Internal Field Seperator, by default, its values is `$' \n\t'` (`$'...'` is the construct that allows escaped characters);
 
 ```sh
-set -euo pipefail
-trap "echo 'error: Script failed: see failed command above'" ERR
+for arg in $@; do
+    echo "doing something with file: $arg"
+done
 ```
 
-Example:
+```sh
+./x.sh a.txt 'gary li.doc'
+
+# doing something with file: a.txt
+# doing something with file: gary
+# doing something with file: li.doc
+```
+
+In the example above, we don't want to split by space, so we'd better set **`IFS=$'\n\t'`**
+
+### `trap`
+
+You can use `trap` to do some cleanup work on script error or exit, this makes sure the cleanup is always done even when the script exits unexpectedly:
 
 ```sh
 #!/bin/bash
 set -euo pipefail
-trap "echo 'error: Script failed: see failed command above'" ERR
+set -x
 
-set -x          # start debugging
-foo='bar'
-echo $foo
+function onExit {
+    echo 'EXIT: clean up, remove temp directories, stop a service, etc'
+}
 
-echo $bar
-set +x          # end debugging
+function onError {
+    echo 'ERROR: something is wrong'
+}
+
+function onError {
+    echo 'something is wrong'
+}
+
+trap onError ERR    # do something on error
+trap onExit EXIT    # do something on exit
+
+foo # triggers an error
 
 exit 0
 ```
 
-## read lines of a file
+outputs
 
-    $ while read -r line; do echo $line; done < my_file.txt
+```
+x.sh: line 15: foo: command not found
+ERROR: something is wrong
+EXIT: clean up, remove temp directories, stop a service, etc
+```
+
+### 'strict' mode
+
+It's a good practice to start a script like this(called [unofficial bash strict mode](http://redsymbol.net/articles/unofficial-bash-strict-mode/)), which will detect undefined variables, abort on errors and print a message:
+
+```sh
+set -euo pipefail
+IFS=$'\n\t'
+trap "echo 'error: Script failed: see failed command above'" ERR
+
+# your code here
+```
+
+## Quick recipes
+
+### Read lines of a file
+
+```sh
+while read -r line; do echo $line; done < my_file.txt
+```
+
+### Generate random numbers
+
+```sh
+echo $RANDOM
+# 12521
+echo $RANDOM
+# 15828
+```
+
+### Multiple commands on a single line
+
+All three commands will execute even some fails
+
+```sh
+$ make ; make install ; make clean
+```
+
+Only proceed to the next command when the preceding one succeeded
+
+```sh
+$ make && make install && make clean
+```
+
+Stop execution after first success
+
+```sh
+$ cat file1 || cat file2 || cat file3
+```
+
+### Basename and dirname
+
+```sh
+basename /home/lee/code/test.php
+# test.php
+
+dirname /home/lee/code/test.php
+# /home/lee/code
+```
+
+### Get the directory of a script you're running
+
+ref: http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
+
+```sh
+DIR=$( cd "$( dirname "$0" )" && pwd )
+```
+
+
+
 
 
 <a name="end"></a>
