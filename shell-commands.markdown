@@ -17,9 +17,6 @@
 - [`whereis`](#whereis)
 - [`logrotate`](#logrotate)
 - [`watch`](#watch)
-- [`nc`, `netcat`](#nc-netcat)
-  - [Port scanning](#port-scanning)
-  - [Data transfer](#data-transfer)
 - [`od`](#od)
 - [`mktemp`](#mktemp)
 - [`expand`](#expand)
@@ -27,6 +24,16 @@
 - [`xargs`](#xargs)
 - [`pushd`, `popd`, `dirs`](#pushd-popd-dirs)
 - [`rsync`](#rsync)
+- [System](#system)
+- [Processes](#processes)
+  - [`pgrep`, `pkill`](#pgrep-pkill)
+- [Networking](#networking)
+  - [`netstat`](#netstat)
+  - [`nc`, `netcat`](#nc-netcat)
+    - [Port scanning](#port-scanning)
+    - [Data transfer](#data-transfer)
+  - [`ssh`](#ssh)
+- [One liner](#one-liner)
 
 ## Preface
 
@@ -58,39 +65,39 @@ useful options, `-e` to enable escaping, `-n` to suppress default-added-newline 
 
 ## `sort`
 
-useful options: `-n` sort as number, `-r` sort from big to small, `-u` output only first of equal values
+Common options:
 
-sort according to fields, `-t` for delimiter, `-k` for start and end field, and options of each field
-for example, sort according to user id from big to small:
+- `-n` sort as number;
+- `-h` compare human readable numbers (e.g., 2K 1G);
 
-    $ sort -t':' -k3nr,3 /etc/passwd | tail -3
-    bin:x:2:2:bin:/bin:/bin/sh
-    daemon:x:1:1:daemon:/usr/sbin:/bin/sh
-    root:x:0:0:root:/root:/bin/bash
+    ```sh
+    du -sh * | sort -h
+
+    # 4.0K    x.sh
+    # 44K     test
+    # 12M	    screenshots
+    ```
+
+- `-r` sort from big to small;
+- `-u` output only first of equal values;
+- `-t` for delimiter, if you need to use tab as separator, use `-t$'\t'`;
+- `-k` specify sorting fields(`-k3,3` to sort for the third field), and options of each field;
+
+    ```sh
+    # sort according to user id from big to small:
+    sort -t':' -k3nr,3 /etc/passwd
+
+    # ...
+    # bin:x:2:2:bin:/bin:/bin/sh
+    # daemon:x:1:1:daemon:/usr/sbin:/bin/sh
+    # root:x:0:0:root:/root:/bin/bash
+    ```
 
 **CAUTION** if you want to output sort result to the same file as input file, do not use redirection, this will empty the file, as the file will be emptied even before sorting, use `-o` instead:
 
- $ cat input.file
-    10
-    2
-    2314
-    $ sort input.file > input.file
-$ cat input.file
-    $ #file emptied
-
-    $ cat > input.file
-    10
-    2
-    2314
-    $ cat input.file
-    10
-    2
-    2314
-    $ sort -o input.file input.file # use -o
-    $ cat input.file
-    10
-    2
-    2314
+```sh
+sort -o input.file input.file   # use -o
+```
 
 ## `paste`
 
@@ -327,29 +334,6 @@ execute a program periodically, showing output fullscreen
     # run the date command every 1 seconds, and highlight difference
     $ watch -n 1 -d=culmulative date +%H:%M:%S
 
-## `nc`, `netcat`
-
-### Port scanning
-
-```sh
-nc -zv host.example.com 20-30
-```
-
-### Data transfer
-
-using nc to send files
-
-at remote host `dev`:
-
-    $ cat test.txt
-    hello world
-    $ nc -l 5555 < test.txt
-
-at localhost:
-
-    $ nc dev 5555
-    hello world
-
 ## `od`
 
 dump files in octal format
@@ -418,6 +402,12 @@ or use `column`
 ## `find`
 
 ```sh
+# common usage, simple wildcard name mathing
+find . -name '*gary*'
+
+# anything last modified at least 10 days ago
+find . -mtime +10
+
 # use extended RegEx
 find . -regextype posix-extended -regex '.*(php)|(phtml)'
 
@@ -442,7 +432,7 @@ Some shell commands don't take standard input, `xargs` allow you to convert stan
 * Print/Confirm commands
 
     ```sh
-    # Print out commands before execution
+    # -t enables printing out commands before execution
     echo A B C | xargs -t echo
     # echo A B C
     # A B C
@@ -451,6 +441,14 @@ Some shell commands don't take standard input, `xargs` allow you to convert stan
     echo A B C | xargs -p echo
     # echo A B C ?...y
     # A B C
+    ```
+
+* Placeholder
+
+    Use `{}` as a placeholder, so the argument can be at any position
+
+    ```sh
+    find . -name '*.txt' | xargs -i cp {} newFolder
     ```
 
 * How to split inputs
@@ -537,5 +535,88 @@ rsync -avp src ./dest
 # everything only in dest/ will be deleted
 rsync -avp --delete src/ ./dest
 ```
+
+## System
+
+- `uptime`  system uptime
+- `who`     who is logged in
+- `whoami`  current username
+- `uname`   kernel info
+- `lsb_release -a`  Linux distro info
+- `lsof | grep fileName` find what program opened a file
+
+## Processes
+
+### `pgrep`, `pkill`
+
+Find or send signals to processes based on name or other attributes
+
+```sh
+pgrep -a zsh
+
+# 5150 /usr/bin/zsh
+# 6901 /usr/bin/zsh
+# 25781 /bin/zsh
+
+pkill -9 -e node    # send a signal to processes matching 'node' and echo the result
+# node killed (pid 30604)
+```
+
+## Networking
+
+### `netstat`
+
+```sh
+# show listening processes
+netstat -lntp
+# ...
+# Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
+# tcp        0      0 127.0.0.1:5037          0.0.0.0:*               LISTEN      9772/adb
+# ...
+```
+
+`ss` and `lsof` can do similar things
+
+### `nc`, `netcat`
+
+#### Port scanning
+
+```sh
+nc -zv host.example.com 20-30
+```
+
+#### Data transfer
+
+using nc to send files
+
+at remote host `dev`:
+
+```sh
+$ cat test.txt
+hello world
+$ nc -l 5555 < test.txt     # start listening
+```
+
+at localhost:
+
+```sh
+$ nc dev 5555               # connect to a remote port
+hello world
+```
+
+### `ssh`
+
+Port forwarding, any connection to local port 80 is forwarded to 'localhost:8080' on remoteHost
+
+```sh
+ssh -L 80:localhost:8080 remoteHost
+```
+
+
+## One liner
+
+- `man ascii` get ASCII table
+
+
 
 [tuanzi]: http://kodango.com

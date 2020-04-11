@@ -2,7 +2,7 @@
 
 ## Preface
 
-Some useful tips of awk  
+Some useful tips of awk
 Source: [sed & awk, 2nd Edition][sedawk2_book], [团子的小窝][tuanzi]
 
 ## basic usage
@@ -21,7 +21,7 @@ Source: [sed & awk, 2nd Edition][sedawk2_book], [团子的小窝][tuanzi]
 
 ### simple use
 
-awk treats each line as a record consisting of fields separated by delimiter(default to spaces or tabs), `$0` represents the entire line, `$1` refers to the first field, `$2` the second, ...  
+awk treats each line as a record consisting of fields separated by delimiter(default to spaces or tabs), `$0` represents the entire line, `$1` refers to the first field, `$2` the second, ...
 the delimiter can be specified by the `-F` option
 
 ```sh
@@ -55,7 +55,7 @@ Terry Kalkas
 
 ### use with sed
 
-output state and names in each state  
+output state and names in each state
 put commands in a script named `nameByState.sh`
 
     $ cat nameByState.sh
@@ -81,8 +81,8 @@ put commands in a script named `nameByState.sh`
     	}
     '
 
-replace state code with names, sort by state names  
-`LastState` is a variable (awk variables are initialized to the empty string, they do not need to be assigned before using)  
+replace state code with names, sort by state names
+`LastState` is a variable (awk variables are initialized to the empty string, they do not need to be assigned before using)
 run the script:
 
     $ cat list | ./nameByState.sh
@@ -103,7 +103,7 @@ run the script:
 ## Records and Fields
 
 matching a field
-  
+
 if field 5 matches `/MA/`:
 
 ```awk
@@ -122,7 +122,7 @@ $5 !~ /MA/ {
 
 ## Field Separators
 
-by default, awk use white space as delimiter, leading and trailing spaces are trimed, fields are separated by consecutive spaces  
+by default, awk use white space as delimiter, leading and trailing spaces are trimed, fields are separated by consecutive spaces
 you can set delimiter by the `-F` command line option or in a `BEGIN {}` section
 
     FS = "\t"  # a single tab
@@ -138,10 +138,13 @@ each variable has a string value(default to '') and a numeric value(default to 0
     z = "HelloWorld"
 
 supply command line variables with `-v`, this will make the variable available in the `BEGIN` section:
-  
- \$ awk -v var=1 'BEGIN {print var, "in BEGIN"} {print var, "in main"}' test
-1 in BEGIN
-1 in main
+
+```sh
+awk -v var=1 'BEGIN {print var, "in BEGIN"} {print var, "in main"}' gary.txt
+
+# 1 in BEGIN
+# 1 in main
+```
 
 ## System variables
 
@@ -166,12 +169,15 @@ supply command line variables with `-v`, this will make the variable available i
 ## Output formatting
 
 variable specifier:
-  
- %-width.precision format-specifier
-%-10.5s -> a field of width 10, left justified, 5 chars at most
 
-    # specify width and precision dynamically
-    printf("%*.*g\n", 5, 3, myvar);
+`%-width.precision format-specifier`
+
+`%-10.5s` -> a field of width 10, left justified, 5 chars at most
+
+```sh
+# specify width and precision dynamically
+printf("%*.*g\n", 5, 3, myvar);
+```
 
 `printf` do not output newline automatically, while `print` does
 
@@ -201,7 +207,7 @@ delete an element from array:
 
     delete array[subscript]
 
-**multidimensional arrays**  
+**multidimensional arrays**
 awk do not support multidimensional arrays, but it has a syntax that looks like one:
 
     array[1, 2] = 'hello'

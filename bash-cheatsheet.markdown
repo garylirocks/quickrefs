@@ -1,11 +1,12 @@
 # Bash Cheatsheet
 
 - [Resources](#resources)
+- [Get help/documentation](#get-helpdocumentation)
 - [Interactive use](#interactive-use)
   - [History](#history)
   - [VI Mode](#vi-mode)
-    - [Insert mode](#insert-mode)
     - [Command mode](#command-mode)
+    - [Insert mode](#insert-mode)
 - [Bash Invocation](#bash-invocation)
   - [Login vs. non-login](#login-vs-non-login)
   - [Interactive vs. non-interactive](#interactive-vs-non-interactive)
@@ -28,11 +29,11 @@
 - [`case` statements](#case-statements)
 - [Functions](#functions)
 - [Variable scope](#variable-scope)
+- [Input / output](#input--output)
 - [Here documents](#here-documents)
 - [Builtins](#builtins)
   - [`source`, `.`](#source)
   - [`read`](#read)
-  - [`expr`](#expr)
   - [`printf`](#printf)
   - [`set`](#set)
   - [`shift`](#shift)
@@ -47,6 +48,10 @@
   - [Multiple commands on a single line](#multiple-commands-on-a-single-line)
   - [Basename and dirname](#basename-and-dirname)
   - [Get the directory of a script you're running](#get-the-directory-of-a-script-youre-running)
+  - [Subshells](#subshells)
+  - [Special characters on command line](#special-characters-on-command-line)
+  - [Text file intersections](#text-file-intersections)
+  - [Sum up a column of numbers](#sum-up-a-column-of-numbers)
 
 ## Resources
 
@@ -54,21 +59,78 @@
 - [The Art of Command Line][the-art-of-command-line]
 - [15 Examples To Master Linux Command Line History][15-examples-to-master-linux-command-line-history]
 
+## Get help/documentation
+
+- `man`
+
+    ```sh
+    # search man pages
+    man -k crontab
+    # crontab (1)          - maintain crontab files for individual users (Vixie Cron)
+    # crontab (5)          - tables for driving cron
+
+    # limit search to section 1 (executables/commands)
+    man -k crontab -s 1
+    # crontab (1)          - maintain crontab files for individual users (Vixie Cron)
+
+    # search using regex
+    man -k 'cron.*' --regex
+
+    man crontab
+
+    # man page of crontab in section 5 (file format)
+    man 5 crontab
+    ```
+
+- `type`
+
+    Some commands are not executables, but Bash builtins, you can check this with `type`
+
+    ```sh
+    type echo
+    # echo is a shell builtin
+
+    type python
+    # python is /home/gary/miniconda3/bin/python
+    ```
+
+- `help`
+
+    Show info about builtin commands, just `help` list all builtins;
+
+- misc
+
+    ```sh
+    whatis node
+    # node (1)             - Server-side JavaScript runtime
+
+    which node
+    # /home/gary/.nvm/versions/node/v12.14.0/bin/node
+
+    whereis node
+    # node: /usr/local/bin/node /home/gary/.nvm/versions/node/v12.14.0/bin/node
+    ```
 
 ## Interactive use
 
-The interactive line editing is handled by the readline library, see `man readline` for editing shortcuts.
+The interactive line editing is handled by the readline library, it's in Emacs mode by default, can be changed to Vi mode, see **`man readline`** for all editing shortcuts.
 
 ### History
 
-- Search history: `Ctrl-R`
+- Search history: `Ctrl-R`, then type in keyword
+
+  - `Ctrl-R` again to loop thru results;
+  - Right arrow to select current result;
+
 - Repeat previous command
+
     - the Up key
     - `Ctrl-P`
     - `!!`
     - `!-1`
 
 - Execute a specific command
+
     ```sh
     # find the number of the command
     $ history | grep echo
@@ -90,11 +152,6 @@ The interactive line editing is handled by the readline library, see `man readli
 
 Run `set -o vi` to change to VI mode
 
-#### Insert mode
-
-- `C-W` delete word backward
-- `C-[` switch to command mode
-
 #### Command mode
 
 - `-`, `k` previous history
@@ -103,6 +160,13 @@ Run `set -o vi` to change to VI mode
 - `/`, `?` search history
 - `n`, `N` next/previous search result
 - `#`  comment out current command and keep it in the history
+
+#### Insert mode
+
+- `C-W` delete word backward
+- `C-U` delete to the start of the line
+- `C-[` switch to command mode
+
 
 ## Bash Invocation
 
@@ -173,9 +237,7 @@ Interactive non-login shell:
 
 1. read both `/etc/bash.bashrc`, `~/.bashrc` (if exist)
 
-General rule:
-
-- For bash, put stuff in `~/.bashrc`, and make `~/.bash_profile` source it.
+General rule: **For Bash, put stuff in `~/.bashrc`, and make `~/.bash_profile` source it**
 
 ### A prompt-unchangeable issue
 
@@ -209,6 +271,13 @@ FOO
 
 $ echo ${foo:+BAR}  # foo is not null, out put BAR
 BAR
+```
+
+Check whether a variable exists:
+
+```sh
+# if no $1, fail with a usage message
+input_file=${1:?usage $0 input_file}
 ```
 
 ### String manipulation
@@ -262,6 +331,15 @@ or use a one-liner: `export foo='i am a var'`
 
 **exported variables are copied, not shared**, which means any modification in the subroutine will not affect the variable in the parent routine
 
+```sh
+date
+# Sat Apr 11 10:09:59 NZST 2020
+
+# set environment variable for a command
+TZ=Asia/Shanghai date
+# Sat Apr 11 06:10:21 CST 2020
+```
+
 ### Special variables
 
 - `$$` current process id;
@@ -314,51 +392,48 @@ $ echo $(date '+%Y/%m/%d %H:%M:%S')
 ## Brace expansion
 
 ```sh
-$ touch {dog,cat}s
-$ ls
-cats  dogs
+ls gary.{txt,jpg}
+# gary.txt gary.jpg
+
+mkdir -p test-{1..3}/sub-{a..b}     # create all combinations
 ```
 
 ### Integer or character sequence
 
 ```sh
-$ echo {1..5} #number sequence
-1 2 3 4 5
+echo {1..5}                 # number sequence
+# 1 2 3 4 5
 
-$ echo {a..h} #character sequence
-a b c d e f g h
+echo {a..h}                 # character sequence
+# a b c d e f g h
 
-$ echo {10..1} #reversed sequence
-10 9 8 7 6 5 4 3 2 1
+echo {10..1}                # reversed sequence
+# 10 9 8 7 6 5 4 3 2 1
 
-$ echo {1..10..3} #sequence with increment interval
-1 4 7 10
+echo {1..10..3}             # sequence with increment interval
+# 1 4 7 10
 
-$ echo {0..9}{0..9} #echo 00 to 99
-00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99
+echo {0..1}{0..9}           # combinations
+# 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19
 ```
 
-brace expansion is performed before any other expansion, so `{1..$VAR}` would not work as expected, use `seq start end` or `for` loop instead:
+brace expansion is performed before any other expansion, so `{1..$END}` would not work as expected, use `seq start end` or `for` loop instead:
 
 ```sh
-$ END=5
-$ for i in {1..$END}; do echo $i; done
-{1..5}
+END=3
+for i in {1..$END}; do echo $i; done
+# {1..3}
 
-$ for i in `seq 1 $END`; do echo $i; done
-1
-2
-3
-4
-5
+for i in `seq 1 $END`; do echo $i; done
+# 1
+# 2
+# 3
 
-$ for ((i=0;i<=$END;i++)) do echo $i; done
-0
-1
-2
-3
-4
-5
+for ((i=0; i<=$END; i++)) do echo $i; done
+# 0
+# 1
+# 2
+# 3
 ```
 
 
@@ -702,7 +777,22 @@ run the script, you'll get:
 
 **variables defined in functions have global scope, except you declare them as `local` explicitly**
 
+## Input / output
 
+By default stdout and stderr both go to the current terminal, they can be redirected:
+
+```sh
+ls > out 2> err
+
+# append to files
+ls >> out 2>> err
+
+# redirect stderr to the stdout file 'out'
+ls >> out 2>&1
+
+# alternative syntax
+ls &>> out
+```
 
 ## Here documents
 
@@ -767,16 +857,6 @@ lee
 
 $ echo $name
 lee
-```
-
-### `expr`
-
-Usually used for simple arithmetic, normally replaced by more efficient `$((...))`
-
-```sh
-$ x=$(expr 2 - 1)
-$ echo $x
-1
 ```
 
 ### `printf`
@@ -1026,6 +1106,46 @@ ref: http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-direct
 ```sh
 DIR=$( cd "$( dirname "$0" )" && pwd )
 ```
+
+### Subshells
+
+Use subshells (enclosed with parenthesis) to group commands, which allows you to another directory temporarily
+
+```sh
+# do something in current dir
+
+(cd /some/other/dir && other-command)
+
+# continue in original dir
+```
+
+### Special characters on command line
+
+Use `$''` to input special characters on command line
+
+```sh
+echo hello$'\n\t'world
+# hello
+# 	world
+```
+
+### Text file intersections
+
+If you have two files 'a' and 'b', they are already uniqed, you can use `sort/uniq` to find common/different words in them like this:
+
+```sh
+sort a b | uniq           # a union b
+sort a b | uniq -d        # a intersect b
+sort a b b | uniq -u      # set difference a - b
+```
+
+### Sum up a column of numbers
+
+```sh
+awk '{ sum += $2 } END { print sum }' numbers.txt
+```
+
+
 
 
 
