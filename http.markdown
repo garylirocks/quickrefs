@@ -15,6 +15,7 @@
   - [Simple requests](#simple-requests)
   - [Preflighted requests](#preflighted-requests)
   - [Requests with credentials](#requests-with-credentials)
+  - [Cross site script](#cross-site-script)
 
 ## Caching
 
@@ -240,3 +241,19 @@ invocation.withCredentials = true;
 And the browser only accepts the response when it has
   - an `Access-Control-Allow-Credentials: true` header;
   - and the `Access-Control-Allow-Origin` is not a wildcard '*';
+
+
+### Cross site script
+
+By default, you can include a script from another origin:
+
+```html
+<script src="https://another.site/lib.js"></script>
+```
+
+But if any error happens in this script, you can't get details from the `window.onerror` handler (many bug tracking services rely on it).
+
+To allow the access, `<script>` tag needs a **`crossorigin`** attribute, and remote server must provide special headers:
+
+- `crossorigin="anonymous"`, this is the same as just `crossorigin`, access allowed if the server responds with the header `Access-Control-Allow-Origin` with `*` or our origin. Browser does not send authorization information and cookies to remote server;
+- `crossorigin="anonymous"`, access allowed if the server sends back the header `Access-Control-Allow-Origin` with our origin and `Access-Control-Allow-Credentials: true`. Browser sends authorization information and cookies to remote server;
