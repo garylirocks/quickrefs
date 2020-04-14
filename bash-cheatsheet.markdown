@@ -1020,10 +1020,6 @@ function onError {
     echo 'ERROR: something is wrong'
 }
 
-function onError {
-    echo 'something is wrong'
-}
-
 trap onError ERR    # do something on error
 trap onExit EXIT    # do something on exit
 
