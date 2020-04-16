@@ -612,10 +612,17 @@ Port forwarding, any connection to local port 80 is forwarded to 'localhost:8080
 ssh -L 80:localhost:8080 remoteHost
 ```
 
+Use ssh as a SOCKS server:
+
+```sh
+# start a SOCKS server: localhost:8080
+ssh -fnNC -D 8080 remoteHost
+```
+
 
 ## One liner
 
-- `man ascii` get ASCII table
+- `man 7 ascii` get ASCII table
 
 
 
