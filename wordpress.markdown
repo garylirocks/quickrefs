@@ -33,6 +33,7 @@
   - [Check and update links](#check-and-update-links)
   - [Woocommerce](#woocommerce)
 - [wp-cli](#wp-cli)
+  - [Manage Wordpress container](#manage-wordpress-container)
   - [Install Wordpress core](#install-wordpress-core)
   - [Install and activate plugins](#install-and-activate-plugins)
   - [Search and Replace](#search-and-replace)
@@ -539,6 +540,13 @@ UPDATE `wp_postmeta` set meta_value = REPLACE( meta_value, 'XXX', 'YYY' ) WHERE 
   ```
 
 ## wp-cli
+
+### Manage Wordpress container
+
+```sh
+# use the --ssh option to manage Wordpress running in a container
+wp db tables --ssh=docker:wordpress
+```
 
 ### Install Wordpress core
 
