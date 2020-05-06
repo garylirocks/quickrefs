@@ -308,12 +308,19 @@ pdfinfo syslog.pdf
 #     File size:      5016 bytes
 #     Optimized:      no
 #     PDF version:    1.4
+```
 
-# extract first page of a pdf file
-pdftk A=syslog.pdf cat A1 output syslog-firstpage.pdf
+Rotate and combine PDF pages
 
-# rotate pages of a pdf file
-pdftk A=syslog.pdf cat A1-endright output syslog-rotated.pdf
+```sh
+# install pdftk
+sudo snap install pdftk
+
+# rotate every page in a.pdf, the up side rotates to the left (90 degres anticlockwise)
+pdftk a.pdf cat 1-endleft output rotated.pdf
+
+# get page 1,2 rotated upside down from a.pdf, and add page 1 of b.pdf
+pdftk A=a.pdf B=b.pdf cat A1-2down B1 output combined.pdf
 ```
 
 ## SSH login without password
