@@ -34,6 +34,7 @@
     - [Data transfer](#data-transfer)
   - [`ssh`](#ssh)
 - [One liner](#one-liner)
+- [Helpful tools](#helpful-tools)
 
 ## Preface
 
@@ -623,6 +624,17 @@ ssh -fnNC -D 8080 remoteHost
 ## One liner
 
 - `man 7 ascii` get ASCII table
+
+
+## Helpful tools
+
+`tldr` gives you usage examples for commands, so you don't need to read lengthy man pages
+
+```sh
+npm install -g tldr
+
+tldr tar
+```
 
 
 

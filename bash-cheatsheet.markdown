@@ -17,8 +17,12 @@
   - [Environment variables](#environment-variables)
   - [Special variables](#special-variables)
   - [Command line arguments](#command-line-arguments)
-- [Command substitution](#command-substitution)
-- [Brace expansion](#brace-expansion)
+- [Substitutions](#substitutions)
+  - [Command substitution](#command-substitution)
+  - [Process substitution](#process-substitution)
+- [Expansions](#expansions)
+  - [Globbing](#globbing)
+  - [Brace expansion](#brace-expansion)
   - [Integer or character sequence](#integer-or-character-sequence)
 - [`if` statement](#if-statement)
 - [Conditional](#conditional)
@@ -30,6 +34,7 @@
 - [Functions](#functions)
 - [Variable scope](#variable-scope)
 - [Input / output](#input--output)
+  - [How to redirect output to a protected (root-only) file](#how-to-redirect-output-to-a-protected-root-only-file)
 - [Here documents](#here-documents)
 - [Builtins](#builtins)
   - [`source`, `.`](#source)
@@ -42,6 +47,7 @@
   - [`IFS`](#ifs)
   - [`trap`](#trap)
   - ['strict' mode](#strict-mode)
+  - [Checking](#checking)
 - [Quick recipes](#quick-recipes)
   - [Read lines of a file](#read-lines-of-a-file)
   - [Generate random numbers](#generate-random-numbers)
@@ -377,7 +383,9 @@ world
 is-fun
 ```
 
-## Command substitution
+## Substitutions
+
+### Command substitution
 
 Use back ticks or `$(...)` to get the output of a command
 
@@ -389,7 +397,42 @@ $ echo $(date '+%Y/%m/%d %H:%M:%S')
 2013/01/10 10:44:05
 ```
 
-## Brace expansion
+### Process substitution
+
+When a command expects filenames as arguments, `<(CMD)` can help get output of `CMD` in a temporary file
+
+Example: using diff to compare file list in two directories
+
+```sh
+ls test1 test2
+# test1:
+# a  b  c
+
+# test2:
+# c  d  e
+
+diff <(ls test1) <(ls test2)
+# 1,2d0
+# < a
+# < b
+# 3a2,3
+# > d
+# > e
+```
+
+## Expansions
+
+### Globbing
+
+```sh
+ls test?        # single character
+# test1 test2
+
+ls "test?"      # double quote disables globbing
+# ls: cannot access 'test?': No such file or directory
+```
+
+### Brace expansion
 
 ```sh
 ls gary.{txt,jpg}
@@ -794,6 +837,21 @@ ls >> out 2>&1
 ls &>> out
 ```
 
+### How to redirect output to a protected (root-only) file
+
+If `out` is a protected file, `sudo ls /root > out` won't work, because `sudo` only applies to `ls`, the redirection is done by `zsh`, which is not run by super user, so you need to pipe stdout to `sudo tee`:
+
+```sh
+ls -l out
+# -rw-rw-r-- 1 root root 0 May 23 21:00 out
+
+sudo ls /root > out
+# zsh: permission denied: out
+
+sudo ls /root | sudo tee out
+```
+
+
 ## Here documents
 
 Used in place of standard input
@@ -1046,6 +1104,16 @@ IFS=$'\n\t'
 trap "echo 'error: Script failed: see failed command above'" ERR
 
 # your code here
+```
+
+### Checking
+
+Install a tool `shellcheck` to check your script:
+
+```sh
+sudo apt install shellcheck
+
+shellcheck script.sh
 ```
 
 ## Quick recipes
