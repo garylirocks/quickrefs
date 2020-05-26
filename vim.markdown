@@ -132,7 +132,7 @@ m' or m`    # set previous context mark, can be jumped to with "''" or "``"
 '< `< '> `>         # the first/last char/line of last selected Visual area
 '" `"               # cursor position when last exiting the current buffer
 '^ `^               # last Insert mode postion
-'. `.               # last chnage position
+'. `.               # last change position
 ```
 
 - Marks are NOT the same as named registers;
@@ -522,7 +522,7 @@ Vim has special filenames:
 
 ### arglist
 
-- When starging Vim with more than one file names, the list is remembered as the argument list;
+- When starting Vim with more than one file names, the list is remembered as the argument list;
 - It's different from buffer list, arglist was already in Vi, and buffer list is new in Vim;
 - Every file in arglis is also in buffer list, but buffer list commonly has more files;
 - There is a global arglist used by all windows, and it's possible to create a new arglist local to a window;
