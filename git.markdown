@@ -32,10 +32,12 @@
   - [Negate pattern](#negate-pattern)
 - [Hooks](#hooks)
 - [Merge & Diff](#merge--diff)
-- [Split a subfolder out into a new repository](#split-a-subfolder-out-into-a-new-repository)
-- [Multiple accounts setup for Bitbucket/Github](#multiple-accounts-setup-for-bitbucketgithub)
+- [Submodules](#submodules)
+- [Recipes](#recipes)
+  - [Split a subfolder out into a new repository](#split-a-subfolder-out-into-a-new-repository)
+  - [Multiple accounts setup for Bitbucket/Github](#multiple-accounts-setup-for-bitbucketgithub)
 - [Misc](#misc)
-- [NOTICES](#notices)
+- [Rules](#rules)
 
 ## Preface
 
@@ -773,7 +775,32 @@ diff and merge configs:
     merge.tool
     diff.external
 
-## Split a subfolder out into a new repository
+## Submodules
+
+When to use:
+
+- Track a component as a vendor dependency, and pin it to a specific commit;
+
+```sh
+cd ~/.dotfiles/oh-my-zsh/custom/plugins
+
+# add a custom zsh plugin
+git submodule add https://github.com/zsh-users/zsh-autosuggestions
+```
+
+This will add a `.gitmodules` file in your repo, which is a mapping from the path to a git url:
+
+```
+[submodule "oh-my-zsh/custom/plugins/zsh-autosuggestions"]
+        path = oh-my-zsh/custom/plugins/zsh-autosuggestions
+        url = https://github.com/zsh-users/zsh-autosuggestions
+```
+
+- When cloning a repo with submodules, use `git clone --recursive`
+
+## Recipes
+
+### Split a subfolder out into a new repository
 
 looks like there are two ways to accomplish this:
 
@@ -798,7 +825,7 @@ looks like there are two ways to accomplish this:
     cd ../newrepo/
     git push origin master
 
-## Multiple accounts setup for Bitbucket/Github
+### Multiple accounts setup for Bitbucket/Github
 
 [Mutiple accounts and ssh keys](http://dbushell.com/2013/01/27/multiple-accounts-and-ssh-keys/)
 
@@ -868,9 +895,9 @@ in `.ssh/config`
   git remote prune [-n] origin
   ```
 
-## NOTICES
+## Rules
 
-**DO NOT USE REBASE ON SHARED BRANCHES**
+- **Do not `rebase` on shared branches**
 
 [pro_git_book]: http://git-scm.com/book
 [git_immersion]: http://gitimmersion.com/index.html
