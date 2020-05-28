@@ -31,6 +31,7 @@ Quick productivity tips, shortcuts, command line snippets.
 - [Chrom DevTools](#chrom-devtools)
 - [Limit memory/cpu usage using cgroups](#limit-memorycpu-usage-using-cgroups)
 - [`resolve.conf`](#resolveconf)
+- [Search files (grep)](#search-files-grep)
 
 ## Shortcuts
 
@@ -547,3 +548,15 @@ cgroups can be used to limit a process groups resource(memory/cpu/...) usage
   If you try to query a non FQDN, such as `app`, then it will append domains in the `search` line to it, so it will query `app.a.com`, `app.b.com` in turn;
 
   `domain` directive is obsolete, replaced by `search`
+
+## Search files (grep)
+
+`ripgrep` is a popular `grep` alternative, it's fast, searchs recursively, ignoring files in `.gitignore` by default
+
+```sh
+# search 'foo' in markdown files, show 2 lines context above and below the match
+rg -tmd -C2 foo
+
+# see default file type extensions
+rg --type-list
+```
