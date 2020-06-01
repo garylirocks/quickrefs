@@ -41,6 +41,7 @@
 - [Modes](#modes)
   - [ex mode](#ex-mode)
   - [visual mode](#visual-mode)
+- [Help](#help)
 - [Plugins](#plugins)
   - [Vundle](#vundle)
   - [Useful Plugins](#useful-plugins)
@@ -801,6 +802,28 @@ CTRL-V      # select a rectangular area
 ```
 
 If you used `CTRL-V` for pasting in your terminal program, you may need `CTRL-SHIFT-V`
+
+## Help
+
+Vim has an extensive help system, there are few tricks to use them:
+
+```sh
+# get help for shortcut ctrl-n, it shows what it does in normal mode
+:help ^n
+:help ctrl-n
+
+# get help for shortcut ctrl-n in insert/command mode
+:help i_^n
+:help c_^n
+
+# search help documents for 'tags'
+:helpgrep tags
+# then you can get the result list by:
+:cl
+# go to next match by:
+:cn
+```
+
 
 ## Plugins
 
