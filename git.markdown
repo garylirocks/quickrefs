@@ -796,7 +796,8 @@ This will add a `.gitmodules` file in your repo, which is a mapping from the pat
         url = https://github.com/zsh-users/zsh-autosuggestions
 ```
 
-- When cloning a repo with submodules, use `git clone --recursive`
+- When cloning a repo with submodules, use `git clone --recursive`;
+- Another way is to clone as usual, and then `git submodule init` and `git submodule update`, this allows you to init only some sub-modules;
 
 ## Recipes
 
