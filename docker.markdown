@@ -19,7 +19,7 @@
     - [Data Sharing](#data-sharing)
     - [Backup, restore, or migrate data volumes](#backup-restore-or-migrate-data-volumes)
     - [Remove volumes](#remove-volumes)
-    - [`-v`, `--mount` and volume driver](#v---mount-and-volume-driver)
+    - [`-v`, `--mount` and volume driver](#-v---mount-and-volume-driver)
   - [Bind mounts](#bind-mounts)
     - [Commands](#commands-1)
   - [`tmpfs`](#tmpfs)
@@ -34,7 +34,7 @@
   - [`docker-compose.yml`](#docker-composeyml)
     - [`volumes`](#volumes-1)
     - [`deploy`](#deploy)
-  - [`env_file`](#envfile)
+  - [`env_file`](#env_file)
   - [Variable substitution](#variable-substitution)
   - [Networking](#networking)
     - [Custom networks](#custom-networks)
@@ -1261,19 +1261,19 @@ docker config rm site.conf
   ```yml
   version: '3.3'
   services:
-  redis:
-    image: redis:latest
-    deploy:
-    replicas: 1
-    configs:
-      - my_config
-      - my_other_config
+    redis:
+      image: redis:latest
+      deploy:
+      replicas: 1
+      configs:
+        - my_config
+        - my_other_config
 
   configs:
-  my_config:
-    file: ./my_config.txt
-  my_other_config:
-    external: true
+    my_config:
+      file: ./my_config.txt
+    my_other_config:
+      external: true
   ```
 
 - long syntax
@@ -1281,21 +1281,21 @@ docker config rm site.conf
   ```yml
   version: "3.3"
   services:
-  redis:
+    redis:
       image: redis:latest
       deploy:
       replicas: 1
       configs:
-      - source: my_config
+        - source: my_config
           target: /redis_config
           uid: '103'
           gid: '103'
           mode: 0440
 
   configs:
-  my_config:
+    my_config:
       file: ./my_config.txt
-  my_other_config:
+    my_other_config:
       external: true
   ```
 
@@ -1321,6 +1321,8 @@ Usage:
   - `docker secret rm`;
   - `--secret` flag for `docker service create`;
   - `--secret-add` and `--secret-rm` flags for `docker service update`;
+
+**Secrets are persistent, they still exists after you restart docker daemon**
 
 ### Example: Use secrets with a WordPress service
 
