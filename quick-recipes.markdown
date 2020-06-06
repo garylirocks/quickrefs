@@ -26,7 +26,8 @@ Quick productivity tips, shortcuts, command line snippets.
 - [Package files](#package-files)
 - [Download all images from a web page](#download-all-images-from-a-web-page)
 - [Linux process management](#linux-process-management)
-  - [Kill a process](#kill-a-process)
+  - [`kill`](#kill)
+  - [`pgrep`, `pkill`](#pgrep-pkill)
 - [Limit Google Chrome memory usage](#limit-google-chrome-memory-usage)
 - [Chrom DevTools](#chrom-devtools)
 - [Limit memory/cpu usage using cgroups](#limit-memorycpu-usage-using-cgroups)
@@ -434,8 +435,9 @@ wget --page-requisites --span-hosts --no-directories --accept jpg,png --execute 
 - `pgrep -a chrome` find processes using RegExp matching
 - `lsof -i:8080` list processes listening on port 8080 (`lsof` means list open files)
 - `pstree` display a process tree
+- `htop` an interactive version of `top`
 
-### Kill a process
+### `kill`
 
 See `man 7 signal` for a full signal list
 
@@ -447,7 +449,21 @@ See `man 7 signal` for a full signal list
 
   `SIGKILL`, terminate immediately/hard kill;
 
-[RenameUSBDrive]: [https://help.ubuntu.com/community/RenameUSBDrive]
+### `pgrep`, `pkill`
+
+Find or send signals to processes based on name or other attributes
+
+```sh
+pgrep -a zsh
+
+# 5150 /usr/bin/zsh
+# 6901 /usr/bin/zsh
+# 25781 /bin/zsh
+
+pkill -9 -e node    # send a signal to processes matching 'node' and echo the result
+# node killed (pid 30604)
+```
+
 
 ## Limit Google Chrome memory usage
 
@@ -560,3 +576,6 @@ rg -tmd -C2 foo
 # see default file type extensions
 rg --type-list
 ```
+
+
+[RenameUSBDrive]: [https://help.ubuntu.com/community/RenameUSBDrive]

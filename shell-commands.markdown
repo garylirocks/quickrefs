@@ -25,8 +25,6 @@
 - [`pushd`, `popd`, `dirs`](#pushd-popd-dirs)
 - [`rsync`](#rsync)
 - [System](#system)
-- [Processes](#processes)
-  - [`pgrep`, `pkill`](#pgrep-pkill)
 - [Networking](#networking)
   - [`netstat`](#netstat)
   - [`nc`, `netcat`](#nc-netcat)
@@ -546,22 +544,6 @@ rsync -avp --delete src/ ./dest
 - `lsb_release -a`  Linux distro info
 - `lsof | grep fileName` find what program opened a file
 
-## Processes
-
-### `pgrep`, `pkill`
-
-Find or send signals to processes based on name or other attributes
-
-```sh
-pgrep -a zsh
-
-# 5150 /usr/bin/zsh
-# 6901 /usr/bin/zsh
-# 25781 /bin/zsh
-
-pkill -9 -e node    # send a signal to processes matching 'node' and echo the result
-# node killed (pid 30604)
-```
 
 ## Networking
 
