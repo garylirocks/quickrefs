@@ -4,7 +4,7 @@ Quick productivity tips, shortcuts, command line snippets.
 
 - [Shortcuts](#shortcuts)
   - [Ubuntu](#ubuntu)
-- [Update keyboard layout](#update-keyboard-layout)
+- [Use CapsLock as Ctrl and Escape](#use-capslock-as-ctrl-and-escape)
 - [Add a user as sudoer](#add-a-user-as-sudoer)
 - [Change file/directory permissions](#change-filedirectory-permissions)
   - [`setgid`](#setgid)
@@ -56,40 +56,20 @@ Ctrl + Shift + Alt + Down       # move window to workspace down
 Ctrl + Shift + Alt + Up         # move window to workspace up
 ```
 
-## Update keyboard layout
+## Use CapsLock as Ctrl and Escape
 
-[treat the `CapsLock` key as `Ctrl`](http://askubuntu.com/a/633539)
+Set CapsLock to be Escape when tapped alone, and Ctrl when held down
 
-To permanently change the behaviour:
+- Install `xcape`
+- Set the following script in autostart:
 
-- run `dconf-editor`
-- select `org.gnome.desktop.input-sources`
-- Change `xkb-options` to `['ctrl:nocaps']` (or add it to any existing options)
+  ```sh
+  # swap Ctrl and CapsLock
+  setxkbmap -option ctrl:swapcaps
 
-OR
-
-on the command line (Warning -- this overwrites your existing settings!):
-
-```sh
-gsettings set org.gnome.desktop.input-sources xkb-options "['ctrl:nocaps']"
-```
-
-OR
-
-see method at this link: http://askubuntu.com/a/633539
-
-```sh
-sudo vi /etc/default/keyboard
-
-# edit the XKBOPTIONS line as below
-# XKBOPTIONS="ctrl:nocaps"
-
-# OR, swap Caps with Ctrl
-# XKBOPTIONS="ctrl:swapcaps"
-
-
-sudo dpkg-reconfigure keyboard-configuration
-```
+  # set Ctrl as Escape when tapped alone
+  xcape -e 'Control_L=Escape'
+  ```
 
 ## Add a user as sudoer
 
