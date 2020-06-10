@@ -33,6 +33,7 @@ Quick productivity tips, shortcuts, command line snippets.
 - [Limit memory/cpu usage using cgroups](#limit-memorycpu-usage-using-cgroups)
 - [`resolve.conf`](#resolveconf)
 - [Search files (grep)](#search-files-grep)
+- [Hash](#hash)
 
 ## Shortcuts
 
@@ -556,6 +557,29 @@ rg -tmd -C2 foo
 # see default file type extensions
 rg --type-list
 ```
+
+## Hash
+
+```sh
+sha1sum test.txt
+# 22596363b3de40b06f981fb85d82312e8c0ed511  test.txt
+
+# checking
+sha1sum --check checksum
+# test.txt: OK
+
+# can be done with openssl command as well
+openssl sha1 test.txt
+# SHA1(test.txt)= 22596363b3de40b06f981fb85d82312e8c0ed511
+```
+
+`sha1sum` takes any data and produces a 160-bit (40 hexadecimal) output
+
+- Non-revertible - can't get input from output
+- Collision resistant - hard to find two input producing same output
+- Git uses SHA1 to get a hash for each object (file, tree or commit)
+
+Similar commands, `sha256sum`, `sha384sum` and `sha512sum`, they produce 256-bit, 384-bit and 512-bit hashes respectively.
 
 
 [RenameUSBDrive]: [https://help.ubuntu.com/community/RenameUSBDrive]
