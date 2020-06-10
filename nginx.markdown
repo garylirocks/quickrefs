@@ -4,16 +4,16 @@
   - [`server` block](#server-block)
   - [`location` block](#location-block)
 - [Directives](#directives)
-  - [`server_name`](#servername)
+  - [`server_name`](#server_name)
     - [Wildcard names](#wildcard-names)
     - [Regular expression names](#regular-expression-names)
     - [Default server](#default-server)
-  - [`try_files`](#tryfiles)
+  - [`try_files`](#try_files)
   - [`return`](#return)
   - [`rewrite`](#rewrite)
     - [`rewrite` vs. `return`](#rewrite-vs-return)
   - [`upstream`](#upstream)
-  - [`fastcgi_split_path_info`](#fastcgisplitpathinfo)
+  - [`fastcgi_split_path_info`](#fastcgi_split_path_info)
   - [`map`](#map)
 - [Cheatsheets](#cheatsheets)
   - [Standardizing domain names](#standardizing-domain-names)
@@ -314,9 +314,16 @@ upstream backend {
 server {
     location / {
         proxy_pass http://backend;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto https;
     }
 }
 ```
+
+You usually need to use `proxy_set_header` to pass a few headers to the backend, so it can get correct host, protocol, etc.
+
+- `proxy_set_header Host $host;` sets 'Host' to the original 'Host' header, otherwise `$proxy_host` is set as 'Host', 'backend' in the example above;
+- `proxy_set_header X-Forwarded-Proto https;` sets the protocol, in express it would be available as `req.protocol`;
 
 ### `fastcgi_split_path_info`
 
