@@ -77,7 +77,7 @@
 - systemd is a replacement for System V init;
 - designed to start processes in parallel to reduce boot time;
 - many other improvements;
-- it has already been integrated into Fedora, Arch, RedHat, CentOS etc, in Ubuntu, needs to be installed and configured;
+- it has already been integrated into Fedora, Arch, RedHat, CentOS and Ubuntu
 
 #### Usage
 
