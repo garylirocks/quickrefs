@@ -1165,8 +1165,10 @@ docker service ls
 
 ## Configs
 
+**A good usecase for config: use the same nginx image, load different `nginx.conf` to it, so you don't need to build an image for each config.**
+
 - Store non-sensitive info (e.g. config files) outside image or running containers;
-- **Don't neet to bind-mount**;
+- Don't need to bind-mount;
 - Added or removed from a service at any time, and services can share a config;
 - Config values can be **generic strings or binary content** (up to 500KB);
 - **Only available to swarm services**, not standalone containers;
@@ -1441,8 +1443,29 @@ secrets:
   db_root_password:
     file: db_root_password.txt
 
-volumes: db_data:
+volumes:
+  db_data:
 ```
+
+The above compose file would create secret `<stack_name>_db_password` in the swarm.
+
+From Compose File v3.5,
+  - if you want to use a secret already exist in the swarm, set `external: true`,
+  - and it allows name-mapping, in the following example, the secret is named `redis_secret` in the swarm, and `my_second_secret` within the stack, this can be leveraged for secret rotation
+
+```yaml
+version "3.5"
+
+...
+
+secrets:
+  my_first_secret:
+    external: true
+  my_second_secret:
+    external: true
+    name: redis_secret
+```
+
 
 ## Tips / Best Practices
 
