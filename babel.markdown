@@ -5,6 +5,7 @@
 - [Babel Configs](#babel-configs)
   - [`babel.config.js`](#babelconfigjs)
   - [`.babelrc`](#babelrc)
+  - [Monorepo setup](#monorepo-setup)
   - [Plugins vs. Presets](#plugins-vs-presets)
     - [Executing order](#executing-order)
 - [Compile](#compile)
@@ -15,9 +16,6 @@
 - Node
 
   ```bash
-  sudo npm install babel babel-cli
-
-  # after v7
   sudo npm install @babel/core @babel/cli @babel/preset-env
   ```
 
@@ -74,6 +72,38 @@ The old method for configs, put the following in `.babelrc` to use the latest Ba
   "presets": ["env"]
 }
 ```
+
+### Monorepo setup
+
+```
+package.json
+babel.config.js
+packages/
+  mod1/
+    package.json
+    .babelrc.json
+    index.js
+```
+
+- `babel.config.js` is for repo-wide configs;
+- `.babelrc.json` is for configs specific to `mod1`;
+- In `mod1`, if you want to compile `index.js`, you need to set `rootMode` option to be `upward`:
+  - CLI
+
+    `babel --root-mode upward src -d lib`
+
+  - Webpack
+
+    ```js
+    module: {
+      rules: [{
+        loader: "babel-loader",
+        options: {
+          rootMode: "upward",
+        }
+      }]
+    }
+    ```
 
 ### Plugins vs. Presets
 
