@@ -46,6 +46,30 @@ Set environment variables for PHP in apache config:
 </Files>
 ```
 
+## Redirect
+
+If you need a external redirection, use `Redirect` and `RedirectMatch`, `Rewrite` is mostly used for internal redirection
+
+```
+Redirect [status] [URL-path] URL
+```
+
+```apache
+Redirect permanent "/one" "https://new.example.com/one"
+```
+
+Redirect is matching the beginning of the path, any additional path and GET parameters will be appended to the new URL, so `https://old.example.com/one/foo?id=1` is redirected to `https://new.example.com/one/foo?id=1`
+
+```
+RedirectMatch [status] regex URL
+```
+
+```apache
+RedirectMatch "^/one(/|$)(.*)" "https://new.example.com/one$1$2"
+```
+
+For `RedirectMatch`, it's matching the whole path, and GET parameters are appended automatically
+
 ## Rewrite
 
 ### Logging
