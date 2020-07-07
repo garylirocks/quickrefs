@@ -1,59 +1,6 @@
 # Vim cheatsheet
 
-- [Motions](#motions)
-  - [Left-right motions](#left-right-motions)
-  - [Up-down motions](#up-down-motions)
-  - [Word motions](#word-motions)
-  - [Text object motions](#text-object-motions)
-  - [Marks](#marks)
-    - [Examples](#examples)
-  - [Jumps](#jumps)
-  - [Various motions](#various-motions)
-  - [Tags](#tags)
-- [Editing](#editing)
-  - [Operators](#operators)
-  - [Text objects](#text-objects)
-  - [Examples](#examples-1)
-  - [Column mode](#column-mode)
-  - [Increase / Decrease numbers](#increase--decrease-numbers)
-  - [Indent lines](#indent-lines)
-  - [Abbreviations](#abbreviations)
-  - [Word completion](#word-completion)
-- [Search and replace](#search-and-replace)
-  - [Special characters in a replacement pattern](#special-characters-in-a-replacement-pattern)
-  - [Copy from one location, replacing multiple locations](#copy-from-one-location-replacing-multiple-locations)
-- [Regular Expressions](#regular-expressions)
-  - [Enable ERE (extended regular expression)](#enable-ere-extended-regular-expression)
-  - [About new line](#about-new-line)
-  - [Lookahead / Lookbehind modifiers](#lookahead--lookbehind-modifiers)
-- [Buffer, Window and Tab](#buffer-window-and-tab)
-  - [Concepts](#concepts)
-  - [Multiple buffers](#multiple-buffers)
-  - [arglist](#arglist)
-  - [Multiple windows](#multiple-windows)
-  - [Tabs](#tabs)
-  - [Tag with windows](#tag-with-windows)
-- [Record and Play](#record-and-play)
-- [Copy and Paste](#copy-and-paste)
-- [Command macros](#command-macros)
-- [Registers](#registers)
-- [Options](#options)
-- [Modes](#modes)
-  - [ex mode](#ex-mode)
-  - [visual mode](#visual-mode)
-- [Help](#help)
-- [Plugins](#plugins)
-  - [Vundle](#vundle)
-  - [Useful Plugins](#useful-plugins)
-  - [vim-surround](#vim-surround)
-- [Miscs](#miscs)
-  - [Avoid the Esc key](#avoid-the-esc-key)
-  - [Save a readonly file](#save-a-readonly-file)
-  - [Add a new filetype](#add-a-new-filetype)
-  - [Encoding](#encoding)
-  - [Save session](#save-session)
-  - [Line ending](#line-ending)
-- [Refs](#refs)
+[[toc]]
 
 ## Motions
 
@@ -86,6 +33,7 @@ gg              # Goto first line
 :[range]        # go to last line in [range], which can be ":22", ":+5" or ":'mark"
 {count}%        # go to {count} percentage of the file
 
+zf              # fold selected lines
 za              # open or close folds
 ```
 
@@ -525,7 +473,7 @@ Vim has special filenames:
 
 - When starting Vim with more than one file names, the list is remembered as the argument list;
 - It's different from buffer list, arglist was already in Vi, and buffer list is new in Vim;
-- Every file in arglis is also in buffer list, but buffer list commonly has more files;
+- Every file in arglist is also in buffer list, but buffer list commonly has more files;
 - There is a global arglist used by all windows, and it's possible to create a new arglist local to a window;
 
 ```
@@ -820,29 +768,19 @@ Vim has an extensive help system, there are few tricks to use them:
 :helpgrep tags
 # then you can get the result list by:
 :cl
-# go to next match by:
-:cn
-```
 
+# then you can go to any specific match by
+:cc <number>
+
+# go to next/previous match by:
+:cn
+:cp
+```
 
 ## Plugins
 
 - `.vim` files in `.vim/plugin` folder are loaded automatically when Vim starts;
-
-### Vundle
-
-Vundle is one of the best Vim plugin managers, go to https://github.com/VundleVim/Vundle.vim for details
-
-To use it:
-
-1. Clone vundle to `~/.vim/bundle/Vundle.vim`
-
-```sh
-git clone https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim
-```
-
-2. Configure plugins in `.vimrc`
-3. Launch vim and run `:PluginInstall`
+- There are a few popular vim plugin managers: Vundle, vim-plug, etc;
 
 ### Useful Plugins
 
@@ -956,6 +894,37 @@ to wrap it in another tag, use `V` to select the whole line, then `S<p class="no
 </p>
 ```
 
+### `fzf.vim`
+
+Using fzf in vim for lots of awesomeness:
+
+- `:Rg <pattern>`     ripgrep search
+  - use `Tab` to multiselect, then the results will be in a quickfix list, use `:cn` `:cp` to jump
+- `:Buffers`     buffers list, easy switching
+- `:History:`    vim command line history
+- `:History/`    vim search history
+- `:Commits`     Git commits log (need `fugitive.vim`), allow you to open a commit and see the changes
+- `:BCommits`    Git commits for current buffer
+- `:Maps`        Normal mode mappings/shortcuts
+- `:Filetypes`   Change file type of current buffer
+
+Tips:
+
+- Use `CTRL-T`/`CTRL-X`/`CTRL-SHIFT-V` to open in new tab/split/vertical split respectively
+- Add `!` to a command to open fzf in fullscreen
+
+### `vim-fugitive`
+
+Common work flow
+
+- `:G` show git status (mapped to `<leader>gs`)
+- In the fugitive window
+  - `s/u` to stage/unstage each or all files
+  - `dv` to see diff of a file
+- `Gcommit` commit
+- `Gpush` commit
+
+
 ## Miscs
 
 ```
@@ -1028,7 +997,6 @@ see https://stackoverflow.com/a/45459733/434540
 - If you run `:set list` command, it will show `$` at the end of each line, depending on the `fileformat`, this `$` may represents `\r\n`, `\r` or `\n`, so even you opened a file with `\r\n` eol, you won't see `\r`;
 - If you want to see the `\r`, you need to forcibly load a `dos` file as a `unix` one by this command: `:e ++ff=unix`, then `\r` will be shown as `^M`;
 - And if you want to input a `\r`, use `CTRL-V` followed by `Enter` in insert mode;
-
 
 ## Refs
 
