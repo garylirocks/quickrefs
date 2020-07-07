@@ -32,9 +32,6 @@ gg              # Goto first line
 [count]G/gg     # Goto line [count]
 :[range]        # go to last line in [range], which can be ":22", ":+5" or ":'mark"
 {count}%        # go to {count} percentage of the file
-
-zf              # fold selected lines
-za              # open or close folds
 ```
 
 ### Word motions
@@ -304,6 +301,32 @@ fun enjoyable desirable
 funny hilarious lol lmao
 retrieve getchar getcwd getdirentries getenv
 ```
+
+### Folding
+
+How folding is handled depends on the `foldmethod` option
+
+- `manual`:
+
+  ```
+  zf{motion}            # fold with {motion}, e.g. `zfap`, zfa{
+  :{range}fo[ld]        # :,+10fo fold current with next 10 lines
+  ```
+
+- `indent`  fold by indentation levels
+- `syntax`  based on syntax files
+
+Folding shortcuts
+
+```
+za/zA                    # toggle a fold (current/all level)
+zd/zD                    # delete fold marks, not the text
+zm/zM                    # fold one/all More level in whold buffer
+zr/zR                    # Reduce one/all fold level in whold buffer
+
+:set foldcolumn=1     # show 1-column gutter for fold marks
+```
+
 
 ## Search and replace
 
