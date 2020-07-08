@@ -245,6 +245,7 @@ gUiw    change word to UPPERCASE
 ```
 >>              # increase indentation for current line
 <<              # decrease indentation for current line
+==              # indent lines
 ```
 
 - In insert mode:
