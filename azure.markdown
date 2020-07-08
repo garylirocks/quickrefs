@@ -1,15 +1,6 @@
 # Azure
 
-- [Azure AD, tenant, subscriptions](#azure-ad-tenant-subscriptions)
-  - [Azure AD](#azure-ad)
-  - [Tenant](#tenant)
-  - [Subscription](#subscription)
-- [Cloud computing fundamentals](#cloud-computing-fundamentals)
-  - [Compute](#compute)
-    - [VMs](#vms)
-  - [Storage](#storage)
-    - [Storage tiers](#storage-tiers)
-  - [Networking](#networking)
+[[toc]]
 
 ## Azure AD, tenant, subscriptions
 
@@ -33,6 +24,18 @@
 - A tenant can have multiple subscriptions;
 - Billing is done monthly at subscription level;
 
+## Concepts
+
+### Resource group
+
+- Resources in one group can span multiple regions;
+- When you delete a group, all resources within are deleted, if you just want to try out something, put all new resources in one group, and then everything can be deleted together;
+- A group can be a scope for applying role-based access control (RBAC);
+- Can be used to filter and sort costs in billing reports;
+- Resource Group Manager (RGM) is the management layer which allows you automate the deployment and configuration of resources;
+
+You can organize resource groups in different ways: by resource type(vm, db), by department(hr, marketing), by environment (prod, qa, dev), etc
+
 ## Cloud computing fundamentals
 
 ### Compute
@@ -44,24 +47,31 @@
 Four types of compute resources:
 
 - Virtual machines
+
   - IaaS
   - Total control over OS, software;
   - And you are responsible for updating the OS and softwares;
+
 - Containers
+  - Azure Container Instances
+    - Run a container directly, you choose which docker image to run, specify CPU, memory requirements, etc
+  - Azure Kubernetes Service
+    - Automating and managing large number of containers and how they interact
 - Azure App Service
   - PaaS
-  - Designed to host enterprise-grade web-oriented applications;
-- Serverless computing
-  - Completely abstracts the underlying hosting environment;
+  - Designed to host enterprise-grade web-oriented applications
+- Serverless computing (Azure Functions)
+  - Completely abstracts the underlying hosting environment
 
 #### VMs
 
 Scaling VMs:
 
 - Availability sets
-  ![Availability Set](images/azure-vm_availability_sets.png)
 
   - logical grouping of VMs across multiple Fault Domains (separate server racks) or Update Domains (logical part of a data center);
+
+  ![Availability Set](images/azure-vm_availability_sets.png)
 
 - Virtual Machine Scale Sets
 
@@ -71,17 +81,34 @@ Scaling VMs:
 - Azure Batch
   - large-scale job scheduling and compute management;
 
+VM availability options:
+
+![Availability Options](images/azure-availability-options.png)
+
+- Availability sets (different racks within a datacenter)
+
+  ![Availability Sets](images/azure-availability-sets.png)
+
+- Availability zones (one or multiple datacenters within a region equipped with independent power, cooling and networking)
+
+  - minimum three separate zones for each enabled region
+
+  ![Availability Zones](images/azure-availability-zones.png)
+
 ### Storage
 
-- SQL Database: structured data;
-- Cosmos DB: semi-structured data;
-- Blob storage: unstructured data;
+- Containers (Blob storage): unstructured data;
+  - Serving images and documents directly to a browser;
+  - Source for CDN;
+  - Data backup and restore, disaster recovery, archiving;
+  - Data for analysis;
+- Tables: for structured, un-relational data;
 - Data Lake storage: for analytics;
 - Azure files
 
   - can be mounted _concurrently_ by cloud or on-premise machines;
   - use SMB protocol;
-  - can be shared anywhere in the world;
+  - can be shared anywhere in the world using a URL containing a shared access signature(SAS) token (which allows specific access to a private asset for a specific amount of time);
 
   ![azure files](images/azure_files.png)
 
@@ -96,6 +123,7 @@ Scaling VMs:
 
   - suitable for storing data only for the attached VM;
   - can be standard or premium SSD/HDD;
+  - can be managed and configured either by Azure or the user;
 
 #### Storage tiers
 
@@ -103,4 +131,33 @@ Scaling VMs:
 2. Cool: for infrequently accessed data and stored for at least 30 days;
 3. Archive: rarely accessed data, stored for >180 days;
 
+### Database services
+
+Fully managed PaaS services
+
+- SQL Database: structured data;
+  - based on Microsoft SQL Server
+- Cosmos DB: semi-structured data;
+  - globally distributed
+
 ### Networking
+
+- Azure Virtual Network
+
+  - Enables Azure reources to securely communicate with each other, the internet and on-premises networks
+  - Scoped to a single region
+
+- Azure Load Balancer
+
+  - Supports inbound and outbound scenarios, TCP, UDP
+  - Incoming internet traffic, internal traffic across Azure services, port forwarding for specific traffic, or outbound connectivity fro VMs
+
+- VPN Gateway
+- Azure Application Gateway
+
+  - Can route traffic based on source IP/port to a destination IP/port
+  - Help protect web app with a web application firewall, redirection, _session affinity_, etc
+
+- CDN
+  - Minimize latency
+  - Can be hosted in Azure or other locations
