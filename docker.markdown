@@ -1163,6 +1163,30 @@ docker service ls
 # xzqj0epf49eq        getstartedlab_web          replicated          3/3                 garylirocks/get-started:part2     *:4000->80/tcp
 ```
 
+### Service placement
+
+Constraints can be added in the compose file to put a service on specific nodes
+
+```
+...
+
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - "node.role==manager"
+          - "node.labels.security==high"
+
+...
+```
+
+Add labels to a node using:
+
+```
+docker node update --label-add security=high <node-id>
+```
+
+
 ## Configs
 
 **A good usecase for config: use the same nginx image, load different `nginx.conf` to it, so you don't need to build an image for each config.**
