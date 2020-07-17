@@ -577,6 +577,9 @@ wp search-replace --dry-run 'dev.example.com' 'www.example.com'
 
 # actually run:
 wp search-replace 'dev.example.com' 'www.example.com'
+
+# specify included/ignored tables/columns
+wp search-replace 'example.com' 'example.net' wp_posts --include-columns=post_content --skip-columns=guid  --log --dry-run
 ```
 
 **It can even search and replace text in serialized PHP values, do the unserializing and serailizing automatically**
