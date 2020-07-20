@@ -60,8 +60,16 @@ Four types of compute resources:
 - Azure App Service
   - PaaS
   - Designed to host enterprise-grade web-oriented applications
-- Serverless computing (Azure Functions)
-  - Completely abstracts the underlying hosting environment
+- Serverless computing
+  - Azure Functions
+    - Completely abstracts the underlying hosting environment
+    - Response to an event - REST request, timer, or message form other Azure service
+  - Azure Logic Apps (like Zapier)
+    - Automate and orchestrate tasks, workflows;
+    - Can connect to other services such as Salesforce, SAP, Oracel, etc;
+  - Event Grid
+
+    - For apps with event-based architectures, intelligent event routing using publish-subscribe model
 
 #### VMs
 
@@ -161,3 +169,196 @@ Fully managed PaaS services
 - CDN
   - Minimize latency
   - Can be hosted in Azure or other locations
+
+### Big Data
+
+- Synapse Analytics
+- HDInsight
+- Data Lake Analytics
+
+### AI
+
+- Cognitive Services: Vision, Speech, Language, Knowledge, Search
+- Machine Learning Service: develop train, test, deploy, manage, and track ML models
+
+### DevOps
+
+- DevOps Service: pipelines, private Git repos, automated and cloud-based load testing
+- Lab Services: provision environment using reusable templates and artifacts, scale up load testing by provisioning multiple test agents and create pre-provisioned envs for training and demos
+
+## Azure management tools
+
+- Azure Portal
+
+  - Web based, not suitable for reptitive tasks
+
+- Azure PowerShell
+
+  - A module for Windows PowerShell or PowerShell Core(a cross-platform version of PowerShell)
+
+- Azure CLI
+
+- Cloud Shell
+
+  - You can choose to use either CLI or PowerShell
+  - A storage account is required
+
+- Azure Mobile App
+
+- Azure Rest API
+
+## Business Process Automation
+
+- Design-first
+
+  - Power Automate
+    - No code required
+    - Use Logic Apps under the hood
+  - Logic Apps
+    - Intended for developers
+
+- Code-first
+  - Functions (_this should be default choice_)
+    - Wider range of triggers / supported languages
+    - Pay-per-use price model
+  - App Service WebJobs
+    - Part of App Service
+    - Customization to `JobHost`
+
+## Azure Functions
+
+Benefits:
+
+- Auto scaling, pay for what you use
+- No need to manage servers
+- Stateless logic
+- Event driven
+
+Drawbacks:
+
+- Execution time limits (5 ~ 10min)
+- Execution frequency (if need to be ran continously, may be cheaper to use a VM)
+
+Triggers:
+
+- Timer
+- HTTP
+- Blob (file uploaded/updated)
+- Queue messages
+- Cosmos DB (a document changes in a collection)
+- Event Hub (receives a new event)
+
+Bindings:
+
+- A declarative way to connect to data (so you don't need to write the connection logic)
+- Input bindings and output bindings
+- Triggers are special types of input bindings
+- Configured in a JSON file _function.json_, a sample
+
+Example:
+
+![Azure Functions bindings flow](./images/azure-functions_bindings_example.png)
+
+Pass in an `id` and `url` from a HTTP request, if a bookmark with the id does not already exist, add to DB and push to a queue for further processing
+
+`function.json`
+
+```json
+{
+  "bindings": [
+    {
+      "authLevel": "function",
+      "type": "httpTrigger",
+      "direction": "in",
+      "name": "req",
+      "methods": ["get", "post"]
+    },
+    {
+      "type": "http",
+      "direction": "out",
+      "name": "res"
+    },
+    {
+      "name": "bookmark",
+      "direction": "in",
+      "type": "cosmosDB",
+      "databaseName": "func-io-learn-db",
+      "collectionName": "Bookmarks",
+      "connectionStringSetting": "gary-cosmos_DOCUMENTDB",
+      "id": "{id}",
+      "partitionKey": "{id}"
+    },
+    {
+      "name": "newbookmark",
+      "direction": "out",
+      "type": "cosmosDB",
+      "databaseName": "func-io-learn-db",
+      "collectionName": "Bookmarks",
+      "connectionStringSetting": "gary-cosmos_DOCUMENTDB",
+      "partitionKey": "{id}"
+    },
+    {
+      "name": "newmessage",
+      "direction": "out",
+      "type": "queue",
+      "queueName": "bookmarks-post-process",
+      "connection": "storageaccountlearna8ff_STORAGE"
+    }
+  ]
+}
+```
+
+`index.js`
+
+```js
+module.exports = function (context, req) {
+  var bookmark = context.bindings.bookmark;
+  if (bookmark) {
+    context.res = {
+      status: 422,
+      body: 'Bookmark already exists.',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    };
+  } else {
+    // Create a JSON string of our bookmark.
+    var bookmarkString = JSON.stringify({
+      id: req.body.id,
+      url: req.body.url
+    });
+
+    // Write this bookmark to our database.
+    context.bindings.newbookmark = bookmarkString;
+    // Push this bookmark onto our queue for further processing.
+    context.bindings.newmessage = bookmarkString;
+    // Tell the user all is well.
+    context.res = {
+      status: 200,
+      body: 'bookmark added!',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    };
+  }
+  context.done();
+};
+```
+
+- `id` in `req` will be available as `id` to the `cosmosDB` binding;
+- If `id` is found in the DB, `bookmark` will be set;
+- `"connectionStringSetting": "gary-cosmos_DOCUMENTDB"` is an application setting in app scope, not restricted to current function, available to the function as an env variable;
+- Simply assign a value to `newbookmark` and `newmessage` for output
+
+### Durable functions
+
+![Durable function patterns](./images/azure-durable_function_workflow_patterns.png)
+
+There are three different functions types, the table below show how to use them in the human interactions workflow:
+
+| Workflow function                                   | Durable Function Type  |
+| --------------------------------------------------- | ---------------------- |
+| Submitting a project design proposal for approval   | Client Function        |
+| Assign an Approval task to relevant member of staff | Orchestration Function |
+| Approval task                                       | Activity Function      |
+| Escalation task                                     | Activity Function      |
