@@ -1131,6 +1131,15 @@ echo $RANDOM
 # 12521
 echo $RANDOM
 # 15828
+
+```
+
+### Generate random strings
+
+```sh
+# 5 character string (5 bytes, 10 hex chars)
+openssl rand -hex 5
+# cf2a039a47
 ```
 
 ### Multiple commands on a single line
