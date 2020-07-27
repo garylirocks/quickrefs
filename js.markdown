@@ -6,7 +6,7 @@
   - [Wrapper objects](#wrapper-objects)
   - [Operators](#operators)
 - [Numbers](#numbers)
-  - [toString(base) and parseInt(str, base)](#tostringbase-and-parseintstr-base)
+  - [`toString(base)` and `parseInt(str, base)`](#tostringbase-and-parseintstr-base)
 - [Strings](#strings)
   - [Comparison](#comparison)
   - [Surrogate pairs](#surrogate-pairs)
@@ -20,18 +20,18 @@
   - [Transforming objects](#transforming-objects)
 - [Prototype](#prototype)
   - [Inheritance by Prototype](#inheritance-by-prototype)
-  - [What is this](#what-is-this)
+  - [What is `this`](#what-is-this)
   - [Native prototypes](#native-prototypes)
     - [Polyfilling](#polyfilling)
     - [Borrowing from prototypes](#borrowing-from-prototypes)
   - [Plain objects](#plain-objects)
 - [Symbol](#symbol)
   - [Main usages](#main-usages)
-  - [Symbol.iterator](#symboliterator)
-  - [Symbol.toPrimitive](#symboltoprimitive)
+  - [`Symbol.iterator`](#symboliterator)
+  - [`Symbol.toPrimitive`](#symboltoprimitive)
 - [Arrays](#arrays)
   - [Methods](#methods)
-  - [length](#length)
+  - [`length`](#length)
   - [Array-like](#array-like)
   - [Create a number range array](#create-a-number-range-array)
 - [Map and Set](#map-and-set)
@@ -46,9 +46,9 @@
   - [Function expression vs. function statement](#function-expression-vs-function-statement)
   - [Function properties](#function-properties)
   - [Named Function Expressions (NFE)](#named-function-expressions-nfe)
-  - [The arguments parameter](#the-arguments-parameter)
+  - [The `arguments` parameter](#the-arguments-parameter)
   - [Arrow functions](#arrow-functions)
-- [The this keyword](#the-this-keyword)
+- [The `this` keyword](#the-this-keyword)
 - [Closures](#closures)
   - [Temporal Dead Zone](#temporal-dead-zone)
   - [Lexical environment](#lexical-environment)
@@ -58,7 +58,7 @@
   - [Class inheritance](#class-inheritance)
     - [Built-in classes](#built-in-classes)
     - [Constructors](#constructors)
-    - [How super works](#how-super-works)
+    - [How `super` works](#how-super-works)
   - [Static properties/methods](#static-propertiesmethods)
   - [Mixins](#mixins)
 - [Iterations](#iterations)
@@ -70,7 +70,8 @@
   - [Using generators for iterables](#using-generators-for-iterables)
 - [Async/await](#asyncawait)
 - [Event Loop](#event-loop)
-  - [setTimout and setInterval](#settimout-and-setinterval)
+  - [`setTimout` and `setInterval`](#settimout-and-setinterval)
+  - [In browser](#in-browser)
   - [Multiple runtimes](#multiple-runtimes)
 - [ECMAScript](#ecmascript)
 - [Module Systems](#module-systems)
@@ -81,7 +82,7 @@
   - [Modules in browsers](#modules-in-browsers)
 - [Error Handling](#error-handling)
   - [Error](#error)
-  - [try...catch...finally](#trycatchfinally)
+  - [`try...catch...finally`](#trycatchfinally)
   - [Promise](#promise-1)
   - [async/await errors](#asyncawait-errors)
 - [Regular Expression](#regular-expression)
@@ -104,9 +105,9 @@
   - [Deboucing an event](#deboucing-an-event)
   - [Bind a function multiple times](#bind-a-function-multiple-times)
   - [Currying](#currying)
-  - [Object.is()](#objectis)
+  - [`Object.is()`](#objectis)
   - [Object property iteration methods comparison](#object-property-iteration-methods-comparison)
-  - [JSON.stringify and JSON.parse](#jsonstringify-and-jsonparse)
+  - [`JSON.stringify` and `JSON.parse`](#jsonstringify-and-jsonparse)
 - [Reference](#reference)
 
 ## Data types
@@ -2058,6 +2059,16 @@ See the Pen <a href='https://codepen.io/garylirocks/pen/yKRzeM/'>async/await</a>
   - When a function is passed in `setTimeout/setInterval`, an internal reference is created, so it won't be garbage collected;
   - For `setInterval` the function will be cleared when `clearInterval` is called;
   - Since a function references the outer lexical environment, that takes memory, so it's better to **cancel a timer when it's not needed**;
+
+
+### In browser
+
+![Eventloop in browser](images/js_browser_eventloop.png)
+
+
+- There is a macrotask queue and microtask queue;
+-
+
 
 ### Multiple runtimes
 
