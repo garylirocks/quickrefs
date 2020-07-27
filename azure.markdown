@@ -61,6 +61,7 @@ Four types of compute resources:
   - PaaS
   - Designed to host enterprise-grade web-oriented applications
 - Serverless computing
+
   - Azure Functions
     - Completely abstracts the underlying hosting environment
     - Response to an event - REST request, timer, or message form other Azure service
@@ -356,9 +357,64 @@ module.exports = function (context, req) {
 
 There are three different functions types, the table below show how to use them in the human interactions workflow:
 
-| Workflow function                                   | Durable Function Type  |
-| --------------------------------------------------- | ---------------------- |
-| Submitting a project design proposal for approval   | Client Function        |
-| Assign an Approval task to relevant member of staff | Orchestration Function |
-| Approval task                                       | Activity Function      |
-| Escalation task                                     | Activity Function      |
+| Workflow function                    | Durable Function Type             |
+| ------------------------------------ | --------------------------------- |
+| Submitting a project design proposal | Client Function (trigger)         |
+| Assign an Approval task              | Orchestration Function (workflow) |
+| Approval task                        | Activity Function                 |
+| Escalation task                      | Activity Function                 |
+
+- You need to run `npm install durable-functions` from the `wwwroot` folder of your function app in Kudu
+
+## Messaging platforms
+
+### Messages vs. Events
+
+Messages:
+  - Overall integrity of the application rely on messages being received
+  - Generally contains the data itself
+  - Sender and receiver are often coupled by a strict data contract
+
+Events:
+  - 'Lighter' than messages
+  - Most often used for broadcast communications, have a large number of subscribers for each publisher
+  - Publisher has no expectation about the action a receiving component takes
+
+### Service bus  
+
+Queue:
+
+![Service Bus Queue](./images/azure_service-bus-queue.png)
+
+Storage queues are simpler to use but less sophisticated and flexible than Service Bus queues:
+
+| Feature                          | Service Bus Queues                   | Storage Queues |
+| -------------------------------- | ------------------------------------ | -------------- |
+| Message size                     | 256KB(std tier) / 1MB (premium tier) | 64KB           |
+| Queue size                       | 80 GB                                | unlimited      |
+| Delivery                         | at-least-once or at-most-once        | -              |
+| Guarantee                        | FIFO guarantee                       | -              |
+| Transaction                      | Yes                                  | No             |
+| Role-based security              | Yes                                  | No             |
+| Queue polling on destination end | Not required                         | -              |
+| Log                              | -                                    | Yes            |
+
+
+
+Topic (supports multiple receivers):
+
+![Service Bus Topic](./images/azure_service-bus-topic.png)
+
+### Storage Queues 
+
+![storage queue message flow](images/azure_storage-queue-message-flow.png)
+
+- `get` and `delete` are separate operations, this ensures the *at-least-once delivery*, in case there is a failure in the receiver, after receiver gets a message, the message remains in the queue but is invisible for 30 seconds, after that if not deleted, it becomes visible again and another instance of the receive can process it
+
+
+
+### Event Grid
+
+### Event Hub
+
+Often used for a specific type of high-flow stream of communications used for analytics (often used with Stream Analytics)
