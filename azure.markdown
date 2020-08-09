@@ -106,7 +106,7 @@ VM availability options:
 
 ### Storage
 
-- Containers (Blob storage): unstructured data;
+- Blob storage: unstructured data;
   - Serving images and documents directly to a browser;
   - Source for CDN;
   - Data backup and restore, disaster recovery, archiving;
@@ -134,6 +134,7 @@ VM availability options:
   - can be standard or premium SSD/HDD;
   - can be managed and configured either by Azure or the user;
 
+
 #### Storage tiers
 
 1. Hot: for data that is accessed frequently;
@@ -146,8 +147,12 @@ Fully managed PaaS services
 
 - SQL Database: structured data;
   - based on Microsoft SQL Server
+- SQL Data Warehouse
+  - support OLAP solutions and SQL queries
+  - does not support cross-database queries
 - Cosmos DB: semi-structured data;
   - globally distributed
+  - indexes every field by default
 
 ### Networking
 
@@ -207,6 +212,30 @@ Fully managed PaaS services
 - Azure Mobile App
 
 - Azure Rest API
+
+### CLI
+
+```sh
+# set default group and location
+az configure --defaults group=<groupName> location=australiasoutheast
+
+# === START create / manage a storage account
+# get a random account name
+STORAGE_NAME=storagename$RANDOM
+
+# create a storage account
+az storage account create --name $STORAGE_NAME --sku Standard_RAGRS --encryption-service blob
+
+# list access keys
+az storage account keys list --account-name $STORAGE_NAME
+
+# get connection string (key1 is in the string)
+az storage account show-connection-string -n $STORAGE_NAME
+
+# create a container in the account
+az storage container create -n messages --connection-string "<connection string here>"
+```
+
 
 ## Business Process Automation
 
@@ -418,3 +447,191 @@ Topic (supports multiple receivers):
 ### Event Hub
 
 Often used for a specific type of high-flow stream of communications used for analytics (often used with Stream Analytics)
+
+
+## Azure Storage
+
+![storage services overview](images/azure_storage-services.png)
+
+Blobs, Files, Queues and Tables are grouped together into Azure storage and are often used together
+
+Storage account level settings:
+
+- Subscription
+- Location
+- Performance
+  - Standard: magnetic disk drives
+  - Premium: 
+    - SSD
+    - additional services: unstructured object data as block blobs or append blobs, specialized file storage
+- Replication
+  - LRS: locally-redundant storage, three copies within a datacenter
+  - GRS: geo-redundant storage
+- Access tier
+  - Hot or cool
+  - *Only apply to blobs*
+  - Can be specified for each blob
+- Secure transer required: whether HTTPS is enforced
+- Virtual networks: only allow inbound access request from the specified network(s)
+
+- Account kind
+  - StorageV2 (general purpose v2): all storage types, latest features
+  - Storage (general purpose v1): legacy
+  - Blob storage: legacy, allows only block blobs and append blobs
+- Deployment model
+  - Resource Manager
+  - Classic: legacy
+
+
+### Blobs
+
+Object storage solution optimized for storing massive amounts of unstructured data, ideal for:
+
+- serving images or documents directly to a browser, including full static websites.
+- storing files for distributed access.
+- streaming video and audio.
+- storing data for backup, disaster recovery and archiving.
+- storing data for analysis.
+
+Three kinds of blobs:
+
+- Block blobs: for files that are read from beginning to end, files larger than 100MB must be uploaded as small blocks which are then consolidated into the final blob.
+- Page blobs: to hold random-access files up to 8 TB in size, used primarily as storage for the VHDs used to provide durable disks for Azure VMs. They provide random read/write access to 512-byte pages.
+- Append blobs: specialized block blobs, but optimized for append operations, frequently used for logging from one or more sources.
+
+Many Azure components use blobs behind the scenes, Cloud Shell stores your files and configuration in blobs, VMs use blobs for hard-disk storage.
+
+#### Organization
+
+- Account
+  - Can have unlimited containers
+  - Usually created by an admin
+- Containers
+  - Can contain unlimited blobs
+  - Can be seen as a security boundary for blobs, you can set an individual container as public.
+  - Usually created in an app as needed (calling `CreateIfNotExistsAsync` on a `CloudBlobContainer` is the best way to create a container when your application starts or when it first tries to use it)
+- Virtual directories: technically containers are "flat", there is no folders. But if you give blobs hierarchical names looking like file paths, the API's listing operation can filter results to specific prefixes.
+
+### Files
+
+Network files shares, accessed over SMB protocol
+
+Common scenarios:
+
+- Storing shared configuration files for VMs, tools.
+- Log files such as diagnostics, metrics and crash dumps.
+- Shared data between on-premises applications and Azure VMs to allow migration.
+
+### Security
+
+Security features:
+
+- Encryption at rest
+
+  All data is automatically encrypted by Storage Service Encryption (SSE) with a 256-bit AES cipher. This can't be disabled.
+
+  For VMs, Azure let's you encrypt virtual hard disks(VHDs) by using Azure Disk Encryption (BitLocker for Windows images, dm-crypt for Linux)
+
+  Azure Key Vault stores the keys automatically.
+
+- Encryption at tansit
+
+  You can enforce HTTPS on an account. This flag will also enforce secure transfer over SMB by requiring SMB 3.0 for all file share mounts.
+
+- CORS support
+
+  An optional flag you can enable on Storage accounts. Apply only for GET requests.
+
+- Role-based access control
+
+  RBAC is the Most flexible access option.
+  Can be applied to both resource management(e.g. configuration) and data operations(only for Blob and Queue).
+
+- Auditing access
+
+  Using the built-in Storage Analytics service, which logs every operation in real time.
+
+
+#### Access keys
+
+- Like a root password, allow full access.
+- Typically stored within env variables, database, or configuration file.
+- *Should be private, don't include the config file in source control and store in public repos*
+- Each storage account has two access keys, this allows key to be rotated:
+  1. update connection strings in your app to use secondary access key
+  2. Regenerate primary key using Azure portal or CLI.
+  3. Update connection string in your code to reference the new primary key.
+  4. Regenerate the secondary access key.
+  
+#### Shared access signature (SAS)
+
+- support expiration and limited permissions
+- suitable for external third-party applications
+- can be service-level or account-level
+
+Two typical designs for using Azure Storage to store user data:
+
+  - Front end proxy: all data pass through the proxy
+
+  ![Front end proxy](images/azure_storage-design-front-end-proxy.png)
+
+  - SAS provider: only generates a SAS and pass it to the client
+
+  ![SAS provider](images/azure_storage-design-lightweight.png)
+
+
+#### Network access
+
+By default, connections from clients on any network are accepted. You can restrict access to specific IP addresses, ranges or virtual networks.
+
+#### Advanced threat protection
+
+- Detects anomalies in account activity
+- Only for Blob currently
+- Security alerts are integrated with Azure Security Center
+
+## VMs
+
+Checklist for creating VMs
+
+- Network (vNets)
+  - Decide network address space;
+  - Break network into sections, e.g. 10.1.0.0 for VMs, 10.2.0.0 for SQL Server VMs;
+  - Network security groups (NSG)
+
+- Name
+  - used as the computer name
+  - also defines a manageable Azure resource, not trivial to change later (it can be applied to the associated storage account, VNets, network interface, NSGs, public IPs) 
+  - a good example `dev-usc-web01` includes environment, location, role and instance of this VM
+
+- Location
+  - consider proximity, compliance, price
+
+- Size
+  - based on workload (general purpose, compute optimized, memory optimized, storage optimized, GPU, high performance compute)
+  - sizes can be changed
+
+- Pricing model
+  - Compute
+    - billed on per-minute basis
+    - stop and deallocate VM stop compute charging
+    - Linux VMs are cheaper than Windows which includes license charges
+    - Two payment options:
+      - Pay as you go
+      - Reserved VM instances
+
+  - Storage
+    - charged separately from VM, you will be charged for storage used by the disks even if the VM is deallocated
+
+- Storage
+  
+  - Each VM has at least two VHDs, one for OS, another one for temporary storage, and can add additional disks
+  - VHDs are page blobs in Azure Storage
+  - two options for managing the relationship between the storage account and each VHD:
+    - unmanaged disks: you are responsible for the storage account, an account is capable of supporting 40 standard VHDs, it's hard to scale out
+    - **managed disks: newer and recommended**, you only need to specify the size, easier to scale out
+
+- OS
+  - Multiple versions of Windows and Linux
+  - Marketplace has VM images which include popular tech stacks
+  - You can create your disk image and upload to Azure storage and use it to create a VM
