@@ -2278,7 +2278,7 @@ If you want to use ES modules directly (without Webpack) in broswer:
        return 2;
      } finally {
        console.log('in finally');
-       return 3; // would throw an error if there is no 'return' here
+       return 3; // this will suppress the error
      }
 
      return 100;

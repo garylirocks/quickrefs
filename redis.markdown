@@ -74,13 +74,14 @@ rpush mylist A
 rpush mylist B
 # (integer) 2
 
-lpush mylist first second
-# (integer) 3
+lpush mylist second first
+# (integer) 4
 
 lrange mylist 0 -1    # first to last
 # 1) "first"
-# 2) "A"
-# 3) "B"
+# 2) "second"
+# 3) "A"
+# 4) "B"
 
 lpop mylist           # pop out
 # "first"
