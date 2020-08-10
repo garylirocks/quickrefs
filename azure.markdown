@@ -72,37 +72,6 @@ Four types of compute resources:
 
     - For apps with event-based architectures, intelligent event routing using publish-subscribe model
 
-#### VMs
-
-Scaling VMs:
-
-- Availability sets
-
-  - logical grouping of VMs across multiple Fault Domains (separate server racks) or Update Domains (logical part of a data center);
-
-  ![Availability Set](images/azure-vm_availability_sets.png)
-
-- Virtual Machine Scale Sets
-
-  - let you create and manage a group of identical, load balanced VMs;
-  - number of instances can automatically increase or decrease in response to demand or a defined schedule;
-
-- Azure Batch
-  - large-scale job scheduling and compute management;
-
-VM availability options:
-
-![Availability Options](images/azure-availability-options.png)
-
-- Availability sets (different racks within a datacenter)
-
-  ![Availability Sets](images/azure-availability-sets.png)
-
-- Availability zones (one or multiple datacenters within a region equipped with independent power, cooling and networking)
-
-  - minimum three separate zones for each enabled region
-
-  ![Availability Zones](images/azure-availability-zones.png)
 
 ### Storage
 
@@ -608,7 +577,13 @@ Checklist for creating VMs
   - consider proximity, compliance, price
 
 - Size
-  - based on workload (general purpose, compute optimized, memory optimized, storage optimized, GPU, high performance compute)
+  - based on workload
+    - general purpose: ideal for testing and dev, small to medium DBs, low to medium traffic web servers
+    - compute optimized: medium traffic web servers, network appliances, batch processes, and application servers
+    - memory optimized: DBs, caches, in-memory analytics
+    - storage optimized: DBs
+    - GPU: graphics rendering and video editing
+    - high performance compute
   - sizes can be changed
 
 - Pricing model
@@ -625,7 +600,7 @@ Checklist for creating VMs
 
 - Storage
   
-  - Each VM has at least two VHDs, one for OS, another one for temporary storage, and can add additional disks
+  - Each VM has at least two VHDs, one for OS (`/dev/sda` on Linux), another one for temporary storage (`/mnt` on Linux, stores the swap file), and can add additional disks
   - VHDs are page blobs in Azure Storage
   - two options for managing the relationship between the storage account and each VHD:
     - unmanaged disks: you are responsible for the storage account, an account is capable of supporting 40 standard VHDs, it's hard to scale out
@@ -635,3 +610,94 @@ Checklist for creating VMs
   - Multiple versions of Windows and Linux
   - Marketplace has VM images which include popular tech stacks
   - You can create your disk image and upload to Azure storage and use it to create a VM
+
+### Create VM using CLI
+
+```sh
+az vm create \
+    --resource-group TestResourceGroup \
+    --name test-wp1-eus-vm \
+    --image win2016datacenter \
+    --admin-username jonc \
+    --admin-password aReallyGoodPasswordHere
+```
+
+### VM extensions
+
+Small applications that allow you to configure and automate tasks on Azure VMs after initial deployment.
+
+
+### Initialize data disks
+
+Any additional drives you create from scratch need to be initialized and formatted.
+
+```sh
+# list block devices, 'sdc' is not mounted
+lsblk
+# NAME    MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+# sda       8:0    0   16G  0 disk 
+# └─sda1    8:1    0   16G  0 part /mnt
+# sdb       8:16   0   30G  0 disk 
+# ├─sdb1    8:17   0 29.9G  0 part /
+# ├─sdb14   8:30   0    4M  0 part 
+# └─sdb15   8:31   0  106M  0 part /boot/efi
+# sdc       8:32   0    1T  0 disk 
+# sr0      11:0    1  628K  0 rom 
+
+# create a new primary partition
+(echo n; echo p; echo 1; echo ; echo ; echo w) | sudo fdisk /dev/sdc
+
+# write a file system to the partition
+sudo mkfs -t ext4 /dev/sdc1
+
+# create a mount point and mount
+sudo mkdir /data && sudo mount /dev/sdc1 /data
+```
+
+
+### Availability options
+
+![Availability Options](images/azure-availability-options.png)
+
+- Availability sets (different racks within a datacenter)
+
+  - 99.95% SLA
+  - VMs in a availability set are spread across Fault Domains and Update Domains
+
+![Availability Sets](images/azure-vm_availability_sets.png)
+
+
+- Availability zones (one or multiple datacenters within a region equipped with independent power, cooling and networking)
+
+  - minimum three separate zones for each enabled region
+
+  ![Availability Zones](images/azure-availability-zones.png)
+
+
+### Scaling
+
+- Virtual Machine Scale Sets
+
+  - let you create and manage a group of identical, load balanced VMs;
+  - number of instances can automatically increase or decrease in response to demand or a defined schedule;
+
+- Azure Batch
+  - large-scale job scheduling and compute management;
+
+## Resource Manager templates
+
+- JSON file that defines the resources you need to deploy
+- For resources deployed based on a template, after you update and redeploy the template, the resources will reflect the changes
+
+
+## Networking
+
+### Network security group (NSG)
+
+- it's optional
+- a software firewall which filters inbound and outbound traffic on the VNet
+- can be associated to a network interface (per host rules), a subnet in the virtual network, or both
+- default rules cannot be modified but *can* be overridden
+- rules evaluation starts from the **lowest priority** rule, deny rules always stop the evaluation
+
+![network security group](images/azure_network-security-group.png)
