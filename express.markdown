@@ -178,7 +178,9 @@ app.use(function (err, req, res, next) {
 })
 ```
 
-- You must specify four parameters for an error handling middleware;
+- Express has a default error handler at the end of middleware stack, it outputs the call stack in non-production envs;
+- You can add a custom error handler, which must have four parameters, it should either end the response or call `next()` to pass, otherwise the request will hang;
+
 
 
 ## Sub app
