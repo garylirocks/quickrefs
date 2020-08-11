@@ -378,7 +378,7 @@ Events:
   - Most often used for broadcast communications, have a large number of subscribers for each publisher
   - Publisher has no expectation about the action a receiving component takes
 
-### Service bus  
+### Service bus
 
 Queue:
 
@@ -403,7 +403,7 @@ Topic (supports multiple receivers):
 
 ![Service Bus Topic](./images/azure_service-bus-topic.png)
 
-### Storage Queues 
+### Storage Queues
 
 ![storage queue message flow](images/azure_storage-queue-message-flow.png)
 
@@ -430,7 +430,7 @@ Storage account level settings:
 - Location
 - Performance
   - Standard: magnetic disk drives
-  - Premium: 
+  - Premium:
     - SSD
     - additional services: unstructured object data as block blobs or append blobs, specialized file storage
 - Replication
@@ -531,7 +531,7 @@ Security features:
   2. Regenerate primary key using Azure portal or CLI.
   3. Update connection string in your code to reference the new primary key.
   4. Regenerate the secondary access key.
-  
+
 #### Shared access signature (SAS)
 
 - support expiration and limited permissions
@@ -570,7 +570,7 @@ Checklist for creating VMs
 
 - Name
   - used as the computer name
-  - also defines a manageable Azure resource, not trivial to change later (it can be applied to the associated storage account, VNets, network interface, NSGs, public IPs) 
+  - also defines a manageable Azure resource, not trivial to change later (it can be applied to the associated storage account, VNets, network interface, NSGs, public IPs)
   - a good example `dev-usc-web01` includes environment, location, role and instance of this VM
 
 - Location
@@ -599,7 +599,7 @@ Checklist for creating VMs
     - charged separately from VM, you will be charged for storage used by the disks even if the VM is deallocated
 
 - Storage
-  
+
   - Each VM has at least two VHDs, one for OS (`/dev/sda` on Linux), another one for temporary storage (`/mnt` on Linux, stores the swap file), and can add additional disks
   - VHDs are page blobs in Azure Storage
   - two options for managing the relationship between the storage account and each VHD:
@@ -635,14 +635,14 @@ Any additional drives you create from scratch need to be initialized and formatt
 # list block devices, 'sdc' is not mounted
 lsblk
 # NAME    MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
-# sda       8:0    0   16G  0 disk 
+# sda       8:0    0   16G  0 disk
 # └─sda1    8:1    0   16G  0 part /mnt
-# sdb       8:16   0   30G  0 disk 
+# sdb       8:16   0   30G  0 disk
 # ├─sdb1    8:17   0 29.9G  0 part /
-# ├─sdb14   8:30   0    4M  0 part 
+# ├─sdb14   8:30   0    4M  0 part
 # └─sdb15   8:31   0  106M  0 part /boot/efi
-# sdc       8:32   0    1T  0 disk 
-# sr0      11:0    1  628K  0 rom 
+# sdc       8:32   0    1T  0 disk
+# sr0      11:0    1  628K  0 rom
 
 # create a new primary partition
 (echo n; echo p; echo 1; echo ; echo ; echo w) | sudo fdisk /dev/sdc
@@ -701,3 +701,90 @@ sudo mkdir /data && sudo mount /dev/sdc1 /data
 - rules evaluation starts from the **lowest priority** rule, deny rules always stop the evaluation
 
 ![network security group](images/azure_network-security-group.png)
+
+
+## App Service
+
+Fully managed web application hosting platform, PaaS.
+
+### App Service plans
+
+A plan's **size** (aka **sku**, **pricing tier**) determines
+  - the performance characteristics of the underlying virtual servers
+  - features available to apps in the plan
+
+SKUs
+
+- **Shared compute**: **Free** and **Shared**, VM shared with other customers, **cannot** scale out
+- **Dedicated compute**: only apps in the same plan can share the same compute resources
+- **Isolated**: network isolation on top of compute isolation
+
+Plans are the unit of billing. How much you pay for a plan is determined by the plan size(sku) and bandwidth usage, not the number of apps in the plan.
+
+You can start from an cheaper plan and scale up later.
+
+### Deployment
+
+There are multiple ways to deploy an app:
+
+- Azure DevOps
+- GitHub
+- BitBucket
+- Local Git: You will be given a remote git url, pushing to it triggers a build.
+- OneDrive
+- Dropbox
+- FTP
+- CLI
+
+  example:
+
+  ```sh
+  # get all variables
+  APPNAME=$(az webapp list --query [0].name --output tsv)
+  APPRG=$(az webapp list --query [0].resourceGroup --output tsv)
+  APPPLAN=$(az appservice plan list --query [0].name --output tsv)
+  APPSKU=$(az appservice plan list --query [0].sku.name --output tsv)
+  APPLOCATION=$(az appservice plan list --query [0].location --output tsv)
+
+  # go to your app directory
+  cd ~/helloworld
+
+  az webapp up --name $APPNAME --resource-group $APPRG --plan $APPPLAN --sku $APPSKU --location "$APPLOCATION"
+  ```
+
+### Deployment slots
+
+- A slot is a separate instance of your app, has its own hostname
+- Each slot shares the resources of the App Service plan
+- Only available in the Standard, Premium or Isolated tier
+- You can create a new slot by cloning the config of an existing slot, but you can't clone the content, which needs to be deployed
+
+If you app name is `garyapp`, the urls would be like
+
+- production: https://garyapp.azurewebsites.net/
+- staging: https://garyapp-staging.azurewebsites.net/
+
+
+#### Swap
+
+- You can create a **staging** slot, after testing, you can **swap** the staging slot with production slot, this happens instantly without any downtime.
+- If you want rollback, swap again.
+- App Service warms up the app by sending a request to the root of the site after a swap.
+- When swapping two slots, configurations get swapped as well, unless a configuration is '**Deployment slot settings**', then it sticks with the slot (this allows you to config different DB connection strings or `NODE_ENV` for production and staging and make sure they don't swap with the app)
+- 'Auto Swap' option is available for Windows.
+
+### Scaling
+
+- Built-in auto scale support
+- Scale up/down: increasing/decreasing the resources of the underlying machine
+- Scale out: increase the number of machines running your app, each tier has a limit on how many instances can be run
+
+### Node app
+
+If it's node, Azure will run `yarn install` automatically to install packages
+
+You need to make sure the app:
+
+- Is listening on `process.env.PORT`
+- Uses `start` in `package.json` to start the app
+
