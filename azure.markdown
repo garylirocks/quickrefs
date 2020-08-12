@@ -752,6 +752,10 @@ There are multiple ways to deploy an app:
   az webapp up --name $APPNAME --resource-group $APPRG --plan $APPPLAN --sku $APPSKU --location "$APPLOCATION"
   ```
 
+If your app is based on a docker container, then there will be a webhook url, which allows you to receive notifications from a docker registry when an image is updated. Then App Service can pull the latest image and restart your app.
+
+If you are using an image from Azure Container Registry, when you enable '**Continuous Deployment**', the webhook is automatically configured in Container Registry.
+
 ### Deployment slots
 
 - A slot is a separate instance of your app, has its own hostname
@@ -787,4 +791,48 @@ You need to make sure the app:
 
 - Is listening on `process.env.PORT`
 - Uses `start` in `package.json` to start the app
+
+## Docker Container Registry
+
+Like Docker Hub
+
+Unique benefits:
+
+- Runs in Azure, the registry can be replicated to store images where they're likely to be deployed
+- Highly scalable, enhanced thoroughput for Docker pulls
+
+```sh
+# create a registry
+az acr create --name garyrepo --resource-group mygroup --sku standard --admin-enabled true
+
+# instead of building locally and pushing to it
+# you can also let the registry build an image for you
+# just like 'docker build'
+az acr build --file Dockerfile --registry garyrepo --image myimage .
+
+# you can enable 'Admin user' for the registry
+# then you can login from your local machine
+docker login -u garyrepo garyrepo.azurecr.io
+
+# pull an image
+docker pull garyrepo.azurecr.io/myimage:latest
+```
+
+### Tasks feature
+
+You can use the tasks feature to rebuild your image whenever its source code changes.
+
+```sh
+az acr task create
+  --registry <container_registry_name> \
+  --name buildwebapp \
+  --image webimage \
+  --context https://github.com/MicrosoftDocs/mslearn-deploy-run-container-app-service.git --branch master \
+  --file Dockerfile \
+  --git-access-token <access_token>
+```
+
+The above command creates a task `buildwebapp`, creates a webhook in the GitHub repo, when it changes, triggers image rebuild in ACR.
+
+
 
