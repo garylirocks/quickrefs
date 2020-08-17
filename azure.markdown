@@ -2,41 +2,24 @@
 
 [[toc]]
 
-## Azure AD, tenant, subscriptions
+## Resources in Azure
 
-![Azure AD, tenant, subscriptions](images/azure-ad_tenant_subscriptions.png)
+### Deployment model
 
-### Azure AD
+- Public cloud
+- Private cloud
 
-- Is about web-based authentication standards such as OpenID and OAuth;
-- _Not_ the same as Windows AD;
+  Azure Stack
 
-### Tenant
+- Hybrid cloud
 
-- Azure AD is partitioned into separate _tenants_;
-- A tenant is a dedicated, isolated instance of the Azure AD service;
-- When you sign up for Azure with an email address that's not associated with an existing tenant, the sign-up process will create a tenant for you automatically;
-- An email address can be associated with more than one tenant (and you can switch from one to another);
-- Each tenant has an _account owner_;
+### Service model
 
-### Subscription
+- IaaS
+- PaaS
+- SaaS
 
-- A tenant can have multiple subscriptions;
-- Billing is done monthly at subscription level;
-
-## Concepts
-
-### Resource group
-
-- Resources in one group can span multiple regions;
-- When you delete a group, all resources within are deleted, if you just want to try out something, put all new resources in one group, and then everything can be deleted together;
-- A group can be a scope for applying role-based access control (RBAC);
-- Can be used to filter and sort costs in billing reports;
-- Resource Group Manager (RGM) is the management layer which allows you automate the deployment and configuration of resources;
-
-You can organize resource groups in different ways: by resource type(vm, db), by department(hr, marketing), by environment (prod, qa, dev), etc
-
-## Cloud computing fundamentals
+![shared management responsibility](images/azure_iaas-paas-saas-shared-responsibility.png)
 
 ### Compute
 
@@ -161,6 +144,95 @@ Fully managed PaaS services
 - DevOps Service: pipelines, private Git repos, automated and cloud-based load testing
 - Lab Services: provision environment using reusable templates and artifacts, scale up load testing by provisioning multiple test agents and create pre-provisioned envs for training and demos
 
+
+## Resource management
+
+![Azure AD, tenant, subscriptions](images/azure-ad_tenant_subscriptions.png)
+
+### Azure AD
+
+- Is about web-based authentication standards such as OpenID and OAuth;
+- _Not_ the same as Windows AD;
+
+### Tenant
+
+- Azure AD is partitioned into separate _tenants_;
+- A tenant is a dedicated, isolated instance of the Azure AD service;
+- When you sign up for Azure with an email address that's not associated with an existing tenant, the sign-up process will create a tenant for you automatically;
+- An email address can be associated with more than one tenant (and you can switch from one to another);
+- Each tenant has an _account owner_;
+
+### Subscription
+
+- A tenant can have multiple subscriptions;
+- Billing is done monthly at subscription level;
+
+
+### Resource group
+
+- A logical container for resources;
+- All resources must be in one and only one group;
+- Resources in one group can span multiple regions;
+- Groups can't be nested;
+
+
+You can organize resource groups in different ways:
+
+  - by resource type(vm, db),
+  - by department(hr, marketing),
+  - by environment (prod, qa, dev),
+  - Life cycle
+
+    When you delete a group, all resources within are deleted, if you just want to try out something, put all new resources in one group, and then everything can be deleted together;
+
+  - Authorization
+
+    A group can be a scope for applying role-based access control (RBAC);
+
+  - Billing
+
+    Can be used to filter and sort costs in billing reports;
+
+
+### Tags
+
+Another way to organize resources
+
+- **NOT** all types of resources support tags;
+- There are limitations on number of tags for each resource, lengths of tag name and value;
+- Tags are not inherited;
+- Can be used to automate task, such as adding `shutdown:6PM` and `startup:7AM` to virtual machines, then create an automation job that accomplish tasks based on tags;
+
+### Policy
+
+Policies apply and enforce rules your resources need to follow, such as:
+
+- only allow specific types of resources to be created;
+- only allow resources in specific regions;
+- enforce naming conventions;
+- specific tags are applied;
+
+### Locks
+
+A setting that can by applied to any resource to block inadvertent modification or deletion.
+
+- Two types: **Delete** or **Read-only**
+- Can be applied at different levels: subscriptions, resource groups, and individual resources
+- Are inherited from higher levels;
+- Apply regardless of RBAC permissions, even you are the owner , you still need to remove the lock before delete the resource;
+
+
+### Resource Group Manager (RGM)
+
+Resource Group Manager (RGM) is the management layer which allows you automate the deployment and configuration of resources;
+
+
+### Resource Manager templates
+
+- JSON file that defines the resources you need to deploy
+- For resources deployed based on a template, after you update and redeploy the template, the resources will reflect the changes
+
+
 ## Azure management tools
 
 - Azure Portal
@@ -182,29 +254,213 @@ Fully managed PaaS services
 
 - Azure Rest API
 
+- Azure SDKs
+
+  - SDKs are based on Reset API, but are easier to use
+
 ### CLI
 
+- Get help
+
+  ```sh
+  az vm --help
+
+  # this use AI to get usage examples:
+  az find `az vm`
+  ```
+
+- Connect and config
+
+  ```sh
+  az login
+
+  # list subscriptions
+  az account list
+
+  # set active subscription
+  az account set --subscription gary-default
+
+  # list resource groups
+  az group list
+
+  # set default group and location
+  az configure --defaults group=<groupName> location=australiasoutheast
+
+  # list default configs
+  az configure -l
+  ```
+
+- Create
+
+  ```sh
+  # create a resource group, <location> here is only for group metadata, resources in the group can be in other locations
+  az group create --name <name> --location <location>
+
+  # verify
+  az group list
+  ```
+
+- Full example
+
+  ```sh
+  # set default group and location
+  az configure --defaults group=<groupName> location=australiasoutheast
+
+  # === START create / manage a storage account
+  # get a random account name
+  STORAGE_NAME=storagename$RANDOM
+
+  # create a storage account
+  az storage account create --name $STORAGE_NAME --sku Standard_RAGRS --encryption-service blob
+
+  # list access keys
+  az storage account keys list --account-name $STORAGE_NAME
+
+  # get connection string (key1 is in the string)
+  az storage account show-connection-string -n $STORAGE_NAME
+
+  # create a container in the account
+  az storage container create -n messages --connection-string "<connection string here>"
+  ```
+
+### PowerShell
+
+- Windows include PowerShell, on Linux or Mac, you can use PowerShell Core
+- Azure PowerShell is a PowerShell module, you need install it by `Install-Module Az -AllowClobber`
+
 ```sh
-# set default group and location
-az configure --defaults group=<groupName> location=australiasoutheast
-
-# === START create / manage a storage account
-# get a random account name
-STORAGE_NAME=storagename$RANDOM
-
-# create a storage account
-az storage account create --name $STORAGE_NAME --sku Standard_RAGRS --encryption-service blob
-
-# list access keys
-az storage account keys list --account-name $STORAGE_NAME
-
-# get connection string (key1 is in the string)
-az storage account show-connection-string -n $STORAGE_NAME
-
-# create a container in the account
-az storage container create -n messages --connection-string "<connection string here>"
+# start PowerShell
+sudo pwsh
 ```
 
+```powershell
+# import Az module
+Import-Module Az
+
+# login
+Connect-AzAccount
+
+# list subscriptions
+Get-AzSubscription
+
+# select a subscription
+Select-AzSubscription -Subscription "gary-default"
+
+# get resource groups in the active subscription
+Get-AzResourceGroup
+
+# or show results in table format
+Get-AzResourceGroup | Format-Table
+
+# create a resource group
+New-AzResourceGroup -Name <name> -Location <location>
+
+# get resources
+Get-AzResource -ResourceType Microsoft.Compute/virtualMachines
+
+# create a VM
+# 'Get-Credential' cmdlet will prompt you for username/password
+New-AzVm -ResourceGroupName <resource-group-name>
+  -Name "testvm-eus-01"
+  -Credential (Get-Credential)
+  -Location "East US"
+  -Image UbuntuLTS
+  -OpenPorts 22
+
+# get a VM object
+$vm = Get-AzVM -Name "testvm-eus-01" -ResourceGroupName learn-baaf2cfd-95ef-4c32-be59-55c78729a07d
+
+# show the object
+$vm
+
+# get a field
+$vm.Location
+# eastus
+
+# stop vm
+Stop-AzVM -Name $vm.Name -ResourceGroup $vm.ResourceGroupName
+
+# remove vm (it doesn't cleanup related resources)
+Remove-AzVM -Name $vm.Name -ResourceGroup $vm.ResourceGroupName
+```
+
+PowerShell script example, creating three VMs
+
+```powershell
+# assign first param to a variable
+param([string]$resourceGroup)
+
+# prompt for username/password
+$adminCredential = Get-Credential -Message "Enter a username and password for the VM administrator."
+
+For ($i = 1; $i -le 3; $i++)
+{
+    $vmName = "ConferenceDemo" + $i
+    Write-Host "Creating VM: " $vmName
+    New-AzVm -ResourceGroupName $resourceGroup -Name $vmName -Credential $adminCredential -Image UbuntuLTS
+}
+```
+
+Run the script by
+
+```
+./script.ps1 learn-baaf2cfd-95ef-4c32-be59-55c78729a07d
+```
+
+
+## Azure AD
+
+- Each Azure subscription is associated with a single Azure AD directory;
+- Users, groups and applications in that directory can manage resources in the subscription;
+- Subscriptions use Azure AD for SSO;
+
+Provides services such as:
+
+- Authentication
+- Single-Sign-On
+- Application management
+- B2B identity services
+- B2C identity services
+- Device management
+
+### Providing identities to services
+
+- Service principals
+
+  is an identity used by any service or application, it can have assigned roles, use a different service principal for each of your applications
+
+- Managed identities for Azure services
+
+  When you create a manaaged identity for a service, you are creating an account on your organization's AD.
+
+### Role-based access control (RBAC)
+
+RBAC allows you to grant access to Azure resources that you control. You do this by creating role assignments, which control how permissions are enforces. There are three elements in a role assignment:
+
+1. Security principal (who)
+
+  ![RBAC principal](images/azure_rbac-principal.png)
+
+2. Role definition (what)
+
+  A collection of permissions, `NotActions` are subtracted from `Actions`
+
+  ![RBAC role definition](images/azure_rbac-role.png)
+
+  Four fundamental built-in roles:
+    - Owner - full access, including the right to delegate access to others
+    - Contributor - create and manage, but can't grant access to others
+    - Reader - view
+    - User Access Administrator - can manage user access
+
+3. Scope (where)
+
+  ![role scopes hierarchy](images/azure_rbac-scopes.png)
+
+
+Role Assignment
+
+![Role Assignment](images/azure_rbac-role-assignment.png)
 
 ## Business Process Automation
 
@@ -402,6 +658,16 @@ Storage queues are simpler to use but less sophisticated and flexible than Servi
 Topic (supports multiple receivers):
 
 ![Service Bus Topic](./images/azure_service-bus-topic.png)
+
+
+Three filter conditions:
+
+- Boolean filters
+- SQL filters: use SQL-like conditional expressions
+- Correlation Filters: matches against messages properties, more efficient than SQL filters
+
+All filters evaluate message properties, not message body.
+
 
 ### Storage Queues
 
@@ -684,11 +950,6 @@ sudo mkdir /data && sudo mount /dev/sdc1 /data
 - Azure Batch
   - large-scale job scheduling and compute management;
 
-## Resource Manager templates
-
-- JSON file that defines the resources you need to deploy
-- For resources deployed based on a template, after you update and redeploy the template, the resources will reflect the changes
-
 
 ## Networking
 
@@ -834,5 +1095,180 @@ az acr task create
 
 The above command creates a task `buildwebapp`, creates a webhook in the GitHub repo, when it changes, triggers image rebuild in ACR.
 
+### Authentication options
 
+| Method                               | How                                                                                                   | Scenarios                                                                                                                                | RBAC                            | Limitations                                                     |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- | --------------------------------------------------------------- |
+| Individual AD identity               | `az acr login`                                                                                        | interactive push/pull by dev/testers                                                                                                     | Yes                             | AD token must be renewed every 3 hours                          |
+| Admin user                           | `docker login`                                                                                        | interactive push/pull by individual dev/tester                                                                                           | No, always pull and push access | Single account per registry, not recommended for multiple users |
+| Integrate with AKS                   | Attach registry when AKS cluster created or updated                                                   | Unattended pull to AKS cluster                                                                                                           | No, pull access only            | Only for AKS cluster                                            |
+| Managed identity for Azure resources | `docker login` / `az acr login`                                                                       | Unattended push from Azure CI/CD, Unattended pull to Azure services                                                                      | Yes                             | Only for Azure services that support managed identities         |
+| AD service principal                 | `docker login` / `az acr login` / Registry login settings in APIs or tooling / Kubernetes pull secret | Unattended push from CI/CD, Unattended pull to Azure or external services                                                                | Yes                             | SP password default expiry is 1 year                            |
+| Repository-scoped access token       | `docker login` / `az acr login`                                                                       | Interactive push/pull to repository by individual dev/tester, Unattended push/pull to repository by individual system or external device | Yes                             | Not integrated with AD                                          |
+
+
+#### Individual AD identity
+
+```sh
+az acr login --name <acrName>
+```
+
+- The CLI uses the token created when you executed `az login` to seamlessly authenticate your session with your registry;
+- Docker CLI and daemon must by running in your env;
+- `az acr login` uses the Docker client to set an Azure AD token in the `docker.config` file;
+- Once logged in, your credentials are cached, valid for 3 hours;
+
+If Docker daemon isn't running in your env, use `--expose-token` parameter
+
+```sh
+# expose an access token
+az acr login -name <acrName> --expose-token
+# {
+#   "accessToken": "eyJhbGciOiJSUzI1NiIs[...]24V7wA",
+#   "loginServer": "myregistry.azurecr.io"
+# }
+
+# use a special username and accessToken as password to login
+docker login myregistry.azurecr.io --username 00000000-0000-0000-0000-000000000000 --password eyJhbGciOiJSUzI1NiIs[...]24V7wA
+```
+
+
+#### Service principal
+
+Best suited for **headless scenarios**, that is, any application/service/script that must push or pull container images in an automated manner.
+
+Create a service principal with the following script, which output an ID and password (also called *client ID* and *client secret*)
+
+*Note that this principal's scope is limited to a specific registry*
+
+```sh
+#!/bin/bash
+
+# Modify for your environment.
+# ACR_NAME: The name of your Azure Container Registry
+# SERVICE_PRINCIPAL_NAME: Must be unique within your AD tenant
+ACR_NAME=<container-registry-name>
+SERVICE_PRINCIPAL_NAME=acr-service-principal
+
+# Obtain the full registry ID for subsequent command args
+ACR_REGISTRY_ID=$(az acr show \
+                    --name $ACR_NAME \
+                    --query id \
+                    --output tsv)
+
+# Create the service principal with rights scoped to the registry.
+# Default permissions are for docker pull access. Modify the '--role'
+# argument value as desired:
+# acrpull:     pull only
+# acrpush:     push and pull
+# owner:       push, pull, and assign roles
+SP_PASSWD=$(az ad sp create-for-rbac \
+              --name http://$SERVICE_PRINCIPAL_NAME \
+              --scopes $ACR_REGISTRY_ID \
+              --role acrpull \
+              --query password \
+              --output tsv)
+SP_APP_ID=$(az ad sp show \
+              --id http://$SERVICE_PRINCIPAL_NAME \
+              --query appId \
+              --output tsv)
+
+# Output the service principal's credentials; use these in your services and
+# applications to authenticate to the container registry.
+echo "Service principal ID: $SP_APP_ID"
+echo "Service principal password: $SP_PASSWD"
+```
+
+For existing principal
+
+```sh
+#!/bin/bash
+
+ACR_NAME=mycontainerregistry
+SERVICE_PRINCIPAL_ID=<service-principal-ID>
+
+ACR_REGISTRY_ID=$(az acr show \
+                    --name $ACR_NAME \
+                    --query id \
+                    --output tsv)
+
+# Assign the desired role to the service principal. Modify the '--role' argument
+az role assignment create \
+  --assignee $SERVICE_PRINCIPAL_ID \
+  --scope $ACR_REGISTRY_ID \
+  --role acrpull
+```
+
+Then you can
+
+- Use with docker login
+
+  ```sh
+  # Log in to Docker with service principal credentials
+  docker login myregistry.azurecr.io \
+    --username $SP_APP_ID \
+    --password $SP_PASSWD
+  ```
+
+- Use with certificate
+
+  ```sh
+  # login with service principal certificate file (which includes the private key)
+  az login --service-principal
+    --username $SP_APP_ID \
+    --tenant $SP_TENANT_ID \
+    --password /path/to/cert/pem/file
+
+  # then authenticate with the registry
+  az acr login --name myregistry
+  ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Key Vault
+
+
+### Concepts
+
+- Vaults
+
+  Are logical groups of keys and secrets, like folders
+
+- Keys
+
+  - Such as asymmetric master key of Microsoft Azure RMS, SQL Server TDE, CLE.
+
+  - Once a key is created or added to a key vault. Your app never has direct access to the keys.
+
+  - Keys can be single instanced or be versioned (primary and secondary keys)
+
+  - There are hardware-protected and software-protected keys.
+
+- Secrets
+
+  - Are small(< 10K) data blobs
+  - Can be: storage account keys, .PFX files, SQL connection strings, data encryption keys
+
+### Usage
+
+- Secrets management
+- Key management
+  - Encryption keys
+  - Azure services such as App Service integrate directly with Key Vault
+- Certificate management
+  - Provision, manage and deploy SSL/TLS certificate;
+  - Request and renew certificates through parternership with certificate authorities
 
