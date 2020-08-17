@@ -88,15 +88,15 @@ If the destination is in:
 
 - different subnet
 
-      	the sender can not get the destination's MAC address, so it just send the data to gateway, let the gateway handle it
+  the sender can not get the destination's MAC address, so it just send the data to gateway, let the gateway handle it
 
 - same subnet
 
-      	use 'ARP' protocal: use 'FF:FF:FF:FF:FF:FF' as MAC address, put the destination's IP address in data section
+  use 'ARP' protcal: use 'FF:FF:FF:FF:FF:FF' as MAC address, put the destination's IP address in data section
 
-      	send data to every host in the subnet, every receiver compares the IP address with its own, if matching, reply the sender with its MAC address
+  send data to every host in the subnet, every receiver compares the IP address with its own, if matching, reply the sender with its MAC address
 
-      	*Note: a host knows every other one's IP address in the same subnet by looking at its own IP address and the subnet mask*
+*Note: a host knows every other one's IP address in the same subnet by looking at its own IP address and the subnet mask*
 
 ## Transport Layer
 
