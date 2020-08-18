@@ -284,7 +284,8 @@ Resource Group Manager (RGM) is the management layer which allows you automate t
   az group list
 
   # set default group and location
-  az configure --defaults group=<groupName> location=australiasoutheast
+  az configure \
+    --defaults group=<groupName> location=australiasoutheast
 
   # list default configs
   az configure -l
@@ -974,11 +975,20 @@ A plan's **size** (aka **sku**, **pricing tier**) determines
   - the performance characteristics of the underlying virtual servers
   - features available to apps in the plan
 
-SKUs
+#### SKUs
 
-- **Shared compute**: **Free** and **Shared**, VM shared with other customers, **cannot** scale out
+| Usage      | Tier                 | Instances | New Features                                  |
+| ---------- | -------------------- | --------- | --------------------------------------------- |
+| Dev/Test   | Free                 | 1         |                                               |
+| Dev/Test   | Shared(Windows only) | 1         | Custom domains                                |
+| Dev/Test   | Basic                | <=3       | Custom domains/SSL                            |
+| Production | Standard             | <=10      | Staging slots, Daily backups, Traffic Manager |
+| Production | Premium              | <=20      | More slots, backups                           |
+| Isolated   | Isolated             | <=100     | Isolated network, Internal Load Balancing     |
+
+- **Shared compute**: **Free**, **Shared** and **Basic**, VM shared with other customers
 - **Dedicated compute**: only apps in the same plan can share the same compute resources
-- **Isolated**: network isolation on top of compute isolation
+- **Isolated**: network isolation on top of compute isolation, using App Service Environment(ASE)
 
 Plans are the unit of billing. How much you pay for a plan is determined by the plan size(sku) and bandwidth usage, not the number of apps in the plan.
 
@@ -989,7 +999,7 @@ You can start from an cheaper plan and scale up later.
 There are multiple ways to deploy an app:
 
 - Azure DevOps
-- GitHub
+- GitHub (App Service can setup a GitHub action for you)
 - BitBucket
 - Local Git: You will be given a remote git url, pushing to it triggers a build.
 - OneDrive
@@ -997,7 +1007,7 @@ There are multiple ways to deploy an app:
 - FTP
 - CLI
 
-  example:
+  Example:
 
   ```sh
   # get all variables
@@ -1010,7 +1020,22 @@ There are multiple ways to deploy an app:
   # go to your app directory
   cd ~/helloworld
 
-  az webapp up --name $APPNAME --resource-group $APPRG --plan $APPPLAN --sku $APPSKU --location "$APPLOCATION"
+  # deploy current working directory as an app
+  az webapp up \
+    --name $APPNAME \
+    --resource-group $APPRG \
+    --plan $APPPLAN \
+    --sku $APPSKU \
+    --location "$APPLOCATION"
+
+  # set as default
+  az configure --defaults web=garyapp
+
+  # open the app
+  az webapp browse
+
+  # live logs
+  az webapp log tail
   ```
 
 If your app is based on a docker container, then there will be a webhook url, which allows you to receive notifications from a docker registry when an image is updated. Then App Service can pull the latest image and restart your app.
