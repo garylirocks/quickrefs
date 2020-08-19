@@ -109,24 +109,10 @@ Fully managed PaaS services
 ### Networking
 
 - Azure Virtual Network
-
-  - Enables Azure reources to securely communicate with each other, the internet and on-premises networks
-  - Scoped to a single region
-
 - Azure Load Balancer
-
-  - Supports inbound and outbound scenarios, TCP, UDP
-  - Incoming internet traffic, internal traffic across Azure services, port forwarding for specific traffic, or outbound connectivity fro VMs
-
 - VPN Gateway
 - Azure Application Gateway
-
-  - Can route traffic based on source IP/port to a destination IP/port
-  - Help protect web app with a web application firewall, redirection, _session affinity_, etc
-
 - CDN
-  - Minimize latency
-  - Can be hosted in Azure or other locations
 
 ### Big Data
 
@@ -509,7 +495,7 @@ Bindings:
 - A declarative way to connect to data (so you don't need to write the connection logic)
 - Input bindings and output bindings
 - Triggers are special types of input bindings
-- Configured in a JSON file _function.json_, a sample
+- Configured in a JSON file _function.json_
 
 Example:
 
@@ -626,16 +612,29 @@ There are three different functions types, the table below show how to use them 
 ### Messages vs. Events
 
 Messages:
-  - Overall integrity of the application rely on messages being received
-  - Generally contains the data itself
+  - Generally contains the raw data itself (e.g. raw file data to be stored)
   - Sender and receiver are often coupled by a strict data contract
+  - Overall integrity of the application rely on messages being received
 
 Events:
-  - 'Lighter' than messages
+  - Lightweight notification of a condition or a state change
+  - Usually have meta data of the event but not the data that triggered the event (e.g. a file was created, but not the actual file data)
   - Most often used for broadcast communications, have a large number of subscribers for each publisher
-  - Publisher has no expectation about the action a receiving component takes
+  - Publisher has no expectation about how the event is handled
+  - Can be discrete or part of series
+
+| Service     | Type                          | Purpose                         | When to use                              |
+| ----------- | ----------------------------- | ------------------------------- | ---------------------------------------- |
+| Service Bus | Message                       | High-value enterprise messaging | Order processing, financial transactions |
+| Event Grid  | Event distribution (discrete) | Reactive programming            | React to status change                   |
+| Event Hubs  | Event streaming (series)      | Big data pipeline               | Telemetry and distributed data streaming |
 
 ### Service bus
+
+- Intended for traditional enterprise applications, which require transactions, ordering, duplicate detection, and instantaneous consistency.
+
+- Is a brokered messaging system, stores messages in a "broker" (e.g. a queue) until the consuming party is ready.
+
 
 Queue:
 
@@ -676,9 +675,8 @@ All filters evaluate message properties, not message body.
 
 - `get` and `delete` are separate operations, this ensures the *at-least-once delivery*, in case there is a failure in the receiver, after receiver gets a message, the message remains in the queue but is invisible for 30 seconds, after that if not deleted, it becomes visible again and another instance of the receive can process it
 
-
-
 ### Event Grid
+
 
 ### Event Hub
 
@@ -826,6 +824,59 @@ By default, connections from clients on any network are accepted. You can restri
 - Only for Blob currently
 - Security alerts are integrated with Azure Security Center
 
+
+## Cosmos DB
+
+Features
+
+- Multi-model
+
+  It supports multiple API and data models(each account only supports one model):
+
+    - Core (SQL)
+    - MongoDB
+    - Cassandra
+    - Azure Table
+    - Gremlin(graph)
+
+- Global distribution
+
+
+### Global distribution
+
+You Cosmos DB can be replicated to multiple regions around the globe. It is recommended to add regions based on Azure Paired Regions.
+
+Common scenarios:
+- Deliver low-latency data access
+- Add regional resiliency for business continuity and disaster recovery (BCDR)
+
+![Comsos DB global distribution](images/azure_cosmosdb-global-distribution.png)
+
+#### Multi-region writes
+
+AKA multi-master support, when you perform writes in a write-enabled region world-wide, written data is propagated to all other regions immediately.
+
+Rarely, conflicts can happen when an item is changed simultaneously in multiple regions. There are three conflict resolution modes offered by Cosmos DB.
+
+- **Last-Writer-Wins (LWW)** - this is the default mode, based on the `_ts` timestamp
+- **Custom - User-defined function** - a user-defined function is a special type of stored procedure
+- **Custom - Async** - all conflicts are registered in the read-only conflicts feed for deferred resolution
+
+### Consistency levels
+
+![Consistency levels](images/azure_cosmosdb-consistency-level-scale.png)
+
+*You can set the default consistency level on your Azure Cosmos DB account, which can be overridden by a specific read request.*
+
+| Consistency Level | Guarantees                                                                                   |
+| ----------------- | -------------------------------------------------------------------------------------------- |
+| Strong            | Linearizability. Reads are guaranteed to return the most recent version of an item.          |
+| Bounded Staleness | Consistent Prefix. Reads lag behind writes by at most k prefixes or t interval.              |
+| Session           | Consistent Prefix. Monotonic reads, monotonic writes, read-your-writes, write-follows-reads. |
+| Consistent Prefix | Updates returned are some prefix of all the updates, with no gaps.                           |
+| Eventual          | Out of order reads.                                                                          |
+
+
 ## VMs
 
 Checklist for creating VMs
@@ -954,15 +1005,63 @@ sudo mkdir /data && sudo mount /dev/sdc1 /data
 
 ## Networking
 
+### Virtual network
+
+- Logically isolated network
+- Scoped to a single region
+- Can be segmented into one or more *subnets*
+- Can use a *VPN gateway* to connect to an on-premises network
+
 ### Network security group (NSG)
 
 - it's optional
 - a software firewall which filters inbound and outbound traffic on the VNet
-- can be associated to a network interface (per host rules), a subnet in the virtual network, or both
+- can be associated to a **network interface** (per host rules), a **subnet** in the virtual network, or both
 - default rules cannot be modified but *can* be overridden
 - rules evaluation starts from the **lowest priority** rule, deny rules always stop the evaluation
 
 ![network security group](images/azure_network-security-group.png)
+
+### Azure Load Balancer
+
+- Can be used with incoming internet traffic, internal traffic, port forwarding for specific traffic, or outbound connectivity for VMs
+
+Example multi-tier architecture with load balancers
+
+![Azure Load Balancer](images/azure_load-balancer.png)
+
+### Application Gateway
+
+- Is a load balancer for web apps
+- Uses Azure Load Balancer at TCP level
+- Understands HTTP, applies routing at application layer (L7)
+
+Benefits over a simple LB
+
+- Cookie affinity
+- SSL termination
+- Web application firewall (WAF): detailed monitoring and logging to detect malicious attacks
+- URL rule-based routes: based on URL patterns, source IP and port, helpful when setting up a CDN
+- Rewrite HTTP headers: such as scrubing server names
+
+![Application Gateway](images/azure_aplication-gateway.png)
+
+### Traffic Manager
+
+Comparing to Load Balancer:
+
+|                 | Use                                                                                     | Resiliency                                                                                                   |
+| --------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Load Balancer   | makes your service **highly available** by distributing traffic within the same region  | monitor the health of VMs                                                                                    |
+| Traffic Manager | works at the DNS level, directs the client to a preferred endpoint, **reduces latency** | monitors the health of endpoints, when one endpoint is unresponsive, directs traffic to the next closest one |
+
+![Traffic Manager](images/azure_traffic-manager.png)
+
+
+### CDN
+
+- Get content to users in their local region to **minimize latency**
+- Can be hosted by Azure or other providers
 
 
 ## App Service
