@@ -514,7 +514,7 @@ if (!elem.dispatchEvent(event)) {
 
 - `unload`: can send out statistics;
 
-  There's a special `navigator.sendBeacon(url, data)` method, which works in the background, doesn't deplay page transition
+  There's a special `navigator.sendBeacon(url, data)` method, which works in the background, doesn't delay page transition
 
   ```js
   let analyticsData = { /* object with gathered data */ };
