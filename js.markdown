@@ -70,8 +70,10 @@
   - [Using generators for iterables](#using-generators-for-iterables)
 - [Async/await](#asyncawait)
 - [Event Loop](#event-loop)
+  - [Message queue / task queue](#message-queue--task-queue)
   - [`setTimout` and `setInterval`](#settimout-and-setinterval)
-  - [In browser](#in-browser)
+  - [Microtasks](#microtasks)
+  - [Render steps and `requestAnimationFrame`](#render-steps-and-requestanimationframe)
   - [Multiple runtimes](#multiple-runtimes)
 - [ECMAScript](#ecmascript)
 - [Module Systems](#module-systems)
@@ -93,7 +95,7 @@
   - [Unicode](#unicode)
   - [Escaping](#escaping)
 - [Immutability](#immutability)
-  - [What is immutability ?](#what-is-immutability)
+  - [What is immutability ?](#what-is-immutability-)
   - [Reference equality vs. value equality](#reference-equality-vs-value-equality)
   - [Immutability tools](#immutability-tools)
     - [The JS way](#the-js-way)
@@ -2005,13 +2007,27 @@ See the Pen <a href='https://codepen.io/garylirocks/pen/yKRzeM/'>async/await</a>
 
 ## Event Loop
 
-[Concurrency model and Event Loop - JavaScript | MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop)
+Refs:
 
-- **Run-to-completion**: Each message in the loop is processed completely before any other message is processed;
+- [Concurrency model and Event Loop - JavaScript | MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop)
+- [Event loop: microtasks and macrotasks - Javascript.info](https://javascript.info/event-loop)
+- [What the heck is the event loop anyway? | Philip Roberts | JSConf EU](https://youtu.be/8aGhZQkoFbQ)
+- [Jake Archibald: In The Loop](https://youtu.be/cCOL7MC4Pl0)
+- [Jake Archibald: The compositor thread](https://vimeo.com/254947206#t=1470s)
+
+### Message queue / task queue
+
+![JS message queue](images/js_message-queue.png)
+
+- JS is single threaded, it relies on environment provided APIs to handle asynchronous actions.
+- The browser provides APIs for **DOM**, **network request** and **timer**.
+- JS runtime uses a message queue, each message has an associated function which gets called(put in the stack) to handle the message.
+- Once the stack is empty, the oldest item in the message queue is put in the stack.
+- **Run-to-completion**: each task is processed completely before any other message is processed, so it won't be interrupted by other async tasks.
 
 ### `setTimout` and `setInterval`
 
-- The time argument for `setTimout` only indicates the **minimum** delay after which the message will be pushed into the queue, it only runs only when other messages before it have been cleared;
+- The time argument for `setTimout` only indicates the **minimum** delay after which the message will be pushed into the queue, it only runs when other messages before it have been cleared;
 
   ```js
   const s = new Date().getSeconds();
@@ -2027,6 +2043,12 @@ See the Pen <a href='https://codepen.io/garylirocks/pen/yKRzeM/'>async/await</a>
       break;
     }
   }
+  ```
+
+- **Zero-delay timeout**, is not actually 0ms, there's a minimal delay of around 4ms, and subject to whether there are other tasks in the queue
+
+  ```js
+  setTimeout(func, 0);
   ```
 
 - Nested `setTimeout` vs. `setInterval`
@@ -2061,18 +2083,110 @@ See the Pen <a href='https://codepen.io/garylirocks/pen/yKRzeM/'>async/await</a>
   - Since a function references the outer lexical environment, that takes memory, so it's better to **cancel a timer when it's not needed**;
 
 
-### In browser
+### Microtasks
 
-![Eventloop in browser](images/js_browser_eventloop.png)
+- Apart from the task queue(aka *mactotask queue*), there is a **microtask queue**;
+- Microtasks come solely from our code, usually created by
+  - **promises**: `.then/catch/finally` or `await`,
+  - **`queueMicrotask(func)`**: a special function that queues `func` in the microtask queue
+  - **`new MutationObserver(func)`**
+- Microtask queue has higher priority than macrotask queue and rendering, once the stack is empty, the microtask queue gets executed immediately until it's empty, so newly added microtasks get executed as well
 
+Example:
 
-- There is a macrotask queue and microtask queue;
--
+```js
+function foo() {
+  console.log('sync: start');
+	setTimeout(() => console.log('macrotask: timeout'), 0);
+  const promise = Promise.resolve();
+  const promiseRejected = Promise.resolve().then(() => {throw new Error('Rejected!')});
+  promise
+    .then(x => console.log('microtask: promise'))
+    .then(() => {
+    	queueMicrotask(()  => console.log('microtask: added by queueMicrotask'));
+    	Promise.resolve().then(() => console.log('microtask: nested promise'));
+
+  	})
+  console.log('sync: end');
+  window.addEventListener('unhandledrejection', e => {
+    console.log('macrotask: unhandledrejection')
+  });
+}
+
+foo();
+
+// sync: start
+// sync: end
+// microtask: promise
+// microtask: added by queueMicrotask
+// microtask: nested promise
+// macrotask: timeout
+// macrotask: unhandledrejection
+```
+
+As you can see,
+
+1. synchronous code is executed first,
+2. then microtasks, including those newly added microtasks, until the microtasks queue is empty,
+3. then macrotask executes
+
+Note:
+
+-  *a promise handler is always put into the microtask queue when the promise settles, even for already resolved promises*
+- After the microtask queue is complete, if there is any rejected promise, the `unhandledrejection` event is triggered
+
+There are three queues, they are processed differently:
+
+- Tasks: one at a time, new items enqueued
+- Microtasks: all items are processed, including new items just enqueued
+- Animation callbacks: all existing items are processed, new items just enqueued will wait for next turn
+
+![Three types of queue](images/js_queues-tasks-microtasks-animation.png)
+
+### Render steps and `requestAnimationFrame`
+
+- Render steps include style calculation, layout and painting, they happen at the begining of each frame, which lasts 16.6ms for a 60Hz display
+
+  ![Render steps and frames](images/js_render-steps.png)
+
+- If you use a zero-delay timeout loop for DOM updating, in each frame the callback can be run around 4 times, but 3 of them are wasted
+
+  ![DOM updates by setTimeout](images/js_dom-updates-by-settimeout.png)
+
+- You can use the `requestAnimationFrame` to schedule some style/DOM updating actions, they will be picked up immediately in each frame
+
+  ![Eventloop with mictotask queue](images/js_eventloop.png)
+  ![DOM updates by requestAnimationFrame](images/js_dom-updates-by-requestanimationframe.png)
 
 
 ### Multiple runtimes
 
+[Jake Archibald: Multiple Event Loops](https://vimeo.com/254947206#t=1470s)
+
+- Tabs
+
+  Usually each tab has its own event loop
+
+- Iframe
+
+  - Same-origin: using the same event loop as the parent frame, so the parent can access the iframe's DOM
+  - Cross-origin: has its own event loop
+
+- Web worker
+
+  Has its own event loop
+
+- `window.open()`
+
+  Similar to iframe
+
+- `<a href="//example.com" target="_blank">`
+
+  - Same-origin: same event loop, last tab is available as `window.opener`, new tab can access last tab's DOM
+  - Cross-origin: new tab has a new event loop, can't access last tab's DOM, but still can change its location by `window.opener.location = ...`, this is **a security risk**, so you should add the **`rel="noopener"`** attribute, then `window.opener` is `null`
+
 A _web worker_ or a cross-origin _iframe_ has its own stack, heap, and message queue. Two distinct runtimes can only communicate through sending messages via the `postMessage` method. This method adds a message to the other runtime if the latter listens to message events.
+
 
 ## ECMAScript
 
@@ -2301,6 +2415,7 @@ If you want to use ES modules directly (without Webpack) in broswer:
 ### Promise
 
 [javascript.info - Promise error handling](https://javascript.info/promise-error-handling)
+
 [MDN - unhandledrejection](https://developer.mozilla.org/en-US/docs/Web/API/Window/unhandledrejection_event)
 
 ```js
