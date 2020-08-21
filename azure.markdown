@@ -831,7 +831,7 @@ Features
 
 - Multi-model
 
-  It supports multiple API and data models(each account only supports one model):
+  It supports multiple API and data models(*each account only supports one model*):
 
     - Core (SQL)
     - MongoDB
@@ -864,9 +864,10 @@ Rarely, conflicts can happen when an item is changed simultaneously in multiple 
 
 ### Consistency levels
 
-![Consistency levels](images/azure_cosmosdb-consistency-level-scale.png)
+![Consistency spectrum](images/azure_cosmosdb-consistency-spectrum.png)
 
-*You can set the default consistency level on your Azure Cosmos DB account, which can be overridden by a specific read request.*
+- Consistency levels are guaranteed for all operations regardless of the region from which the reads and writes are served, the number of regions or whether the account is configured with a single or multiple write regions.
+- *You set the default consistency level on your Azure Cosmos DB account, which can be overridden by a specific read request.*
 
 | Consistency Level | Guarantees                                                                                   |
 | ----------------- | -------------------------------------------------------------------------------------------- |
