@@ -2090,7 +2090,7 @@ Refs:
   - **promises**: `.then/catch/finally` or `await`,
   - **`queueMicrotask(func)`**: a special function that queues `func` in the microtask queue
   - **`new MutationObserver(func)`**
-- Microtask queue has higher priority than macrotask queue and rendering, once the stack is empty, the microtask queue gets executed immediately until it's empty, so newly added microtasks get executed as well
+- Microtask queue has **higher priority** than macrotask queue and rendering, once the stack is empty, the microtask queue gets executed immediately until it's empty, so newly added microtasks get executed as well
 
 Example:
 
