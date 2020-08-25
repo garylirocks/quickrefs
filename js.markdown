@@ -103,6 +103,7 @@
     - [Immer](#immer)
     - [immutability-helper](#immutability-helper)
 - [Javascript: The Good Parts](#javascript-the-good-parts)
+- [JS engine / Compilation](#js-engine--compilation)
 - [Tricks](#tricks)
   - [Deboucing an event](#deboucing-an-event)
   - [Bind a function multiple times](#bind-a-function-multiple-times)
@@ -3023,6 +3024,25 @@ You need to use your custom methods or something like `_.isEqual` from Lo-Dash t
 
   convert truesy value to `true`, falsy value to `false`
 
+## JS engine / Compilation
+
+[JS optimizing compiler - JSConf][js-optimizing-compiler]
+
+- **Just In Time (JIT) compilation**
+
+  Generate machine code during runtime, not ahead of time (AOT)
+
+- **Optimizing compilation**
+
+  - There are two compilers, baseline complier and optimizing compiler, which optimizes 'hot' functions based on gathered info (e.g. property types) from execution.
+
+  - If types change, then it need to '**de-optimize**' the code, which impacts the performance.
+
+  - *Performance tip: write code that looks like statically typed, it would be much easier for optimizing*
+
+  ![JS optimizing complier](images/js_engine.png)
+
+
 ## Tricks
 
 ### Deboucing an event
@@ -3195,3 +3215,4 @@ Object.is(NaN, NaN);
 
 [symbol-iterator-etc]: https://medium.freecodecamp.org/some-of-javascripts-most-useful-features-can-be-tricky-let-me-explain-them-4003d7bbed32
 [tc39 process]: https://tc39.github.io/process-document/
+[js-optimizing-compiler]: https://www.youtube.com/watch?v=p-iiEDtpy6I&list=WL&index=14&t=272s
