@@ -256,4 +256,4 @@ But if any error happens in this script, you can't get details from the `window.
 To allow the access, `<script>` tag needs a **`crossorigin`** attribute, and remote server must provide special headers:
 
 - `crossorigin="anonymous"`, this is the same as just `crossorigin`, access allowed if the server responds with the header `Access-Control-Allow-Origin` with `*` or our origin. Browser does not send authorization information and cookies to remote server;
-- `crossorigin="anonymous"`, access allowed if the server sends back the header `Access-Control-Allow-Origin` with our origin and `Access-Control-Allow-Credentials: true`. Browser sends authorization information and cookies to remote server;
+- `crossorigin="use-credentials"`, access allowed if the server sends back the header `Access-Control-Allow-Origin` with our origin and `Access-Control-Allow-Credentials: true`. Browser sends authorization information and cookies to remote server;
