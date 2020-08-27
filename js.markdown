@@ -70,6 +70,7 @@
   - [Using generators for iterables](#using-generators-for-iterables)
 - [Async/await](#asyncawait)
 - [Event Loop](#event-loop)
+  - [Overview](#overview)
   - [Message queue / task queue](#message-queue--task-queue)
   - [`setTimout` and `setInterval`](#settimout-and-setinterval)
   - [Microtasks](#microtasks)
@@ -2015,16 +2016,58 @@ Refs:
 - [What the heck is the event loop anyway? | Philip Roberts | JSConf EU](https://youtu.be/8aGhZQkoFbQ)
 - [Jake Archibald: In The Loop](https://youtu.be/cCOL7MC4Pl0)
 - [Jake Archibald: The compositor thread](https://vimeo.com/254947206#t=1470s)
+- [Further Adventures of the Event Loop - Erin Zimmer - JSConf EU 2018](https://youtu.be/u1kqx6AenYw)
+
+
+### Overview
+
+![Eventloop with mictotask queue](images/js_eventloop.png)
+
+Event loop pseudo code (*browser only, it's different in Node*):
+
+```js
+while (true) {
+  // macro tasks, run one
+  queue = getNextQueue();
+  task = queue.pop();
+  execute(task);
+
+  // microtass queue, run until exhausted including newly added microtasks
+  while(microtaskQueue.hasTasks()) {
+    doMicrotask();
+  }
+
+  // render steps and requestAnimationFrame queue
+  if (isRepaintTime()) {
+    // run everything currently in the queue
+    // newly added ones will be run next time
+    rafQueue = rafQueue.copy();
+    for (task in rafQueue) {
+      doRafTask(task)
+    }
+
+    repaint();
+  }
+}
+```
+
+Differences in Node:
+
+- No script parsing events;
+- No user interactions;
+- No render steps and `requestAnimationFrame`;
+- In browser it runs infinitely, in Node, it exits if nothing left;
 
 ### Message queue / task queue
 
 ![JS message queue](images/js_message-queue.png)
 
 - JS is single threaded, it relies on environment provided APIs to handle asynchronous actions.
-- The browser provides APIs for **DOM**, **network request** and **timer**.
+- The browser provides APIs for **DOM**, **network request** and **timer**, etc.
 - JS runtime uses a message queue, each message has an associated function which gets called(put in the stack) to handle the message.
 - Once the stack is empty, the oldest item in the message queue is put in the stack.
 - **Run-to-completion**: each task is processed completely before any other message is processed, so it won't be interrupted by other async tasks.
+- When a new script is loaded, it's added as a new task to the queue to be parsed.
 
 ### `setTimout` and `setInterval`
 
@@ -2146,9 +2189,12 @@ There are three queues, they are processed differently:
 
 ### Render steps and `requestAnimationFrame`
 
+
 - Render steps include style calculation, layout and painting, they happen at the begining of each frame, which lasts 16.6ms for a 60Hz display
 
   ![Render steps and frames](images/js_render-steps.png)
+
+- Since tasks are run-to-completion, so if you have a **long running task**, it will **delay the render steps**, causing unresponsive UI, so if there are long running tasks, you should either **break them up to small chunks** or handle them in a **web worker**;
 
 - If you use a zero-delay timeout loop for DOM updating, in each frame the callback can be run around 4 times, but 3 of them are wasted
 
@@ -2156,7 +2202,6 @@ There are three queues, they are processed differently:
 
 - You can use the `requestAnimationFrame` to schedule some style/DOM updating actions, they will be picked up immediately in each frame
 
-  ![Eventloop with mictotask queue](images/js_eventloop.png)
   ![DOM updates by requestAnimationFrame](images/js_dom-updates-by-requestanimationframe.png)
 
 
@@ -2175,7 +2220,7 @@ There are three queues, they are processed differently:
 
 - Web worker
 
-  Has its own event loop
+  Has **its own event loop**, which is **much simpler**, since there is no script tags, user interactions and DOM manipulations
 
 - `window.open()`
 

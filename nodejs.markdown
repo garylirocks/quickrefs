@@ -3,9 +3,11 @@
 - [Basic concepts](#basic-concepts)
   - [Node dependencies](#node-dependencies)
 - [Blocking vs non-blocking](#blocking-vs-non-blocking)
-  - [What is blocking ?](#what-is-blocking)
+  - [What is blocking ?](#what-is-blocking-)
   - [Concurrency](#concurrency)
 - [Event loop](#event-loop)
+  - [Phases](#phases)
+  - [`process.nextTick`](#processnexttick)
 - [Streams and pipes](#streams-and-pipes)
   - [read](#read)
   - [write](#write)
@@ -32,6 +34,7 @@
   - [Handling operational errors](#handling-operational-errors)
   - [Programmer errors](#programmer-errors)
 - [Debugging](#debugging)
+  - [Command line debugging](#command-line-debugging)
   - [Remote debugging](#remote-debugging)
 - [Barebone HTTP server](#barebone-http-server)
 - [CLI](#cli)
@@ -64,11 +67,11 @@ Tools: npm, gyp, gtest
 
 ### What is blocking ?
 
-- It happens when a Node process can not continue JavaScript execution until a non-JavaScript operation completes;
+- It happens when a Node process can not continue JavaScript execution until a **non-JavaScript operation** completes;
 
-- Most commonly blocking operations are synchronous methods from the Node standard library that use libuv, native modules may also have **blocking** methods;
+- Most commonly blocking operations are synchronous methods from the Node standard library that use libuv, native modules may also have blocking methods;
 
-- CPU intensive JS operations are not typically referred to as **blocking**;
+- **CPU intensive JS operations** are not typically referred to as blocking;
 
 - All of the I/O methods in the Node standard library provide asynchronous versions, which are **non-blocking**, and accept callback functions. Some methods also have **blocking** counterparts, which have names that end with `Sync`;
 
@@ -79,6 +82,71 @@ Tools: npm, gyp, gtest
 - Other languages may create additional threads to handle concurrent work;
 
 ## Event loop
+
+[Morning Keynote- Everything You Need to Know About Node.js Event Loop - Bert Belder, IBM][bert-belder]\
+[Daniel Khan - Everything I thought I knew about the event loop was wrong][daniel-khan]
+[Further Adventures of the Event Loop - Erin Zimmer - JSConf EU 2018][erin-zimmer]
+
+- There is **only one thread** that executes JavaScript code and this is the thread **where the event loop** is running
+- Libuv creates a pool with four threads that is **only used if no asynchronous API is available**
+- Event look is **NOT** a stack or queue, it's a **set of phases** with dedicated data structures for each phase
+
+Pseudo code (*Node only, different from browser*)
+
+```js
+while (tasksAreWaiting()) {
+  queue = getNextQueue();
+
+  while (queue.hasTasks()) { // run all tasks in a queue
+    task = queue.pop();
+    execute(task);
+
+    while (nextTickQueue.hasTasks) { // run to exhaustion
+      doNextTickTask();
+    }
+
+    while (promiseQueue.hasTasks) { // run to exhaustion
+      doPromiseTask();
+    }
+  }
+}
+
+```
+
+
+### Phases
+
+
+### `process.nextTick`
+
+```js
+const foo = () => {
+  console.log('in timeout');
+
+  setTimeout(() => console.log('in nested timeout'));
+
+  process.nextTick(() => {
+    console.log('in nextTick');
+    process.nextTick(() => {console.log('in nested nextTick')});
+  });
+}
+
+setTimeout(foo);
+setTimeout(foo);
+
+// in timeout
+// in nextTick
+// in nested nextTick
+// in timeout
+// in nextTick
+// in nested nextTick
+// in nested timeout
+// in nested timeout
+```
+
+- nextTick tasks get run immediately when current task is done, even though there may have more tasks in the current task queue;
+- newly scheduled zero-delay timeout needs to wait for next loop;
+
 
 ## Streams and pipes
 
@@ -696,6 +764,14 @@ node --inspect-brk demo.js
 
 by default the Node process listens via WebSocket on `127.0.0.1:9229` for debugging messages, a debugger programe then connect to this url (e.g. `ws://127.0.0.1:9229/0f2c936f-b1cd-4ac9-aab3-f63b0f33d55e`). You can also get metadata about the program via a HTTP endpoint (`http://[host:port]/json/list`).
 
+### Command line debugging
+
+```sh
+node inspect demo.js
+```
+
+This spawns a child process to run the script under `--inspect` flag; and use main process to run CLI debugger
+
 ### Remote debugging
 
 don't bind the node inspector to a public IP address, instead connect to it through SSH
@@ -869,3 +945,7 @@ yarn upgrade --scope @pkg-namespace --latest
 # the above is not working somehow, used the following line
 yarn upgrade pkg1@latest pkg2@latest
 ```
+
+[daniel-khan]: (https://youtu.be/gl9qHml-mKc)
+[bert-belder]: (https://youtu.be/PNa9OMajw9w)
+[erin-zimmer]: (https://youtu.be/u1kqx6AenYw)
