@@ -1490,6 +1490,39 @@ secrets:
     name: redis_secret
 ```
 
+## Node.js in Docker
+
+[Docker and Node.js Best Practices](https://github.com/nodejs/docker-node/blob/master/docs/BestPractices.md)
+
+- Use `init`
+
+  Node.js was not designed to run as PID 1, for example, it will not respond to `SIGINT` and similar signals, you should use the `--init` flag to wrap your Node.js process
+
+  Using `Docker run`:
+
+  ```sh
+  docker run -it -init node
+  ```
+
+  Using docker-compose:
+
+  ```
+  version: "3.8"
+  services:
+    web:
+      image: alpine:latest
+      init: true
+  ```
+
+- Use the non-priviledged user `node`
+
+- CMD
+
+  Instead of using `npm start`, use `node` directly. This reduces the number of processes, and causes exit signals such as `SIGTERM` and `SIGINT` to be received by the Node.js process instead of npm
+
+  ```sh
+  CMD ["node","index.js"]
+  ```
 
 ## Tips / Best Practices
 
