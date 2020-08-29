@@ -87,9 +87,16 @@ Tools: npm, gyp, gtest
 [Daniel Khan - Everything I thought I knew about the event loop was wrong][daniel-khan]
 [Further Adventures of the Event Loop - Erin Zimmer - JSConf EU 2018][erin-zimmer]
 
+- Event loop is implemented in **libuv**.
 - There is **only one thread** that executes JavaScript code and this is the thread **where the event loop** is running
 - Libuv creates a pool with four threads that is **only used if no asynchronous API is available**
-- Event look is **NOT** a stack or queue, it's a **set of phases** with dedicated data structures for each phase
+  - OS already provides async interfaces(**epoll** in Linux) for many I/O tasks, libuv will use those interfaces whenever possible
+  - But some actions can't be done in async completely, such as file system access, some DNS functions such as `dns.lookup` which involves file system access, they are handled by the thread pool
+  - I/O is not the only type of tasks performed on the thread pool, some highly **CPU intensive tasks** are handled there as well: `crypto.pbkdf2`, async versions of `crypto.randomBytes`, `crypto.randomFill` and async `zlib` functions
+- Event loop is **NOT** a stack or queue, it's a **set of phases** with dedicated data structures for each phase
+
+![Libuv architecture](images/node_libuv-architecture.png)
+
 
 Pseudo code (*Node only, different from browser*)
 
@@ -101,7 +108,7 @@ while (tasksAreWaiting()) {
     task = queue.pop();
     execute(task);
 
-    while (nextTickQueue.hasTasks) { // run to exhaustion
+    while (nextTickQueue.hasTasks) { // run to exhaustion, higher priority than promiseQueue
       doNextTickTask();
     }
 
