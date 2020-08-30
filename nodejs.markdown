@@ -7,7 +7,17 @@
   - [Concurrency](#concurrency)
 - [Event loop](#event-loop)
   - [Phases](#phases)
+    - [timers](#timers)
+    - [pending](#pending)
+    - [idle, prepare](#idle-prepare)
+    - [poll](#poll)
+    - [check](#check)
+    - [close callbacks](#close-callbacks)
+  - [`setImmediate` vs `setTimeout`](#setimmediate-vs-settimeout)
   - [`process.nextTick`](#processnexttick)
+    - [What is it for ?](#what-is-it-for-)
+    - [`process.nextTick()` vs `setImmediate()`](#processnexttick-vs-setimmediate)
+    - [Example](#example)
 - [Streams and pipes](#streams-and-pipes)
   - [read](#read)
   - [write](#write)
@@ -67,7 +77,13 @@ Tools: npm, gyp, gtest
 
 ### What is blocking ?
 
-- It happens when a Node process can not continue JavaScript execution until a **non-JavaScript operation** completes;
+- It happens when a Node process can not continue JavaScript execution until a **non-JavaScript operation**(such as I/O) completes;
+
+  ```js
+  const fs = require('fs');
+  const data = fs.readFileSync('/file.md'); // blocks here until file is read
+  moreWork();
+  ```
 
 - Most commonly blocking operations are synchronous methods from the Node standard library that use libuv, native modules may also have blocking methods;
 
@@ -84,18 +100,31 @@ Tools: npm, gyp, gtest
 ## Event loop
 
 [Morning Keynote- Everything You Need to Know About Node.js Event Loop - Bert Belder, IBM][bert-belder]\
-[Daniel Khan - Everything I thought I knew about the event loop was wrong][daniel-khan]
-[Further Adventures of the Event Loop - Erin Zimmer - JSConf EU 2018][erin-zimmer]
+[Daniel Khan - Everything I thought I knew about the event loop was wrong][daniel-khan]\
+[Further Adventures of the Event Loop - Erin Zimmer - JSConf EU 2018][erin-zimmer]\
+[NodeJS Event Loop Series][deepal-jayasekara]
+
+Event loop is what allows Node.js to perform non-blocking I/O operations by offloading operations to the system kernel whenever possible.\
+When Node.js starts, it
+  1. initializes the event loop,
+  2. processes the input script (which may make async API calls, schedule timers, etc.),
+  3. then begins processing the event loop.
+
+Notes:
 
 - Event loop is implemented in **libuv**.
 - There is **only one thread** that executes JavaScript code and this is the thread **where the event loop** is running
 - Libuv creates a pool with four threads that is **only used if no asynchronous API is available**
   - OS already provides async interfaces(**epoll** in Linux) for many I/O tasks, libuv will use those interfaces whenever possible
   - But some actions can't be done in async completely, such as file system access, some DNS functions such as `dns.lookup` which involves file system access, they are handled by the thread pool
-  - I/O is not the only type of tasks performed on the thread pool, some highly **CPU intensive tasks** are handled there as well: `crypto.pbkdf2`, async versions of `crypto.randomBytes`, `crypto.randomFill` and async `zlib` functions
+  - I/O is not the only type of tasks performed on the thread pool, some highly **CPU intensive async tasks** are handled there as well: `crypto.pbkdf2`, `crypto.randomBytes`, `crypto.randomFill` and async `zlib` functions
 - Event loop is **NOT** a stack or queue, it's a **set of phases** with dedicated data structures for each phase
 
+Libuv architecture:
 ![Libuv architecture](images/node_libuv-architecture.png)
+
+Where libuv sits in whole Node.js architecture:
+![Node.js architecture](images/node_architecture.png)
 
 
 Pseudo code (*Node only, different from browser*)
@@ -117,14 +146,162 @@ while (tasksAreWaiting()) {
     }
   }
 }
-
 ```
-
 
 ### Phases
 
+Event loop is implemented in phases, the following is a simplified overview:
+
+```
+   ┌───────────────────────────┐
+┌─>│           timers          │
+│  └─────────────┬─────────────┘
+│  ┌─────────────┴─────────────┐
+│  │     pending callbacks     │
+│  └─────────────┬─────────────┘
+│  ┌─────────────┴─────────────┐
+│  │       idle, prepare       │
+│  └─────────────┬─────────────┘      ┌───────────────┐
+│  ┌─────────────┴─────────────┐      │   incoming:   │
+│  │           poll            │<─────┤  connections, │
+│  └─────────────┬─────────────┘      │   data, etc.  │
+│  ┌─────────────┴─────────────┐      └───────────────┘
+│  │           check           │
+│  └─────────────┬─────────────┘
+│  ┌─────────────┴─────────────┐
+└──┤      close callbacks      │
+   └───────────────────────────┘
+```
+
+- Each phase has a FIFO queue of callbacks to execute
+- In each phase, event loop will execute callbacks in that phases's queue until the queue has been exhausted or the maximum number of callbacks has executed
+
+#### timers
+
+This phase executes callbacks scheduled by `setTimeout()` and `setInterval()`
+
+- The queue in timer phase is actually a heap (priority queue), a data structure which allows you to get the min or max value in constant time;
+- The timeout value you set is just a minimal timeout value, the event is not guaranteed to run at the exact time;
+- Node.js caps minimum timeout to **1ms**, so even if you set a `0ms` delay, it is actually overridden to `1ms`.
+
+#### pending
+
+Executes callbacks for some system operations such as types of TCP errors. For example, a TCP socket received `ECONNREFUSED` when attempting to connect.
+
+#### idle, prepare
+
+Only used internally
+
+#### poll
+
+Two main functions:
+  1. Calculating how long it should block and poll for I/O, then
+
+  Simplified logic: If there is any task in other phases, timeout would be 0, if there is any timer set, it would be the remaining time for the closest timer, otherwise it would be indefinite
+
+  2. Processing events in the **poll** queue
+
+#### check
+
+`setImmediate()` callbacks
+
+#### close callbacks
+
+some close callbacks, e.g. `socket.on('close', ...)`
+
+
+### `setImmediate` vs `setTimeout`
+
+When they are not set within an I/O cycle (i.e. the main module), then the order is not determinstic, it is bound by the performance of the process
+
+```js
+// timeout_vs_immediate.js
+setTimeout(() => {
+  console.log('timeout');
+}, 0);
+
+setImmediate(() => {
+  console.log('immediate');
+});
+```
+
+```sh
+$ node timeout_vs_immediate.js
+timeout
+immediate
+
+$ node timeout_vs_immediate.js
+immediate
+timeout
+```
+
+However, if they are within an I/O cycle, the immediate callback is always executed first:
+
+```js
+// timeout_vs_immediate.js
+const fs = require('fs');
+
+fs.readFile(__filename, () => {
+  setTimeout(() => {
+    console.log('timeout');
+  }, 0);
+  setImmediate(() => {
+    console.log('immediate');
+  });
+});
+```
 
 ### `process.nextTick`
+
+- It's not technically part of the event loop.
+- The `nextTickQueue` will be processed after the current operation is completed, regardless of the current phase of the event loop.
+- `nextTickQueue` is executed until exhaustion, so avoid calling `process.nextTick` recursively.
+
+#### What is it for ?
+
+It makes an API call asynchronous even where it doesn't have to be.
+
+```js
+let bar;
+
+// this has an asynchronous signature, but calls callback synchronously
+function someAsyncApiCall(callback) { callback(); }
+
+// the callback is called before `someAsyncApiCall` completes.
+someAsyncApiCall(() => {
+  // since someAsyncApiCall hasn't completed, bar hasn't been assigned any value
+  console.log('bar', bar); // undefined
+});
+
+bar = 1;
+```
+
+It's better to change it to:
+
+```js
+let bar;
+
+function someAsyncApiCall(callback) {
+  process.nextTick(callback);
+}
+
+someAsyncApiCall(() => {
+  console.log('bar', bar); // 1
+});
+
+bar = 1;
+```
+
+#### `process.nextTick()` vs `setImmediate()`
+
+- `process.nextTick()` fires immediately on the same phase
+- `setImmediate()` fires on the following iteration or 'tick' of the event loop
+
+They are named badly, `process.nextTick()` fires more immediately than `setImmediate()`
+
+**Most of the time you only need `setImmediate()`**
+
+#### Example
 
 ```js
 const foo = () => {
@@ -956,3 +1133,4 @@ yarn upgrade pkg1@latest pkg2@latest
 [daniel-khan]: (https://youtu.be/gl9qHml-mKc)
 [bert-belder]: (https://youtu.be/PNa9OMajw9w)
 [erin-zimmer]: (https://youtu.be/u1kqx6AenYw)
+[deepal-jayasekara]: (https://blog.insiderattack.net/event-loop-and-the-big-picture-nodejs-event-loop-part-1-1cb67a182810)
