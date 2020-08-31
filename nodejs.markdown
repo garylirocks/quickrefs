@@ -6,6 +6,7 @@
   - [What is blocking ?](#what-is-blocking-)
   - [Concurrency](#concurrency)
 - [Event loop](#event-loop)
+  - [Thread pool](#thread-pool)
   - [Phases](#phases)
     - [timers](#timers)
     - [pending](#pending)
@@ -18,6 +19,7 @@
     - [What is it for ?](#what-is-it-for-)
     - [`process.nextTick()` vs `setImmediate()`](#processnexttick-vs-setimmediate)
     - [Example](#example)
+  - [Don't block the Event Loop](#dont-block-the-event-loop)
 - [Streams and pipes](#streams-and-pipes)
   - [read](#read)
   - [write](#write)
@@ -115,9 +117,6 @@ Notes:
 - Event loop is implemented in **libuv**.
 - There is **only one thread** that executes JavaScript code and this is the thread **where the event loop** is running
 - Libuv creates a pool with four threads that is **only used if no asynchronous API is available**
-  - OS already provides async interfaces(**epoll** in Linux) for many I/O tasks, libuv will use those interfaces whenever possible
-  - But some actions can't be done in async completely, such as file system access, some DNS functions such as `dns.lookup` which involves file system access, they are handled by the thread pool
-  - I/O is not the only type of tasks performed on the thread pool, some highly **CPU intensive async tasks** are handled there as well: `crypto.pbkdf2`, `crypto.randomBytes`, `crypto.randomFill` and async `zlib` functions
 - Event loop is **NOT** a stack or queue, it's a **set of phases** with dedicated data structures for each phase
 
 Libuv architecture:
@@ -147,6 +146,22 @@ while (tasksAreWaiting()) {
   }
 }
 ```
+
+### Thread pool
+
+Thread pool handles I/O tasks which OS does not provide a non-blocking version, as well as some CPU-intensive tasks
+
+1. I/O-intensive
+
+  - DNS: `dns.lookup()`, `dns.lookupService()`
+  - File system: All file system APIs except `fs.FSWatcher()` and those that are explicitly synchronous
+
+2. CPU-intensive
+
+  - Crypto: `crypto.pbkdf2()`, `crypto.scrypt()`, `crypto.randomBytes()`, `crypto.randomFill()`, `crypto.generateKeyPair()`
+  - Zlib: All except those explicitly synchronous ones
+
+The Worker Pool uses a queue whose entries are tasks to be processed. A Worker pops a task from this queue and works on it, and when finished the Worker raises an "At least one task is finished" event for the Event Loop.
 
 ### Phases
 
@@ -331,6 +346,18 @@ setTimeout(foo);
 - nextTick tasks get run immediately when current task is done, even though there may have more tasks in the current task queue;
 - newly scheduled zero-delay timeout needs to wait for next loop;
 
+
+### Don't block the Event Loop
+
+In Apache, there is a thread for each client, when one thread blocks, the OS will interrupt it and run another one.
+
+Node.js handles many clients with few threads, if a thread blocks handling one client's request, then pending client requests may not get a turn until the thread finishes its callback or task. This means you **shouldn't do too much work for any client in a single callback or task**.
+
+Some operations are slow, and would potentially block the Event Loop:
+
+- REDOS: Regular Expression Denial of Service (regexp that requires O(2^n) time), see [REDOS](https://nodejs.org/en/docs/guides/dont-block-the-event-loop/#blocking-the-event-loop-redos) for details and solutions
+- Synchronous APIs from some core modules (fs, crypto, zlib, child_process), they are intended for scripting convenience, not intended for use in the server context.
+- JSON DOS, it's slow to process large amount of data with `JSON.parse` and `JSON.stringify`
 
 ## Streams and pipes
 
