@@ -6,6 +6,7 @@
   - [What is blocking ?](#what-is-blocking-)
   - [Concurrency](#concurrency)
 - [Event loop](#event-loop)
+  - [Overview](#overview)
   - [Thread pool](#thread-pool)
   - [Phases](#phases)
     - [timers](#timers)
@@ -104,7 +105,10 @@ Tools: npm, gyp, gtest
 [Morning Keynote- Everything You Need to Know About Node.js Event Loop - Bert Belder, IBM][bert-belder]\
 [Daniel Khan - Everything I thought I knew about the event loop was wrong][daniel-khan]\
 [Further Adventures of the Event Loop - Erin Zimmer - JSConf EU 2018][erin-zimmer]\
-[NodeJS Event Loop Series][deepal-jayasekara]
+[NodeJS Event Loop Series][deepal-jayasekara]\
+[Event Loop, yay - Bert Belder][bert-belder-slides]
+
+### Overview
 
 Event loop is what allows Node.js to perform non-blocking I/O operations by offloading operations to the system kernel whenever possible.\
 When Node.js starts, it
@@ -163,6 +167,14 @@ Thread pool handles I/O tasks which OS does not provide a non-blocking version, 
 
 The Worker Pool uses a queue whose entries are tasks to be processed. A Worker pops a task from this queue and works on it, and when finished the Worker raises an "At least one task is finished" event for the Event Loop.
 
+The following graph shows the results of running multiple `crypto.pbkdf2` tasks on a 4-core machine:
+
+![Thread pool performance](images/node_threadpool-performance.png)
+
+- By default there are 4 threads in the pool, you can change it by the `UV_THREADPOOL_SIZE` env variable.
+- When 8 tasks running on 4 threads, the first 4 get executed first while the later 4 wait.
+- When 8 tasks running on 8 threads, no task need to wait, but since there are 2 threads per core, each core needs to switch between the threads, so the first 4 only have a slight head start.
+
 ### Phases
 
 Event loop is implemented in phases, the following is a simplified overview:
@@ -190,6 +202,8 @@ Event loop is implemented in phases, the following is a simplified overview:
 
 - Each phase has a FIFO queue of callbacks to execute
 - In each phase, event loop will execute callbacks in that phases's queue until the queue has been exhausted or the maximum number of callbacks has executed
+
+![Event loop phases](images/node_eventloop-overview.png)
 
 #### timers
 
@@ -267,6 +281,8 @@ fs.readFile(__filename, () => {
 ```
 
 ### `process.nextTick`
+
+![Nexttick and promise queue](images/node_nexttick-promise-queue.png)
 
 - It's not technically part of the event loop.
 - The `nextTickQueue` will be processed after the current operation is completed, regardless of the current phase of the event loop.
@@ -1159,5 +1175,6 @@ yarn upgrade pkg1@latest pkg2@latest
 
 [daniel-khan]: (https://youtu.be/gl9qHml-mKc)
 [bert-belder]: (https://youtu.be/PNa9OMajw9w)
+[bert-belder-slides]: (https://drive.google.com/file/d/0B1ENiZwmJ_J2a09DUmZROV9oSGc/view)
 [erin-zimmer]: (https://youtu.be/u1kqx6AenYw)
 [deepal-jayasekara]: (https://blog.insiderattack.net/event-loop-and-the-big-picture-nodejs-event-loop-part-1-1cb67a182810)
