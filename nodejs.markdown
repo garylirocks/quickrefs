@@ -56,6 +56,7 @@
   - [`nvm` - manage multiple versions of Node](#nvm---manage-multiple-versions-of-node)
   - [NPM](#npm)
     - [`package.json`](#packagejson)
+    - [`package-lock.json`](#package-lockjson)
     - [Avoid installing packages globally](#avoid-installing-packages-globally)
     - [Publish package to NPM](#publish-package-to-npm)
     - [Symlink a package folder](#symlink-a-package-folder)
@@ -1090,12 +1091,21 @@ npm config set save-exact=true
 }
 ```
 
+#### `package-lock.json`
+
+This file ensures the same version of packages is installed on different environments.
+
+For example, if a package is specified as `^1.2.0` in `package.json`, without `package-lock.json`, `1.2.0` may be installed on one machine, while `1.9.0` on another.
+
+But, *if the version in `package-lock.json` doesn't match `package.json`, then it's not obeyed*.
 
 #### Avoid installing packages globally
 
-_Since npm 5.2, there is a tool `npx` bundled with npm_, you can use it to run some scripts without installing a global package, such as
+Since npm 5.2, there is a tool **`npx`** bundled with npm, it's great if you want to run something infrequently, so don't want to install a global package:
 
-    npx create-react-app my-app
+  ```sh
+  npx create-react-app my-app
+  ```
 
 [The Issue With Global Node Packages](https://www.smashingmagazine.com/2016/01/issue-with-global-node-npm-packages/)
 
@@ -1164,6 +1174,9 @@ yarn add -D [packages ...]
 
 # make sure the installed files are matching the specified version
 yarn add --check-files [packages ...]
+
+# check for updates
+yarn outdated
 
 # upgrade packages to their latest versions, package.json is updated as well
 yarn upgrade pkg1 pkg2 --latest
