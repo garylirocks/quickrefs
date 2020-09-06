@@ -1209,16 +1209,17 @@ docker pull garyrepo.azurecr.io/myimage:latest
 You can use the tasks feature to rebuild your image whenever its source code changes.
 
 ```sh
+# `--name` here is the task name, not image name
 az acr task create
-  --registry <container_registry_name> \
   --name buildwebapp \
+  --registry <container_registry_name> \
   --image webimage \
   --context https://github.com/MicrosoftDocs/mslearn-deploy-run-container-app-service.git --branch master \
   --file Dockerfile \
   --git-access-token <access_token>
 ```
 
-The above command creates a task `buildwebapp`, creates a webhook in the GitHub repo, when it changes, triggers image rebuild in ACR.
+The above command creates a task `buildwebapp`, creates a webhook in the GitHub repo using an access token, this webhook triggers image rebuild in ACR when repo changes.
 
 ### Authentication options
 
@@ -1348,20 +1349,68 @@ Then you can
   az acr login --name myregistry
   ```
 
+### Replication
+
+A registry can be replicated to multiple regions, this allows for
+- Network-close registry access
+- No additional egress fees, as images are pulled from the same region as your container host
+
+```sh
+az acr replication create --registry $ACR_NAME --location japaneast
+az acr replication list --registry $ACR_NAME --output table
+```
 
 
+## Container Instance
+
+- Fit for executing run-once tasks like image rendering or building/testing applications;
+- Billed by seconds;
+
+Some options:
+
+- `--restart-policy` one of 'Always', 'Never' or 'OnFailure'
+- `--environment-variables`: environment variables
+- `--secure-environment-variables`: secure environment variables
 
 
+```sh
+az container create \
+  --resource-group learn-deploy-aci-rg \
+  --name mycontainer \
+  --image microsoft/aci-helloworld \
+  --ports 80 \
+  --dns-name-label $DNS_NAME_LABEL \
+  --location eastus
 
+# OR
+# create a container instance using an image from ACR
+# you need to provide registry url/username/password
+az container create \
+    --resource-group learn-deploy-acr-rg \
+    --name acr-tasks \
+    --image $ACR_NAME.azurecr.io/helloacrtasks:v1 \
+    --ip-address Public \
+    --location <location> \
+    --registry-login-server $ACR_NAME.azurecr.io \
+    --registry-username [username] \
+    --registry-password [password]
 
+# get ip/domain name/state of a container
+az container show \
+  --resource-group learn-deploy-aci-rg \
+  --name mycontainer \
+  --query "{IP:ipAddress.ip,FQDN:ipAddress.fqdn,ProvisioningState:provisioningState}" \
+  --out table
 
+# IP            FQDN                                     ProvisioningState
+# ------------  ---------------------------------------  -------------------
+# 40.71.238.13  aci-demo-12631.eastus.azurecontainer.io  Succeeded
 
-
-
-
-
-
-
+# get container logs
+az container logs \
+  --resource-group learn-deploy-aci-rg \
+  --name mycontainer-restart-demo
+```
 
 ## Key Vault
 
