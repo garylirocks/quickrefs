@@ -707,7 +707,6 @@ Storage account level settings:
   - Can be specified for each blob
 - Secure transer required: whether HTTPS is enforced
 - Virtual networks: only allow inbound access request from the specified network(s)
-
 - Account kind
   - StorageV2 (general purpose v2): all storage types, latest features
   - Storage (general purpose v1): legacy
@@ -715,36 +714,6 @@ Storage account level settings:
 - Deployment model
   - Resource Manager
   - Classic: legacy
-
-
-### Blobs
-
-Object storage solution optimized for storing massive amounts of unstructured data, ideal for:
-
-- serving images or documents directly to a browser, including full static websites.
-- storing files for distributed access.
-- streaming video and audio.
-- storing data for backup, disaster recovery and archiving.
-- storing data for analysis.
-
-Three kinds of blobs:
-
-- Block blobs: for files that are read from beginning to end, files larger than 100MB must be uploaded as small blocks which are then consolidated into the final blob.
-- Page blobs: to hold random-access files up to 8 TB in size, used primarily as storage for the VHDs used to provide durable disks for Azure VMs. They provide random read/write access to 512-byte pages.
-- Append blobs: specialized block blobs, but optimized for append operations, frequently used for logging from one or more sources.
-
-Many Azure components use blobs behind the scenes, Cloud Shell stores your files and configuration in blobs, VMs use blobs for hard-disk storage.
-
-#### Organization
-
-- Account
-  - Can have unlimited containers
-  - Usually created by an admin
-- Containers
-  - Can contain unlimited blobs
-  - Can be seen as a security boundary for blobs, you can set an individual container as public.
-  - Usually created in an app as needed (calling `CreateIfNotExistsAsync` on a `CloudBlobContainer` is the best way to create a container when your application starts or when it first tries to use it)
-- Virtual directories: technically containers are "flat", there is no folders. But if you give blobs hierarchical names looking like file paths, the API's listing operation can filter results to specific prefixes.
 
 ### Files
 
@@ -756,17 +725,26 @@ Common scenarios:
 - Log files such as diagnostics, metrics and crash dumps.
 - Shared data between on-premises applications and Azure VMs to allow migration.
 
+### Organization
+
+- Account
+  - Can have unlimited containers
+  - Usually created by an admin
+- Containers
+  - Can contain unlimited blobs
+  - Can be seen as a security boundary for blobs, you can set an individual container as public.
+  - Usually created in an app as needed (calling `CreateIfNotExistsAsync` on a `CloudBlobContainer` is the best way to create a container when your application starts or when it first tries to use it)
+- Virtual directories: technically containers are "flat", there is no folders. But if you give blobs hierarchical names looking like file paths, the API's listing operation can filter results to specific prefixes.
+
 ### Security
 
 Security features:
 
 - Encryption at rest
 
-  All data is automatically encrypted by Storage Service Encryption (SSE) with a 256-bit AES cipher. This can't be disabled.
-
-  For VMs, Azure let's you encrypt virtual hard disks(VHDs) by using Azure Disk Encryption (BitLocker for Windows images, dm-crypt for Linux)
-
-  Azure Key Vault stores the keys automatically.
+  - All data is automatically encrypted by Storage Service Encryption (SSE) with a 256-bit AES cipher. This can't be disabled.
+  - For VMs, Azure let's you encrypt virtual hard disks(VHDs) by using Azure Disk Encryption (BitLocker for Windows images, `dm-crypt` for Linux)
+  - Azure Key Vault stores the keys automatically.
 
 - Encryption at tansit
 
@@ -788,9 +766,9 @@ Security features:
 
 #### Access keys
 
-- Like a root password, allow full access.
+- Like a root password, allow **full access**.
 - Typically stored within env variables, database, or configuration file.
-- *Should be private, don't include the config file in source control and store in public repos*
+- *Should be private, don't include the config file in source control or store in public repos*
 - Each storage account has two access keys, this allows key to be rotated:
   1. update connection strings in your app to use secondary access key
   2. Regenerate primary key using Azure portal or CLI.
@@ -801,7 +779,7 @@ Security features:
 
 - support expiration and limited permissions
 - suitable for external third-party applications
-- can be service-level or account-level
+- can be applied to only containers or objects
 
 Two typical designs for using Azure Storage to store user data:
 
@@ -823,6 +801,118 @@ By default, connections from clients on any network are accepted. You can restri
 - Detects anomalies in account activity
 - Only for Blob currently
 - Security alerts are integrated with Azure Security Center
+
+
+## Blobs
+
+Object storage solution optimized for storing massive amounts of unstructured data, ideal for:
+
+- serving images or documents directly to a browser, including full static websites.
+- storing files for distributed access.
+- streaming video and audio.
+- storing data for backup, disaster recovery and archiving.
+- storing data for analysis.
+
+Three kinds of blobs:
+
+- Block blobs: for files that are read from beginning to end, files larger than 100MB must be uploaded as small blocks which are then consolidated into the final blob.
+- Page blobs: to hold random-access files up to 8 TB in size, used primarily as storage for the VHDs used to provide durable disks for Azure VMs. They provide random read/write access to 512-byte pages.
+- Append blobs: specialized block blobs, but optimized for append operations, frequently used for logging from one or more sources.
+
+Many Azure components use blobs behind the scenes, Cloud Shell stores your files and configuration in blobs, VMs use blobs for hard-disk storage.
+
+### CLI
+
+- Can't resume if upload/download fails, so not suitable for large files
+- `az storage` commands require an account name and key to authenticate, you can either specify them everytime or use environment variables `AZURE_STORAGE_ACCOUNT` and `AZURE_STORAGE_KEY`
+- There are options to specify overwritting behavior based on ETag or modification date, eg. `--if-unmodified-since`
+
+```sh
+# get account keys
+az storage account keys list \
+  --account-name $HOT_STORAGE_NAME \
+  --output table
+
+# specify default account and key
+export AZURE_STORAGE_ACCOUNT=<Account>
+export AZURE_STORAGE_KEY=<Key>
+
+# (sync) upload file to a blob
+az storage blob upload \
+  --container-name MyContainer \
+  --file /path/to/file \
+  --name MyBlob \
+  --if-unmodified-since 2019-05-26T10:30Z
+
+# (sync) batch upload
+az storage blob upload-batch \
+  --destination myContainer \
+  --source myFolder \
+  --pattern *.bmp
+
+# list
+az storage blob list ...
+```
+
+Copy blobs, there are options for selecting source blobs, e.g. use `--source-if-unmodified-since` to copy old blobs from hot storage to cool storage
+
+```sh
+# (async) start copying between containers/accounts
+# only
+az storage blob copy start \
+  ... \
+  --source-if-unmodified-since [date]
+
+# check state of dest blob
+az storage blob show ...
+```
+
+To move a blob, you need to copy it, then delete the source blob.
+
+```sh
+# delete a blob
+az storage blob delete --name sourceBlob
+
+# batch delete blobs older than 6 months
+date=`date -d "6 months ago" '+%Y-%m-%dT%H:%MZ'`
+az storage blob delete-batch \
+  --source sourceContainer \
+  --if-unmodified-since $date
+```
+
+### AzCopy
+
+- All operations are async;
+- Suitable for bulk operations, if interrupted, can resume from the point of failure;
+- Supports hierarchical containers;
+- Supports pattern matching selection;
+- *Doesn't support selection based on modification dates*
+
+```sh
+# upload file
+azcopy copy "myfile.txt" "https://myaccount.blob.core.windows.net/mycontainer/?<sas token>"
+
+# upload folder recursively
+azcopy copy "myfolder" "https://myaccount.blob.core.windows.net/mycontainer/?<sas token>" --recursive=true
+
+# transfer between accounts
+azcopy copy "https://sourceaccount.blob.core.windows.net/sourcecontainer/*?<source sas token>" "https://destaccount.blob.core.windows.net/destcontainer/*?<dest sas token>"
+
+# sync data
+azcopy sync ...
+
+# list data/create new container/remove blobs
+azcopy [list|make|remove] ...
+
+# show job status
+azcopy jobs list
+```
+
+### .NET Storage Client library
+
+- Suitable for complex, repeated tasks
+- Provides full access to blob properties
+- Supports async operations
 
 
 ## Cosmos DB
