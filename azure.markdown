@@ -87,12 +87,6 @@ Four types of compute resources:
   - can be managed and configured either by Azure or the user;
 
 
-#### Storage tiers
-
-1. Hot: for data that is accessed frequently;
-2. Cool: for infrequently accessed data and stored for at least 30 days;
-3. Archive: rarely accessed data, stored for >180 days;
-
 ### Database services
 
 Fully managed PaaS services
@@ -823,14 +817,14 @@ Many Azure components use blobs behind the scenes, Cloud Shell stores your files
 
 ### CLI
 
-- Can't resume if upload/download fails, so not suitable for large files
+- Can't resume if upload/download fails, so NOT suitable for large files
 - `az storage` commands require an account name and key to authenticate, you can either specify them everytime or use environment variables `AZURE_STORAGE_ACCOUNT` and `AZURE_STORAGE_KEY`
 - There are options to specify overwritting behavior based on ETag or modification date, eg. `--if-unmodified-since`
 
 ```sh
 # get account keys
 az storage account keys list \
-  --account-name $HOT_STORAGE_NAME \
+  --account-name <Account> \
   --output table
 
 # specify default account and key
@@ -852,6 +846,12 @@ az storage blob upload-batch \
 
 # list
 az storage blob list ...
+
+# archive a blob
+az storage blob set-tier \
+  --container-name myContainer \
+  --name myPhoto.png \
+  --tier Archive
 ```
 
 Copy blobs, there are options for selecting source blobs, e.g. use `--source-if-unmodified-since` to copy old blobs from hot storage to cool storage
@@ -893,10 +893,12 @@ az storage blob delete-batch \
 azcopy copy "myfile.txt" "https://myaccount.blob.core.windows.net/mycontainer/?<sas token>"
 
 # upload folder recursively
-azcopy copy "myfolder" "https://myaccount.blob.core.windows.net/mycontainer/?<sas token>" --recursive=true
+azcopy copy "myfolder" "https://myaccount.blob.core.windows.net/mycontainer/?<sas token>" \
+  --recursive=true
 
 # transfer between accounts
-azcopy copy "https://sourceaccount.blob.core.windows.net/sourcecontainer/*?<source sas token>" "https://destaccount.blob.core.windows.net/destcontainer/*?<dest sas token>"
+azcopy copy "https://sourceaccount.blob.core.windows.net/sourcecontainer/*?<source sas token>" \
+  "https://destaccount.blob.core.windows.net/destcontainer/*?<dest sas token>"
 
 # sync data
 azcopy sync ...
@@ -913,6 +915,28 @@ azcopy jobs list
 - Suitable for complex, repeated tasks
 - Provides full access to blob properties
 - Supports async operations
+
+### Access tiers
+
+- Hot and Cool can be set as account or blob level;
+- Archive
+  - can only be set at blob level;
+  - data is offline, only metadata available for online query;
+  - to access data, the blob must first be **rehydrated** (changing the blob tier from Archive to Hot or Cool, this can take hours);
+- Premium: only available for BlobStorage accounts (legacy);
+
+From Hot to Cool to Archive, the cost of storing data decreases but the cost of retrieving data increses.
+
+### Properties and Metadata
+
+- Both containers and blobs have properties and metadata.
+- Can be accessed/updated by Portal, CLI, PowerShell, SDK, REST API.
+
+| Properties | Metadata |
+| --- | --- |
+| system-defined | user-defined name-value pairs |
+| read-only or read-write | read-write |
+| `Length`, `LastModifined`, ... | `docType`, `docClass`, ... |
 
 
 ## Cosmos DB
