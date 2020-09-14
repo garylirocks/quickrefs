@@ -1178,12 +1178,15 @@ yarn add --check-files [packages ...]
 # check for updates
 yarn outdated
 
-# upgrade packages to their latest versions, package.json is updated as well
-yarn upgrade pkg1 pkg2 --latest
-yarn upgrade --scope @pkg-namespace --latest
-
-# the above is not working somehow, used the following line
+# upgrade packages
+yarn upgrade-interactive pkg --latest
 yarn upgrade pkg1@latest pkg2@latest
+
+# yarn upgrade has some issues:
+#   it doesn't change the version in package.json
+#   if you run it on a dev dependency, it's added to dependency
+# you can also just use `yarn add` to upgrade a package
+yarn add pkg@latest
 ```
 
 [daniel-khan]: (https://youtu.be/gl9qHml-mKc)
