@@ -24,6 +24,8 @@
     - [Commands](#commands-1)
   - [`tmpfs`](#tmpfs)
   - [Usage](#usage)
+- [Logging](#logging)
+  - [`journald`](#journald)
 - [Network](#network)
   - [Basic commands](#basic-commands)
   - [DNS](#dns)
@@ -34,17 +36,18 @@
   - [`docker-compose.yml`](#docker-composeyml)
     - [`volumes`](#volumes-1)
     - [`deploy`](#deploy)
-  - [`env_file`](#env_file)
-  - [Variable substitution](#variable-substitution)
+    - [`env_file`](#env_file)
+    - [Variable substitution](#variable-substitution)
+    - [Using placeholders](#using-placeholders)
   - [Networking](#networking)
     - [Custom networks](#custom-networks)
   - [Name collision issue](#name-collision-issue)
 - [Docker machine](#docker-machine)
-- [Context](#context)
 - [Swarm mode](#swarm-mode)
   - [Swarm on a single node](#swarm-on-a-single-node)
   - [Multi-nodes swarm example](#multi-nodes-swarm-example)
   - [Multi-service stacks](#multi-service-stacks)
+  - [Service placement](#service-placement)
 - [Configs](#configs)
   - [Basic usage using `docker config` commands](#basic-usage-using-docker-config-commands)
   - [Use for Nginx config](#use-for-nginx-config)
@@ -54,6 +57,7 @@
   - [Example: Use secrets with a WordPress service](#example-use-secrets-with-a-wordpress-service)
   - [Rotate a secret](#rotate-a-secret)
   - [Example compose file](#example-compose-file)
+- [Node.js in Docker](#nodejs-in-docker)
 - [Tips / Best Practices](#tips--best-practices)
 
 docker basics:
@@ -494,7 +498,60 @@ docker run -it -v /home/gary/code/super-app:/app ubuntu
   - Sharing source code or build artifacts between a development env on the host and a container (**Your production Dockerfile should copy the production-ready artifacts into the image directly, instead of relying on a bind mount**);
 
 * If you mount an **empty volume** into a directory in the container in which files or directories exist, these files or directories are copied into the volume, if you start a container and specify a volume which does not already exist, an empty volume is created;
-* If you mount a **bind mount or non-empty volume** into a directory in which soe file or directories exist, these files or directories are obscured by the mount;
+* If you mount a **bind mount or non-empty volume** into a directory in which some file or directories exist, these files or directories are obscured by the mount;
+
+## Logging
+
+- Docker comes with a few logging drivers, such as `json-file`, `syslog`, `journald`, `fluentd`, `awslogs`, ...
+- `json-file` is the default driver, the log is saved in `/var/lib/docker/containers/<containerId>/<containerId>-json.log`, and you can use `docker logs <containerId>` to see the logs
+- For Docker CE, you can only use `docker logs` with `json-file` and `journald`, not with other driver
+
+### `journald`
+
+```sh
+# use journald driver, and include a container label in the log
+docker run \
+    --log-driver=journald \
+    --log-opt labels=label.garyli.rocks \
+    --label label.garyli.rocks=mylabel \
+    -p 8888:80 \
+    --name=garyTest \
+    nginx
+
+# retrive the container log, filter by container name
+journalctl -o json-pretty -f CONTAINER_NAME=garyTest
+
+# or filter by label
+journalctl -o json-pretty -f LABEL_GARYLI_ROCKS=mylabel
+```
+
+A journald log entry in json format includes some system properties, such as timestamp, hostname, etc, and the container's id, name, image name and the specified label `LABEL_GARYLI_ROCKS` are all captured:
+
+```
+{
+  "__CURSOR" : ...
+  "__REALTIME_TIMESTAMP" : "1600256254650198",
+  "_BOOT_ID" : "b3ee38a4933a49b4964691b093630125",
+  "PRIORITY" : "6",
+  "_HOSTNAME" : "gary-tpx1",
+  "_COMM" : "dockerd",
+  "_EXE" : "/usr/bin/dockerd",
+  "_SYSTEMD_UNIT" : "docker.service",
+  "_TRANSPORT" : "journal",
+
+  ...
+
+  "LABEL_GARYLI_ROCKS" : "mylabel",
+  "IMAGE_NAME" : "nginx",
+  "CONTAINER_NAME" : "garyTest",
+  "CONTAINER_TAG" : "eb0738878674",
+  "SYSLOG_IDENTIFIER" : "eb0738878674",
+  "CONTAINER_ID" : "eb0738878674",
+  "CONTAINER_ID_FULL" : "eb0738878674ffe8879...",
+  "MESSAGE" : "172.17.0.1 - - [16/Sep/2020:11:37:34 +0000] \"HEAD / HTTP/1.1\" 200 0 \"-\" \"curl/7.58.0\" \"-\"",
+  "_SOURCE_REALTIME_TIMESTAMP" : "1600256254650178"
+}
+```
 
 ## Network
 
@@ -659,7 +716,7 @@ docker network inspect overlay0
 
     ```yaml
     ports:
-    - target: 80
+      - target: 80
         published: 8080
         rotocol: tcp
         mode: host      # specify mode here
@@ -754,7 +811,7 @@ see here: ["docker-compose up" not rebuilding container that has an underlying u
   - `delay`
   - `window`
 
-### `env_file`
+#### `env_file`
 
 ```sh
 # api.env
@@ -784,7 +841,7 @@ This allows you provide a set of environment variables to the container, the pre
 
 In the above example, inside the container, `NODE_ENV` will be 'production', and `APP_VERSION` will be whatever value in the shell when you start the container;
 
-### Variable substitution
+#### Variable substitution
 
 ```yaml
 db:
@@ -807,6 +864,49 @@ Please note:
   - **Values in `.env` are used for variable substitution automatically, but they don't get set in the container's environment if you don't specify it with `env_file` in the compose file**;
   - In later versions of `docker-compose`, there is a new CLI option `--env-file`, which allows you to specify another file instead of `.env`, it's not the same as the `env_file` option in compose file;
   - `.env` file **doesn't** work with `docker stack deploy`;
+
+#### Using placeholders
+
+[Create services using templates - Docker doc](https://docs.docker.com/engine/reference/commandline/service_create/#create-services-using-templates)
+
+Some `docker service create` flags (thus corresponding compose file fields) support placeholders: `--hostname`, `--mount`, `--env`
+
+| Placeholder           | Description    |
+| --------------------- | -------------- |
+| `{{.Service.ID}}`     | Service ID     |
+| `{{.Service.Name}}`   | Service name   |
+| `{{.Service.Labels}}` | Service labels |
+| `{{.Node.ID}}`        | Node ID        |
+| `{{.Node.Hostname}}`  | Node Hostname  |
+| `{{.Task.ID}}`        | Task ID        |
+| `{{.Task.Name}}`      | Task name      |
+| `{{.Task.Slot}}`      | Task slot      |
+
+Example:
+
+```yaml
+version: '3.4'
+
+services:
+  test:
+    image: 'node'
+
+    environment:
+      # each container gets its unique env var
+      - myTask='{{.Service.Name}} - {{.Node.Hostname}}'
+
+    deploy:
+      replicas: 3
+
+    volumes:
+      - logs:/logs/
+
+volumes:
+  logs:
+    # this makes each task/container get its own volume
+    # /var/lib/docker/volumes/mystack_test_taskId
+    name: '{{.Service.Name}}_{{.Task.ID}}'
+```
 
 
 ### Networking
@@ -936,10 +1036,6 @@ docker-machine start <machine-name>
 # unset 'DOCKER_' envs
 eval $(docker-machine env -u)
 ```
-
-## Context
-
-TODO
 
 ## Swarm mode
 
