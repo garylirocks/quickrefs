@@ -7,6 +7,7 @@
     - [Usage](#usage)
   - [systemd](#systemd)
     - [Usage](#usage-1)
+- [Journal](#journal)
 
 ## Shell
 
@@ -86,3 +87,30 @@
 ```sh
 systemctl status apache2.service
 ```
+
+## Journal
+
+- `journald` is part of systemd for managing logs
+- Journal is save in binary format
+- Use `journalctl` to retrieve logs
+
+```sh
+# tail
+journalctl -f
+
+# show recorded system boots
+journalctl --list-boots
+
+# show kernel message log
+journalctl -k
+
+# show logs from UNIT
+journalctl -u UNIT
+
+# logs since last boot
+journalctl -b
+
+# specify output format
+journalctl -o [short-iso|json|json-pretty|...]
+```
+
