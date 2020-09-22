@@ -947,14 +947,138 @@ Features
 
   It supports multiple API and data models(*each account only supports one model*):
 
-    - Core (SQL)
+    - Core (SQL) *this is for NoSQL document DB as well, and is recommended, other APIs are mainly for migration purposes*
     - MongoDB
     - Cassandra
-    - Azure Table
+    - Azure Table (for migrating data from Azure Table, Cosmos offers global distribution, high availability, scalable throughput)
     - Gremlin(graph)
 
 - Global distribution
 
+### Common CLI operations
+
+```sh
+export NAME=cosmos$RANDOM
+
+az cosmosdb create \
+    --name $NAME \
+    --kind GlobalDocumentDB
+
+az cosmosdb sql database create \
+    --account-name $NAME \
+    --name "Products"
+
+az cosmosdb sql container create \
+    --account-name $NAME \
+    --database-name "Products" \
+    --name "Clothing" \
+    --partition-key-path "/productId" \
+    --throughput 1000
+```
+
+### Request unit
+
+- You can provision throughput on a database or a container;
+- Throughput is meseaured with request units per second (**RU/s**);
+- If your request consumes all provisioned throughput, then Azure will rate-limit your requests, you need to retry your request;
+- Billing is based on provisioned RUs, whether you use them or not;
+
+A single RU is equal to the approximate cost of performing a single GET request on a 1-KB document using a document's ID. Creating, replacing or deleting the same item requires additional processing, thus more RUs.
+
+The number of RUs consumed by an operation is depending on a range of factors:
+
+- item size
+- item indexing
+- item property count
+- indexed properties
+- data consistency level (strong and bounded staleness consume approximately two times more RUs on read)
+- complexity of a query (same query on the same data always costs the same amount of RUs)
+- script usage (stored procedures and triggers)
+
+### Partitioning
+
+- Partitioning is the distribution and grouping of your data across the underlying resources;
+- Documents are grouped in a partition based on the partition key;
+- A partition key can be a single or multiple fields of a document;
+- Partition key can't be changed after a collection is provisioned;
+- Documents with the same partition key are in the same logical partition, but possibly multiple **physical partitions**;
+
+### Indexing
+
+- By default, all document properties are indexed;
+- Indexing mode:
+  - **Consistent**, index is updated synchronously every time a new document is written
+  - **Lazy**, when the index is fully updated depends on the demand
+  - **None**
+
+A sample indexing policy:
+
+```sh
+{
+    "indexingMode": "consistent",
+    "automatic": true,
+    "includedPaths": [
+        {
+            "path": "/Item/id/?"
+        },
+        {
+          "path": "/Customer/email/?"
+        },
+        ...
+    ],
+    "excludedPaths": [
+        {
+            "path": "/"
+        }
+    ]
+}
+```
+
+### Stored procedures
+
+- Written in JS, stored in container;
+- Have acccess to the context object, CAN read/write documents;
+- The **only way to ensure ACID transactions**, the client-side SDKs do not support transactions;
+- Recommended for batch operations;
+- Only works within a **single partition**, so you need to give it a partition key value when executing;
+
+```js
+// a sample that sends a simple response
+function helloWorld() {
+    var context = getContext();
+    var response = context.getResponse();
+
+    response.setBody("Hello, World");
+}
+```
+
+### User-defined functions (UDF)
+
+- To extend SQL query grammar and implement custom business logic, such as calculations on properties or documents;
+- Can only be called from queries, do not have access to context object, so they **CAN NOT** read or write documents;
+
+```js
+// use a UDF to calculate tax based on price
+function producttax(price) {
+    if (price == undefined  )
+        throw 'no input';
+
+    var amount = parseFloat(price);
+
+    if (amount < 1000)
+        return amount * 0.1;
+    else if (amount < 10000)
+        return amount * 0.2;
+    else
+        return amount * 0.4;
+}
+```
+
+Then you can use this UDF in a query
+
+```sql
+SELECT c.id, c.productId, c.price, udf.producttax(c.price) AS producttax FROM c
+```
 
 ### Global distribution
 
