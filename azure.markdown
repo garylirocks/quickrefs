@@ -1659,20 +1659,18 @@ az container logs \
 
   Are logical groups of keys and secrets, like folders
 
-- Keys
-
-  - Such as asymmetric master key of Microsoft Azure RMS, SQL Server TDE, CLE.
-
-  - Once a key is created or added to a key vault. Your app never has direct access to the keys.
-
-  - Keys can be single instanced or be versioned (primary and secondary keys)
-
-  - There are hardware-protected and software-protected keys.
-
 - Secrets
 
-  - Are small(< 10K) data blobs
-  - Can be: storage account keys, .PFX files, SQL connection strings, data encryption keys
+  - Name-value pair of strings
+  - Can be passwords, SQL connection strings, etc
+  - You app can retrive secrets through REST API
+
+- Keys
+
+  - Such as asymmetric master key of Microsoft Azure RMS, SQL Server TDE (Transparent Data Encryption), CLE.
+  - Once created or added to a key vault, your app **NEVER** has direct access to the keys.
+  - Can be single instanced or be versioned (primary and secondary keys)
+  - There are hardware-protected and software-protected keys.
 
 ### Usage
 
@@ -1684,3 +1682,8 @@ az container logs \
   - Provision, manage and deploy SSL/TLS certificate;
   - Request and renew certificates through parternership with certificate authorities
 
+### Security
+
+- Use AAD to authenticate users and applications
+- Three kind of actions: Get, List and Set
+- Most apps only need 'Get' permission, some may need 'List'
