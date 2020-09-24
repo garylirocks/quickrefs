@@ -31,7 +31,9 @@
   - [DNS](#dns)
   - [Swarm](#swarm)
   - [Network Driver Types](#network-driver-types)
+    - [ingress](#ingress)
   - [Port Publishing Mode](#port-publishing-mode)
+    - [Endpoint mode](#endpoint-mode)
 - [Docker Compose](#docker-compose)
   - [`docker-compose.yml`](#docker-composeyml)
     - [`volumes`](#volumes-1)
@@ -650,12 +652,21 @@ docker service create \
                 --replicas 3 \
                 httpd
 
+# start another service using the same overlay network
+docker service create \
+                --name myservice \
+                --network=overlay0 \
+                --replicas 3 \
+                <image>
+
 # inspect the network, it will show containers in this network
+#   including a 'overlay0-endpoint' container, serves as a load balancer
 docker network inspect overlay0
 ```
 
 - An overlay network will be available to all nodes in a swarm;
-- If the above service `testweb` runs on `node1.example.com` and `node2.exmaple.com`, you can access it from either domain;
+- If the above service `testweb` runs on `node1.example.com` and `node2.example.com`, you can access it from either host;
+- Any service in an overlay network can connect to other services in the same network using the service name, docker handles the **DNS resolution**, so in above example, in a `myservice` container, you can `ping testweb`, any request to `testweb` is load balanced by the virtual endpoint container `overlay0-endpoint`;
 
 ### Network Driver Types
 
@@ -682,28 +693,33 @@ docker network inspect overlay0
 - gateway bridge
 
   - automatically created when initing or joining a swarm;
-  - special bridge network that allows overlay networks access to an individual Docker daemon's physical network;
+  - special bridge network that **allows overlay networks access to an individual Docker daemon's physical network**;
   - all service containers running on a node is in this network;
+  - **Not a Docker device, it exists in the kernel of the Docker host**, you can see it with **`ifconfig`** on the host;
 
 - overlay
 
   - it is a 'swarm' scope driver: it extends itself to all daemons in the swarm (building on workers if needed);
+  - **Swarm services connected to the same overlay network effectively expose all ports to each other**. For a port to be accessible outside of the service, that port must be published using the `-p` or `--publish` flag on `docker service create`;
 
-- ingress
+#### ingress
 
-  - **A Special overlay network that load balances network traffic amongst a given service's working nodes**;
+  - **A Special overlay network that load balances network traffic amongst swarm working nodes**;
   - Maintains a list of all IP addresses from nodes of a service, when a request comes in, routes to one of them;
   - Provides '**routing mesh**', allows services to be exposed to the external network without having a replica running on every node in the Swarm;
+  - When you start a Swarm service and do not connect it do a user-defined overlay network, it connects to `ingress` by default;
+  - You can customize the subnet ip range, MTU, etc;
 
 ![Swarm networking](images/docker-swarm-networking.png)
 
 - When init/join a swarm, `docker_gwbridge` and `ingress` networks are created on each node, and there is a virtual `ingress-endpoint` container, which is part of both networks;
 - When creating a service `web`, its containers are attached to both the `docker_gwbridge` and `ingress` network;
-- When deploying a stack `xStack`, which have two services `s1` (2 replicas) and `s2` (1 replica), all three containers are in the `ingress` network, and the `docker_gwbridge` network of respective owning host;
+- When deploying a stack `xStack`, which have two services `s1` (2 replicas) and `s2` (1 replica), all three containers are in the `ingress` network (because they publish ports), and the `docker_gwbridge` network of respective owning host;
   - There is an additional overlay network `xStack_default`, which is non-ingress;
-  - Inside the stack, services are accessible by name `s1` and `s2`, so in `xStack_s1.1` you can `ping s2`;
-  - But in `web.1`, you can't `ping s2`;
+  - `xStack_default` **handles DNS resolution**, services are accessible by name `s1` and `s2`, so in `xStack_s1.1` you can `ping s2`;
+  - **Ingress network doesn't handle DNS resolution**, so in `web.1`, you can't `ping s2`;
 - Let's say `web` has a port binding `9000:80`, then when you visit `192.168.0.1:9000`, thru the `docker_gwbridge` network, it reaches `ingress-endpoint`, which keeps record of all ips of the `web` service, thru the `ingress` network, it routes the request to either `web.1` (10.0.0.6) or `web.2` (10.0.0.5);
+
 
 ### Port Publishing Mode
 
@@ -724,6 +740,50 @@ docker network inspect overlay0
 
 - Ingress
   - provides 'routing mesh', makes all published ports available on all hosts, so that service is accessible from every node regardless whether there is a replica running on it or not;
+  - in `docker-compose.yml` :
+
+    ```yaml
+    ports:
+      - target: 80
+        published: 8080
+        rotocol: tcp
+        mode: ingress   # specify mode here
+    ```
+
+#### Endpoint mode
+
+- `vip`
+
+  When a swarm service publish a port in `vip` mode (the default), all it's containers are added to the `ingress` network:
+
+    ```sh
+    docker service create \
+                    --name myWeb \
+                    --network myOverlay \
+                    --endpoint-mode vip \
+                    -p 8080:80 \
+                    --replicas 2 \
+                    nginx
+    ```
+
+  In this example `myWeb` containers would be in both `myOverlay` and `ingress`, if you don't publish any ports, then they would **ONLY** be in `myOverlay`
+
+- `dnsrr`
+
+  If you have your own load balancer, you can bypass the routing mesh, by specifying the `endpoint-mode` to `dnsrr` and publish port with `host` mode
+
+  ```sh
+  docker service create \
+                  --name testweb \
+                  --replicas 2 \
+                  --endpoint-mode dnsrr \
+                  --publish published=80,target=8080,protocol=tcp,mode=host \
+                  nginx
+  ```
+
+  Then the container on each host would be in the `bridge` network, instead of the ingress network.
+
+
 
 ## Docker Compose
 
