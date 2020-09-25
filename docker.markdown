@@ -26,6 +26,7 @@
   - [Usage](#usage)
 - [Logging](#logging)
   - [`journald`](#journald)
+  - [fluentd](#fluentd)
 - [Network](#network)
   - [Basic commands](#basic-commands)
   - [DNS](#dns)
@@ -555,6 +556,112 @@ A journald log entry in json format includes some system properties, such as tim
 }
 ```
 
+### fluentd
+
+- Fluentd is an open source log processor, it can collect logs from multiple sources, process them and send them to multiple destinations;
+- *Fluent-bit is a light weight version of Fluentd*
+
+See an example here: https://programmaticponderings.com/2017/04/10/streaming-docker-logs-to-the-elastic-stack-using-fluentd/
+
+The following docker compose files specify fluentbit and nginx services, nginx service's logs are sent to fluentbit, from there you can output it to file, Elasticsearch, Datadog, etc
+
+`docker-compose.fluent.yml`
+
+```yaml
+version: "3.7"
+
+services:
+  fluentbit:
+    image: fluent/fluent-bit
+
+    deploy:
+      mode: global      # one container per host
+
+    ports:
+      - target: 24224
+        published: 24224
+        protocol: tcp   # fluent-bit only supports TCP for forward input
+        mode: host      # use host mode, no need to go through ingress routing mesh
+
+    volumes:
+      - /mnt/path:/log  # persist logs to an NAS drive
+
+    configs:            # load config, so no need to build custom image
+      - source: FLUENTBIT_CONFIG
+        target: /fluent-bit/etc/fluent-bit.conf
+
+configs:
+  FLUENTBIT_CONFIG:
+    external: true
+    name: FLUENTBIT_CONFIG
+```
+
+`docker-compose.nginx.yml`
+
+```yaml
+version: "3.7"
+
+services:
+  nginx:
+    image: nginx
+
+    ports:
+      - 8080:80
+
+    environment:
+      FOO: foo
+      BAR: bar
+
+    labels:
+      com.example.service: web
+
+    logging:
+      driver: fluentd
+      options:
+        fluentd-address: 'localhost:24224' # !IMPORTANT you need an endpoint accessible from the docker host, not inside the container
+        fluentd-async-connect: 'true'      # async connection
+        mode: 'non-blocking'               # non blocking
+        tag: 'docker.{{.Name}}'            # the tag/name of a log entry
+        env: 'FOO,BAR'                     # any env variable you want to add to the log
+        labels: 'com.example.service'      # any label you want to add to the log
+```
+
+For `fluentd-address`, you need an endpoint **accessible from the docker host, NOT inside the container**
+
+Example fluent-bit config:
+
+```
+[INPUT]
+    Name              forward
+    Listen            0.0.0.0
+    Port              24224
+
+[FILTER]
+    Name              grep
+    Match             *
+    Exclude           log "IGNORE ME"
+
+[OUTPUT]
+    Name              stdout
+    Match             *
+
+[OUTPUT]
+    Name              file
+    Match             *
+    Path              /log
+
+[OUTPUT]
+    Name              datadog
+    Match             *
+    Host              http-intake.logs.datadoghq.com
+    TLS               on
+    compress          gzip
+    apikey            <apikey>
+    dd_source         nginx
+    dd_message_key    log
+    dd_tags           env:local
+```
+
 ## Network
 
 ### Basic commands
@@ -726,6 +833,7 @@ docker network inspect overlay0
 - Host
 
   - `mode=host` in deployment;
+  - you can only have at most ONE container on each host;
   - used in single host environment or in environment where you need complete control over routing;
   - ports for containers are only available on the underlying host system and are NOT avaliable for services which don't have a replica on this host;
   - in `docker-compose.yml` :
@@ -734,7 +842,7 @@ docker network inspect overlay0
     ports:
       - target: 80
         published: 8080
-        rotocol: tcp
+        protocol: tcp
         mode: host      # specify mode here
     ```
 
@@ -746,7 +854,7 @@ docker network inspect overlay0
     ports:
       - target: 80
         published: 8080
-        rotocol: tcp
+        protocol: tcp
         mode: ingress   # specify mode here
     ```
 
@@ -754,35 +862,32 @@ docker network inspect overlay0
 
 - `vip`
 
-  When a swarm service publish a port in `vip` mode (the default), all it's containers are added to the `ingress` network:
+  This is the default mode:
 
-    ```sh
-    docker service create \
-                    --name myWeb \
-                    --network myOverlay \
-                    --endpoint-mode vip \
-                    -p 8080:80 \
-                    --replicas 2 \
-                    nginx
-    ```
+  ```sh
+  docker service create \
+                  --name myWeb \
+                  --network myOverlay \
+                  --endpoint-mode vip \
+                  --replicas 2 \
+                  nginx
+  ```
 
-  In this example `myWeb` containers would be in both `myOverlay` and `ingress`, if you don't publish any ports, then they would **ONLY** be in `myOverlay`
+  When you query the Docker internal DNS (`127.0.0.11:53`), you get one virtual IP of the service, it's the IP of an endpoint, not any specific container.
 
 - `dnsrr`
 
-  If you have your own load balancer, you can bypass the routing mesh, by specifying the `endpoint-mode` to `dnsrr` and publish port with `host` mode
+  If you have your own load balancer, you can bypass the routing mesh, by specifying the `endpoint-mode` to `dnsrr`
 
   ```sh
   docker service create \
                   --name testweb \
-                  --replicas 2 \
                   --endpoint-mode dnsrr \
-                  --publish published=80,target=8080,protocol=tcp,mode=host \
+                  --replicas 2 \
                   nginx
   ```
 
-  Then the container on each host would be in the `bridge` network, instead of the ingress network.
-
+  When you query the Docker internal DNS server `127.0.0.11:53`, it gives you a list of each container's IP address.
 
 
 ## Docker Compose
@@ -943,6 +1048,8 @@ Some `docker service create` flags (thus corresponding compose file fields) supp
 | `{{.Task.Slot}}`      | Task slot      |
 
 Example:
+
+docker service create --name myWeb --hostname '{{.Node.Hostname}}' nginx
 
 ```yaml
 version: '3.4'
@@ -1301,7 +1408,8 @@ services:
     networks:
       - webnet
 
-networks: webnet:
+networks:
+  webnet:
 ```
 
 ```sh
