@@ -13,6 +13,7 @@
   - [Startup files](#startup-files)
   - [A prompt-unchangeable issue](#a-prompt-unchangeable-issue)
 - [Variables](#variables)
+  - [Parameter expansion](#parameter-expansion)
   - [String manipulation](#string-manipulation)
   - [Environment variables](#environment-variables)
   - [Special variables](#special-variables)
@@ -26,7 +27,7 @@
   - [Integer or character sequence](#integer-or-character-sequence)
 - [`if` statement](#if-statement)
 - [Conditional](#conditional)
-- [`[` vs `[[`](#vs)
+- [`[` vs `[[`](#-vs-)
 - [Arithmetic](#arithmetic)
 - [Array](#array)
 - [Looping](#looping)
@@ -37,7 +38,7 @@
   - [How to redirect output to a protected (root-only) file](#how-to-redirect-output-to-a-protected-root-only-file)
 - [Here documents](#here-documents)
 - [Builtins](#builtins)
-  - [`source`, `.`](#source)
+  - [`source`, `.`](#source-)
   - [`read`](#read)
   - [`printf`](#printf)
   - [`set`](#set)
@@ -51,6 +52,7 @@
 - [Quick recipes](#quick-recipes)
   - [Read lines of a file](#read-lines-of-a-file)
   - [Generate random numbers](#generate-random-numbers)
+  - [Generate random strings](#generate-random-strings)
   - [Multiple commands on a single line](#multiple-commands-on-a-single-line)
   - [Basename and dirname](#basename-and-dirname)
   - [Get the directory of a script you're running](#get-the-directory-of-a-script-youre-running)
@@ -264,26 +266,32 @@ $ echo "hello ${foo} world"
 hello world
 ```
 
-```sh
-$ echo $foo         # foo is undefined
+### Parameter expansion
 
-$ echo ${foo:-FOO}  # output FOO, because foo is undefined, doesn't change foo
-FOO
+|   Expression in script:       |  FOO="world" (Set and Not Null)  |  FOO="" (Set But Null) |     (Unset)     |
+|--------------------|----------------------|-----------------|-----------------|
+| ${FOO:-hello}      | world                | hello           | hello           |
+| ${FOO-hello}       | world                | ""              | hello           |
+| ${FOO:=hello}      | world                | FOO=hello       | FOO=hello       |
+| ${FOO=hello}       | world                | ""              | FOO=hello       |
+| ${FOO:?hello}      | world                | error, exit     | error, exit     |
+| ${FOO?hello}       | world                | ""              | error, exit     |
+| ${FOO:+hello}      | hello                | ""              | ""              |
+| ${FOO+hello}       | hello                | hello           | ""              |
 
-$ echo $foo         # foo is still undefined
-
-$ echo ${foo:=FOO}  # set `foo` as 'FOO' and output
-FOO
-
-$ echo ${foo:+BAR}  # foo is not null, out put BAR
-BAR
-```
 
 Check whether a variable exists:
 
 ```sh
-# if no $1, fail with a usage message
+# try to assign $1 to `input_file`, if not set, exit with an error message
 input_file=${1:?usage $0 input_file}
+
+# check whether a var is set
+if [ -z ${var+x} ]; then
+    echo "var is unset";
+else
+    echo "var is set to '$var'";
+fi
 ```
 
 ### String manipulation
@@ -440,6 +448,8 @@ ls gary.{txt,jpg}
 
 mkdir -p test-{1..3}/sub-{a..b}     # create all combinations
 ```
+
+
 
 ### Integer or character sequence
 
