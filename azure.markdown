@@ -391,7 +391,7 @@ Run the script by
 
 ## Azure AD
 
-- Each Azure subscription is associated with a single Azure AD directory;
+- Each Azure subscription is associated with a single Azure AD directory (tenant);
 - Users, groups and applications in that directory can manage resources in the subscription;
 - Subscriptions use Azure AD for SSO;
 
@@ -404,6 +404,12 @@ Provides services such as:
 - B2C identity services
 - Device management
 
+### Compare with Active Directory
+
+- Active Directory manages objects, like devices and users on your on-premises network;
+- AAD does not replace Active Directory;
+- They can be used together;
+
 ### Providing identities to services
 
 - Service principals
@@ -412,7 +418,7 @@ Provides services such as:
 
 - Managed identities for Azure services
 
-  When you create a manaaged identity for a service, you are creating an account on your organization's AD.
+  When you create a managed identity for a service, you are creating an account on your organization's AD.
 
 ### Role-based access control (RBAC)
 
@@ -429,10 +435,11 @@ RBAC allows you to grant access to Azure resources that you control. You do this
   ![RBAC role definition](images/azure_rbac-role.png)
 
   Four fundamental built-in roles:
-    - Owner - full access, including the right to delegate access to others
-    - Contributor - create and manage, but can't grant access to others
-    - Reader - view
-    - User Access Administrator - can manage user access
+
+  - Owner - full access, including the right to delegate access to others
+  - Contributor - create and manage, but can't grant access to others
+  - Reader - view
+  - User Access Administrator - can manage user access
 
 3. Scope (where)
 
@@ -1303,6 +1310,17 @@ Comparing to Load Balancer:
 - Can be hosted by Azure or other providers
 
 
+## DNS
+
+- Supports private DNS zones, which provide name resolution for VMs within a virtual network, and between virtual networks.
+  - Host names for VMs in your virtual network are automatically maintained;
+  - Split-horizon DNS support: allows the same domain name to exist in both private and public zones, resolves to the correct one based on the originating request location.
+
+- Alias record sets: allows you to setup alias record to direct traffic to an Azure public IP address(load balancer), an Azure Traffic Manager profile, or an Azure CDN endpoint.
+  - It's a dynamic link between a record and a resource, so when the resource's IP changes, it's automatically handled;
+  - Supports these record types: A, AAAA, CNAME;
+
+
 ## App Service
 
 Fully managed web application hosting platform, PaaS.
@@ -1687,3 +1705,60 @@ az container logs \
 - Use AAD to authenticate users and applications
 - Three kind of actions: Get, List and Set
 - Most apps only need 'Get' permission, some may need 'List'
+
+### Vault authentication
+
+Vault uses AAD to authenticate users and apps:
+
+1. Register your app as a service principle in AAD
+
+  - you register your app as a service principle, and assign vault permissions to it;
+  - the app uses its password or certificate to get an AAD authentication token;
+  - then the app can access Vault secrets using the token;
+  - there is a *bootstrapping problem*, all your secrets are securely saved in the Vault, but you still need to keep a secret outside of the vault to access them;
+
+2. Managed identities for Azure resources
+
+  When you enable managed identity on your web app, Azure activates a **separate token-granting REST service** specifically for use by your app, your app request tokens from this service instead of directly from AAD. Your app needs a secret to access this service, but that **secret is injected into your app's environment variables** by App Service when it starts up. You don't to manage or store the secret value, and nothing outside of your app can access this secret or the managed identity token service endpoint.
+
+  - this registers your app in AAD for you, and will delete the registration if you delete the app or disable its managed identity;
+  - managed identities are free, and you can enable/disable it on an app at any time;
+
+
+
+
+### Example
+
+```sh
+az keyvault create \
+    --name <your-unique-vault-name>
+
+az keyvault secret set \
+    --name password \
+    --value TOP_SECRET \
+    --vault-name <your-unique-vault-name>
+
+# enable managed identity for a App Service app and grant vault access
+az webapp identity assign \
+    --resource-group <rg> \
+    --name <app-name>
+
+az keyvault set-policy \
+    --secret-permissions get list \
+    --name <vault-name> \
+    --object-id <managed-identity-principleid-from-last-step>
+```
+
+In Node, Azure provides packages to access Vault secrets:
+
+- `azure-keyvault`:
+  - `KeyVaultClient.getSecret`: to read a secret;
+  - `KeyVaultClient.getSecrets`: get a list of all secrets;
+- `ms-rest-azure` authenticate to Azure:
+  - `loginWithAppServiceMSI` login using managed identity credentials available via your environment variables;
+  - `loginWithServicePrincipalSecret` login using your service principle secret;
+
+### Best practices
+
+- It's recommended to set up a **separate vault for each environment of each of your applications**, so if someone gained access to one of your vaults, the impace is limited;
+- Don't read secrets from the vault everytime, you should cache secret values locally or load them into memory at startup time;
