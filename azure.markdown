@@ -394,21 +394,51 @@ Run the script by
 - Each Azure subscription is associated with a single Azure AD directory (tenant);
 - Users, groups and applications in that directory can manage resources in the subscription;
 - Subscriptions use Azure AD for SSO;
+- Microsoft 365 uses Azure AD;
 
-Provides services such as:
+Licenses:
 
-- Authentication
-- Single-Sign-On
-- Application management
-- B2B identity services
-- B2C identity services
-- Device management
+- Free
+  - user, groups, basic reports
+  - on-premises AD sync
+  - self-service password reset
+  - SSO for Microsoft 365, Azure services, other third-party SaaS applications
+
+- Premium P1
+  - dynamic groups
+  - on-premises identity management suite
+  - conditional access policy
+
+- Premium P2
+  - Active Directory Identity Protection: risk-based conditional access
+  - privileged identity management: detailed restrictions on administrators
+
+- Pay-as-you-go
+  - Azure AD B2C: manage identity and access for consumer users
+
+Features:
+
+- B2B identity services (allow you to invite guest users, *available to all tiers*)
+
+  ![B2B process](images/azure_ad-b2b.svg)
+
+- B2C identity services (customer users, *pay-as-you-go*)
+
+  ![B2B process](images/azure_ad-b2c.svg)
 
 ### Compare with Active Directory
 
 - Active Directory manages objects, like devices and users on your on-premises network;
 - AAD does not replace Active Directory;
 - They can be used together;
+
+### Best practices
+
+- Give at least two accounts the **Global Administrator** role, DON'T use them daily;
+- Use regular administrator roles wherever possible;
+- Create a list of banned passwords (such as company name);
+- Configure conditional-access policies to require users to pass multiple authentication challenges;
+
 
 ### Providing identities to services
 
@@ -939,11 +969,11 @@ From Hot to Cool to Archive, the cost of storing data decreases but the cost of 
 - Both containers and blobs have properties and metadata.
 - Can be accessed/updated by Portal, CLI, PowerShell, SDK, REST API.
 
-| Properties | Metadata |
-| --- | --- |
-| system-defined | user-defined name-value pairs |
-| read-only or read-write | read-write |
-| `Length`, `LastModifined`, ... | `docType`, `docClass`, ... |
+| Properties                     | Metadata                      |
+| ------------------------------ | ----------------------------- |
+| system-defined                 | user-defined name-value pairs |
+| read-only or read-write        | read-write                    |
+| `Length`, `LastModifined`, ... | `docType`, `docClass`, ...    |
 
 
 ## Cosmos DB
