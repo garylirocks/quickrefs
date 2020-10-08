@@ -414,6 +414,7 @@ find . -regextype posix-extended -regex '.*(php)|(phtml)'
 find . -mindepth 1 -type d
 
 # exclude a directory (prune './images1', find '*.png' in other directories)
+# '-prune -o ...' is a common pattern
 find . -path './images1' -prune -o -name '*.png' -print
 
 # execute a command on matched files
