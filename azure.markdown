@@ -975,6 +975,28 @@ From Hot to Cool to Archive, the cost of storing data decreases but the cost of 
 | read-only or read-write        | read-write                    |
 | `Length`, `LastModifined`, ... | `docType`, `docClass`, ...    |
 
+```sh
+export AZURE_STORAGE_ACCOUNT=<account>
+export AZURE_STORAGE_SAS_TOKEN=<token>
+
+# get details of a blob
+az storage blob show -c myContainer -n 'file.txt'
+
+# set a property on a blob
+# this will make CDN don't cache this file
+az storage blob update -c myContainer -n 'file.txt' --content-cache-control 'no-cache'
+# can be done during upload as well
+az storage blob upload -c myContainer -n 'file.txt' -f file.txt -p cacheControl="no-cache" 
+# using azcopy
+azcopy cp file.txt <remote-address> --cache-control 'no-cache'
+
+# get metadata of a blob
+az storage blob metadata show -c myContainer -n 'file.txt'
+
+# properties for the whole blob service, not a specific blob
+az storage blob service-properties show
+```
+
 
 ## Cosmos DB
 
@@ -1749,7 +1771,7 @@ Vault uses AAD to authenticate users and apps:
 
 2. Managed identities for Azure resources
 
-  When you enable managed identity on your web app, Azure activates a **separate token-granting REST service** specifically for use by your app, your app request tokens from this service instead of directly from AAD. Your app needs a secret to access this service, but that **secret is injected into your app's environment variables** by App Service when it starts up. You don't to manage or store the secret value, and nothing outside of your app can access this secret or the managed identity token service endpoint.
+  When you enable managed identity on your web app, Azure activates a **separate token-granting REST service** specifically for use by your app, your app request tokens from this service instead of directly from AAD. Your app needs a secret to access this service, but that **secret is injected into your app's environment variables** by App Service when it starts up. You don't need to manage or store the secret value, and nothing outside of your app can access this secret or the managed identity token service endpoint.
 
   - this registers your app in AAD for you, and will delete the registration if you delete the app or disable its managed identity;
   - managed identities are free, and you can enable/disable it on an app at any time;
