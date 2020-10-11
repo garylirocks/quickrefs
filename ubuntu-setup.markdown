@@ -210,3 +210,5 @@ Restart the resolvconf service
 ```sh
 sudo service resolvconf restart
 ```
+
+Looks like it makes `/etc/resolv.conf` be a symlink to `/run/resolvconf/resolv.conf`
