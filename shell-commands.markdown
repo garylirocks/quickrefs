@@ -413,10 +413,6 @@ find . -regextype posix-extended -regex '.*(php)|(phtml)'
 # exclude current directory (at least one level deep)
 find . -mindepth 1 -type d
 
-# exclude a directory (prune './images1', find '*.png' in other directories)
-# '-prune -o ...' is a common pattern
-find . -path './images1' -prune -o -name '*.png' -print
-
 # execute a command on matched files
 # `{}` is a placeholder for matched files, `\;` is required
 find . -type f -regex '\./[1-9]+' -exec cp {} dest \;
@@ -424,6 +420,33 @@ find . -type f -regex '\./[1-9]+' -exec cp {} dest \;
 # use with xargs, and use null as separator, to handle file names containing white spaces
 find . -name '*.png' -print0 | xargs -0 ls -al
 ```
+
+Given a directory like this:
+
+```
+.
+├── a.txt
+└── subdir
+    └── a.txt
+```
+
+`-prune -o (...) -print` is a common pattern to ignore a directory:
+
+```sh
+find . -name 'subdir' -prune -o -name 'a.txt' -print
+# ./a.txt
+
+# equivalent to
+find . \( -name 'subdir' -prune \) -o \( -name 'a.txt' -print \)
+# ./a.txt
+
+# -print is essential here,
+# otherwise a global -print will be applied and './subdir' is output as well
+find . \( -name 'subdir' -prune \) -o \( -name 'a.txt' \)
+# ./subdir
+# ./a.txt
+```
+
 
 ## `xargs`
 
