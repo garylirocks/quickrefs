@@ -42,6 +42,7 @@
     - [`env_file`](#env_file)
     - [Variable substitution](#variable-substitution)
     - [Using placeholders](#using-placeholders)
+  - [Multiple compose files](#multiple-compose-files)
   - [Networking](#networking)
     - [Custom networks](#custom-networks)
   - [Name collision issue](#name-collision-issue)
@@ -1075,6 +1076,47 @@ volumes:
     name: '{{.Service.Name}}_{{.Task.ID}}'
 ```
 
+### Multiple compose files
+
+https://docs.docker.com/compose/extends/#multiple-compose-files
+
+You can deploy a stack using multiple compose files, so there is a base compose file, and each env can have its own compose file containing its special settings.
+
+`docker-compose.base.yml`
+
+```yml
+version: '3.6'
+
+services:
+  nginx:
+    image: 'nginx'
+
+    deploy:
+      replicas: 2
+```
+
+`docker-compose.prod.yml`
+
+```yml
+version: '3.6'
+
+services:
+  nginx:
+    ports:
+      - 80:80
+
+    deploy:
+      replicas: 4
+```
+
+Deploy a Swarm stack using multiple compose files:
+
+```sh
+docker stack deploy \
+              -c docker-compose.base.yml \
+              -c docker-compose.prod.yml \
+              garystack
+```
 
 ### Networking
 
