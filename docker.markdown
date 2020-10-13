@@ -55,7 +55,7 @@
   - [Basic usage using `docker config` commands](#basic-usage-using-docker-config-commands)
   - [Use for Nginx config](#use-for-nginx-config)
   - [Rotate a config](#rotate-a-config)
-  - [Usage in `compose` files](#usage-in-compose-files)
+  - [Usage in Compose file](#usage-in-compose-file)
 - [Secrets](#secrets)
   - [Example: Use secrets with a WordPress service](#example-use-secrets-with-a-wordpress-service)
   - [Rotate a secret](#rotate-a-secret)
@@ -1544,50 +1544,89 @@ docker service update \
 docker config rm site.conf
 ```
 
-### Usage in `compose` files
+### Usage in Compose file
 
-- short syntax
+Example
 
-  ```yml
-  version: '3.3'
-  services:
-    redis:
-      image: redis:latest
-      deploy:
-      replicas: 1
-      configs:
-        - my_config
-        - my_other_config
+```yml
+version: '3.3'
 
-  configs:
-    my_config:
-      file: ./my_config.txt
-    my_other_config:
-      external: true
-  ```
+services:
+  redis:
+    image: redis:latest
 
-- long syntax
+    configs:
+      # short syntax
+      - my_config
+      - my_other_config
 
-  ```yml
-  version: "3.3"
-  services:
-    redis:
-      image: redis:latest
-      deploy:
-      replicas: 1
-      configs:
-        - source: my_config
-          target: /redis_config
-          uid: '103'
-          gid: '103'
-          mode: 0440
+      # long syntax
+      - source: my_config
+        target: /redis_config
+        uid: '103'
+        gid: '103'
+        mode: 0440
 
-  configs:
-    my_config:
-      file: ./my_config.txt
-    my_other_config:
-      external: true
-  ```
+
+configs:
+  my_config:
+    file: ./my_config.txt
+  my_other_config:
+    external: true
+  yet_another_config:
+    external: true
+```
+
+To put Docker configs under version control, since you can't update an existing config, you need to give it a new name for every deployment:
+
+```yml
+version: '3.6'
+
+services:
+  nginx:
+    image: nginx
+
+    configs:
+      - source: x
+        target: /x.txt
+
+configs:
+  x:
+    name: x.$BUILD_ID   # build id in CI
+    file: ./x.txt
+```
+
+On remote server:
+
+```sh
+BUILD_ID=12 docker stack deploy -c './docker-compose.yml' mystack
+# Creating network mystack_default
+# Creating config x.12
+# Creating service mystack_nginx
+```
+
+deploy again
+
+```sh
+BUILD_ID=13 docker stack deploy -c './docker-compose.yml' mystack
+# Creating config x.13
+# Updating service mystack_nginx (id: nb4xk465kl1vxgxp4jq7r1djl)
+```
+
+These configs are scoped to the stack, when you remove the stack, they are deleted too:
+
+```sh
+docker config ls
+# ID                          NAME                CREATED             UPDATED
+# olih9b2a594bxryn7hz50ephg   x.12                9 minutes ago       9 minutes ago
+# 3lkh69r8g704mqwmobqnyw41e   x.13                8 seconds ago       8 seconds ago
+
+docker stack rm mystack
+# Removing service mystack_nginx
+# Removing config x.13
+# Removing config x.12
+# Removing network mystack_default
+```
 
 ## Secrets
 
