@@ -1361,6 +1361,19 @@ Comparing to Load Balancer:
 - Get content to users in their local region to **minimize latency**
 - Can be hosted by Azure or other providers
 
+#### Standard rules engine notes
+
+The rules engine rules are not so easy to debug, the rules takes quite a while to take effect, and the doc is not so detailed or seems to be wrong in some cases.
+
+- https://docs.microsoft.com/en-us/azure/cdn/cdn-standard-rules-engine-match-conditions#url-file-name says multiple file names can be separated with a single space, but 
+  - If URL file name 'Contains' 'xxx yyy' => matches 'https://garytest.azureedge.net/xxx%20yyy' instead of 'https://garytest.azureedge.net/xxx'
+- Some of the operators are numeric, like *Less than* or *Greater than*, example:
+  - If URL file name 'Greater than' '6' => matches 'https://garytest.azureedge.net/verylongname'
+  - If URL file extension 'Less than or equals' '0' => matches any url without a file extension, eg. 'https://garytest.azureedge.net/foo'
+- The doc says *Equals* is a numeric operator, but:
+  - If URL path 'Equals' '/abc' => matches 'https://garytest.azureedge.net/abc', does not work if you set a number
+- URL path matches the whole path
+
 
 ## DNS
 
