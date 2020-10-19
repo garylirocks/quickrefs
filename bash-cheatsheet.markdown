@@ -279,20 +279,42 @@ hello world
 | ${FOO:+hello}      | hello                | ""              | ""              |
 | ${FOO+hello}       | hello                | hello           | ""              |
 
+**Null and empty string are equivalent in Bash**
 
-Check whether a variable exists:
+Check whether a variable is set:
 
 ```sh
-# try to assign $1 to `input_file`, if not set, exit with an error message
-input_file=${1:?usage $0 input_file}
+# check whether a var is set and not empty
+# we have the '-u' flag, so simple '[ -n "$1" ]' would throw an error
+set -eu
 
-# check whether a var is set
-if [ -z ${var+x} ]; then
-    echo "var is unset";
-else
-    echo "var is set to '$var'";
+if [ -n "${1:+x}" ]; then
+  echo 'set'
 fi
 ```
+
+See details here: https://stackoverflow.com/a/3870055
+
+**CAUTION: In single brackets, always quote a variable**
+
+```sh
+# Wrong
+[ -n $NOT_DEFINED ] && echo 'yes' || echo 'no'
+# yes
+
+# the above is equivalent to, the test returns true
+[ -n ] && echo 'yes' || echo 'no'
+# yes
+
+# Correct: you NEED to quote the variable in single brackets
+[ -n "$NOT_DEFINED" ] && echo 'yes' || echo 'no'
+# no
+
+# OR, use double brackets, then no need to worry about quoting
+[[ -n $NOT_DEFINED ]] && echo 'yes' || echo 'no'
+# no
+```
+
 
 ### String manipulation
 
@@ -582,17 +604,16 @@ so, **Always enclose string variables and environment variable in double quotes!
 ## `[` vs `[[`
 
 - `[` is a shell builtin command, similar to `test`, but requires a closing `]`, builtin commands executes in the current process;
-- There is a `/bin/[`, which executes in a subshell;
+
+- There is an executable file at: `/bin/[`, which executes in a subshell;
 
   ```bash
-  type [
+  type -a [
   # [ is a shell builtin
-
-  type -p [
-  # [ is /bin/[
+  # [ is /usr/bin/[
 
   type '[['
-  # [[ is a reserved word
+  # [[ is a shell keyword
   ```
 
 - `[[` is a Bash extension to `[`, it has some improvements:
@@ -666,7 +687,7 @@ echo ${arr[*]}                      # same as above, get all elements
 echo ${#arr[@]}                     # length
 # 3
 
-echo ${#arr[1]}                     # first element, index starts at 1
+echo ${arr[1]}                     # first element, index starts at 1
 # apple
 
 echo ${arr[@]:1}                    # leave the first
@@ -995,7 +1016,7 @@ $ echo $#
 
     same as: `set -o nounset`, exit when an undefined variable is used, otherwise it's silently ignored;
 
-    - use a default value when necessary: `NAME=${1:-gary}`, if `$1` is undefined, `NAME` will be `gary`;
+    - use a default value when necessary: `NAME=${1:-gary}`, if `$1` is undefined or empty, `NAME` will be `gary`;
 
 - `set -e`
 
