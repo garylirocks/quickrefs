@@ -319,39 +319,59 @@ See details here: https://stackoverflow.com/a/3870055
 
 ### String manipulation
 
-String length
+- String length
 
-```sh
-$ a='hello world'
-$ echo ${#a}
-11
-```
+    ```sh
+    a='hello world'
+    echo ${#a}
+    # 11
+    ```
 
-chopping strings, `##`,`#` to chop from beginning, `%%`,`%` to chop from the end, `##`, `%%` for longest matching, `#`, `%` for first matching
+- Chopping strings, `##`,`#` to chop from beginning, `%%`,`%` to chop from the end, `##`, `%%` for longest matching, `#`, `%` for first matching
 
-```sh
-$ foo='hello-hello.world.jpg'
+    ```sh
+    foo='hello-hello.world.jpg'
 
-$ echo ${foo##*hello}
-.world.jpg
+    echo ${foo##*hello}
+    # .world.jpg
 
-$ echo ${foo#*hello}
--hello.world.jpg
+    echo ${foo#*hello}
+    # -hello.world.jpg
 
-$ echo ${foo%%.*}
-hello-hello
+    echo ${foo%%.*}
+    # hello-hello
 
-$ echo ${foo%.*}
-hello-hello.world
-```
+    echo ${foo%.*}
+    # hello-hello.world
+    ```
 
-substring
+- Substring
 
-```sh
-$ foo='hello-world.jpg'
-$ echo ${foo:6:5}
-world
-```
+    ```sh
+    foo='hello-world.jpg'
+    echo ${foo:6:5}
+    # world
+    ```
+
+- Uppercase / Lowercase
+
+    Since Bash 4
+
+    ```sh
+    a='test'
+    echo "${a^}"
+    # Test
+
+    echo "${a^^}"
+    # TEST
+
+    b='TEST'
+    echo "${b,}"
+    # tEST
+
+    echo "${b,,}"
+    # test
+    ```
 
 ### Environment variables
 
