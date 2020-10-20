@@ -18,6 +18,7 @@
   - [Environment variables](#environment-variables)
   - [Special variables](#special-variables)
   - [Command line arguments](#command-line-arguments)
+  - [Dynamic variables](#dynamic-variables)
 - [Substitutions](#substitutions)
   - [Command substitution](#command-substitution)
   - [Process substitution](#process-substitution)
@@ -411,6 +412,30 @@ all arguments:
 hello
 world
 is-fun
+```
+
+### Dynamic variables
+
+Since Bash 4.3, you can use `declare` builtin to create dynamic variables
+
+```sh
+i=20
+var_20=gary
+
+# ref is like a pointer in C
+declare -n ref="var_$i"
+echo "$ref"
+# gary
+
+echo "${!ref}"  # which variable ref is pointing to
+# var_20
+
+ref=amy
+echo "$ref"
+# amy
+
+echo "$var_20"
+# amy
 ```
 
 ## Substitutions
