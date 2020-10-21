@@ -14,6 +14,9 @@
   - [`ENV`](#env)
   - [`ADD` vs. `COPY`](#add-vs-copy)
   - [`.dockerignore`](#dockerignore)
+- [Build images](#build-images)
+  - [BuildKit](#buildkit)
+    - [Use secrets in docker build](#use-secrets-in-docker-build)
 - [Data Storage](#data-storage)
   - [Volumes](#volumes)
     - [Data Sharing](#data-sharing)
@@ -374,6 +377,41 @@ config what files and directories should be ignored when sending to the docker d
 # any file with a '.cache' extension
 **/.cache
 ```
+
+
+## Build images
+
+### BuildKit
+
+Improvement on performance, storage management, feature functionality and security.
+
+To enable BuildKit: `DOCKER_BUILDKIT=1 docker build .` or set it in `/etc/docker/daemon.json`:
+
+```json
+{ "features": { "buildkit": true } }
+```
+
+#### Use secrets in docker build
+
+- Syntax is similar to use Docker Secrets at runtime
+- This is a secure way to use secrets while building image, because the secrets won't be saved in the history of the final image
+- `# syntax = docker/dockerfile:1.0-experimental` this comment is required to enable this feature
+
+```docker
+# syntax = docker/dockerfile:1.0-experimental
+FROM alpine
+
+# shows secret from default secret location:
+RUN --mount=type=secret,id=mysecret cat /run/secrets/mysecret
+
+# shows secret from custom secret location:
+RUN --mount=type=secret,id=mysecret,dst=/foobar cat /foobar
+```
+
+```sh
+docker build --no-cache --progress=plain --secret id=mysecret,src=mysecret.txt .
+```
+
 
 ## Data Storage
 
