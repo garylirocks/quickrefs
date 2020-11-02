@@ -444,11 +444,48 @@ Features:
 
 - Service principals
 
-  is an identity used by any service or application, it can have assigned roles, use a different service principal for each of your applications
+  A service principal is an identity used by any service or application, it can have assigned roles, use a different service principal for each of your applications
 
 - Managed identities for Azure services
 
   When you create a managed identity for a service, you are creating an account on your organization's AD.
+
+  - System-assigned
+
+    A resource can have only one system-assigned managed identity, if the resource is deleted, so is the managed identity
+
+    ```sh
+    # assign a system-assigned managed identity to a VM
+    az vm identity assign \
+        --name <vm name> \
+        --resource-group <resource group>
+    ```
+
+  - User-assigned
+
+    A user-assigned managed identity is independent of any resources, so if your app is running on multiple VMs, it can use the same identity
+
+    ```sh
+    az identity create \
+        --name <identity name> \
+        --resource-group <resource group>
+
+    # view identities, including system-assigned
+    az identity list \
+        --resource-group <resource group>
+
+    # assign an identity to a function app
+    az functionapp identity assign \
+        --name <function app name> \
+        --resource-group <resource group> \
+        --role <principal id>
+
+    # grant key vault permissions to an identity
+    az keyvault set-policy \
+        --name <key vault name> \
+        --object-id <principal id> \
+        --secret-permissions get list
+    ```
 
 ### Role-based access control (RBAC)
 
@@ -997,6 +1034,21 @@ az storage blob metadata show -c myContainer -n 'file.txt'
 az storage blob service-properties show
 ```
 
+### Concurrency
+
+Three concurrency strategies:
+  - optimistic concurrency;
+    - Get the ETag, when saving data, send back this ETag, Azure only updates the blob if the ETag still matches the blob's current ETag;
+    - It's not enforced, every app needs to adopt it;
+
+    ![Blob concurrency using ETag](images/azure_blob-concurrency-etag.png)
+  - pessimistic concurrency;
+    - An app require a lease for a set period of time, no one else can modify the blob before the lease is released or expired;
+    - Lease time is from 15s to 60s, so it's more suitable for programmatic processing of records;
+    - An app can also renew or break a lease before it expires;
+
+    ![Blob concurrency using lease](images/azure_blob-concurrency-lease.png)
+
 
 ## Cosmos DB
 
@@ -1360,6 +1412,9 @@ Comparing to Load Balancer:
 
 - Get content to users in their local region to **minimize latency**
 - Can be hosted by Azure or other providers
+- Standard Microsoft tier has less features than Akamai and Verizon CDNs
+- Asset TTL is determined by the `Cache-Control` header from the origin server, if not set, Azure sets a default value. This can be changed by caching rules.
+- In Standard Microsoft tier, you can't set specific caching rules for a file, if you do not want to cache a file, you should set the **`Cache-Control` to be `no-cache` in the origin server**
 
 #### Standard rules engine notes
 
