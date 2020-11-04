@@ -1226,6 +1226,19 @@ Rarely, conflicts can happen when an item is changed simultaneously in multiple 
 | Consistent Prefix | Updates returned are some prefix of all the updates, with no gaps.                           |
 | Eventual          | Out of order reads.                                                                          |
 
+## Redis Caching
+
+Tiers:
+
+- Basic: single server, ideal for dev/testing, no SLA;
+- Standard: supports two servers (master/slave), 99.99% SLA;
+- Premium: persistence, clustering and scale-out, virtual network;
+
+Best practices:
+
+- Redis works best with data that is 100K or less
+- Longer keys cause longer lookup times because they're compared byte-by-byte
+
 
 ## VMs
 
@@ -1407,6 +1420,33 @@ Comparing to Load Balancer:
 
 ![Traffic Manager](images/azure_traffic-manager.png)
 
+### Front Door
+
+![Front door](images/azure_front-door.png)
+
+It's like the Application Gateway at a global scale, plus a CDN
+  - resilient to failures to an entire Azure region
+  - can cache content
+  - a backend can be within or outside Azure
+
+Supports: 
+  - URL-path based routing
+  - health probe: determines the **proximity** and health of each backend
+  - cookie-based session affinity
+  - SSL offloading
+  - WAF
+  - URL redirect/rewrite
+  - Caching: like a CDN
+
+```sh
+az extension add --name front-door
+
+az network front-door create \
+  --resource-group myRG \
+  --name gary-frontend \
+  --accepted-protocols http https \
+  --backend-address webapp1.azurewebsites.net webapp2.azurewebsites.net
+```
 
 ### CDN
 
