@@ -1,8 +1,6 @@
 # Azure
 
-[[toc]]
-
-## Resources in Azure
+## Overview
 
 ### Deployment model
 
@@ -142,6 +140,15 @@ Fully managed PaaS services
 - An email address can be associated with more than one tenant (and you can switch from one to another);
 - Each tenant has an _account owner_;
 
+## Management groups
+
+![Management groups](images/azure_management-groups.png)
+
+- A way to efficiently manage access, policies, and compliance for subscriptions
+  - Apply a policy to limit regions available to subscriptions under a group
+  - Create a RBAC assignment on a group
+- All subscriptions and management groups are within a single hierarchy in each directory
+
 ### Subscription
 
 - A tenant can have multiple subscriptions;
@@ -203,6 +210,8 @@ A setting that can by applied to any resource to block inadvertent modification 
 
 
 ### Resource Group Manager (RGM)
+
+![Resource manager](images/azure_resource-manager.png)
 
 Resource Group Manager (RGM) is the management layer which allows you automate the deployment and configuration of resources;
 
@@ -1239,6 +1248,13 @@ Best practices:
 - Redis works best with data that is 100K or less
 - Longer keys cause longer lookup times because they're compared byte-by-byte
 
+Transactions:
+
+- Use `MULTI`, `EXEC` to init and commit a transaction
+  - If a command is queued with incorrect syntax, the transaction will be automatically discarded;
+  - If a command fails, the transaction will complete as normal;
+- There is no rollback;
+
 
 ## VMs
 
@@ -1922,3 +1938,44 @@ In Node, Azure provides packages to access Vault secrets:
 
 - It's recommended to set up a **separate vault for each environment of each of your applications**, so if someone gained access to one of your vaults, the impace is limited;
 - Don't read secrets from the vault everytime, you should cache secret values locally or load them into memory at startup time;
+
+
+## Monitoring
+
+![Azure Monitor Overview](images/azure_monitor.svg)
+
+- Collects two fundamental types of data:
+  - metrics
+  - logs
+- Functions: analysis, alerting, autoscaling, streaming to external systems
+- Collects data automatically, can be extended by:
+  - Enabling diagnostics: only get full info about a resource after you have enabled diagnostic logging for it, e.g. SQL Database 
+  - Adding an agent: e.g. install a Log Analytics agent to a VM
+- Use Data Collector API to send data from your custom code
+
+| logs | metrics |
+| --- | --- |
+| text (can have numeric fields) | numeric values |
+| sporadic | at fixed interval |
+| record event | describe some aspect of a system |
+| identify root causes | performance, alerting |
+| Log Analytics workspace | time-series database |
+
+### Kusto Query Language
+
+Example:
+
+```
+Events
+| where StartTime >= datetime(2018-11-01) and StartTime < datetime(2018-12-01)
+| where State == "FLORIDA"  
+| count
+```
+
+```
+Heartbeat
+| summarize arg_max(TimeGenerated, *) by ComputerIP
+```
+
+
+
