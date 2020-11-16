@@ -65,9 +65,9 @@ Four types of compute resources:
 - Data Lake storage: for analytics;
 - Azure files
 
-  - can be mounted _concurrently_ by cloud or on-premise machines;
-  - use SMB protocol;
-  - can be shared anywhere in the world using a URL containing a shared access signature(SAS) token (which allows specific access to a private asset for a specific amount of time);
+  - Can be mounted _concurrently_ by cloud or on-premise machines (e.g. store config files in a file share and access them from multiple VMs);
+  - Use SMB protocol;
+  - Can be shared anywhere in the world using a URL containing a shared access signature(SAS) token (which allows specific access to a private asset for a specific amount of time);
 
   ![azure files](images/azure_files.png)
 
@@ -80,9 +80,9 @@ Four types of compute resources:
 
 - Disk storage
 
-  - suitable for storing data only for the attached VM;
-  - can be standard or premium SSD/HDD;
-  - can be managed and configured either by Azure or the user;
+  - Only for attaching to VM;
+  - Can be standard or premium SSD/HDD;
+  - Can be managed and configured either by Azure or the user;
 
 
 ### Database services
@@ -1441,6 +1441,7 @@ Comparing to Load Balancer:
 ![Front door](images/azure_front-door.png)
 
 It's like the Application Gateway at a global scale, plus a CDN
+  - operates at the edge, not within a vNet
   - resilient to failures to an entire Azure region
   - can cache content
   - a backend can be within or outside Azure
@@ -1942,6 +1943,8 @@ In Node, Azure provides packages to access Vault secrets:
 
 ## Monitoring
 
+### Azure Monitor
+
 ![Azure Monitor Overview](images/azure_monitor.svg)
 
 - Collects two fundamental types of data:
@@ -1951,6 +1954,8 @@ In Node, Azure provides packages to access Vault secrets:
 - Collects data automatically, can be extended by:
   - Enabling diagnostics: only get full info about a resource after you have enabled diagnostic logging for it, e.g. SQL Database 
   - Adding an agent: e.g. install a Log Analytics agent to a VM
+- Can be used to **unify** multiple monitoring solutions:
+  - Azure Application Insights and Azure Security Center store their collected data in workspace for Azure Monitor, you can then use Azure Monitor Log Analytics to interactively query the data;
 - Use Data Collector API to send data from your custom code
 
 | logs | metrics |
@@ -1960,6 +1965,11 @@ In Node, Azure provides packages to access Vault secrets:
 | record event | describe some aspect of a system |
 | identify root causes | performance, alerting |
 | Log Analytics workspace | time-series database |
+
+### Azure Security Center
+
+- Collects data from resources such as VMs by using the Log Analytics Agent, and puts it into a workspace;
+  - Log Analytics Agent can be provisioned automatically
 
 ### Kusto Query Language
 
@@ -1977,5 +1987,9 @@ Heartbeat
 | summarize arg_max(TimeGenerated, *) by ComputerIP
 ```
 
+### Alerting
 
+- Metric alerts
+- Log alerts
+- Activity Log alerts (resource creation, deletion, etc)
 
