@@ -684,6 +684,10 @@ There are three different functions types, the table below show how to use them 
 
 - You need to run `npm install durable-functions` from the `wwwroot` folder of your function app in Kudu
 
+## Logic Apps
+
+![Trigger types](images/azure_logic-app-trigger-types.png)
+
 ## Messaging platforms
 
 ### Messages vs. Events
@@ -1970,6 +1974,15 @@ In Node, Azure provides packages to access Vault secrets:
 
 - Collects data from resources such as VMs by using the Log Analytics Agent, and puts it into a workspace;
   - Log Analytics Agent can be provisioned automatically
+
+### Azure Application Insights
+
+- Is an APM (Application Performance Management) service, mostly captures two kinds of data: *events* and *metrics*
+- Instrumentation methods:
+  - Runtime instrumentation: can be enabled without making any changes to code (Windows IIS web app only, works best with ASP.NET)
+  - Build-time instrumentation: by installing SDK to code, enables full functionality, supports custom events
+  - Client-side instrumentation: JavaScript SDK, you can configure App Service to inject it automatically (Windows IIS web app only)
+
 
 ### Kusto Query Language
 
