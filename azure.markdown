@@ -220,6 +220,87 @@ Resource Group Manager (RGM) is the management layer which allows you automate t
 
 - JSON file that defines the resources you need to deploy
 - For resources deployed based on a template, after you update and redeploy the template, the resources will reflect the changes
+- With parameters, you can use the same template to create multiple versions of your infrastructure, such as staging and production
+- Modular: you can create small templates and combine them
+
+Example:
+
+```json
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "",
+
+  // values you provide when run a template
+  "parameters": {
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Username for the Virtual Machine."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the Virtual Machine."
+      }
+    }
+  },
+
+
+  // global variables
+  "variables": {
+    "nicName": "myVMNic",
+    "addressPrefix": "10.0.0.0/16",
+    "subnetName": "Subnet",
+    "subnetPrefix": "10.0.0.0/24",
+    "publicIPAddressName": "myPublicIP",
+    "virtualNetworkName": "MyVNET"
+  },
+
+  // utility functions
+  "functions": [
+    {
+      "namespace": "contoso",
+      "members": {
+        "uniqueName": {
+          "parameters": [
+            {
+              "name": "namePrefix",
+              "type": "string"
+            }
+          ],
+          "output": {
+            "type": "string",
+            "value": "[concat(toLower(parameters('namePrefix')), uniqueString(resourceGroup().id))]"
+          }
+        }
+      }
+    }
+  ],
+
+  "resources": [
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2018-08-01",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dnsLabelPrefix')]"
+        }
+      }
+    }
+  ],
+
+  "outputs": {
+    "hostname": {
+      "type": "string",
+      "value": "[reference(variables('publicIPAddressName')).dnsSettings.fqdn]"
+    }
+  }
+}
+```
 
 
 ## Azure management tools
