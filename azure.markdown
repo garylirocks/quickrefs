@@ -140,7 +140,7 @@ Fully managed PaaS services
 - An email address can be associated with more than one tenant (and you can switch from one to another);
 - Each tenant has an _account owner_;
 
-## Management groups
+### Management groups
 
 ![Management groups](images/azure_management-groups.png)
 
@@ -300,6 +300,32 @@ Example:
     }
   }
 }
+```
+
+Note:
+
+- Expressions need to be enclosed in brackets `[`, `]`
+
+
+
+```sh
+# validate a template file
+az deployment group validate \
+    --resource-group learn-63336b5a-694e-4b61-a1a5-1f173253244e \
+    --template-file basic-template.json
+    --parameters @params.json
+
+# deploy
+az deployment group create \
+    --name MyDeployment \
+    --resource-group learn-63336b5a-694e-4b61-a1a5-1f173253244e \
+    --template-file basic-template.json
+    --parameters @params.json
+
+# verify
+az deployment group show \
+    --name MyDeployment \
+    --resource-group learn-63336b5a-694e-4b61-a1a5-1f173253244e
 ```
 
 
@@ -768,6 +794,47 @@ There are three different functions types, the table below show how to use them 
 ## Logic Apps
 
 ![Trigger types](images/azure_logic-app-trigger-types.png)
+
+JSON definition example:
+
+- There is a trigger named `myManualTrigger`, which is an HTTP request trigger, here we define two url path parameters `width` and `height`
+- There is one action named `myResponse`, which output a string, doing an area calculation based on `width` and `height`
+- Variables should be inclosed like `@{varName}`
+- You can trigger this app by visiting a URL like `https://prod-57.westus.logic.azure.com/workflows/90cb01f9a2534ee5a9a0a50f95e5a34b/triggers/myManualTrigger/paths/invoke/{width}/{height}?api-version=2016-10-01&sp=%2Ftriggers%2FmyManualTrigger%2Frun&sv=1.0&sig=nn8JG1P1aOzXFN2lv1haoEQYcRxP4kCaeSyG33yE5sQ`
+
+```json
+{
+  "definition": {
+    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {},
+    "triggers": {
+      "myManualTrigger": {
+        "type": "Request",
+        "kind": "Http",
+        "inputs": {
+          "method": "GET",
+          "relativePath": "{width}/{height}",
+          "schema": {}
+        }
+      }
+    },
+    "actions": {
+      "myResponse": {
+        "type": "Response",
+        "kind": "Http",
+        "runAfter": {},
+        "inputs": {
+          "body": "Response from @{workflow().name}  Total area = @{triggerBody()}@{mul( int(triggerOutputs()['relativePathParameters']['height'])  , int(triggerOutputs()['relativePathParameters']['width'])  )}",
+          "statusCode": 200
+        }
+      }
+    },
+    "outputs": {}
+  },
+  "parameters": {}
+}
+```
 
 ## Messaging platforms
 
