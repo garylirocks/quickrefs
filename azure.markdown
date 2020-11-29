@@ -836,6 +836,59 @@ JSON definition example:
 }
 ```
 
+## API Management
+
+- You can import APIs defined in Open API, WSDL, WADL, Azure Functions, API app, ...
+- APIs can be grouped in to Product, which is a scope for policies and subscriptions
+- You can use subscription keys to restrict access to the API, a key can be scoped to
+  - all APIs
+  - a Product
+  - a specific API
+
+Call an API with a subscription key:
+
+```sh
+curl --header "Ocp-Apim-Subscription-Key: <my-subscription-key>" https://myApiName.azure-api.net/api/cars
+```
+### Policies
+
+- You can add policies to APIs to:
+  - cache responses (either internal cache or external Redis cache)
+  - transform documents and values (e.g JSON to XML)
+  - set limits (rate limit by client IP or subscription key)
+  - enforce security requirements
+  - call webhooks for notification or audit
+- Policies can be applied at four scoped:
+  - All
+  - Product
+  - API
+  - Operation
+
+- Policies are defined as XML documents, example:
+
+```xml
+<policies>
+    <inbound>
+        <base />
+        <check-header name="Authorization" failed-check-httpcode="401" failed-check-error-message="Not authorized" ignore-case="false">
+        </check-header>
+    </inbound>
+    <backend>
+        <base />
+    </backend>
+    <outbound>
+        <base />
+        <json-to-xml apply="always" consider-accept-header="false" parse-date="false" />
+    </outbound>
+    <on-error>
+        <base />
+    </on-error>
+</policies>
+```
+
+*`<base />` specifies when to run upper-level policies*
+
+
 ## Messaging platforms
 
 ### Messages vs. Events
