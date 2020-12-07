@@ -361,7 +361,7 @@ az deployment group show \
   ```sh
   az vm --help
 
-  # this use AI to get usage examples:
+  # this uses AI to get usage examples:
   az find `az vm`
   ```
 
@@ -419,6 +419,11 @@ az deployment group show \
   # create a container in the account
   az storage container create -n messages --connection-string "<connection string here>"
   ```
+
+- Tips
+  - Use `--no-wait` to move on to next command and avoid blocking
+  - It's often useful to use `--output tsv` to put the output of a command in a variable
+  - `--query` uses [JMESPath](https://jmespath.org/) to query JSON data
 
 ### PowerShell
 
@@ -1562,7 +1567,10 @@ Checklist for creating VMs
 
 - Storage
 
-  - Each VM has at least two VHDs, one for OS (`/dev/sda` on Linux), another one for temporary storage (`/mnt` on Linux, stores the swap file), and can add additional disks
+  - Each VM can have three types of disk:
+    - **OS disk** (`/dev/sda` on Linux),
+    - **Temporary disk**, is a short-term storage (`/mnt` on Linux, page files, swap files), **local to the server, NOT in a storage account**
+    - **Data disk**, for database files, website static content, app code, etc
   - VHDs are page blobs in Azure Storage
   - two options for managing the relationship between the storage account and each VHD:
     - unmanaged disks: you are responsible for the storage account, an account is capable of supporting 40 standard VHDs, it's hard to scale out
