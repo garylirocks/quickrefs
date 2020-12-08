@@ -1654,6 +1654,90 @@ sudo mkdir /data && sudo mount /dev/sdc1 /data
 - Azure Batch
   - large-scale job scheduling and compute management;
 
+### Provisioning
+
+- Custom scripts
+
+  - Imperative, you specify a custom script to be run on a VM, it can update configuration, install software, etc
+  - Doesn't work if reboot is required
+
+- Desired State Configuration
+
+  - You specify your required VM state in a configuration file
+
+- Chef
+
+  - You specify a Chef server and recipes to run
+
+- Terraform
+
+  - Infrastructure as code, you can specify whether you want to use Azure or AWS
+
+  ```
+  # Configure the Microsoft Azure as a provider
+  provider "azurerm" {
+      subscription_id = "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+      client_id       = "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+      client_secret   = "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+      tenant_id       = "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+  }
+
+  # Create a resource group
+  resource "azurerm_resource_group" "myterraformgroup" {
+      name     = "myResourceGroup"
+      location = "eastus"
+
+      tags = {
+          environment = "Terraform Demo"
+      }
+  }
+
+  # Create the virtual machine
+  resource "azurerm_virtual_machine" "myterraformvirtual machine" {
+      name                  = "myvirtual machine"
+      location              = "eastus"
+      resource_group_name   = "${azurerm_resource_group.myterraformgroup.name}"
+      network_interface_ids = ["${azurerm_network_interface.myterraformnic.id}"]
+      virtual machine_size               = "Standard_DS1_v2"
+
+      storage_os_disk {
+          name              = "myOsDisk"
+          caching           = "ReadWrite"
+          create_option     = "FromImage"
+          managed_disk_type = "Premium_LRS"
+      }
+
+      storage_image_reference {
+          publisher = "Canonical"
+          offer     = "UbuntuServer"
+          sku       = "16.04.0-LTS"
+          version   = "latest"
+      }
+
+      os_profile {
+          computer_name  = "myvirtual machine"
+          admin_username = "azureuser"
+      }
+
+      os_profile_linux_config {
+          disable_password_authentication = true
+          ssh_keys {
+              path     = "/home/azureuser/.ssh/authorized_keys"
+              key_data = "ssh-rsa AAAAB3Nz{snip}hwhaa6h"
+          }
+      }
+
+      boot_diagnostics {
+          enabled     = "true"
+          storage_uri = "${azurerm_storage_account.mystorageaccount.primary_blob_endpoint}"
+      }
+
+      tags = {
+          environment = "Terraform Demo"
+      }
+  }
+  ```
+
 
 ## Networking
 
