@@ -1854,6 +1854,81 @@ The rules engine rules are not so easy to debug, the rules takes quite a while t
   - It's a dynamic link between a record and a resource, so when the resource's IP changes, it's automatically handled;
   - Supports these record types: A, AAAA, CNAME;
 
+### VPN
+
+Different types:
+
+- **site to site**: your on-premise to vNet
+- **point to site**: your local machine to a vNet
+  ![Azure VPN point to site](images/azure_vpn-point-to-site.png)
+- **vNet to vNet**
+
+#### Point to site
+
+Follow the doc (https://docs.microsoft.com/en-us/azure/vpn-gateway/vpn-gateway-howto-point-to-site-resource-manager-portal)
+
+The following covers how to generate CA/client certificates on Linux:
+
+```sh
+# generate CA certificates
+ipsec pki --gen --outform pem > caKey.pem
+ipsec pki --self --in caKey.pem --dn "CN=VPN CA" --ca --outform pem > caCert.pem 
+
+# print certificate in base64 format (put this in Azure portal)
+openssl x509 -in caCert.pem -outform der | base64 -w0 ; echo
+```
+
+Use following script to create client cert/key for multiple users
+
+```sh
+#!/bin/bash
+
+USERS=$@
+
+create_cert_key() {
+  local PASSWORD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | head -c 16)
+  local U=$1
+
+  echo "$PASSWORD" > "${U}_key_password"
+  ipsec pki --gen --outform pem > "${U}_key.pem"
+  ipsec pki --pub --in "${U}_key.pem" | ipsec pki --issue --cacert caCert.pem --cakey caKey.pem --dn "CN=${U}" --san "${U}" --flag clientAuth --outform pem > "${U}_cert.pem"
+
+  # create a p12 bundle (need to be installed on client machine to connect to VPN)
+  openssl pkcs12 -in "${U}_cert.pem" -inkey "${U}_key.pem" -certfile caCert.pem -export -out "${U}.p12" -password "pass:${PASSWORD}"
+}
+
+
+for U in $USERS; do
+  echo "creating cert for ${U}"
+  create_cert_key "${U}"
+  mkdir "$U"
+  mv "${U}_key_password" "${U}_key.pem" "${U}_cert.pem" "${U}.p12" "${U}"
+done
+```
+
+Then you download a VPNClient package from Azure portal, extract the file, it has clients/configs for Windows, OpenVPN, etc. 
+
+  - OpenVPN on Linux
+    - make sure openvpn is installed
+    ```sh
+    sudo apt-get install openvpn network-manager-openvpn network-manager-openvpn-gnome
+    ```
+    - then create a OpenVPN connection by importing the OpenVPN config file from the package, set your cert file, key file, key password
+
+  - Windows (IKEv2)
+
+    - Open the `.p12` bundle to import client key (need to know the key password)
+    - Run the Windows client provided by Azure to create a VPN connection
+
+
+To revoke a client certificate, use the following scripts to get a client certificate's fingerprint:
+
+```sh
+a=$(openssl x509 -in my_cert.pem -fingerprint -noout)
+a=${a#*=}       # remove everthing before '='
+echo ${a//:}    # remove ':'
+```
+
 
 ## App Service
 
