@@ -589,7 +589,12 @@ netstat -lntp
 #### Port scanning
 
 ```sh
-nc -zv host.example.com 20-30
+# time out in 3 seconds
+nc -zvw3 localhost 22
+# Connection to localhost 22 port [tcp/ssh] succeeded!
+
+# scan a port range
+nc -zvw3 host.example.com 20-30
 ```
 
 #### Data transfer
