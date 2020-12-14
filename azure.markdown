@@ -972,7 +972,7 @@ Events:
 
 | Service     | Type                          | Purpose                         | When to use                              |
 | ----------- | ----------------------------- | ------------------------------- | ---------------------------------------- |
-| Service Bus | Message                       | High-value enterprise messaging | Order processing, financial transactions |
+| Service Bus | Message                       | **High-value enterprise** messaging | Order processing, financial transactions |
 | Event Grid  | Event distribution (discrete) | Reactive programming            | React to status change                   |
 | Event Hubs  | Event streaming (series)      | Big data pipeline               | Telemetry and distributed data streaming |
 
@@ -1661,17 +1661,62 @@ sudo mkdir /data && sudo mount /dev/sdc1 /data
   - Imperative, you specify a custom script to be run on a VM, it can update configuration, install software, etc
   - Doesn't work if reboot is required
 
+  ```sh
+  # run an custom script extension
+  az vm extension set \
+    --resource-group $RESOURCEGROUP \
+    --vm-name simpleLinuxVM \
+    --name customScript \
+    --publisher Microsoft.Azure.Extensions \
+    --version 2.0 \
+    --settings '{"fileUris":["https://raw.githubusercontent.com/MicrosoftDocs/mslearn-welcome-to-azure/master/configure-nginx.sh"]}' \
+    --protected-settings '{"commandToExecute": "./configure-nginx.sh"}'
+  ```
+
+  Or add the custom script extension as a resource in the template, *specify that it dependsOn the VM*, so it runs after the VM is deployed
+  ```sh
+  {
+    "name": "[concat(parameters('vmName'),'/', 'ConfigureNginx')]",
+    "type": "Microsoft.Compute/virtualMachines/extensions",
+    "apiVersion": "2018-06-01",
+    "location": "[parameters('location')]",
+    "properties": {
+      "publisher": "Microsoft.Azure.Extensions",
+      "type": "customScript",
+      "typeHandlerVersion": "2.0",
+      "autoUpgradeMinorVersion": true,
+      "settings": {
+        "fileUris": [
+          "https://raw.githubusercontent.com/MicrosoftDocs/mslearn-welcome-to-azure/master/configure-nginx.sh"
+        ]
+      },
+      "protectedSettings": {
+        "commandToExecute": "./configure-nginx.sh"
+      }
+    },
+    "dependsOn": [
+      "[resourceId('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
+    ]
+  }
+  ```
+
 - Desired State Configuration
 
   - You specify your required VM state in a configuration file
+  - PowerShell only
+  - Better to be used with Azure Automation State Configuration, otherwise you need to manage your own DSC configuration and orchestration
 
 - Chef
 
   - You specify a Chef server and recipes to run
+  - It uses a Ruby-based DSL
 
 - Terraform
 
-  - Infrastructure as code, you can specify whether you want to use Azure or AWS
+  - Infrastructure as code
+  - Supports Azure, AWS, GCP
+  - Use Hashicorp Configuration Language (HCL), also supports JSON
+  - Managed separate from Azure, you might not be able to provision some types of resources
 
   ```
   # Configure the Microsoft Azure as a provider
@@ -2434,3 +2479,17 @@ Heartbeat
 - Log alerts
 - Activity Log alerts (resource creation, deletion, etc)
 
+## CLI Cheatsheats
+
+```sh
+# list resouces
+az resource list -g learn-rg -o table
+
+# show details of a resource
+az resource show -g learn-rg \
+  --resource-type Microsoft.Network/publicIPAddresses 
+  --name simpleLinuxVMPublicIP \
+
+# delete a resource group
+az group delete -g learn-rg
+```
