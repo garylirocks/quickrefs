@@ -325,6 +325,25 @@ You usually need to use `proxy_set_header` to pass a few headers to the backend,
 - `proxy_set_header Host $host;` sets 'Host' to the original 'Host' header, otherwise `$proxy_host` is set as 'Host', 'backend' in the example above;
 - `proxy_set_header X-Forwarded-Proto https;` sets the protocol, in express it would be available as `req.protocol`;
 
+To make sure Nginx starts even when any upstream is not up, you need to either use static ip address or variable for the upstream host, see https://stackoverflow.com/a/32846603
+
+```nginx
+# a resolver directive is required if you use a variable in upstream host
+resolver 127.0.0.11 valid=30s;
+
+server {
+    listen 7009;
+    server_name _;
+
+    location / {
+      # use a variable here
+      set $upstream dummy-backend;
+      proxy_pass http://$upstream:80;   # NOTE: a trailing slash like 'http://$upstream:80/;' would cause problems !!!
+    }
+}
+```
+
+
 ### `fastcgi_split_path_info`
 
 Defines a regular expression that captures a value for the `$fastcgi_path_info` variable. The regular expression should have two captures: the first becomes a value of the `$fastcgi_script_name` variable, the second becomes a value of the `$fastcgi_path_info` variable. For example, with these settings
