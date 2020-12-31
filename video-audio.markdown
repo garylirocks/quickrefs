@@ -37,6 +37,19 @@
   ffmpeg -i gary.mp4 -crf 28 -vcodec h264 -acodec copy gary-compressed.mp4
   ```
 
+- rotate video
+
+  ```bash
+  # transpose:
+  #   0: 90 counter clockwise and vertical flip
+  #   1: 90 clockwise
+  #   2: 90 counter clockwise
+  #   3: 90 clockwise and vertical flip
+
+  # -map_metadata 0 : keep first input file's metadata
+  ffmpeg -i in.mp4 -vf "transpose=2" -map_metadata 0 out.mp4
+  ```
+
 ## Refs
 
 [How to Get Started Using FFmpeg for Transcoding](https://www.youtube.com/watch?v=1ymYwSQFodU)
