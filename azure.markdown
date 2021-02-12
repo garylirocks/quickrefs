@@ -1239,7 +1239,7 @@ az storage blob delete-batch \
 - Suitable for bulk operations, if interrupted, can resume from the point of failure;
 - Supports hierarchical containers;
 - Supports pattern matching selection;
-- *Doesn't support selection based on modification dates*
+- Use `--include-after` to only include files changed after a specific date/time;
 
 ```sh
 # upload file
@@ -1302,7 +1302,7 @@ az storage blob show -c myContainer -n 'file.txt'
 # this will make CDN don't cache this file
 az storage blob update -c myContainer -n 'file.txt' --content-cache-control 'no-cache'
 # can be done during upload as well
-az storage blob upload -c myContainer -n 'file.txt' -f file.txt -p cacheControl="no-cache" 
+az storage blob upload -c myContainer -n 'file.txt' -f file.txt -p cacheControl="no-cache"
 # using azcopy
 azcopy cp file.txt <remote-address> --cache-control 'no-cache'
 
@@ -1848,7 +1848,7 @@ It's like the Application Gateway at a global scale, plus a CDN
   - can cache content
   - a backend can be within or outside Azure
 
-Supports: 
+Supports:
   - URL-path based routing
   - health probe: determines the **proximity** and health of each backend
   - cookie-based session affinity
@@ -1879,7 +1879,7 @@ az network front-door create \
 
 The rules engine rules are not so easy to debug, the rules takes quite a while to take effect, and the doc is not so detailed or seems to be wrong in some cases.
 
-- https://docs.microsoft.com/en-us/azure/cdn/cdn-standard-rules-engine-match-conditions#url-file-name says multiple file names can be separated with a single space, but 
+- https://docs.microsoft.com/en-us/azure/cdn/cdn-standard-rules-engine-match-conditions#url-file-name says multiple file names can be separated with a single space, but
   - If URL file name 'Contains' 'xxx yyy' => matches 'https://garytest.azureedge.net/xxx%20yyy' instead of 'https://garytest.azureedge.net/xxx'
 - Some of the operators are numeric, like *Less than* or *Greater than*, example:
   - If URL file name 'Greater than' '6' => matches 'https://garytest.azureedge.net/verylongname'
@@ -1888,6 +1888,39 @@ The rules engine rules are not so easy to debug, the rules takes quite a while t
   - If URL path 'Equals' '/abc' => matches 'https://garytest.azureedge.net/abc', does not work if you set a number
 - URL path matches the whole path
 
+#### Custom domain HTTPS
+
+Although Azure Vault supports both `.pem` and `.pfx` formats for certificates, when you load it to Azure CDN, only the `.pfx` format is supported (it includes the private key, which is needed in CDN), to convert a certificate from `.pem` to `.pfx`:
+
+```sh
+openssl pkcs12 -export -out server.pfx -inkey server.key -in server.crt -certfile root_or_intermediary_cert.crt
+```
+
+Common X.509 certificate encoding formats and extensions:
+
+- Base64 (ASCII)
+  - PEM
+    - .pem
+    - .crt
+    - .ca-bundle
+  - PKCS#7
+    - .p7b
+    - .p7s
+- Binary
+  - DER
+    - .der
+    - .cer
+  - PKCS#12
+    - .pfx
+    - .p12
+
+`*.pem`, `*.crt`, `*.ca-bundle`, `*.cer`, `*.p7b`, `*.p7s` files contain one or more X.509 digital certificate files that use base64 (ASCII) encoding.
+
+A `.pfx` file, also known as PKCS #12, is a single, password protected certificate archive that **contains the entire certificate chain plus the matching private key**. Essentially it is everything that any server will need to import a certificate and private key from a single file.
+
+see:
+- https://www.ssls.com/knowledgebase/what-are-certificate-formats-and-what-is-the-difference-between-them/
+- https://blog.neilsabol.site/post/azure-cdn-custom-https-secret-contains-unsupported-content-type-x-pkcs12/
 
 ## DNS
 
@@ -1915,9 +1948,11 @@ Follow the doc (https://docs.microsoft.com/en-us/azure/vpn-gateway/vpn-gateway-h
 The following covers how to generate CA/client certificates on Linux:
 
 ```sh
+sudo apt install strongswan strongswan-pki libstrongswan-extra-plugins
+
 # generate CA certificates
 ipsec pki --gen --outform pem > caKey.pem
-ipsec pki --self --in caKey.pem --dn "CN=VPN CA" --ca --outform pem > caCert.pem 
+ipsec pki --self --in caKey.pem --dn "CN=VPN CA" --ca --outform pem > caCert.pem
 
 # print certificate in base64 format (put this in Azure portal)
 openssl x509 -in caCert.pem -outform der | base64 -w0 ; echo
@@ -1951,7 +1986,7 @@ for U in $USERS; do
 done
 ```
 
-Then you download a VPNClient package from Azure portal, extract the file, it has clients/configs for Windows, OpenVPN, etc. 
+Then you download a VPNClient package from Azure portal, extract the file, it has clients/configs for Windows, OpenVPN, etc.
 
   - OpenVPN on Linux
     - make sure openvpn is installed
@@ -2429,7 +2464,7 @@ In Node, Azure provides packages to access Vault secrets:
   - logs
 - Functions: analysis, alerting, autoscaling, streaming to external systems
 - Collects data automatically, can be extended by:
-  - Enabling diagnostics: only get full info about a resource after you have enabled diagnostic logging for it, e.g. SQL Database 
+  - Enabling diagnostics: only get full info about a resource after you have enabled diagnostic logging for it, e.g. SQL Database
   - Adding an agent: e.g. install a Log Analytics agent to a VM
 - Can be used to **unify** multiple monitoring solutions:
   - Azure Application Insights and Azure Security Center store their collected data in workspace for Azure Monitor, you can then use Azure Monitor Log Analytics to interactively query the data;
@@ -2464,7 +2499,7 @@ Example:
 ```
 Events
 | where StartTime >= datetime(2018-11-01) and StartTime < datetime(2018-12-01)
-| where State == "FLORIDA"  
+| where State == "FLORIDA"
 | count
 ```
 
@@ -2487,7 +2522,7 @@ az resource list -g learn-rg -o table
 
 # show details of a resource
 az resource show -g learn-rg \
-  --resource-type Microsoft.Network/publicIPAddresses 
+  --resource-type Microsoft.Network/publicIPAddresses
   --name simpleLinuxVMPublicIP \
 
 # delete a resource group
