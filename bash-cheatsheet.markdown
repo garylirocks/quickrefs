@@ -31,6 +31,7 @@
 - [`[` vs `[[`](#-vs-)
 - [Arithmetic](#arithmetic)
 - [Array](#array)
+- [Dictionary](#dictionary)
 - [Looping](#looping)
 - [`case` statements](#case-statements)
 - [Functions](#functions)
@@ -743,6 +744,29 @@ echo ${arr[@]: -1}                  # get the last, the space is needed
 
 echo ${arr[@]:0:2}                  # start from the first, get two
 # apple banana
+```
+
+## Dictionary
+
+Bash 4+
+
+```sh
+declare -A animals=( ["cow"]="moo" ["dog"]="woof")
+
+echo "${!animals[@]}" # all keys
+# dog cow
+
+echo "${animals[@]}" # all values
+# woof moo
+
+echo "${animals[cow]}" # retrive a value
+# moo
+
+for animal in "${!animals[@]}"; do
+  echo "$animal - ${animals[$animal]}";
+done
+# dog - woof
+# cow - moo
 ```
 
 ## Looping
