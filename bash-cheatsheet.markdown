@@ -346,6 +346,18 @@ See details here: https://stackoverflow.com/a/3870055
     # hello-hello.world
     ```
 
+- String replacement
+
+    ```sh
+    a='foo'
+    echo ${a/o/X}
+    # fXo
+
+    # double slash to replace all occurrence
+    echo ${a//o/X}
+    # fXX
+    ```
+
 - Substring
 
     ```sh
