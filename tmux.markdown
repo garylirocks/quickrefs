@@ -74,6 +74,8 @@ bind-key -T copy-mode-vi 'y' send-keys -X copy-pipe-and-cancel "xclip -i -f -sel
 
     <prefix> !          # Make current pane a new window
 
+    <prefix> :setw synchronize-panes on/off          # broadcast command to all panes in the same window
+
 define custom keys to switch panes quickly and with ease:
 
     # use alt + hjkl to select panes
