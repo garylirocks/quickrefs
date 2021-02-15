@@ -1149,7 +1149,6 @@ By default, connections from clients on any network are accepted. You can restri
 - Only for Blob currently
 - Security alerts are integrated with Azure Security Center
 
-
 ## Blobs
 
 Object storage solution optimized for storing massive amounts of unstructured data, ideal for:
@@ -1802,6 +1801,115 @@ sudo mkdir /data && sudo mount /dev/sdc1 /data
 - rules evaluation starts from the **lowest priority** rule, deny rules always stop the evaluation
 
 ![network security group](images/azure_network-security-group.png)
+
+### Private Endpoints
+
+![Private endpoints for storage](images/azure_private-endpoints-for-stroage.jpg)
+
+* A private endpoint is a special network interface for an Azure service in your vNet, it gets an IP from the address range of the vNet;
+* Connection between the private endpoint and the storage service uses a private link, which traverses only Microsoft backbone network;
+* Applications in the vNet can connect to the storage service over the private endpoint seamlessly, **using the same connection string and authorization mechanisms that they would use otherwise**;
+* You DON'T need a firewall rule to allow traffic from a vNet that has a private endpoint, since the storage firewall only controls access through the public endpoint. Private endpoints instead rely on the consent flow for granting subnet access;
+* You need a separate private endpoint for each storage service in a storage account that you need to access: Blobs, Files, Static Websites, ...;
+* For RA-GRS accounts, you should create a separate private endpoint for the secondary instance;
+
+DNS resolution:
+
+Clients on a vNet using the private endpoint should use the same connection string (not using the *privatelink* URL), as clients connecting to the public endpoint. This requires DNS configuration.
+
+Out of vNet:
+
+```sh
+# before private endpoint
+garystoryagefoo.blob.core.windows.net. 78 IN CNAME blob.syd26prdstr02a.store.core.windows.net.
+blob.syd26prdstr02a.store.core.windows.net. 75 IN A 20.150.66.4
+
+# after
+garystoryagefoo.blob.core.windows.net. 120 IN CNAME garystoryagefoo.privatelink.blob.core.windows.net.
+garystoryagefoo.privatelink.blob.core.windows.net. 119 IN CNAME blob.syd26prdstr02a.store.core.windows.net.
+blob.syd26prdstr02a.store.core.windows.net. 119 IN A 20.150.66.4
+```
+
+In the vNet (private DNS auto configured):
+
+```sh
+# after
+garystoryagefoo.blob.core.windows.net. 60 IN CNAME garystoryagefoo.privatelink.blob.core.windows.net.
+garystoryagefoo.privatelink.blob.core.windows.net. 9 IN A 10.0.0.5
+```
+
+CLI example:
+
+```sh
+# get the resource id of the storage account
+id=$(az storage account show \
+      -g default-rg \
+      -n garystoryagefoo \
+      --query '[id]' \
+      -o tsv
+    )
+
+# disable private endpoint network policies for the subnet
+az network vnet subnet update \
+    --name default \
+    --resource-group default-rg \
+    --vnet-name default-vnet \
+    --disable-private-endpoint-network-policies true
+
+# create private endpoint in a vnet
+az network private-endpoint create \
+      --name myPrivateEndpoint \
+      -g default-rg \
+      --vnet-name default-vnet \
+      --subnet default \
+      --private-connection-resource-id $id \
+      --group-id blob \
+      --connection-name myConnection
+
+# create a private dns zone
+az network private-dns zone create \
+    --name "privatelink.blob.core.windows.net"
+
+# link the private dns to a vnet
+az network private-dns link vnet create \
+    --zone-name "privatelink.blob.core.windows.net" \
+    --name MyDNSLink \
+    --virtual-network default-vnet \
+    --registration-enabled false
+
+# register the private endpoint in the private dns
+az network private-endpoint dns-zone-group create \
+   --endpoint-name myPrivateEndpoint \
+   --private-dns-zone "privatelink.blob.core.windows.net" \
+   --name MyZoneGroup \
+   --zone-name storage
+```
+
+Compare private endpoint and private link service:
+
+- **Azure Private Endpoint**: Azure Private Endpoint is a network interface that connects you privately and securely to a service powered by Azure Private Link. You can use Private Endpoints to connect to an Azure PaaS service that supports Private Link or to your own Private Link Service.
+
+- **Azure Private Link Service**: Azure Private Link service is a service created by a service provider. Currently, a Private Link service can be attached to the frontend IP configuration of a Standard Load Balancer.
+
+- A Private Link service receives connections from multiple private endpoints. A private endpoint connects to one Private Link service.
+
+
+### Service endpoints
+
+![Service endpoints overview](images/azure_vnet_service_endpoints_overview.png)
+
+- A virtual network service endpoint provides the identity of your virtual network to an Azure service. Then you can secure the access to an Azure service to a vNet;
+
+- After enabling a service endpoint, the source IP addresses switch from using public IPv4 addresses to using their private IPv4 address when communicating with the service from that subnet. This switch allows you to access the services without the need for reserved, public IP addresses used in IP firewalls.
+
+- With service endpoints, DNS entries for Azure services don't change, continue to resolve to public IP addresses assigned to the Azure service. (**Different from private endpoints**)
+
+- Virtual networks and Azure service resources can be in the same or different subscriptions. Certain Azure Services (not all) such as Azure Storage and Azure Key Vault also support service endpoints across different Active Directory(AD) tenants i.e., the virtual network and Azure service resource can be in different Active Directory (AD) tenants.
+
+**Private endpoints** vs. **service endpoints**:
+
+- Private Endpoints allows you to connect to a service via a private IP address in a vNet, easily extensible to on-prem network;
+- A service endpoint remains a publicly routable IP address, scoped to subnets;
 
 ### Azure Load Balancer
 
