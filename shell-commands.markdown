@@ -31,6 +31,7 @@
     - [Port scanning](#port-scanning)
     - [Data transfer](#data-transfer)
   - [`ssh`](#ssh)
+    - [ProxyJump](#proxyjump)
 - [One liner](#one-liner)
 - [Helpful tools](#helpful-tools)
 
@@ -618,17 +619,46 @@ hello world
 
 ### `ssh`
 
-Port forwarding, any connection to local port 80 is forwarded to 'localhost:8080' on remoteHost
+Port forwarding, any connection to local port 80 is forwarded to `localhost:8080` on `remoteHost`
 
 ```sh
-ssh -L 80:localhost:8080 remoteHost
+ssh -L 80:localhost:8080 -N remoteHost
 ```
 
-Use ssh as a SOCKS server:
+Use ssh as a SOCKS proxy:
 
 ```sh
-# start a SOCKS server: localhost:8080
+# start a SOCKS proxy: localhost:8080
 ssh -fnNC -D 8080 remoteHost
+```
+
+#### ProxyJump
+
+In `~/.ssh/config`, use `ProxyJump` to SSH via a hop:
+
+```sh
+Host hop
+    User gary
+    IdentitiesOnly yes
+    IdentityFile ~/.ssh/id1.pem
+
+Host dest
+    User gary
+    HostName destHostName
+    IdentitiesOnly yes
+    IdentityFile ~/.ssh/id2.pem
+    ProxyJump hop
+```
+
+then `ssh dest` will login you to `dest` via `hop`
+
+- `id1.pem` and `id2.pem` are on local;
+- `hop` need to be able to resolve `destHostName`;
+
+Then we could also forward a local port to a port on `dest` like:
+
+```sh
+ssh -L 80:localhost:8080 -N dest
 ```
 
 
