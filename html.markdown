@@ -5,6 +5,9 @@
   - [Node classes](#node-classes)
   - [Navigation](#navigation)
     - [DOM collections](#dom-collections)
+  - [XPath](#xpath)
+    - [Common patterns](#common-patterns)
+    - [In JS](#in-js)
   - [Attributes and Properties](#attributes-and-properties)
   - [Classes and Styles](#classes-and-styles)
   - [Element Size and Scrolling](#element-size-and-scrolling)
@@ -92,6 +95,51 @@ Everything in HTML is represented by objects in the DOM tree, there are 12 types
 - Can be converted to real arrays using `Array.from()`, `...`;
 - Read-only;
 - Live, if you keep a reference to it, and add/remove nodes into DOM, they appear in the collection directly;
+
+### XPath
+
+#### Common patterns
+
+- Find elements whose class attribute contains 'foo'
+
+  ```
+  //*[contains(@class, "foo")]
+  ```
+
+- Find elements whose (or its descendants') text contains 'Foo'
+
+  ```
+  //*[contains(text(), "Foo")]
+  //*[contains(., "Foo")]
+  ```
+
+- Find elements whose own text contains 'Foo'
+
+  ```
+  //*[contains(string(), "Foo")]
+  ```
+
+- Find first `li`
+
+  ```
+  //li[1]
+  ```
+
+- Select an element who has a child div whose title is 'Foo'
+
+  ```sh
+  //*[child::div[@title="Foo"]]
+  ```
+
+#### In JS
+
+```js
+// evaluate XPATH, and specify result type to be first matching node
+const results = document.evaluate('//*[contains(@class, "foo")]', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE);
+
+// get the node
+const node = results.singleNodeValue;
+```
 
 ### Attributes and Properties
 
