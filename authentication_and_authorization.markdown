@@ -109,7 +109,7 @@ Then comes **OAuth2**, if Yelp wants to access your Gmail account, it needs to r
 - Specify scopes, redirection url etc;
 - Get a *client_id* and a *client_secret* ;
 
-It's goal is to obtain an *access_token* to access protected resources
+Its goal is to obtain an *access_token* to access protected resources
 
 - OAuth2.0 does not specify the format of *access_token*, it's up to the implementation, it can be JWT, or something else;
 - There are four flows:
