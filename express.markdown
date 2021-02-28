@@ -9,6 +9,7 @@
 - [Error Handling](#error-handling)
 - [Sub app](#sub-app)
 - [Router](#router)
+- [HTTPS](#https)
 
 ## Barebone Express app
 
@@ -227,3 +228,32 @@ router.get('/events', function (req, res, next) {
 // only requests to /calendar/* will be sent to our "router"
 app.use('/calendar', router)
 ```
+
+
+## HTTPS
+
+```js
+const express = require('express');
+const https = require('https');
+const http = require('http');
+
+const app = express();
+const options = {
+  key: fs.readFileSync('key.pem'),
+  cert: fs.readFileSync('cert.pem')
+};
+
+http.createServer(app).listen(80);
+https.createServer(options, app).listen(443);
+```
+
+This works because the `app` returned by `express()` is in fact a callback function, `app.listen()` is a convenient method for:
+
+```js
+app.listen = function () {
+  const server = http.createServer(this)
+  return server.listen.apply(server, arguments)
+}
+```
+
+In localhost, you can create your own CA, generate your own SSL cert, see: https://stackoverflow.com/a/60516812
