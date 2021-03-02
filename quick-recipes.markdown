@@ -34,6 +34,7 @@ Quick productivity tips, shortcuts, command line snippets.
 - [`resolve.conf`](#resolveconf)
 - [Search files (grep)](#search-files-grep)
 - [Hash](#hash)
+- [Self-signed SSL certs](#self-signed-ssl-certs)
 
 ## Shortcuts
 
@@ -539,7 +540,7 @@ cgroups can be used to limit a process groups resource(memory/cpu/...) usage
   search a.com b.com
   nameserver 172.24.16.11
   nameserver 10.10.39.65
-  # domain proworkflow.com
+  # domain gary.com
   ```
 
   If you try to query a non FQDN, such as `app`, then it will append domains in the `search` line to it, so it will query `app.a.com`, `app.b.com` in turn;
@@ -580,6 +581,56 @@ openssl sha1 test.txt
 - Git uses SHA1 to get a hash for each object (file, tree or commit)
 
 Similar commands, `sha256sum`, `sha384sum` and `sha512sum`, they produce 256-bit, 384-bit and 512-bit hashes respectively.
+
+
+## Self-signed SSL certs
+
+
+```sh
+# Create CA cert and key
+
+# Generate private key
+openssl genrsa -des3 -out gary_ca.key 2048
+
+# Generate root certificate
+openssl req -x509 -new -nodes -key gary_ca.key -sha256 -days 825 -out gary_ca.pem
+```
+
+```sh
+# Create self-signed cert
+
+NAME=$1 # 'localhost' or 'gary.local', or '*.gary.local"
+
+# Generate a private key
+openssl genrsa -out $NAME.key 2048
+
+# Create a certificate-signing request
+openssl req -new -key $NAME.key -out $NAME.csr
+
+# Create a config file for the extensions
+cat > $NAME.ext <<-EOF
+	authorityKeyIdentifier=keyid,issuer
+	basicConstraints=CA:FALSE
+	keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
+	subjectAltName = @alt_names
+	[alt_names]
+	DNS.1 = $NAME # Be sure to include the domain name here because Common Name is not so commonly honoured by itself
+	EOF
+
+# Create the signed certificate
+openssl x509 -req \
+  -CA gary_ca.pem \
+  -CAkey gary_ca.key \
+  -CAcreateserial \
+  -days 825 \
+  -sha256 \
+  -in $NAME.csr \
+  -extfile $NAME.ext \
+  -out $NAME.crt
+```
+
+If you want to create a wildcard certificate, use `*.gary.local` as `$NAME`, and use it when prompted for `CN` (it needs to be a properly-structured domain, something like `*.local` is not working in Chrome)
+
 
 
 [RenameUSBDrive]: [https://help.ubuntu.com/community/RenameUSBDrive]
