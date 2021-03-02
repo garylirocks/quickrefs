@@ -1933,3 +1933,9 @@ secrets:
 
   COPY ./my-app/ /home/app/       # copy over other stuff
   ```
+
+- Serve current folder using NginX
+
+  ```sh
+  docker run -v "$(pwd):/usr/share/nginx/html" -p 4000:80 nginx
+  ```
