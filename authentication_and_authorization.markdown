@@ -5,7 +5,8 @@
 - [OAuth 2](#oauth-2)
   - [History](#history)
   - [Authorization Code Flow](#authorization-code-flow)
-  - [Implicit Flow](#implicit-flow)
+  - [PKCE extension](#pkce-extension)
+  - [Implicit Flow (NOT SECURE)](#implicit-flow-not-secure)
   - [Client Credential](#client-credential)
   - [Password Flow](#password-flow)
   - [OpenID Connect](#openid-connect)
@@ -126,12 +127,83 @@ Its goal is to obtain an *access_token* to access protected resources
 ![Authorization Code Flow Code Example](images/oauth2_auth-code-flow-code-example.png)
 ![Authorization Code Grant Flow](images/oauth2_auth-code-grant-flow.png)
 
-### Implicit Flow
+
+### PKCE extension
+
+- PKCE: Proof Key for Code Exchange, an extension to the Authorization Code Flow;
+- Created because native apps can't safely use a client secret, so it uses a dynamic secret generated on the client;
+- Protects against authorization code stolen in transit;
+- Doesn't solve the problem of storing access token and refresh token in the front-end, you still need good a Content Security Policy and be aware of any third-party libraries you are using;
+- See:
+  - [OAuth 2.0 Playground](https://www.oauth.com/playground/)
+  - [Is the OAuth 2.0 Implicit Flow Dead? | Okta Developer][implicit-flow-dead]
+  - [aaronpk/pkce-vanilla-js: A demonstration of the OAuth PKCE flow in plain JavaScript](https://github.com/aaronpk/pkce-vanilla-js)
+
+
+- Steps:
+
+  Generates Code Verifier and Code Challenge
+  ```js
+  // dummy code
+  const code_verifier = getRandomString();
+  const code_challenge = base64url(sha256(code_verifier));
+  ```
+
+  Redirect to auth server, send `code_challenge`:
+
+  ```
+  https://authorization-server.com/authorize?
+       response_type=code
+      &client_id=DQbPDZTDvFUy3G2C3z9Wp5tx
+      &redirect_uri=https://www.oauth.com/playground/authorization-code-with-pkce.html
+      &scope=photo+offline_access
+      &state=zPw70UxYF_dLjn-D
+      &code_challenge=a3jxgYEML02lNWk-OQB9aTLPPon5CBoAEdEE6eO12FM
+      &code_challenge_method=S256
+  ```
+
+  Redirect back
+
+  ```
+  ?state=zPw70UxYF_dLjn-D&code=IbaAu5FBoJOkK5aeSvOA-wYhcbAN9jjDeEitijeRsUJyEt9V
+  ```
+
+  Exchange the code for token, use `code_verifier` here:
+
+  ```
+  POST https://authorization-server.com/token
+    grant_type=authorization_code
+    &client_id=DQbPDZTDvFUy3G2C3z9Wp5tx
+    &redirect_uri=https://www.oauth.com/playground/authorization-code-with-pkce.html
+    &code=IbaAu5FBoJOkK5aeSvOA-wYhcbAN9jjDeEitijeRsUJyEt9V
+    &code_verifier=47LQewk2qOLVvz0AqV5kt_BBQB60WlImDdDj0AFrsLPRGu9n
+  ```
+
+  Get back result
+
+  ```json
+  {
+    "token_type": "Bearer",
+    "expires_in": 86400,
+    "access_token": "4M2T7HkVKv-M5ouVL2HbBoTxtE7UuSdnJbWRqSRvv3Aji8cPjjtiFQiRNv5jefsY-vwtDPbS",
+    "scope": "photo offline_access",
+    "refresh_token": "jDBLg1iTwLG24380c9K5pzq3"
+  }
+  ```
+
+
+### Implicit Flow (NOT SECURE)
 
 - Suitable for SPA, static Javascript applications;
 - The Authorization server returns the *access_token* directly;
 - Take care to store the *access_token* properly;
 - There is no *client_secret*;
+- Doesn't return a refresh token (seen as too insecure), recommends short lifetime and limited scope;
+- **NOT SECURE, DEPRECATED NOW**
+  - It was a compromise, created due to browser limitations (JS couldn't do cross-origin post, which is required in the auth code flow)
+  - Browsers, browser addons, third party JS libraries can get the access token in the url
+  - see: [implicit-flow-dead]
+- Current Best Practice is to replace this with Auth Code Flow with PKCE;
 
 ![Implicit Flow Example](images/oauth2_implicit-flow-example.png)
 ![Implicit Grant](images/oauth2_implicit-grant-flow.png)
@@ -184,6 +256,9 @@ A few differences:
 
   - Cookie is still used to keep the session;
   - *access_token* and *id_token* are stored in the session on server;
+  - More secure:
+    - Tokens are saved on the server;
+    - Cookies can be limited to HTTP request only, so not exposed to rogue Javascript code;
 
   ![Example - Web app](images/oauth2_example-web-app.png)
 
@@ -193,10 +268,12 @@ A few differences:
 
   ![Example - Native mobile app](images/oauth2_example-native-mobile-app.png)
 
-- Javascript app (SPA) with API backend: implicit flow
-
-  - Tokens need to be stored properly;
+- Javascript app (SPA): authorization code flow with PKCE
+  - Implicit flow used to be recommended, but it's **deprecated** now;
+  - Tokens need to be stored properly, but actually there's no 100% secure way to store tokens, they are accessible by JS code, browser addons, etc;
 
   ![Example - SPA](images/oauth2_example-spa.png)
 
 - Microservices and APIs: client credentials flow
+
+[implicit-flow-dead]: (https://developer.okta.com/blog/2019/05/01/is-the-oauth-implicit-flow-dead)
