@@ -805,8 +805,6 @@ console.log(gary * 2);
 // 40
 ```
 
-``
-
 ## Arrays
 
 - An array is a special kind of object, the syntax `arr[index]` is esentially the same as `obj[key]`;
