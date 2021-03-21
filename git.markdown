@@ -28,7 +28,8 @@
 - [diff](#diff)
 - [checkout](#checkout)
 - [rebase](#rebase)
-- [ignore files](#ignore-files)
+- [Ignore files](#ignore-files)
+  - [Examples](#examples)
   - [Negate pattern](#negate-pattern)
 - [Hooks](#hooks)
 - [Merge & Diff](#merge--diff)
@@ -676,13 +677,15 @@ Option `-i` allows you for doing interactive rebase, you can **reorder, squash, 
 git rebase -i HEAD~5
 ```
 
-## ignore files
+## Ignore files
 
-global ignore files, `~/.gitignore`, then make it a global ignore file with:
+Set a global ignore file with
 
-    $ git config --global core.excludesfile ~/.gitignore
+```sh
+git config --global core.excludesfile ~/.gitignore
+```
 
-local ignore files, `$PROJECT/.gitignore`, `$PROJECT/info/exclude`
+Local ignore files: `$PROJECT/.gitignore`, `$PROJECT/info/exclude`
 
 Ignore an already tracked file,
 
@@ -693,6 +696,11 @@ Ignore an already tracked file,
    ```
 
 2. And add them to `.gitignore`;
+
+### Examples
+
+- `foo/bar/` ignores folder `foo/bar/` relative to the `.gitignore` file, so when the `.gitignore` is at the root, this is the same as `/foo/bar/`, to ignore `foo/bar` anywhere, use **`**/foo/bar/`**
+
 
 ### Negate pattern
 
