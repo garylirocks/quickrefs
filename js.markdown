@@ -2399,7 +2399,7 @@ If you want to use ES modules directly (without Webpack) in broswer:
 
      notExistingFunction(); // unexpected error
    } catch (e) {
-     if (e instanceof SyntaxErrorn) {
+     if (e instanceof SyntaxError) {
        // **handle known errors**
        console.log(e.name + ': ' + e.message);
      } else {
