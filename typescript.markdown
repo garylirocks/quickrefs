@@ -120,7 +120,7 @@ interface Cat {
 const aCat = { name: "Gary", colour: "white" };
 const myCat1: Cat = aCat;
 
-// Error! TypeScript do excess property checking when assigning object leterals which has excess properties
+// Error! TypeScript do excess property checking when assigning object literals which has excess properties
 const myCat2: Cat = { name: "Gary", colour: "white" };
 ```
 
