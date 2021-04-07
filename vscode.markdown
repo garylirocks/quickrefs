@@ -60,26 +60,10 @@
 
 ESLint's rules regarding code style may conflict with Prettier, to make them work together, either:
 
-- Use ESLint to run Prettier
+- (Recommended) Turn off ESLint's formatting rules that might conflict with Prettier
 
   ```sh
-  yarn add --dev prettier eslint-plugin-prettier
-  ```
-
-  `.eslintrc`
-
-  ```
-  {
-    "plugins": ["prettier"],
-    "rules": {
-      "prettier/prettier": "error"
-    }
-  }
-  ```
-
-- Turn off ESLint's formatting rules
-
-  ```sh
+  # eslint-config-prettier turns off all ESLint rules that might interfere with Prettier rules
   yarn add --dev eslint-config-prettier
   ```
 
@@ -87,7 +71,26 @@ ESLint's rules regarding code style may conflict with Prettier, to make them wor
 
   ```json
   {
-    "extends": ["prettier"]
+    "extends": ["prettier"] // configs(a set of rules) from eslint-config-prettier
+  }
+  ```
+
+- Use ESLint to run Prettier
+
+  ```sh
+  # eslint-plugin-prettier turns Prettier rules into ESLint rules
+  yarn add --dev prettier eslint-plugin-prettier
+  ```
+
+  `.eslintrc`
+
+  ```json
+  {
+    "plugins": ["prettier"],
+    "rules": {
+      // rules from eslint-plugin-prettier
+      "prettier/prettier": "error"
+    }
   }
   ```
 
