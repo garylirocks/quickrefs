@@ -7,12 +7,17 @@
   - [Extending](#extending)
   - [Function Types](#function-types)
   - [Hybrid Types](#hybrid-types)
+- [Literal Inference](#literal-inference)
+- [Assignments](#assignments)
 - [Functions](#functions)
   - [Overload](#overload)
 - [Classes](#classes)
 - [Generics](#generics)
   - [Generic Interface](#generic-interface)
   - [Generic Constraints](#generic-constraints)
+- [Interfaces vs. Type aliases](#interfaces-vs-type-aliases)
+- [Modules](#modules)
+- [Add TypeScript to a React project](#add-typescript-to-a-react-project)
 
 ## Basic Types
 
@@ -24,10 +29,10 @@
 
   ```ts
   let x: [string, number];
-  x = ["hello", 10];
+  x = ['hello', 10];
 
   console.log(x[1].substr(1)); // Error, no 'substr' for 'number'
-  x[3] = "world"; // OK, elements outside of the known indices got a union type 'string | number'
+  x[3] = 'world'; // OK, elements outside of the known indices got a union type 'string | number'
   ```
 
 - Enum
@@ -37,7 +42,7 @@
   enum Fruit {
     Apple = 10,
     Pear = 1,
-    Strawberry
+    Strawberry,
   }
 
   const myFruit = Fruit.Pear; // access using string key
@@ -50,7 +55,7 @@
   let notSure: any = 4;
   notSure.notExistMethod(); // OK
 
-  let mysticArray: any[] = [1, true, "ghost"];
+  let mysticArray: any[] = [1, true, 'ghost'];
   ```
 
 - `void`: mostly used for functions that do not return a value;
@@ -67,7 +72,7 @@
 
   // Inferred return type is never
   function fail() {
-    return error("Something failed");
+    return error('Something failed');
   }
 
   // Function returning never must have unreachable end point
@@ -84,9 +89,10 @@
 - No runtime impact, used purely by the compiler;
 
   ```ts
-  let someValue: any = "this is a string";
-
   let strLength: number = (someValue as string).length;
+
+  // convert to any type you want
+  const a = (expr as any) as T;
   ```
 
 ## Interfaces
@@ -100,11 +106,11 @@ interface Person {
 
 // use type annotation here
 function greeter(person: Person) {
-  return "Hello, " + person.firstName + " " + person.lastName;
+  return 'Hello, ' + person.firstName + ' ' + person.lastName;
 }
 
 // only the shape matters, you can pass in arguments with addtional prop 'middleName'
-const user = { firstName: "Jane", lastName: "User", middleName: "G" };
+const user = { firstName: 'Jane', lastName: 'User', middleName: 'G' };
 greeter(user);
 ```
 
@@ -117,17 +123,17 @@ interface Cat {
 }
 
 // this is fine
-const aCat = { name: "Gary", colour: "white" };
+const aCat = { name: 'Gary', colour: 'white' };
 const myCat1: Cat = aCat;
 
 // Error! TypeScript do excess property checking when assigning object literals which has excess properties
-const myCat2: Cat = { name: "Gary", colour: "white" };
+const myCat2: Cat = { name: 'Gary', colour: 'white' };
 ```
 
 Can be fixed using a type assertion:
 
 ```ts
-const myCat2: Cat = { name: "Gary", colour: "white" } as Cat;
+const myCat2: Cat = { name: 'Gary', colour: 'white' } as Cat;
 ```
 
 A better way is adding a string index signature:
@@ -154,9 +160,9 @@ interface Employee extends Person {
 }
 
 const a: Employee = {
-  firstName: "Gary",
-  lastName: "Li",
-  role: "Dev"
+  firstName: 'Gary',
+  lastName: 'Li',
+  role: 'Dev',
 };
 ```
 
@@ -172,7 +178,7 @@ interface Func {
   (a: number, b: number): number;
 }
 
-const foo: Func = function(x: number, y: number) {
+const foo: Func = function (x: number, y: number) {
   return x + y;
 };
 ```
@@ -187,11 +193,50 @@ interface Func {
 }
 
 let foo: Func;
-foo = function(x: number, y: number) {
+foo = function (x: number, y: number) {
   return x + y;
 } as Func;
 
-foo.bar = "xxx";
+foo.bar = 'xxx';
+```
+
+## Literal Inference
+
+```ts
+const req = { url: 'https://example.com', method: 'GET' };
+handleRequest(req.url, req.method);
+// Argument of type 'string' is not assignable to parameter of type '"GET" | "POST"'.
+
+// error occurs because 'method' is inferred to be a string
+// this can be fixed by
+
+const req = { url: 'https://example.com', method: 'GET' as 'GET' };
+
+// or
+handleRequest(req.url, req.method as 'GET');
+
+// or make all fields assigned literal type
+const req = { url: 'https://example.com', method: 'GET' } as const;
+```
+
+## Assignments
+
+The declared type of `x` - the type that `x` started with - is `string | number`, and assignability is always checked against the declared type
+
+```ts
+let x = Math.random() < 0.5 ? 10 : 'hello world!';
+//  ^ = let x: string | number
+x = 1;
+
+console.log(x);
+//          ^ = let x: number
+x = 'goodbye!';
+
+console.log(x);
+//          ^ = let x: string
+
+x = true;
+// Type 'boolean' is not assignable to type 'string | number'.
 ```
 
 ## Functions
@@ -205,17 +250,17 @@ function add(x: string, y: string): string;
 
 // this is not part of the overload list, it only becomes the signature if overloads list above don't exist
 function add(x: any, y: any): any {
-  if (typeof x === "number") {
+  if (typeof x === 'number') {
     return x + y;
-  } else if (typeof x === "string") {
-    return x + " " + y;
+  } else if (typeof x === 'string') {
+    return x + ' ' + y;
   }
 }
 
 add(1, 2);
-add("hello", "world");
+add('hello', 'world');
 
-add(2, "world"); // Error!
+add(2, 'world'); // Error!
 ```
 
 ## Classes
@@ -260,7 +305,7 @@ add(2, "world"); // Error!
 
   class Rhino extends Animal {
     constructor() {
-      super("Rhino");
+      super('Rhino');
     }
   }
 
@@ -271,9 +316,9 @@ add(2, "world"); // Error!
     }
   }
 
-  let animal = new Animal("Goat");
+  let animal = new Animal('Goat');
   let rhino = new Rhino();
-  let employee = new Employee("Bob");
+  let employee = new Employee('Bob');
 
   animal = rhino;
   animal = employee; // Error: 'Animal' and 'Employee' are not compatible
@@ -283,26 +328,26 @@ add(2, "world"); // Error!
 
   ```ts
   class Man {
-    static gender = "Male";
+    static gender = 'Male';
 
     constructor(public name: string) {}
 
     info() {
-      console.log("name: " + this.name);
-      console.log("gender: " + Man.gender);
+      console.log('name: ' + this.name);
+      console.log('gender: ' + Man.gender);
     }
   }
 
   // 'Man' is the class name, also the type of all instances
-  const gary: Man = new Man("Gary");
+  const gary: Man = new Man('Gary');
   console.log(gary.info());
 
   // 'Man' class itself is actually a constructor function
   // its type is 'typeof Man', it has a 'gender' property
   const alienMan: typeof Man = Man;
-  alienMan.gender = "Alien";
+  alienMan.gender = 'Alien';
 
-  const gary2: Man = new alienMan("Gary");
+  const gary2: Man = new alienMan('Gary');
   console.log(gary2.info());
   ```
 
@@ -321,13 +366,13 @@ When using this function, you can either
 - set the type explicitly:
 
   ```ts
-  let output = identity<string>("myString");
+  let output = identity<string>('myString');
   ```
 
 - or let the compiler figure out the type argument to by `string` based on the argument passed in
 
   ```ts
-  let output2 = identity("myString");
+  let output2 = identity('myString');
   ```
 
 ### Generic Interface
@@ -370,8 +415,8 @@ let myIdentity: GenericIdentityFn<number> = identity;
 
   let x = { a: 1, b: 2, c: 3, d: 4 };
 
-  getProperty(x, "a"); // okay
-  getProperty(x, "m"); // error: Argument of type 'm' isn't assignable to 'a' | 'b' | 'c' | 'd'.
+  getProperty(x, 'a'); // okay
+  getProperty(x, 'm'); // error: Argument of type 'm' isn't assignable to 'a' | 'b' | 'c' | 'd'.
   ```
 
 - Class types in generics:
@@ -406,3 +451,93 @@ let myIdentity: GenericIdentityFn<number> = identity;
   ```
 
   for any `class A`, you can type it as `new () => A`, meaning it can be `new`ed to create a `A` instance
+
+## Interfaces vs. Type aliases
+
+- They are similar, act the same for most cases
+- Interfaces are preferred, you get better error message
+- Differences:
+  - Extend types via `&`, extend interfaces via keyword `extends`
+  - Type aliases can describe any type, interfaces are for objects only
+  - Interfaces are open while types are closed, you can extend an interface by declaring it a second time
+
+```js
+type BirdType = {
+  wings: 2,
+};
+
+interface BirdInterface {
+  wings: 2;
+}
+
+const bird1: BirdType = { wings: 2 };
+const bird2: BirdInterface = { wings: 2 };
+
+// Because TypeScript is a structural type system,
+// it's possible to intermix their use too.
+
+const bird3: BirdInterface = bird1;
+
+// They both support extending other interfaces and types.
+// Type aliases do this via intersection types, while
+// interfaces have a keyword.
+type Owl = { nocturnal: true } & BirdType;
+
+interface Peacock extends BirdType {
+  colorful: true;
+  flies: false;
+}
+
+interface Kitten {
+  purrs: boolean;
+}
+
+// This extends Kitten, NOT overrides
+interface Kitten {
+  colour: string;
+}
+```
+
+## Modules
+
+- JavaScript specification declares that any JavaScript files without an `export` or top-level `await` should be considered a **script** and not a module.
+- In TypeScript, a file without any top-level `import` or `export` declarations is treated as a script whose contents are available in the global scope (and therefore to modules as well).
+- If a file doesn't have any `import` or `export`, but you want to treat it as a module, add this:
+
+  ```ts
+  export {};
+  ```
+
+Types can be exported and imported as values
+
+```ts
+// @filename: animal.ts
+export type Cat = { breed: string; yearOfBirth: number };
+
+export interface Dog {
+  breeds: string[];
+  yearOfBirth: number;
+}
+
+// @filename: app.ts
+import { Cat, Dog } from "./animal.js";
+type Animals = Cat | Dog;
+```
+
+You can also use `import type`, which allows non-TypeScript compilers like Babel to know what can be stripped
+
+```ts
+// @filename: app.ts
+import type { Cat, Dog } from "./animal.js";
+```
+
+## Add TypeScript to a React project
+
+```sh
+npm install --save-dev typescript ts-loader source-map-loader
+
+# add types
+npm install --save @types/react @types/react-dom
+```
+
+
