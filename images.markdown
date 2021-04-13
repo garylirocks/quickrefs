@@ -1,5 +1,13 @@
 # Work with images
 
+- [image info](#image-info)
+- [resize image](#resize-image)
+- [create fixed size thumbnails for images](#create-fixed-size-thumbnails-for-images)
+- [rotate an image](#rotate-an-image)
+- [show/edit/remove EXIF data](#showeditremove-exif-data)
+- [convert image format](#convert-image-format)
+- [composite, add overlay to an image](#composite-add-overlay-to-an-image)
+
 ## image info
 
     $ identify demo.jpg
@@ -57,13 +65,19 @@ when you rotate an image in Shotwell, seems like it just add an tag `Exif.Image.
 
 ## show/edit/remove EXIF data
 
-show metadata:
+```sh
+# show metadata:
+exiv2 -p a print apple.jpg
 
-    exiv2 -p a pr apple.jpg
+# delete all metadata:
+exiv2 -d a delete apple.jpg
 
-delete all metadata:
+# add/modify a field (datetime)
+exiv2 -M 'set Exif.Image.DateTime Ascii "2021:01:01 20:20:20"' modify apple.jpg
 
-    exiv2 -d a rm apple.jpg
+# delete a field
+exiv2 -M 'del Exif.Image.Copyright' modify apple.jpg
+```
 
 ## convert image format
 
