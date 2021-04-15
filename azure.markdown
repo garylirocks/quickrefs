@@ -970,11 +970,11 @@ Events:
   - Publisher has no expectation about how the event is handled
   - Can be discrete or part of series
 
-| Service     | Type                          | Purpose                         | When to use                              |
-| ----------- | ----------------------------- | ------------------------------- | ---------------------------------------- |
+| Service     | Type                          | Purpose                             | When to use                              |
+| ----------- | ----------------------------- | ----------------------------------- | ---------------------------------------- |
 | Service Bus | Message                       | **High-value enterprise** messaging | Order processing, financial transactions |
-| Event Grid  | Event distribution (discrete) | Reactive programming            | React to status change                   |
-| Event Hubs  | Event streaming (series)      | Big data pipeline               | Telemetry and distributed data streaming |
+| Event Grid  | Event distribution (discrete) | Reactive programming                | React to status change                   |
+| Event Hubs  | Event streaming (series)      | Big data pipeline                   | Telemetry and distributed data streaming |
 
 ### Service bus
 
@@ -1580,15 +1580,39 @@ Checklist for creating VMs
   - Marketplace has VM images which include popular tech stacks
   - You can create your disk image and upload to Azure storage and use it to create a VM
 
-### Create VM using CLI
+### CLI Cheatsheet
 
 ```sh
+# create a vm
 az vm create \
     --resource-group TestResourceGroup \
     --name test-wp1-eus-vm \
     --image win2016datacenter \
     --admin-username jonc \
     --admin-password aReallyGoodPasswordHere
+
+# get a table of VMs with selected columns
+az vm list \
+    -g dev \
+    --show-detail \
+    --query '[].{rg:resourceGroup,name:name,ip:privateIps,os:storageProfile.osDisk.osType,state:powerState}' \
+    --output table
+
+# Rg    Name              Ip             Os       State
+# ----  ----------------  -------------  -------  --------------
+# dev   lnx1              192.168.94.1   Linux    VM running
+# dev   web               192.168.94.2   Windows  VM deallocated
+
+# filter by name
+az vm list \
+    -g dev \
+    --show-detail \
+    --query '[?contains(name, `lnx`)].{name:name,ip:privateIps}' \
+    --output table
+
+# Name    Ip
+# ------  -------------
+# lnx1    192.168.94.31
 ```
 
 ### VM extensions
@@ -2578,13 +2602,13 @@ In Node, Azure provides packages to access Vault secrets:
   - Azure Application Insights and Azure Security Center store their collected data in workspace for Azure Monitor, you can then use Azure Monitor Log Analytics to interactively query the data;
 - Use Data Collector API to send data from your custom code
 
-| logs | metrics |
-| --- | --- |
-| text (can have numeric fields) | numeric values |
-| sporadic | at fixed interval |
-| record event | describe some aspect of a system |
-| identify root causes | performance, alerting |
-| Log Analytics workspace | time-series database |
+| logs                           | metrics                          |
+| ------------------------------ | -------------------------------- |
+| text (can have numeric fields) | numeric values                   |
+| sporadic                       | at fixed interval                |
+| record event                   | describe some aspect of a system |
+| identify root causes           | performance, alerting            |
+| Log Analytics workspace        | time-series database             |
 
 ### Azure Security Center
 
