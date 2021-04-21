@@ -241,6 +241,51 @@ x = true;
 
 ## Functions
 
+Different ways to describe a function
+
+- Function type expression
+
+  ```ts
+  function greeter(fn: (a: string) => void) {
+    fn("Hello, World");
+  }
+  ```
+
+- Use a type alias to name a function type
+
+  ```ts
+  type GreetFunction = (a: string) => void;
+
+  function greeter(fn: GreetFunction) {
+    // ...
+  }
+  ```
+
+- Functions can have properties
+
+  ```ts
+  type DescribableFunction = {
+    description: string;
+    (someArg: number): boolean;
+  };
+
+  function doSomething(fn: DescribableFunction) {
+    console.log(fn.description + " returned " + fn(6));
+  }
+  ```
+
+- Construct signature
+
+  ```ts
+  type SomeConstructor = {
+    new (s: string): SomeObject;
+  };
+
+  function fn(ctor: SomeConstructor) {
+    return new ctor("hello");
+  }
+  ```
+
 ### Overload
 
 ```ts
