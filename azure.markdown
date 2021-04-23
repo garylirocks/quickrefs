@@ -1,5 +1,126 @@
 # Azure
 
+- [Overview](#overview)
+  - [Deployment model](#deployment-model)
+  - [Service model](#service-model)
+  - [Compute](#compute)
+  - [Storage](#storage)
+  - [Database services](#database-services)
+  - [Networking](#networking)
+  - [Big Data](#big-data)
+  - [AI](#ai)
+  - [DevOps](#devops)
+- [Resource management](#resource-management)
+  - [Azure AD](#azure-ad)
+  - [Tenant](#tenant)
+  - [Management groups](#management-groups)
+  - [Subscription](#subscription)
+  - [Resource group](#resource-group)
+  - [Tags](#tags)
+  - [Policy](#policy)
+  - [Locks](#locks)
+  - [Resource Group Manager (RGM)](#resource-group-manager-rgm)
+  - [Resource Manager templates](#resource-manager-templates)
+- [Azure management tools](#azure-management-tools)
+  - [CLI](#cli)
+  - [PowerShell](#powershell)
+- [Azure AD](#azure-ad-1)
+  - [Compare with Active Directory](#compare-with-active-directory)
+  - [Best practices](#best-practices)
+  - [Providing identities to services](#providing-identities-to-services)
+  - [Role-based access control (RBAC)](#role-based-access-control-rbac)
+- [Business Process Automation](#business-process-automation)
+- [Azure Functions](#azure-functions)
+  - [Durable functions](#durable-functions)
+- [Logic Apps](#logic-apps)
+- [API Management](#api-management)
+  - [Policies](#policies)
+  - [Client certificates](#client-certificates)
+- [Messaging platforms](#messaging-platforms)
+  - [Messages vs. Events](#messages-vs-events)
+  - [Service bus](#service-bus)
+  - [Storage Queues](#storage-queues)
+  - [Event Grid](#event-grid)
+  - [Event Hub](#event-hub)
+- [Azure Storage](#azure-storage)
+  - [Files](#files)
+  - [Organization](#organization)
+  - [Security](#security)
+    - [Access keys](#access-keys)
+    - [Shared access signature (SAS)](#shared-access-signature-sas)
+    - [Network access](#network-access)
+    - [Advanced threat protection](#advanced-threat-protection)
+- [Blobs](#blobs)
+  - [CLI](#cli-1)
+  - [AzCopy](#azcopy)
+  - [.NET Storage Client library](#net-storage-client-library)
+  - [Access tiers](#access-tiers)
+  - [Properties and Metadata](#properties-and-metadata)
+  - [Concurrency](#concurrency)
+- [Cosmos DB](#cosmos-db)
+  - [Common CLI operations](#common-cli-operations)
+  - [Request unit](#request-unit)
+  - [Partitioning](#partitioning)
+  - [Indexing](#indexing)
+  - [Stored procedures](#stored-procedures)
+  - [User-defined functions (UDF)](#user-defined-functions-udf)
+  - [Global distribution](#global-distribution)
+    - [Multi-region writes](#multi-region-writes)
+  - [Consistency levels](#consistency-levels)
+- [Redis Caching](#redis-caching)
+- [VMs](#vms)
+  - [CLI Cheatsheet](#cli-cheatsheet)
+  - [VM extensions](#vm-extensions)
+  - [Initialize data disks](#initialize-data-disks)
+  - [Availability options](#availability-options)
+  - [Scaling](#scaling)
+  - [Provisioning](#provisioning)
+  - [Use AAD for Linux VM authentication](#use-aad-for-linux-vm-authentication)
+- [Networking](#networking-1)
+  - [Virtual network](#virtual-network)
+  - [Network security group (NSG)](#network-security-group-nsg)
+  - [Private Endpoints](#private-endpoints)
+  - [Service endpoints](#service-endpoints)
+  - [Azure Load Balancer](#azure-load-balancer)
+  - [Application Gateway](#application-gateway)
+  - [Traffic Manager](#traffic-manager)
+  - [Front Door](#front-door)
+  - [CDN](#cdn)
+    - [Standard rules engine notes](#standard-rules-engine-notes)
+    - [Custom domain HTTPS](#custom-domain-https)
+- [DNS](#dns)
+  - [VPN](#vpn)
+    - [Point to site](#point-to-site)
+- [App Service](#app-service)
+  - [App Service plans](#app-service-plans)
+    - [SKUs](#skus)
+  - [Deployment](#deployment)
+  - [Deployment slots](#deployment-slots)
+    - [Swap](#swap)
+  - [Scaling](#scaling-1)
+  - [Node app](#node-app)
+- [Docker Container Registry](#docker-container-registry)
+  - [Tasks feature](#tasks-feature)
+  - [Authentication options](#authentication-options)
+    - [Individual AD identity](#individual-ad-identity)
+    - [Service principal](#service-principal)
+  - [Replication](#replication)
+- [Container Instance](#container-instance)
+- [Key Vault](#key-vault)
+  - [Concepts](#concepts)
+  - [Usage](#usage)
+  - [Security](#security-1)
+  - [Vault authentication](#vault-authentication)
+  - [Example](#example)
+  - [Best practices](#best-practices-1)
+- [Monitoring](#monitoring)
+  - [Azure Monitor](#azure-monitor)
+  - [Azure Security Center](#azure-security-center)
+  - [Azure Application Insights](#azure-application-insights)
+  - [Kusto Query Language](#kusto-query-language)
+  - [Alerting](#alerting)
+- [CLI Cheatsheats](#cli-cheatsheats)
+
 ## Overview
 
 ### Deployment model
@@ -401,23 +522,31 @@ az deployment group show \
 
   ```sh
   # set default group and location
-  az configure --defaults group=<groupName> location=australiasoutheast
+  az configure \
+    --defaults group=<groupName> location=australiasoutheast
 
   # === START create / manage a storage account
   # get a random account name
   STORAGE_NAME=storagename$RANDOM
 
   # create a storage account
-  az storage account create --name $STORAGE_NAME --sku Standard_RAGRS --encryption-service blob
+  az storage account create \
+    --name $STORAGE_NAME \
+    --sku Standard_RAGRS \
+    --encryption-service blob
 
   # list access keys
-  az storage account keys list --account-name $STORAGE_NAME
+  az storage account keys list \
+    --account-name $STORAGE_NAME
 
   # get connection string (key1 is in the string)
-  az storage account show-connection-string -n $STORAGE_NAME
+  az storage account show-connection-string \
+    -n $STORAGE_NAME
 
   # create a container in the account
-  az storage container create -n messages --connection-string "<connection string here>"
+  az storage container create \
+    -n messages \
+    --connection-string "<connection string here>"
   ```
 
 - Tips
@@ -637,6 +766,19 @@ RBAC allows you to grant access to Azure resources that you control. You do this
 Role Assignment
 
 ![Role Assignment](images/azure_rbac-role-assignment.png)
+
+  ```sh
+  # create a role assignment
+  az role assignment create \
+      --role "Virtual Machine Administrator Login" \
+      --assignee $userPrincipalName \
+      --scope $vm
+
+  # query role assignment within a scope
+  az role assignment list \
+      --assignee $userPrincipalName \
+      --scope $vm
+  ```
 
 ## Business Process Automation
 
@@ -1805,6 +1947,44 @@ sudo mkdir /data && sudo mount /dev/sdc1 /data
       }
   }
   ```
+
+### Use AAD for Linux VM authentication
+
+1. Install extension to VM
+
+    ```sh
+    az vm extension set \
+        --publisher Microsoft.Azure.ActiveDirectory.LinuxSSH \
+        --name AADLoginForLinux \
+        --resource-group myResourceGroup \
+        --vm-name myVM
+    ```
+
+1. Assign roles
+
+    To login via SSH, a user needs to have either 'Virtual Machine Administrator Login' or 'Virtual Machine User Login' role
+
+    ```sh
+    userPrincipalName=$(az ad signed-in-user show --query userPrincipalName -o tsv)
+    vm=$(az vm show --resource-group myResourceGroup --name myVM --query id -o tsv)
+
+    az role assignment create \
+        --role "Virtual Machine Administrator Login" \
+        --assignee $userPrincipalName \
+        --scope $vm
+    ```
+
+1. Login
+   
+    Now you can login with
+
+    ```sh
+    ssh -l gary@outlook.com <vm-ip>
+    ```
+
+    - You have your own uid, gid, home directory, etc;
+    - If you have the `Virtual Machine Administrator Login` role, you would be in `aad_admins` group, which has **sudo** permission (`%aad_admins ALL=(ALL) NOPASSWD:ALL` is in file `/etc/sudoers.d/aad_admins`)
+
 
 
 ## Networking
