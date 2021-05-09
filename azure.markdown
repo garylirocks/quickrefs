@@ -81,6 +81,7 @@
   - [Network security group (NSG)](#network-security-group-nsg)
   - [Private Endpoints](#private-endpoints)
   - [Service endpoints](#service-endpoints)
+  - [Network Peering](#network-peering)
   - [Azure Load Balancer](#azure-load-balancer)
   - [Application Gateway](#application-gateway)
   - [Traffic Manager](#traffic-manager)
@@ -2114,6 +2115,19 @@ Compare private endpoint and private link service:
 
 - Private Endpoints allows you to connect to a service via a private IP address in a vNet, easily extensible to on-prem network;
 - A service endpoint remains a publicly routable IP address, scoped to subnets;
+
+### Network Peering
+
+Connect two virtual networks together, resources in one network can communicate with resources in another network.
+
+- The networks can be in different subscriptions, AAD tenants, or regions
+- Traffic between networks is private, on Microsoft backbone network
+- A VPN gateway in one network allows you access to its peered networks
+- Azure Bastion in hub network can be used to access VMs in spoke network (networks must be in same tenant)
+- Spoke networks can **NOT** connect with each other by default through the hub network, you need to add peering between the spokes or consider using user defined routes (UDRs)
+
+![network peering in hub-spoke topology](images/azure_hub-spoke-network-topology.png)
+
 
 ### Azure Load Balancer
 
