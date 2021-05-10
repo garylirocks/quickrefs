@@ -5,6 +5,7 @@
 - [Actions](#actions)
   - [Action definition](#action-definition)
   - [Workflow file](#workflow-file)
+  - [GitHub Script](#github-script)
 
 ## GitHub Flow
 
@@ -148,14 +149,14 @@ on:
     types: [rerequested, requested_action]
 ```
 
-Conditionals:
+Both jobs and steps can have `if` conditions:
 
 ```yaml
 name: CI
 on: push
 jobs:
   prod-check:
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' # job condition
     runs-on: ubuntu-latest
     steps:
       ...
@@ -170,6 +171,11 @@ jobs:
     # get an array of label names like ["bug", "stage", "peacock"] of the pull request that triggered this job
     runs-on: ubuntu-latest
     steps:
+      - name: Frist step
+      - name: Another step
+        if: contains(github.event.issue.labels.*.name, 'bug') # step condition
+        run: |
+          echo "A bug report"
       ...
 ```
 
@@ -225,7 +231,41 @@ test:
       CI: true
 ```
 
+### GitHub Script
 
+It is a special action (`actions/github-script`) that allows using octokit/rest.js directly in a workflow file.
 
+- `octokit`: official collection of GitHub API clients
+- `rest.js`: included in octokit, JavaScript client for GitHub rest API
 
+GitHub Script provides these variables:
 
+- `github`: rest.js client
+- `context`: workflow context object
+
+Example:
+
+```yaml
+# add a comment to newly opened issues
+name: Learning GitHub Script
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  comment:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/github-script@v2
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: "🎉 You've created this issue comment using GitHub Script!!!"
+            })
+```
