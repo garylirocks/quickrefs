@@ -1951,17 +1951,23 @@ sudo mkdir /data && sudo mount /dev/sdc1 /data
 
 ### Use AAD for Linux VM authentication
 
-1. Install extension to VM
+1. Insure System assigned managed identity is enabled:
+
+    ```sh
+    az vm identity assign -g myResourceGroup -n myVm
+    ```
+
+2. Install extension to VM
 
     ```sh
     az vm extension set \
-        --publisher Microsoft.Azure.ActiveDirectory.LinuxSSH \
-        --name AADLoginForLinux \
-        --resource-group myResourceGroup \
-        --vm-name myVM
+          --publisher Microsoft.Azure.ActiveDirectory \
+          --name AADSSHLoginForLinux \
+          --resource-group myResourceGroup \
+          --vm-name myVM
     ```
 
-1. Assign roles
+3. Assign roles
 
     To login via SSH, a user needs to have either 'Virtual Machine Administrator Login' or 'Virtual Machine User Login' role
 
@@ -1975,12 +1981,19 @@ sudo mkdir /data && sudo mount /dev/sdc1 /data
         --scope $vm
     ```
 
-1. Login
+4. Login
    
-    Now you can login with
+    Now you can login with Az CLI
 
     ```sh
-    ssh -l gary@outlook.com <vm-ip>
+    # ensure the ssh extension is installed
+    az extension add --name ssh
+
+    # login with az ssh
+    az ssh vm -n myVM -g myGroup
+
+    # OR export configuration to use your usual ssh client
+    az ssh config --file ~/.ssh/config -n myVM -g myGroup
     ```
 
     - You have your own uid, gid, home directory, etc;
