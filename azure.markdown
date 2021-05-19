@@ -120,7 +120,6 @@
   - [Azure Application Insights](#azure-application-insights)
   - [Kusto Query Language](#kusto-query-language)
   - [Alerting](#alerting)
-- [CLI Cheatsheats](#cli-cheatsheats)
 
 ## Overview
 
@@ -478,79 +477,38 @@ az deployment group show \
 
 ### CLI
 
-- Get help
+Example
 
-  ```sh
-  az vm --help
+```sh
+# set default group and location
+az configure \
+  --defaults group=<groupName> location=australiasoutheast
 
-  # this uses AI to get usage examples:
-  az find `az vm`
-  ```
+# === START create / manage a storage account
+# get a random account name
+STORAGE_NAME=storagename$RANDOM
 
-- Connect and config
+# create a storage account
+az storage account create \
+  --name $STORAGE_NAME \
+  --sku Standard_RAGRS \
+  --encryption-service blob
 
-  ```sh
-  az login
+# list access keys
+az storage account keys list \
+  --account-name $STORAGE_NAME
 
-  # list subscriptions
-  az account list
+# get connection string (key1 is in the string)
+az storage account show-connection-string \
+  -n $STORAGE_NAME
 
-  # set active subscription
-  az account set --subscription gary-default
+# create a container in the account
+az storage container create \
+  -n messages \
+  --connection-string "<connection string here>"
+```
 
-  # list resource groups
-  az group list
-
-  # set default group and location
-  az configure \
-    --defaults group=<groupName> location=australiasoutheast
-
-  # list default configs
-  az configure -l
-  ```
-
-- Create
-
-  ```sh
-  # create a resource group, <location> here is only for group metadata, resources in the group can be in other locations
-  az group create --name <name> --location <location>
-
-  # verify
-  az group list
-  ```
-
-- Full example
-
-  ```sh
-  # set default group and location
-  az configure \
-    --defaults group=<groupName> location=australiasoutheast
-
-  # === START create / manage a storage account
-  # get a random account name
-  STORAGE_NAME=storagename$RANDOM
-
-  # create a storage account
-  az storage account create \
-    --name $STORAGE_NAME \
-    --sku Standard_RAGRS \
-    --encryption-service blob
-
-  # list access keys
-  az storage account keys list \
-    --account-name $STORAGE_NAME
-
-  # get connection string (key1 is in the string)
-  az storage account show-connection-string \
-    -n $STORAGE_NAME
-
-  # create a container in the account
-  az storage container create \
-    -n messages \
-    --connection-string "<connection string here>"
-  ```
-
-- Tips
+Tips
   - Use `--no-wait` to move on to next command and avoid blocking
   - It's often useful to use `--output tsv` to put the output of a command in a variable
   - `--query` uses [JMESPath](https://jmespath.org/) to query JSON data
@@ -2852,18 +2810,3 @@ Heartbeat
 - Metric alerts
 - Log alerts
 - Activity Log alerts (resource creation, deletion, etc)
-
-## CLI Cheatsheats
-
-```sh
-# list resouces
-az resource list -g learn-rg -o table
-
-# show details of a resource
-az resource show -g learn-rg \
-  --resource-type Microsoft.Network/publicIPAddresses
-  --name simpleLinuxVMPublicIP \
-
-# delete a resource group
-az group delete -g learn-rg
-```
