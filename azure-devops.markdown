@@ -3,7 +3,6 @@
 - [Overview](#overview)
 - [Pipelines](#pipelines)
   - [Multistage pipeline](#multistage-pipeline)
-  - [Environments](#environments)
   - [Templates](#templates)
   - [Agent pools](#agent-pools)
 
@@ -150,9 +149,20 @@ stages:
         ...
 ```
 
-### Environments
+- An environment is created automatically if it does not exist, you can create one manually and add approvals and checks to it;
+- Useful stage conditions:
 
-Environment can have releasing criteria: approvals and checks
+  ```yaml
+  dependsOn:    # depends on 2 stages
+    - Stage1
+    - Stage2
+  condition: |  # Stage1 need to be successful, Stage2 could be skipped
+    and
+    (
+      succeeded('Stage1'),
+      in(dependencies.Stage2.result, 'Succeeded', 'Skipped')
+    )
+  ```
 
 
 ### Templates
