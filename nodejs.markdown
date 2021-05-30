@@ -1182,10 +1182,10 @@ yarn outdated
 yarn upgrade-interactive pkg --latest
 yarn upgrade pkg1@latest pkg2@latest
 
-# yarn upgrade has some issues:
-#   it doesn't change the version in package.json
-#   if you run it on a dev dependency, it's added to dependency
-# you can also just use `yarn add` to upgrade a package
+# 'yarn upgrade' has some issues:
+#   - it doesn't change the version in package.json
+#   - if you run it on a package in 'devDependencies', it's added to 'dependencies'
+# as an alternative, you could just use `yarn add` to upgrade a package
 yarn add pkg@latest
 ```
 
