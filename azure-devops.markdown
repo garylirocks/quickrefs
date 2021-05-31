@@ -5,6 +5,7 @@
   - [Multistage pipeline](#multistage-pipeline)
   - [Templates](#templates)
   - [Agent pools](#agent-pools)
+- [Tests](#tests)
 
 
 ## Overview
@@ -111,7 +112,7 @@ stages:
         eq(variables['Build.SourceBranchName'], variables['releaseBranchName'])
       )
     jobs:
-      - deployment: Deploy  # a shortcut for a job named 'Deploy' ?
+      - deployment: Deploy  # a deployment job
         pool:
           vmImage: "ubuntu-18.04"
         environment: dev    # an environment is created automatically if it doesn't exist
@@ -140,6 +141,15 @@ stages:
         environment: test
         ...
 
+      - job: RunUITests
+        dependsOn: Deploy # Depends on another job in the same stage
+        displayName: 'Run UI tests'
+        pool:
+          vmImage: 'windows-2019'
+        variables:
+          - group: 'Release'
+        ...
+
   - stage: "Staging"
     displayName: "Deploy to the staging environment"
     dependsOn: Test
@@ -150,6 +160,7 @@ stages:
 ```
 
 - An environment is created automatically if it does not exist, you can create one manually and add approvals and checks to it;
+- Jobs in a stage can run in any order or in parallel, use `dependsOn` to make them run in correct order
 - Useful stage conditions:
 
   ```yaml
@@ -225,3 +236,18 @@ Use self-hosted agent:
     ```
   - Generate a PAT (Personal Access Token) to register your hosted agent in a pool
   - You need to install the agent software on your machine, and start a daemon service to connect to the pool
+
+
+## Tests
+
+- Functional tests
+  - **Smoke testing**: most basic functionality, eg. `curl` to verify a web page returns 200
+  - **Unit testing**: test individual function and method
+  - **Integration testing**: multiple components work together, eg. add products to shoping car and then check out
+  - **Regression testing**: make sure one component change doesn't affect other components, might involve just running unit tests and integration test for every change
+  - **Sanity testing**: usually manually verify the software appears to be working before more thorough testing
+  - **UI testing**: verify UI displays correctly and a sequence of interactions leads to expected result
+  - **Usability testing**: usually manual, verify the software is intuitive
+  - **User acceptance testing (UAT)**: typically done by real end users
+
+- Nonfunctional tests
