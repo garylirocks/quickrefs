@@ -6,6 +6,7 @@
   - [Templates](#templates)
   - [Agent pools](#agent-pools)
 - [Tests](#tests)
+- [Deployment patterns](#deployment-patterns)
 
 
 ## Overview
@@ -251,3 +252,53 @@ Use self-hosted agent:
   - **User acceptance testing (UAT)**: typically done by real end users
 
 - Nonfunctional tests
+
+  - Performance testing
+    - **Load testing**: performance at the upper limit of its SLA
+    - **Stress testing**: under abnormally heavy loads, whether the application would fail gracefully
+  - Security testing
+    - **Penetration testing**: vulnerabilities
+    - **Compliance testing**: eg. PCI, HIPPA
+
+## Deployment patterns
+
+Deployment pattern is an automated way to smoothly roll out new application features to users. It
+  - helps you minimize downtime 
+  - may enable you to roll out new features progressively
+  - give you a chance to run tests that should happen in production
+
+Common patterns:
+
+- Blue-green deployment
+
+  ![Deployment Pattern Blue-green](images/azure-devops_blue-green-deployment.png)
+
+  - switch the router to release
+  - easy to roll back
+
+- Canary releases
+
+  ![Deployment Pattern Canary](images/azure-devops_canary-deployment.png)
+
+  - expose features to a small subset of user before make it available to everyone
+
+- Feature toggles
+
+  ![Deployment Pattern Feature toggles](images/azure-devops_feature-toggles.png)
+
+- Dark launches
+
+  ![Deployment Pattern Dark launches](images/azure-devops_dark-launches.png)
+
+  - similar to canary release, but don't highlight new features
+
+- A/B testing
+
+  ![Deployment Pattern a-b testing](images/azure-devops_a-b-testing.png)
+
+  - randomly show users two or more variations of a page, then use statistical analysis to decide which one performs better
+
+- Progressive-exposure deployment
+
+  ![Deployment Pattern progressive exposure](images/azure-devops_progressive-exposure-deployment.png)
+
