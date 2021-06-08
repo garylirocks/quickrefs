@@ -6,6 +6,8 @@
   - [Configurations](#configurations)
   - [Groups and resources](#groups-and-resources)
   - [VM](#vm)
+  - [Network](#network)
+    - [DNS](#dns)
 
 ## Cheatsheats
 
@@ -93,3 +95,18 @@ az vm create \
 # so you could login to it using
 ssh vm-public-ip
 ```
+
+### Network
+
+#### DNS
+
+```sh
+az network dns zone list \
+    --output table
+
+az network dns record-set list \
+    -g <resource-group> \
+    -z <zone-name> \
+    --output table
+```
+

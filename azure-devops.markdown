@@ -16,7 +16,7 @@
 To integrate with GitHub: 
 
 - Azure Pipelines has an OAuth App and a GitHub App
-  - the OAuth App allows it read your repo, update your code on behalf of you from within Azure
+  - the OAuth App allows it read your repo, update `azure-pipelines.yml` file directly from within Azure
   - the GitHub App triggers the pipeline
 
 - The YAML file `azure-pipelines.yml` in your repo defines the trigger, the build agent, and the pipeline steps.
