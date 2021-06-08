@@ -5,7 +5,9 @@
   - [Pod deployment](#pod-deployment)
 - [Networking](#networking)
   - [Kubernetes services](#kubernetes-services)
+  - [Ingress](#ingress)
 - [Storage](#storage)
+- [Manifest files](#manifest-files)
 - [MicroK8s](#microk8s)
   - [Install a web server on a cluster](#install-a-web-server-on-a-cluster)
 
@@ -118,19 +120,23 @@ With `kubectl`, there are four options to manage the deployment of pods:
 
 Kubernetes offers several networking options that you can install to configure networking, including Antrea, Cisco Application Centric Infrastructure, Cilium, Flannel, Kubenet, VMware NSX-T
 
+
 ### Kubernetes services
+
+![Kubernetes service](images/kubernetes_service.png)
 
 ***Service** here is different from the term in Docker Swarm*
 
-- Is a Kubernetes object that provides stable networking for pods
-- Enables communication between nodes, pods and users of your app, both internal and external
+- A Kubernetes service acts as a load balancer and redirects traffic to specific ports of specified pods by using port-forwarding rules
 - Gets assigned an IP address from a service cluster's IP range (e.g. 10.96.0.0/12), a DNS name and an IP port
+- The service uses the same `selector` key as deployments to select and group resources with matching labels into one single IP
+- It needs four pieces of information to route traffic: `Service port`, `Network protocol`, `Target resource`, `Resource port` 
 
-Three types of services:
+Services can be of several types, each changes the behavior of the applications selected by the service:
 
-- **ClusterIP** the address assigned to a service makes the service availabel to a set of services inside the cluster
-- **NodePort** 
-- **LoadBalancer** you typically configure load balancers when you use cloud providers, in this case, traffic from the external load balancer is directed to the pods running your app
+- **ClusterIP** default value, expooses the applications internally only
+- **NodePort** exposes the service externally, assigns each node a static port that responds to that service. When accessed through `nodeIp:port`, the node automatically redirects the request to an internal service of the `ClusterIP` type
+- **LoadBalancer** you typically configure load balancers when you use cloud providers (eg. Azure Load Balancer), automatically creates a `NodePort` service to which the load balancer's traffic is redirected and a `ClusterIP` service to forward internally
 
 ![service labels](images/kubernetes_service-with-selector.svg)
 
@@ -138,12 +144,130 @@ You set the selector label in a service definition to match the pod label define
 
 The service here `drone-front-end-service` will group only the pods that match the label `app: front-end-nginx`
 
+```yaml
+#service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: contoso-website
+
+spec:
+  type: ClusterIP           # service type
+  selector:
+    app: contoso-website
+  ports:
+    - port: 80              # SERVICE exposed port
+      name: http            # SERVICE port name
+      protocol: TCP         # The protocol the SERVICE will listen to
+      targetPort: http      # Port to forward to in the pod
+```
+
+```sh
+kubectl apply -f ./service.yaml
+
+# show the service
+kubectl get service contoso-website
+```
+
+### Ingress
+
+Ingress exposes routes for HTTP and HTTPS traffic from outside a cluster to services inside the cluster. 
+
+So the traffic goes like this: Ingress -> service -> pod
+
+![Ingress](images/kubernetes_ingress.png)
+
+```yaml
+#ingress.yaml
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: contoso-website
+  annotations:       # Use the HTTP application routing add-on
+    kubernetes.io/ingress.class: addon-http-application-routing
+spec:
+  rules:
+    - host: contoso.<uuid>.<region>.aksapp.io
+      http:
+        paths:
+          - backend: # How the ingress will handle the requests
+              serviceName: contoso-website # Which service the request will be forwarded to
+              servicePort: http # Which port in that service
+            path: / # Which path is this rule referring to
+```
+
+```sh
+kubectl apply -f ./ingress.yaml
+
+kubectl get ingress contoso-website
+```
+
 ## Storage
 
 Kubernetes volume's lifetime matches the pod's lifetime, this means a volume outlives the containers that run in the pod.
 
 - options to provision persistent storage with the use of *PersistentVolumes*
 - request specific storage for pods by using *PersistentVolumeClaims*
+
+
+## Manifest files
+
+Structure of manifest files differs depending on the type of resource that you create. They share some common instructions:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: contoso-website # This will be the name of the deployment
+```
+
+A sample deployment manifest file, it uses `label` to find and group pods
+
+```yaml
+# deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: contoso-website
+spec:
+  selector: # Define the wrapping strategy
+    matchLabels: # Match all pods with the defined labels
+      app: contoso-website # Labels follow the `name: value` template
+
+  template: # This is the template of the pod inside the deployment
+    metadata:
+      labels:
+        app: contoso-website
+    spec:
+      containers:         # containers inside a pod
+        - image: mcr.microsoft.com/mslearn/samples/contoso-website
+          name: contoso-website
+          resources:
+            requests:     # minimum resource requirement
+              cpu: 100m
+              memory: 128Mi
+            limits:       # maximum resource requirement
+              cpu: 250m
+              memory: 256Mi
+          ports:
+            - containerPort: 80
+              name: http
+```
+
+To deploy a file:
+
+```sh
+kubectl apply -f ./deployment.yaml
+
+# get deployment
+kubectl get deploy contoso-website
+# NAME              READY   UP-TO-DATE   AVAILABLE   AGE
+# contoso-website   1/1     1            1           44s
+
+kubectl get pods
+# NAME                               READY   STATUS    RESTARTS   AGE
+# contoso-website-6d959cf499-s2b8s   1/1     Running   0          53s
+```
 
 
 ## MicroK8s
