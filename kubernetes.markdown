@@ -8,6 +8,9 @@
   - [Ingress](#ingress)
 - [Storage](#storage)
 - [Manifest files](#manifest-files)
+- [Helm](#helm)
+  - [Helm repos](#helm-repos)
+  - [Install Helm Chart](#install-helm-chart)
 - [MicroK8s](#microk8s)
   - [Install a web server on a cluster](#install-a-web-server-on-a-cluster)
 
@@ -267,6 +270,107 @@ kubectl get deploy contoso-website
 kubectl get pods
 # NAME                               READY   STATUS    RESTARTS   AGE
 # contoso-website-6d959cf499-s2b8s   1/1     Running   0          53s
+```
+
+
+## Helm
+
+![Deploy with yaml files](images/kubernetes_deploy-with-yaml-files.svg)
+
+Without Helm, you need to manage multiple hardcoded YAML files for each environment, this is cumbersome.
+
+Helm allows you **to create templated YAML** script files to manage your application's deployment. These files allow you to specify all dependencies, configuration mapping, and secrets.
+
+![Helm Components](images/kubernetes_helm-components.svg)
+
+Helm client implements a Go language-based template engine, which creates manifest files by combining the templates in `templates/` with values from `chart.yaml` and `values.yaml`
+
+![Helm chart processing](images/kubernetes_helm-chart-process.svg)
+
+An example `Chart.yaml`
+
+```yaml
+apiVersion: v2
+name: webapp
+description: A Helm chart for Kubernetes
+
+type: application
+
+version: 0.1.0
+appVersion: 1.0.0
+```
+
+An example template file, with `{{.Values.<property>}}` placeholders for every custom value
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  ...
+spec:
+  ...
+  template:
+    ...
+    spec:
+      containers:
+        - name: webapp
+          image: {{ .Values.registry }}/webapp:{{ .Values.dockerTag }}
+          imagePullPolicy: {{ .Values.pullPolicy }}
+          resources:
+          ...
+          ports:
+            ...
+```
+
+An example `values.yaml` file:
+
+```yaml
+apiVersion: v2
+name: webapp
+description: A Helm chart for Kubernetes
+...
+registry: "my-acr-registry.azurecr.io"
+dockerTag: "linux-v1"
+pullPolicy: "Always"
+```
+
+There are also *predefined* values you could reference, like `{{.Release.Name}}`, `{{.Release.IsInstall}}`
+
+You could reference `Chart.yaml` values as well, like `{{.Chart.version}}`
+
+
+### Helm repos
+
+```sh
+helm repo add azure-marketplace https://marketplace.azurecr.io/helm/v1/repo
+
+helm repo list
+
+# search charts
+helm search repo aspnet
+```
+
+### Install Helm Chart
+
+```sh
+# test
+helm install --debug --dry-run my-drone-webapp ./drone-webapp
+
+# from a chart folder
+#   my-drone-webapp: -> name of the release
+helm install my-drone-webapp ./drone-webapp
+
+# from a tar archive
+helm install my-drone-webapp ./drone-webapp.tgz
+
+# from a repo
+helm install my-release azure-marketplace/aspnet-core
+```
+
+Set values
+
+```sh
+helm install --set replicaCount=5 aspnet-webapp azure-marketplace/aspnet-core
 ```
 
 
