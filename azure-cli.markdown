@@ -8,6 +8,7 @@
   - [VM](#vm)
   - [Network](#network)
     - [DNS](#dns)
+  - [ARM templates](#arm-templates)
 
 ## Cheatsheats
 
@@ -110,3 +111,9 @@ az network dns record-set list \
     --output table
 ```
 
+### ARM templates
+
+```sh
+# deploy an ARM **template**
+az deployment create --template-file test.json
+```
