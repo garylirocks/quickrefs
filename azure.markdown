@@ -1836,6 +1836,31 @@ sudo mkdir /data && sudo mount /dev/sdc1 /data
   - You specify a Chef server and recipes to run
   - It uses a Ruby-based DSL
 
+- Cloud-init
+
+  - A way to customize a Linux VM as it boots for the first time, you can use it to install packages, write files, and configure users
+  - Cloud-init files use YAML format, the following example installs the package `pythong-pip` and `numpy`
+
+
+  ```yaml
+  #cloud-config
+  packages:
+    - python-pip
+  runcmd:
+    - pip install numpy
+  ```
+  (*the comment on first line is required*)
+
+  ```sh
+  az vm create \
+    --resource-group my-rg \
+    --name my-vm \
+    --admin-username azureuser \
+    --image UbuntuLTS \
+    --custom-data cloud-init.txt \
+    --generate-ssh-keys
+  ```
+
 - Terraform
 
   - Infrastructure as code

@@ -68,33 +68,46 @@ az resource list \
   -o table
 
 # show details of a resource
-az resource show 
+az resource show
   -g learn-rg \
   --name simpleLinuxVMPublicIP \
   --resource-type Microsoft.Network/publicIPAddresses
 ```
 ### VM
 
-```sh
-# create a simple ubuntu vm
-# and 
-#   - enable system assigned managed identity
-#   - it would have the 'Contributor' role in the specified scope
-#   - this creates vnet, subnet, ip, etc
-az vm create \
-  --name myVM \
-  --image ubuntuLTS \
-  --size Standard_B1ms \
-  -g myRG
-  --assign-identity '[system]' \
-  --scope $principalId
+- Create a VM with specified username and SSH key
 
-# by default, 
-#   - it would use your local username
-#   - and ~/.ssh/id_rsa.pub
-#   - and port 22 is accessible
-# so you could login to it using
-ssh vm-public-ip
+  ```sh
+  az vm create \
+    --resource-group my-rg \
+    --name vm1 \
+    --admin-username azureuser \
+    --image UbuntuLTS \
+    --ssh-key-values ~/.ssh/azure_rsa.pub
+  ```
+
+- Create a VM with system assigned identity
+
+  ```sh
+  # create a simple ubuntu vm
+  # and
+  #   - enable system assigned managed identity
+  #   - it would have the 'Contributor' role in the specified scope
+  #   - this creates vnet, subnet, ip, etc
+  az vm create \
+    -g my-rg \
+    --name vm1 \
+    --image ubuntuLTS \
+    --size Standard_B1ms \
+    --assign-identity '[system]' \
+    --scope $principalId
+
+  # by default,
+  #   - it would use your local username
+  #   - and ~/.ssh/id_rsa.pub
+  #   - and port 22 is accessible
+  # so you could login to it using
+  ssh vm-public-ip
 ```
 
 ### Network
