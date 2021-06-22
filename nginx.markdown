@@ -9,6 +9,7 @@
     - [Regular expression names](#regular-expression-names)
     - [Default server](#default-server)
   - [`try_files`](#try_files)
+  - [`internal`](#internal)
   - [`return`](#return)
   - [`rewrite`](#rewrite)
     - [`rewrite` vs. `return`](#rewrite-vs-return)
@@ -202,6 +203,27 @@ location /images/ {
 
 location = /images/default.gif {
     expires 30s;
+}
+```
+
+### `internal`
+
+Specifies that a given location can only be used for internal requests. For external requests, the client error 404 (Not Found) is returned. 
+
+Internal requests include
+
+- requests changed by the `rewrite` directive.
+- requests redirected by the `error_page`, `index`, `random_index`, and `try_files` directives;
+- requests redirected by the `X-Accel-Redirect` response header field from an upstream server;
+- ...
+
+Example:
+
+```nginx
+error_page 404 /404.html;
+
+location = /404.html {
+    internal;
 }
 ```
 
