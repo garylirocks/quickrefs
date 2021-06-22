@@ -35,6 +35,7 @@ Quick productivity tips, shortcuts, command line snippets.
 - [Search files (grep)](#search-files-grep)
 - [Hash](#hash)
 - [Self-signed SSL certs](#self-signed-ssl-certs)
+- [DNS tools](#dns-tools)
 
 ## Shortcuts
 
@@ -630,6 +631,18 @@ openssl x509 -req \
 ```
 
 If you want to create a wildcard certificate, use `*.gary.local` as `$NAME`, and use it when prompted for `CN` (it needs to be a properly-structured domain, something like `*.local` is not working in Chrome)
+
+## DNS tools
+
+```sh
+# query A records of example.com using server 8.8.8.8
+dig @8.8.8.8 example.com
+
+# get name server of a domain
+dig example.com ns
+```
+
+
 
 
 
