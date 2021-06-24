@@ -76,6 +76,7 @@
   - [Scaling](#scaling)
   - [Provisioning](#provisioning)
   - [Use AAD for Linux VM authentication](#use-aad-for-linux-vm-authentication)
+- [Updating](#updating)
 - [Networking](#networking-1)
   - [Virtual network](#virtual-network)
   - [Network security group (NSG)](#network-security-group-nsg)
@@ -1983,6 +1984,15 @@ sudo mkdir /data && sudo mount /dev/sdc1 /data
     - You have your own uid, gid, home directory, etc;
     - If you have the `Virtual Machine Administrator Login` role, you would be in `aad_admins` group, which has **sudo** permission (`%aad_admins ALL=(ALL) NOPASSWD:ALL` is in file `/etc/sudoers.d/aad_admins`)
 
+## Updating
+
+Azure has a solution for updating VMs called Update Management
+
+- It works with both Windows and Linux virtual machines that are deployed in Azure, on-premises, or even in other cloud providers
+- There are no agents or additional configuration within the virtual machine
+- You can run updates without logging into the VM. You also don't have to create passwords to install the update
+
+![Update Management data flow](images/azure_update-management-data-flow.png)
 
 
 ## Networking
@@ -2826,9 +2836,8 @@ In Node, Azure provides packages to access Vault secrets:
   - metrics
   - logs
 - Functions: analysis, alerting, autoscaling, streaming to external systems
-- Collects data automatically, can be extended by:
-  - Enabling diagnostics: only get full info about a resource after you have enabled diagnostic logging for it, e.g. SQL Database
-  - Adding an agent: e.g. install a Log Analytics agent to a VM
+- Collects some metrics for all resources by default, can be extended by enabling diagnostic or installing an agent:
+  - For VMs, Azure collects some metrics(host-level) by default, such as CPU usage, OS disk usage, network traffic, boot success, to get a full set of metrics, you need to install two tools directly on the VM: the Azure Diagnostics extension (not the same as boot diagnostics,which you usually enable while creating a VM) and the Log Analytics agent. (Both tools are available for Windows and Linux)
 - Can be used to **unify** multiple monitoring solutions:
   - Azure Application Insights and Azure Security Center store their collected data in workspace for Azure Monitor, you can then use Azure Monitor Log Analytics to interactively query the data;
 - Use Data Collector API to send data from your custom code
