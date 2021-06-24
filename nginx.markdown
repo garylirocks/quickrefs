@@ -97,7 +97,7 @@ server {
 5. Modifiers:
    1. `~` case-sensitive regex;
    2. `~*` case-insensitive regex;
-   3. `=` exact prefix match, terminates the search;
+   3. `=` exact match, terminates the search;
    4. `^~` if the longest prefix location has this modifier, don't check regex expressions;
 6. Regex can contain captures that can be used in other directives;
 
