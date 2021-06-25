@@ -1828,9 +1828,27 @@ sudo mkdir /data && sudo mount /dev/sdc1 /data
 
 - Desired State Configuration
 
-  - You specify your required VM state in a configuration file
   - PowerShell only
+  - You specify your required VM state in a configuration file
+
+    ```
+    Configuration MyDscConfiguration {
+      Node "localhost" {
+          WindowsFeature MyFeatureInstance {
+              Ensure = 'Present'
+              Name = 'Web-Server'
+          }
+      }
+    }
+    MyDscConfiguration -OutputPath C:\temp\
+    ```
+
   - Better to be used with Azure Automation State Configuration, otherwise you need to manage your own DSC configuration and orchestration
+
+    ![Azure DSC setup](images/azure_dsc-setup.png)
+    ![Azure DSC pull](images/azure_dsc-pull.png)
+
+    By default, every 15 minutes, LCM on each VM polls Azure Automation for any changes to the DSC configuration file.
 
 - Chef
 
