@@ -233,14 +233,21 @@ By default, browsers will not send cookies/HTTP Authentication info with cross-s
 You need to set a specific flag:
 
 ```js
+// XHR
 const invocation = new XMLHttpRequest();
 invocation.open('GET', 'http://bar.other/resources', true);
 invocation.withCredentials = true;
+
+// fetch
+fetch(url, {
+  credentials: 'include',
+  ...
+})
 ```
 
-And the browser only accepts the response when it has
-  - an `Access-Control-Allow-Credentials: true` header;
-  - and the `Access-Control-Allow-Origin` is not a wildcard '*';
+And the browsers only accept the response which
+  - has an `Access-Control-Allow-Credentials: true` header;
+  - and the `Access-Control-Allow-Origin` is exactly the current origin, not a wildcard `*`;
 
 
 ### Cross site script
