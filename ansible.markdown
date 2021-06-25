@@ -1,6 +1,9 @@
 Ansible
 =========
 
+- [Inventory](#inventory)
+- [Playbook](#playbook)
+
 - Sponsored by Red
 - Automates cloud provisioning, configuration management and application deployments
 - Agentless, but nodes and the control machine needs Python
