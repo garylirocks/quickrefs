@@ -129,4 +129,22 @@ az network dns record-set list \
 ```sh
 # deploy an ARM **template**
 az deployment create --template-file test.json
+
+# validate a template file
+az deployment group validate \
+    --resource-group my-rg \
+    --template-file basic-template.json
+    --parameters @params.json
+
+# deploy to a resource group
+az deployment group create \
+    --name MyDeployment \
+    --resource-group my-rg \
+    --template-file basic-template.json
+    --parameters @params.json
+
+# verify
+az deployment group show \
+    --name MyDeployment \
+    --resource-group my-rg
 ```
