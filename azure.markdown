@@ -101,6 +101,7 @@
     - [Swap](#swap)
   - [Scaling](#scaling-1)
   - [Node app](#node-app)
+  - [App Logs](#app-logs)
 - [Docker Container Registry](#docker-container-registry)
   - [Tasks feature](#tasks-feature)
   - [Authentication options](#authentication-options)
@@ -2473,6 +2474,30 @@ You need to make sure the app:
 
 - Is listening on `process.env.PORT`
 - Uses `start` in `package.json` to start the app
+
+### App Logs
+
+|            | Windows                                 | Linux            |
+| ---------- | --------------------------------------- | ---------------- |
+| Log levels | Error, Warning, Information, Verbose    | Error            |
+| Storage    | Filesystem, Blob                        | Filesystem       |
+| Location   | A virtual drive at `D:\Home\LogFiles`   | Docker log files |
+| Options    | Application, IIS server, Detailed Error | STDERR, STDOUT   |
+
+On Linux, you need to open an SSH connection to the Docker container to get messages of underlying processes (such as Apache)
+
+```sh
+# tail live logs
+az webapp log tail \
+  --resource-group my-rg \
+  --name my-web-app
+
+# download logs
+az webapp log download \
+  --log-file logs.zip \
+  --resource-group my-rg \
+  --name my-web-app
+```
 
 ## Docker Container Registry
 
