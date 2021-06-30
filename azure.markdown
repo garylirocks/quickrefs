@@ -70,7 +70,7 @@
 - [Redis Caching](#redis-caching)
 - [VMs](#vms)
   - [CLI Cheatsheet](#cli-cheatsheet)
-  - [VM extensions](#vm-extensions)
+  - [Disks](#disks)
   - [Initialize data disks](#initialize-data-disks)
   - [Availability options](#availability-options)
   - [Scaling](#scaling)
@@ -117,7 +117,7 @@
   - [Vault authentication](#vault-authentication)
   - [Example](#example)
   - [Best practices](#best-practices-1)
-- [Monitoring](#monitoring)
+- [Monitoring and Analytics](#monitoring-and-analytics)
   - [Azure Monitor](#azure-monitor)
   - [Azure Security Center](#azure-security-center)
   - [Azure Application Insights](#azure-application-insights)
@@ -1719,9 +1719,22 @@ az vm list \
 # lnx1    192.168.94.31
 ```
 
-### VM extensions
+### Disks
 
-Small applications that allow you to configure and automate tasks on Azure VMs after initial deployment.
+- Local SSD
+  - The temporary disk of each VM, size depending on the size of the VM;
+  - No extra charge, already included in the VM cost;
+  - Local to the VM, performance is high;
+  - Data could be lost during a maintenance or redeployment of the VM;
+  - Suitable for temporary data storage, eg. page or swap file, tempdb for SQL Server;
+- Standard HDD
+  - Inconsistent latency or lower levels of throughput;
+  - Suitable for dev/test workload;
+- Standard SSD
+- Premium SSD
+  - Consistent low latency, high levels of throughput and IOPS;
+  - Recommended for all production workloads;
+  - Can only be attached to specific VM sizes (designated by a 's' in the name, eg. D2s_v3, Standard F2s_v2)
 
 
 ### Initialize data disks
@@ -2868,8 +2881,38 @@ In Node, Azure provides packages to access Vault secrets:
 - It's recommended to set up a **separate vault for each environment of each of your applications**, so if someone gained access to one of your vaults, the impace is limited;
 - Don't read secrets from the vault everytime, you should cache secret values locally or load them into memory at startup time;
 
+## Monitoring and Analytics
 
-## Monitoring
+![monitoring services](images/azure_monitoring-services.png)
+
+Monitoring servcies in logical groups:
+
+- Core monitoring
+
+  Platform level, built-in to Azure, requires little to no configuration to set up.
+
+  - Activity Log
+    - Tracks actions on your resources, eg. VM startup, load balancer config change, etc
+    - Log data is retained for 90 days, although you can archive your data to a storage account, or send it to Log Analytics
+  - Service Health
+    - Identifies any issues with Azure services that might affect your application
+    - Helps you plan for scheduled maintenance
+  - Azure Monitor (metrics and diagnostics)
+    - Provide performance statistics for different resources, eg. VM CPU/RAM usage
+    - Could be used for time-critical alerts and notifications
+  - Advisor
+    - Potential performance, cost, high availability or security issues
+
+- Log Analytics: deep infrastructure monitoring
+
+  ![Log Analytics](images/azure_log-analytics.png)
+
+  - More diagnostic information and metrics, eg. pull information from SQL server, free disk space of VMs, network dependencies between your systems and services
+  - Azure Monitor data can be configured to be sent to a Log Analytics workspace
+  - VMs can have an agent installed to send data
+
+- Application Insights: APM
+  - Identify performance issues, usage trends, and the overall availability of services
 
 ### Azure Monitor
 
