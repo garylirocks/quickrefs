@@ -1,5 +1,21 @@
 # awk cheatsheet
 
+- [Preface](#preface)
+- [basic usage](#basic-usage)
+  - [sample input file:](#sample-input-file)
+  - [simple use](#simple-use)
+  - [use with sed](#use-with-sed)
+- [Records and Fields](#records-and-fields)
+- [Field Separators](#field-separators)
+- [Variables](#variables)
+- [System variables](#system-variables)
+- [Output formatting](#output-formatting)
+- [Array](#array)
+- [Function](#function)
+- [`getline`](#getline)
+- [Misc](#misc)
+- [Recipes](#recipes)
+
 ## Preface
 
 Some useful tips of awk
@@ -283,6 +299,20 @@ are incremented
 ## Misc
 
 **`BEGIN` only executes once, even for multiple input files**
+
+## Recipes
+
+- Sums up a column of numbers
+
+```sh
+gary 20
+jack 30
+```
+
+```sh
+awk '{sum += $2} END {print sum}' ./numbers.txt
+# 50
+```
 
 [tuanzi]: http://kodango.com
 [sedawk2_book]: http://shop.oreilly.com/product/9781565922259.do
