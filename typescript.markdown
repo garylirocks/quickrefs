@@ -18,6 +18,9 @@
 - [Interfaces vs. Type aliases](#interfaces-vs-type-aliases)
 - [Modules](#modules)
 - [Add TypeScript to a React project](#add-typescript-to-a-react-project)
+- [Declaration merging](#declaration-merging)
+  - [Interfaces](#interfaces-1)
+  - [Module Augmentation](#module-augmentation)
 
 ## Basic Types
 
@@ -586,3 +589,80 @@ npm install --save @types/react @types/react-dom
 ```
 
 
+## Declaration merging
+
+| Declaration Type | Namespace | Type | Value |
+| ---------------- | --------- | ---- | ----- |
+| Namespace        | X         |      | X     |
+| Class            |           | X    | X     |
+| Enum             |           | X    | X     |
+| Interface        |           | X    |       |
+| Type Alias       |           | X    |       |
+| Function         |           |      | X     |
+| Variable         |           |      | X     |
+
+### Interfaces
+
+- Non functional members are merged:
+
+  ```ts
+  interface Box {
+    height: number;
+    width: number;
+  }
+
+  interface Box {
+    scale: number;
+  }
+
+  let box: Box = { height: 5, width: 6, scale: 10 };
+  ```
+
+- Functional members of the same name become overloads:
+
+  ```ts
+  interface Cloner {
+    clone(animal: Animal): Animal;
+  }
+
+  interface Cloner {
+    clone(animal: Sheep): Sheep;
+  }
+
+  interface Cloner {
+    clone(animal: Dog): Dog;
+    clone(animal: Cat): Cat;
+  }
+
+  // orders retained within each set, but later sets are ordered first
+  interface Cloner {
+    clone(animal: Dog): Dog;
+    clone(animal: Cat): Cat;
+    clone(animal: Sheep): Sheep;
+    clone(animal: Animal): Animal;
+  }
+  ```
+
+### Module Augmentation
+
+```ts
+// augment Palette interface
+import { Palette } from '@material-ui/core/styles/createPalette';
+
+declare module '@material-ui/core/styles/createPalette' {
+  interface Palette {
+    grid: {
+      highlight: string;
+      highlightText: string;
+    };
+  }
+}
+```
+
+```ts
+import { Palette } from '@material-ui/core/styles/createPalette';
+
+// now you could use 'grid' in Palette
+let x: Palette = {...};
+x.grid.highlight = 'red';
+```
