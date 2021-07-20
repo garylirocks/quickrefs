@@ -71,7 +71,8 @@
   - [Scaling](#scaling)
   - [Provisioning](#provisioning)
   - [Use AAD for Linux VM authentication](#use-aad-for-linux-vm-authentication)
-- [Updating](#updating)
+  - [Linux Agent](#linux-agent)
+  - [Updating](#updating)
 - [Networking](#networking-1)
   - [Virtual network](#virtual-network)
   - [Network security group (NSG)](#network-security-group-nsg)
@@ -1868,8 +1869,63 @@ sudo mkdir /data && sudo mount /dev/sdc1 /data
 
     - You have your own uid, gid, home directory, etc;
     - If you have the `Virtual Machine Administrator Login` role, you would be in `aad_admins` group, which has **sudo** permission (`%aad_admins ALL=(ALL) NOPASSWD:ALL` is in file `/etc/sudoers.d/aad_admins`)
+  
+### Linux Agent
 
-## Updating
+There's an agent in each Linux vm, called `walinuxagent`, pre-built in most Linux images.
+
+It manages Linux provisioning and VM interaction with the Azure Fabric Controller. Provides the following functionality for Linux VMs:
+
+- Provisioning
+  - Creation of a user account
+  - Configuring SSH authentication types
+  - Deployment of SSH public keys and key pairs
+  - Setting the host name
+  - Publishing the host name to the platform DNS
+  - Formatting and mounting the resource disk
+  - ...
+
+- Networking
+  - Manages routes to improve compatibility with platform DHCP servers
+  - Ensures the stability of the network interface name
+
+- VM Extension (*password reset, ssh key updates and backups depend on VM extensions*)
+  - Inject component authored by Microsoft and Partners into Linux VM to enable software and configuration automation 
+
+- Telemetry
+  - Collects usage data and sends it to Microsoft
+
+- ...
+
+It requires:
+
+  - Python 2.6+
+  - OpenSSL 1.0+
+  - OpenSSH 5.3+
+  - Filesystem utilities: `sfdisk`, `fdisk`, `mkfs`, `parted`
+  - Password tools: `chpasswd`, `sudo`
+  - Text processing tools: `sed`, `grep`
+  - Network tools: `ip-route`
+
+
+Update the agent:
+
+```sh
+apt list --installed | grep walinuxagent
+sudo apt-get -qq update
+
+# install latest version
+sudo apt-get install walinuxagent
+
+# to enable auto update, set it in /etc/waagent.conf
+# AutoUpdate.Enabled=y
+
+# restart
+systemctl restart walinuxagent.service
+```
+
+
+### Updating
 
 Azure has a solution for updating VMs called Update Management
 
