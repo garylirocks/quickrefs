@@ -24,6 +24,7 @@
 - [`xargs`](#xargs)
 - [`pushd`, `popd`, `dirs`](#pushd-popd-dirs)
 - [`rsync`](#rsync)
+- [`envsubst`](#envsubst)
 - [System](#system)
 - [Networking](#networking)
   - [`netstat`](#netstat)
@@ -558,6 +559,22 @@ rsync -avp src ./dest
 
 # everything only in dest/ will be deleted
 rsync -avp --delete src/ ./dest
+```
+
+## `envsubst`
+
+Replace variables in strings/files
+
+```sh
+# greeting.txt
+Hello ${name} !
+```
+
+```sh
+export name=Gary
+
+cat greeting.txt | envsubst
+# Hello Gary !
 ```
 
 ## System
