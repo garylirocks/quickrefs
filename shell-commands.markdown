@@ -33,6 +33,7 @@
     - [Data transfer](#data-transfer)
   - [`ssh`](#ssh)
     - [ProxyJump](#proxyjump)
+  - [`curl`](#curl)
 - [One liner](#one-liner)
 - [Helpful tools](#helpful-tools)
 
@@ -678,6 +679,25 @@ Then we could also forward a local port to a port on `dest` like:
 ssh -L 80:localhost:8080 -N dest
 ```
 
+### `curl`
+
+- Output connection time info
+  - `connect` TCP connect time
+  - `appconnect` includes SSL/SSH connect/handshake time
+  - `starttransfer` includes `pretransfer` and the time the server needed to calculate the result
+
+```sh
+curl -I -w "\n namelookup: \t\t%{time_namelookup} \n connect: \t\t%{time_connect} \n appconnect: \t\t%{time_appconnect} \n pretransfer: \t\t%{time_pretransfer} \n starttransfer: \t%{time_starttransfer} \n total: \t\t%{time_total}\n" https://www.google.com
+
+...
+
+ namelookup:            0.001128
+ connect:               0.033624
+ appconnect:            0.173827
+ pretransfer:           0.174055
+ starttransfer:         0.372834
+ total:                 0.373073
+```
 
 ## One liner
 
