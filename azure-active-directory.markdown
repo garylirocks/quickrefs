@@ -72,7 +72,7 @@ Features:
 
   - A service principal is an identity used by any service or application
   - You should create a different service principal for each of your application
-  - Listed under 'App registrations' in Azure Portal
+  - Listed under **App registrations** in Azure Portal
 
   ```sh
   # create an sp and set its RBAC
@@ -100,7 +100,7 @@ Features:
 - Managed identities for Azure services
 
   - For Azure resources only
-  - Listed under 'Enterprise applications' in Azure Portal
+  - Listed under **Enterprise applications -> Managed Identities** in Azure Portal
 
   Two types:
 
