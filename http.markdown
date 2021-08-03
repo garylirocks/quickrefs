@@ -11,6 +11,7 @@
   - [Get a certificate](#get-a-certificate)
   - [Install](#install)
   - [How does it work](#how-does-it-work)
+  - [SNI](#sni)
 - [CORS](#cors)
   - [Simple requests](#simple-requests)
   - [Preflighted requests](#preflighted-requests)
@@ -179,6 +180,20 @@ ssl_certificate_key file;
   - If the server's certificate claims it's from CA Foo, the client can verify the certificate with CA Foo's public key, which is in Foo's certificate;
   - If the server's certificate is issued by an intermediate CA, the intermediate CA's cert should come with the server's certificate, and the client verifies them all the way up to a root CA;
 - Start from step 6, client and server only use the symmetric key for encryption;
+
+
+### SNI
+
+- Server Name Indication (SNI) is an extension to the Transport Layer Security (TLS)
+- A client indicates which hostname it is attempting to connect to at the start of the handshaking process.
+- This allows a server to present multiple certificates on the same IP address and TCP port number and hence allows multiple secure (HTTPS) websites (or any other service over TLS) to be served by the same IP address without requiring all those sites to use the same certificate. 
+- It is the conceptual equivalent to HTTP/1.1 name-based virtual hosting, but for HTTPS. 
+- This also allows a proxy to forward client traffic to the right server during TLS/SSL handshake. The desired hostname is not encrypted in the original SNI extension, so an eavesdropper can see which site is being requested.
+
+
+Details:
+
+Name-based virtual hosting allows multiple DNS hostnames to be hosted by a single server (usually a web server) on the same IP address. To achieve this, the server uses a hostname presented by the client as part of the protocol (for HTTP the name is presented in the **Host** header). However, when using HTTPS, the **TLS handshake happens before the server sees any HTTP headers**. Therefore, it was not possible for the server to use the information in the HTTP host header to decide which certificate to present and as such only names covered by the same certificate could be served from the same IP address.
 
 ## CORS
 
