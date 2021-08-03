@@ -682,22 +682,41 @@ ssh -L 80:localhost:8080 -N dest
 ### `curl`
 
 - Output connection time info
+    ```sh
+    curl -I -w "\n namelookup: \t\t%{time_namelookup} \n connect: \t\t%{time_connect} \n appconnect: \t\t%{time_appconnect} \n pretransfer: \t\t%{time_pretransfer} \n starttransfer: \t%{time_starttransfer} \n total: \t\t%{time_total}\n" https://www.google.com
+
+    ...
+
+    namelookup:            0.001128
+    connect:               0.033624
+    appconnect:            0.173827
+    pretransfer:           0.174055
+    starttransfer:         0.372834
+    total:                 0.373073
+    ```
+
   - `connect` TCP connect time
   - `appconnect` includes SSL/SSH connect/handshake time
   - `starttransfer` includes `pretransfer` and the time the server needed to calculate the result
 
-```sh
-curl -I -w "\n namelookup: \t\t%{time_namelookup} \n connect: \t\t%{time_connect} \n appconnect: \t\t%{time_appconnect} \n pretransfer: \t\t%{time_pretransfer} \n starttransfer: \t%{time_starttransfer} \n total: \t\t%{time_total}\n" https://www.google.com
+- Fake the `Host:` header
 
-...
+    ```sh
+    curl -H 'Host: example.com' http://127.0.0.1
+    ```
 
- namelookup:            0.001128
- connect:               0.033624
- appconnect:            0.173827
- pretransfer:           0.174055
- starttransfer:         0.372834
- total:                 0.373073
-```
+  - Works for HTTP only
+  - If you follow redirects, the fake `Host:` header would be sent to those requests as well 
+
+- For HTTPS
+
+    ```sh
+    curl --resolve example.com:443:127.0.0.1 https://example.com/
+    ```
+
+    - This populates curl's DNS cache with a custom entry for `example.com` port 443 with the address `127.0.0.1`
+    - `example.com` is used as the SNI field in TLS handshake, so the server can send the correct certificate back
+    - `example.com` is used as `Host:` header as well
 
 ## One liner
 
