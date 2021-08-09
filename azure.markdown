@@ -98,6 +98,7 @@
   - [Scaling](#scaling-1)
   - [Node app](#node-app)
   - [App Logs](#app-logs)
+- [Static Web App](#static-web-app)
 - [Docker Container Registry](#docker-container-registry)
   - [Tasks feature](#tasks-feature)
   - [Authentication options](#authentication-options)
@@ -1853,7 +1854,7 @@ sudo mkdir /data && sudo mount /dev/sdc1 /data
     ```
 
 4. Login
-   
+
     Now you can login with Az CLI
 
     ```sh
@@ -1869,7 +1870,7 @@ sudo mkdir /data && sudo mount /dev/sdc1 /data
 
     - You have your own uid, gid, home directory, etc;
     - If you have the `Virtual Machine Administrator Login` role, you would be in `aad_admins` group, which has **sudo** permission (`%aad_admins ALL=(ALL) NOPASSWD:ALL` is in file `/etc/sudoers.d/aad_admins`)
-  
+
 ### Linux Agent
 
 There's an agent in each Linux vm, called `walinuxagent`, pre-built in most Linux images.
@@ -1890,7 +1891,7 @@ It manages Linux provisioning and VM interaction with the Azure Fabric Controlle
   - Ensures the stability of the network interface name
 
 - VM Extension (*password reset, ssh key updates and backups depend on VM extensions*)
-  - Inject component authored by Microsoft and Partners into Linux VM to enable software and configuration automation 
+  - Inject component authored by Microsoft and Partners into Linux VM to enable software and configuration automation
 
 - Telemetry
   - Collects usage data and sends it to Microsoft
@@ -2421,6 +2422,74 @@ az webapp log download \
   --name my-web-app
 ```
 
+## Static Web App
+
+You could deploy a GitHub repo as a static web app, just like GitHub Pages
+
+```sh
+az staticwebapp create \
+    -g $resourceGroupName \
+    -n $webAppName \
+    -l 'westus2'
+    -s $appRepository \       # repo
+    -b main \                 # branch
+    --token $githubToken      # github PAT token
+```
+
+This adds a workflow file in the GitHub repo:
+  - Staging environments are automatically created when a pull request is generated,
+  - and are promoted into production once the pull request is merged.
+
+
+```yaml
+name: Azure Static Web Apps CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    branches:
+      - main
+
+jobs:
+  build_and_deploy_job:
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
+    runs-on: ubuntu-latest
+    name: Build and Deploy Job
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Build And Deploy
+        id: builddeploy
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_GREEN_GLACIER_0BAB5B71E }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }} # this is auto-generated, used for Github integrations (i.e. PR comments)
+          action: "upload"
+          ###### Repository/Build Configurations - These values can be configured to match your app requirements. ######
+          # For more information regarding Static Web App workflow configurations, please visit: https://aka.ms/swaworkflowconfig
+          app_location: "." # App source code path
+          api_location: "." # Api source code path - optional
+          output_location: ".github/workflows" # Built app content directory - optional
+          ###### End of Repository/Build Configurations ######
+
+  close_pull_request_job:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    name: Close Pull Request Job
+    steps:
+      - name: Close Pull Request
+        id: closepullrequest
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_GREEN_GLACIER_0BAB5B71E }}
+          action: "close"
+```
+
+
 ## Docker Container Registry
 
 Like Docker Hub
@@ -2670,7 +2739,7 @@ When you create an AKS cluster, you need to specify
   You specify the VM size, node pools use virtual machine scale sets as the underlying infrastructure
 - Node count
 - Automatic routing
-  
+
   - A Kubernetes cluster blocks all external communications by default
   - You need to manually create an *ingress* with an exception that allows incoming client connections to that paticular service
 
