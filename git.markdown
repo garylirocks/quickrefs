@@ -261,6 +261,13 @@ quite useful configs:
 
 whitespace, line-endings:
 
+- `core.eol`
+
+  Control what line ending style is used in the working directory for all text files.
+  `eol` attribute can be used for a single file.
+
+  Setting `core.autocrlf` to `true` or `input` overrides `core.eol`
+
 - `core.autocrlf`
 
   - `true` # convert cflf to lf on commit, vice versa on checkout
