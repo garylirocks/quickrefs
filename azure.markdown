@@ -98,7 +98,7 @@
   - [Scaling](#scaling-1)
   - [Node app](#node-app)
   - [App Logs](#app-logs)
-- [Static Web App](#static-web-app)
+- [Static Web Apps](#static-web-apps)
 - [Docker Container Registry](#docker-container-registry)
   - [Tasks feature](#tasks-feature)
   - [Authentication options](#authentication-options)
@@ -2422,9 +2422,26 @@ az webapp log download \
   --name my-web-app
 ```
 
-## Static Web App
+## Static Web Apps
 
-You could deploy a GitHub repo as a static web app, just like GitHub Pages
+![Static Web Apps overview](images/azure_static-web-apps-overview.png)
+
+When you create a Static Web App, GitHUb Actions or Azure DevOps workflow is added in the app's source code repository. It watches a chosen branch, everytime you push commits or create pull requests into the branch, the workflow builds and deploys your app and its API to Azure.
+
+- Globally distributed web hosting
+- Integrated API support by Azure Functions (the `/api` route points to it)
+  - Locally, you could use the `func` tool to run API functions, it would be on another port, so need CORS configuration, put this in `api/local.settings.json`
+
+    ```json
+    {
+      "Host": {
+        "CORS": "http://localhost:3000"
+      }
+    }
+    ```
+  - On Auzre, a reverse proxy would be setup for you automatically, so any call to `/api` is on the same origin, and proxied to the Azure Functions
+- Free SSL certificates for custom domains
+- Staging envrionment created automatically from pull request
 
 ```sh
 az staticwebapp create \
@@ -2436,9 +2453,12 @@ az staticwebapp create \
     --token $githubToken      # github PAT token
 ```
 
-This adds a workflow file in the GitHub repo:
-  - Staging environments are automatically created when a pull request is generated,
+This
+  - adds a workflow file in the GitHub repo
+  - a token for the staticwebapp is added to GitHub secrets
+  - A staging environment is automatically created when a pull request is generated,
   - and are promoted into production once the pull request is merged.
+
 
 
 ```yaml
@@ -2469,12 +2489,9 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_GREEN_GLACIER_0BAB5B71E }}
           repo_token: ${{ secrets.GITHUB_TOKEN }} # this is auto-generated, used for Github integrations (i.e. PR comments)
           action: "upload"
-          ###### Repository/Build Configurations - These values can be configured to match your app requirements. ######
-          # For more information regarding Static Web App workflow configurations, please visit: https://aka.ms/swaworkflowconfig
-          app_location: "." # App source code path
-          api_location: "." # Api source code path - optional
-          output_location: ".github/workflows" # Built app content directory - optional
-          ###### End of Repository/Build Configurations ######
+          app_location: "."         # App source code path
+          output_location: "dist"   # Optional: build artifacts path, relative to app_location
+          api_location: "api"       # Optional: API source path, relative to root
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
@@ -2488,6 +2505,33 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_GREEN_GLACIER_0BAB5B71E }}
           action: "close"
 ```
+
+Notes:
+
+  - When you close the pull request, it actually triggers 2 workflow runs, each runs a single job:
+    - one for the PR closing action, the `close_pull_request_job` closes the staging environment
+    - the `main` branch is updated as well, so the `build_and_deploy_job` updates the live environment
+
+  - *When you create an app in the Azure Portal, you specify the build presets (such as, React, Vue, Gatsby etc), and the `app_location`, `api_location`, `output_location`, so your app would be automatically built and uploaded by GitHub Actions*
+
+  - Here is an example of live and staging URLs:
+
+    | Source          | Description                | URL                                                   |
+    | --------------- | -------------------------- | ----------------------------------------------------- |
+    | main branch     | Live web site URL (global) | https://my-app-23141.azurestaticapps.net/             |
+    | Pull Request #3 | Staging URL (one region)   | https://my-app-23141-3.centralus.azurestaticapps.net/ |
+
+  - For a static web app, you likely need to respond all routes with `index.html`, you need a `staticwebapp.config.json` file in the build output directory for this:
+
+    ```json
+    // fall back to `index.html`
+    {
+      "navigationFallback": {
+        "rewrite": "index.html",
+        "exclude": ["/images/*.{png,jpg,gif,ico}", "/*.{css,scss,js}"]
+      }
+    }
+    ```
 
 
 ## Docker Container Registry
