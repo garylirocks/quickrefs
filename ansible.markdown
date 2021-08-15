@@ -1,10 +1,13 @@
 Ansible
 =========
 
+- [Overview](#overview)
 - [Inventory](#inventory)
 - [Playbook](#playbook)
 
-- Sponsored by Red
+## Overview
+
+- Sponsored by Red Hat
 - Automates cloud provisioning, configuration management and application deployments
 - Agentless, but nodes and the control machine needs Python
 - Connect to each node through SSH (WinRM for Windows)
