@@ -161,7 +161,9 @@ After you add a connection to a GitHub repo in the settings, you could add a lin
 
 For example:
 
-A commit message like `Fix #2, Fix AB#113` should fix Issue 2 in GitHub and work item #113 in Azure Boards
+A commit message like `Fix #2, Fix AB#113` should
+  - close Issue 2 in GitHub
+  - add a link in Azure Boards work item #113 and update its state to be `Done`
 
 ## Pipelines
 
