@@ -1,6 +1,13 @@
 # Azure DevOps
 
 - [Overview](#overview)
+- [organization-project-team structure](#organization-project-team-structure)
+  - [How to structure a project](#how-to-structure-a-project)
+  - [Processes](#processes)
+  - [Work item](#work-item)
+  - [Backlogs, Boards, Taskboards and Plans](#backlogs-boards-taskboards-and-plans)
+  - [Teams vs. Groups](#teams-vs-groups)
+  - [Scoped under team](#scoped-under-team)
 - [Pipelines](#pipelines)
   - [Multistage pipeline](#multistage-pipeline)
   - [Templates](#templates)
@@ -11,9 +18,147 @@
 
 ## Overview
 
+## organization-project-team structure
+
+![Organization hierarchy overview](images/azure-devops_organization-project-overview.png)
+
+  - Organization is also called project collection.
+  - Project could be either private or public.
+  - It is recommended to use just **a single project for an organization**, unless:
+    - To support custom work tracking process for specific business units
+    - To prohibit or manage access to the information contained within a project to select groups
+    - To support entirely separate business units that have their own policies and administrators
+  - Project can not be moved to another organization without losing history data
+  - Each project has a default team (which is also a security group), you can add more teams.
+  - Some project resources are scoped under a team, such as Notifications, Dashboards, Iteration and Area Paths
+
+### How to structure a project
+
+  - Create a GIT repo for each subproject or application
+  - Define area paths to support different subprojects, products, features or teams
+  - Define iteration paths (AKA sprints) that can be shared across teams
+  - Add a team for people that develops a set of features for a product
+  - Grant or restrict access to select features and functions using custom security groups
+
+
+### Processes
+
+You need to choose a workflow process when you create a project, it could be one of the default processes (Basic, Agile, Scrum, CMMI), or a custom one which inherits one of the defaults;
+
+The processes mainly differ in the work item types (WITs)
+
+- Basic
+
+  ![Basic process work item types](images/azure-devops_work-item-types-basic.png)
+
+  Issues and Tasks are used to track work, epics are used to group work under larger scenarios.
+
+- Agile
+
+  ![Agile process work item types](images/azure-devops_work-item-types-agile.png)
+
+  Each team can configure how they manage Bugs, at the same level as User Stories or Tasks
+
+- Scrum
+
+  ![Scrum process work item types](images/azure-devops_work-item-types-scrum.png)
+
+  Similar to Agile process, 'User Story' is called 'Product backlog item', 'Issue' is called 'Impediment'
+
+Workflow states
+
+| Basic              | Agile                                  | Scrum                                   | CMMI                               |
+| ------------------ | -------------------------------------- | --------------------------------------- | ---------------------------------- |
+| To Do, Doing, Done | New, Active, Resolved, Closed, Removed | New, Approved, Committed, Done, Removed | Proposed, Active, Resolved, Closed |
+
+
+### Work item
+
+- Use work items to track anything you need to track
+- Work item types(WIT) available in a project are based on the process used when your project was created (Basic, Agile, Scrum or CMMI)
+
+- WIT categories determine which types appear on backlogs and boards
+
+  | Category    | Work item type                                                                      | Controls backlogs/boards                        |
+  | ----------- | ----------------------------------------------------------------------------------- | ----------------------------------------------- |
+  | Epic        | Epic                                                                                | Epic portfolio backlogs and boards              |
+  | Feature     | Feature                                                                             | Feature portfolio backlogs and boards           |
+  | Requirement | User Story (Agile), Issue (Basic), Product Backlog Item (Scrum), Requirement (CMMI) | Product backlogs and boards and Sprints backlog |
+  | Task        | Task                                                                                | Sprints Taskboards                              |
+  | Bug         | Bug                                                                                 | Dependent on how bugs are tracked               |
+
+- You can add custom work item types
+- You can add fields, change the workflow, add custom rules and add custom pages to the work item form
+- Work items can link to each other, there are different link types, such as parent-child, predecessor-successor:
+
+  ![work item link types](images/azure-devops_work-item-link-types.png)
+
+### Backlogs, Boards, Taskboards and Plans
+
+- Backlogs display items as a list and boards display them as cards
+- Product backlog: quickly plan and prioritize work
+- Use sprint backlogs and taskboards when you work in Scrum
+- Use Kanban board to update work status
+- Each backlog is associated with a board, changes to priority order you make in one are reflected in its corresponding board
+- Plans allow you to review the deliverables for several teams across sprints and a calendar schedule
+- Backlogs, boards and plans are configurable for each team
+
+Three classes of backlogs
+  - Portfolio: high level features, scenarios or epics
+  - Product: user stories, deliverables, or work you plan to build or fix
+  - Sprint: items in a scheduled sprint
+
+Two types of boards
+  - Kanban: track requirements, sprint-independent, monitor the flow through the cumulative flow chart
+  - Taskboards: tasks defined for a sprint and you monitor the flow via the sprint burndown chart
+
+
+### Teams vs. Groups
+
+- Each team you create automatically creates a security group for that team, so you can manage permissions for a team;
+- There are security groups at both organization and project level;
+- Groups could be nested;
+- All security groups are organizational level entities, even groups that only have permissions to a specific project;
+
+### Scoped under team
+
+- Backlog navigation levels
+  - Epics
+  - Issues
+- Working days (for capacity and burndown report)
+- Iteration Paths (Sprints)
+- Area Paths
+
+  You define area and iteration paths for a project, each team can choose one or more paths to specify which work items will appear on their backlogs and boards
+
+Recommendations on how to configure project and teams:
+
+- Determine the number and names of area paths that you want to categorize your work. At a minimum, add **one area path for each team you define**.
+- Define the area paths in `Project configuration`
+- Determine the number and names of teams
+- Add teams
+- Open the team configuration and assign the default and additional area paths to each team
+- Assign the area path of work items to an area path you defined
+
+    **It's not recommended to assign the same area path to multiple teams**
+
+- Determine the length of the iteration
+
+    **Recommended practice is to have all teams use the same sprint cadence**
+
+- Determine if you want a flat structure or hierarchy of sprints and releases
+- Define hte iteration paths in `Project configuration`
+- Assign the default and additional iteration paths to each team
+
+![Iteration paths example](images/azure-devops_iteration-paths-example.png)
+
+Iterations don't enforce any rules, at the end of an iteration, you can move any remaining active items to next iteration or back to the backlog
+
+
+
 ## Pipelines
 
-To integrate with GitHub: 
+To integrate with GitHub:
 
 - Azure Pipelines has an OAuth App and a GitHub App
   - the OAuth App allows it read your repo, update `azure-pipelines.yml` file directly from within Azure
@@ -263,7 +408,7 @@ Use self-hosted agent:
 ## Deployment patterns
 
 Deployment pattern is an automated way to smoothly roll out new application features to users. It
-  - helps you minimize downtime 
+  - helps you minimize downtime
   - may enable you to roll out new features progressively
   - give you a chance to run tests that should happen in production
 
