@@ -8,6 +8,7 @@
   - [Backlogs, Boards, Taskboards and Plans](#backlogs-boards-taskboards-and-plans)
   - [Teams vs. Groups](#teams-vs-groups)
   - [Scoped under team](#scoped-under-team)
+  - [Boards-GitHub Connection](#boards-github-connection)
 - [Pipelines](#pipelines)
   - [Multistage pipeline](#multistage-pipeline)
   - [Templates](#templates)
@@ -154,7 +155,13 @@ Recommendations on how to configure project and teams:
 
 Iterations don't enforce any rules, at the end of an iteration, you can move any remaining active items to next iteration or back to the backlog
 
+### Boards-GitHub Connection
 
+After you add a connection to a GitHub repo in the settings, you could add a link up work items in Azure Boards with GitHub commits, issues, pull requests.
+
+For example:
+
+A commit message like `Fix #2, Fix AB#113` should fix Issue 2 in GitHub and work item #113 in Azure Boards
 
 ## Pipelines
 
