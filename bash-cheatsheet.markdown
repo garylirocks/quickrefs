@@ -62,6 +62,7 @@
   - [Special characters on command line](#special-characters-on-command-line)
   - [Text file intersections](#text-file-intersections)
   - [Sum up a column of numbers](#sum-up-a-column-of-numbers)
+  - [Add content hash to file name](#add-content-hash-to-file-name)
 
 ## Resources
 
@@ -1330,6 +1331,15 @@ sort a b b | uniq -u      # set difference a - b
 awk '{ sum += $2 } END { print sum }' numbers.txt
 ```
 
+### Add content hash to file name
+
+```sh
+# rename x.ext => x.[md5sum].ext
+for f in `ls *`; do 
+    hash=$(md5sum $f | cut -d' ' -f1)
+    mv $f ${f%%.*}.${hash}.${f##*.}
+done
+```
 
 
 
