@@ -602,24 +602,25 @@ example
 
 bash comparison operators:
 
-    Operator    Meaning                             Example
-    -s          File exists and not empty           [ -s "$myvar" ]
-    -z          Zero-length string                  [ -z "$myvar" ]
-    -n          Non-zero-length string              [ -n "$myvar" ]
-    =           String equality                     [ "abc" = "$myvar" ]
-    ==          Bash extension, same as '='
-    !=          String inequality                   [ "abc" != "$myvar" ]
-    -eq         Numeric equality                    [ 3 -eq "$myinteger" ]
-    -ne         Numeric inequality                  [ 3 -ne "$myinteger" ]
-    -lt         Numeric strict less than            [ 3 -lt "$myinteger" ]
-    -le         Numeric less than or equals         [ 3 -le "$myinteger" ]
-    -gt         Numeric strict greater than         [ 3 -gt "$myinteger" ]
-    -ge         Numeric greater than or equals      [ 3 -ge "$myinteger" ]
-    -f          Exists and is regular file          [ -f "$myfile" ]
-    -d          Exists and is directory             [ -d "$myfile" ]
-    -nt         First file is newer than second one [ "$myfile" -nt ~/.bashrc ]
-    -ot         First file is older than second one [ "$myfile" -ot ~/.bashrc ]
-    =~          Regular expression match            [[ 'Files a and b differ' =~ differ$ ]]
+| Operator | Meaning | Example |
+| --- | --- | --- |
+| -s | File exists and not empty | `[ -s "$myvar" ]` |
+| -z | Zero-length string | `[ -z "$myvar" ]` |
+| -n | Non-zero-length string | `[ -n "$myvar" ]` |
+| = | String equality | `[ "abc" = "$myvar" ]` |
+| == | Bash extension, same as '=' | |
+| != | String inequality | `[ "abc" != "$myvar" ]` |
+| -eq | Numeric equality | `[ 3 -eq "$myinteger" ]` |
+| -ne | Numeric inequality | `[ 3 -ne "$myinteger" ]` |
+| -lt | Numeric strict less than | `[ 3 -lt "$myinteger" ]` |
+| -le | Numeric less than or equals | `[ 3 -le "$myinteger" ]` |
+| -gt | Numeric strict greater than | `[ 3 -gt "$myinteger" ]` |
+| -ge | Numeric greater than or equals | `[ 3 -ge "$myinteger" ]` |
+| -f | Exists and is regular file | `[ -f "$myfile" ]` |
+| -d | Exists and is directory | `[ -d "$myfile" ]` |
+| -nt | First file is newer than second one | `[ "$myfile" -nt ~/.bashrc ]` |
+| -ot | First file is older than second one | `[ "$myfile" -ot ~/.bashrc ]` |
+| =~ | Regular expression, NO QUOTES around the RE | `[[ "$file" =~ .*\.jpg$ ]]` |
 
 example:
 
