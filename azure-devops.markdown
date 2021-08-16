@@ -11,9 +11,23 @@
   - [Boards-GitHub Connection](#boards-github-connection)
 - [Pipelines](#pipelines)
   - [Multistage pipeline](#multistage-pipeline)
+  - [Variables](#variables)
+    - [Scopes](#scopes)
+    - [Naming](#naming)
+    - [Syntax](#syntax)
+    - [Environment variables](#environment-variables)
+    - [Specify variables](#specify-variables)
+    - [Secret variables](#secret-variables)
+    - [Set variables and use output variables](#set-variables-and-use-output-variables)
+  - [Predefined variables](#predefined-variables)
+  - [Use Key Vault secrets in pipelines](#use-key-vault-secrets-in-pipelines)
+  - [Artifacts in Azure Pipelines](#artifacts-in-azure-pipelines)
+    - [Publish](#publish)
+    - [Download](#download)
   - [Resources](#resources)
   - [Templates](#templates)
   - [Agent pools](#agent-pools)
+- [Artifacts](#artifacts)
 - [Tests](#tests)
 - [Deployment patterns](#deployment-patterns)
 
@@ -331,6 +345,315 @@ stages:
     )
   ```
 
+### Variables
+
+#### Scopes
+
+Variables can be defined at multiple levels, the most locally scoped one wins:
+
+Job -> Stage -> Pipeline root -> Pipeline settings UI
+
+#### Naming
+
+Variable names **can't** be prefixed with `endpoint`, `input`, `secret` and `securefile`
+
+#### Syntax
+
+- Template expression `${{ variables.myVar }}`
+
+  - processed at compile time, for reusing parts of YAML as templates
+  - the same syntax as template parameters
+  - can appear as either keys or values: `${{ variables.key }} : ${{ variables.value }}`
+
+- Macro `$(myVar)`
+
+  - processed during runtime, before a task runs
+  - designed to interpolate variable values into task inputs and into other variables
+  - can only be values, not keys
+  - renders as '$(myVar)' if not found
+
+    ```yaml
+    variables:
+      my.name: 'gary'
+
+    steps:
+      # macro syntax is the same for all three
+      # the value is interpolated before passing to 'echo'
+      # 'echo' only see the env variable
+      - bash: |
+          echo $(my.name)
+          echo $MY_NAME
+      - powershell: |
+          echo $(my.name)
+          echo $env:MY_NAME
+      - script: echo $(my.name)
+    ```
+
+- Runtime expression `$[variables.myVar]`
+
+  - runtime, designed for use with conditions and expressions
+  - must take up the entire right side of a definition
+
+```yaml
+variables:
+  - name: one
+    value: initialValue
+
+steps:
+  - script: |
+      echo ${{ variables.one }}     # outputs initialValue
+      echo $(one)
+    displayName: First variable pass
+
+  - bash: echo '##vso[task.setvariable variable=one]secondValue'
+    displayName: Set new variable value
+
+  - script: |
+      echo ${{ variables.one }}     # outputs initialValue
+      echo $(one)                   # outputs secondValue
+    displayName: Second variable pass
+```
+
+| Syntax              | Example                | When is it processed?          | Where does it expand in a pipeline definition? | How does it render when not found? |
+| ------------------- | ---------------------- | ------------------------------ | ---------------------------------------------- | ---------------------------------- |
+| macro               | `$(var)`               | runtime before a task executes | value (right side)                             | prints `$(var)`                    |
+| template expression | `${{ variables.var }}` | compile time                   | key or value (left or right side)              | empty string                       |
+| runtime expression  | `$[variables.var]`     | runtime                        | value (right side)                             | empty string                       |
+
+#### Environment variables
+
+The above variable syntaxes are processed by the Pipeline engine, already interpolated before passing to a Bash script, which can access those variables through environment variables.
+
+System and user-defined variables get injected as environment variables for your platform, the name become uppercase, periods turn into underscores:
+
+| Variable  | Linux & Mac | Windows (batch) | Windows (PowerShell) |
+| --------- | ----------- | --------------- | -------------------- |
+| `any.var` | `$ANY_VAR`  | `%ANY_VAR%`     | `$env:ANY_VAR`       |
+
+#### Specify variables
+
+- Key-value pairs
+
+  ```yaml
+  variables:
+    my.name: 'gary'
+    foo: 'bar'
+  ```
+
+- List
+
+  ```yaml
+  variables:
+    # a regular variable
+    - name: myvariable
+      value: myvalue
+
+    # a variable group
+    - group: myvariablegroup
+
+    # a reference to a variable template
+    - template: myvariabletemplate.yml
+  ```
+
+#### Secret variables
+
+- Don't pub secret in the YAML file directly
+- Define it in the Pipeline settings UI or in a variable group
+- Secret variables are encrypted at rest with a 2048-bit RSA key
+- You could use the macro syntax `$(mySecretVar)` to include it as task input
+- They are not automatically decrypted into environment variables for scripts though, you need to map it with `env`
+
+```yaml
+variables:
+ global_secret: $(mySecret) # this will NOT work because the secret variable needs to be mapped as env
+ global_nonsecret: $(nonSecretVariable) # this works because it's not a secret.
+
+steps:
+  - bash: |
+      echo "Using an input-macro directly works: $(mySecret)"
+      echo "Using a mapped input-macro works: $(global_secret)"
+      echo "Using the env var directly does not work: $MYSECRET"
+      echo "Using a global secret var mapped in the pipeline does not work either: $GLOBAL_MYSECRET"
+      echo "Using a global non-secret var mapped in the pipeline works: $GLOBAL_NONSECRET"
+      echo "Using the mapped env var for this task works and is recommended: $MY_MAPPED_ENV_VAR"
+    env:
+      MY_MAPPED_ENV_VAR: $(mySecret) # the recommended way to map to an env variable
+```
+
+```
+Using an input-macro directly works: ***
+Using a mapped input-macro works: ***
+Using the env var directly does not work:
+Using a global secret var mapped in the pipeline does not work either:
+Using a global non-secret var mapped in the pipeline works: Not a secret
+Using the mapped env var for this task works and is recommended: ***
+```
+
+Macros like `$(mySecret)`, `$(global_secret)` work, they are interpreted by the Pipeline engine, but they are not available as `$MYSECRET` or `$GLOBAL_SECRET` env variables directly, you need to map it in `env` explicitly
+
+#### Set variables and use output variables
+
+- Same job
+
+  - Use the **`##vso[task.setvariable ...]`** logging command to output a variable from a task
+  - Then use macro syntax `$(var)` to use it in following tasks
+
+  ```yaml
+  steps:
+  - bash: |
+       echo "##vso[task.setvariable variable=MyVar]true"
+  - script: echo $(MyVar) # this step uses the output variable
+  ```
+
+
+- A different job
+
+  - You must have `isOutput=true` to the logging command
+  - In following job, use the runtime expression syntax `$[ dependencies.PrevJob.outputs['Task.VarName'] ]` to map it to a variable in the job
+
+
+  ```yaml
+  jobs:
+  - job: A
+    steps:
+    # assume that MyTask generates an output variable called "MyVar"
+    # (you would learn that from the task's documentation)
+    - bash: |
+        echo "##vso[task.setvariable variable=MyVar;isOutput=true]true"
+      name: ProduceVar  # because we're going to depend on it, we need to name the step
+  - script: echo $(ProduceVar.MyVar) # this step uses the output variable
+
+  - job: B
+    dependsOn: A
+    variables:
+      # map the output variable from A into this job
+      varFromA: $[ dependencies.A.outputs['ProduceVar.MyVar'] ]
+    steps:
+    - script: echo $(varFromA) # this step uses the mapped-in variable
+  ```
+
+- A different stage
+
+  - use `stageDependencies` to reference a dependency stage
+
+  ```yaml
+  stages:
+  - stage: One
+    jobs:
+    - job: A
+      steps:
+      - bash: |
+          echo "##vso[task.setvariable variable=MyVar;isOutput=true]true"
+        name: ProduceVar  # because we're going to depend on it, we need to name the step
+
+  - stage: Two
+    dependsOn: One
+    jobs:
+    - job: B
+      variables:
+        # map the output variable from A into this job
+        varFromA: $[ stageDependencies.One.A.outputs['ProduceVar.MyVar'] ]
+      steps:
+      - script: echo $(varFromA) # this step uses the mapped-in variable
+  ```
+
+### Predefined variables
+
+Can be used as env variables in scripts and as parameters in build task
+
+Examples:
+  - `Build.ArtifactStagingDirectory`: The local path on the agent where any artifacts are copied to before being pushed to destination, same as `Build.StagingDirectory`
+  - `Build.SourcesDirectory`: the local path where your source code files are downloaded
+  - `Build.SourceBranchName`: 'main', ...
+  - `Build.Reason`: 'Manual', 'Schedule', 'PullRequest', ...
+  - `Pipeline.Workspace`
+
+Deployment job only:
+
+  - `Environment.Name`
+  - `Strategy.Name`: The name of the deployment strategy: `canary`, `runOnce`, or `rolling`.
+
+### Use Key Vault secrets in pipelines
+
+- Create a service principal for the pipeline, and configure proper access policy in Key Vault for it
+- Use the `AzureKeyVault` task to get secrets
+- Explicitly map secrets to env variables
+
+```yaml
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- task: AzureKeyVault@1
+  inputs:
+    azureSubscription: 'repo-kv-demo'                    ## YOUR_SERVICE_CONNECTION_NAME
+    KeyVaultName: 'kv-demo-repo'                         ## YOUR_KEY_VAULT_NAME
+    SecretsFilter: 'secretDemo'                          ## YOUR_SECRET_NAME
+    RunAsPreJob: false
+
+- bash: |
+    echo "Secret Found! $MY_MAPPED_ENV_VAR"
+  env:
+    MY_MAPPED_ENV_VAR: $(mySecret)
+```
+
+### Artifacts in Azure Pipelines
+
+#### Publish
+
+```yaml
+steps:
+- task: PublishPipelineArtifact@1
+  inputs:
+    targetPath: $(System.DefaultWorkingDirectory)/bin/WebApp
+    artifactName: WebApp
+```
+
+or shortcut
+
+```yaml
+steps:
+- publish: $(System.DefaultWorkingDirectory)/bin/WebApp
+  artifact: WebApp
+```
+
+Use `.artifactignore` to ignore files
+
+```
+# ignore everthing except .exe files
+
+**/*
+!*.exe
+```
+
+#### Download
+
+```yaml
+steps:
+- task: DownloadPipelineArtifact@2
+  inputs:
+    artifact: WebApp
+```
+
+or shortcut
+
+```yaml
+steps:
+- download: current   # download artifacts produced by the current pipeline run
+  artifact: WebApp    # optional
+  patterns: '**/*.js' # optional
+```
+
+- Files are downloaded into `$(Pipeline.Workspace)`
+- `artifact` controls which artifact to download, if empty, download everything
+- Use `patterns` to filter which files to download
+- Artifacts are downloaded automatically in deployment jobs (a download task is auto injected), use the following step to stop it:
+
+  ```yaml
+  steps:
+  - download: none
+  ```
+
 ### Resources
 
 - Protected
@@ -421,6 +744,25 @@ Use self-hosted agent:
   - Generate a PAT (Personal Access Token) to register your hosted agent in a pool
   - You need to install the agent software on your machine, and start a daemon service to connect to the pool
 
+
+## Artifacts
+
+- Is in organization scope
+- Supports storing NuGet, NPM, Maven, Python and Universal packages in a single feed
+
+To publish an NPM package to a feed:
+
+ - You must first provide a Contributor access to the `Project Collection Build Service` identity in the feed's settings
+
+ - Use an `Npm` task
+
+    ```yaml
+    - task: Npm@1
+      inputs:
+        command: 'publish'
+        publishRegistry: 'useFeed'
+        publishFeed: '865b7c4e-795b-4149-8d51-fbdb16a6db21'
+    ```
 
 ## Tests
 
