@@ -11,6 +11,7 @@
   - [Boards-GitHub Connection](#boards-github-connection)
 - [Pipelines](#pipelines)
   - [Multistage pipeline](#multistage-pipeline)
+  - [Resources](#resources)
   - [Templates](#templates)
   - [Agent pools](#agent-pools)
 - [Tests](#tests)
@@ -329,6 +330,34 @@ stages:
       in(dependencies.Stage2.result, 'Succeeded', 'Skipped')
     )
   ```
+
+### Resources
+
+- Protected
+
+  These resources have security settings, you can make them accessible only to specific users and pipelines within the project, and you can run additional manual or auto checks every time a pipeline uses one of these resources
+
+  - agent pools
+  - variable groups
+
+    ```yaml
+    # you need to delcare it like this in a pipeline job for access
+    variables:
+      - group: 'Release'
+    ```
+
+  - secure files
+  - service connections
+  - environments
+  - repositories
+    - access token given to an build agent for running jobs will only have access to repositories explicitly mentioned in the `resources` section of the pipeline
+
+- Open
+
+  - artifacts
+  - pipelines
+  - test plans
+  - work items
 
 
 ### Templates
