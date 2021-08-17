@@ -404,14 +404,20 @@ or use `column`
 ## `find`
 
 ```sh
-# common usage, simple wildcard name mathing
+# common usage, matching basename only (both files and directories)
 find . -name '*gary*'
+
+# match full path, including basename
+find . -path '*/js/*'
+
+# match multiple names
+find . -name '*.html' -o -name '*.md'
+
+# or use extended RegEx, matches full path
+find . -regextype posix-extended -regex '.*(php)|(phtml)'
 
 # anything last modified at least 10 days ago
 find . -mtime +10
-
-# use extended RegEx
-find . -regextype posix-extended -regex '.*(php)|(phtml)'
 
 # exclude current directory (at least one level deep)
 find . -mindepth 1 -type d
