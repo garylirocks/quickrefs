@@ -138,12 +138,19 @@ $5 !~ /MA/ {
 
 ## Field Separators
 
-by default, awk use white space as delimiter, leading and trailing spaces are trimed, fields are separated by consecutive spaces
-you can set delimiter by the `-F` command line option or in a `BEGIN {}` section
+By default, awk use white space as delimiter, leading and trailing spaces are trimed, fields are separated by consecutive spaces
 
-    FS = "\t"  # a single tab
-    FS = "\t+"  # one or more consecutive tabs
-    FS = "[ \t,]"  # any one of space, tab or comma
+You can set delimiter by the `-F` command line option or in a `BEGIN {}` section
+
+```sh
+FS = "\t"  # a single tab
+FS = "\t+"  # one or more consecutive tabs
+FS = "[ \t,]"  # any one of space, tab or comma
+
+awk -F'.' '{print $NF}'
+# or
+awk 'BEGIN { FS="." } {print $NF}'
+```
 
 ## Variables
 
