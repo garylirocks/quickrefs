@@ -433,14 +433,15 @@ Note:
 # validate a template file
 az deployment group validate \
     --resource-group learn-63336b5a-694e-4b61-a1a5-1f173253244e \
-    --template-file basic-template.json
+    --template-file basic-template.json \
     --parameters @params.json
 
 # deploy
 az deployment group create \
     --name MyDeployment \
     --resource-group learn-63336b5a-694e-4b61-a1a5-1f173253244e \
-    --template-file basic-template.json
+    --mode [Incremental|Complete] \
+    --template-file basic-template.json \
     --parameters @params.json
 
 # verify
@@ -449,12 +450,15 @@ az deployment group show \
     --resource-group learn-63336b5a-694e-4b61-a1a5-1f173253244e
 ```
 
+- By default, deployment runs in `Incremental` mode, which leaves existing resources in the RG but not in the template *unchanged*, in `Complete` mode, those resources would be deleted
+- For resources in the template, all properties are reapplied, so you need to specify the final state of the resources, NOT only the properties you want to update
+
 
 ## Azure management tools
 
 - Azure Portal
 
-  - Web based, not suitable for reptitive tasks
+  - Web based, not suitable for repetitive tasks
 
 - Azure PowerShell
 
