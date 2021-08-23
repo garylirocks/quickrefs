@@ -7,6 +7,7 @@
     - [DOM collections](#dom-collections)
   - [XPath](#xpath)
     - [Common patterns](#common-patterns)
+    - [In Google Chrome](#in-google-chrome)
     - [In JS](#in-js)
   - [Attributes and Properties](#attributes-and-properties)
   - [Classes and Styles](#classes-and-styles)
@@ -106,17 +107,19 @@ Everything in HTML is represented by objects in the DOM tree, there are 12 types
   //*[contains(@class, "foo")]
   ```
 
+
+
 - Find elements whose (or its descendants') text contains 'Foo'
 
   ```
-  //*[contains(text(), "Foo")]
+  //*[contains(string(), "Foo")]
   //*[contains(., "Foo")]
   ```
 
 - Find elements whose own text contains 'Foo'
 
   ```
-  //*[contains(string(), "Foo")]
+  //*[contains(text(), "Foo")]
   ```
 
 - Find first `li`
@@ -125,11 +128,40 @@ Everything in HTML is represented by objects in the DOM tree, there are 12 types
   //li[1]
   ```
 
-- Select an element who has a child div whose title is 'Foo'
+- Multiple conditions
+
+  ```
+  //span[contains(@class, "warn") and contains(., "1")]
+  ```
+
+- Select an element based on descendant
 
   ```sh
+  # match against direct child div
   //*[child::div[@title="Foo"]]
+
+  # match against any descendant div
+  //*[descendant::div[@title="Foo"]]
   ```
+
+- SVG
+
+  Simple `//svg` seems not working, use
+
+  ```sh
+  //*[name()="svg"]
+
+  # multiple conditions
+  //*[name()="svg" and @role="img"]
+  ```
+
+#### In Google Chrome
+
+You could use `$x()` in the Devtools to find elements
+
+```js
+$x('//*[@id="logo"]')
+```
 
 #### In JS
 
