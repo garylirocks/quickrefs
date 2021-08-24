@@ -11,6 +11,8 @@
   - [Boards-GitHub Connection](#boards-github-connection)
 - [Pipelines](#pipelines)
   - [Multistage pipeline](#multistage-pipeline)
+  - [Deployment jobs](#deployment-jobs)
+    - [Deployment strategies](#deployment-strategies)
   - [Variables](#variables)
     - [Scopes](#scopes)
     - [Naming](#naming)
@@ -344,6 +346,153 @@ stages:
       in(dependencies.Stage2.result, 'Succeeded', 'Skipped')
     )
   ```
+
+### Deployment jobs
+
+```yaml
+jobs:
+  - deployment: string   # name of the deployment job, A-Z, a-z, 0-9, and underscore. The word "deploy" is a keyword and is unsupported as the deployment name.
+    displayName: string  # friendly name to display in the UI
+    pool:                # see pool schema
+      name: string       # Use only global level variables for defining a pool name. Stage/job level variables are not supported to define pool name.
+      demands: string | [ string ]
+    workspace:
+      clean: outputs | resources | all # what to clean up before the job runs
+    dependsOn: string
+    condition: string
+    continueOnError: boolean                # 'true' if future jobs should run even if this job fails; defaults to 'false'
+    container: containerReference # container to run this job inside
+    services: { string: string | container } # container resources to run as a service container
+    timeoutInMinutes: nonEmptyString        # how long to run the job before automatically cancelling
+    cancelTimeoutInMinutes: nonEmptyString  # how much time to give 'run always even if cancelled tasks' before killing them
+    variables: # several syntaxes, see specific section
+    environment: string  # target environment name and optionally a resource name to record the deployment history; format: <environment-name>.<resource-name>
+    strategy:
+      runOnce:    #rolling, canary are the other strategies that are supported
+        deploy:
+          steps: [ script | bash | pwsh | powershell | checkout | task | templateReference ]
+```
+
+A deployment job:
+
+- Doesn't automatically clone the source repo, you can do it with `checkout: self`
+- Automatically download build artifacts
+- Allow you do define the deployment strategy
+- Records history against the deployed-to environment
+
+#### Deployment strategies
+
+- `runOnce`
+
+    each hook is executed once, then run either `on:failure` or `on:success`
+
+  ```yaml
+  strategy:
+      runOnce:
+        preDeploy:
+          pool: [ server | pool ] # See pool schema.
+          steps:
+          - script: [ script | bash | pwsh | powershell | checkout | task | templateReference ]
+
+        deploy:
+          pool: [ server | pool ] # See pool schema.
+          steps: ...
+
+        routeTraffic:
+          pool: [ server | pool ]
+          steps: ...
+
+        postRouteTraffic:
+          pool: [ server | pool ]
+          steps: ...
+
+        on:
+          failure:
+            pool: [ server | pool ]
+            steps: ...
+
+          success:
+            pool: [ server | pool ]
+            steps: ...
+  ```
+
+- `rolling`
+
+  ```yaml
+  strategy:
+    rolling:
+      maxParallel: [ number or percentage as x% VMs]
+
+      preDeploy:
+        steps: ...
+
+      deploy:
+        steps: ...
+
+      routeTraffic:
+        steps: ...
+
+      postRouteTraffic:
+        steps: ...
+
+      on:
+        failure:
+          steps: ...
+
+        success:
+          steps: ...
+  ```
+
+  - Currently only support deployment to VM resources
+  - In each iteration, rolling out new version to a fixed set of VMs(rolling set)
+  - Typically waits for deployment on each set of VMs to complete before proceeding, you could do a health check after each iteration
+  - All lifecycle hook jobs are created to run on each VM
+
+- `canary`
+
+  An example, deploying to AKS, will first deploy to 10-percent pods, then 20 percent, while monitoring the health during `postRouteTraffic`
+
+  ```yaml
+  jobs:
+  - deployment:
+    environment: smarthotel-dev.bookings
+    pool:
+      name: smarthotel-devPool
+    strategy:
+      canary:
+        increments: [10,20]
+        preDeploy:
+          steps:
+          - script: initialize, cleanup....
+
+        deploy:
+          steps:
+          - script: echo deploy updates...
+              - task: KubernetesManifest@0
+                inputs:
+                  action: $(strategy.action)
+                  namespace: 'default'
+                  strategy: $(strategy.name)
+                  percentage: $(strategy.increment)
+                  manifests: 'manifest.yml'
+
+        postRouteTraffic:
+          pool: server
+          steps:
+          - script: echo monitor application health...
+        on:
+          failure:
+            steps:
+            - script: echo clean-up, rollback...
+          success:
+            steps:
+          - script: echo checks passed, notify...
+  ```
+
+  - `preDeploy` run once, then iterates with `deploy`, `routeTraffic` and `postRouteTraffic` hooks, then exits with either the `success` or `failure` hook
+
+
+
 
 ### Variables
 
