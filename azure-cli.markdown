@@ -108,7 +108,7 @@ az resource show
   #   - and port 22 is accessible
   # so you could login to it using
   ssh vm-public-ip
-```
+  ```
 
 ### Network
 
