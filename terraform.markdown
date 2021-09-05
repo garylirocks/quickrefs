@@ -2,9 +2,10 @@
 
 - [File structure](#file-structure)
 - [Commands](#commands)
+- [Authenticate Terraform to Azure](#authenticate-terraform-to-azure)
+- [Use a remote state file](#use-a-remote-state-file)
 - [Run in CI/CD pipelines](#run-in-cicd-pipelines)
   - [Use remote state file](#use-remote-state-file)
-  - [Create a service principal for Terraform](#create-a-service-principal-for-terraform)
   - [Pipeline](#pipeline)
 
 ## File structure
@@ -110,6 +111,90 @@
 
 - `terraform destroy`
 
+## Authenticate Terraform to Azure
+
+- When using Terraform in command line, Terraform uses Azure CLI to authenticate;
+- In a non-interactive context, create a service principal for Terraform
+
+  ```sh
+  SP_NAME='terraform-sp-20210905'
+
+  # get default subscription id
+  ARM_SUBSCRIPTION_ID=$(az account list \
+    --query "[?isDefault][id]" \
+    --all \
+    --output tsv)
+
+  # create a sp and get the secret
+  # - `Contributor` is the default role for a service principal, which has full permissions to read and write to an Azure subscription
+  # - get the service principal id
+  ARM_CLIENT_ID=$(az ad sp create-for-rbac \
+    --name $SP_NAME \
+    --role Contributor \
+    --scopes "/subscriptions/$ARM_SUBSCRIPTION_ID" \
+    --query appId \
+    --output tsv)
+
+  # password was generated in the last step, which we used to get the appId
+  # so we reset the password and get it here
+  ARM_CLIENT_SECRET=$(az ad sp credential reset \
+    --name $SP_NAME \
+    --query password \
+    --output tsv)
+
+  # get tenant id
+  ARM_TENANT_ID=$(az ad sp show \
+    --id $ARM_CLIENT_ID \
+    --query appOwnerTenantId \
+    --output tsv)
+  ```
+
+  Export variables, Terraform looks for them when it runs
+
+  ```sh
+  export ARM_SUBSCRIPTION_ID
+  export ARM_CLIENT_SECRET
+  export ARM_CLIENT_ID
+  export ARM_TENANT_ID
+  ```
+
+## Use a remote state file
+
+In a collaborative or CI/CD context, you want to use a remote state file:
+
+1. Add a `backend` block in Terraform config
+
+    ```terraform
+    terraform {
+      required_providers {
+        azurerm = {
+          source = "hashicorp/azurerm"
+          version = "2.75.0"
+        }
+      }
+
+      backend "azurerm" {
+        resource_group_name  = "learning-rg"
+        storage_account_name = "tfstatey2hkc"
+        container_name       = "tfstate"
+        key                  = "terraform.tfstate"
+      }
+    }
+    ```
+
+1. Set access key in an environment variable
+
+    ```sh
+    ARM_ACCESS_KEY=$(az storage account keys list \
+                  --resource-group $RESOURCE_GROUP_NAME \
+                  --account-name $STORAGE_ACCOUNT_NAME \
+                  --query '[0].value' \
+                  -o tsv)
+    export ARM_ACCESS_KEY
+    ```
+
+1. A state file will be created in the storage account when you run `terraform apply`
+
 
 ## Run in CI/CD pipelines
 
@@ -145,53 +230,6 @@ Init with backend
 ```sh
 terraform init -backend-config="backend.tfvars"
 ```
-
-### Create a service principal for Terraform
-
-```sh
-# get default subscription id
-ARM_SUBSCRIPTION_ID=$(az account list \
-  --query "[?isDefault][id]" \
-  --all \
-  --output tsv)
-```
-
-```sh
-# create a sp and get the secret
-ARM_CLIENT_SECRET=$(az ad sp create-for-rbac \
-  --name http://tf-sp-$UNIQUE_ID \
-  --role Contributor \
-  --scopes "/subscriptions/$ARM_SUBSCRIPTION_ID" \
-  --query password \
-  --output tsv)
-```
-- Name needs to start with `http://`
-- `Contributor` is the default role for a service principal, which has full permissions to read and write to an Azure subscription
-- This is the ONLY opportunity to retrieve the generated password
-
-```sh
-# get service principal id
-ARM_CLIENT_ID=$(az ad sp show \
-  --id http://tf-sp-$UNIQUE_ID \
-  --query appId \
-  --output tsv)
-
-# get tenant id
-ARM_TENANT_ID=$(az ad sp show \
-  --id http://tf-sp-$UNIQUE_ID \
-  --query appOwnerTenantId \
-  --output tsv)
-```
-
-Export variables, Terraform looks for them when it runs
-
-```sh
-export ARM_SUBSCRIPTION_ID
-export ARM_CLIENT_SECRET
-export ARM_CLIENT_ID
-export ARM_TENANT_ID
-```
-
 ### Pipeline
 
 ```yaml

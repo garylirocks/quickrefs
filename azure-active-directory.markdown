@@ -76,7 +76,6 @@ Features:
 
   ```sh
   # create an sp and set its RBAC
-  # sp name needs to start with 'http://'
   # retrieve its password here (this is the only chance)
   az ad sp create-for-rbac \
     --name http://my-sp-$UNIQUE_ID \
@@ -134,7 +133,7 @@ Features:
         --resource-group <resource group> \
         --role <principal id>
 
-    # grant key vault permissions to an identity 
+    # grant key vault permissions to an identity
     #  then the functionapp can access the vault
     az keyvault set-policy \
         --name <key vault name> \
