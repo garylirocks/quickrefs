@@ -724,6 +724,17 @@ ssh -L 80:localhost:8080 -N dest
     - `example.com` is used as the SNI field in TLS handshake, so the server can send the correct certificate back
     - `example.com` is used as `Host:` header as well
 
+- Output headers only
+
+    ```sh
+    # -s : silent
+    # -S : show-error
+    # -L : follow redirection
+    # '-D -': dump header to stdout
+    # '-o /dev/null': discard data
+    curl -sSL -D - -o /dev/null www.example.com.org 
+    ```
+
 ## One liner
 
 - `man 7 ascii` get ASCII table
