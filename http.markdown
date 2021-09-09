@@ -260,8 +260,8 @@ fetch(url, {
 })
 ```
 
-And the browsers only accept the response which
-  - has an `Access-Control-Allow-Credentials: true` header;
+And the browsers only accept the response when **BOTH** the preflight and the actual request have
+  - an `Access-Control-Allow-Credentials: true` header;
   - and the `Access-Control-Allow-Origin` is exactly the current origin, not a wildcard `*`;
 
 
