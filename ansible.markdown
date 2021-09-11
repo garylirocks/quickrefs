@@ -4,6 +4,7 @@ Ansible
 - [Overview](#overview)
 - [Inventory](#inventory)
 - [Playbook](#playbook)
+- [Configs](#configs)
 
 ## Overview
 
@@ -74,7 +75,7 @@ Here is an example playbook that configures service accounts
   become: yes # apply with `sudo` privilege
   tasks:
     - name: Add service accounts
-      user:   # Ansible's 'user' module
+      user:                     # 'user' module
         name: "{{ item }}"
         comment: service account
         create_home: no
@@ -106,4 +107,35 @@ ansible \
   tag_Ansible_mslearn
 ```
 
+Example modules:
 
+```yaml
+---
+- hosts: demoGroup
+  become: true
+
+  tasks:
+    - name: Ping
+      ping:                  # 'ping' module, no arguments required
+
+    - name: Install nginx
+      apt:                   # 'apt' module, install a package
+        name: nginx
+        state: present
+
+    - name: Find nginx configs
+      find:                 # 'find' module, find files
+        path: /etc/nginx/conf.d/
+        file_type: file
+```
+
+## Configs
+
+Ansible configs are in `/etc/ansible/ansible.cfg`
+
+```
+[defaults]
+
+# control the output format
+stdout_callback = yaml
+```
