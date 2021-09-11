@@ -2,6 +2,7 @@ Ansible
 =========
 
 - [Overview](#overview)
+- [Commands](#commands)
 - [Inventory](#inventory)
 - [Playbook](#playbook)
 - [Configs](#configs)
@@ -13,6 +14,12 @@ Ansible
 - Agentless, but nodes and the control machine needs Python
 - Connect to each node through SSH (WinRM for Windows)
 - Idempotent
+
+## Commands
+
+- `ansible` run ad-hoc tasks
+- `ansible-inventory` list hosts
+- `ansible-playbook` run playbooks
 
 ## Inventory
 
@@ -72,7 +79,7 @@ Here is an example playbook that configures service accounts
 # users.yml
 ---
 - hosts: all
-  become: yes # apply with `sudo` privilege
+  become: yes                   # apply with `sudo` privilege
   tasks:
     - name: Add service accounts
       user:                     # 'user' module
@@ -127,6 +134,11 @@ Example modules:
       find:                 # 'find' module, find files
         path: /etc/nginx/conf.d/
         file_type: file
+
+    - name: Ensure Nginx is running
+      service:              # 'service' module
+        name: nginx
+        state: started
 ```
 
 ## Configs
