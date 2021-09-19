@@ -1,5 +1,6 @@
 AWS
 =====
+- [Five Pillars](#five-pillars)
 - [Core Concepts](#core-concepts)
 - [IAM](#iam)
 - [Cognito](#cognito)
@@ -8,6 +9,7 @@ AWS
 - [Signing Requests](#signing-requests)
 - [VPC (Virtual Private Cloud)](#vpc-virtual-private-cloud)
   - [Network ACLs vs. Security Groups](#network-acls-vs-security-groups)
+  - [TODO: Private vs. Public subnets](#todo-private-vs-public-subnets)
 - [EC2](#ec2)
   - [EC2 Storage](#ec2-storage)
 - [Glacier](#glacier)
@@ -17,6 +19,63 @@ AWS
 - [API Gateway](#api-gateway)
   - [CORS](#cors)
 - [Developer Tools](#developer-tools)
+
+## Five Pillars
+
+1. Operational Excellence
+
+    - Infrastructure as Code
+      - CloudFormation
+      - CDK
+
+    - Observability
+      - Collection:
+        - Infrastructure-level: CloudWatch
+        - Application-level: CloudWatch Custom Metrics
+        - Account-level: CloudTrail
+      - Analytics: CloudWatch Logs Insight, Athena, RDS, RedShift, Elasticsearch Service
+      - Action: CloudWatch Alarms/Dashboards
+
+1. Security: Zero Trust, Principle of least privilege
+
+    - IAM
+    - Network security: VPC, ALB, WAF, Security Group
+    - Data Encryption
+      - In transit: HTTPS, ALB
+      - At rest: KMS, CMK, CloudTrail
+
+1. Reliability
+
+    Minimize the blast radius of any individual component
+
+    - Fault Isolation
+      - Resource and Request
+      - Availability Zone
+      - Region
+    - Limits
+      - Service Quotas
+
+1. Performance Efficiency
+
+    - Selection
+      - Compute
+      - Storage
+      - Database
+      - Network
+    - Scaling
+      - Vertical
+      - Horizontal
+
+1. Cost Optimization
+
+    OpEx vs. CapEx
+
+    - Pay for Use
+      - Right Sizing
+      - Serverless
+      - Reservations
+      - Spot Instances: for fault-tolerent workloads
+    - Cost Optimization Lifecycle
 
 ## Core Concepts
 
@@ -137,6 +196,8 @@ These two should be used together to implement network security rules, ACLs appl
 | Default | "Allow All" for both in/out | "Deny All" inbound |
 | Settings | Can specify both allow and deny rules | Can only specify allow rules |
 | Attributes | Stateless (you have to manually edit both inbound/outbound rules) | Stateful (if you open inbound port 80, it will open outbound port 80 automatically) |
+
+### TODO: Private vs. Public subnets
 
 ## EC2
 
