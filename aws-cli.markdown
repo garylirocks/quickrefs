@@ -1,13 +1,22 @@
-# AWS CLI notes
+# AWS CLI
 
 ## Configure
 
-default config files are in `~/.aws/`, there are two files: `credentials`, `config`
+```sh
+# config the 'default' profile: credentials, default region and output format
+aws configure
 
-example:
+# config the 'work' profile
+aws configure --profile work
+```
 
-`credentials`:
+Config files are in `~/.aws/`, there are two files: `credentials`, `config`
 
+Example:
+
+- `credentials`:
+
+    ```
     [default]
     aws_secret_access_key = ****
     aws_access_key_id = ****
@@ -15,19 +24,26 @@ example:
     [work]
     aws_secret_access_key = ****
     aws_access_key_id = ****
+    ```
 
-`config`:
+- `config`:
 
+    ```
     [default]
     region = ap-southeast-2
 
     [profile work]
     region = ap-southeast-1
+    ```
 
-there are two profiles in this example, you can switch between profiles by setting an environment variable:
+There are two profiles in this example, you can switch between profiles by setting an environment variable:
 
-    export AWS_PROFILE=work
+```sh
+export AWS_PROFILE=work
+```
 
 or for one-off usage, add a `--profile` parameter to any command:
 
-    aws s3 ls --profile=work
+```sh
+aws s3 ls --profile=work
+```
