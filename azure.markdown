@@ -2153,6 +2153,16 @@ az network front-door create \
 - Standard Microsoft tier has less features than Akamai and Verizon CDNs
 - Asset TTL is determined by the `Cache-Control` header from the origin server, if not set, Azure sets a default value. This can be changed by caching rules.
 - In Standard Microsoft tier, you can't set specific caching rules for a file, if you do not want to cache a file, you should set the **`Cache-Control` to be `no-cache` in the origin server**
+  - Since it's not cached by CDN, CDN won't compress it as well, so if you would like to serve a compressed version, you need to put the compressed file in the origin Blob storage, and set the `ContentEncoding: gzip` on it
+
+    ```sh
+    gzip /paht/to/file
+    mv /paht/to/file.gz /paht/to/file
+
+    azcopy copy /paht/to/file <Blob-storage-path> \
+                --cache-control 'no-cache' \
+                --content-encoding 'gzip'
+    ```
 
 #### Standard rules engine notes
 
