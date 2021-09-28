@@ -39,8 +39,8 @@
 </svg>
 ```
 
-- Show top left quarter of the circle;
-- The `svg` element will take the full width of the page be default;
+- Show top left quarter of the circle, `0 0` is the starting coordinates, `50 50` is the width and height, NOT the ending coordinates;
+- The `svg` element will take the full width of the page by default;
 - When `viewbox` is present, you'd better only specify one of `width` or `height`, the other one can be calculated:
   ```xml
   <svg viewbox="0 0 50 50" width="100">
