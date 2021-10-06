@@ -36,7 +36,7 @@ In a general computer cluster:
 
 In the case of Kubernetes:
 
-![Kubernetes cluster](images/kubernetes_architecture.svg)
+![Kubernetes cluster](images/kubernetes_architecture.png)
 
 - Control plane services
 
@@ -100,7 +100,7 @@ With `kubectl`, there are four options to manage the deployment of pods:
 - Replica sets
   - replaces the replication controller as the preferred way to deploy replicas
   - has an extra option to include a selector value
-  
+
 - Deployments
   - A deployment is a management object one level higher than a replica set, enables you to deploy and manage updates for pods
   - update strategies:
@@ -110,7 +110,7 @@ With `kubectl`, there are four options to manage the deployment of pods:
   - enables you to apply any change to a cluster: deploy new versions of an app, update labels, run other replicas of your pods
   - `kubectl run` automatically creates a deployment with required replica set and pods, but the best practice is to manage all deployments with deployment definition files
 
-## Networking 
+## Networking
 
 ![Pods nodes IP](images/kubernetes_nodes-pods-assigned-ip-addresses.svg)
 
@@ -133,7 +133,7 @@ Kubernetes offers several networking options that you can install to configure n
 - A Kubernetes service acts as a load balancer and redirects traffic to specific ports of specified pods by using port-forwarding rules
 - Gets assigned an IP address from a service cluster's IP range (e.g. 10.96.0.0/12), a DNS name and an IP port
 - The service uses the same `selector` key as deployments to select and group resources with matching labels into one single IP
-- It needs four pieces of information to route traffic: `Service port`, `Network protocol`, `Target resource`, `Resource port` 
+- It needs four pieces of information to route traffic: `Service port`, `Network protocol`, `Target resource`, `Resource port`
 
 Services can be of several types, each changes the behavior of the applications selected by the service:
 
@@ -174,7 +174,7 @@ kubectl get service contoso-website
 
 ### Ingress
 
-Ingress exposes routes for HTTP and HTTPS traffic from outside a cluster to services inside the cluster. 
+Ingress exposes routes for HTTP and HTTPS traffic from outside a cluster to services inside the cluster.
 
 So the traffic goes like this: Ingress -> service -> pod
 
