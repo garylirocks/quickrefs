@@ -47,3 +47,13 @@ or for one-off usage, add a `--profile` parameter to any command:
 ```sh
 aws s3 ls --profile=work
 ```
+
+## S3
+
+```sh
+# create a bucket
+aws s3 mb s3://testing-12345
+
+# upload a file
+aws s3 cp x.tar s3://testing-12345/x.tar
+```
