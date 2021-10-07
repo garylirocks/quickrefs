@@ -137,7 +137,7 @@ Kubernetes offers several networking options that you can install to configure n
 
 Services can be of several types, each changes the behavior of the applications selected by the service:
 
-- **ClusterIP** default value, expooses the applications internally only
+- **ClusterIP** default value, exposes the applications internally only
 - **NodePort** exposes the service externally, assigns each node a static port that responds to that service. When accessed through `nodeIp:port`, the node automatically redirects the request to an internal service of the `ClusterIP` type
 - **LoadBalancer** you typically configure load balancers when you use cloud providers (eg. Azure Load Balancer), automatically creates a `NodePort` service to which the load balancer's traffic is redirected and a `ClusterIP` service to forward internally
 
@@ -376,7 +376,7 @@ helm install --set replicaCount=5 aspnet-webapp azure-marketplace/aspnet-core
 
 ## MicroK8s
 
-MicroK8s is an option for deploying a single-node Kubernetes cluster as a single plackage to target workstations and IoT devices.
+MicroK8s is an option for deploying a single-node Kubernetes cluster as a single package to target workstations and IoT devices.
 
 ```sh
 sudo snap install microk8s --classic
