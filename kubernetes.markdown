@@ -11,6 +11,7 @@
 - [Helm](#helm)
   - [Helm repos](#helm-repos)
   - [Install Helm Chart](#install-helm-chart)
+- [Minikube](#minikube)
 - [MicroK8s](#microk8s)
   - [Install a web server on a cluster](#install-a-web-server-on-a-cluster)
 
@@ -373,6 +374,36 @@ Set values
 helm install --set replicaCount=5 aspnet-webapp azure-marketplace/aspnet-core
 ```
 
+## Minikube
+
+For start a K8s cluster on localhost.
+
+```sh
+minikube start
+
+kubectl create -f helloworld.yaml
+# deployment.apps/helloworld created
+
+kubectl get deployments
+# NAME         READY   UP-TO-DATE   AVAILABLE   AGE
+# helloworld   1/1     1            1           15m
+
+# create a new service to expose a deployment
+kubectl expose deployment helloworld --type NodePort
+
+kubectl get service/helloworld
+# NAME         TYPE       CLUSTER-IP     EXTERNAL-IP   PORT(S)        AGE
+# helloworld   NodePort   10.100.95.14   <none>        80:31796/TCP   62s
+
+# to get output in YAML format
+kubectl get service/helloworld -o yaml
+
+# show all resources in the cluster
+kubectl get all
+
+# open the service in browser
+minikube service helloworld
+```
 
 ## MicroK8s
 

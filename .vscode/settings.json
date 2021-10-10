@@ -1,3 +1,10 @@
 {
-  "cSpell.words": ["CMMI", "Kubernetes", "contoso", "kubectl", "rerequested"]
+  "cSpell.words": [
+    "CMMI",
+    "contoso",
+    "kubectl",
+    "Kubernetes",
+    "minikube",
+    "rerequested"
+  ]
 }
