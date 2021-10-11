@@ -75,25 +75,35 @@ Features:
   - Listed under **App registrations** in Azure Portal
 
   ```sh
-  # create an sp and set its RBAC
-  # retrieve its password here (this is the only chance)
-  az ad sp create-for-rbac \
-    --name http://my-sp-$UNIQUE_ID \
-    --role Contributor \
-    --scopes "/subscriptions/$SUBSCRIPTION_ID" \
+  SP_NAME='My-Service-Principal'
+  RESOURCE_ID='resource/id'
+  ANOTHER_RESOURCE_ID='another/resource/id'
+
+  # create an SP and assign a role on multiple scopes
+  SP_PASS=$(az ad sp create-for-rbac \
+    --name $SP_NAME \
+    --role "Contributor" \
+    --scopes $RESOURCE_ID $ANOTHER_RESOURCE_ID \
     --query password \
-    --output tsv
+    --output tsv)
 
-  # get service principal id
-  az ad sp show \
-    --id http://my-sp-$UNIQUE_ID \
-    --query appId \
-    --output tsv
+  # get appId, which is used in your client app
+  SP_APP_ID=$(az ad sp list \
+    --display-name $SP_NAME \
+    --query "[].appId" \
+    --output tsv)
 
-  # list all SP created by 'Default Directory'
-  az ad sp list \
-    --filter "PublisherName eq 'Default Directory'" \
-    -otable
+  # get objectId here, needed for role assignment
+  SP_OBJECT_ID=$(az ad sp list \
+    --display-name $SP_NAME \
+    --query "[].objectId" \
+    --output tsv)
+
+  # if you need to create another role assignment
+  az role assignment create \
+    --assignee $SP_OBJECT_ID \
+    --role "ROLE_A" \
+    --scope "SUB_or_GROUP_or_RESOURCE_ID"
   ```
 
 - Managed identities for Azure services
