@@ -687,6 +687,14 @@ ssh -L 80:localhost:8080 -N dest
 
 ### `curl`
 
+- Post JSON data
+
+    ```sh
+    curl -X POST 'https://example.com' \
+        -H 'Content-Type: application/json' \
+        -d '{ "name": "Gary" }'
+    ```
+
 - Output connection time info
     ```sh
     curl -I -w "\n namelookup: \t\t%{time_namelookup} \n connect: \t\t%{time_connect} \n appconnect: \t\t%{time_appconnect} \n pretransfer: \t\t%{time_pretransfer} \n starttransfer: \t%{time_starttransfer} \n total: \t\t%{time_total}\n" https://www.google.com
