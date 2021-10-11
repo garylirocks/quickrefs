@@ -8,6 +8,9 @@
   - [Ingress](#ingress)
 - [Storage](#storage)
 - [Manifest files](#manifest-files)
+- [Labels](#labels)
+- [Probes](#probes)
+- [Updates and Rollback](#updates-and-rollback)
 - [Helm](#helm)
   - [Helm repos](#helm-repos)
   - [Install Helm Chart](#install-helm-chart)
@@ -273,6 +276,86 @@ kubectl get pods
 # contoso-website-6d959cf499-s2b8s   1/1     Running   0          53s
 ```
 
+## Labels
+
+```sh
+kubectl get pods --show-labels
+
+# add/update label
+kubectl label pod/podname myLabel=myValue
+# pod/podname labeled
+
+# remove a label
+kubectl label pod/podname myLabel-
+
+# search by labels
+kubectl get pods --selector env=staging,team=web
+
+# not equal
+kubectl get pods --selector env!=staging
+
+# in a range
+kubectl get pods -l 'release-version in (1.0,2.0)' --show-labels
+kubectl get pods -l 'env in (dev,staging)' --show-labels
+```
+
+## Probes
+
+```yaml
+spec:
+  containers:
+  - name: helloworld
+    image: helloworld:latest
+
+    ports:
+    - containerPort: 80
+
+    readinessProbe:
+      initialDelaySeconds: 10
+      initialDelaySeconds: 1
+      httpGet:
+        path: /
+        port: 80
+
+    livenessProbe:
+      initialDelaySeconds: 10
+      timeoutSeconds: 1
+      httpGet:
+        path: /
+        port: 80
+```
+
+## Updates and Rollback
+
+```sh
+# update image of myContainer in myDeployment
+kubectl set image deployment/myDeployment myContainer=garylirocks/helloworld:latest
+
+# old replicaset replaced by a new set
+kubectl get rs
+# NAME                      DESIRED   CURRENT   READY   AGE
+# myDeployment-668f5695cf   3         3         3       111s
+# myDeployment-66db4977c8   0         0         0       5m6s
+
+# show rollout history
+kubectl rollout history deployment/myDeployment
+
+# rollback
+kubectl rollout undo deployment myDeployment
+```
+
+Trouble shooting
+
+```sh
+# inspect a pod
+kubectl describe pod/myDeployment-66db4977c8-g79d7
+
+# get logs
+kubectl logs pod/myDeployment-66db4977c8-g79d7
+
+# get into a container
+kubectl exec -it pod/myDeployment-66db4977c8-g79d7 bash
+```
 
 ## Helm
 
@@ -403,6 +486,19 @@ kubectl get all
 
 # open the service in browser
 minikube service helloworld
+```
+
+Addons
+
+```sh
+minikube addons list
+
+# enable dashboard
+minikube addons enable dashboard
+minikube addons enable metrics-server
+
+# open dashboard
+minikube dashboard
 ```
 
 ## MicroK8s
