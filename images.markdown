@@ -93,6 +93,16 @@ with Gaussian blur:
 
     convert -strip -interlace Plane -gaussian-blur 0.05 -quality 85% banner.png banner.jpg
 
+- Extract image frames from gif
+
+    ```sh
+    # get all frames
+    convert image.gif image.png
+
+    # get the first frame
+    convert 'image.gif[0]' image.png
+    ```
+
 ## composite, add overlay to an image
 
     composite overlay.png background.png result.png
