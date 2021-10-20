@@ -758,6 +758,11 @@ echo ${arr[@]: -1}                  # get the last, the space is needed
 
 echo ${arr[@]:0:2}                  # start from the first, get two
 # apple banana
+
+# loop through an array
+for (( i=0; i<${#arr[@]}; i++ )); do
+  echo ${arr[$i]}
+done
 ```
 
 ## Dictionary

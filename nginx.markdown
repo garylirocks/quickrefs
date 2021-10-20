@@ -104,7 +104,34 @@ server {
 Example:
 
 - `/about.html` is handled by the first location, `/data/www/about.html` is sent to the client if present;
-- in above example, when `\` is requested, if `index.html` is present, it is sent out, if it is not, but `index.php` exists, then the directive does an internal redirect to `/index.php` as if the request comes from a client, it will be handled by the last `location` block;
+- in above example, when `/` is requested, if `index.html` is present, it is sent out, if it is not, but `index.php` exists, then the directive does an internal redirect to `/index.php` as if the request comes from a client, it will be handled by the last `location` block;
+- Nested locations:
+    - Nested location is still matching to the full path;
+    - When a parent location is defined by a prefix, nested locations could be either prefix or regex locations;
+    - When a parent location is a regex, nested locations must also be regexes;
+
+    ```nginx
+    location /a {
+        location /a/b {
+            ...
+        }
+
+        location ~ /c {
+            ...
+        }
+    }
+
+
+    location ~ ^/(a|b) {
+        location ~ ^/a {
+            ...
+        }
+
+        location ~ ^/b {
+            ...
+        }
+    }
+    ```
 
 ## Directives
 
