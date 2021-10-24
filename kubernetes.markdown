@@ -9,6 +9,8 @@
 - [Storage](#storage)
 - [Manifest files](#manifest-files)
 - [Labels](#labels)
+- [Configs](#configs)
+- [Secrets](#secrets)
 - [Probes](#probes)
 - [Updates and Rollback](#updates-and-rollback)
 - [Helm](#helm)
@@ -299,6 +301,79 @@ kubectl get pods -l 'release-version in (1.0,2.0)' --show-labels
 kubectl get pods -l 'env in (dev,staging)' --show-labels
 ```
 
+## Configs
+
+`my-configs.yaml` defines a ConfigMap resource
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: my-configs
+data:
+  api-endpoint: https://example.com/api
+```
+
+```sh
+kubectl apply -f my-configs.yaml
+# configmap/my-configs created
+
+kubectl get configmap/my-configs --output yaml
+
+# apiVersion: v1
+# data:
+#   api-endpoint: https://example.com/api
+# ...
+```
+
+This is how you reference a config as an env variable:
+
+```yaml
+spec:
+  containers:
+  - name: myContainer
+    image: gary/coolimage:latest
+    env:
+    - name: endpoint
+      valueFrom:
+        configMapKeyRef:
+          name: my-configs
+          key: api-endpoint
+```
+
+## Secrets
+
+```sh
+kubectl create secret generic apikey --from-literal=api_key=12345
+# secret/apikey created
+
+kubectl get secrets
+# NAME        TYPE         DATA   AGE
+# apikey      Opaque       1      7s
+
+kubectl get secret apikey -o yaml
+# apiVersion: v1
+# data:
+#   api_key: MTIzNDU=
+# kind: Secret
+# metadata:
+#   ...
+# type: Opaque
+```
+
+To reference a secret key
+
+```yaml
+env:
+- name: api_key
+  valueFrom:
+    secretKeyRef:
+      name: apikey
+      key: api_key
+```
+
+
+
 ## Probes
 
 ```yaml
@@ -471,7 +546,7 @@ kubectl get deployments
 # NAME         READY   UP-TO-DATE   AVAILABLE   AGE
 # helloworld   1/1     1            1           15m
 
-# create a new service to expose a deployment
+# expose a deployment as a new service
 kubectl expose deployment helloworld --type NodePort
 
 kubectl get service/helloworld
@@ -500,6 +575,8 @@ minikube addons enable metrics-server
 # open dashboard
 minikube dashboard
 ```
+
+
 
 ## MicroK8s
 
