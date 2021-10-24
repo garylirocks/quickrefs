@@ -784,7 +784,7 @@ docker network inspect ingress
 You can create your own overlay network:
 
 ```sh
-# create another overlay network, this netowrk will be available to all nodes
+# create another overlay network, this network will be available to all nodes
 docker network create \
                 --driver=overlay \
                 --subnet 192.168.1.0/24 \
@@ -851,6 +851,8 @@ docker network inspect overlay0
 #### ingress
 
   - **A Special overlay network that load balances network traffic amongst swarm working nodes**;
+  - Every working node gets a `ingress-endpoint` container;
+  - If a service exposes any ports, then its containers are in this network;
   - Maintains a list of all IP addresses from nodes of a service, when a request comes in, routes to one of them;
   - Provides '**routing mesh**', allows services to be exposed to the external network without having a replica running on every node in the Swarm;
   - When you start a Swarm service and do not connect it do a user-defined overlay network, it connects to `ingress` by default;
