@@ -126,3 +126,33 @@ Config can be defined
     "moduleDirectories": ["src/components", "node_modules"]
   }
   ```
+
+- `setupFiles` and `setupFilesAfterEnv`
+
+  - `setupFiles` files run before each test suite (a `.test` file), before the testing framework is loaded, could be used to load `.env`
+  - `setupFilesAfterEnv` files run before each test suite after the testing framework is loaded, so could be used to set options for `jest`, extending `expect`, etc
+
+    ```js
+    jest.setTimeout(70000);
+    ```
+
+  Example:
+
+  ```json
+  setupFiles: ['./jest.setup.js'],
+  setupFilesAfterEnv: ['./jest.afterEnvSetup.js'],
+  ```
+
+  When run `jest`, the execution order is like:
+
+  ```
+  running jest.setup.js
+  running jest.afterEnvSetup.js
+  running a.test.js
+
+  running jest.setup.js
+  running jest.afterEnvSetup.js
+  running b.test.js
+
+  ...
+  ```
