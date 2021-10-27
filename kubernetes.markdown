@@ -11,6 +11,8 @@
 - [Labels](#labels)
 - [Configs](#configs)
 - [Secrets](#secrets)
+- [Jobs and cronjobs](#jobs-and-cronjobs)
+- [DaemonSets](#daemonsets)
 - [Probes](#probes)
 - [Updates and Rollback](#updates-and-rollback)
 - [Helm](#helm)
@@ -372,7 +374,74 @@ env:
       key: api_key
 ```
 
+## Jobs and cronjobs
 
+- Jobs run a pod once, then stop, the logs are kept around
+
+  ```yaml
+  apiVersion: batch/v1
+  kind: Job
+  metadata:
+    name: finalcountdown
+  spec:
+    template:
+      metadata:
+        name: finalcountdown
+      spec:
+        containers:
+        - name: counter
+          image: busybox
+          command:
+          - bin/sh
+          - -c
+          - "for i in 9 8 7 6 5 4 3 2 1 ; do echo $i ; done"
+        restartPolicy: Never #could also be Always or OnFailure
+  ```
+
+- Cronjobs run periodically
+
+  ```yaml
+  apiVersion: batch/v1beta1
+  kind: CronJob
+  metadata:
+    name: hellocron
+  spec:
+    schedule: "*/1 * * * *"  #Runs every minute (cron syntax) or @hourly.
+    jobTemplate:
+      spec:
+        template:
+          spec:
+            containers:
+            - name: hellocron
+              image: busybox
+              args:
+              - /bin/sh
+              - -c
+              - date; echo Hello from your Kubernetes cluster
+            restartPolicy: OnFailure #could also be Always or Never
+    suspend: false #Set to true if you want to suspend in the future
+  ```
+
+  ```sh
+  # get cronjobs
+  kubectl get cronjobs
+
+  # you could edit a cronjob, e.g. set 'suspend' to true to suspend it
+  kubectl edit cronjobs\cronjobname
+  ```
+
+## DaemonSets
+
+A DaemonSet ensures all nodes run a copy of a pod, could be used to run your logging and monitoring tools
+
+You could use `nodeSelector` to target nodes with specific labels:
+
+```yaml
+...
+nodeSelector:
+  infra: "production"
+...
+```
 
 ## Probes
 
