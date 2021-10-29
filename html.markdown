@@ -640,8 +640,12 @@ Notes:
 - HTML5 supports history API;
 - You can manipulate the history by `pushState` and `replaceState`
   - `pushState(state: any, title: string, path?: string)`, this add a new entry to the history object, and attach a `state` object to it, you can update the `path` at the same time, which doesn't send a query to the server;
-- `popstate` event is triggered when you use `back`, `forward` or `go` method;
-- Hash change triggers both `hashchange` and `popstate` event;
+  - They **don't** trigger `hashchange` or `popstate` event
+
+- `popstate` event is triggered when you navigate with buttons or use `back`, `forward` or `go` method, **NOT** by `pushState` and `replaceState`;
+- Hash change (by `location.hash` or anchor links) triggers both `popstate` and `hashchange` event, `popstate` happens before `hashchange`;
+
+- Check out `https://github.com/remix-run/history`, which extends the History API, can listen to any url changes, used by React-Router.
 
 ## Web Performance
 
