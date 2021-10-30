@@ -5,6 +5,7 @@
 - [Actions](#actions)
   - [Action definition](#action-definition)
   - [Workflow file](#workflow-file)
+  - [Step output](#step-output)
   - [GitHub Script](#github-script)
 
 ## GitHub Flow
@@ -229,6 +230,25 @@ test:
         npm test
       env:
         CI: true
+```
+
+### Step output
+
+Your could output a variable in one step using `::set-output` command in one step and use it later
+
+```yaml
+- name: Fetch latest version
+  id: fetch_version
+  run: echo ::set-output name=TAG::${GITHUB_REF#refs/tags/}
+
+...
+
+- name: Build and push production images
+  uses: docker/build-push-action@v2
+  with:
+    context: .
+    tags: ${{secrets.ACR_NAME}}/contoso-website:${{ steps.fetch_version.outputs.TAG }}
+    push: true
 ```
 
 ### GitHub Script
