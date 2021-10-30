@@ -19,6 +19,9 @@
   - [Helm repos](#helm-repos)
   - [Install Helm Chart](#install-helm-chart)
 - [Minikube](#minikube)
+  - [Addons](#addons)
+  - [Minikube deepdive](#minikube-deepdive)
+  - [Tips](#tips)
 - [MicroK8s](#microk8s)
   - [Install a web server on a cluster](#install-a-web-server-on-a-cluster)
 
@@ -182,9 +185,10 @@ kubectl get service contoso-website
 
 ### Ingress
 
-Ingress exposes routes for HTTP and HTTPS traffic from outside a cluster to services inside the cluster.
-
-So the traffic goes like this: Ingress -> service -> pod
+- Ingress exposes routes for HTTP and HTTPS traffic from outside a cluster to services inside the cluster.
+- The traffic goes like this: Ingress -> service -> pod
+- Comparing to the `LoadBalancer` type, `ingress` is more like an `Azure Application Gateway`, it could handle **SSL termination, routing to different services based on url path, etc**
+- Relies on the `HTTP application routing` addon in Azure, which routes the traffic, and creates a DNS zone as well (a DNS record is created automatically when you deploy the service)
 
 ![Ingress](images/kubernetes_ingress.png)
 
@@ -511,7 +515,19 @@ Helm allows you **to create templated YAML** script files to manage your applica
 
 ![Helm Components](images/kubernetes_helm-components.svg)
 
-Helm client implements a Go language-based template engine, which creates manifest files by combining the templates in `templates/` with values from `chart.yaml` and `values.yaml`
+```sh
+helm create my-app
+ls -F1 my-app
+# charts/
+# Chart.yaml
+# templates/
+# values.yaml
+```
+
+- `Chart.yaml` manifest file, contains name, description, version, etc.
+- `charts/` dependencies
+
+Helm client implements a Go language-based template engine, which creates manifest files by combining the templates in `templates/` with values from `Chart.yaml` and `values.yaml`
 
 ![Helm chart processing](images/kubernetes_helm-chart-process.svg)
 
@@ -528,6 +544,16 @@ version: 0.1.0
 appVersion: 1.0.0
 ```
 
+An example `values.yaml` file:
+
+```yaml
+image:
+  registry: <your-acr-name>
+  name: webapp
+  tag: latest
+  pullPolicy: "Always"
+```
+
 An example template file, with `{{.Values.<property>}}` placeholders for every custom value
 
 ```yaml
@@ -542,30 +568,17 @@ spec:
     spec:
       containers:
         - name: webapp
-          image: {{ .Values.registry }}/webapp:{{ .Values.dockerTag }}
-          imagePullPolicy: {{ .Values.pullPolicy }}
+          image: {{ .Values.image.registry }}/{{ .Values.image.name }}:{{ default "latest" .Values.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           resources:
           ...
           ports:
             ...
 ```
 
-An example `values.yaml` file:
-
-```yaml
-apiVersion: v2
-name: webapp
-description: A Helm chart for Kubernetes
-...
-registry: "my-acr-registry.azurecr.io"
-dockerTag: "linux-v1"
-pullPolicy: "Always"
-```
-
-There are also *predefined* values you could reference, like `{{.Release.Name}}`, `{{.Release.IsInstall}}`
-
-You could reference `Chart.yaml` values as well, like `{{.Chart.version}}`
-
+- There are also *predefined* values you could reference, like `{{ .Release.Name }}`, `{{ .Release.IsInstall }}`
+- You could reference `Chart.yaml` values as well, like `{{ .Chart.version }}`
+- Values in `values.yaml` can be overridden by CLI `--set` option
 
 ### Helm repos
 
@@ -632,20 +645,123 @@ kubectl get all
 minikube service helloworld
 ```
 
-Addons
+### Addons
+
+- List
+
+  ```sh
+  minikube addons list
+  ```
+
+- Enable dashboard
+
+  ```sh
+  # enable dashboard
+  minikube addons enable dashboard
+  minikube addons enable metrics-server
+
+  # open dashboard
+  minikube dashboard
+  ```
+
+- Use a custom image
+
+  ```sh
+  minikube addons enable efk --images="Kibana=kibana/kibana:5.6.2-custom"
+  ```
+
+### Minikube deepdive
+
+[A Deep Dive Into 5 years of Minikube - Medya Ghazizadeh, Google - YouTube](https://www.youtube.com/watch?v=GHczvbzuVvc&t=926s)
+
+![Minikube architecture](images/kubernetes_minikube-architecture.png)
+![Minikube architecture 2](images/kubernetes_minikube-architecture-2.png)
+
+- Hypervisor technology creates a Linux box, which is required to install K8s, it could be container based, VM based or no virtualization at all (bare-metal, SSH)
+
+  ```sh
+  # specify a driver, one of: virtualbox, vmwarefusion, kvm2, vmware, none, docker, podman, ssh
+  minikube start --driver=kvm2
+  ```
+
+- Container runtime manages containers inside K8s (the driver and runtime can both be Docker)
+
+  ```sh
+  minikube start --container-runtime=containerd
+  ```
+
+- Other options to `minikube start`
+
+  ```sh
+  # K8s version
+  minikube start --kubernetes-version='v1.2.3'
+
+  # multi-node
+  minikube start -n=2
+
+  # start another cluster (called profile in minikube)
+  minikube start -p p1
+
+  # extra configs to components, which could be kubelet, kubeadm,
+  #     apiserver, controller-manager, etcd, proxy, scheduler
+  minikube start \
+    --extra-config=apiserver.authorization-mode=RBAC \
+    --extra-config=apiserver.oidc-issuer-url=https://example.com
+
+  ```
+
+  - `--addons=[]`: Enable addons. see `minikube addons list` for a list of valid addon names.
+  - `--cni=''`: CNI plug-in to use. Valid options: auto, bridge, calico, cilium, flannel, kindnet, or path to a CNI manifest (default: auto)
+  - `--cpus='2'`: Number of CPUs allocated to Kubernetes. Use "max" to use the maximum number of CPUs.
+  - `--dns-domain='cluster.local'`: The cluster dns domain name used in the Kubernetes cluster
+  - `--docker-env=[]`: Environment variables to pass to the Docker daemon. (format: key=value)
+  - `--host-dns-resolver=true`: Enable host resolver for NAT DNS requests (virtualbox driver only)
+  - `--image-repository=''`: Alternative image repository to pull docker images from. This can be used when you have limited access to gcr.io. Set it to "auto" to let minikube decide one for you. For Chinese mainland users, you may use local gcr.io mirrors such as registry.cn-hangzhou.aliyuncs.com/google_containers
+  - `--memory=''`: Amount of RAM to allocate to Kubernetes (format: <number>[<unit>], where unit = b, k, m or g). Use "max" to use the maximum amount of memory.
+  - `--mount=false`: This will start the mount daemon and automatically mount files into minikube.
+  - `--mount-string='/home/gary`:/minikube-host': The argument to pass the minikube mount command on start.
+  - `--namespace='default'`: The named space to activate after start
+  - `--ports=[]`: List of ports that should be exposed (docker and podman driver only)
+  - `--service-cluster-ip-range='10.96.0.0/12'`: The CIDR to be used for service cluster IPs.
+
+### Tips
 
 ```sh
-minikube addons list
+# copy file to minikube node (NOT container)
+minikube cp a.txt /home/docker/b.txt
 
-# enable dashboard
-minikube addons enable dashboard
-minikube addons enable metrics-server
+# specify the node
+minikube cp a.txt node2:/home/docker/b.txt
 
-# open dashboard
-minikube dashboard
+# ======
+
+# SSH into a cluster node
+minikube ssh
+
+# ======
+
+# pause K8s (the apiserver, etc), but keep your apps running
+#  useful to save CPU/battery life
+minikube pause
+
+# or use auto-pause addon
+minikube addons enable auto-pause
+
+# ======
+
+# automated GCP auth: if your host has auth, your apps will be authenticated automatically
+minikube addons enable gcp-auth
+
+# =====
+
+# connect to the docker daemon inside minikube
+eval $(minikube docker-env)
+
+# =====
+
+# build images without docker, using buildkit inside minikube
+minikube image build -t my-image .
 ```
-
-
 
 ## MicroK8s
 
