@@ -10,7 +10,11 @@
 - [Manifest files](#manifest-files)
 - [Labels](#labels)
 - [Configs](#configs)
+  - [Usage](#usage)
+  - [Notes](#notes)
 - [Secrets](#secrets)
+  - [Definition in YAML](#definition-in-yaml)
+  - [Usage](#usage-1)
 - [Jobs and cronjobs](#jobs-and-cronjobs)
 - [DaemonSets](#daemonsets)
 - [Probes](#probes)
@@ -332,51 +336,118 @@ kubectl get configmap/my-configs --output yaml
 # ...
 ```
 
-This is how you reference a config as an env variable:
+### Usage
 
-```yaml
-spec:
-  containers:
-  - name: myContainer
-    image: gary/coolimage:latest
-    env:
-    - name: endpoint
-      valueFrom:
-        configMapKeyRef:
-          name: my-configs
-          key: api-endpoint
-```
+- Mounted as files in a volume on containers inside Pod or Deployment
+  - Automatically updated when value changes, no need to restart the Pod
+
+  ```yaml
+  apiVersion: v1
+  kind: Pod
+  metadata:
+    name: configmap-as-files
+    namespace: default
+  spec:
+    containers:
+      - name: my-container
+        image: alpine
+        command: ["sleep", "3600"]
+        volumeMounts:
+        - name: my-volume
+          mountPath: "/path/to/mount/"        # absolute path
+          readOnly: true
+
+    volumes:
+      - name: my-volume
+        configMap:
+          name: my-configmap
+          items:
+          - key: "api-endpoint"
+            path: "relative/path/to/file.txt" # must be relative path
+  ```
+
+- As env variables
+  - Need to restart the Pod to get new values
+
+  ```yaml
+  spec:
+    containers:
+    - name: myContainer
+      image: gary/coolimage:latest
+      env:
+      - name: endpoint
+        valueFrom:
+          configMapKeyRef:
+            name: my-configs
+            key: api-endpoint
+  ```
+
+### Notes
+
+- Can only be accessed and mounted by containers in the same namespace
+- Widely used by tools like Helm and Kubernetes Operator to store and read states
 
 ## Secrets
 
 ```sh
-kubectl create secret generic apikey --from-literal=api_key=12345
+kubectl create secret generic my_secrets --from-literal=api_key=12345
 # secret/apikey created
 
 kubectl get secrets
-# NAME        TYPE         DATA   AGE
-# apikey      Opaque       1      7s
+# NAME            TYPE         DATA   AGE
+# my_secrets      Opaque       1      7s
 
-kubectl get secret apikey -o yaml
+kubectl get secret my_secrets -o yaml
 # apiVersion: v1
 # data:
-#   api_key: MTIzNDU=
+#   api_key: MTIzNDU=           # encoded in Base64
 # kind: Secret
 # metadata:
 #   ...
 # type: Opaque
 ```
 
-To reference a secret key
+### Definition in YAML
+
+Use `stringData` and plain text
 
 ```yaml
-env:
-- name: api_key
-  valueFrom:
-    secretKeyRef:
-      name: apikey
-      key: api_key
+apiVersion: v1
+kind: Secret
+  name: my_secrets
+  namespace: default
+type: Opaque
+stringData:
+  api_key: 12345
 ```
+
+Or use `data` and Base64 encoded values
+
+```yaml
+...
+data:
+  api_key: MTIzNDU=
+```
+
+### Usage
+
+- Mounted as files in a volume on containers inside Pod or Deployment
+  - Automatically updates when secret value changes, no need to restart the Pod
+
+- As env variables
+  - Need to restart the Pod to get new secret values
+
+  ```yaml
+  env:
+  - name: api_key
+    valueFrom:
+      secretKeyRef:
+        name: apikey
+        key: api_key
+  ```
+
+- Used by kubelet when pulling images from private registries via the `imagePullSecret` key in Pod specification
+
 
 ## Jobs and cronjobs
 
