@@ -39,3 +39,41 @@ kubectl get nodes
 
 ![AKS deployment](images/azure_aks-deployments-diagram.png)
 
+## Node pools
+
+- System node pool
+  - Host system pods that make up the control plane of your cluster
+  - Every AKS cluster needs at least one system node pool with at least one node
+  - Linux OS only
+  - At most 30 pods on a single node
+  - For production environments, a minimum of three nodes are recommended
+- User node pool
+  - Node count can be 0
+
+You could scale Pods and nodes manually or automatically
+
+- Manual scaling
+
+  ```sh
+  # add a node pool
+  az aks nodepool add \
+      --resource-group resourceGroup \
+      --cluster-name aksCluster \
+      --name gpunodepool \
+      --node-count 1 \
+      --node-vm-size Standard_NC6 \
+      --no-wait
+
+  # scale node count to 0
+  az aks nodepool scale \
+      --resource-group resourceGroup \
+      --cluster-name aksCluster \
+      --name gpunodepool \
+      --node-count 0
+  ```
+
+- Automatic scaling
+
+  ![AKS auto scaler](images/aks_autoscaler.png)
+
+  Cluster Autoscaler scales nodes, Horizontal Pod Autoscaler scales pods on existing nodes
