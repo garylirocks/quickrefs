@@ -1,11 +1,15 @@
 {
   "cSpell.words": [
+    "azurerm",
     "CMMI",
     "contoso",
+    "hashicorp",
     "kubectl",
     "kubelet",
     "Kubernetes",
     "minikube",
-    "rerequested"
+    "rerequested",
+    "tfstate",
+    "tfvars"
   ]
 }

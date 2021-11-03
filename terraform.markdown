@@ -1,5 +1,6 @@
 # Terraform
 
+- [Overview](#overview)
 - [File structure](#file-structure)
 - [Commands](#commands)
 - [Authenticate Terraform to Azure](#authenticate-terraform-to-azure)
@@ -8,93 +9,65 @@
   - [Use remote state file](#use-remote-state-file)
   - [Pipeline](#pipeline)
 
+## Overview
+
+![Overview](images/terraform_overview.png)
+
 ## File structure
 
 - `main.tf` - the plan
 
   ```terraform
-  # required version
+  # Configure the Azure provider
   terraform {
-    required_version = "> 0.12.0"
+    required_providers {
+      azurerm = {
+        source  = "hashicorp/azurerm"
+        version = "~> 2.65"
+      }
+    }
+
+    required_version = ">= 0.14.9"
   }
 
-  # which platform/plugin
   provider "azurerm" {
-    version = ">=2.0.0"
     features {}
   }
 
-  # variables, will prompt if there's no default value
-  variable "resource_group_name" {
-    default = "my-rg"
-    description = "The name of the resource group"
+  resource "azurerm_resource_group" "rg" {
+    name     = var.resource_group_name
+    location = "westus2"
   }
 
-  ...
-
-  variable "app_service_name_prefix" {
-    default     = "my-appsvc"
-    description = "The beginning part of the app service name"
-  }
-
-  # generate a random integer,
-  # which will be written to a state file,
-  # so you get the same number each time
-  resource "random_integer" "app_service_name_suffix" {
-    min = 1000
-    max = 9999
-  }
-
-  # "my" enables you to refer to this resource in other parts of your plan, it does not appear in your Azure resource
-  resource "azurerm_resource_group" "my" {
-    name     = var.resource_group_name        # use a variable
-    location = var.resource_group_location
-  }
-
-  resource "azurerm_app_service_plan" "my" {
-    name                = var.app_service_plan_name
-    location            = azurerm_resource_group.my.location  # reference another resource
-    resource_group_name = azurerm_resource_group.my.name
-    kind                = "Linux"
-    reserved            = true
-
-    sku {
-      tier = "Basic"
-      size = "B1"
-    }
-  }
-
-  resource "azurerm_app_service" "my" {
-    name                = "${var.app_service_name_prefix}-${random_integer.app_service_name_suffix.result}"
-    location            = azurerm_resource_group.my.location
-    resource_group_name = azurerm_resource_group.my.name
-    app_service_plan_id = azurerm_app_service_plan.my.id
-  }
-
-  # output a generated hostname
-  output "website_hostname" {
-    value       = azurerm_app_service.my.default_site_hostname
-    description = "The hostname of the website"
+  output "resource_group_id" {
+    value = azurerm_resource_group.rg.id
   }
   ```
+
+  - Terraform installs providers from [Terraform Registry](https://registry.terraform.io) by default
+  - `version` key is recommended
+  - You can have multiple providers in one file
+  - `azurerm_resource_group` is the resource type, prefixed with resource provider name, `azurerm_resource_group.rg` is a unique ID of the resource
 
 - `terraform.tfvars` - variables
 
   ```sh
-  resource_group_location = "northeurope"
+  variable "resource_group_name" {
+    default = "myTFResourceGroup"
+  }
   ```
 
 - `terraform.tfstate`
-  - Generated after you apply you plan
+  - Generated after you apply you plan, contains IDs and properties of the resources
   - Helps terraform map you plan to your running resources
   - Can holds value that's not in Azure, such as a generated random number
-
+  - Do NOT put it in version control
 
 ## Commands
 
 - `terraform init`
 
-    Downloads the plug-ins you need and verifies that terraform can access your plan's state file
+    Downloads the plug-ins you need (eg. `azurerm`, `docker`) and verifies that terraform can access your plan's state file
 
 - `terraform plan`
 
@@ -102,14 +75,33 @@
 
 - `terraform apply`
 
-    Runs you plan, it's **idempotent**
+    - Runs you plan, it's **idempotent**
+    - To override a variable:
+
+      `terraform apply -var "resource_group_name=myNewResourceGroupName"`
 
 - `terraform output`
 
     - Get the output
-    - `terraform output website_hostname` gets a single value, useful to pass the value to other commands
+    - `terraform output resource_group_id` gets a single value, useful to pass the value to other commands
 
 - `terraform destroy`
+
+- `terraform import ADDRESS ID`
+
+  - Import existing resources which were not created by Terraform into the state, does not generate configuration
+  - Example:
+
+    ```sh
+    terraform import azurerm_resource_group.my '/subscriptions/xxx/resourceGroups/my-rg'
+    ```
+
+- `terraform fmt` format files
+- `terraform validate` validate files
+- `terraform state list` list resources in state file
+- `terraform show [ADDRESS]` show details of a resource
+- `terraform providers` show providers for this config
+
 
 ## Authenticate Terraform to Azure
 
