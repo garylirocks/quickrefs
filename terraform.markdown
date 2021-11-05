@@ -62,6 +62,7 @@
   - Helps terraform map you plan to your running resources
   - Can holds value that's not in Azure, such as a generated random number
   - Do NOT put it in version control
+  - In production, the state file should be kept secure and encrypted
 
 ## Commands
 
@@ -154,38 +155,59 @@
 
 In a collaborative or CI/CD context, you want to use a remote state file:
 
-1. Add a `backend` block in Terraform config
+- With Terraform Cloud
 
-    ```terraform
-    terraform {
-      required_providers {
-        azurerm = {
-          source = "hashicorp/azurerm"
-          version = "2.75.0"
+  Terraform Cloud can be a simple backend for storing state files, you can also run terraform remotely on it
+
+  1. `terraform login`
+
+  1. Add a `backend` to config
+
+      ```terraform
+      terraform {
+        ...
+
+        backend "remote" {
+          organization = "garylirocks"
+
+          workspaces {
+            name = "learning"
+          }
         }
       }
+      ```
 
-      backend "azurerm" {
-        resource_group_name  = "learning-rg"
-        storage_account_name = "tfstatey2hkc"
-        container_name       = "tfstate"
-        key                  = "terraform.tfstate"
+  1. By default, `terraform apply` runs remotely in Terraform Cloud, so you need to put credentials Terraform needs as workspace env variables (eg. `ARM_CLIENT_SECRET` for `azurerm')
+
+- Use Azure blob storage
+
+  1. Add a `backend` block in Terraform config
+
+      ```terraform
+      terraform {
+        ...
+
+        backend "azurerm" {
+          resource_group_name  = "learning-rg"
+          storage_account_name = "tfstatey2hkc"
+          container_name       = "tfstate"
+          key                  = "terraform.tfstate"
+        }
       }
-    }
-    ```
+      ```
 
-1. Set access key in an environment variable
+  1. Set access key in an environment variable
 
-    ```sh
-    ARM_ACCESS_KEY=$(az storage account keys list \
-                  --resource-group $RESOURCE_GROUP_NAME \
-                  --account-name $STORAGE_ACCOUNT_NAME \
-                  --query '[0].value' \
-                  -o tsv)
-    export ARM_ACCESS_KEY
-    ```
+      ```sh
+      ARM_ACCESS_KEY=$(az storage account keys list \
+                    --resource-group $RESOURCE_GROUP_NAME \
+                    --account-name $STORAGE_ACCOUNT_NAME \
+                    --query '[0].value' \
+                    -o tsv)
+      export ARM_ACCESS_KEY
+      ```
 
-1. A state file will be created in the storage account when you run `terraform apply`
+  1. A state file will be created in the storage account when you run `terraform apply`
 
 
 ## Run in CI/CD pipelines
@@ -223,6 +245,12 @@ Init with backend
 terraform init -backend-config="backend.tfvars"
 ```
 ### Pipeline
+
+In the following example,
+- you use pipeline secrets to construct a `backend.tfvars` file,
+- then terraform could access the state file,
+- then run `terraform apply` and get the output,
+- which is used in the next step for deplying an app
 
 ```yaml
   - stage: "Dev"
