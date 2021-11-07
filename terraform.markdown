@@ -2,90 +2,253 @@
 
 - [Overview](#overview)
 - [File structure](#file-structure)
+  - [`main.tf` - the plan](#maintf---the-plan)
+  - [`variables.tf` - variable definition](#variablestf---variable-definition)
+    - [`terraform.tfvars`](#terraformtfvars)
+  - [`outputs.tf`](#outputstf)
+  - [`terraform.tfstate`](#terraformtfstate)
 - [Commands](#commands)
 - [Authenticate Terraform to Azure](#authenticate-terraform-to-azure)
-- [Use a remote state file](#use-a-remote-state-file)
+- [Remote runs and state](#remote-runs-and-state)
+  - [Terraform Cloud](#terraform-cloud)
+  - [Azure blob storage](#azure-blob-storage)
 - [Run in CI/CD pipelines](#run-in-cicd-pipelines)
   - [Use remote state file](#use-remote-state-file)
   - [Pipeline](#pipeline)
+- [HCL language features](#hcl-language-features)
 
 ## Overview
 
 ![Overview](images/terraform_overview.png)
 
+The above is the usual workflow: Create IaC config -> Plan -> Apply
+
+When dealing with existing infrastructure, you use the 'import' workflow:
+
+![Import workflow](images/terraform_import-workflow-diagram.png)
+
+- Import infrastructure into Terraform state
+- Write config that matches the infrastructure
+- Review and apply
+
 ## File structure
 
-- `main.tf` - the plan
+- A typical file structure in a Terraform workspace:
 
-  ```terraform
-  # Configure the Azure provider
-  terraform {
-    required_providers {
-      azurerm = {
-        source  = "hashicorp/azurerm"
-        version = "~> 2.65"
-      }
+  ```
+  main.tf                 # main config
+  versions.tf             # terraform and provider versions
+  variables.tf            # variable definition
+  outputs.tf              # output definition
+
+  terraform.tfvars        # actual variable values (should be in .gitignore)
+  terraform.tfstate       # generated state file (should be in .gitignore)
+
+  .terraform.lock.hcl     # version lock file, make sure everyone is using the same versions, generated if not present
+  ```
+
+- `version`, `variable` and `output` blocks could be included in `main.tf` directly, but it's better to put them in separate files
+
+### `main.tf` - the plan
+
+```terraform
+# Configure the Azure provider
+terraform {
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "~> 2.65"
     }
-
-    required_version = ">= 0.14.9"
   }
 
-  provider "azurerm" {
-    features {}
+  required_version = ">= 0.14.9"
+}
+
+provider "azurerm" {
+  features {}
+}
+
+resource "azurerm_resource_group" "rg" {
+  name     = var.resource_group_name
+  location = "westus2"
+}
+
+output "resource_group_id" {
+  value = azurerm_resource_group.rg.id
+}
+```
+
+- Terraform installs providers from [Terraform Registry](https://registry.terraform.io) by default
+- `version` key is recommended
+- You can have multiple providers in one file
+- `azurerm_resource_group` is the resource type, prefixed with resource provider name, `azurerm_resource_group.rg` is a unique ID of the resource
+
+
+### `variables.tf` - variable definition
+
+A variable can be of type string, number, bool, list, map, set, tuple and object
+
+```terraform
+# without a default value
+variable "ec2_instance_type" {
+  description = "AWS EC2 instance type."
+  type        = string
+}
+
+variable "public_subnet_count" {
+  description = "Number of public subnets."
+  type        = number
+  default     = 2
+}
+
+variable "public_subnet_cidr_blocks" {
+  description = "Available cidr blocks for public subnets."
+  type        = list(string)
+  default     = [
+    "10.0.1.0/24",
+    "10.0.2.0/24",
+    "10.0.3.0/24",
+    "10.0.4.0/24",
+  ]
+}
+
+variable "resource_tags" {
+  description = "Tags to set for all resources"
+  type        = map(string)
+
+  default     = {
+    project     = "project-alpha",
+    environment = "dev"
   }
 
-  resource "azurerm_resource_group" "rg" {
-    name     = var.resource_group_name
-    location = "westus2"
+  # validation rules
+  validation {
+    condition     = length(var.resource_tags["project"]) <= 16 && length(regexall("[^a-zA-Z0-9-]", var.resource_tags["project"])) == 0
+    error_message = "The project tag must be no more than 16 characters, and only contain letters, numbers, and hyphens."
   }
 
-  output "resource_group_id" {
-    value = azurerm_resource_group.rg.id
+  validation {
+    condition     = length(var.resource_tags["environment"]) <= 8 && length(regexall("[^a-zA-Z0-9-]", var.resource_tags["environment"])) == 0
+    error_message = "The environment tag must be no more than 8 characters, and only contain letters, numbers, and hyphens."
   }
-  ```
+}
+```
 
-  - Terraform installs providers from [Terraform Registry](https://registry.terraform.io) by default
-  - `version` key is recommended
-  - You can have multiple providers in one file
-  - `azurerm_resource_group` is the resource type, prefixed with resource provider name, `azurerm_resource_group.rg` is a unique ID of the resource
+You could evaluate variable expressions with `terraform console`
 
-- `terraform.tfvars` - variables
+```sh
+> var.public_subnet_cidr_blocks[1]
+"10.0.2.0/24"
 
-  ```sh
-  variable "resource_group_name" {
-    default = "myTFResourceGroup"
-  }
-  ```
+# use function 'slice'
+> slice(var.public_subnet_cidr_blocks, 0, var.public_subnet_count)
+tolist([
+  "10.0.1.0/24",
+  "10.0.2.0/24",
+])
 
-- `terraform.tfstate`
-  - Generated after you apply you plan, contains IDs and properties of the resources
-  - Helps terraform map you plan to your running resources
-  - Can holds value that's not in Azure, such as a generated random number
-  - Do NOT put it in version control
-  - In production, the state file should be kept secure and encrypted
+> var.resource_tags.project
+"project-alpha"
+
+# variable interpolation in strings
+> "app-${var.resource_tags["project"]}-${var.resource_tags["environment"]}"
+"app-project-alpha-dev"
+```
+
+#### `terraform.tfvars`
+
+- Variable values, so you don't need to enter them manually every time
+- DON'T include it in version control
+
+```
+resource_tags = {
+  project     = "new-project",
+  environment = "test",
+  owner       = "me@example.com"
+}
+
+ec2_instance_type = "t3.micro"
+
+instance_count = 3
+```
+
+### `outputs.tf`
+
+- `output` block can be in the main config file, but it's better to put it into a seprate file called `outputs.tf`
+- Outputs allow you to
+  - share data between Terraform workspaces,
+  - with other tools and automation,
+  - only way to share data from a child module to your config's root module
+- You could use string interpolation and functions
+- Sensitive output is **not always** redacted, it's plain text in state file, in JSON output, or queried by name
+
+```terraform
+output "vpc_id" {
+  description = "ID of project VPC"
+  value       = module.vpc.vpc_id
+}
+
+output "lb_url" {
+  description = "URL of load balancer"
+  value       = "http://${module.elb_http.this_elb_dns_name}/"
+}
+
+output "web_server_count" {
+  description = "Number of web servers provisioned"
+  value       = length(module.ec2_instances.instance_ids)
+}
+
+# sensitive value
+output "db_password" {
+  description = "Database administrator password"
+  value       = aws_db_instance.database.password
+  sensitive   = true
+}
+
+```
+
+```sh
+# get all outputs
+terraform output
+
+# in JSON format
+terraform output -json
+
+# get a paticular output
+terraform output lb_url
+# "http://lb-5YI-project-alpha-dev-2144336064.us-east-1.elb.amazonaws.com/"
+
+# output in raw mode
+terraform output -raw lb_url
+# http://lb-5YI-project-alpha-dev-2144336064.us-east-1.elb.amazonaws.com/
+```
+
+### `terraform.tfstate`
+
+- Generated after you apply you plan, contains IDs and properties of the resources
+- Helps terraform map you plan to your running resources
+- Can holds value that's not in Azure, such as a generated random number
+- Do NOT put it in version control
+- In production, the state file should be kept secure and encrypted
 
 ## Commands
 
 - `terraform init`
 
-    Downloads the plug-ins you need (eg. `azurerm`, `docker`) and verifies that terraform can access your plan's state file
+    - Downloads the plug-ins you need (eg. `azurerm`, `docker`) and verifies that terraform can access your plan's state file
+    - `terraform init -upgrade` update provider versions in `.terraform.lock.hcl`
 
 - `terraform plan`
 
-    Produces an execution plan for you to review
+    - Produces an execution plan for you to review
 
 - `terraform apply`
 
     - Runs you plan, it's **idempotent**
-    - To override a variable:
-
-      `terraform apply -var "resource_group_name=myNewResourceGroupName"`
+    - `terraform apply -var "resource_group_name=myNewResourceGroupName"` to override a variable
+    - `terraform apply -replace="aws_instance.example"` force replace a paticular resource
 
 - `terraform output`
-
-    - Get the output
-    - `terraform output resource_group_id` gets a single value, useful to pass the value to other commands
-
 - `terraform destroy`
 
 - `terraform import ADDRESS ID`
@@ -100,6 +263,7 @@
 - `terraform fmt` format files
 - `terraform validate` validate files
 - `terraform state list` list resources in state file
+- `terraform plan -refresh-only` refresh state file to reflect infrastructure changes
 - `terraform show [ADDRESS]` show details of a resource
 - `terraform providers` show providers for this config
 
@@ -151,13 +315,13 @@
   export ARM_TENANT_ID
   ```
 
-## Use a remote state file
+## Remote runs and state
 
-In a collaborative or CI/CD context, you want to use a remote state file:
+In a collaborative or CI/CD context, you may want to run and save state files remotely
 
-- With Terraform Cloud
+### Terraform Cloud
 
-  Terraform Cloud can be a simple backend for storing state files, you can also run terraform remotely on it
+  Terraform Cloud supports remote run, storing state file, input variables, environment variables, private module registry, policy as code, etc
 
   1. `terraform login`
 
@@ -179,7 +343,7 @@ In a collaborative or CI/CD context, you want to use a remote state file:
 
   1. By default, `terraform apply` runs remotely in Terraform Cloud, so you need to put credentials Terraform needs as workspace env variables (eg. `ARM_CLIENT_SECRET` for `azurerm')
 
-- Use Azure blob storage
+### Azure blob storage
 
   1. Add a `backend` block in Terraform config
 
@@ -221,11 +385,12 @@ When provision infrastructure in a pipeline, you need:
 
 In `main.tf`
 
-```yaml
+```terraform
 terraform {
   required_version = "> 0.12.0"
 
   backend "azurerm" {
+    // leave empty
   }
 }
 ```
@@ -318,3 +483,97 @@ In the following example,
                     appName: "$(WebAppNameDev)"
                     package: "$(Pipeline.Workspace)/drop/$(buildConfiguration)/*.zip"
 ```
+
+## HCL language features
+
+
+- Collections
+
+  - `count`
+
+    ```terraform
+    resource "random_pet" "object_names" {
+      count = 4
+
+      length    = 5
+      separator = "_"
+      prefix    = "learning"
+    }
+
+    resource "aws_s3_bucket_object" "objects" {
+      count = 4
+
+      key          = "${random_pet.object_names[count.index].id}.txt"
+      content      = "Example object #${count.index}"
+      content_type = "text/plain"
+      ...
+    }
+    ```
+
+  - `for_each`
+
+    ```terraform
+    locals {
+      names = {
+        name1 = "Name 1",
+        name2 = "Name 2",
+      }
+    }
+
+    resource "aws_instance" "app" {
+      # use a map
+      for_each               = local.names
+      ami                    = data.aws_ami.ubuntu.id
+      instance_type          = "t2.micro"
+      ...
+    }
+    ```
+
+  - `for .. in`
+
+    ```terraform
+    output "instance_id" {
+      description = "ID of the EC2 instance"
+      # output a list
+      value       = [for instance in aws_instance.app : instance.id]
+    }
+    ```
+
+- `locals`
+
+  Used to simplify the config and avoid repetition
+
+  ```terraform
+  locals {
+    required_tags = {
+      project     = var.project_name,
+      environment = var.environment
+    }
+
+    tags = merge(var.resource_tags, local.required_tags)
+  }
+  ```
+
+- Data source blocks
+
+  A module can provide both resources and data sources
+
+  ```terraform
+  data "aws_availability_zones" "available" {
+    state = "available"
+  }
+
+  # load state from another workspace
+  data "terraform_remote_state" "vpc" {
+    backend = "local"
+
+    config = {
+      path = "../learn-terraform-data-sources-vpc/terraform.tfstate"
+    }
+  }
+
+  # reference data
+  provider "aws" {
+    region = data.terraform_remote_state.vpc.outputs.aws_region
+  }
+  ```
