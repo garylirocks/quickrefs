@@ -104,6 +104,11 @@ Features:
     --assignee $SP_OBJECT_ID \
     --role "ROLE_A" \
     --scope "SUB_or_GROUP_or_RESOURCE_ID"
+
+  # show SPs you created in your Default Directory
+  az ad sp list \
+    --filter "PublisherName eq 'Default Directory'" \
+    -otable
   ```
 
 - Managed identities for Azure services
