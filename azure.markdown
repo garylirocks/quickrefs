@@ -119,6 +119,7 @@
   - [Azure Application Insights](#azure-application-insights)
   - [Kusto Query Language](#kusto-query-language)
   - [Alerting](#alerting)
+- [Troubleshooting](#troubleshooting)
 
 ## Overview
 
@@ -2966,3 +2967,22 @@ Heartbeat
 - Metric alerts
 - Log alerts
 - Activity Log alerts (resource creation, deletion, etc)
+
+
+## Troubleshooting
+
+- Delete a locked file in Azure File Share
+
+  A file may get locked and you cannot delete it, you need to find and close file handle on the file. See https://infra.engineer/azure/65-azure-clearing-the-lock-on-a-file-within-an-azure-file-share
+
+  ```powershell
+  # get storage account context
+  $Context = New-AzStorageContext -StorageAccountName "StorageAccountName" -StorageAccountKey "StorageAccessKey"
+
+  # find all open handles of a file share
+  Get-AzStorageFileHandle -Context $Context -ShareName "FileShareName" -Recursive
+
+  # close a handle
+  Close-AzStorageFileHandle -Context $Context -ShareName "FileShareName" -Path 'path/to/file' -CloseAll
+  ```
+
