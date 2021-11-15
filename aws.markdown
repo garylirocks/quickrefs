@@ -99,7 +99,7 @@ Identity and Access Management
 - **IAM Roles are intended to be used temporarily**, it can be granted to
   - IAM users in another account;
   - code running on a EC2 instance;
-  - or an AWS service that needs access to resources in your account.
+  - or an AWS service that needs access to resources in your account, *eg. when you create an Cloud9 environment, an IAM role "AWSServiceRoleForAWSCloud9" will be created, it allows Cloud9 to call other AWS services for you*
 
 ## Cognito
 
@@ -190,11 +190,11 @@ Basic Network Knowledge:
 
 These two should be used together to implement network security rules, ACLs apply to subnet and security groups apply to individual instances;
 
-| | Network ACLs | Security Groups |
-|--- |--- | ---|
-| Applies to | Subnets | Individual instances (EC2, RDS, etc) |
-| Default | "Allow All" for both in/out | "Deny All" inbound |
-| Settings | Can specify both allow and deny rules | Can only specify allow rules |
+|            | Network ACLs                                                      | Security Groups                                                                     |
+| ---------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Applies to | Subnets                                                           | Individual instances (EC2, RDS, etc)                                                |
+| Default    | "Allow All" for both in/out                                       | "Deny All" inbound                                                                  |
+| Settings   | Can specify both allow and deny rules                             | Can only specify allow rules                                                        |
 | Attributes | Stateless (you have to manually edit both inbound/outbound rules) | Stateful (if you open inbound port 80, it will open outbound port 80 automatically) |
 
 ### TODO: Private vs. Public subnets
