@@ -8,6 +8,9 @@ aws configure
 
 # config the 'work' profile
 aws configure --profile work
+
+# set default region for current profile
+aws configure set default.region ap-southeast-2
 ```
 
 Config files are in `~/.aws/`, there are two files: `credentials`, `config`
