@@ -640,10 +640,11 @@ dig @8.8.8.8 example.com
 
 # get name server of a domain
 dig example.com ns
+
+# show friendly ttl
+dig google.com +ttlunits
+# google.com.             3m37s   IN      A       142.250.66.238
 ```
-
-
-
 
 
 [RenameUSBDrive]: [https://help.ubuntu.com/community/RenameUSBDrive]
