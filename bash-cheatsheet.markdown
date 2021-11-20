@@ -63,6 +63,7 @@
   - [Text file intersections](#text-file-intersections)
   - [Sum up a column of numbers](#sum-up-a-column-of-numbers)
   - [Add content hash to file name](#add-content-hash-to-file-name)
+  - [Check whether a command exits](#check-whether-a-command-exits)
 
 ## Resources
 
@@ -1347,7 +1348,19 @@ for f in `ls *`; do
 done
 ```
 
+### Check whether a command exits
 
+```sh
+if ! command -v <the_command> &> /dev/null
+then
+    echo "<the_command> could not be found"
+    exit
+fi
+```
+
+`command` is a builtin, can be used to
+  - invoke a command on disk even when a function with the same name exists
+  - display information about a command
 
 
 
