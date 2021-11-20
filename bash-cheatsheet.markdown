@@ -271,16 +271,16 @@ hello world
 
 ### Parameter expansion
 
-|   Expression in script:       |  FOO="world" (Set and Not Null)  |  FOO="" (Set But Null) |     (Unset)     |
-|--------------------|----------------------|-----------------|-----------------|
-| ${FOO:-hello}      | world                | hello           | hello           |
-| ${FOO-hello}       | world                | ""              | hello           |
-| ${FOO:=hello}      | world                | FOO=hello       | FOO=hello       |
-| ${FOO=hello}       | world                | ""              | FOO=hello       |
-| ${FOO:?hello}      | world                | error, exit     | error, exit     |
-| ${FOO?hello}       | world                | ""              | error, exit     |
-| ${FOO:+hello}      | hello                | ""              | ""              |
-| ${FOO+hello}       | hello                | hello           | ""              |
+| Expression in script: | FOO="world" (Set and Not Null) | FOO="" (Set But Null) | (Unset)     |
+| --------------------- | ------------------------------ | --------------------- | ----------- |
+| ${FOO:-hello}         | world                          | hello                 | hello       |
+| ${FOO-hello}          | world                          | ""                    | hello       |
+| ${FOO:=hello}         | world                          | FOO=hello             | FOO=hello   |
+| ${FOO=hello}          | world                          | ""                    | FOO=hello   |
+| ${FOO:?hello}         | world                          | error, exit           | error, exit |
+| ${FOO?hello}          | world                          | ""                    | error, exit |
+| ${FOO:+hello}         | hello                          | ""                    | ""          |
+| ${FOO+hello}          | hello                          | hello                 | ""          |
 
 **Null and empty string are equivalent in Bash**
 
@@ -602,25 +602,25 @@ example
 
 bash comparison operators:
 
-| Operator | Meaning | Example |
-| --- | --- | --- |
-| -s | File exists and not empty | `[ -s "$myvar" ]` |
-| -z | Zero-length string | `[ -z "$myvar" ]` |
-| -n | Non-zero-length string | `[ -n "$myvar" ]` |
-| = | String equality | `[ "abc" = "$myvar" ]` |
-| == | Bash extension, same as '=' | |
-| != | String inequality | `[ "abc" != "$myvar" ]` |
-| -eq | Numeric equality | `[ 3 -eq "$myinteger" ]` |
-| -ne | Numeric inequality | `[ 3 -ne "$myinteger" ]` |
-| -lt | Numeric strict less than | `[ 3 -lt "$myinteger" ]` |
-| -le | Numeric less than or equals | `[ 3 -le "$myinteger" ]` |
-| -gt | Numeric strict greater than | `[ 3 -gt "$myinteger" ]` |
-| -ge | Numeric greater than or equals | `[ 3 -ge "$myinteger" ]` |
-| -f | Exists and is regular file | `[ -f "$myfile" ]` |
-| -d | Exists and is directory | `[ -d "$myfile" ]` |
-| -nt | First file is newer than second one | `[ "$myfile" -nt ~/.bashrc ]` |
-| -ot | First file is older than second one | `[ "$myfile" -ot ~/.bashrc ]` |
-| =~ | Regular expression, NO QUOTES around the RE | `[[ "$file" =~ .*\.jpg$ ]]` |
+| Operator | Meaning                                     | Example                       |
+| -------- | ------------------------------------------- | ----------------------------- |
+| -s       | File exists and not empty                   | `[ -s "$myvar" ]`             |
+| -z       | Zero-length string                          | `[ -z "$myvar" ]`             |
+| -n       | Non-zero-length string                      | `[ -n "$myvar" ]`             |
+| =        | String equality                             | `[ "abc" = "$myvar" ]`        |
+| ==       | Bash extension, same as '='                 |                               |
+| !=       | String inequality                           | `[ "abc" != "$myvar" ]`       |
+| -eq      | Numeric equality                            | `[ 3 -eq "$myinteger" ]`      |
+| -ne      | Numeric inequality                          | `[ 3 -ne "$myinteger" ]`      |
+| -lt      | Numeric strict less than                    | `[ 3 -lt "$myinteger" ]`      |
+| -le      | Numeric less than or equals                 | `[ 3 -le "$myinteger" ]`      |
+| -gt      | Numeric strict greater than                 | `[ 3 -gt "$myinteger" ]`      |
+| -ge      | Numeric greater than or equals              | `[ 3 -ge "$myinteger" ]`      |
+| -f       | Exists and is regular file                  | `[ -f "$myfile" ]`            |
+| -d       | Exists and is directory                     | `[ -d "$myfile" ]`            |
+| -nt      | First file is newer than second one         | `[ "$myfile" -nt ~/.bashrc ]` |
+| -ot      | First file is older than second one         | `[ "$myfile" -ot ~/.bashrc ]` |
+| =~       | Regular expression, NO QUOTES around the RE | `[[ "$file" =~ .*\.jpg$ ]]`   |
 
 example:
 
@@ -1341,7 +1341,7 @@ awk '{ sum += $2 } END { print sum }' numbers.txt
 
 ```sh
 # rename x.ext => x.[md5sum].ext
-for f in `ls *`; do 
+for f in `ls *`; do
     hash=$(md5sum $f | cut -d' ' -f1)
     mv $f ${f%%.*}.${hash}.${f##*.}
 done
