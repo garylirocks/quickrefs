@@ -7,6 +7,8 @@
   - [Kubernetes services](#kubernetes-services)
   - [Ingress](#ingress)
 - [Storage](#storage)
+  - [PersistentVolume and PersistentVolumeClaims](#persistentvolume-and-persistentvolumeclaims)
+  - [StorageClass](#storageclass)
 - [Manifest files](#manifest-files)
 - [Labels](#labels)
 - [Configs](#configs)
@@ -17,6 +19,7 @@
   - [Usage](#usage-1)
 - [Jobs and cronjobs](#jobs-and-cronjobs)
 - [DaemonSets](#daemonsets)
+- [StatefulSet](#statefulset)
 - [Probes](#probes)
 - [Updates and Rollback](#updates-and-rollback)
 - [Helm](#helm)
@@ -153,39 +156,44 @@ Kubernetes offers several networking options that you can install to configure n
 Services can be of several types, each changes the behavior of the applications selected by the service:
 
 - **ClusterIP** default value, exposes the applications internally only
+  ![service labels](images/kubernetes_service-with-selector.svg)
+
+  You set the selector label in a service definition to match the pod label defined in the pods' definition file
+
+  The service here `drone-front-end-service` will group only the pods that match the label `app: front-end-nginx`
+
+  ```yaml
+  #service.yaml
+  apiVersion: v1
+  kind: Service
+  metadata:
+    name: contoso-website
+
+  spec:
+    type: ClusterIP           # service type
+    selector:
+      app: contoso-website
+    ports:
+      - port: 80              # SERVICE exposed port
+        name: http            # SERVICE port name
+        protocol: TCP         # The protocol the SERVICE will listen to
+        targetPort: http      # Port to forward to in the pod
+  ```
+
+  ```sh
+  kubectl apply -f ./service.yaml
+
+  # show the service
+  kubectl get service contoso-website
+  ```
+
 - **NodePort** exposes the service externally, assigns each node a static port that responds to that service. When accessed through `nodeIp:port`, the node automatically redirects the request to an internal service of the `ClusterIP` type
+  ![nodeport](images/kubernetes_service-nodeport.png)
+  - Port on the node need to be in range 30000 - 32767
+  - Traffic goes from Node:port -> service:port -> pod:port
 - **LoadBalancer** you typically configure load balancers when you use cloud providers (eg. Azure Load Balancer), automatically creates a `NodePort` service to which the load balancer's traffic is redirected and a `ClusterIP` service to forward internally
+  ![loadbalancer type](images/kubernetes_service-loadbalancer.png)
 
-![service labels](images/kubernetes_service-with-selector.svg)
-
-You set the selector label in a service definition to match the pod label defined in the pods' definition file
-
-The service here `drone-front-end-service` will group only the pods that match the label `app: front-end-nginx`
-
-```yaml
-#service.yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: contoso-website
-
-spec:
-  type: ClusterIP           # service type
-  selector:
-    app: contoso-website
-  ports:
-    - port: 80              # SERVICE exposed port
-      name: http            # SERVICE port name
-      protocol: TCP         # The protocol the SERVICE will listen to
-      targetPort: http      # Port to forward to in the pod
-```
-
-```sh
-kubectl apply -f ./service.yaml
-
-# show the service
-kubectl get service contoso-website
-```
 
 ### Ingress
 
@@ -223,11 +231,85 @@ kubectl get ingress contoso-website
 
 ## Storage
 
-Kubernetes volume's lifetime matches the pod's lifetime, this means a volume outlives the containers that run in the pod.
+### PersistentVolume and PersistentVolumeClaims
 
-- options to provision persistent storage with the use of *PersistentVolumes*
-- request specific storage for pods by using *PersistentVolumeClaims*
+![storage abstractions](images/kubernetes_storage-abstractions.png)
 
+```yaml
+# persistent volume
+kind: PersistentVolume
+metadata:
+  name: my-pv
+spec:
+  capacity:
+    storage: 5Gi
+  volumeMode: Filesystem
+  ...
+  mountOptions:
+    - hard
+    - nfsvers=4.0
+  nfs:
+    path: /path/on/nfs/server
+    server: my-nfs-server-address
+---
+# persistent volume claims
+kind: PersistentVolumeClaims
+metadata:
+  name: my-pvc
+spec:
+  storageClassName: manual
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+# pod specs
+spec:
+  containers:
+  - name: my-container
+    image: alpine
+    command: ["sleep", "3600"]
+    volumeMounts:
+    - name: my-persistent-storage
+      mountPath: "/path/to/mount/"        # absolute path
+
+  volumes:
+  - name: my-persistent-storage
+    persistentStorageClaim:
+      claimName: my-pvc
+```
+
+There are many levels of abstraction:
+
+- Admin prepare the actual physical storages, could be local disk, nfs, cloud storages (AWS EBS, Azure Files), etc
+- `PersistentVolume`
+  - Not namespaced
+  - Different properties in the YAML file depending on the storage type
+- `PersistentVolumeClaims`
+  - Defines storage requirement
+  - Connects to a static `PersistentVolume` or a dynamic `StorageClass`, the connection is called `binding`
+  - You can not bind two PVC to the same PV, but the same PVC could be used on multiple nodes
+- Pod
+  - Requests volumes through PVC
+  - A container mounts a volume on a path
+
+### StorageClass
+
+This helps provision a storage dynamically, when a PVC requires a storage, the provisioner creates a PV to satisfy the requirement.
+
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: my-storage-class
+provisioner: kubernetes.io/aws-ebs
+parameters:
+  type: io1
+  iopsPerGB: "10"
+  fsType: ext4
+```
 
 ## Manifest files
 
@@ -448,6 +530,38 @@ data:
 
 - Used by kubelet when pulling images from private registries via the `imagePullSecret` key in Pod specification
 
+  - Create the secret
+
+    - Use the Docker config.json file, which could contain multiple registry credentials
+
+      ```sh
+      kubectl create secret generic my-registry-key \
+        --from-file=.dockerconfigjson=.docker/config.json \
+        --type=kubernetes.io/dockerconfigjson
+      ```
+
+    - Another way for only one registry
+
+      ```sh
+      kubectl create secret docker-registry my-registry-key \
+        --docker-server=https://registry.example.com \
+        --docker-username=gary \
+        --docker-password=xxxxxxx
+      ```
+
+  - Use the secret in pod template
+
+    ```yaml
+    spec:
+      imagePullSecrets:
+      - name: my-registry-key
+      containers:
+      - name: my-app
+        image: registry.example.com/my-app:1.0
+        imagePullPolicy: Always
+        ...
+    ```
+
 
 ## Jobs and cronjobs
 
@@ -517,6 +631,19 @@ nodeSelector:
   infra: "production"
 ...
 ```
+
+## StatefulSet
+
+For stateful applications thats stores data, such as databases
+
+![statefulset storage](images/kubernetes_statefulset-storage.png)
+
+- Replica pods are not identical, each one has a fixed id (such as `mysql-1`), when this pod restarts, it sticks with the same id, not a random one like in a deployment
+- They are started in a fixed order, always start `mysql-0`, then `mysql-1`, and then `mysql-2`
+- When deleting, pods get deleted in reverse order, `mysql-2` gets deleted first
+- Each pod has a unique DNS endpoint, such as `mysql-0.service1`
+- Better to use remote storages, and the data syncing need to be setup, such as the database master-slave syncing
+
 
 ## Probes
 
