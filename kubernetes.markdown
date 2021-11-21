@@ -25,6 +25,7 @@
 - [Helm](#helm)
   - [Helm repos](#helm-repos)
   - [Install Helm Chart](#install-helm-chart)
+- [Prometheus](#prometheus)
 - [Minikube](#minikube)
   - [Addons](#addons)
   - [Minikube deepdive](#minikube-deepdive)
@@ -810,6 +811,46 @@ Set values
 
 ```sh
 helm install --set replicaCount=5 aspnet-webapp azure-marketplace/aspnet-core
+```
+
+Helm sets some labels for each resources it creates, so you can get resources by using:
+
+```sh
+kubectl get all -l 'release=my-release'
+```
+
+## Prometheus
+
+![Prometheus architecture](images/kubernetes_prometheus-architecture.png)
+
+Installation:
+
+```sh
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+
+helm install prometheus prometheus-community/kube-prometheus-stack
+```
+
+This creates a bunch of statefulset, deployments, demonset, configmaps, secrets, services and CRDs:
+
+```sh
+deployment.apps/prometheus-kube-prometheus-operator     # creates the prometheus and alertmanager statefulsets
+deployment.apps/prometheus-grafana                      # a dependency, grafana
+deployment.apps/prometheus-kube-state-metrics           # a dependency, scrapes K8s components
+
+statefulset.apps/alertmanager-prometheus-kube-prometheus-alertmanager
+statefulset.apps/prometheus-prometheus-kube-prometheus-prometheus     # prometheus server
+
+daemonset.apps/prometheus-prometheus-node-exporter      # runs on every node, get nodes metrics (CPU, memory, etc)
+```
+
+Access Grafana
+
+By default, all services are using the ClusterIP service type, you need to forward a grafana pod's port to your localhost:
+
+```sh
+kubectl port-forward prometheus-grafana-c8787f89b-26rsl 3000
 ```
 
 ## Minikube
