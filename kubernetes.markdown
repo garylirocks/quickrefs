@@ -22,6 +22,9 @@
 - [StatefulSet](#statefulset)
 - [Probes](#probes)
 - [Updates and Rollback](#updates-and-rollback)
+- [Scaling](#scaling)
+  - [Visualization and monitoring](#visualization-and-monitoring)
+  - [Horizontal pod autoscaling](#horizontal-pod-autoscaling)
 - [Helm](#helm)
   - [Helm repos](#helm-repos)
   - [Install Helm Chart](#install-helm-chart)
@@ -659,7 +662,7 @@ spec:
 
     readinessProbe:
       initialDelaySeconds: 10
-      initialDelaySeconds: 1
+      periodSeconds: 5
       httpGet:
         path: /
         port: 80
@@ -667,10 +670,15 @@ spec:
     livenessProbe:
       initialDelaySeconds: 10
       timeoutSeconds: 1
+      periodSeconds: 5
       httpGet:
         path: /
         port: 80
 ```
+
+- Probing is done by kubelet on each node
+- If livenessProbe fails, container will be killed and restarted
+- Container will only serve traffic when readinessProbe passes
 
 ## Updates and Rollback
 
@@ -698,11 +706,47 @@ Trouble shooting
 kubectl describe pod/myDeployment-66db4977c8-g79d7
 
 # get logs
-kubectl logs pod/myDeployment-66db4977c8-g79d7
+kubectl logs -f pod/myDeployment-66db4977c8-g79d7
+
+# if a container has been restarted, get previous container logs
+kubectl logs pod/myDeployment-66db4977c8-g79d7 --previous
 
 # get into a container
 kubectl exec -it pod/myDeployment-66db4977c8-g79d7 bash
+
+# start a pod
+kubectl run -it --image=node:lts my-pod /bin/sh
 ```
+
+## Scaling
+
+### Visualization and monitoring
+
+```sh
+helm install kube-ops-view \
+  stable/kube-ops-view \
+  --set service.type=LoadBalancer \
+  --set rbac.create=True
+
+# install metrics-server for K8s builtin autoscaling
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.5.0/components.yaml
+```
+
+### Horizontal pod autoscaling
+
+```sh
+# scale my-app when cpu usage reaches 50%
+kubectl autoscale deployment my-app \
+    --cpu-percent=50 \
+    --min=1 \
+    --max=10
+
+# watch hpa
+kubectl get hpa -w
+# NAME    REFERENCE           TARGETS   MINPODS   MAXPODS   REPLICAS   AGE
+# my-app  Deployment/my-app   0%/50%    1         10        1          21s
+```
+
 
 ## Helm
 
@@ -714,19 +758,25 @@ Helm allows you **to create templated YAML** script files to manage your applica
 
 ![Helm Components](images/kubernetes_helm-components.svg)
 
-```sh
-helm create my-app
-ls -F1 my-app
-# charts/
-# Chart.yaml
-# templates/
-# values.yaml
+Helm charts have a structure like:
+```
+/myapp
+├── charts/                           # dependency charts
+├── Chart.yaml                        # name, description, version, etc
+├── templates/
+│   ├── deployment.yaml
+│   ├── _helpers.tpl                  # Go template helpers
+│   ├── hpa.yaml                      # Horizontal Pod Autoscaler
+│   ├── ingress.yaml
+│   ├── NOTES.txt
+│   ├── serviceaccount.yaml
+│   ├── service.yaml
+│   └── tests
+│       └── test-connection.yaml      # validate that your chart works as expected when it is installed
+└── values.yaml                       # default values
 ```
 
-- `Chart.yaml` manifest file, contains name, description, version, etc.
-- `charts/` dependencies
-
-Helm client implements a Go language-based template engine, which creates manifest files by combining the templates in `templates/` with values from `Chart.yaml` and `values.yaml`
+`templates/` contains Go language-based YAML templates, which are combined with values from `Chart.yaml` and `values.yaml` during installation
 
 ![Helm chart processing](images/kubernetes_helm-chart-process.svg)
 
@@ -782,32 +832,29 @@ spec:
 ### Helm repos
 
 ```sh
-helm repo add azure-marketplace https://marketplace.azurecr.io/helm/v1/repo
+helm repo add bitnami https://charts.bitnami.com/bitnami
 
 helm repo list
 
 # search charts
-helm search repo aspnet
+helm search repo nginx
 ```
 
 ### Install Helm Chart
 
 ```sh
-# test
+# install a chart, give it a name
+helm install my-nginx bitnami/nginx
+
+# dry run
 helm install --debug --dry-run my-drone-webapp ./drone-webapp
 
-# from a chart folder
-#   my-drone-webapp: -> name of the release
+# from a chart folder or archive
 helm install my-drone-webapp ./drone-webapp
-
-# from a tar archive
 helm install my-drone-webapp ./drone-webapp.tgz
-
-# from a repo
-helm install my-release azure-marketplace/aspnet-core
 ```
 
-Set values
+Set values for installation
 
 ```sh
 helm install --set replicaCount=5 aspnet-webapp azure-marketplace/aspnet-core
@@ -817,6 +864,38 @@ Helm sets some labels for each resources it creates, so you can get resources by
 
 ```sh
 kubectl get all -l 'release=my-release'
+```
+
+Update and rollback
+
+```sh
+# update chart
+
+# update the installation
+helm upgrade workshop ./
+
+# show history
+helm history workshop
+# REVISION        UPDATED                         STATUS          CHART           APP VERSION     DESCRIPTION
+# 1               Sun Nov 21 22:05:25 2021        superseded      eksdemo-0.1.0   1               Install complete
+# 2               Sun Nov 21 22:09:19 2021        deployed        eksdemo-0.1.0   1               Upgrade complete
+
+# rollback to specified revision, creating a new revision
+helm rollback workshop 1
+
+helm history workshop
+# REVISION        UPDATED                         STATUS          CHART           APP VERSION     DESCRIPTION
+# 1               Sun Nov 21 22:05:25 2021        superseded      eksdemo-0.1.0   1               Install complete
+# 2               Sun Nov 21 22:09:19 2021        superseded      eksdemo-0.1.0   1               Upgrade complete
+# 3               Sun Nov 21 22:12:58 2021        deployed        eksdemo-0.1.0   1               Rollback to 1
+```
+
+Uninstall
+
+```sh
+helm list
+
+helm uninstall my-nginx
 ```
 
 ## Prometheus
