@@ -25,6 +25,7 @@
 - [`pushd`, `popd`, `dirs`](#pushd-popd-dirs)
 - [`rsync`](#rsync)
 - [`envsubst`](#envsubst)
+- [`jq`](#jq)
 - [System](#system)
 - [Networking](#networking)
   - [`netstat`](#netstat)
@@ -584,6 +585,52 @@ cat greeting.txt | envsubst
 # Hello Gary !
 ```
 
+## `jq`
+
+Command line JSON processor
+
+Use an example JSON file `example.json`
+
+```json
+{
+  "name": {
+    "first": "Gary",
+    "last": "Li"
+  },
+  "fruits": [
+    "apple",
+    "banana",
+    "kiwifruit"
+  ]
+}
+```
+
+```sh
+# default, output as JSON
+jq '.name.first' example.json
+# "Gary"
+
+# output raw text
+jq -r '.name.first' example.json
+# Gary
+
+# array element
+jq -r '.fruits[1]' example.json
+banana
+```
+
+Format JSON text:
+
+```sh
+echo '{"name": {"first": "Gary", "last": "Li"}}' | jq .
+# {
+#   "name": {
+#     "first": "Gary",
+#     "last": "Li"
+#   }
+# }
+```
+
 ## System
 
 - `uptime`  system uptime
@@ -720,7 +767,7 @@ ssh -L 80:localhost:8080 -N dest
     ```
 
   - Works for HTTP only
-  - If you follow redirects, the fake `Host:` header would be sent to those requests as well 
+  - If you follow redirects, the fake `Host:` header would be sent to those requests as well
 
 - For HTTPS
 
@@ -740,7 +787,7 @@ ssh -L 80:localhost:8080 -N dest
     # -L : follow redirection
     # '-D -': dump header to stdout
     # '-o /dev/null': discard data
-    curl -sSL -D - -o /dev/null www.example.com.org 
+    curl -sSL -D - -o /dev/null www.example.com.org
     ```
 
 ## One liner
