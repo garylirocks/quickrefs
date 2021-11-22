@@ -60,3 +60,15 @@ aws s3 mb s3://testing-12345
 # upload a file
 aws s3 cp x.tar s3://testing-12345/x.tar
 ```
+
+## KMS
+
+```sh
+# create a key and get the id
+keyId=$(aws kms create-key --query KeyMetadata.Arn --output text)
+
+# assign a alias to the key
+aws kms create-alias \
+    --alias-name alias/myKey \
+    --target-key-id $keyId
+```
