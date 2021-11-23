@@ -690,18 +690,38 @@ hello world
 
 ### `ssh`
 
-Port forwarding, any connection to local port 80 is forwarded to `localhost:8080` on `remoteHost`
+- Port Forwarding (tunneling)
 
-```sh
-ssh -L 80:localhost:8080 -N remoteHost
-```
+    ![ssh tunnel](images/ssh_tunnel.png)
 
-Use ssh as a SOCKS proxy:
+    Port forwarding, any connection to local port 123 is forwarded to `localhost:456` on `remotehost`
 
-```sh
-# start a SOCKS proxy: localhost:8080
-ssh -fnNC -D 8080 remoteHost
-```
+    ```sh
+    ssh -L 123:localhost:456 -N -T remotehost
+    ssh -L 123:farawayhost:456 -N -T remotehost
+    ```
+
+    - `-N` do not execute any remote commands
+    - `-T` disable pseudo tty allocation
+
+
+- Reverse tunneling
+
+    ![ssh reverse tunneling](images/ssh_reverse-tunnel.png)
+
+    Any connection to remotehost's port 123 is forwarded to `localhost:456` on your host
+
+    ```sh
+    ssh -R 123:localhost:456 -N -T remotehost
+    ssh -R 123:nearhost:456 -N -T remotehost
+    ```
+
+- Use ssh as a SOCKS proxy:
+
+    ```sh
+    # start a SOCKS proxy: localhost:8080
+    ssh -fnNC -D 8080 remotehost
+    ```
 
 #### ProxyJump
 
