@@ -1,7 +1,11 @@
 # VS Code
 
 - [Shortcuts](#shortcuts)
-  - [with Vim plugin](#with-vim-plugin)
+  - [VSCodeVim plugin](#vscodevim-plugin)
+    - [Selection](#selection)
+    - [Action](#action)
+    - [Editing](#editing)
+    - [With NeoVim Enabled](#with-neovim-enabled)
 - [Formatting / Linting](#formatting--linting)
   - [ESLint](#eslint)
     - [`extends` vs `plugins`](#extends-vs-plugins)
@@ -16,17 +20,29 @@
 - multi word cursors/selections, allows you to change multi occurence of a word simutaneously: `Ctrl + Shift + L`
 - `Command + Alt + C`: copy absolute path of current file
 
-### with Vim plugin
+### VSCodeVim plugin
+
+#### Selection
+
+- `af`: in visual mode, select a larger block increasingly
+- `gb`: add cursor to the next word which is the same as current one under cursor
+- `gn`: add cursor to next line
+
+#### Action
 
 - `gd`: go to definition;
 - `gh`: show hover message (types or error messages);
-- `af`: in visual mode, select a larger block increasingly;
 - `Shift + <Esc>`: close popup boxes;
+
+#### Editing
+
 - `gc`: toggle line comment, `gcc` for current line, `gc2j` for current and next 2 lines;
 - `gC`: toggle block comment;
+- `gq`: reflow and wordwrap long comment lines
 
-- when neovim is installed:
-  - `:g/foo/co$` copy all lines with `foo` to the end of file;
+#### With NeoVim Enabled
+
+- `:g/foo/co$` copy all lines with `foo` to the end of file;
 
 ## Formatting / Linting
 
