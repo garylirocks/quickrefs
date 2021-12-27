@@ -341,7 +341,7 @@ In a collaborative or CI/CD context, you may want to run and save state files re
       }
       ```
 
-  1. By default, `terraform apply` runs remotely in Terraform Cloud, so you need to put credentials Terraform needs as workspace env variables (eg. `ARM_CLIENT_SECRET` for `azurerm')
+  1. By default, `terraform apply` runs remotely in Terraform Cloud, so you need to put credentials Terraform needs as workspace env variables (eg. `ARM_CLIENT_SECRET` for `azurerm`)
 
 ### Azure blob storage
 

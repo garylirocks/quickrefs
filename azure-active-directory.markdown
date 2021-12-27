@@ -158,7 +158,7 @@ Features:
 
 ## Role-based access control (RBAC)
 
-RBAC allows you to grant access to Azure resources that you control. You do this by creating role assignments, which control how permissions are enforces. There are three elements in a role assignment:
+RBAC allows you to grant access to Azure resources that you control. You do this by creating role assignments, which control how permissions are enforced. There are three elements in a role assignment:
 
 1. Security principal (who)
 

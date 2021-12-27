@@ -165,7 +165,7 @@ Recommendations on how to configure project and teams:
     **Recommended practice is to have all teams use the same sprint cadence**
 
 - Determine if you want a flat structure or hierarchy of sprints and releases
-- Define hte iteration paths in `Project configuration`
+- Define the iteration paths in `Project configuration`
 - Assign the default and additional iteration paths to each team
 
 ![Iteration paths example](images/azure-devops_iteration-paths-example.png)
@@ -606,7 +606,7 @@ System and user-defined variables get injected as environment variables for your
 
 #### Secret variables
 
-- Don't pub secret in the YAML file directly
+- Don't put secret in the YAML file directly
 - Define it in the Pipeline settings UI or in a variable group
 - Secret variables are encrypted at rest with a 2048-bit RSA key
 - You could use the macro syntax `$(mySecretVar)` to include it as task input
