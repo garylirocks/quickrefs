@@ -1,5 +1,9 @@
 # Azure Kubernetes Service
 
+- [Overview](#overview)
+- [Node pools](#node-pools)
+- [Settings](#settings)
+
 ## Overview
 
 - Master node in your cluster is free, you pay for node VMs, storage and networking resources
@@ -77,3 +81,14 @@ You could scale Pods and nodes manually or automatically
   ![AKS auto scaler](images/aks_autoscaler.png)
 
   Cluster Autoscaler scales nodes, Horizontal Pod Autoscaler scales pods on existing nodes
+
+## Settings
+
+- Attach ACR to pull image (*assign AcrPull permission to AKS's managed identity*)
+
+  ```sh
+  az aks update \
+    -n $AKS_CLUSTER_NAME \
+    -g $AKS_RESOURCE_GROUP \
+    --attach-acr $ACR_NAME
+  ```
