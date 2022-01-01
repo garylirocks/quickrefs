@@ -19,7 +19,7 @@
   - [Tags](#tags)
   - [Policy](#policy)
   - [Locks](#locks)
-  - [Resource Group Manager (RGM)](#resource-group-manager-rgm)
+  - [Azure Resource Manager (ARM)](#azure-resource-manager-arm)
   - [Resource Manager templates](#resource-manager-templates)
 - [Azure management tools](#azure-management-tools)
   - [CLI](#cli)
@@ -48,6 +48,7 @@
   - [Azure Application Insights](#azure-application-insights)
   - [Kusto Query Language](#kusto-query-language)
   - [Alerting](#alerting)
+- [Backup and Recovery](#backup-and-recovery)
 - [Troubleshooting](#troubleshooting)
 
 ## Overview
@@ -211,7 +212,8 @@ Fully managed PaaS services
 - All resources must be in one and only one group;
 - Resources in one group can span multiple regions;
 - Groups can't be nested;
-
+- Cannot be renamed;
+- Resources can be moved between groups;
 
 You can organize resource groups in different ways:
 
@@ -256,14 +258,13 @@ A setting that can by applied to any resource to block inadvertent modification 
 - Two types: **Delete** or **Read-only**
 - Can be applied at different levels: subscriptions, resource groups, and individual resources
 - Are inherited from higher levels;
-- Apply regardless of RBAC permissions, even you are the owner , you still need to remove the lock before delete the resource;
+- Apply regardless of RBAC permissions, even you are the owner, you still need to remove the lock before deleting a resource;
 
-
-### Resource Group Manager (RGM)
+### Azure Resource Manager (ARM)
 
 ![Resource manager](images/azure_resource-manager.png)
 
-Resource Group Manager (RGM) is the management layer which allows you automate the deployment and configuration of resources;
+Azure Resource Manager (ARM) is the management layer which allows you automate the deployment and configuration of resources;
 
 
 ### Resource Manager templates
@@ -354,21 +355,25 @@ Example:
 
 Note:
 
-- Expressions need to be enclosed in brackets `[`, `]`
-
+- Expressions need to be enclosed in brackets `[variables('var1')]`
+- Resource type is in the format **`{resource-provider}/{resource-type}`**, like `Microsoft.Compute/virtualMachines`, common resource providers include:
+  - Microsoft.Compute
+  - Microsoft.Network
+  - Microsoft.Storage
+  - Microsoft.Web
 
 
 ```sh
 # validate a template file
 az deployment group validate \
-    --resource-group learn-63336b5a-694e-4b61-a1a5-1f173253244e \
+    --resource-group my-RG \
     --template-file basic-template.json \
     --parameters @params.json
 
 # deploy
 az deployment group create \
     --name MyDeployment \
-    --resource-group learn-63336b5a-694e-4b61-a1a5-1f173253244e \
+    --resource-group my-RG \
     --mode [Incremental|Complete] \
     --template-file basic-template.json \
     --parameters @params.json
@@ -376,7 +381,7 @@ az deployment group create \
 # verify
 az deployment group show \
     --name MyDeployment \
-    --resource-group learn-63336b5a-694e-4b61-a1a5-1f173253244e
+    --resource-group my-RG
 ```
 
 - By default, deployment runs in `Incremental` mode, which leaves existing resources in the RG but not in the template *unchanged*, in `Complete` mode, those resources would be deleted
@@ -491,7 +496,7 @@ New-AzVm -ResourceGroupName <resource-group-name>
   -OpenPorts 22
 
 # get a VM object
-$vm = Get-AzVM -Name "testvm-eus-01" -ResourceGroupName learn-baaf2cfd-95ef-4c32-be59-55c78729a07d
+$vm = Get-AzVM -Name "testvm-eus-01" -ResourceGroupName my-RG
 
 # show the object
 $vm
@@ -527,7 +532,7 @@ For ($i = 1; $i -le 3; $i++)
 Run the script by
 
 ```
-./script.ps1 learn-baaf2cfd-95ef-4c32-be59-55c78729a07d
+./script.ps1 my-RG
 ```
 
 ## Business Process Automation
@@ -966,6 +971,9 @@ Heartbeat
 - Log alerts
 - Activity Log alerts (resource creation, deletion, etc)
 
+## Backup and Recovery
+
+TODO: what's the difference between Recovery Services vault and Backup vault ?
 
 ## Troubleshooting
 
