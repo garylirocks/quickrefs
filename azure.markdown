@@ -270,6 +270,7 @@ Azure Resource Manager (ARM) is the management layer which allows you automate t
 ### Resource Manager templates
 
 - JSON file that defines the resources you need to deploy
+- Idempotent, multiple deployments create resources in the same state
 - For resources deployed based on a template, after you update and redeploy the template, the resources will reflect the changes
 - With parameters, you can use the same template to create multiple versions of your infrastructure, such as staging and production
 - Modular: you can create small templates and combine them
@@ -356,6 +357,15 @@ Example:
 Note:
 
 - Expressions need to be enclosed in brackets `[variables('var1')]`
+- `reference()`, `parameters()` and `variables()` etc are functions
+- Parameters can be of type
+  - string
+  - secureString
+  - integers
+  - boolean
+  - object
+  - secureObject
+  - array
 - Resource type is in the format **`{resource-provider}/{resource-type}`**, like `Microsoft.Compute/virtualMachines`, common resource providers include:
   - Microsoft.Compute
   - Microsoft.Network
@@ -370,7 +380,13 @@ az deployment group validate \
     --template-file basic-template.json \
     --parameters @params.json
 
-# deploy
+# deploy (parameters on command line)
+az deployment group create \
+  --name my-deployment \
+  --template-file basic-template.json \
+  --parameters adminUsername=gary
+
+# deploy (with a parameters file)
 az deployment group create \
     --name MyDeployment \
     --resource-group my-RG \
@@ -378,10 +394,11 @@ az deployment group create \
     --template-file basic-template.json \
     --parameters @params.json
 
-# verify
+# get an output value from the result
 az deployment group show \
     --name MyDeployment \
     --resource-group my-RG
+    --query "properties.outputs.hostname.value"
 ```
 
 - By default, deployment runs in `Incremental` mode, which leaves existing resources in the RG but not in the template *unchanged*, in `Complete` mode, those resources would be deleted

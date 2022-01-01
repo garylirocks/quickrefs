@@ -38,6 +38,7 @@ az account set --subscription gary-default
 # logout a specific user
 az logout --username gary@foo.com
 ```
+
 ### Configurations
 
 ```sh
@@ -47,7 +48,12 @@ az configure \
 
 # list default configs
 az configure -l
+
+# new command, like "git config"
+az config set defaults.location="australiaeast"
+az config get defaults.location
 ```
+
 ### Groups and resources
 
 ```sh
