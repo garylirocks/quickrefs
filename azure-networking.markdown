@@ -2,6 +2,9 @@
 
 - [Overview](#overview)
 - [Network security group (NSG)](#network-security-group-nsg)
+- [Azure Firewall](#azure-firewall)
+  - [Web Application Firewall (WAF)](#web-application-firewall-waf)
+- [DDoS Protection](#ddos-protection)
 - [Private Endpoints](#private-endpoints)
 - [Service endpoints](#service-endpoints)
 - [Network Peering](#network-peering)
@@ -32,6 +35,35 @@
 - rules evaluation starts from the **lowest priority** rule, deny rules always stop the evaluation
 
 ![network security group](images/azure_network-security-group.png)
+
+## Azure Firewall
+
+![Azure Firewall](images/azure_firewall-overview.png)
+
+- Built-in high availability
+- Inbound and outbound filtering rules
+- Inbound Destination Network Address Translation (DNAT) support
+- Is **stateful**, analyzes the complete context of a network connection, not just an individual packet
+- Uses a static public IP address for your virtual network resources
+- You typically deploy it on a central virtual network to control general network access
+
+You can configure:
+
+- **Application rules**: FQDNs that can be accessed from a subnet
+- **Network rules**: inbound/outbound filtering
+- **NAT rules**: destination IP addresses and ports to translate inbound requests
+
+### Web Application Firewall (WAF)
+
+- Centralized, inbound protection for your web applications agains common exploits and vulnerabilities
+- Provided by Application Gateway, Front Door and CDN services
+
+## DDoS Protection
+
+![DDoS Protection](images/azure_ddos-protection.png)
+
+- Basic: Free, part of your Azure subscription
+- Standard: Protection policies are tuned through dedicated traffic monitoring and machine learning algorithms
 
 ## Private Endpoints
 

@@ -3,6 +3,7 @@
     "azurerm",
     "CMMI",
     "contoso",
+    "DNAT",
     "hashicorp",
     "kubectl",
     "kubelet",

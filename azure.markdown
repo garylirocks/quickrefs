@@ -9,7 +9,9 @@
   - [Networking](#networking)
   - [Big Data](#big-data)
   - [AI](#ai)
+  - [IoT services](#iot-services)
   - [DevOps](#devops)
+  - [Security](#security)
 - [Resource management](#resource-management)
   - [Azure AD](#azure-ad)
   - [Tenant](#tenant)
@@ -38,7 +40,7 @@
 - [Key Vault](#key-vault)
   - [Concepts](#concepts)
   - [Usage](#usage)
-  - [Security](#security)
+  - [Security](#security-1)
   - [Vault authentication](#vault-authentication)
   - [Example](#example)
   - [Best practices](#best-practices)
@@ -56,10 +58,7 @@
 ### Deployment model
 
 - Public cloud
-- Private cloud
-
-  Azure Stack
-
+- Private cloud: Azure Stack
 - Hybrid cloud
 
 ### Service model
@@ -168,11 +167,36 @@ Fully managed PaaS services
 - Cognitive Services: Vision, Speech, Language, Knowledge, Search
 - Machine Learning Service: develop train, test, deploy, manage, and track ML models
 
+### IoT services
+
+- **IoT Hub**: bi-directional messaging between application and devices
+- **IoT Central**: builds on top of IoT Hub, adding
+  - dashboard for reporting and management,
+  - alerting,
+  - and starter templates for common industry and usage scenarios
+- **Azure Sphere**: end-to-end, highly secure solution that encompasses everything from hardware, OS on the device and secure messaging
+  - Hardware: Azure Sphere micro-controller unit (MCU)
+  - OS: customized Linux, handles communication with the security service, can run the vendor's software
+  - Azure Sphere Security service (AS3): certificate-based authentication, pushes OS and software updates to the device
+
 ### DevOps
 
 - DevOps Service: pipelines, private Git repos, automated and cloud-based load testing
 - Lab Services: provision environment using reusable templates and artifacts, scale up load testing by provisioning multiple test agents and create pre-provisioned envs for training and demos
 
+### Security
+
+![Defense in depth strategy](./images/azure_defense-in-depth.png)
+
+- _Perimeter_: DDoS protection
+- _Network_: NSG
+- _Compute_: access to VMs
+
+Security posture (CIA):
+
+- _Confidentiality_: principle of least privilege
+- _Integrity_: at rest and in transit
+- _Availability_: DoS attacks
 
 ## Resource management
 
@@ -560,7 +584,9 @@ Run the script by
     - No code required
     - Use Logic Apps under the hood
   - Logic Apps
-    - Intended for developers
+    - Low-code / no-code
+    - Has pre-built connectors to well-known services
+    - Best for orchestrating multiple systems
 
 - Code-first
   - Functions (_this should be default choice_)
