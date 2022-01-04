@@ -20,9 +20,11 @@
   - [Resource group](#resource-group)
   - [Tags](#tags)
   - [Policy](#policy)
+  - [Blueprints](#blueprints)
   - [Locks](#locks)
   - [Azure Resource Manager (ARM)](#azure-resource-manager-arm)
   - [Resource Manager templates](#resource-manager-templates)
+- [Azure Cloud Adoption Framework](#azure-cloud-adoption-framework)
 - [Azure management tools](#azure-management-tools)
   - [CLI](#cli)
   - [PowerShell](#powershell)
@@ -275,6 +277,31 @@ Policies apply and enforce rules your resources need to follow, such as:
 - enforce naming conventions;
 - specific tags are applied;
 
+Notes:
+- It could
+  - highlight noncompliant resources,
+  - prevent noncompliant resources from being created,
+  - and somtimes automatically remediate resources
+- Policy evaluation happens about once per hour
+- A group of policies is called an _initiative_
+
+### Blueprints
+
+Contains some artifacts that could be deployed to existing or new subscriptions:
+
+- Role assignments
+- Policy assignments
+- Resource groups
+- ARM templates
+
+![Blueprint artifacts example](images/azure_blueprint-artifacts-example.png)
+
+Notes:
+
+- Blueprints are versioned
+- The relationship between the blueprint definition and assignment (the deployed resources) is preserved, helping you track and audit your deployments
+- You assign a blueprint to a management group, it would deploy to existing and new subscriptions under the group
+
 ### Locks
 
 A setting that can by applied to any resource to block inadvertent modification or deletion.
@@ -427,6 +454,26 @@ az deployment group show \
 
 - By default, deployment runs in `Incremental` mode, which leaves existing resources in the RG but not in the template *unchanged*, in `Complete` mode, those resources would be deleted
 - For resources in the template, all properties are reapplied, so you need to specify the final state of the resources, NOT only the properties you want to update
+
+
+## Azure Cloud Adoption Framework
+
+Cloud Adoption Framework consists of tools, documentation, and proven practices. It has five stages:
+
+1. Define your strategy
+  1. Motivation
+  1. Goals
+  1. Financial considerations
+  1. Technical considerations
+2. Make a plan.
+  1. What digital estate to migrate
+  1. Who needs to be involved
+  1. Skills readiness
+  1. A plan that brings together development, operations and business teams
+3. Ready your organization: create a landing zone
+4. Adopt the cloud: migrate and innovate
+5. Govern and manage your cloud environments.
+
 
 
 ## Azure management tools

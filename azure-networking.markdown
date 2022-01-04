@@ -46,6 +46,7 @@
 - Is **stateful**, analyzes the complete context of a network connection, not just an individual packet
 - Uses a static public IP address for your virtual network resources
 - You typically deploy it on a central virtual network to control general network access
+- You should use it along with NSG and WAF
 
 You can configure:
 

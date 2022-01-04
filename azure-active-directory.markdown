@@ -14,7 +14,7 @@ Overview:
 - Each Azure subscription is associated with a single Azure AD directory (tenant);
 - Users, groups and applications in that directory can manage resources in the subscription;
 - Subscriptions use Azure AD for SSO;
-- Microsoft 365 uses Azure AD;
+- Microsoft 365, Office 365, Azure, and Dynamics CRM Online use Azure AD, a tenant in these services is automatically an Azure AD tenant.
 
 ## Licenses
 
@@ -27,7 +27,7 @@ Overview:
 - Premium P1
   - dynamic groups
   - on-premises identity management suite
-  - conditional access policy
+  - conditional access policy (based on user's location, device etc, then allow/block access or require multi-factor authentication)
 
 - Premium P2
   - Active Directory Identity Protection: risk-based conditional access
@@ -48,9 +48,16 @@ Features:
 
 ## Compare with Active Directory
 
-- Active Directory manages objects, like devices and users on your on-premises network;
-- AAD does not replace Active Directory;
-- They can be used together;
+- Active Directory
+  - Introduced in Windows 2000, for on-premises identity and access management
+  - Runs on Windows Server
+  - Manages objects, like devices and users on your on-premises network
+- AAD
+  - Cloud based
+  - Does not replace Active Directory
+- They can be used together, Azure AD Connect can synchronizes changes between the them:
+
+  ![Azure AD Connect](images/azure_azure-ad-connect.png)
 
 ## Best practices
 
