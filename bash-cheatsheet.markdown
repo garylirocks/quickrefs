@@ -94,6 +94,10 @@
     man 5 crontab
     ```
 
+    Navigation in a man page (seems different from the usual vim shortcuts):
+    - `k` / `K` next / previous match
+    - `j` / `e` next / previous line
+
 - `type`
 
     Some commands are not executables, but Bash builtins, you can check this with `type`
