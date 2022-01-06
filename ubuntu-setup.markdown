@@ -49,20 +49,26 @@ Most of the configs needed are already in https://github.com/garylirocks/dotfile
   sudo python -c "import sys; py3 = sys.version_info[0] > 2; u = __import__('urllib.request' if py3 else 'urllib', fromlist=1); exec(u.urlopen('http://status.calibre-ebook.com/linux_installer').read()); main(install_dir='/opt')"
   ```
 
-- Input method
+- Chinese Input method
 
-  ```sh
-  # 'System Settings' -> 'Language Support' -> change input method to 'fcitx'
-  sudo add-apt-repository ppa:fcitx-team/nightly
-  sudo apt-get update
-  sudo apt-get install fcitx-sogoupinyin
+  - ibus
 
-  # install google pinyin
-  sudo apt-get install ibus-googlepinyin
+    _ref: https://www.linkedin.com/pulse/installing-pinyin-input-method-ubuntu-2004-chinese-post-ron-li/_
 
-  # set preferences
-  ibus-setup
-  ```
+    - Run `ibus-setup`, add "Chinese - Intelligent Pinyin" under "Input Method"
+    - In "Settings" -> "Region & Language", add "Chinese (Intelligent Pinyin)" as an input source
+
+  - fcitx
+
+    ```sh
+    # 'System Settings' -> 'Language Support' -> change input method to 'fcitx'
+    sudo add-apt-repository ppa:fcitx-team/nightly
+    sudo apt-get update
+    sudo apt-get install fcitx-sogoupinyin
+
+    # set preferences
+    ibus-setup
+    ```
 
 - Gnome shell extensions (For Gnome based desktop)
 
