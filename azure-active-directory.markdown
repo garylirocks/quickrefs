@@ -1,11 +1,15 @@
 # Azure AD
 
-- [Licenses](#licenses)
-- [Compare with Active Directory](#compare-with-active-directory)
+- [Editions](#editions)
+- [Compare with Active Directory Domain Services](#compare-with-active-directory-domain-services)
+- [Azure AD Join](#azure-ad-join)
 - [Best practices](#best-practices)
 - [Users](#users)
+- [Groups](#groups)
+- [Administrative Units](#administrative-units)
 - [Providing identities to services](#providing-identities-to-services)
 - [Role-based access control (RBAC)](#role-based-access-control-rbac)
+  - [Azure RBAC roles vs. Azure AD roles](#azure-rbac-roles-vs-azure-ad-roles)
 - [Logging and analytics](#logging-and-analytics)
 
 
@@ -16,22 +20,42 @@ Overview:
 - Subscriptions use Azure AD for SSO;
 - Microsoft 365, Office 365, Azure, and Dynamics CRM Online use Azure AD, a tenant in these services is automatically an Azure AD tenant.
 
-## Licenses
+## Editions
+
+| Feature                                             | Free      | Microsoft 365 Apps | Premium P1 | Premium P2 |
+| --------------------------------------------------- | --------- | ------------------ | ---------- | ---------- |
+| Directory Objects                                   | 500,000   | Unlimited          | Unlimited  | Unlimited  |
+| Single Sign-On                                      | Unlimited | Unlimited          | Unlimited  | Unlimited  |
+| Core Identity and Access Management                 | X         | X                  | X          | X          |
+| Business to Business Collaboration                  | X         | X                  | X          | X          |
+| Identity & Access Management for Microsoft 365 apps |           | X                  | X          | X          |
+| Premium Features                                    |           |                    | X          | X          |
+| Hybrid Identities                                   |           |                    | X          | X          |
+| Advanced Group Access Management                    |           |                    | X          | X          |
+| Conditional Access                                  |           |                    | X          | X          |
+| Identity Protection                                 |           |                    |            | X          |
+| Identity Governance                                 |           |                    |            | X          |
 
 - Free
   - user, groups, basic reports
   - on-premises AD sync
-  - self-service password reset
   - SSO for Microsoft 365, Azure services, other third-party SaaS applications
 
 - Premium P1
+  - self-service password reset
+    - Refers to resetting password when not signed in, NOT changing password after signed in
+    - You could config what authentication tests need to be passed
+    - Can be set as 'none', 'selected' or 'all', administrator accounts can always do this no matter what is configured
+  - custom Azure AD roles (not Azure RBAC roles)
+  - allow hybrid users access both on-prem and cloud resources
   - dynamic groups
-  - on-premises identity management suite
+  - self-service group management
+  - Microsoft Identity Manager (on-premises identity management suite, allows self-service password reset for your on-prem users)
   - conditional access policy (based on user's location, device etc, then allow/block access or require multi-factor authentication)
 
 - Premium P2
   - Active Directory Identity Protection: risk-based conditional access
-  - Privileged Identity Management: detailed restrictions on administrators
+  - Privileged Identity Management: discover, restrict and monitor administrators
 
 - Pay-as-you-go
   - Azure AD B2C: manage identity and access for consumer users
@@ -46,18 +70,29 @@ Features:
 
   ![B2B process](images/azure_ad-b2c.svg)
 
-## Compare with Active Directory
+## Compare with Active Directory Domain Services
 
-- Active Directory
-  - Introduced in Windows 2000, for on-premises identity and access management
-  - Runs on Windows Server
-  - Manages objects, like devices and users on your on-premises network
-- AAD
-  - Cloud based
-  - Does not replace Active Directory
-- They can be used together, Azure AD Connect can synchronizes changes between the them:
+|            | Active Directory DS                                                        | Azure AD                                                       |
+| ---------- | -------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| Purpose    | Introduced in Windows 2000, for on-premises identity and access management | Identity solution for Internet-based applications              |
+| Deployment | Windows Server (On-prem or IaaS VMs)                                       | Cloud based                                                    |
+| API        | LDAP                                                                       | REST (HTTPS)                                                   |
+| Protocols  | Kerberos authentication                                                    | SAML, WS-Federation, OpenID Connect for authN, OAuth for authZ |
+| Structure  | Organization Units (OUs) , Group Policy Objects (GPOs)                     | flat users and groups                                          |
+
+Azure AD does not replace Active Directory, they can be used together, **Azure AD Connect** can synchronizes changes between the them:
 
   ![Azure AD Connect](images/azure_azure-ad-connect.png)
+
+## Azure AD Join
+
+- Provide access to organizational resources of work-related devices
+- Intended for organizations that do not have on-prem AD
+- Connection options:
+  - Registering a device to Azure AD enables you to manage a device's identity, which can be used to enable or disable a device
+  - Joining: an extension to registering, changes local state to a device, which enables your users to sign-in to a device using a work or school account instead of personal account (e.g. you add your work M365 email to your own laptop)
+- Combined with a mobile device management (MDM) solution such as Microsoft Intune, provides additional attributes in Azure AD
+
 
 ## Best practices
 
@@ -68,9 +103,27 @@ Features:
 
 ## Users
 
-- Two user types: Member and Guest
-- Users with User Administrator or Global Administrator role can create new users
+- User types:
+  - Member (could be defined in this AAD, another ADD, or synced from on-prem AD)
+  - Guest (accounts from other cloud providers)
+- Users with Global Administrator or User Administrator role can create new users
 - When you delete an account, the account remains in suspended state for 30 days
+- Users can also be added to Azure AD through Microsoft 365 Admin Center, Microsoft Intune admin console, and the CLI
+
+## Groups
+
+- Two types
+  - Security groups: for RBAC
+  - Microsoft 365: giving members access to shared mailbox, calendar, files, etc
+- Adding group members
+  - Assigned
+  - Dynamic User
+  - Dynamic Device: based ond devices' attributes
+
+## Administrative Units
+
+- To restrict administrative scope in organizations that are made up of independent divisions, such as School of Business and School of Engineering in a University
+- Apply scope only to management permissions
 
 
 ## Providing identities to services
@@ -169,42 +222,108 @@ RBAC allows you to grant access to Azure resources that you control. You do this
 
 1. Security principal (who)
 
-  ![RBAC principal](images/azure_rbac-principal.png)
+    ![RBAC principal](images/azure_rbac-principal.png)
 
 2. Role definition (what)
 
-  A collection of permissions, `NotActions` are subtracted from `Actions`
+    Four fundamental built-in roles:
 
-  ![RBAC role definition](images/azure_rbac-role.png)
+    - **Owner** - full access, including the right to delegate access to others
+    - **Contributor** - create and manage, but can't delegate access to others
+    - **Reader** - view existing resources
+    - **User Access Administrator** - manage user access to resources, rather than to managing resources
 
-  Four fundamental built-in roles:
+    Definition for `Contributor`:
 
-  - Owner - full access, including the right to delegate access to others
-  - Contributor - create and manage, but can't grant access to others
-  - Reader - view
-  - User Access Administrator - can manage user access
+    ![RBAC role definition](images/azure_rbac-role.png)
+
+    - `NotActions` are subtracted from `Actions`
+    - `dataActions` refer to actions on data within an object, built-in role "Storage Blob Data Reader" has permissions shown below, it can read blob containers and data, but not write or delete them:
+
+      ```
+      "permissions": [
+        {
+          "actions": [
+            "Microsoft.Storage/storageAccounts/blobServices/containers/read",
+            "Microsoft.Storage/storageAccounts/blobServices/generateUserDelegationKey/action"
+          ],
+          "dataActions": [
+            "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read"
+          ],
+        ```
+
+    - All the built-in roles have `"assignableScopes": [ "/" ]`
 
 3. Scope (where)
 
-  ![role scopes hierarchy](images/azure_rbac-scopes.png)
+    ![role scopes hierarchy](images/azure_rbac-scopes.png)
 
 
-Role Assignment
+4. Role Assignment
 
-![Role Assignment](images/azure_rbac-role-assignment.png)
+    ![Role Assignment](images/azure_rbac-role-assignment.png)
 
-  ```sh
-  # create a role assignment
-  az role assignment create \
-      --role "Virtual Machine Administrator Login" \
-      --assignee $userPrincipalName \
-      --scope $vm
+    ```sh
+    # create a role assignment
+    az role assignment create \
+        --role "Virtual Machine Administrator Login" \
+        --assignee $userPrincipalName \
+        --scope $vm
 
-  # query role assignment within a scope
-  az role assignment list \
-      --assignee $userPrincipalName \
-      --scope $vm
-  ```
+    # query role assignment within a scope
+    az role assignment list \
+        --assignee $userPrincipalName \
+        --scope $vm
+    ```
+
+### Azure RBAC roles vs. Azure AD roles
+
+Different roles in Azure:
+
+- Azure AD administrator roles
+
+  To manage Azure AD resources, such as users, groups and domains, find them in **"Roles and administrators" menu under Azure AD**
+
+- RBAC roles
+
+  The new Authorization system, find them in the **"Access Control (IAM)" menu under management groups, subscriptions, resource groups or resources**
+
+- Classic subscription administrator roles (Legacy)
+
+  The three administrator roles when Azure was initially released: Account Administrator, Service Administrator and Co-Administrator
+
+
+|                             | Azure RBAC roles                                                                                                  | Azure AD roles                                                                     |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| For                         | Azure resources                                                                                                   | Azure Active Directory                                                             |
+| Scope                       | management group, subscription, resource group, resource                                                          | tenant level                                                                       |
+| How to get role information | Azure portal, Azure CLI (`az role definition list`), Azure PowerShell, Azure Resource Manager templates, REST API | Azure admin portal, Microsoft 365 admin portal, Microsoft Graph AzureAD PowerShell |
+
+![RBAC vs. AAD roles](images/azure_rbac-vs-aad-roles.png)
+
+- Azure AD roles and Azure RBAC roles are independent from one another, AD role assignment does not grant access to Azure resources and vice versa
+- As an Azure AD Global Administrator, you might not have access to all subscriptions and management groups, but you could elevate your access:
+  - Assign yourself "**User Access Administrator**" role in Azure at root scope(`/`)
+  - View and assign access in any subscription or management group (e.g. assign yourself the Owner role of a management group)
+  - You should remove this elevated access once you have made the changes needed
+- Each directory is given a single top-level management group called "Tenant Root Group", it has the same id as the tenant, allows for global policies and Azure role assignments to be applied at this directory/tenant level.
+
+To enable the elevated access:
+
+  -  In Azure Portal ("AAD" -> "Properties" -> "Access management for Azure resources")
+  -  CLI
+
+      ```sh
+      az rest --method post --url "/providers/Microsoft.Authorization/elevateAccess?api-version=2016-07-01"
+
+      # you need to login again to see the new role assignment
+      az logout
+      az login
+      az role assignment list --role "User Access Administrator" --scope "/"
+
+      # remove the elevated access
+      az role assignment delete --role "User Access Administrator" --scope "/"
+      ```
 
 ## Logging and analytics
 

@@ -15,6 +15,7 @@
 - [Resource management](#resource-management)
   - [Azure AD](#azure-ad)
   - [Tenant](#tenant)
+  - [Regions](#regions)
   - [Management groups](#management-groups)
   - [Subscription](#subscription)
   - [Resource group](#resource-group)
@@ -217,6 +218,21 @@ Security posture (CIA):
 - An email address can be associated with more than one tenant (and you can switch from one to another);
 - Each tenant has an _account owner_;
 
+### Regions
+
+- Bring applications closer to users
+- Offer data residency, compliance and resiliency options
+- A region contains at least one, but potentially multiple datacenters (Availability Zones)
+- Some services or features are only available in certain regions: such as specific VM sizes or storage types
+- Some services are global: Azure AD, DNS, Traffic Manager
+- Each regions is paired with another region within the same geography, making a **regional pair**
+  - Physical isolation
+  - Replication: Geo-Redundant Storage provide automatic replication to the paired region
+  - Recovery order: one region is prioritized out of every pair
+  - Sequential updates
+  - Data residency
+
+
 ### Management groups
 
 ![Management groups](images/azure_management-groups.png)
@@ -225,6 +241,7 @@ Security posture (CIA):
   - Apply a policy to limit regions available to subscriptions under a group
   - Create a RBAC assignment on a group
 - All subscriptions and management groups are within a single hierarchy in each directory
+- Each directory is given a root management group, it has the same id as the tenant
 
 ### Subscription
 
@@ -283,7 +300,8 @@ Notes:
   - prevent noncompliant resources from being created,
   - and somtimes automatically remediate resources
 - Policy evaluation happens about once per hour
-- A group of policies is called an _initiative_
+- A group of policies is called an _initiative_, it's recommended to use initiatives even when there's only a few policies
+- A custom policy definition or initiative can be defined in a management group or subscription level, not at resource group level (can be assigned to a resource group)
 
 ### Blueprints
 
