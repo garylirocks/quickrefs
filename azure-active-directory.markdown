@@ -1,7 +1,8 @@
 # Azure AD
 
 - [Editions](#editions)
-- [Compare with Active Directory Domain Services](#compare-with-active-directory-domain-services)
+- [Azure AD vs. AD DS vs. Azure AD DS](#azure-ad-vs-ad-ds-vs-azure-ad-ds)
+  - [Azure AD DS](#azure-ad-ds)
 - [Azure AD Join](#azure-ad-join)
 - [Best practices](#best-practices)
 - [Users](#users)
@@ -43,7 +44,7 @@ Overview:
 
 - Premium P1
   - self-service password reset
-    - Refers to resetting password when not signed in, NOT changing password after signed in
+    - Refers to resetting password when not signed in (forgotten or expired password), NOT changing password after signed in (everyone can do this)
     - You could config what authentication tests need to be passed
     - Can be set as 'none', 'selected' or 'all', administrator accounts can always do this no matter what is configured
   - custom Azure AD roles (not Azure RBAC roles)
@@ -70,19 +71,30 @@ Features:
 
   ![B2B process](images/azure_ad-b2c.svg)
 
-## Compare with Active Directory Domain Services
+## Azure AD vs. AD DS vs. Azure AD DS
 
-|            | Active Directory DS                                                        | Azure AD                                                       |
-| ---------- | -------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| Purpose    | Introduced in Windows 2000, for on-premises identity and access management | Identity solution for Internet-based applications              |
-| Deployment | Windows Server (On-prem or IaaS VMs)                                       | Cloud based                                                    |
-| API        | LDAP                                                                       | REST (HTTPS)                                                   |
-| Protocols  | Kerberos authentication                                                    | SAML, WS-Federation, OpenID Connect for authN, OAuth for authZ |
-| Structure  | Organization Units (OUs) , Group Policy Objects (GPOs)                     | flat users and groups                                          |
+|            | AD DS                                                                      | Azure AD                                                       | Azure AD DS                                |
+| ---------- | -------------------------------------------------------------------------- | -------------------------------------------------------------- | ------------------------------------------ |
+| Purpose    | Introduced in Windows 2000, for on-premises identity and access management | Microsoft 365, Azure Portal, SaaS applications                 | A subset of AD DS features, lift-and-shift |
+| Deployment | Windows Server (On-prem or IaaS VMs)                                       | Cloud based                                                    | Cloud                                      |
+| API        | LDAP                                                                       | REST (HTTPS)                                                   | same as AD DS                              |
+| Protocols  | Kerberos authentication                                                    | SAML, WS-Federation, OpenID Connect for authN, OAuth for authZ | same as AD DS                              |
+| Structure  | Organization Units (OUs) , Group Policy Objects (GPOs)                     | flat users and groups                                          | same as AD DS                              |
 
-Azure AD does not replace Active Directory, they can be used together, **Azure AD Connect** can synchronizes changes between the them:
+- Azure AD does not replace Active Directory, they can be used together, **Azure AD Connect** can synchronizes changes between the them:
 
   ![Azure AD Connect](images/azure_azure-ad-connect.png)
+
+### Azure AD DS
+
+![AADDS Syncing](images/azure_aadds-sync.png)
+_On prem AD is optional here_
+
+- Intended to lift and shift your legacy applications from your on-prem to a managed domain.
+- You define the domain name, two Windows Server DCs are then deployed into your selected Azure region as a replica set.
+- Replica sets can be added to any peered virtual network in other regions.
+- You don't need to deploy, manage and patch Domain Controllers (DCs).
+- A one-way sync is configured from Azure AD to the managed domain, so you could login to a Windows VM using your Azure AD credentials.
 
 ## Azure AD Join
 
