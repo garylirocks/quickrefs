@@ -624,7 +624,7 @@ az webapp log download \
 
 ![Static Web Apps overview](images/azure_static-web-apps-overview.png)
 
-When you create a Static Web App, GitHUb Actions or Azure DevOps workflow is added in the app's source code repository. It watches a chosen branch, everytime you push commits or create pull requests into the branch, the workflow builds and deploys your app and its API to Azure.
+When you create a Static Web App, GitHub Actions or Azure DevOps workflow is added in the app's source code repository. It watches a chosen branch, everytime you push commits or create pull requests into the branch, the workflow builds and deploys your app and its API to Azure.
 
 - Globally distributed web hosting
 - Integrated API support by Azure Functions (the `/api` route points to it)
@@ -979,7 +979,7 @@ Benefits:
 Drawbacks:
 
 - Execution time limits (5 ~ 10min)
-- Execution frequency (if need to be ran continously, may be cheaper to use a VM)
+- Execution frequency (if need to be run continuously, may be cheaper to use a VM)
 
 Triggers:
 
