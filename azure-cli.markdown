@@ -116,6 +116,55 @@ az resource show
   ssh vm-public-ip
   ```
 
+- List images/VM sizes
+
+  ```sh
+  # filter by publisher
+  az vm image list --publisher Microsoft --all --output table
+
+  # filter by location
+  az vm image list --location eastus --output table
+
+  # vm sizes
+  az vm list-sizes --location eastus --output table
+  ```
+
+- Resize a VM
+
+  ```sh
+  # list available sizes
+  az vm list-vm-resize-options \
+    --resource-group my-rg \
+    --name vm1 \
+    --output table
+
+  # resize a vm
+  az vm resize \
+    --resource-group my-rg \
+    --name vm1 \
+    --size Standard_D2s_v3
+  ```
+
+- Query a VM
+
+  ```sh
+  # get ip address
+  az vm list-ip-addresses -n vm1 -o table
+
+  # query a property
+  az vm show \
+    --resource-group my-rg \
+    --name vm1 \
+    --query osProfile.adminUsername \
+    -otsv
+
+  # open a port (on the NSG attached to the VM's NIC)
+  az vm open-port \
+    --resource-group my-rg \
+    --name vm1 \
+    --port 80
+  ```
+
 ### Network
 
 #### DNS

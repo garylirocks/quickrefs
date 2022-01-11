@@ -28,6 +28,7 @@
     - [Service principal](#service-principal)
   - [Replication](#replication)
 - [Container Instance](#container-instance)
+  - [Container groups](#container-groups)
 - [Azure Functions](#azure-functions)
   - [Durable functions](#durable-functions)
 
@@ -60,8 +61,9 @@ Checklist for creating VMs
 
 - Costs
   - Compute
-    - billed on per-minute basis
-    - stop and deallocate VM stop compute charging
+    - Billed on per-minute basis
+    - Stop the VM only shuts down the guest OS, doesn't release the compute resource
+    - Deallocating releases the compute resource and stops charging
     - Linux VMs are cheaper than Windows which includes license charges
     - Two payment options:
       - Pay as you go
@@ -91,11 +93,13 @@ Checklist for creating VMs
 ```sh
 # create a vm
 az vm create \
-    --resource-group TestResourceGroup \
-    --name test-wp1-eus-vm \
-    --image win2016datacenter \
-    --admin-username jonc \
-    --admin-password aReallyGoodPasswordHere
+  --resource-group my-rg \
+  --location westus \
+  --name my-demo-vm \
+  --image UbuntuLTS \
+  --admin-username azureuser \
+  --generate-ssh-keys \
+  --verbose
 
 # get a table of VMs with selected columns
 az vm list \
@@ -980,6 +984,18 @@ az container logs \
   --resource-group learn-deploy-aci-rg \
   --name mycontainer-restart-demo
 ```
+
+### Container groups
+
+![Container groups](images/azure_container-groups.png)
+
+- Top-level resource in ACI
+- Similar to a pod in K8s, containers in a group share a lifecycle, resources, local network and storage volumes
+- Could be deployed using ARM teamplates(recommended when additional Azure resources are needed) or a YAML file
+- Share an external-facing IP address, a FQDN
+- Common scenarios:
+  - An app container with a logging/monitoring container
+  - A front-end container with a back-end container
 
 ## Azure Functions
 
