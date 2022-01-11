@@ -1,18 +1,17 @@
 # Azure CLI
 
-- [Cheatsheats](#cheatsheats)
-  - [General](#general)
-  - [Login and accounts](#login-and-accounts)
-  - [Configurations](#configurations)
-  - [Groups and resources](#groups-and-resources)
-  - [VM](#vm)
-  - [Network](#network)
-    - [DNS](#dns)
-  - [ARM templates](#arm-templates)
+- [General](#general)
+- [Login and accounts](#login-and-accounts)
+- [Configurations](#configurations)
+- [Groups and resources](#groups-and-resources)
+- [Storage](#storage)
+- [VM](#vm)
+- [Network](#network)
+  - [DNS](#dns)
+- [ARM templates](#arm-templates)
+- [JMESPath](#jmespath)
 
-## Cheatsheats
-
-### General
+## General
 
 ```sh
 az vm --help
@@ -24,7 +23,14 @@ az find `az vm`
 az upgrade
 ```
 
-### Login and accounts
+Common parameters and shorthand syntax:
+
+- `--resource-group / -g`
+- `--output / -o`
+- `--name / -n`
+- `--query`
+
+## Login and accounts
 
 ```sh
 az login
@@ -32,14 +38,14 @@ az login
 # list subscriptions
 az account list
 
-# set active subscription
+# set active account/subscription
 az account set --subscription gary-default
 
 # logout a specific user
 az logout --username gary@foo.com
 ```
 
-### Configurations
+## Configurations
 
 ```sh
 # set default group and location
@@ -54,7 +60,7 @@ az config set defaults.location="australiaeast"
 az config get defaults.location
 ```
 
-### Groups and resources
+## Groups and resources
 
 ```sh
 # list resource groups
@@ -79,7 +85,38 @@ az resource show
   --name simpleLinuxVMPublicIP \
   --resource-type Microsoft.Network/publicIPAddresses
 ```
-### VM
+
+
+
+## Storage
+
+```sh
+# === START create / manage a storage account
+
+# get a random account name
+STORAGE_NAME=storagename$RANDOM
+
+# create a storage account
+az storage account create \
+  --name $STORAGE_NAME \
+  --sku Standard_RAGRS \
+  --encryption-service blob
+
+# list access keys
+az storage account keys list \
+  --account-name $STORAGE_NAME
+
+# get connection string (key1 is in the string)
+az storage account show-connection-string \
+  -n $STORAGE_NAME
+
+# create a container in the account
+az storage container create \
+  -n messages \
+  --connection-string "<connection string here>"
+```
+
+## VM
 
 - Create a VM with specified username and SSH key
 
@@ -89,8 +126,11 @@ az resource show
     --name vm1 \
     --admin-username azureuser \
     --image UbuntuLTS \
-    --ssh-key-values ~/.ssh/azure_rsa.pub
+    --ssh-key-values ~/.ssh/azure_rsa.pub \
+    --no-wait
   ```
+
+  *Use `--no-wait` to move on to next command and avoid blocking*
 
 - Create a VM with system assigned identity
 
@@ -165,9 +205,9 @@ az resource show
     --port 80
   ```
 
-### Network
+## Network
 
-#### DNS
+### DNS
 
 ```sh
 az network dns zone list \
@@ -179,7 +219,7 @@ az network dns record-set list \
     --output table
 ```
 
-### ARM templates
+## ARM templates
 
 ```sh
 # deploy an ARM **template**
@@ -203,3 +243,101 @@ az deployment group show \
     --name MyDeployment \
     --resource-group my-rg
 ```
+
+## JMESPath
+
+`--query` uses [JMESPath](https://jmespath.org/) to query JSON data
+
+Given an example JSON data like this:
+
+```json
+{
+  "people": [
+    {
+      "name": "Fred",
+      "age": 28
+    },
+    {
+      "name": "Barney",
+      "age": 25
+    },
+    {
+      "name": "Wilma",
+      "age": 27
+    }
+  ]
+}
+```
+
+- Basic expressions
+
+  - `people[1]`
+
+    ```
+    {
+      "age": 25,
+      "name": "Barney"
+    }
+    ```
+
+  - `people[1].name`
+
+    ```
+    "Barney"
+    ```
+
+  - `people[1:3]`
+
+    ```
+    [
+      {
+        "age": 25,
+        "name": "Barney"
+      },
+      {
+        "age": 27,
+        "name": "Wilma"
+      }
+    ]
+    ```
+
+- Filtering
+
+  ```sh
+  people[?age>=`27`].name
+
+  # [
+  #   "Fred",
+  #   "Wilma"
+  # ]
+
+  people[?contains(@.name, `"F"`)]
+
+  # [
+  #   {
+  #     "age": 28,
+  #     "name": "Fred"
+  #   }
+  # ]
+  ```
+
+- MultiSelect
+
+  ```sh
+  # remap field names
+  people[:1].{N: name, A: age}
+
+  # [
+  #   {
+  #     "A": 28,
+  #     "N": "Fred"
+  #   }
+  # ]
+  ```
+
+
+
+
+
+
+

@@ -521,41 +521,7 @@ Cloud Adoption Framework consists of tools, documentation, and proven practices.
 
 ### CLI
 
-Example
-
-```sh
-# set default group and location
-az configure \
-  --defaults group=<groupName> location=australiasoutheast
-
-# === START create / manage a storage account
-# get a random account name
-STORAGE_NAME=storagename$RANDOM
-
-# create a storage account
-az storage account create \
-  --name $STORAGE_NAME \
-  --sku Standard_RAGRS \
-  --encryption-service blob
-
-# list access keys
-az storage account keys list \
-  --account-name $STORAGE_NAME
-
-# get connection string (key1 is in the string)
-az storage account show-connection-string \
-  -n $STORAGE_NAME
-
-# create a container in the account
-az storage container create \
-  -n messages \
-  --connection-string "<connection string here>"
-```
-
-Tips
-  - Use `--no-wait` to move on to next command and avoid blocking
-  - It's often useful to use `--output tsv` to put the output of a command in a variable
-  - `--query` uses [JMESPath](https://jmespath.org/) to query JSON data
+*see `azure-cli.markdown`*
 
 ### PowerShell
 
