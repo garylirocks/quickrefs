@@ -11,8 +11,10 @@
     "Kubernetes",
     "minikube",
     "MIUI",
+    "mkdir",
     "rerequested",
     "tfstate",
-    "tfvars"
+    "tfvars",
+    "VHDs"
   ]
 }

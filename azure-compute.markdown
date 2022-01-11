@@ -19,6 +19,7 @@
   - [Scaling](#scaling-1)
   - [Node app](#node-app)
   - [App Logs](#app-logs)
+  - [Backup](#backup)
 - [Static Web Apps](#static-web-apps)
 - [Docker Container Registry](#docker-container-registry)
   - [Tasks feature](#tasks-feature)
@@ -57,7 +58,7 @@ Checklist for creating VMs
     - high performance compute
   - sizes can be changed
 
-- Pricing model
+- Costs
   - Compute
     - billed on per-minute basis
     - stop and deallocate VM stop compute charging
@@ -73,12 +74,12 @@ Checklist for creating VMs
 
   - Each VM can have three types of disk:
     - **OS disk** (`/dev/sda` on Linux),
-    - **Temporary disk**, is a short-term storage (`/mnt` on Linux, page files, swap files), **local to the server, NOT in a storage account**
+    - **Temporary disk**, is a short-term storage (`D:` on Windows, `/mnt` on Linux, page files, swap files), **local to the server, NOT in a storage account**
     - **Data disk**, for database files, website static content, app code, etc
   - VHDs are page blobs in Azure Storage
-  - two options for managing the relationship between the storage account and each VHD:
-    - unmanaged disks: you are responsible for the storage account, an account is capable of supporting 40 standard VHDs, it's hard to scale out
-    - **managed disks: newer and recommended**, you only need to specify the size, easier to scale out
+  - Two options for managing the relationship between the storage account and each VHD:
+    - **unmanaged disks**: expose the underlying storage accounts and page blobs, an account is capable of supporting 40 standard VHDs, it's hard to scale out
+    - **managed disks**: newer and recommended, you only need to specify the type (Ultra/Premium/Standard SSD, Standard HDD) and size, only show the disks, hide the underlying storage account and page blobs
 
 - OS
   - Multiple versions of Windows and Linux
@@ -170,12 +171,17 @@ sudo mkdir /data && sudo mount /dev/sdc1 /data
 
 ![Availability Options](images/azure-availability-options.png)
 
+- Single instance VM
+  - 99.9% SLA when using premium storage for all OS and Data Disks
+
 - Availability sets (different racks within a datacenter)
 
-  - 99.95% SLA
-  - VMs in a availability set are spread across Fault Domains and Update Domains
+  - 99.95% SLA (connectivity to at least one instance 99.95% of the time)
+  - Multiple VMs in an availability set are spread across Fault Domains and Update Domains
+  - The VMs in a set should perform identical functionalities and have the same software installed
+  - Combine a Load Balancer with an availability set
 
-![Availability Sets](images/azure-vm_availability_sets.png)
+  ![Availability Sets](images/azure-vm_availability_sets.png)
 
 
 - Availability zones (one or multiple datacenters within a region equipped with independent power, cooling and networking)
@@ -189,15 +195,17 @@ sudo mkdir /data && sudo mount /dev/sdc1 /data
 
 - Virtual Machine Scale Sets
 
-  - let you create and manage a group of identical, load balanced VMs;
-  - number of instances can automatically increase or decrease in response to demand or a defined schedule;
+  - All instances are created from the same base OS image and configuration.
+  - Support Load Balancer for layer-4 traffic distribution, and Application Gateway for layer-7 traffic distribution and SSL termination.
+  - Number of instances can automatically increase or decrease in response to demand or a defined schedule.
+  - You could use your own custom VM images.
 
 - Azure Batch
   - large-scale job scheduling and compute management;
 
 ### Provisioning
 
-- Custom scripts
+- Custom Script Extension
 
   - Imperative, you specify a custom script to be run on a VM, it can update configuration, install software, etc
   - Doesn't work if reboot is required
@@ -501,7 +509,7 @@ A plan's **size** (aka **sku**, **pricing tier**) determines
 | Dev/Test   | Shared(Windows only) | 1         | Custom domains                                |
 | Dev/Test   | Basic                | <=3       | Custom domains/SSL                            |
 | Production | Standard             | <=10      | Staging slots, Daily backups, Traffic Manager |
-| Production | Premium              | <=20      | More slots, backups                           |
+| Production | Premium              | <=30      | More slots, backups                           |
 | Isolated   | Isolated             | <=100     | Isolated network, Internal Load Balancing     |
 
 - **Shared compute**: **Free**, **Shared** and **Basic**, VM shared with other customers
@@ -523,7 +531,7 @@ There are multiple ways to deploy an app:
 - OneDrive
 - Dropbox
 - FTP
-- CLI
+- CLI (`az webapp up`)
 
   Example:
 
@@ -619,6 +627,12 @@ az webapp log download \
   --resource-group my-rg \
   --name my-web-app
 ```
+
+### Backup
+
+- You could do a full or partial backup
+- Backup goes to a storage account and container in the same subscription
+- Backup contains app configuration, files, and database connected to your app
 
 ## Static Web Apps
 
