@@ -255,7 +255,7 @@ sudo mkdir /data && sudo mount /dev/sdc1 /data
 
 - Desired State Configuration
 
-  - PowerShell only
+  - PowerShell only (could be used on Linux)
   - You specify your required VM state in a configuration file
 
     ```
@@ -551,6 +551,7 @@ There are multiple ways to deploy an app:
   cd ~/helloworld
 
   # deploy current working directory as an app
+  # create a new app if there isn't one
   az webapp up \
     --name $APPNAME \
     --resource-group $APPRG \
