@@ -118,6 +118,24 @@ az storage container create \
 
 ## VM
 
+- Create a basic Linux vm for testing
+
+  ```sh
+  # - this creates vnet, subnet, ip, etc
+  # - it would use your local username
+  # - and ~/.ssh/id_rsa.pub
+  # - and port 22 is accessible
+  # - Standard_B1s has 1 vCore, 1024M RAM
+  az vm create \
+    -g my-rg \
+    --name vm1 \
+    --image ubuntuLTS \
+    --size Standard_B1s
+
+  # so you could login to it using
+  ssh vm-public-ip
+  ```
+
 - Create a VM with specified username and SSH key
 
   ```sh
@@ -135,25 +153,15 @@ az storage container create \
 - Create a VM with system assigned identity
 
   ```sh
-  # create a simple ubuntu vm
-  # and
-  #   - enable system assigned managed identity
-  #   - it would have the 'Contributor' role in the specified scope
-  #   - this creates vnet, subnet, ip, etc
+  # - enable system assigned managed identity
+  # - it would have the 'Contributor' role in the specified scope
   az vm create \
     -g my-rg \
     --name vm1 \
     --image ubuntuLTS \
-    --size Standard_B1ms \
+    --size Standard_B1s \
     --assign-identity '[system]' \
     --scope $principalId
-
-  # by default,
-  #   - it would use your local username
-  #   - and ~/.ssh/id_rsa.pub
-  #   - and port 22 is accessible
-  # so you could login to it using
-  ssh vm-public-ip
   ```
 
 - List images/VM sizes

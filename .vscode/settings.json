@@ -19,6 +19,7 @@
     "rerequested",
     "tfstate",
     "tfvars",
-    "VHDs"
+    "VHDs",
+    "vnet"
   ]
 }
