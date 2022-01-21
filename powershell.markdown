@@ -39,9 +39,41 @@ Get-Command *blob*
 # find commands in Azure.Storage, start with 'get' and operate on blobs
 Get-Command -Module Azure.Storage -Verb get* -Noun *blob*
 
+# download help files, otherwise only summary help is available locally
+Update-Help
+
 # get help for a command
 help ls
 
-# alias for
+# same as
 Get-Help Get-ChildItem
+
+# show examples
+Get-Help Get-ChildItem -Examples
+
+# get online help
+Get-Help Get-ChildItem -Online
+```
+
+Inspect object
+
+```powershell
+# show details of a returned object
+Get-Process -Name *powershell* | Get-Member
+#    TypeName: System.Diagnostics.Process
+
+# Name                       MemberType     Definition
+# ----                       ----------     ----------
+# Handles                    AliasProperty  Handles = Handlecount
+# ...
+
+# filter result columns using 'Select-Object'
+Get-Process -Name *powershell* | Get-Member | Select-Object -Property MemberType -Unique
+
+# find commands operate on the Process type
+Get-Command -ParameterType Process
+# CommandType     Name                           Version    Source
+# -----------     ----                           -------    ------
+# Cmdlet          Debug-Process                  3.1.0.0    Microsoft.PowerShell.Management
+# Cmdlet          Enter-PSHostProcess            3.0.0.0    Microsoft.PowerShell.Core
 ```
