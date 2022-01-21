@@ -76,7 +76,7 @@ The *inventory* is a file that defines the hosts upon which the tasks in a playb
 Here is an example playbook that configures service accounts
 
 ```yaml
-# users.yml
+# playbook.yml
 ---
 - hosts: all
   become: yes                   # apply with `sudo` privilege
@@ -100,7 +100,7 @@ ansible-playbook \
   --inventory azure_rm.yml \
   --user azureuser \
   --private-key ~/.ssh/ansible_rsa \
-  users.yml
+  playbook.yml
 ```
 
 Verify by running a command on each host
