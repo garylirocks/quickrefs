@@ -5,6 +5,12 @@ Ansible
 - [Commands](#commands)
 - [Inventory](#inventory)
 - [Playbook](#playbook)
+- [Tasks](#tasks)
+- [Variables](#variables)
+- [Loops](#loops)
+- [Testing](#testing)
+- [Roles](#roles)
+- [Galaxy](#galaxy)
 - [Configs](#configs)
 
 ## Overview
@@ -53,9 +59,12 @@ The *inventory* is a file that defines the hosts upon which the tasks in a playb
   ansible-inventory --inventory azure_rm.yml --graph
 
   # @all:
-  # |--@tag_Ansible_mslearn:
-  # |  |--vm1_1bbf
-  # |  |--vm2_867a
+  # |--@tag_dev:
+  # |  |--vm_dev_1
+  # |  |--vm_dev_2
+  # |--@tag_prod:
+  # |  |--vm_prod_1
+  # |  |--vm_prod_2
   # |--@ungrouped:
   ```
 
@@ -139,6 +148,157 @@ Example modules:
       service:              # 'service' module
         name: nginx
         state: started
+```
+
+## Tasks
+
+There are many ways to filter tasks, by tags, by conditions, etc
+
+```yaml
+---
+  ...
+  tasks:
+    - name: Install nginx
+      apt:                   # 'apt' module, install a package
+        name: nginx
+        state: present
+      tag: nginx
+
+    - name: Find nginx configs
+      find:                 # 'find' module, find files
+        path: /etc/nginx/conf.d/
+        file_type: file
+      tag: config
+
+    - name: Ensure Nginx is running
+      service:              # 'service' module
+        name: nginx
+        state: started
+      tag: nginx-start
+```
+
+```sh
+# list available tags in a playbook
+ansible-playbook playbook.yml --list-tags
+
+# run tasks tagged 'nginx'
+ansible-playbook playbook.yml --tags nginx
+
+# skip tags
+ansible-playbook playbook.yml --skip-tags nginx
+
+# start from a task
+ansible-playbook playbook.yml --start-at-task 'Find nginx configs'
+
+# run tasks one-by-one
+ansible-playbook playbook.yml --step
+```
+
+Task conditions using `when`:
+
+```yaml
+tasks:
+  - name: Upgrade in Redhat
+    when: ansible_os_family == "Redhat"
+    yum: name=* state=latest
+
+  - name: Upgrade in Debian
+    when: ansible_os_family == "Debian"
+    apt: upgrade=dist update_cache=yes
+```
+
+## Variables
+
+Define variables in inventory files
+
+```ini
+[my-hosts]
+vm1
+vm2
+vm3
+vm4
+
+[webservers]
+vm1
+vm2
+
+# variables for 'all'
+[all:vars]
+temp_file=/tmp/temp1
+
+# variables for 'webserver'
+[webservers:vars]
+temp_file=/tmp/temp2
+```
+
+Use variables in playbooks
+
+```yaml
+- hosts: webservers
+
+  tasks:
+    - name: Create a file
+      file:
+        dest: '{{temp_file}}'
+        state: '{{file_state}}'
+      when: temp_file is defined
+```
+
+You can also pass in a variable in command line
+
+```sh
+ansible-playbook demo.yml -e file_state=touch
+```
+
+## Loops
+
+```yaml
+- hosts: localhost
+  vars:
+    fruits: [apple,orange,banana]
+
+  tasks:
+    - name: Show fruits
+      debug:
+        msg: I have a {{item}}
+      with_items: '{{fruits}}'
+```
+
+## Testing
+
+Using `--check` flag
+
+```sh
+ansible-playbook demo.yml --check
+```
+
+## Roles
+
+```sh
+# init a role, this creates a bunch of folders and files
+ansible-galaxy init testrole1
+
+ls -AF
+# .travis.yml  README.md  defaults/  files/  handlers/  meta/  tasks/  templates/  tests/  vars/
+```
+
+- `defaults/` for default variable values
+- `vars/` override default variable values
+- `tasks/` tasks for this role
+- `templates/` jinja2 template files for the `template` task
+
+## Galaxy
+
+Install Ansible roles and collections
+
+```sh
+# install a role (into ~/.ansible by default)
+ansible-galaxy install huxoll.azure-cli
+
+# install a collection
+ansible-galaxy collection install azure.azcollection
+
+pip install -r ~/.ansible/collections/ansible_collections/azure/azcollection/requirements-azure.txt
 ```
 
 ## Configs
