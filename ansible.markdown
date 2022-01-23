@@ -11,6 +11,9 @@ Ansible
 - [Testing](#testing)
 - [Roles](#roles)
 - [Galaxy](#galaxy)
+- [Secrets](#secrets)
+  - [File-level encryption](#file-level-encryption)
+  - [Variable-level encryption](#variable-level-encryption)
 - [Configs](#configs)
 
 ## Overview
@@ -299,6 +302,51 @@ ansible-galaxy install huxoll.azure-cli
 ansible-galaxy collection install azure.azcollection
 
 pip install -r ~/.ansible/collections/ansible_collections/azure/azcollection/requirements-azure.txt
+```
+
+## Secrets
+
+### File-level encryption
+
+```sh
+# create an encrypted file
+ansible-vault enc
+
+# edit an encrypted file
+ansible-vault edit demo1.yml
+
+# run an encrypted playbook
+ansible-playbook demo1.yml --ask-vault-pass
+```
+
+### Variable-level encryption
+
+```sh
+ansible-vault encrypt_string --vault-id @prompt mysupersecretstring
+```
+
+Use the secret in a playbook
+
+```yaml
+- hosts: localhost
+  vars:
+    secret: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          66613333646138636537363536373431633333353631646164353031303933316533326437366564
+          6430613461323339316130626533336165376238316134310a303836356162633363666439353534
+          39653865646130346239316137373565623934663238343061663239383139613032636262363565
+          6138613861613031650a326230616637396232623630323362386430326464373364323531303631
+          32393362326164343566383936633838336166363535383333366237636639636535
+  tasks:
+  - name: Test variable
+    debug:
+      var: secret
+```
+
+Run the playbook
+
+```sh
+ansible-playbook use-secret.yml --ask-vault-pass
 ```
 
 ## Configs
