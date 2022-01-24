@@ -577,3 +577,26 @@ In the following example,
     region = data.terraform_remote_state.vpc.outputs.aws_region
   }
   ```
+
+- Modules
+
+  Combines your code into a logical group, a module definition should have:
+
+  ```sh
+  main.tf
+  variables.tf
+  outputs.tf
+  README.md
+  ```
+
+  then use it like a custom resource:
+
+  ```terraform
+  module "web_server" {
+    # a module in a local folder
+    source = "./modules/servers"
+
+    web_ami = "ami-12345"
+    server_name = "prod-web"
+  }
+  ```
