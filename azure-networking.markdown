@@ -1,6 +1,9 @@
 # Azure Networking
 
 - [Overview](#overview)
+- [Virtual networks](#virtual-networks)
+  - [Subnets](#subnets)
+  - [IP addresses](#ip-addresses)
 - [Network security group (NSG)](#network-security-group-nsg)
 - [Azure Firewall](#azure-firewall)
   - [Web Application Firewall (WAF)](#web-application-firewall-waf)
@@ -26,33 +29,102 @@
 - Can be segmented into one or more *subnets*
 - Can use a *VPN gateway* to connect to an on-premises network
 
+## Virtual networks
+
+![vnet](images/azure_virtual-networks.png)
+
+The vNet can be
+- cloud-only, or
+- connected to on-prem network through site-2-site VPN, or ExpressRoute circuit
+
+### Subnets
+
+Each vNet is segmented into multiple subnets:
+
+- Each subnet should have non-overlapping CIDR address space
+- Some services require its own dedicated subnet, such as VPN gateway
+- Routing:
+  - By default, network traffic between subnets in a vNet is allowed, you can override this default routing
+  - You could also route inter-subnet traffic through a network virtual appliance(NVA)
+- You could enable **service endpoints** in subnets, this allows some public-facing Azure services(e.g. Azure storage account or Azure SQL database) to be accessible from these subnets and deny access from internet
+- A subnet can have zero or one NSG, and an NSG could be associated to multiple subnets
+- Each subnet has **5 reserved IP addresses**, so the maximum prefix in the subnet CIDR is 29 (e.g 10.0.1.0/29, 3 + 5 Azure reserved addresses)
+  - `x.x.x.0`: Network address
+  - `x.x.x.1`: Reserved by Azure for the default gateway
+  - `x.x.x.2`, `x.x.x.3`: Reserved by Azure to map the Azure DNS IPs to the VNet space
+  - `x.x.x.255`: Network broadcast address
+
+### IP addresses
+
+| Feature   | Private IP                                                                             | Public IP                                                                                                           |
+| --------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Resources | <ul><li>VM NICs</li><li>internal load balancers</li><li>application gateways</li></ul> | <ul><li>VM NICs</li><li>internet-facing load balancers</li><li>application gateways</li> <li>VPN gateways</li></ul> |
+
+Public IP SKUs
+
+| Feature       | Basic SKU                                                                                                          | Standard SKU                                                     |
+| ------------- | ------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------- |
+| IP assignment | Static or dynamic                                                                                                  | Static                                                           |
+| Security      | Open by default                                                                                                    | **Are secure by default and closed to inbound traffic**          |
+| Resources     | <ul><li>VM NICs</li><li>internet-facing load balancers</li><li>application gateways</li><li>VPN gateways</li></ul> | <ul><li>VM NICs</li><li>public standard load balancers</li></ul> |
+| Redundancy    | Not zone redundant                                                                                                 | Zone redundant by default                                        |
+
 ## Network security group (NSG)
 
-- it's optional
-- a software firewall which filters inbound and outbound traffic on the VNet
-- can be associated to a **network interface** (per host rules), a **subnet** in the virtual network, or both
-- default rules cannot be modified but *can* be overridden
-- rules evaluation starts from the **lowest priority** rule, deny rules always stop the evaluation
+- Filters inbound and outbound traffic
+- Can be associated to a **network interface** (per host rules), a **subnet** , or both
+- Each subnet or NIC can have zero or one NSG
+- An NSG is an independent resource, doesn't belong to a vNet, it can be associated **multiple times** to subnets in the same or different vNets (must be in the same region)
+- Default rules cannot be modified but *can* be overridden
+- Rules evaluation starts from the **lowest priority** rule, deny rules always stop the evaluation
 
 ![network security group](images/azure_network-security-group.png)
 
+- To access a VM, traffic must be allowed on both subnet and NIC NSG rules
+- For inbound traffic, subnet NSG rules are evaluated first, then NIC NSG rules, the other way around for outbound traffic
+
+Service tags represent a group of IP addresses, these could be used in an NSG rule:
+
+  - VirtualNetwork
+  - Internet
+  - SQL
+  - Storage
+  - AzureLoadBalancer and
+  - AzureTrafficManager
+
 ## Azure Firewall
+
+Firewall in a hub-spoke network:
 
 ![Azure Firewall](images/azure_firewall-overview.png)
 
-- Built-in high availability
+More detailed:
+
+![Azure Firewall architecture](images/azure_firewall-hub-spoke.png)
+
+- Typically deployed on a **central vNet**, so you can centrally create, enforce, and log application and network connectivity policies **across subscriptions and virtual networks**
+- Uses **one or multiple static public IP** addresses, so outside firewalls can identify traffic originating from your vNet
+- Built-in high availability (no need to configure additional load balancers), and can span multiple availability zones
 - Inbound and outbound filtering rules
-- Inbound Destination Network Address Translation (DNAT) support
+- Inbound Destination Network Address Translation (DNAT)
 - Is **stateful**, analyzes the complete context of a network connection, not just an individual packet
-- Uses a static public IP address for your virtual network resources
-- You typically deploy it on a central virtual network to control general network access
 - You should use it along with NSG and WAF
 
-You can configure:
+By default, all traffic is blocked, you can configure:
 
-- **Application rules**: FQDNs that can be accessed from a subnet
-- **Network rules**: inbound/outbound filtering
-- **NAT rules**: destination IP addresses and ports to translate inbound requests
+- **NAT rules**:
+  - translate fireware public IP and port to a private IP and port, could be helpful in publishing SSH, RDP, or non-HTTP/S applications to the Internet
+  - **must be accompanied by a matching network rule**
+- **Network rules**:
+  - apply to **non-HTTP/S traffic** that flow through the firewall, including traffic from one subnet to another
+  - inbound/outbound filtering rules by source, destination, port and protocol(TCP, UDP, ICMP or any), it can distinguish legitimate packets for different type of connections
+- **Application rules**:
+  - only allow **a list of specified FQDNs for outbound HTTP/S** and Azure SQL traffic
+  - could use FQDN tags: Windows Update, Azure Backup, App Service Environment
+- **Threat Intelligence**
+  - alert/deny traffic from known malicious IP and domains
+
+Network rules are processed before application rules
 
 ### Web Application Firewall (WAF)
 
