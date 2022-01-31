@@ -644,6 +644,10 @@ dig example.com ns
 # show friendly ttl
 dig google.com +ttlunits
 # google.com.             3m37s   IN      A       142.250.66.238
+
+# reverse lookup (PTR)
+dig -x 8.8.8.8
+# 8.8.8.8.in-addr.arpa.   1621    IN      PTR     dns.google.
 ```
 
 

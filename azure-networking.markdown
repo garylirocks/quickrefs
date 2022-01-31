@@ -19,6 +19,7 @@
   - [Standard rules engine notes](#standard-rules-engine-notes)
   - [Custom domain HTTPS](#custom-domain-https)
 - [DNS](#dns)
+  - [Private DNS zones](#private-dns-zones)
 - [VPN](#vpn)
   - [Point to site](#point-to-site)
 
@@ -391,13 +392,62 @@ see:
 
 ## DNS
 
-- Supports private DNS zones, which provide name resolution for VMs within a virtual network, and between virtual networks.
-  - Host names for VMs in your virtual network are automatically maintained;
-  - Split-horizon DNS support: allows the same domain name to exist in both private and public zones, resolves to the correct one based on the originating request location.
+Concepts:
+
+- **DNS Zone** corresponds to a domain name, parent and children zones could be in different resource groups
+- A **record set** is a collection of records in a zone that have the same name and type (e.g. multiple IP addresses for name 'www' and type 'A')
+
+Features:
+
+- Split-horizon DNS support: allows the same domain name to exist in both private and public zones, so you could have a private version of your services within your virtual network.
 
 - Alias record sets: allows you to setup alias record to direct traffic to an Azure public IP address(load balancer), an Azure Traffic Manager profile, or an Azure CDN endpoint.
   - It's a dynamic link between a record and a resource, so when the resource's IP changes, it's automatically handled;
   - Supports these record types: A, AAAA, CNAME;
+
+### Private DNS zones
+
+You could link a Private DNS Zone to a vNet (not subnet), enable auto-registration, then hostname of any VMs in the vNet would be registered in this Private DNS Zone
+
+- Scoped to a single vNet
+
+  ![Private DNS lookup](images/azure_private-dns-1.png)
+
+  ```sh
+  dig vm1
+  # vm1.                    0       IN      A       10.0.0.4
+
+  # reverse lookup (PTR)
+  dig -x 10.0.0.4
+  # 4.0.0.10.in-addr.arpa.  10      IN      PTR     vm1.internal.cloudapp.net.
+  # 4.0.0.10.in-addr.arpa.  10      IN      PTR     vm1.gary.com.
+  ```
+
+- For multiple vNets
+
+  ![Name resolution for multiple vNets](images/azure_private-dns-multiple-vnets.png)
+
+  - Both vNets are linked to the private DNS zone
+  - Auto registration enabled for vNet1, disabled for vNet2 (you could still add entries manually)
+  - DNS queries resolve across vNets, reverse queries are scoped to the same vNet
+
+  On a VM in vNet2:
+
+  ```sh
+  # you could resolve vm1
+  dig vm1.gary.com
+  # vm1.gary.com.           10      IN      A       10.0.0.4
+
+  # reverse query (PTR) works in the same vNet
+  dig -x 10.1.0.4
+  # 4.0.1.10.in-addr.arpa.  10      IN      PTR     vm2.internal.cloudapp.net.
+
+  # reverse query doesn't work across vNets, getting 'NXDOMAIN' error
+  dig -x 10.0.0.4
+  # ;; ->>HEADER<<- opcode: QUERY, status: NXDOMAIN, id: 4990
+  # ;4.0.0.10.in-addr.arpa.         IN      PTR
+  ```
+
 
 ## VPN
 
