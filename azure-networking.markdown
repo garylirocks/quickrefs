@@ -5,12 +5,12 @@
   - [Subnets](#subnets)
   - [IP addresses](#ip-addresses)
 - [Network security group (NSG)](#network-security-group-nsg)
+- [Network Peering](#network-peering)
 - [Azure Firewall](#azure-firewall)
   - [Web Application Firewall (WAF)](#web-application-firewall-waf)
 - [DDoS Protection](#ddos-protection)
 - [Private Endpoints](#private-endpoints)
 - [Service endpoints](#service-endpoints)
-- [Network Peering](#network-peering)
 - [Azure Load Balancer](#azure-load-balancer)
 - [Application Gateway](#application-gateway)
 - [Traffic Manager](#traffic-manager)
@@ -21,6 +21,7 @@
 - [DNS](#dns)
   - [Private DNS zones](#private-dns-zones)
 - [VPN](#vpn)
+  - [Site to site](#site-to-site)
   - [Point to site](#point-to-site)
 
 ## Overview
@@ -92,6 +93,27 @@ Service tags represent a group of IP addresses, these could be used in an NSG ru
   - Storage
   - AzureLoadBalancer and
   - AzureTrafficManager
+
+
+## Network Peering
+
+Connect two virtual networks together, resources in one network can communicate with resources in another network.
+
+![network peering](images/azure_network-peering.png)
+
+- The networks can be in **different** subscriptions, AAD tenants, or regions
+- Traffic between networks is **private**, on Microsoft backbone network
+
+A typical use for peering is creating hub-spoke architecture:
+
+![Azure gateway transit](images/azure_gateway-transit.png)
+
+- A VPN gateway in one network allows you access to its peered networks
+- A vNet only allows one gateway, when configuring peering, you could choose whether to use gateway in this vNet or the remote vNet
+- Azure Bastion in hub network can be used to access VMs in spoke network (networks must be in same tenant)
+- Spoke networks can **NOT** connect with each other by default through the hub network, you need to add peering between the spokes or consider using user defined routes (UDRs)
+  - Peering enables the next hop in a UDR to be the IP address of an NVA (network virtual appliance) or VPN gateway. Then traffic between spoke networks can flow through the NVA or VPN gateway in the hub vNet.
+
 
 ## Azure Firewall
 
@@ -247,19 +269,6 @@ Compare private endpoint and private link service:
 
 - Private Endpoints allows you to connect to a service via a private IP address in a vNet, easily extensible to on-prem network;
 - A service endpoint remains a publicly routable IP address, scoped to subnets;
-
-## Network Peering
-
-Connect two virtual networks together, resources in one network can communicate with resources in another network.
-
-- The networks can be in different subscriptions, AAD tenants, or regions
-- Traffic between networks is private, on Microsoft backbone network
-- A VPN gateway in one network allows you access to its peered networks
-- Azure Bastion in hub network can be used to access VMs in spoke network (networks must be in same tenant)
-- Spoke networks can **NOT** connect with each other by default through the hub network, you need to add peering between the spokes or consider using user defined routes (UDRs)
-
-![network peering in hub-spoke topology](images/azure_hub-spoke-network-topology.png)
-
 
 ## Azure Load Balancer
 
@@ -453,10 +462,43 @@ You could link a Private DNS Zone to a vNet (not subnet), enable auto-registrati
 
 Different types:
 
-- **site to site**: your on-premise to vNet
+- **site to site**: your on-premise to vNet (needs a on-prem VPN device)
+  ![Azure VPN site to site](images/azure_vpn-site-2-site.png)
 - **point to site**: your local machine to a vNet
   ![Azure VPN point to site](images/azure_vpn-point-to-site.png)
 - **vNet to vNet**
+
+VPN Gateway:
+
+- Each vNet can have **only one** VPN gateway
+- Underlyingly, a gateway actually is composed of **two or more VMs** that are deployed to a specific subnet you create
+  - this gateway subnet must be named  **`GatewaySubnet`**
+  - better use a CIDR block of /28 or /27 to allow enough IP addresses for future config requirements
+  - never put other resources in this subnet
+- These VMs contain routing tables and specific services, they are created automatically, you can't configure them directly
+- VPN gateways can be deployed to multiple AZs for high availability
+
+VPN gateway type
+
+- **Route-based**: for most cases
+- **Policy-based**: only for some S2S connections
+
+### Site to site
+
+![S2S gateway creation steps](images/azure_vpn-gateway-creation-steps.png)
+
+*Last 3 steps are specific to S2S connections*
+
+- Create local network gateway: this gateway refers to the on-prem location, you specify the IP or FQDN of the on-prem VPN device, and the CIDR of your on-prem network
+- Configure on-prem VPN device: steps differ based on your device, you need a **shared key** and the public IP of the Azure VPN gateway
+- Create the VPN connection: specify the VPN gateway, the local network gateway and the shared key (same as previous step)
+
+For high availability, you could have either active-standby or active-active configurations:
+
+![Active standby](images/azure_vpn-gateway-active-standby.png)
+![Active active](images/azure_vpn-gateway-active-active.png)
+
+
 
 ### Point to site
 
