@@ -6,6 +6,12 @@
   - [IP addresses](#ip-addresses)
 - [Network security group (NSG)](#network-security-group-nsg)
 - [Network Peering](#network-peering)
+- [VPN](#vpn)
+  - [Site to site](#site-to-site)
+  - [Point to site](#point-to-site)
+- [ExpressRoute](#expressroute)
+  - [Virtual WAN](#virtual-wan)
+- [Routing](#routing)
 - [Azure Firewall](#azure-firewall)
   - [Web Application Firewall (WAF)](#web-application-firewall-waf)
 - [DDoS Protection](#ddos-protection)
@@ -20,9 +26,6 @@
   - [Custom domain HTTPS](#custom-domain-https)
 - [DNS](#dns)
   - [Private DNS zones](#private-dns-zones)
-- [VPN](#vpn)
-  - [Site to site](#site-to-site)
-  - [Point to site](#point-to-site)
 
 ## Overview
 
@@ -115,6 +118,157 @@ A typical use for peering is creating hub-spoke architecture:
   - Peering enables the next hop in a UDR to be the IP address of an NVA (network virtual appliance) or VPN gateway. Then traffic between spoke networks can flow through the NVA or VPN gateway in the hub vNet.
 
 
+
+## VPN
+
+Different types:
+
+- **site to site**: your on-premise to vNet (needs a on-prem VPN device)
+  ![Azure VPN site to site](images/azure_vpn-site-2-site.png)
+- **point to site**: your local machine to a vNet
+  ![Azure VPN point to site](images/azure_vpn-point-to-site.png)
+- **vNet to vNet**
+
+VPN Gateway:
+
+- Each vNet can have **only one** VPN gateway
+- Underlyingly, a gateway actually is composed of **two or more VMs** that are deployed to a specific subnet you create
+  - this gateway subnet must be named  **`GatewaySubnet`**
+  - better use a CIDR block of /28 or /27 to allow enough IP addresses for future config requirements
+  - never put other resources in this subnet
+- These VMs contain routing tables and specific services, they are created automatically, you can't configure them directly
+- VPN gateways can be deployed to multiple AZs for high availability
+
+VPN gateway type
+
+- **Route-based**: for most cases
+- **Policy-based**: only for some S2S connections
+
+### Site to site
+
+![S2S gateway creation steps](images/azure_vpn-gateway-creation-steps.png)
+
+*Last 3 steps are specific to S2S connections*
+
+- Create local network gateway: this gateway refers to the on-prem location, you specify the IP or FQDN of the on-prem VPN device, and the CIDR of your on-prem network
+- Configure on-prem VPN device: steps differ based on your device, you need a **shared key** and the public IP of the Azure VPN gateway
+- Create the VPN connection: specify the VPN gateway, the local network gateway and the shared key (same as previous step)
+
+For high availability, you could have either active-standby or active-active configurations:
+
+![Active standby](images/azure_vpn-gateway-active-standby.png)
+![Active active](images/azure_vpn-gateway-active-active.png)
+
+
+
+### Point to site
+
+Follow the doc (https://docs.microsoft.com/en-us/azure/vpn-gateway/vpn-gateway-howto-point-to-site-resource-manager-portal)
+
+The following covers how to generate CA/client certificates on Linux:
+
+```sh
+sudo apt install strongswan strongswan-pki libstrongswan-extra-plugins
+
+# generate CA certificates
+ipsec pki --gen --outform pem > caKey.pem
+ipsec pki --self --in caKey.pem --dn "CN=VPN CA" --ca --outform pem > caCert.pem
+
+# print certificate in base64 format (put this in Azure portal)
+openssl x509 -in caCert.pem -outform der | base64 -w0 ; echo
+```
+
+Use following script to create client cert/key for multiple users
+
+```sh
+#!/bin/bash
+
+USERS=$@
+
+create_cert_key() {
+  local PASSWORD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | head -c 16)
+  local U=$1
+
+  echo "$PASSWORD" > "${U}_key_password"
+  ipsec pki --gen --outform pem > "${U}_key.pem"
+  ipsec pki --pub --in "${U}_key.pem" | ipsec pki --issue --cacert caCert.pem --cakey caKey.pem --dn "CN=${U}" --san "${U}" --flag clientAuth --outform pem > "${U}_cert.pem"
+
+  # create a p12 bundle (need to be installed on client machine to connect to VPN)
+  openssl pkcs12 -in "${U}_cert.pem" -inkey "${U}_key.pem" -certfile caCert.pem -export -out "${U}.p12" -password "pass:${PASSWORD}"
+}
+
+
+for U in $USERS; do
+  echo "creating cert for ${U}"
+  create_cert_key "${U}"
+  mkdir "$U"
+  mv "${U}_key_password" "${U}_key.pem" "${U}_cert.pem" "${U}.p12" "${U}"
+done
+```
+
+Then you download a VPNClient package from Azure portal, extract the file, it has clients/configs for Windows, OpenVPN, etc.
+
+  - OpenVPN on Linux
+    - make sure openvpn is installed
+    ```sh
+    sudo apt-get install openvpn network-manager-openvpn network-manager-openvpn-gnome
+    ```
+    - then create a OpenVPN connection by importing the OpenVPN config file from the package, set your cert file, key file, key password
+
+  - Windows (IKEv2)
+
+    - Open the `.p12` bundle to import client key (need to know the key password)
+    - Run the Windows client provided by Azure to create a VPN connection
+
+
+To revoke a client certificate, use the following scripts to get a client certificate's fingerprint:
+
+```sh
+a=$(openssl x509 -in my_cert.pem -fingerprint -noout)
+a=${a#*=}       # remove everthing before '='
+echo ${a//:}    # remove ':'
+```
+
+## ExpressRoute
+
+![ExpressRoute overview](images/azure_expressroute.png)
+
+- A direct, private connection to Microsoft services, including Azure, Microsoft 365, CRM
+- Facilitated by a connectivity provider
+- Connect with one peering location, gain access to all regions within the same geopolitical region
+
+![Coexisting ExpressRoute and VPN gateway](images/azure_coexisting-connections.png)
+
+A vNet can have both ExpressRoute and VPN gateways at the same time.
+
+### Virtual WAN
+
+![Virtual WAN](images/azure_virtual-wan.png)
+
+- Azure regions serve as hubs that you choose to connect your branches to
+- Brings together many networking services: site-to-site VPN, point-to-site VPN, ExpressRoute into a single operational interface
+- The cloud hosted 'hub' enables transitive connectivity between endpoints across different types of 'spokes'
+
+
+## Routing
+
+![Azure system routes](images/azure_system-routes.png)
+
+- By default, each subnet is associated with a route table, which contains system routes. These routes manage traffic within the same subnet, between subnets in the same vNet, from vNet to the Internet.
+- Each subnet can only be associated with one route table, while a route table could be associated with multiple subnets.
+
+![User defined routes](images/azure_user-defined-routes.png)
+
+- You could config user-defined routes (UDRs), by define the next hop in a route to be a virtual network gateway, virtual appliance, vNet or the Internet
+
+![Routing example](images/azure_routing-example.png)
+
+In the above example,
+
+- By default, traffic from public subnet goes to private subnet directly
+- You define a route in the public subnet's route table, make any traffic from the public subnet to the private subnet go through the virtual appliance in the DMZ subnet.
+
+
 ## Azure Firewall
 
 Firewall in a hub-spoke network:
@@ -165,10 +319,14 @@ Network rules are processed before application rules
 
 ![Private endpoints for storage](images/azure_private-endpoints-for-stroage.jpg)
 
-* A private endpoint is a special network interface for an Azure service in your vNet, it gets an IP from the address range of the vNet;
-* Connection between the private endpoint and the storage service uses a private link, which traverses only Microsoft backbone network;
-* Applications in the vNet can connect to the storage service over the private endpoint seamlessly, **using the same connection string and authorization mechanisms that they would use otherwise**;
-* You DON'T need a firewall rule to allow traffic from a vNet that has a private endpoint, since the storage firewall only controls access through the public endpoint. Private endpoints instead rely on the consent flow for granting subnet access;
+* **Azure Private Endpoint**: a special network interface for an Azure service in your vNet, it gets an IP from the address range of the vNet
+* Connection between the private endpoint and the storage service uses a **private link**, which traverses only Microsoft backbone network
+  - A Private Link can connect to Azure PaaS services, customer-owned or Microsoft partner services.
+  - A Private Link service receives connections from multiple private endpoints. A private endpoint connects to one Private Link service.
+  - Private Link works across Azure AD tenants
+  - No gateways, NAT devices, ExpressRoute or VPN connections, or public IP addresses are needed.
+* Applications in the vNet can connect to the service over the private endpoint seamlessly, **using the same connection string and authorization mechanisms that they would use otherwise**;
+* You **DON'T** need a firewall rule to allow traffic from a vNet that has a private endpoint, since the storage firewall only controls access through the public endpoint. Private endpoints instead rely on the consent flow for granting subnet access;
 * You need a separate private endpoint for each storage service in a storage account that you need to access: Blobs, Files, Static Websites, ...;
 * For RA-GRS accounts, you should create a separate private endpoint for the secondary instance;
 
@@ -244,24 +402,17 @@ az network private-endpoint dns-zone-group create \
    --zone-name storage
 ```
 
-Compare private endpoint and private link service:
-
-- **Azure Private Endpoint**: Azure Private Endpoint is a network interface that connects you privately and securely to a service powered by Azure Private Link. You can use Private Endpoints to connect to an Azure PaaS service that supports Private Link or to your own Private Link Service.
-
-- **Azure Private Link Service**: Azure Private Link service is a service created by a service provider. Currently, a Private Link service can be attached to the frontend IP configuration of a Standard Load Balancer.
-
-- A Private Link service receives connections from multiple private endpoints. A private endpoint connects to one Private Link service.
-
 
 ## Service endpoints
 
 ![Service endpoints overview](images/azure_vnet_service_endpoints_overview.png)
 
-- A virtual network service endpoint provides the identity of your virtual network to an Azure service. Then you can secure the access to an Azure service to a vNet;
+- A virtual network service endpoint provides the identity of your virtual network to an Azure service. You secure the access to an Azure service to your vNet by adding a virtual network rule. You could fully remove public Internet access to this service.
 
-- After enabling a service endpoint, the source IP addresses switch from using public IPv4 addresses to using their private IPv4 address when communicating with the service from that subnet. This switch allows you to access the services without the need for reserved, public IP addresses used in IP firewalls.
+- After enabling a service endpoint, the source IP addresses switch from using public IPv4 addresses to using their private IPv4 address when communicating with the service from that subnet. This switch allows you to access the services without the need for reserved, public IP addresses used in Azure service IP firewalls.
 
 - With service endpoints, DNS entries for Azure services don't change, continue to resolve to public IP addresses assigned to the Azure service. (**Different from private endpoints**)
+  - **When a service endpoint is created, Azure actually creates routes in the route table to direct the traffic, keeping it within Microsoft network**.
 
 - Virtual networks and Azure service resources can be in the same or different subscriptions. Certain Azure Services (not all) such as Azure Storage and Azure Key Vault also support service endpoints across different Active Directory(AD) tenants i.e., the virtual network and Azure service resource can be in different Active Directory (AD) tenants.
 
@@ -456,114 +607,3 @@ You could link a Private DNS Zone to a vNet (not subnet), enable auto-registrati
   # ;; ->>HEADER<<- opcode: QUERY, status: NXDOMAIN, id: 4990
   # ;4.0.0.10.in-addr.arpa.         IN      PTR
   ```
-
-
-## VPN
-
-Different types:
-
-- **site to site**: your on-premise to vNet (needs a on-prem VPN device)
-  ![Azure VPN site to site](images/azure_vpn-site-2-site.png)
-- **point to site**: your local machine to a vNet
-  ![Azure VPN point to site](images/azure_vpn-point-to-site.png)
-- **vNet to vNet**
-
-VPN Gateway:
-
-- Each vNet can have **only one** VPN gateway
-- Underlyingly, a gateway actually is composed of **two or more VMs** that are deployed to a specific subnet you create
-  - this gateway subnet must be named  **`GatewaySubnet`**
-  - better use a CIDR block of /28 or /27 to allow enough IP addresses for future config requirements
-  - never put other resources in this subnet
-- These VMs contain routing tables and specific services, they are created automatically, you can't configure them directly
-- VPN gateways can be deployed to multiple AZs for high availability
-
-VPN gateway type
-
-- **Route-based**: for most cases
-- **Policy-based**: only for some S2S connections
-
-### Site to site
-
-![S2S gateway creation steps](images/azure_vpn-gateway-creation-steps.png)
-
-*Last 3 steps are specific to S2S connections*
-
-- Create local network gateway: this gateway refers to the on-prem location, you specify the IP or FQDN of the on-prem VPN device, and the CIDR of your on-prem network
-- Configure on-prem VPN device: steps differ based on your device, you need a **shared key** and the public IP of the Azure VPN gateway
-- Create the VPN connection: specify the VPN gateway, the local network gateway and the shared key (same as previous step)
-
-For high availability, you could have either active-standby or active-active configurations:
-
-![Active standby](images/azure_vpn-gateway-active-standby.png)
-![Active active](images/azure_vpn-gateway-active-active.png)
-
-
-
-### Point to site
-
-Follow the doc (https://docs.microsoft.com/en-us/azure/vpn-gateway/vpn-gateway-howto-point-to-site-resource-manager-portal)
-
-The following covers how to generate CA/client certificates on Linux:
-
-```sh
-sudo apt install strongswan strongswan-pki libstrongswan-extra-plugins
-
-# generate CA certificates
-ipsec pki --gen --outform pem > caKey.pem
-ipsec pki --self --in caKey.pem --dn "CN=VPN CA" --ca --outform pem > caCert.pem
-
-# print certificate in base64 format (put this in Azure portal)
-openssl x509 -in caCert.pem -outform der | base64 -w0 ; echo
-```
-
-Use following script to create client cert/key for multiple users
-
-```sh
-#!/bin/bash
-
-USERS=$@
-
-create_cert_key() {
-  local PASSWORD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | head -c 16)
-  local U=$1
-
-  echo "$PASSWORD" > "${U}_key_password"
-  ipsec pki --gen --outform pem > "${U}_key.pem"
-  ipsec pki --pub --in "${U}_key.pem" | ipsec pki --issue --cacert caCert.pem --cakey caKey.pem --dn "CN=${U}" --san "${U}" --flag clientAuth --outform pem > "${U}_cert.pem"
-
-  # create a p12 bundle (need to be installed on client machine to connect to VPN)
-  openssl pkcs12 -in "${U}_cert.pem" -inkey "${U}_key.pem" -certfile caCert.pem -export -out "${U}.p12" -password "pass:${PASSWORD}"
-}
-
-
-for U in $USERS; do
-  echo "creating cert for ${U}"
-  create_cert_key "${U}"
-  mkdir "$U"
-  mv "${U}_key_password" "${U}_key.pem" "${U}_cert.pem" "${U}.p12" "${U}"
-done
-```
-
-Then you download a VPNClient package from Azure portal, extract the file, it has clients/configs for Windows, OpenVPN, etc.
-
-  - OpenVPN on Linux
-    - make sure openvpn is installed
-    ```sh
-    sudo apt-get install openvpn network-manager-openvpn network-manager-openvpn-gnome
-    ```
-    - then create a OpenVPN connection by importing the OpenVPN config file from the package, set your cert file, key file, key password
-
-  - Windows (IKEv2)
-
-    - Open the `.p12` bundle to import client key (need to know the key password)
-    - Run the Windows client provided by Azure to create a VPN connection
-
-
-To revoke a client certificate, use the following scripts to get a client certificate's fingerprint:
-
-```sh
-a=$(openssl x509 -in my_cert.pem -fingerprint -noout)
-a=${a#*=}       # remove everthing before '='
-echo ${a//:}    # remove ':'
-```
