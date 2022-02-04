@@ -1,9 +1,12 @@
 {
   "cSpell.words": [
+    "arpa",
     "azcollection",
+    "azcopy",
     "azurerm",
     "cmdlets",
     "CMMI",
+    "CNAME",
     "contoso",
     "distro",
     "distros",
@@ -19,11 +22,16 @@
     "MIUI",
     "mkdir",
     "otable",
+    "NXDOMAIN",
     "otsv",
+    "OWASP",
+    "PKCS",
     "rerequested",
     "tfstate",
     "tfvars",
     "VHDs",
-    "vnet"
+    "VMSS",
+    "vnet",
+    "vnets"
   ]
 }

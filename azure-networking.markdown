@@ -53,7 +53,7 @@ Each vNet is segmented into multiple subnets:
   - You could also route inter-subnet traffic through a network virtual appliance(NVA)
 - You could enable **service endpoints** in subnets, this allows some public-facing Azure services(e.g. Azure storage account or Azure SQL database) to be accessible from these subnets and deny access from internet
 - A subnet can have zero or one NSG, and an NSG could be associated to multiple subnets
-- Each subnet has **5 reserved IP addresses**, so the maximum prefix in the subnet CIDR is 29 (e.g 10.0.1.0/29, 3 + 5 Azure reserved addresses)
+- Each subnet has **5 reserved IP addresses**, so the maximum prefix in the subnet CIDR is /29 (e.g 10.0.1.0/29, 5 Azure reserved addresses + 3 available)
   - `x.x.x.0`: Network address
   - `x.x.x.1`: Reserved by Azure for the default gateway
   - `x.x.x.2`, `x.x.x.3`: Reserved by Azure to map the Azure DNS IPs to the VNet space
@@ -61,18 +61,27 @@ Each vNet is segmented into multiple subnets:
 
 ### IP addresses
 
-| Feature   | Private IP                                                                             | Public IP                                                                                                           |
-| --------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| Resources | <ul><li>VM NICs</li><li>internal load balancers</li><li>application gateways</li></ul> | <ul><li>VM NICs</li><li>internet-facing load balancers</li><li>application gateways</li> <li>VPN gateways</li></ul> |
+Three ranges of non-routable IP addresses for internal networks:
+
+- `10.0.0.0/8`
+- `172.16.0.0/12`
+- `192.168.0.0/16`
+
+Private vs. Public IPs:
+
+| Feature    | Private IP                                                                             | Public IP                                                                                                           |
+| ---------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Resources  | <ul><li>VM NICs</li><li>internal load balancers</li><li>application gateways</li></ul> | <ul><li>VM NICs</li><li>internet-facing load balancers</li><li>application gateways</li> <li>VPN gateways</li></ul> |
+| Assignment | Dynamic (DHCP lease) or Static (DHCP reservation)                                      | Dynamic or Static                                                                                                   |
 
 Public IP SKUs
 
-| Feature       | Basic SKU                                                                                                          | Standard SKU                                                     |
-| ------------- | ------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------- |
-| IP assignment | Static or dynamic                                                                                                  | Static                                                           |
-| Security      | Open by default                                                                                                    | **Are secure by default and closed to inbound traffic**          |
-| Resources     | <ul><li>VM NICs</li><li>internet-facing load balancers</li><li>application gateways</li><li>VPN gateways</li></ul> | <ul><li>VM NICs</li><li>public standard load balancers</li></ul> |
-| Redundancy    | Not zone redundant                                                                                                 | Zone redundant by default                                        |
+| Feature       | Basic SKU                                           | Standard SKU                                                                                                       |
+| ------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| IP assignment | Static or dynamic                                   | Static                                                                                                             |
+| Security      | Open by default, available for inbound only traffic | **Are secure by default and closed to inbound traffic**, you must enable inbound traffic by using NSG              |
+| Resources     | all that can be assigned a public IP                | <ul><li>VM NICs</li><li>Standard public load balancers</li><li>application gateways</li><li>VPN gateways</li></ul> |
+| Redundancy    | Not zone redundant                                  | Zone redundant, or assigned to be in a specific zone                                                               |
 
 ## Network security group (NSG)
 
@@ -317,7 +326,7 @@ Network rules are processed before application rules
 
 ## Private Endpoints
 
-![Private endpoints for storage](images/azure_private-endpoints-for-stroage.jpg)
+![Private endpoints for storage](images/azure_private-endpoints-for-storage.jpg)
 
 * **Azure Private Endpoint**: a special network interface for an Azure service in your vNet, it gets an IP from the address range of the vNet
 * Connection between the private endpoint and the storage service uses a **private link**, which traverses only Microsoft backbone network
@@ -431,19 +440,41 @@ Example multi-tier architecture with load balancers
 
 ## Application Gateway
 
-- Is a load balancer for web apps
-- Uses Azure Load Balancer at TCP level
-- Understands HTTP, applies routing at application layer (L7)
+- Is a load balancer for web apps, supports HTTP, HTTPS, HTTP/2 and WebSocket protocols
+- Support redirection, rewrite HTTP headers and custom error pages
+- Works at application layer (OSI layer 7)
+- Uses Azure Load Balancer at TCP level (OSI layer 4)
 
-Benefits over a simple LB
+Benefits over a simple LB:
 
 - Cookie affinity
 - SSL termination
 - Web application firewall (WAF): detailed monitoring and logging to detect malicious attacks
-- URL rule-based routes: based on URL patterns, source IP and port, helpful when setting up a CDN
+- URL rule-based routes: based on hostname and paths, helpful when setting up a CDN
 - Rewrite HTTP headers: such as scrubing server names
 
-![Application Gateway](images/azure_aplication-gateway.png)
+![Application Gateway](images/azure_application-gateway.png)
+
+Components:
+
+![Application Gateway components](images/azure_application-gateway-components.png)
+
+- Front end: a public IP, a private IP, or both
+- Listeners
+  - Defined by protocol, port, host and IP address
+  - Two types:
+    - Basic: routes based on path
+    - Multi-site: also route requests using the hostname
+  - Handle TLS/SSL certificates
+- Routing rules: each rule has an associated set of HTTP settings, such as whether to encrypt traffic to back-end, session stickiness, timeout period, etc
+- Back-end pools: each pool could be a fixed set of VMs, a VMSS, an app in Azure App Services, or a collections of on-prem servers
+- WAF:
+  - checks each request for common threats: SQL-injection, XSS, command injection, HTTP request smuggling, crawlers, etc
+  - based on OWASP rules, referred to as Core Rule Set(CRS)
+  - you can opt to select only specific rules, or specify which elements to examine
+- Health probes
+  - if not configured, a default probe is created, which waits for 30s before deciding whether a server is unavailable
+
 
 ## Traffic Manager
 
@@ -495,10 +526,10 @@ az network front-door create \
   - Since it's not cached by CDN, CDN won't compress it as well, so if you would like to serve a compressed version, you need to put the compressed file in the origin Blob storage, and set the `ContentEncoding: gzip` on it
 
     ```sh
-    gzip /paht/to/file
-    mv /paht/to/file.gz /paht/to/file
+    gzip /path/to/file
+    mv /path/to/file.gz /path/to/file
 
-    azcopy copy /paht/to/file <Blob-storage-path> \
+    azcopy copy /path/to/file <Blob-storage-path> \
                 --cache-control 'no-cache' \
                 --content-encoding 'gzip'
     ```
