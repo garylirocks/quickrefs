@@ -1091,6 +1091,14 @@ $ echo $#
 
 ## Scripting best practices
 
+### Shebang
+
+Always add the shebang on first line, use `env` to find `bash` in `$PATH`:
+
+```sh
+#!/usr/bin/env bash
+```
+
 ### Options
 
 - `set -n`
