@@ -6,8 +6,6 @@
 - [Groups and resources](#groups-and-resources)
 - [Storage](#storage)
 - [VM](#vm)
-- [Network](#network)
-  - [DNS](#dns)
 - [ARM templates](#arm-templates)
 - [JMESPath](#jmespath)
 
@@ -212,20 +210,6 @@ az storage container create \
     --name vm1 \
     --port 80
   ```
-
-## Network
-
-### DNS
-
-```sh
-az network dns zone list \
-    --output table
-
-az network dns record-set list \
-    -g <resource-group> \
-    -z <zone-name> \
-    --output table
-```
 
 ## ARM templates
 

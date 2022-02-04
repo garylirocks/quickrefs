@@ -4,8 +4,10 @@
 - [Virtual networks](#virtual-networks)
   - [Subnets](#subnets)
   - [IP addresses](#ip-addresses)
+  - [CLI](#cli)
 - [Network security group (NSG)](#network-security-group-nsg)
 - [Network Peering](#network-peering)
+  - [CLI](#cli-1)
 - [VPN](#vpn)
   - [Site to site](#site-to-site)
   - [Point to site](#point-to-site)
@@ -26,6 +28,7 @@
   - [Custom domain HTTPS](#custom-domain-https)
 - [DNS](#dns)
   - [Private DNS zones](#private-dns-zones)
+  - [CLI](#cli-2)
 
 ## Overview
 
@@ -83,6 +86,13 @@ Public IP SKUs
 | Resources     | all that can be assigned a public IP                | <ul><li>VM NICs</li><li>Standard public load balancers</li><li>application gateways</li><li>VPN gateways</li></ul> |
 | Redundancy    | Not zone redundant                                  | Zone redundant, or assigned to be in a specific zone                                                               |
 
+### CLI
+
+```sh
+# list vnets
+az network vnet list --output table
+```
+
 ## Network security group (NSG)
 
 - Filters inbound and outbound traffic
@@ -114,19 +124,60 @@ Connect two virtual networks together, resources in one network can communicate 
 ![network peering](images/azure_network-peering.png)
 
 - The networks can be in **different** subscriptions, AAD tenants, or regions
+  - For different subscription scenarios, you must have the `Network Contributor` role in both subs to configure the peering
 - Traffic between networks is **private**, on Microsoft backbone network
+- Non-transitive, for example, with peering like this A <-> B <-> C, A can't communicate with C, you need to peer A <-> C
 
 A typical use for peering is creating hub-spoke architecture:
 
 ![Azure gateway transit](images/azure_gateway-transit.png)
 
-- A VPN gateway in one network allows you access to its peered networks
-- A vNet only allows one gateway, when configuring peering, you could choose whether to use gateway in this vNet or the remote vNet
-- Azure Bastion in hub network can be used to access VMs in spoke network (networks must be in same tenant)
+- A vNet only allows **one gateway**, when configuring peering, you could choose whether to use gateway in this vNet or the remote vNet
+- In above diagram, to allow connection between vNet B and on-prem, you need configure **Allow Gateway Transit** in the hub vNet, and **Use Remote Gateway** in vNet B
 - Spoke networks can **NOT** connect with each other by default through the hub network, you need to add peering between the spokes or consider using user defined routes (UDRs)
   - Peering enables the next hop in a UDR to be the IP address of an NVA (network virtual appliance) or VPN gateway. Then traffic between spoke networks can flow through the NVA or VPN gateway in the hub vNet.
+- Azure Bastion in hub network can be used to access VMs in spoke network (networks must be in same tenant)
 
+### CLI
 
+```sh
+az network vnet peering create \
+    --resource-group my-rg \
+    --name vnet1-to-vnet2 \
+    --vnet-name vnet1 \
+    --remote-vnet vnet2 \
+    --allow-vnet-access
+
+# create the reciprocal connection
+az network vnet peering create \
+    --resource-group my-rg \
+    --name vnet1-to-vnet1 \
+    --vnet-name vnet2 \
+    --remote-vnet vnet1 \
+    --allow-vnet-access
+
+# list vnet peering
+az network vnet peering list \
+    --resource-group my-rg \
+    --vnet-name vnet1 \
+    --output table
+
+# show effective route table of a vm in a peered vnet
+# showing peering as the "Next Hop Type" for peered vnet addresses
+az network nic show-effective-route-table \
+    --resource-group my-rg \
+    --name vm-in-vnet1 \
+    --output table
+# Source    State    Address Prefix    Next Hop Type      Next Hop IP
+# --------  -------  ----------------  -----------------  -------------
+# Default   Active   10.1.0.0/16       VnetLocal
+# Default   Active   10.2.0.0/16       VNetPeering
+# Default   Active   0.0.0.0/0         Internet
+# Default   Active   10.0.0.0/8        None
+# Default   Active   100.64.0.0/10     None
+# Default   Active   192.168.0.0/16    None
+# Default   Active   10.3.0.0/16       VNetGlobalPeering
+```
 
 ## VPN
 
@@ -638,3 +689,15 @@ You could link a Private DNS Zone to a vNet (not subnet), enable auto-registrati
   # ;; ->>HEADER<<- opcode: QUERY, status: NXDOMAIN, id: 4990
   # ;4.0.0.10.in-addr.arpa.         IN      PTR
   ```
+
+### CLI
+
+```sh
+az network dns zone list \
+    --output table
+
+az network dns record-set list \
+    -g <resource-group> \
+    -z <zone-name> \
+    --output table
+```
