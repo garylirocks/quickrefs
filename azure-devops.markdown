@@ -976,3 +976,24 @@ Common patterns:
 
   ![Deployment Pattern progressive exposure](images/azure-devops_progressive-exposure-deployment.png)
 
+## CLI
+
+```sh
+# add extension
+az extension add --name azure-devops
+
+# set default organization and project
+az devops configure --defaults organization=https://dev.azure.com/myorg/ project=MyProject
+
+# list defaults
+az devops configure -l
+
+# list repos
+az repos list -otable
+
+# list PRs
+az repos pr list -otable
+
+# list pipelines
+az pipelines list -otable
+```
