@@ -779,6 +779,26 @@ there are two types: client-side hooks and server-side hooks
 
     similar to `pre-receive`, but runs for each branch that is pushed to
 
+### `pre-commit`
+
+A utility tool for managing `pre-commit` hooks
+
+```sh
+pip install pre-commit
+
+# generate a sample config file
+pre-commit sample-config > .pre-commit-config.yaml
+
+# install hooks
+pre-commit install
+
+# run against all files, by default it only runs against staged files
+pre-commit run --all-files
+
+# run selected hook
+pre-commit run check-yaml
+```
+
 ## Merge & Diff
 
 use merge tool to resolve conflicts:
