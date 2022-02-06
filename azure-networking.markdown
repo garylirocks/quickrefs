@@ -14,12 +14,19 @@
 - [ExpressRoute](#expressroute)
   - [Virtual WAN](#virtual-wan)
 - [Routing](#routing)
+  - [System routes](#system-routes)
+  - [User-defined routes](#user-defined-routes)
+  - [BGP](#bgp)
+  - [Route selection and priority](#route-selection-and-priority)
+  - [NVA](#nva)
 - [Azure Firewall](#azure-firewall)
   - [Web Application Firewall (WAF)](#web-application-firewall-waf)
 - [DDoS Protection](#ddos-protection)
 - [Private Endpoints](#private-endpoints)
 - [Service endpoints](#service-endpoints)
 - [Azure Load Balancer](#azure-load-balancer)
+  - [SKUs](#skus)
+  - [Distribution modes](#distribution-modes)
 - [Application Gateway](#application-gateway)
 - [Traffic Manager](#traffic-manager)
 - [Front Door](#front-door)
@@ -89,9 +96,15 @@ Public IP SKUs
 ### CLI
 
 ```sh
-# list vnets
+# list vNets
 az network vnet list --output table
+
+# list subnets
+az network vnet subnet list \
+        --vnet-name my-vnet \
+        --output table
 ```
+
 
 ## Network security group (NSG)
 
@@ -312,10 +325,34 @@ A vNet can have both ExpressRoute and VPN gateways at the same time.
 
 ## Routing
 
+### System routes
+
 ![Azure system routes](images/azure_system-routes.png)
 
 - By default, each subnet is associated with a route table, which contains system routes. These routes manage traffic within the same subnet, between subnets in the same vNet, from vNet to the Internet.
 - Each subnet can only be associated with one route table, while a route table could be associated with multiple subnets.
+
+These are the default system routes:
+
+| Address prefix | Next hop type   |
+| -------------- | --------------- |
+| vNet addresses | Virtual network |
+| 0.0.0.0/0      | Internet        |
+| 10.0.0.0/8     | None            |
+| 172.16.0.0/12  | None            |
+| 192.168.0.0/16 | None            |
+| 100.64.0.0/10  | None            |
+
+`100.64.0.0/10` is for a shared address space
+
+Additional system routes will be created when you enable:
+
+- vNet peering
+- Service chaining (lets you override default peering routes with UDRs)
+- vNet gateway
+- vNet Service endpoint
+
+### User-defined routes
 
 ![User defined routes](images/azure_user-defined-routes.png)
 
@@ -327,6 +364,118 @@ In the above example,
 
 - By default, traffic from public subnet goes to private subnet directly
 - You define a route in the public subnet's route table, make any traffic from the public subnet to the private subnet go through the virtual appliance in the DMZ subnet.
+
+```sh
+# create a route table
+az network route-table create \
+        --resource-group my-rg \
+        --name my-route-table \
+        --disable-bgp-route-propagation false
+
+# add a route, message to 10.0.1.0/24 goes through 10.0.2.4
+az network route-table route create \
+        --resource-group my-rg \
+        --route-table-name my-route-table \
+        --name productionsubnet \
+        --address-prefix 10.0.1.0/24 \
+        --next-hop-type VirtualAppliance \
+        --next-hop-ip-address 10.0.2.4
+
+# associate route table to the public subnet
+az network vnet subnet update \
+        --resource-group my-rg \
+        --name publicsubnet \
+        --vnet-name vnet \
+        --route-table my-route-table
+```
+
+On a VM in the public subnet, run `traceroute private-vm --type=icmp`, result would be like:
+
+```
+traceroute to private.xxx.gx.internal.cloudapp.net (10.0.1.4), 64 hops max
+
+1   10.0.2.4  0.710ms  0.410ms  0.536ms
+2   10.0.1.4  0.966ms  0.981ms  1.268ms
+```
+
+### BGP
+
+Border gateway protocol (BGP) is the standard routing protocol to exchange routing and information among two or more networks.
+
+Usually used to advertise on-prem routes to Azure when you're connected through ExpressRoute or S2S VPN.
+
+![BGP](images/azure_bgp.svg)
+
+### Route selection and priority
+
+- If multiple routes are available for an IP address, the one with the longest prefix match is used. Eg. when sending message to `10.0.0.2`, route `10.0.0.0/24` is selected over route `10.0.0.0/16`
+- You can't configure multiple UDRs with the same address prefix
+- If multiple routes share the same prefix, route is selected based on this order of priority:
+  - UDR
+  - BGP routes
+  - System routes
+
+### NVA
+
+![NVA](images/azure_nva.svg)
+
+- NVAs are virtual machines that control the flow of network traffic by controlling routing
+- You could use a **Windows/Linux VM** as an NVA, or choose NVAs from **providers in Azure Marketplace**, such as Check Point, Barracuda, Sophos, WatchGuard, and SonicWall
+- Usually used to manage traffic flowing from a perimeter-network environment to other networks or subnets
+- An NVA often includes various protection layers like:
+  - a firewall
+  - a WAN optimizer
+  - application-delivery controllers
+  - routers
+  - load balancers
+  - proxies
+  - an SD-WAN edge
+- Firewall could inspect all packets at OSI Layer 4 and possible Layer 7
+- Some NVAs require multiple network interfaces, one of which is dedicated to the management network for the appliance
+- NVAs should be deployed in a highly available architecture
+- You need to enable **IP forwarding** for an NVA, when traffic flows to the NVA but is meant for another target, the NVA will route the traffic to its correct destination
+
+Example: use a Linux VM as an NVA
+
+```sh
+# create a VM
+az vm create \
+    --resource-group my-rg \
+    --name nva \
+    --vnet-name vnet \
+    --subnet dmzsubnet \
+    --image UbuntuLTS \
+    --admin-username azureuser \
+    --admin-password <password>
+
+# get NIC ID
+NICID=$(az vm nic list \
+    --resource-group my-rg \
+    --vm-name nva \
+    --query "[].{id:id}" --output tsv)
+
+# get NIC name
+NICNAME=$(az vm nic show \
+    --resource-group my-rg \
+    --vm-name nva \
+    --nic $NICID \
+    --query "{name:name}" --output tsv)
+
+# enable IP forwarding on the NIC
+az network nic update --name $NICNAME \
+    --resource-group my-rg \
+    --ip-forwarding true
+
+# get NVA IP
+NVAIP="$(az vm list-ip-addresses \
+    --resource-group my-rg \
+    --name nva \
+    --query "[].virtualMachine.network.publicIpAddresses[*].ipAddress" \
+    --output tsv)"
+
+# enable IP forwarding within the VNA
+ssh -t -o StrictHostKeyChecking=no azureuser@$NVAIP 'sudo sysctl -w net.ipv4.ip_forward=1; exit;'
+```
 
 
 ## Azure Firewall
@@ -484,10 +633,31 @@ az network private-endpoint dns-zone-group create \
 ## Azure Load Balancer
 
 - Can be used with incoming internet traffic, internal traffic, port forwarding for specific traffic, or outbound connectivity for VMs
+- Public load balancers can only have public IPs, they seem to be **not in a vNet**
+- Internal load balancers are **not in a paticular subnet**, they could have frontend IPs from multiple subnets in a vNet
 
 Example multi-tier architecture with load balancers
 
 ![Azure Load Balancer](images/azure_load-balancer.png)
+
+### SKUs
+
+| SKU          | Basic                                     | Standard (extra features) |
+| ------------ | ----------------------------------------- | ------------------------- |
+| Health probe | TCP, HTTP                                 | HTTPS                     |
+| Back-end     | single availability set or scale set      | availability zones        |
+| Outbound     | source network address translation (SNAT) | outbound rules            |
+
+### Distribution modes
+
+- The default is **Five-tuple hash** (Source IP, Source Port, Destination IP, Destination Port, Protocol)
+  - Because source port changes for each session client might be redirected to a different VM for each session
+- **Source IP affinity**, requests from a specific VM always go to the same VM
+  - Could be three-tuple hash (Source IP, Destination IP, Protocol), or two-tuple hash (Source IP, Destination IP)
+  - Could be used in cases like
+    - Web app with in-memory sessions to store the logged in user's profile
+    - Windows Remote Desktop Gateway
+    - Media upload (In many implementations, there's a TCP connection, which remains open to monitor the progress, and a separate UDP session to upload the file)
 
 ## Application Gateway
 
