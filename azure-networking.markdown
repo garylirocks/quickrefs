@@ -128,6 +128,11 @@ Service tags represent a group of IP addresses, these could be used in an NSG ru
   - Storage
   - AzureLoadBalancer and
   - AzureTrafficManager
+  - AppService
+
+You could add VM NICs to an **App Security Group** (like a custom service tag), which could be used in an NSG rule to make management easier, you just add/remove VMs to/from the ASG, no need to manually add/remove IPs to the NSG rules
+
+![App Security Group](images/azure_app-security-group-asg-nsg.svg)
 
 
 ## Network Peering
@@ -207,7 +212,7 @@ VPN Gateway:
 - Each vNet can have **only one** VPN gateway
 - Underlyingly, a gateway actually is composed of **two or more VMs** that are deployed to a specific subnet you create
   - this gateway subnet must be named  **`GatewaySubnet`**
-  - better use a CIDR block of /28 or /27 to allow enough IP addresses for future config requirements
+  - better use a CIDR block of /27 to allow enough IP addresses for future config requirements
   - never put other resources in this subnet
 - These VMs contain routing tables and specific services, they are created automatically, you can't configure them directly
 - VPN gateways can be deployed to multiple AZs for high availability
@@ -222,6 +227,8 @@ VPN gateway type
 ![S2S gateway creation steps](images/azure_vpn-gateway-creation-steps.png)
 
 *Last 3 steps are specific to S2S connections*
+
+![VPN gateway resources](images/azure_vpn-gateway-resources.svg)
 
 - Create local network gateway: this gateway refers to the on-prem location, you specify the IP or FQDN of the on-prem VPN device, and the CIDR of your on-prem network
 - Configure on-prem VPN device: steps differ based on your device, you need a **shared key** and the public IP of the Azure VPN gateway
@@ -304,15 +311,33 @@ echo ${a//:}    # remove ':'
 
 ## ExpressRoute
 
-![ExpressRoute overview](images/azure_expressroute.png)
+![ExpressRoute overview](images/azure_expressroute.svg)
 
-- A direct, private connection to Microsoft services, including Azure, Microsoft 365, CRM
-- Facilitated by a connectivity provider
+- A direct, private connection(but NOT encrypted) to Microsoft services, including Azure, Microsoft 365, Dynamics 365
+- Facilitated by a connectivity provider (e.g. AT&T, Verizon, Vodafone)
 - Connect with one peering location, gain access to all regions within the same geopolitical region
+- ExpressRoute Global Reach allows you to connect multiple ExpressRoute circuits
+- DNS queries, certificate revocation list checking and Azure CDN requests are still sent over the public internet
+- Up to 10 vNets can be linked to an ExpressRoute circuit
+
+Three connectivity models
+
+- CloudExchange co-location (layer 2 and 3)
+- Point-to-point Ethernet connection (layer 2 and 3)
+- Any-to-any connection (Microsoft will behave just like another location on your private WAN)
+
+A vNet can have both ExpressRoute and VPN gateways at the same time.
 
 ![Coexisting ExpressRoute and VPN gateway](images/azure_coexisting-connections.png)
 
-A vNet can have both ExpressRoute and VPN gateways at the same time.
+Compare ExpressRoute to Site-to-Site VPN:
+
+|                    | Site-to-site VPN                                                   | ExpressRoute                                                                                 |
+| ------------------ | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| Services supported | Azure Iaas and PaaS (through private endpoint)                     | Azure IaaS and PaaS, Microsoft 365, Dynamics 365                                             |
+| Bandwidth          | typically < 1Gbps                                                  | 50Mbps - 10Gbps (100Gbps with ExpressRoute Direct)                                           |
+| Use cases          | <ul><li>Dev, test and lab</li><li>Small-scale production</li></ul> | <ul><li>Enterprise-class and mission-critical workloads</li><li>Big data solutions</li></ul> |
+
 
 ### Virtual WAN
 
@@ -343,7 +368,7 @@ These are the default system routes:
 | 192.168.0.0/16 | None            |
 | 100.64.0.0/10  | None            |
 
-`100.64.0.0/10` is for a shared address space
+*`100.64.0.0/10` is for a shared address space*
 
 Additional system routes will be created when you enable:
 
@@ -616,14 +641,59 @@ az network private-endpoint dns-zone-group create \
 
 ![Service endpoints overview](images/azure_vnet_service_endpoints_overview.png)
 
+- The purpose is to secure your network access to PaaS services (by default, all PaaS services have public IP addresses and are exposed to the internet), such as:
+
+  - Azure Storage
+  - Azure SQL Database
+  - Azure Cosmos DB
+  - Azure Key Vault
+  - Azure Service Bus
+  - Azure Data Lake
+
 - A virtual network service endpoint provides the identity of your virtual network to an Azure service. You secure the access to an Azure service to your vNet by adding a virtual network rule. You could fully remove public Internet access to this service.
 
 - After enabling a service endpoint, the source IP addresses switch from using public IPv4 addresses to using their private IPv4 address when communicating with the service from that subnet. This switch allows you to access the services without the need for reserved, public IP addresses used in Azure service IP firewalls.
 
 - With service endpoints, DNS entries for Azure services don't change, continue to resolve to public IP addresses assigned to the Azure service. (**Different from private endpoints**)
-  - **When a service endpoint is created, Azure actually creates routes in the route table to direct the traffic, keeping it within Microsoft network**.
+  - When a service endpoint is created, **Azure actually creates routes in the route table to direct the traffic, keeping it within Microsoft network**. The route table would like:
+
+    | SOURCE  | STATE  | ADDRESS PREFIXES        | NEXT HOP TYPE                 |
+    | ------- | ------ | ----------------------- | ----------------------------- |
+    | Default | Active | 10.1.1.0/24             | VNet                          |
+    | Default | Active | 0.0.0.0./0              | Internet                      |
+    | Default | Active | 10.0.0.0/8              | None                          |
+    | Default | Active | 100.64.0.0./10          | None                          |
+    | Default | Active | 192.168.0.0/16          | None                          |
+    | Default | Active | 20.38.106.0/23, 10 more | VirtualNetworkServiceEndpoint |
+    | Default | Active | 20.150.2.0/23, 9 more   | VirtualNetworkServiceEndpoint |
+
+- If you use ExpressRoute for connectivity from on-prem to Azure, you need to add the two NAT IPs of the ExpressRoute to the service's IP firewall.
 
 - Virtual networks and Azure service resources can be in the same or different subscriptions. Certain Azure Services (not all) such as Azure Storage and Azure Key Vault also support service endpoints across different Active Directory(AD) tenants i.e., the virtual network and Azure service resource can be in different Active Directory (AD) tenants.
+
+CLI
+
+```sh
+# enable service endpoint in a subnet
+az network vnet subnet update \
+    --resource-group my-rg \
+    --vnet-name my-vnet \
+    --name my-subnet \
+    --service-endpoints Microsoft.Storage
+
+# deny all network access
+az storage account update \
+    --resource-group my-rg \
+    --name my-storage-account \
+    --default-action Deny
+
+# add network rule for the subnet
+az storage account network-rule add \
+    --resource-group my-rg \
+    --vnet-name my-vnet \
+    --subnet my-subnet \
+    --account-name my-storage-account
+```
 
 **Private endpoints** vs. **service endpoints**:
 
