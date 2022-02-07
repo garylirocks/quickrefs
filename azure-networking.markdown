@@ -36,6 +36,7 @@
 - [DNS](#dns)
   - [Private DNS zones](#private-dns-zones)
   - [CLI](#cli-2)
+- [Networking architecutres](#networking-architecutres)
 
 ## Overview
 
@@ -202,9 +203,9 @@ az network nic show-effective-route-table \
 Different types:
 
 - **site to site**: your on-premise to vNet (needs a on-prem VPN device)
-  ![Azure VPN site to site](images/azure_vpn-site-2-site.png)
-- **point to site**: your local machine to a vNet
-  ![Azure VPN point to site](images/azure_vpn-point-to-site.png)
+  ![Azure VPN site to site](images/azure_vpn-site-to-site.svg)
+- **point to site**: your local machine to a vNet (doesn't require on-prem VPN device)
+  ![Azure VPN point to site](images/azure_vpn-point-to-site.svg)
 - **vNet to vNet**
 
 VPN Gateway:
@@ -231,7 +232,7 @@ VPN gateway type
 ![VPN gateway resources](images/azure_vpn-gateway-resources.svg)
 
 - Create local network gateway: this gateway refers to the on-prem location, you specify the IP or FQDN of the on-prem VPN device, and the CIDR of your on-prem network
-- Configure on-prem VPN device: steps differ based on your device, you need a **shared key** and the public IP of the Azure VPN gateway
+- Configure on-prem VPN device: steps differ based on your device, you need a **shared key**(a ASCII string of up to 128 characters) and the public IP of the Azure VPN gateway
 - Create the VPN connection: specify the VPN gateway, the local network gateway and the shared key (same as previous step)
 
 For high availability, you could have either active-standby or active-active configurations:
@@ -316,7 +317,7 @@ echo ${a//:}    # remove ':'
 - A direct, private connection(but NOT encrypted) to Microsoft services, including Azure, Microsoft 365, Dynamics 365
 - Facilitated by a connectivity provider (e.g. AT&T, Verizon, Vodafone)
 - Connect with one peering location, gain access to all regions within the same geopolitical region
-- ExpressRoute Global Reach allows you to connect multiple ExpressRoute circuits
+- **ExpressRoute Global Reach** allows you to connect multiple ExpressRoute circuits
 - DNS queries, certificate revocation list checking and Azure CDN requests are still sent over the public internet
 - Up to 10 vNets can be linked to an ExpressRoute circuit
 
@@ -324,7 +325,7 @@ Three connectivity models
 
 - CloudExchange co-location (layer 2 and 3)
 - Point-to-point Ethernet connection (layer 2 and 3)
-- Any-to-any connection (Microsoft will behave just like another location on your private WAN)
+- Any-to-any(IPVPN) connection (Microsoft will behave just like another location on your private WAN)
 
 A vNet can have both ExpressRoute and VPN gateways at the same time.
 
@@ -336,6 +337,8 @@ Compare ExpressRoute to Site-to-Site VPN:
 | ------------------ | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
 | Services supported | Azure Iaas and PaaS (through private endpoint)                     | Azure IaaS and PaaS, Microsoft 365, Dynamics 365                                             |
 | Bandwidth          | typically < 1Gbps                                                  | 50Mbps - 10Gbps (100Gbps with ExpressRoute Direct)                                           |
+| Protocol           | SSTP or IPsec                                                      | Direct over VLAN or MPLS                                                                     |
+| Routing            | Static or dynamic                                                  | Border Gateway Protocol (BGP)                                                                |
 | Use cases          | <ul><li>Dev, test and lab</li><li>Small-scale production</li></ul> | <ul><li>Enterprise-class and mission-critical workloads</li><li>Big data solutions</li></ul> |
 
 
@@ -941,3 +944,21 @@ az network dns record-set list \
     -z <zone-name> \
     --output table
 ```
+
+## Networking architecutres
+
+- Site-to-site VPN
+
+  ![Reference architecture site-to-site VPN](images/azure_networking-reference-architecture-site-to-site-vpn.svg)
+
+- ExpressRoute
+
+  ![Reference architecture ExpressRoute](images/azure_networking-reference-architecture-expressroute.svg)
+
+- ExpressRoute with VPN failover
+
+  ![Reference architecture ExpressRoute with VPN failover](images/azure_networking-reference-architecture-expressroute-with-vpn-failover.svg)
+
+- Hub-spoke
+
+  ![Reference architecture Hub-spoke](images/azure_firewall-hub-spoke.png)
