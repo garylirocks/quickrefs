@@ -743,7 +743,7 @@ steps:
 - bash: |
     echo "Secret Found! $MY_MAPPED_ENV_VAR"
   env:
-    MY_MAPPED_ENV_VAR: $(mySecret)
+    MY_MAPPED_ENV_VAR: $(secretDemo)  ## secret available in this task now
 ```
 
 ### Artifacts in Azure Pipelines
