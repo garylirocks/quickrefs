@@ -16,6 +16,19 @@
   - [Use remote state file](#use-remote-state-file)
   - [Pipeline](#pipeline)
 - [HCL language features](#hcl-language-features)
+  - [Resource blocks](#resource-blocks)
+    - [Meta-Arguments](#meta-arguments)
+  - [Dependencies](#dependencies)
+  - [Collections](#collections)
+  - [Variables](#variables)
+    - [Loading](#loading)
+    - [Variable interpolation](#variable-interpolation)
+    - [Locals](#locals)
+    - [Sensitive variables](#sensitive-variables)
+  - [Data source blocks](#data-source-blocks)
+  - [Output](#output)
+  - [Modules](#modules)
+- [Internals](#internals)
 
 ## Overview
 
@@ -270,7 +283,7 @@ terraform output -raw lb_url
 
 ## Authenticate Terraform to Azure
 
-- When using Terraform in command line, Terraform uses Azure CLI to authenticate;
+- When using Terraform interactively on command line, Terraform uses Azure CLI to authenticate
 - In a non-interactive context, create a service principal for Terraform
 
   ```sh
@@ -485,61 +498,148 @@ In the following example,
 ```
 
 ## HCL language features
+### Resource blocks
+#### Meta-Arguments
 
+Apart from arguments, ech resource block can have meta-arguments:
 
-- Collections
+  - `depends_on`, for specifying hidden dependencies
+  - `count`, for creating multiple resource instances according to a count
+  - `for_each`, to create multiple instances according to a map, or set of strings
+  - `provider`, for selecting a non-default provider configuration
+  - `lifecycle`, for lifecycle customizations
+  - `provisioner`, for taking extra actions after resource creation
 
-  - `count`
+### Dependencies
+
+Implicit dependency is the primary way for managing dependencies:
+
+```terraform
+resource "aws_instance" "example_a" {
+  ami           = data.aws_ami.amazon_linux.id
+  instance_type = "t2.micro"
+}
+
+# implicitly depends on example_a
+resource "aws_eip" "ip" {
+  vpc = true
+  instance = aws_instance.example_a.id
+}
+```
+
+Explicit dependency uses `depends_on`, could be between resources and modules:
+
+```terraform
+resource "aws_s3_bucket" "example" {
+  acl    = "private"
+}
+
+resource "aws_instance" "example_c" {
+  ami           = data.aws_ami.amazon_linux.id
+  instance_type = "t2.micro"
+
+  depends_on = [aws_s3_bucket.example]
+}
+
+# this module depends on two resources
+module "example_sqs_queue" {
+  source  = "terraform-aws-modules/sqs/aws"
+  version = "2.1.0"
+
+  depends_on = [aws_s3_bucket.example, aws_instance.example_c]
+}
+```
+
+### Collections
+
+- `count`
+
+  - Use `count` to create a collection of resources, in the block, you could use `count.index` to get the index
+  - Use `resource.name[0]` to refer to the first instance in the collection
+  - Use `resource.name.*.id` to get a list of attribute values
+
+  ```terraform
+  resource "random_pet" "object_names" {
+    count = 4
+
+    length    = 5
+    separator = "_"
+    prefix    = "learning"
+  }
+
+  resource "aws_s3_bucket_object" "objects" {
+    count = 4
+
+    key          = "${random_pet.object_names[count.index].id}.txt"
+    content      = "Example object #${count.index}"
+    content_type = "text/plain"
+    ...
+  }
+  ```
+
+- `for_each`
+
+  - Supports map, list and set
+  - Use `each.key` and `each.value` in the block to access key and value
+
 
     ```terraform
-    resource "random_pet" "object_names" {
-      count = 4
-
-      length    = 5
-      separator = "_"
-      prefix    = "learning"
-    }
-
-    resource "aws_s3_bucket_object" "objects" {
-      count = 4
-
-      key          = "${random_pet.object_names[count.index].id}.txt"
-      content      = "Example object #${count.index}"
-      content_type = "text/plain"
-      ...
-    }
-    ```
-
-  - `for_each`
-
-    ```terraform
-    locals {
-      names = {
-        name1 = "Name 1",
-        name2 = "Name 2",
+    variable "project" {
+      description = "Map of project names to configuration."
+      type        = map
+      default     = {
+        client-webapp = {
+          instance_type           = "t2.micro",
+          environment             = "dev"
+        },
+        internal-webapp = {
+          instance_type           = "t2.nano",
+          environment             = "test"
+        }
       }
     }
 
-    resource "aws_instance" "app" {
-      # use a map
-      for_each               = local.names
-      ami                    = data.aws_ami.ubuntu.id
-      instance_type          = "t2.micro"
-      ...
+    module "ec2_instances" {
+      source = "./modules/aws-instance"
+
+      for_each = var.project
+
+      project_name = each.key
+      environment  = each.value.environment
+
+      instance_type      = each.value.instance_type
     }
     ```
 
-  - `for .. in`
+- `for .. in`
 
-    ```terraform
-    output "instance_id" {
-      description = "ID of the EC2 instance"
-      # output a list
-      value       = [for instance in aws_instance.app : instance.id]
-    }
-    ```
+  Creates a collection out of another collection
 
-- `locals`
+  ```terraform
+  output "instance_id" {
+    description = "ID of the EC2 instance"
+    # output a list
+    value       = [for instance in aws_instance.app : instance.id]
+  }
+  ```
+
+### Variables
+
+#### Loading
+
+Variables could be loaded from:
+
+- `terraform.tfvars` or `*.auto.tfvars` are loaded automatically
+- `-var-file` or `-var` flags on command line
+
+#### Variable interpolation
+
+You could use `${var.var_name}` in a string:
+
+```
+name = "web-sg-${var.resource_tags["project"]}-${var.resource_tags["environment"]}"
+```
+#### Locals
 
   Used to simplify the config and avoid repetition
 
@@ -550,53 +650,145 @@ In the following example,
       environment = var.environment
     }
 
+    # merge user provied and required tags
     tags = merge(var.resource_tags, local.required_tags)
+
+    # combine two variables
+    name_suffix = "${var.project_name}-${var.environment}"
   }
   ```
 
-- Data source blocks
+  Locals could be output:
 
-  A module can provide both resources and data sources
-
-  ```terraform
-  data "aws_availability_zones" "available" {
-    state = "available"
-  }
-
-  # load state from another workspace
-  data "terraform_remote_state" "vpc" {
-    backend = "local"
-
-    config = {
-      path = "../learn-terraform-data-sources-vpc/terraform.tfstate"
-    }
-  }
-
-  # reference data
-  provider "aws" {
-    region = data.terraform_remote_state.vpc.outputs.aws_region
+  ```
+  output "tags" {
+    value = local.tags
   }
   ```
 
-- Modules
+#### Sensitive variables
 
-  Combines your code into a logical group, a module definition should have:
+- Flag a variable as sensitive
+
+  ```
+  variable "db_password" {
+    type      = string
+    sensitive = true
+  }
+  ```
+
+  its value would be redacted in output, but it's plain text in local state file, so you must keep your state file secure
+
+- Set values with a `.tfvars` file
+
+  You could put sensitive values in a separate file like `secrets.tfvars`
+
+  ```
+  db_password = 'my-super-pass'
+  ```
+
+  then put it on command line `terraform apply -var-file="secrets.tfvars"`, `.tfvars` file should be git ignored.
+
+- Set values with environment variables
 
   ```sh
-  main.tf
-  variables.tf
-  outputs.tf
-  README.md
+  # Terraform looks for env variables matching the pattern `TF_VAR_*`
+  export TF_VAR_db_password='my-super-pass'
+  terraform apply
   ```
 
-  then use it like a custom resource:
+### Data source blocks
 
-  ```terraform
-  module "web_server" {
-    # a module in a local folder
-    source = "./modules/servers"
+Used to fetch
 
-    web_ami = "ami-12345"
-    server_name = "prod-web"
+- Info from cloud provider APIs (such as disk image IDs)
+- Info from other workspaces
+
+```terraform
+# info from cloud API, get available az zones in current region
+data "aws_availability_zones" "available" {
+  state = "available"
+}
+```
+
+Get state data from another workspace
+
+```terraform
+data "terraform_remote_state" "vpc" {
+  backend = "local"
+
+  config = {
+    path = "../learn-terraform-data-sources-vpc/terraform.tfstate"
   }
-  ```
+}
+
+# reference data
+provider "aws" {
+  region = data.terraform_remote_state.vpc.outputs.aws_region
+}
+```
+
+### Output
+
+Used to
+  - For other parts of your infrastructure automation tools
+  - As a data source for another workspace
+  - Share data from a child module to root module
+
+```terraform
+output "lb_url" {
+  description = "URL of load balancer"
+  value       = "http://${module.elb_http.this_elb_dns_name}/"
+}
+
+# sensitive value
+output "db_password" {
+  description = "Database administrator password"
+  value       = aws_db_instance.database.password
+  sensitive   = true
+}
+```
+
+You could query output
+
+```sh
+# query one output
+terraform output lb_url
+
+# use JSON format
+terraform output -json
+```
+
+
+### Modules
+
+Combines your code into a logical group, a module definition should have:
+
+```sh
+main.tf
+variables.tf
+outputs.tf
+README.md
+```
+
+then use it like a custom resource:
+
+```terraform
+module "web_server" {
+  # a module in a local folder
+  source = "./modules/servers"
+
+  web_ami = "ami-12345"
+  server_name = "prod-web"
+}
+```
+
+## Internals
+
+Terraform is comprised of core and plugins:
+
+![Terraform plugins api](images/terraform_plugins-api.png)
+
+- Core: reads the configurations and builds the resource dependency graph
+- Plugins: providers or provisioners
+
