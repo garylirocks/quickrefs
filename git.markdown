@@ -270,8 +270,8 @@ whitespace, line-endings:
 
 - `core.autocrlf`
 
-  - `true` # convert cflf to lf on commit, vice versa on checkout
-  - `input` # convert cflf to lf on commit, do nothing on checkout, suitable for Linux users
+  - `true` # convert crlf to lf on commit, vice versa on checkout
+  - `input` # convert crlf to lf on commit, do nothing on checkout, suitable for Linux users
   - `false` # nothing is done on commit or checkout
 
 - `core.whitespace`
