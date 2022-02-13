@@ -380,16 +380,24 @@ In a collaborative or CI/CD context, you may want to run and save state files re
       }
       ```
 
-  1. Set access key in an environment variable
+  1. There are multiple ways to authenticate to the Azure storage:
 
-      ```sh
-      ARM_ACCESS_KEY=$(az storage account keys list \
-                    --resource-group $RESOURCE_GROUP_NAME \
-                    --account-name $STORAGE_ACCOUNT_NAME \
-                    --query '[0].value' \
-                    -o tsv)
-      export ARM_ACCESS_KEY
-      ```
+      1. access key
+
+          ```sh
+          ARM_ACCESS_KEY=$(az storage account keys list \
+                        --resource-group $RESOURCE_GROUP_NAME \
+                        --account-name $STORAGE_ACCOUNT_NAME \
+                        --query '[0].value' \
+                        -o tsv)
+          export ARM_ACCESS_KEY
+          ```
+
+      1. SAS key
+
+          ```sh
+          export ARM_SAS_TOKEN
+          ```
 
   1. A state file will be created in the storage account when you run `terraform apply`
 
@@ -1047,4 +1055,3 @@ Terraform is comprised of core and plugins:
 
 - Core: reads the configurations and builds the resource dependency graph
 - Plugins: providers or provisioners
-
