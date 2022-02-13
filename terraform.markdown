@@ -25,9 +25,13 @@
     - [Variable interpolation](#variable-interpolation)
     - [Locals](#locals)
     - [Sensitive variables](#sensitive-variables)
+  - [Functions](#functions)
+  - [Dynamic expressions](#dynamic-expressions)
   - [Data source blocks](#data-source-blocks)
   - [Output](#output)
-  - [Modules](#modules)
+  - [Move resources](#move-resources)
+- [Modules](#modules)
+  - [Create modules](#create-modules)
 - [Internals](#internals)
 
 ## Overview
@@ -57,7 +61,7 @@ When dealing with existing infrastructure, you use the 'import' workflow:
   terraform.tfvars        # actual variable values (should be in .gitignore)
   terraform.tfstate       # generated state file (should be in .gitignore)
 
-  .terraform.lock.hcl     # version lock file, make sure everyone is using the same versions, generated if not present
+  .terraform.lock.hcl     # version lock file, should be committed to Git, make sure everyone is using the same versions, generated if not present
   ```
 
 - `version`, `variable` and `output` blocks could be included in `main.tf` directly, but it's better to put them in separate files
@@ -611,7 +615,7 @@ module "example_sqs_queue" {
     }
     ```
 
-- `for .. in`
+- `for..in`
 
   Creates a collection out of another collection
 
@@ -641,7 +645,8 @@ name = "web-sg-${var.resource_tags["project"]}-${var.resource_tags["environment"
 ```
 #### Locals
 
-  Used to simplify the config and avoid repetition
+  - Used to simplify the config and avoid repetition
+  - Can only be used in the module where it is defined
 
   ```terraform
   locals {
@@ -695,6 +700,93 @@ name = "web-sg-${var.resource_tags["project"]}-${var.resource_tags["environment"
   # Terraform looks for env variables matching the pattern `TF_VAR_*`
   export TF_VAR_db_password='my-super-pass'
   terraform apply
+  ```
+
+### Functions
+
+- `lookup` look up a key in a map
+
+  ```sh
+  lookup({ gary = 20, henry = 30 }, "gary" )
+  # 20
+  ```
+
+- `concat`, `merge` combine lists or maps
+
+  ```sh
+  > concat(["a", "b"], ["x", "y"])
+  [
+    "a",
+    "b",
+    "x",
+    "y",
+  ]
+
+  > merge({ gary = 20, jack = 30  }, { mike = 40  })
+  {
+    "gary" = 20
+    "jack" = 30
+    "mike" = 40
+  }
+  ```
+
+- `file`, `templatefile`
+
+  ```sh
+  # start tf console with a variable
+  tf console -var 'user=gary'
+
+  # read file content as it is
+  > file("init.tftpl")
+  <<EOT
+
+  echo ${userName}
+
+  EOT
+
+  # read a template file and interpolate with variables
+  > templatefile("init.tftpl", { userName = var.user })
+  <<EOT
+
+  echo gary
+
+  EOT
+  ```
+
+### Dynamic expressions
+
+- Conditional expression:
+
+  ```sh
+  resource "aws_instance" "ubuntu" {
+    count                       = (var.high_availability == true ? 3 : 1)
+    associate_public_ip_address = (count.index == 0 ? true : false)
+  }
+  ```
+
+- `splat` expression:
+
+  `collection[*].attribute` or `collection.*.attribute` retrieves an attribute from a list of maps, could also be done with `for..in` expression
+
+  ```sh
+  > [{ name = "gary" }, { name = "jack" }][*].name
+  [
+    "gary",
+    "jack",
+  ]
+
+  > [{ name = "gary" }, { name = "jack" }].*.name
+  [
+    "gary",
+    "jack",
+  ]
+
+
+  > [for i in [{name="gary"}, {name="jack"}]: i.name]
+  [
+    "gary",
+    "jack",
+  ]
   ```
 
 ### Data source blocks
@@ -759,29 +851,82 @@ terraform output lb_url
 terraform output -json
 ```
 
+### Move resources
 
-### Modules
+When your infrastructure grows, you may need to refactor your configurations, such as moving part of it to a separate module, in this case, you need to tell Terraform you moved the resources, otherwise Terraform would recreate the resources, see details here https://learn.hashicorp.com/tutorials/terraform/move-config
 
-Combines your code into a logical group, a module definition should have:
-
-```sh
-main.tf
-variables.tf
-outputs.tf
-README.md
-```
-
-then use it like a custom resource:
 
 ```terraform
-module "web_server" {
-  # a module in a local folder
-  source = "./modules/servers"
+moved {
+  from = aws_instance.example
+  to   = module.ec2_instance.aws_instance.example
+}
 
-  web_ami = "ami-12345"
-  server_name = "prod-web"
+moved {
+  from = aws_security_group.sg_8080
+  to   = module.security_group.aws_security_group.sg_8080
 }
 ```
+
+
+## Modules
+
+A module usually encapsulates multiple logically related resources, making configurations flexible, reusable and composable.
+
+- Every Terraform configurations should be created with the assumption that it may be used as a module
+- The top most Terraform directory is considered the **root module**, a module it uses is a **child module**
+- The `source` argument is required, could be local or remote
+
+  ```terraform
+  # a remote module from Terraform Registry
+  module "vpc" {
+    source  = "terraform-aws-modules/vpc/aws"
+    version = "2.21.0"
+
+    ...
+  }
+
+  # a local module
+  module "web_server" {
+    source = "./modules/servers"
+
+    ...
+  }
+  ```
+
+- Terraform install modules to `.terraform/modules` directory. For local modules, Terraform would create symlinks
+
+  ```
+  ...
+  main.tf
+
+  .terraform/modules/
+  ├── ec2_instances
+  ├── modules.json
+  └── vpc
+  ```
+
+- Module outputs can be referred to by `module.<MODULE NAME>.<OUTPUT NAME>`
+
+### Create modules
+
+A typical file structure for a new module:
+
+```sh
+.
+├── LICENSE
+├── README.md
+├── main.tf
+├── variables.tf  # arguments in the `module` block
+├── outputs.tf
+```
+
+- None of these are required, you could create a module with a single `.tf` file
+- Do not include `provider` blocks in modules, as a `module` block will inherit the provider from the enclosing configuration
+
+
+
+
 
 ## Internals
 
