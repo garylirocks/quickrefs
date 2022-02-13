@@ -12,9 +12,6 @@
 - [Remote runs and state](#remote-runs-and-state)
   - [Terraform Cloud](#terraform-cloud)
   - [Azure blob storage](#azure-blob-storage)
-- [Run in CI/CD pipelines](#run-in-cicd-pipelines)
-  - [Use remote state file](#use-remote-state-file)
-  - [Pipeline](#pipeline)
 - [HCL language features](#hcl-language-features)
   - [Resource blocks](#resource-blocks)
     - [Meta-Arguments](#meta-arguments)
@@ -32,6 +29,12 @@
   - [Move resources](#move-resources)
 - [Modules](#modules)
   - [Create modules](#create-modules)
+- [Best practices](#best-practices)
+  - [Environment separation](#environment-separation)
+- [Automate Terraform](#automate-terraform)
+  - [CLI](#cli)
+  - [Use remote state file](#use-remote-state-file)
+  - [Azure DevOps Pipeline](#azure-devops-pipeline)
 - [Internals](#internals)
 
 ## Overview
@@ -64,7 +67,7 @@ When dealing with existing infrastructure, you use the 'import' workflow:
   .terraform.lock.hcl     # version lock file, should be committed to Git, make sure everyone is using the same versions, generated if not present
   ```
 
-- `version`, `variable` and `output` blocks could be included in `main.tf` directly, but it's better to put them in separate files
+- `version`, `variable` and `output` blocks could be included in `main.tf` directly, but it's better to put them in separate files, Terraform would append all of them together
 
 ### `main.tf` - the plan
 
@@ -390,116 +393,6 @@ In a collaborative or CI/CD context, you may want to run and save state files re
 
   1. A state file will be created in the storage account when you run `terraform apply`
 
-
-## Run in CI/CD pipelines
-
-When provision infrastructure in a pipeline, you need:
-
-- Save state file in a remote storage, so it could be used across multiple runs
-- Create a service principal for terraform to authenticate with Azure
-
-### Use remote state file
-
-In `main.tf`
-
-```terraform
-terraform {
-  required_version = "> 0.12.0"
-
-  backend "azurerm" {
-    // leave empty
-  }
-}
-```
-
-A variables file `backend.tfvars` specifies a state file to use, which is in an Azure storage account
-
-```yaml
-resource_group_name = "tf-storage-rg"
-storage_account_name = "tfsa4962"
-container_name = "tfstate"
-key = "terraform.tfstate"
-```
-
-Init with backend
-
-```sh
-terraform init -backend-config="backend.tfvars"
-```
-### Pipeline
-
-In the following example,
-- you use pipeline secrets to construct a `backend.tfvars` file,
-- then terraform could access the state file,
-- then run `terraform apply` and get the output,
-- which is used in the next step for deplying an app
-
-```yaml
-  - stage: "Dev"
-    displayName: "Deploy to the dev environment"
-    dependsOn: Build
-    jobs:
-      - job: Provision
-        displayName: "Provision Azure App Service"
-        pool:
-          vmImage: "ubuntu-18.04"
-        variables:
-          - group: Release
-        steps:
-          - script: |
-              # Exit when any command returns a failure status.
-              set -e
-
-              # Write terraform.tfvars.
-              echo 'resource_group_location = "'$(ResourceGroupLocation)'"' | tee terraform.tfvars
-
-              # Write backend.tfvars.
-              echo 'resource_group_name = "tf-storage-rg"' | tee backend.tfvars
-
-              echo 'storage_account_name = "'$(StorageAccountName)'"' | tee -a backend.tfvars
-              echo 'container_name = "tfstate"' | tee -a backend.tfvars
-              echo 'key = "terraform.tfstate"' | tee -a backend.tfvars
-
-              # Initialize Terraform.
-              terraform init -input=false -backend-config="backend.tfvars"
-
-              # Apply the Terraform plan.
-              terraform apply -input=false -auto-approve
-
-              # Get the App Service name for the dev environment.
-              WebAppNameDev=$(terraform output appservice_name_dev)
-
-              # Write the WebAppNameDev variable to the pipeline.
-              echo "##vso[task.setvariable variable=WebAppNameDev;isOutput=true]$WebAppNameDev"
-            name: "RunTerraform"
-            displayName: "Run Terraform"
-            # make pipline variable available in Bash
-            env:
-              ARM_CLIENT_ID: $(ARM_CLIENT_ID)
-              ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
-              ARM_TENANT_ID: $(ARM_TENANT_ID)
-              ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
-      - deployment: Deploy
-        dependsOn: Provision
-        variables:
-          # use a variable set by 'RunTerraform' task in job 'Provision'
-          WebAppNameDev: $[ dependencies.Provision.outputs['RunTerraform.WebAppNameDev'] ]
-        pool:
-          vmImage: "ubuntu-18.04"
-        environment: dev
-        strategy:
-          runOnce:
-            deploy:
-              steps:
-                - download: current
-                  artifact: drop
-                - task: AzureWebApp@1
-                  displayName: "Azure App Service Deploy: website"
-                  inputs:
-                    azureSubscription: "Resource Manager - Tailspin - Space Game"
-                    appName: "$(WebAppNameDev)"
-                    package: "$(Pipeline.Workspace)/drop/$(buildConfiguration)/*.zip"
-```
 
 ## HCL language features
 ### Resource blocks
@@ -853,7 +746,9 @@ terraform output -json
 
 ### Move resources
 
-When your infrastructure grows, you may need to refactor your configurations, such as moving part of it to a separate module, in this case, you need to tell Terraform you moved the resources, otherwise Terraform would recreate the resources, see details here https://learn.hashicorp.com/tutorials/terraform/move-config
+When your infrastructure grows, you may need to refactor your configurations, such as moving part of it to a separate module, in this case, your resource's IDs will change, you need to tell Terraform you intend to move the resources rather than replace them, otherwise Terraform would recreate the resources, see details here https://learn.hashicorp.com/tutorials/terraform/move-config
+
+Use the `moved` block to refactor your configuration:
 
 
 ```terraform
@@ -925,7 +820,223 @@ A typical file structure for a new module:
 - Do not include `provider` blocks in modules, as a `module` block will inherit the provider from the enclosing configuration
 
 
+## Best practices
 
+### Environment separation
+
+Two primary ways of separating environments:
+
+1. By directories:
+
+    Pros: Shrink the blast radius
+
+    Cons: Duplicated configurations, creating drift over time
+
+    ```
+    .
+    ├── assets
+    │   ├── index.html
+    ├── prod
+    │   ├── main.tf
+    │   ├── variables.tf
+    │   ├── terraform.tfstate
+    │   └── terraform.tfvars
+    └── dev
+      ├── main.tf
+      ├── variables.tf
+      ├── terraform.tfstate
+      └── terraform.tfvars
+    ```
+
+2. By workspaces:
+
+    - Pros: same config files and different state files
+    - Cons: must be aware of the workspace you are working in
+
+    Create and manage workspaces in a directory
+
+    ```sh
+    terraform workspace new dev
+    terraform workspace new prod
+    terraform workspace list
+    #   default
+    #   dev
+    # * prod
+    ```
+
+    The file structure would be like
+
+    ```
+    .
+    ├── README.md
+    ├── assets
+    │   └── index.html
+    ├── dev.tfvars
+    ├── main.tf
+    ├── outputs.tf
+    ├── prod.tfvars
+    ├── terraform.tfstate.d
+    │   ├── dev
+    │   │   └── terraform.tfstate
+    │   ├── prod
+    │   │   └── terraform.tfstate
+    ├── terraform.tfvars
+    └── variables.tf
+    ```
+
+    The default workspace has its state in the root folder, other environments have their state files in the `terraform.tfstate.d` folder
+
+
+## Automate Terraform
+
+- You could pre-install plugins to control what plugins are available and avoid the overhead of re-downloading every time:
+  ```sh
+  terraform init -input=false -plugin-dir=/path/to/custom-terraform-plugins
+  ```
+
+- Plugins can also be provided along with the configuration by creating a `terraform.d/plugins/OS_ARCH` directory, which will be searched before automatically downloading additional plugins. The `-get-plugins=false` flag can be used to prevent Terraform from automatically downloading additional plugins.
+
+- If you run plan and apply on different machines, you should archive the entire working directory after `plan` and pass it to `apply`
+- The plan file contains a full copy of the configuration, the state and any variables passed to `terraform plan`
+- Relevant environment variables:
+  - `TF_WORKSPACE` sets the workspace
+  - `TF_IN_AUTOMATION`, if true, Terraform would make some changes to its output, such as de-emphasizing the next command to run
+
+
+### CLI
+
+```sh
+# to initialize the working directory.
+terraform init -input=false
+
+# to create a plan and save it to the local file tfplan
+# provide -var or -var-file for variable values
+terraform plan -out=tfplan -input=false [-var] [-var-file]
+
+# REVIEW and APPROVE the plan
+
+# to apply the plan stored in the file tfplan
+terraform apply -input=false tfplan
+```
+
+For non-critical infrastructure, you might want to create a plan implicitly and auto approve it:
+
+```sh
+terraform apply -input=false -auto-approve
+```
+
+
+
+### Use remote state file
+
+When provision infrastructure in a pipeline, you need:
+
+- Save state file in a remote storage, so it could be used across multiple runs
+- The backend should support state locking to provide safety against race conditions
+- Create a service principal for Terraform to authenticate with Azure
+
+
+In `main.tf`
+
+```terraform
+terraform {
+  required_version = "> 0.12.0"
+
+  backend "azurerm" {
+    // leave empty
+  }
+}
+```
+
+A variables file `backend.tfvars` specifies a state file to use, which is in an Azure storage account
+
+```yaml
+resource_group_name = "tf-storage-rg"
+storage_account_name = "tfsa4962"
+container_name = "tfstate"
+key = "terraform.tfstate"
+```
+
+Init with backend
+
+```sh
+terraform init -backend-config="backend.tfvars"
+```
+
+### Azure DevOps Pipeline
+
+In the following example,
+- you use pipeline secrets to construct a `backend.tfvars` file,
+- then terraform could access the state file,
+- then run `terraform apply` and get the output,
+- which is used in the next step for deplying an app
+
+```yaml
+  - stage: "Dev"
+    displayName: "Deploy to the dev environment"
+    dependsOn: Build
+    jobs:
+      - job: Provision
+        displayName: "Provision Azure App Service"
+        pool:
+          vmImage: "ubuntu-18.04"
+        variables:
+          - group: Release
+        steps:
+          - script: |
+              # Exit when any command returns a failure status.
+              set -e
+
+              # Write terraform.tfvars.
+              echo 'resource_group_location = "'$(ResourceGroupLocation)'"' | tee terraform.tfvars
+
+              # Write backend.tfvars.
+              echo 'resource_group_name = "tf-storage-rg"' | tee backend.tfvars
+
+              echo 'storage_account_name = "'$(StorageAccountName)'"' | tee -a backend.tfvars
+              echo 'container_name = "tfstate"' | tee -a backend.tfvars
+              echo 'key = "terraform.tfstate"' | tee -a backend.tfvars
+
+              # Initialize Terraform.
+              terraform init -input=false -backend-config="backend.tfvars"
+
+              # Apply the Terraform plan.
+              terraform apply -input=false -auto-approve
+
+              # Get the App Service name for the dev environment.
+              WebAppNameDev=$(terraform output appservice_name_dev)
+
+              # Write the WebAppNameDev variable to the pipeline.
+              echo "##vso[task.setvariable variable=WebAppNameDev;isOutput=true]$WebAppNameDev"
+            name: "RunTerraform"
+            displayName: "Run Terraform"
+            # make pipline variable available in Bash
+            env:
+              ARM_CLIENT_ID: $(ARM_CLIENT_ID)
+              ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
+              ARM_TENANT_ID: $(ARM_TENANT_ID)
+              ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
+      - deployment: Deploy
+        dependsOn: Provision
+        variables:
+          # use a variable set by 'RunTerraform' task in job 'Provision'
+          WebAppNameDev: $[ dependencies.Provision.outputs['RunTerraform.WebAppNameDev'] ]
+        pool:
+          vmImage: "ubuntu-18.04"
+        environment: dev
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - download: current
+                  artifact: drop
+                - task: AzureWebApp@1
+                  displayName: "Azure App Service Deploy: website"
+                  inputs:
+                    azureSubscription: "Resource Manager - Tailspin - Space Game"
+                    appName: "$(WebAppNameDev)"
+                    package: "$(Pipeline.Workspace)/drop/$(buildConfiguration)/*.zip"
+```
 
 
 ## Internals
