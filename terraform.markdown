@@ -518,7 +518,7 @@ module "example_sqs_queue" {
 
 - `for..in`
 
-  Creates a collection out of another collection
+  Creates a list out of another list or map
 
   ```terraform
   output "instance_id" {
@@ -526,6 +526,20 @@ module "example_sqs_queue" {
     # output a list
     value       = [for instance in aws_instance.app : instance.id]
   }
+  ```
+
+  ```sh
+  > [ for i in { "a" = { id = 2 }, "b" = { id = 3 } }: i.id ]
+  [
+    2,
+    3,
+  ]
+
+  > [ for i in [ { id = 2 }, { id = 3 } ]: i.id ]
+  [
+    2,
+    3,
+  ]
   ```
 
 ### Variables
