@@ -371,7 +371,7 @@ These are the default system routes:
 | 192.168.0.0/16 | None            |
 | 100.64.0.0/10  | None            |
 
-*`100.64.0.0/10` is for a shared address space*
+*`100.64.0.0/10` is shared address space for communications between a service provider and its subscribers when using a carrier-grade NAT (see https://en.wikipedia.org/wiki/Carrier-grade_NAT)*
 
 Additional system routes will be created when you enable:
 
