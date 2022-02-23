@@ -4,6 +4,7 @@
     "azcollection",
     "azcopy",
     "azurerm",
+    "centralus",
     "cmdlets",
     "CMMI",
     "CNAME",
@@ -34,6 +35,7 @@
     "VHDs",
     "VMSS",
     "vnet",
-    "vnets"
+    "vnets",
+    "westus"
   ]
 }
