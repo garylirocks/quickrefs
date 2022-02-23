@@ -565,8 +565,8 @@ steps:
 
 | Syntax              | Example                | When is it processed?          | Where does it expand in a pipeline definition? | How does it render when not found? |
 | ------------------- | ---------------------- | ------------------------------ | ---------------------------------------------- | ---------------------------------- |
-| macro               | `$(var)`               | runtime before a task executes | value (right side)                             | prints `$(var)`                    |
 | template expression | `${{ variables.var }}` | compile time                   | key or value (left or right side)              | empty string                       |
+| macro               | `$(var)`               | runtime before a task executes | value (right side)                             | prints `$(var)`                    |
 | runtime expression  | `$[variables.var]`     | runtime                        | value (right side)                             | empty string                       |
 
 #### Environment variables
@@ -614,8 +614,8 @@ System and user-defined variables get injected as environment variables for your
 
 ```yaml
 variables:
- global_secret: $(mySecret) # this will NOT work because the secret variable needs to be mapped as env
- global_nonsecret: $(nonSecretVariable) # this works because it's not a secret.
+ global_secret: $(mySecret)
+ global_nonsecret: $(nonSecretVariable)
 
 steps:
   - bash: |
