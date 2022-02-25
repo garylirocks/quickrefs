@@ -180,6 +180,21 @@ az deployment group show \
     --name MyDeployment \
     --resource-group my-RG
     --query "properties.outputs.hostname.value"
+
+```
+
+Manage deployments:
+
+```sh
+# show deployment in a resource group
+az deployment group list -g my-rg -otable
+# Name         State       Timestamp                         Mode         ResourceGroup
+# -----------  ----------  --------------------------------  -----------  -------------
+# my-tempate    Succeeded  2022-02-21T22:21:58.747976+00:00  Incremental  my-rg
+# my-tempate-2  Succeeded  2022-02-21T22:21:58.747976+00:00  Incremental  my-rg
+
+# this deletes the deployment metadata, leaving the deployed resources UNAFFECTED
+az deployment group delete -g my-rg --name my-template
 ```
 
 - By default, deployment runs in `Incremental` mode, which leaves existing resources in the RG but not in the template *unchanged*, in `Complete` mode, those resources would be deleted

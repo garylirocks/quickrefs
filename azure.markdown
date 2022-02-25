@@ -286,21 +286,25 @@ Another way to organize resources
 
 ### Policy
 
-Policies apply and enforce rules your resources need to follow, such as:
+- Policies apply and enforce rules your resources need to follow, such as:
 
-- only allow specific types of resources to be created;
-- only allow resources in specific regions;
-- enforce naming conventions;
-- specific tags are applied;
+  - only allow specific types of resources to be created;
+  - only allow resources in specific regions;
+  - enforce naming conventions;
+  - specific tags are applied;
 
-Notes:
-- It could
-  - highlight noncompliant resources,
-  - prevent noncompliant resources from being created,
-  - and somtimes automatically remediate resources
+- A group of policies is called an **initiative**, it's recommended to use initiatives even when there's only a few policies
 - Policy evaluation happens about once per hour
-- A group of policies is called an _initiative_, it's recommended to use initiatives even when there's only a few policies
-- A custom policy definition or initiative can be defined in a management group or subscription level, not at resource group level (can be assigned to a resource group)
+- A custom policy definition or initiative can be defined in a **management group** or **subscription** level, not at resource group level
+#### Assignment
+
+- You could assign a policy or initiative to a **subscription** or **resource group**
+- An assignment could have one of the effects:
+  - Audit: highlight noncompliant resources,
+  - Deny: prevent noncompliant resources from being created,
+  - Disabled
+- By default, an assignment will only take effect on newly created resources
+
 
 ### Blueprints
 
@@ -317,7 +321,7 @@ Notes:
 
 - Blueprints are versioned
 - The relationship between the blueprint definition and assignment (the deployed resources) is preserved, helping you track and audit your deployments
-- You assign a blueprint to a management group, it would deploy to existing and new subscriptions under the group
+- You assign a blueprint to a **management group**, it would deploy to existing and new subscriptions under the group
 
 ### Locks
 
@@ -926,4 +930,3 @@ TODO: what's the difference between Recovery Services vault and Backup vault ?
   # close a handle
   Close-AzStorageFileHandle -Context $Context -ShareName "FileShareName" -Path 'path/to/file' -CloseAll
   ```
-
