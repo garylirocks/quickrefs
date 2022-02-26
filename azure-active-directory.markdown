@@ -81,7 +81,7 @@ Features:
 | Protocols  | Kerberos authentication                                                    | SAML, WS-Federation, OpenID Connect for authN, OAuth for authZ | same as AD DS                              |
 | Structure  | Organization Units (OUs) , Group Policy Objects (GPOs)                     | flat users and groups                                          | same as AD DS                              |
 
-- Azure AD does not replace Active Directory, they can be used together, **Azure AD Connect** can synchronizes changes between the them:
+- Azure AD does not replace Active Directory, they can be used together, **Azure AD Connect** can synchronizes changes between them:
 
   ![Azure AD Connect](images/azure_azure-ad-connect.png)
 
@@ -130,7 +130,7 @@ _On prem AD is optional here_
 - Adding group members
   - Assigned
   - Dynamic User
-  - Dynamic Device: based ond devices' attributes
+  - Dynamic Device: based on devices' attributes
 
 ## Administrative Units
 
