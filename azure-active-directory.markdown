@@ -81,7 +81,7 @@ Features:
 | Protocols  | Kerberos authentication                                                    | SAML, WS-Federation, OpenID Connect for authN, OAuth for authZ | same as AD DS                              |
 | Structure  | Organization Units (OUs) , Group Policy Objects (GPOs)                     | flat users and groups                                          | same as AD DS                              |
 
-- Azure AD does not replace Active Directory, they can be used together, **Azure AD Connect** can synchronizes changes between them:
+- Azure AD does not replace Active Directory, they can be used together, **Azure AD Connect** is a software you download and run on your on-prem host, it can synchronize changes between on-prem AD and Azure AD:
 
   ![Azure AD Connect](images/azure_azure-ad-connect.png)
 
@@ -221,7 +221,7 @@ _On prem AD is optional here_
         --role <principal id>
 
     # grant key vault permissions to an identity
-    #  then the functionapp can access the vault
+    #  ! this is policy based keyvault access, not RBAC based
     az keyvault set-policy \
         --name <key vault name> \
         --object-id <principal id> \
