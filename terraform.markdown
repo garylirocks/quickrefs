@@ -518,29 +518,39 @@ module "example_sqs_queue" {
 
 - `for..in`
 
-  Creates a list out of another list or map
+  - Creates a list out of another list or map
 
-  ```terraform
-  output "instance_id" {
-    description = "ID of the EC2 instance"
-    # output a list
-    value       = [for instance in aws_instance.app : instance.id]
-  }
-  ```
+    ```terraform
+    output "instance_id" {
+      description = "ID of the EC2 instance"
+      # output a list
+      value       = [for instance in aws_instance.app : instance.id]
+    }
+    ```
 
-  ```sh
-  > [ for i in { "a" = { id = 2 }, "b" = { id = 3 } }: i.id ]
-  [
-    2,
-    3,
-  ]
+    ```sh
+    > [ for i in { "a" = { id = 2 }, "b" = { id = 3 } }: i.id ]
+    [
+      2,
+      3,
+    ]
 
-  > [ for i in [ { id = 2 }, { id = 3 } ]: i.id ]
-  [
-    2,
-    3,
-  ]
-  ```
+    > [ for i in [ { id = 2 }, { id = 3 } ]: i.id ]
+    [
+      2,
+      3,
+    ]
+    ```
+
+  - Or create a map
+
+    ```sh
+    > { for i in {a = {name = "gary", age = 20}, b = {name = "jack", age = 30}}: i.name => i.age }
+    {
+      "gary" = 20
+      "jack" = 30
+    }
+    ```
 
 ### Variables
 
