@@ -545,10 +545,10 @@ module "example_sqs_queue" {
   - Or create a map
 
     ```sh
-    > { for i in {a = {name = "gary", age = 20}, b = {name = "jack", age = 30}}: i.name => i.age }
+    > { for k,v in {a = {age = 20}, b = {age = 30}}: k => v.age }
     {
-      "gary" = 20
-      "jack" = 30
+      "a" = 20
+      "b" = 30
     }
     ```
 
