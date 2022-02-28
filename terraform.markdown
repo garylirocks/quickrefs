@@ -550,6 +550,18 @@ module "example_sqs_queue" {
       "a" = 20
       "b" = 30
     }
+
+    # use '...' to group by key
+    > { for v in [ {name = "gary", color = "red"}, {name = "gary", color = "green"}, {name = "jack", color="white"} ]: v.name => v.color... }
+    {
+      "gary" = [
+        "red",
+        "green",
+      ]
+      "jack" = [
+        "white",
+      ]
+    }
     ```
 
 ### Variables
