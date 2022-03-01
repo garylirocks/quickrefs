@@ -40,6 +40,9 @@ wsl date +%Y%m%d
 
 # use the root user
 wsl -u root
+
+# stop a WSL distro
+wsl -t Ubuntu
 ```
 
 Export / Import
@@ -92,19 +95,29 @@ Git comes installed with most WSL distros, you may need to install the latest ve
 sudo apt-get install git
 ```
 
-To use the Windows Git Credential Manager in WSL
+You could use the Windows Git Credential Manager in WSL (https://github.com/GitCredentialManager/git-credential-manager/blob/main/docs/wsl.md):
 
-```sh
-# set as git credential helper
-git config --global credential.helper "/mnt/c/Program\ Files/Git/mingw64/libexec/git-core/git-credential-manager-core.exe"
+- Git inside of a WSL can launch the GCM Windows application transparently to acquire credentials
+- Windows stores the credentials, which could be shared by Windows applications and WSL
+- Config your WSL Git like this:
 
-# additional config for Azure DevOps
-git config --global credential.https://dev.azure.com.useHttpPath true
-```
+  ```sh
+  # set as git credential helper
+  git config --global credential.helper "/mnt/c/Program\ Files/Git/mingw64/libexec/git-core/git-credential-manager-core.exe"
+
+  # additional config for Azure DevOps
+  git config --global credential.https://dev.azure.com.useHttpPath true
+  ```
+
+- Make Windows GCM use WSL Git config, run this in *Administrator* Command Prompt:
+
+  ```sh
+  SETX WSLENV %WSLENV%:GIT_EXEC_PATH/wp
+  ```
+
 
 ### VS Code
 
 - Install the 'Remote Development' pack in VS Code
   - This makes VS Code run in 'client-server' mode, the UI is running on Windows, the server (your code, Git, plugins, etc) are running in WSL.
 - Then you could 'Open folder in WSL' (or run `code .` in a WSL command line)
-
