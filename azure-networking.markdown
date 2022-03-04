@@ -135,6 +135,28 @@ You could add VM NICs to an **App Security Group** (like a custom service tag), 
 
 ![App Security Group](images/azure_app-security-group-asg-nsg.svg)
 
+### Azure platform considerations
+
+- **Licensing (Key Management Service)**: Windows images running in a VM will send request to the Key Management Service host services. The request is made outbound through port 1688.
+- **VMs in load-balanced pools**: Source port and address are from the originating computer, not the load balancer. The destination port and address are for the destination VM, not he load balancer
+- **Azure service instances**: Instances of some Azure services could be or must be deployed in vnet subnets. You need to be aware of the port requirements for these services running in a subnet when applying NSGs.
+- **Outbound email**: Depending on your subscription type, you may not be able to send email directly over TCP port 25. Use an authenticated SMTP relay service (typically over TCP port 587)
+
+
+### Virtual IP of the host node
+
+- Basic infrastructure services like DHCP, DNS, IMDS and health monitoring are provided through the virtualized host IP addresses **168.63.129.16** and **169.254.169.254**
+- These IP addresses belong to Microsoft and are the ONLY virtualized IP addresses used in all regions
+- Effective security rules and effective routes will not include these platform rules
+- To override this basic infrastructure communication, you can create a security rule to deny traffic by using these service tags on your NSG rules: AzurePlatformDNS, AzurePlatformIMDS, AzurePlatformLKM
+
+#### `168.63.129.16`
+Typically, you should allow this IP in any local (in the VM) firewall policies (outbound direction). It's not subject to user defined routes.
+
+- The VM Agent requires outbound communication over port 80/tcp and 32526/tcp with WireServer(168.63.129.16). This is not subject to the configured NSGs.
+- 168.63.129.16 can provide DNS services to the VM when there's no custom DNS servers definition. By default this is not subject to NSGs unless specifically targeted using the "AzurePlatformDNS" service tag. You could also block 53/udp and 53/tcp in local firewall on the VM.
+- Load balancer health probes originate from this IP. The default NSG config has a rule that allows this communication leveraging the "AzureLoadBalancer" service tag.
+
 
 ## Network Peering
 
@@ -371,7 +393,9 @@ These are the default system routes:
 | 192.168.0.0/16 | None            |
 | 100.64.0.0/10  | None            |
 
-*`100.64.0.0/10` is shared address space for communications between a service provider and its subscribers when using a carrier-grade NAT (see https://en.wikipedia.org/wiki/Carrier-grade_NAT)*
+- *`100.64.0.0/10` is shared address space for communications between a service provider and its subscribers when using a carrier-grade NAT (see https://en.wikipedia.org/wiki/Carrier-grade_NAT)*
+- The `0.0.0.0/0` route is used if no other routes match, Azure routes traffic to the Internet, the exception is that traffic to the public IP addresses of Azure services remains on the Azure backbone network, not routed to the Internet.
+
 
 Additional system routes will be created when you enable:
 

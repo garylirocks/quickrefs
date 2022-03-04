@@ -1,5 +1,9 @@
 # PowerShell
 
+- [Overview](#overview)
+- [Common commands](#common-commands)
+- [Networking](#networking)
+
 ## Overview
 
 Is made of a command-line shell, a scripting language and a configuration management framework.
@@ -76,4 +80,14 @@ Get-Command -ParameterType Process
 # -----------     ----                           -------    ------
 # Cmdlet          Debug-Process                  3.1.0.0    Microsoft.PowerShell.Management
 # Cmdlet          Enter-PSHostProcess            3.0.0.0    Microsoft.PowerShell.Core
+```
+
+## Networking
+
+```sh
+# DNS lookup
+nslookup google.com
+
+# check connection to a port
+Test-NetConnection 192.168.1.3 -Port 22
 ```

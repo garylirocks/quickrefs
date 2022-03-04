@@ -8,6 +8,7 @@
 - [Users](#users)
 - [Groups](#groups)
 - [Administrative Units](#administrative-units)
+- [App registrations](#app-registrations)
 - [Providing identities to services](#providing-identities-to-services)
 - [Role-based access control (RBAC)](#role-based-access-control-rbac)
   - [Azure RBAC roles vs. Azure AD roles](#azure-rbac-roles-vs-azure-ad-roles)
@@ -124,27 +125,49 @@ _On prem AD is optional here_
 
 ## Groups
 
-- Two types
+- Group types
   - Security groups: for RBAC
-  - Microsoft 365: giving members access to shared mailbox, calendar, files, etc
-- Adding group members
-  - Assigned
-  - Dynamic User
+  - Microsoft 365: giving members access to shared mailbox, calendar, files, teams in MS Teams, etc
+  - Distribution: seems only for a group email
+
+- Membership types
+  - Assigned: assigned manually
+  - Dynamic User: based on users' attributes
   - Dynamic Device: based on devices' attributes
+
+Note:
+
+In the Azure portal, you can see some groups whose membership and group details you can't manage in the portal:
+
+- Groups synced from on-premises Active Directory can be managed only in on-premises Active Directory.
+- Other group types such as distribution lists and mail-enabled security groups are managed only in Exchange admin center or Microsoft 365 admin center. You must sign in to Exchange admin center or Microsoft 365 admin center to manage these groups.
 
 ## Administrative Units
 
 - To restrict administrative scope in organizations that are made up of independent divisions, such as School of Business and School of Engineering in a University
 - Apply scope only to management permissions
 
+## App registrations
+
+|     | App registrations | Enterprise Applications                                                                            |
+| --- | ----------------- | -------------------------------------------------------------------------------------------------- |
+|     |                   | <ul><li>service principals (application)</li><li>service principals (managed identities)</li></ul> |
+
+
+App registrations vs. Service principals
+
+- If you register an application in the portal, an application object as well as a service principal object are automatically created in your home tenant. If you register/create an application using the Microsoft Graph APIs, creating the service principal object is a **separate step**.
 
 ## Providing identities to services
+
+There are three types of service principals:
 
 - Service principals
 
   - A service principal is an identity used by any service or application
   - You should create a different service principal for each of your application
-  - Listed under **App registrations** in Azure Portal
+  - Listed under **Enterprise applications** in Azure Portal
+
 
   ```sh
   SP_NAME='My-Service-Principal'
@@ -371,4 +394,3 @@ AuditLogs
 | summarize auditCount = count() by OperationName
 | sort by auditCount desc
 ```
-
