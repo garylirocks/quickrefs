@@ -1,6 +1,62 @@
 # Vim cheatsheet
 
-[[toc]]
+- [Motions](#motions)
+  - [Left-right motions](#left-right-motions)
+  - [Up-down motions](#up-down-motions)
+  - [Word motions](#word-motions)
+  - [Text object motions](#text-object-motions)
+  - [Marks](#marks)
+    - [Examples](#examples)
+  - [Jumps](#jumps)
+  - [Various motions](#various-motions)
+  - [Tags](#tags)
+- [Editing](#editing)
+  - [Operators](#operators)
+  - [Text objects](#text-objects)
+  - [Examples](#examples-1)
+  - [Column mode](#column-mode)
+  - [Increase / Decrease numbers](#increase--decrease-numbers)
+  - [Indent lines](#indent-lines)
+  - [Abbreviations](#abbreviations)
+  - [Word completion](#word-completion)
+  - [Folding](#folding)
+- [Search and replace](#search-and-replace)
+  - [Special characters in a replacement pattern](#special-characters-in-a-replacement-pattern)
+  - [To change multiple matches](#to-change-multiple-matches)
+  - [Copy from one location, replacing multiple locations](#copy-from-one-location-replacing-multiple-locations)
+- [Regular Expressions](#regular-expressions)
+  - [Enable ERE (extended regular expression)](#enable-ere-extended-regular-expression)
+  - [About new line](#about-new-line)
+  - [Lookahead / Lookbehind modifiers](#lookahead--lookbehind-modifiers)
+- [Buffer, Window and Tab](#buffer-window-and-tab)
+  - [Concepts](#concepts)
+  - [Multiple buffers](#multiple-buffers)
+  - [arglist](#arglist)
+  - [Multiple windows](#multiple-windows)
+  - [Tabs](#tabs)
+  - [Tag with windows](#tag-with-windows)
+- [Record and Play](#record-and-play)
+- [Copy and Paste](#copy-and-paste)
+- [Command macros](#command-macros)
+- [Registers](#registers)
+- [Options](#options)
+- [Modes](#modes)
+  - [ex mode](#ex-mode)
+  - [visual mode](#visual-mode)
+- [Help](#help)
+- [Plugins](#plugins)
+  - [Useful Plugins](#useful-plugins)
+  - [vim-surround](#vim-surround)
+  - [`fzf.vim`](#fzfvim)
+  - [`vim-fugitive`](#vim-fugitive)
+- [Miscs](#miscs)
+  - [Avoid the Esc key](#avoid-the-esc-key)
+  - [Save a readonly file](#save-a-readonly-file)
+  - [Add a new filetype](#add-a-new-filetype)
+  - [Encoding](#encoding)
+  - [Save session](#save-session)
+  - [Line ending](#line-ending)
+- [Refs](#refs)
 
 ## Motions
 
@@ -383,22 +439,30 @@ gd               # go to local declaration
 
 - `~` means your last replacement pattern,
 
-```
-:s/tab/(&)/     # add parenthesis to 'tab'
-:s/open/~/      # add parenthesis to 'open'
-```
+  ```
+  :s/tab/(&)/     # add parenthesis to 'tab'
+  :s/open/~/      # add parenthesis to 'open'
+  ```
 
 - `\u`, `\l` causes the following character to upper or lower case
 
-```
-:s/\(you\)\(.*\)\(he\)/\u\3\2\u\1/      # switch 'you' and 'he', and to 'You' and 'He'
-```
+  ```
+  # red and black -> Red and Black
+  :s/\v(red)(.*)(black)/\u\1\2\u\3/g
+  ```
 
 - `\U`, `\L`, `\e`, `\E` causes characters up to `\e`, `\E` or end of string to change case
 
-```
-:s/should/\U&/g     # change 'should' to upper case
-```
+  ```
+  # red -> RED
+  :s/red/\U&/g
+  ```
+
+### To change multiple matches
+
+1. Search
+2. `cgnNEW<Esc>` changes next match to "NEW" (`gn` selects next match in visual mode)
+3. `.` changes next match
 
 ### Copy from one location, replacing multiple locations
 
