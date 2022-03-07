@@ -667,6 +667,13 @@ name = "web-sg-${var.resource_tags["project"]}-${var.resource_tags["environment"
   }
   ```
 
+- `jsonencode` encode a value to a JSON string
+
+  ```sh
+  > jsonencode({ name = "gary", age = 20 })
+  "{\"age\":20,\"name\":\"gary\"}"
+  ```
+
 - `file`, `templatefile`
 
   ```sh

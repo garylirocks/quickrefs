@@ -17,6 +17,7 @@
     "hashicorp",
     "Intune",
     "JMES",
+    "jsonencode",
     "kubectl",
     "kubelet",
     "Kubernetes",
