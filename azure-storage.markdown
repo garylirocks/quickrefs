@@ -1,33 +1,58 @@
 # Azure Storage
 
 - [Overview](#overview)
-  - [Files](#files)
-  - [Organization](#organization)
+  - [Services](#services)
+  - [Usages](#usages)
+  - [Account level settings](#account-level-settings)
+  - [Access](#access)
   - [Security](#security)
     - [Access keys](#access-keys)
     - [Shared access signature (SAS)](#shared-access-signature-sas)
     - [Network access](#network-access)
     - [Advanced threat protection](#advanced-threat-protection)
 - [Blobs](#blobs)
+  - [Organization](#organization)
   - [CLI](#cli)
   - [AzCopy](#azcopy)
   - [.NET Storage Client library](#net-storage-client-library)
   - [Access tiers](#access-tiers)
   - [Properties and Metadata](#properties-and-metadata)
   - [Concurrency](#concurrency)
+- [Files](#files)
 
 ## Overview
 
+### Services
+
 ![storage services overview](images/azure_storage-services.png)
 
-Blobs, Files, Queues and Tables are grouped together into Azure storage and are often used together
+- Azure Containers (Blobs): unstructured text or binary data
+- Azure Files: network file shares
+- Azure Queues
+- Azure Tables: *now part of Azure Cosmos DB*
 
-Storage account level settings:
+### Usages
+
+Azure Storage can be used to store files, messages, tables and other types of information.
+
+Azure Storage is also used by IaaS VMs, and PaaS services:
+- VM
+  - Disks: page blobs
+  - File shares: Azure Files
+- Unstructured Data
+  - Blobs
+  - Data Lake Store: Hadoop Distributed File System (HDFS) as a service
+- Structured Data
+  - Azure Tables: key/value, autoscaling NoSQL store
+  - Cosmos DB
+  - Azure SQL DB
+
+### Account level settings
 
 - Subscription
 - Location
-- Performance
-  - Standard: magnetic disk drives
+- Performance tiers
+  - Standard: HDD, low cost
   - Premium:
     - SSD
     - additional services: unstructured object data as block blobs or append blobs, specialized file storage
@@ -41,33 +66,29 @@ Storage account level settings:
 - Secure transer required: whether HTTPS is enforced
 - Virtual networks: only allow inbound access request from the specified network(s)
 - Account kind
-  - StorageV2 (general purpose v2): all storage types, latest features
-  - Storage (general purpose v1): legacy
-  - Blob storage: legacy, allows only block blobs and append blobs
-- Deployment model
-  - Resource Manager
-  - Classic: legacy
+  - Standard (general-purpose v2): all services and Data Lake Storage
+  - Premium block blobs
+  - Premium page blobs: VM disks
+  - Premium file shares
+- Redundancy
+  - LRS: three copies in one location
+  - ZRS (not available in all regions)
+  - GRS: replicated async to the secondary region, LRS in both regions, secondary region data _ONLY_ readable if Microsoft initiates a failover
+  - RA-GRS (default): read from secondary region any time
+  - GZRS/RA-GZRS: combines ZRS and GRS
 
-### Files
+### Access
 
-Network files shares, accessed over SMB protocol
+Default service endpoints:
 
-Common scenarios:
+- Container service: `//mystorageaccount.blob.core.windows.net`
+- Table service: `//mystorageaccount.table.core.windows.net`
+- Queue service: `//mystorageaccount.queue.core.windows.net`
+- File service: `//mystorageaccount.file.core.windows.net`
 
-- Storing shared configuration files for VMs, tools.
-- Log files such as diagnostics, metrics and crash dumps.
-- Shared data between on-premises applications and Azure VMs to allow migration.
-
-### Organization
-
-- Account
-  - Can have unlimited containers
-  - Usually created by an admin
-- Containers
-  - Can contain unlimited blobs
-  - Can be seen as a security boundary for blobs, you can set an individual container as public.
-  - Usually created in an app as needed (calling `CreateIfNotExistsAsync` on a `CloudBlobContainer` is the best way to create a container when your application starts or when it first tries to use it)
-- Virtual directories: technically containers are "flat", there is no folders. But if you give blobs hierarchical names looking like file paths, the API's listing operation can filter results to specific prefixes.
+Note:
+- Account names must be globally unique
+- You could configure a custom domain
 
 ### Security
 
@@ -89,13 +110,13 @@ Security features:
 
 - Role-based access control
 
-  RBAC is the Most flexible access option.
-  Can be applied to both resource management(e.g. configuration) and data operations(only for Blob and Queue).
+  RBAC is the Most flexible access option. Can be applied to
+    - resource management(e.g. configuration)
+    - and data operations(only for Blob and Queue)
 
 - Auditing access
 
   Using the built-in Storage Analytics service, which logs every operation in real time.
-
 
 #### Access keys
 
@@ -110,24 +131,33 @@ Security features:
 
 #### Shared access signature (SAS)
 
-- support expiration and limited permissions
-- suitable for external third-party applications
-- can be applied to only containers or objects
+- Grant access to storage resources for a specific time range without sharing your account keys
+- Suitable for external third-party applications
+- An SAS can be generated at different levels:
+  - Account level, you could specify:
+    - Allowed services: Blob, File, Queue, Table
+    - Allowed resource types: Service, Container, Object
+    - Allowed permissions: Read, Write, Delete, List, ...
+  - Blob Container level
+  - Blob object level
 
 Two typical designs for using Azure Storage to store user data:
 
   - Front end proxy: all data pass through the proxy
 
-  ![Front end proxy](images/azure_storage-design-front-end-proxy.png)
+    ![Front end proxy](images/azure_storage-design-front-end-proxy.png)
 
   - SAS provider: only generates a SAS and pass it to the client
 
-  ![SAS provider](images/azure_storage-design-lightweight.png)
+    ![SAS provider](images/azure_storage-design-lightweight.png)
 
 
 #### Network access
 
-By default, connections from clients on any network are accepted. You can restrict access to specific IP addresses, ranges or virtual networks.
+By default, connections from clients on any network are accepted.
+
+- You can restrict access to an account from specific public IP addresses, or subnets on Virtual Networks.
+- Subnets and Virtual Networks must exist in the same Region or Region Pair as the Storage Account.
 
 #### Advanced threat protection
 
@@ -147,11 +177,20 @@ Object storage solution optimized for storing massive amounts of unstructured da
 
 Three kinds of blobs:
 
-- Block blobs: for files that are read from beginning to end, files larger than 100MB must be uploaded as small blocks which are then consolidated into the final blob.
-- Page blobs: to hold random-access files up to 8 TB in size, used primarily as storage for the VHDs used to provide durable disks for Azure VMs. They provide random read/write access to 512-byte pages.
-- Append blobs: specialized block blobs, but optimized for append operations, frequently used for logging from one or more sources.
+- **Block blobs**: for files that are read from beginning to end, files larger than 100MB must be uploaded as small blocks which are then consolidated into the final blob.
+- **Page blobs**: to hold random-access files up to 8 TB in size, used primarily as storage for the VHDs used to provide durable disks for Azure VMs. They provide random read/write access to 512-byte pages.
+- **Append blobs**: specialized block blobs, but optimized for append operations, frequently used for logging from one or more sources.
 
-Many Azure components use blobs behind the scenes, Cloud Shell stores your files and configuration in blobs, VMs use blobs for hard-disk storage.
+### Organization
+
+- Account
+  - Can have unlimited containers
+  - Usually created by an admin
+- Containers
+  - Can contain unlimited blobs
+  - Can be seen as a security boundary for blobs, you can set an individual container as public.
+  - Usually created in an app as needed (calling `CreateIfNotExistsAsync` on a `CloudBlobContainer` is the best way to create a container when your application starts or when it first tries to use it)
+- Virtual directories: technically containers are "flat", there is no folders. But if you give blobs hierarchical names looking like file paths, the API's listing operation can filter results to specific prefixes.
 
 ### CLI
 
@@ -312,3 +351,17 @@ Three concurrency strategies:
     - An app can also renew or break a lease before it expires;
 
     ![Blob concurrency using lease](images/azure_blob-concurrency-lease.png)
+
+
+## Files
+
+Network files shares
+
+- Accessed over SMB protocol
+- Multiple VMs can share the same files with both read and write access
+
+Common scenarios:
+
+- Storing shared configuration files for VMs, tools.
+- Log files such as diagnostics, metrics and crash dumps.
+- Shared data between on-premises applications and Azure VMs to allow migration.
