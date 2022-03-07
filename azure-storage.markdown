@@ -11,11 +11,14 @@
     - [Network access](#network-access)
     - [Advanced threat protection](#advanced-threat-protection)
 - [Blobs](#blobs)
+  - [Blob types](#blob-types)
+  - [Access tiers](#access-tiers)
   - [Organization](#organization)
+  - [Life cycle management rules](#life-cycle-management-rules)
+  - [Object replication](#object-replication)
   - [CLI](#cli)
   - [AzCopy](#azcopy)
   - [.NET Storage Client library](#net-storage-client-library)
-  - [Access tiers](#access-tiers)
   - [Properties and Metadata](#properties-and-metadata)
   - [Concurrency](#concurrency)
 - [Files](#files)
@@ -175,11 +178,25 @@ Object storage solution optimized for storing massive amounts of unstructured da
 - storing data for backup, disaster recovery and archiving.
 - storing data for analysis.
 
-Three kinds of blobs:
+You could specify the blob type and access tier when you create a blob.
 
-- **Block blobs**: for files that are read from beginning to end, files larger than 100MB must be uploaded as small blocks which are then consolidated into the final blob.
-- **Page blobs**: to hold random-access files up to 8 TB in size, used primarily as storage for the VHDs used to provide durable disks for Azure VMs. They provide random read/write access to 512-byte pages.
-- **Append blobs**: specialized block blobs, but optimized for append operations, frequently used for logging from one or more sources.
+### Blob types
+
+- **Block blobs (default)**: blocks of data assembled to make a blob, used in most scenarios
+- **Append blobs**: like block blobs, but optimized for append operations, frequently used for logging from one or more sources.
+- **Page blobs**: can be up to 8 TB in size, more efficient for frequent read/write operations. They provide random read/write access to 512-byte pages. Azure VMs use page page blobs as OS and data disks.
+
+### Access tiers
+
+For block blobs, there are three access tiers: "hot", "cool" and "archive", from hot to cool to archive, the cost of storing data decreases but the cost of retrieving data increses.
+
+- An account has a default tier, either hot or cool
+- A blob can be at any tier
+- Archive
+  - can only be set at blob level;
+  - data is offline, only metadata available for online query;
+  - to access data, the blob must first be **rehydrated** (changing the blob tier from Archive to Hot or Cool, this can take hours);
+
 
 ### Organization
 
@@ -188,9 +205,25 @@ Three kinds of blobs:
   - Usually created by an admin
 - Containers
   - Can contain unlimited blobs
-  - Can be seen as a security boundary for blobs, you can set an individual container as public.
+  - Can be seen as a security boundary for blobs, its public access level can be:
+    - Private: no anonymous access
+    - Blob: anonymous read access for blobs
+    - Container: anonymous **read and list** access to the entire container and blobs
   - Usually created in an app as needed (calling `CreateIfNotExistsAsync` on a `CloudBlobContainer` is the best way to create a container when your application starts or when it first tries to use it)
 - Virtual directories: technically containers are "flat", there is no folders. But if you give blobs hierarchical names looking like file paths, the API's listing operation can filter results to specific prefixes.
+
+### Life cycle management rules
+
+- You could define rules to move blobs to a cooler tier when they are not modified for X days (hot -> cool/archive, cool -> archive)
+- Or delete blobs at the end of their life cycle
+- Apply rules to containers or a subset of blobs
+
+### Object replication
+
+You could add replication rules to replicate blobs to another storage account, the destination could be in another region, subscription, even another tenant.
+
+- Blob content, versions, properties and metadata are all copied from source container to the destination container. Snapshots are not replicated.
+- Blob versioning needs to be enabled on both accounts.
 
 ### CLI
 
@@ -292,17 +325,6 @@ azcopy jobs list
 - Suitable for complex, repeated tasks
 - Provides full access to blob properties
 - Supports async operations
-
-### Access tiers
-
-- Hot and Cool can be set as account or blob level;
-- Archive
-  - can only be set at blob level;
-  - data is offline, only metadata available for online query;
-  - to access data, the blob must first be **rehydrated** (changing the blob tier from Archive to Hot or Cool, this can take hours);
-- Premium: only available for BlobStorage accounts (legacy);
-
-From Hot to Cool to Archive, the cost of storing data decreases but the cost of retrieving data increses.
 
 ### Properties and Metadata
 
