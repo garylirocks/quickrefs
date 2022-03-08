@@ -6,16 +6,22 @@
   - [Account level settings](#account-level-settings)
   - [Access](#access)
   - [Security](#security)
-    - [Access keys](#access-keys)
-    - [Shared access signature (SAS)](#shared-access-signature-sas)
+    - [Features](#features)
     - [Network access](#network-access)
     - [Advanced threat protection](#advanced-threat-protection)
+  - [Authorization Options](#authorization-options)
+    - [Anonymous access](#anonymous-access)
+    - [Azure AD](#azure-ad)
+    - [Access keys](#access-keys)
+    - [Shared access signature (SAS)](#shared-access-signature-sas)
 - [Blobs](#blobs)
   - [Blob types](#blob-types)
   - [Access tiers](#access-tiers)
   - [Organization](#organization)
   - [Life cycle management rules](#life-cycle-management-rules)
+  - [Versioning vs. snapshot](#versioning-vs-snapshot)
   - [Object replication](#object-replication)
+  - [Immutable storage for Azure Blobs](#immutable-storage-for-azure-blobs)
   - [CLI](#cli)
   - [AzCopy](#azcopy)
   - [.NET Storage Client library](#net-storage-client-library)
@@ -95,13 +101,15 @@ Note:
 
 ### Security
 
-Security features:
+#### Features
 
 - Encryption at rest
 
   - All data is automatically encrypted by Storage Service Encryption (SSE) with a 256-bit AES cipher. This can't be disabled.
   - For VMs, Azure let's you encrypt virtual hard disks(VHDs) by using Azure Disk Encryption (BitLocker for Windows images, `dm-crypt` for Linux)
-  - Azure Key Vault stores the keys automatically.
+  - You could use either
+    - Microsoft managed keys
+    - Customer managed keys: you specify a key in a key vault, the key vault must be in the same region
 
 - Encryption at tansit
 
@@ -111,49 +119,13 @@ Security features:
 
   An optional flag you can enable on Storage accounts. Apply only for GET requests.
 
-- Role-based access control
+- Azure AD and RBAC
 
-  RBAC is the Most flexible access option. Can be applied to
-    - resource management(e.g. configuration)
-    - and data operations(only for Blob and Queue)
+- Shared Access Signatures (see below)
 
 - Auditing access
 
   Using the built-in Storage Analytics service, which logs every operation in real time.
-
-#### Access keys
-
-- Like a root password, allow **full access**.
-- Typically stored within env variables, database, or configuration file.
-- *Should be private, don't include the config file in source control or store in public repos*
-- Each storage account has two access keys, this allows key to be rotated:
-  1. update connection strings in your app to use secondary access key
-  2. Regenerate primary key using Azure portal or CLI.
-  3. Update connection string in your code to reference the new primary key.
-  4. Regenerate the secondary access key.
-
-#### Shared access signature (SAS)
-
-- Grant access to storage resources for a specific time range without sharing your account keys
-- Suitable for external third-party applications
-- An SAS can be generated at different levels:
-  - Account level, you could specify:
-    - Allowed services: Blob, File, Queue, Table
-    - Allowed resource types: Service, Container, Object
-    - Allowed permissions: Read, Write, Delete, List, ...
-  - Blob Container level
-  - Blob object level
-
-Two typical designs for using Azure Storage to store user data:
-
-  - Front end proxy: all data pass through the proxy
-
-    ![Front end proxy](images/azure_storage-design-front-end-proxy.png)
-
-  - SAS provider: only generates a SAS and pass it to the client
-
-    ![SAS provider](images/azure_storage-design-lightweight.png)
-
 
 #### Network access
 
@@ -167,6 +139,77 @@ By default, connections from clients on any network are accepted.
 - Detects anomalies in account activity
 - Only for Blob currently
 - Security alerts are integrated with Azure Security Center
+
+### Authorization Options
+
+#### Anonymous access
+
+  - only for blob containers and blobs
+  - only for read access
+  - a blob container's public access level can be:
+    - Private: no anonymous access
+    - Blob: anonymous read access for blobs
+    - Container: anonymous **read and list** access to the entire container and blobs
+
+#### Azure AD
+
+Can be used for
+
+- Resource management operations: such as key management
+- and data operations on the Blob and Queue services, eg. you need *Storage Blob Data Contributor* role to write to a blob
+
+#### Access keys
+
+- Like a root password, allow **full access**.
+- Typically stored within env variables, database, or configuration file.
+- Should be private, don't include the config file in source control or store in public repos
+- Each storage account has two access keys, this allows key to be rotated:
+  1. update connection strings in your app to use secondary access key
+  2. Regenerate primary key using Azure portal or CLI.
+  3. Update connection string in your code to reference the new primary key.
+  4. Regenerate the secondary access key.
+
+#### Shared access signature (SAS)
+
+SAS grants access to storage resources for a specific time range without sharing your account keys. Suitable for external third-party applications.
+
+There are three types:
+
+- **User delegation SAS**
+  - Secured with Azure AD credentials and also permissions specified for the SAS
+  - For Blob only: could be at container or blob level
+  - Recommended over signing with an account key
+- **Service SAS**: scoped at container level, which can be a blob container, a file share, a queue or a table
+- **Account SAS**
+
+  You could specify:
+    - Allowed services: Blob, File, Queue, Table
+    - Allowed resource types: Service, Container, Object
+    - Allowed permissions: Read, Write, Delete, List, ...
+
+Two forms:
+- Ad hoc SAS
+
+  An ad hoc SAS URI looks like `https://myaccount.blob.core.windows.net/?restype=service&comp=properties&sv=2015-04-05&ss=bf&srt=s&st=2015-04-29T22%3A18%3A26Z&se=2015-04-30T02%3A23%3A26Z&sr=b&sp=rw&sip=168.1.5.60-168.1.5.70&spr=https&sig=F%6GRVAZ5Cdj2Pw4txxxxx`, it contains:
+
+  - The start/expiry time and permissions
+  - The `sig=F%6GRVAZ5Cdj2Pw4txxxxx` part is an HMAC computed over a string-to-sign and key using SHA256, then encoded using Base64
+
+- Service SAS with stored access policy
+
+  - Instead of specify the permissions and time on each SAS, you define a **stored access policy** at the container level (blob container or file share). Then reference this policy when you create a service SAS.
+  - This allows you to change the permissions or duration without having to regenerate the storage account keys.
+
+Two typical designs for using Azure Storage to store user data:
+
+  - Front end proxy: all data pass through the proxy
+
+    ![Front end proxy](images/azure_storage-design-front-end-proxy.png)
+
+  - SAS provider: only generates a SAS and pass it to the client
+
+    ![SAS provider](images/azure_storage-design-lightweight.png)
+
 
 ## Blobs
 
@@ -205,10 +248,7 @@ For block blobs, there are three access tiers: "hot", "cool" and "archive", from
   - Usually created by an admin
 - Containers
   - Can contain unlimited blobs
-  - Can be seen as a security boundary for blobs, its public access level can be:
-    - Private: no anonymous access
-    - Blob: anonymous read access for blobs
-    - Container: anonymous **read and list** access to the entire container and blobs
+  - Can be seen as a security boundary for blobs
   - Usually created in an app as needed (calling `CreateIfNotExistsAsync` on a `CloudBlobContainer` is the best way to create a container when your application starts or when it first tries to use it)
 - Virtual directories: technically containers are "flat", there is no folders. But if you give blobs hierarchical names looking like file paths, the API's listing operation can filter results to specific prefixes.
 
@@ -218,12 +258,36 @@ For block blobs, there are three access tiers: "hot", "cool" and "archive", from
 - Or delete blobs at the end of their life cycle
 - Apply rules to containers or a subset of blobs
 
+### Versioning vs. snapshot
+
+- When blob versioning is enabled: A blob version is created automatically on a write or delete operation
+- A blob snapshot is created manually, not necessary if versioning is enabled
+
 ### Object replication
 
 You could add replication rules to replicate blobs to another storage account, the destination could be in another region, subscription, even another tenant.
 
 - Blob content, versions, properties and metadata are all copied from source container to the destination container. Snapshots are not replicated.
 - Blob versioning needs to be enabled on both accounts.
+
+### Immutable storage for Azure Blobs
+
+![Immutable storage policies](images/azure_blob-immutable-policies.png)
+
+For compliance or legal reasons, you could configure immutability policies for blob data, protecting it from overwrites and deletes.
+
+There are two types of policies:
+  - Time-based retention policy: during the retention period, objects can be created and read, but not modified or deleted. After the period has expired, objects can be deleted but not overwritten.
+  - Legal hold policies: data is immutable until the legal hold is explicitly cleared
+
+Immutability policies can be scoped to a blob version or to a container.
+
+- Version-level scope:
+  - You must enable support for version-level immutability on either the storage account or a container.
+  - Configure a default version-level immutability policy for the account or container.
+  - A blob version supports one version-level immutability policy and one legal hold. A policy on a blob version can override a default policy specified on the account or container.
+- Container-level secope:
+  - When support for version-level immutability has not been enabled for a storage account or a container, then any immutability policies are scoped to the container. Policies apply to all objects within the container.
 
 ### CLI
 
@@ -292,10 +356,12 @@ az storage blob delete-batch \
 
 ### AzCopy
 
-- All operations are async;
-- Suitable for bulk operations, if interrupted, can resume from the point of failure;
+- All operations are async, each instance creates a job, you can view and restart previous jobs and resume failed jobs;
+- Automatically retry a transfer after a failure;
+- Supports copying an entire account (Blob service only) to another account;
 - Supports hierarchical containers;
-- Supports pattern matching selection;
+- Supports authentication with Azure AD or SAS tokens;
+- Supports wildcard patterns in a path, `--include`, `--exclude` flags;
 - Use `--include-after` to only include files changed after a specific date/time;
 
 ```sh
