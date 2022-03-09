@@ -10,7 +10,7 @@
     - [Network access](#network-access)
     - [Advanced threat protection](#advanced-threat-protection)
   - [Authorization Options](#authorization-options)
-    - [Anonymous access](#anonymous-access)
+    - [Public read access for containers and blobs](#public-read-access-for-containers-and-blobs)
     - [Azure AD](#azure-ad)
     - [Access keys](#access-keys)
     - [Shared access signature (SAS)](#shared-access-signature-sas)
@@ -142,14 +142,17 @@ By default, connections from clients on any network are accepted.
 
 ### Authorization Options
 
-#### Anonymous access
+#### Public read access for containers and blobs
 
-  - only for blob containers and blobs
-  - only for read access
-  - a blob container's public access level can be:
+  - Only for blob containers and blobs
+  - Only for read access
+  - A container's public access level can be:
     - Private: no anonymous access
     - Blob: anonymous read access for blobs
     - Container: anonymous **read and list** access to the entire container and blobs
+  - Storage account has a *AllowBlobPublicAccess* property
+  - Both account and container settings are required to enable public access, so an account can have both public and private containers
+  - No separate settings at the blob object level
 
 #### Azure AD
 
@@ -158,11 +161,16 @@ Can be used for
 - Resource management operations: such as key management
 - and data operations on the Blob and Queue services, eg. you need *Storage Blob Data Contributor* role to write to a blob
 
+Use this when you are
+  - running an app with managed identities
+  - or using security principals (users, service principals)
+
 #### Access keys
 
 - Like a root password, allow **full access**.
 - Typically stored within env variables, database, or configuration file.
 - Should be private, don't include the config file in source control or store in public repos
+- It's recommended that you manage access keys in Azure Key Vault
 - Each storage account has two access keys, this allows key to be rotated:
   1. update connection strings in your app to use secondary access key
   2. Regenerate primary key using Azure portal or CLI.
@@ -178,7 +186,7 @@ There are three types:
 - **User delegation SAS**
   - Secured with Azure AD credentials and also permissions specified for the SAS
   - For Blob only: could be at container or blob level
-  - Recommended over signing with an account key
+  - Recommended over signing with an access key
 - **Service SAS**: scoped at container level, which can be a blob container, a file share, a queue or a table
 - **Account SAS**
 
@@ -195,10 +203,25 @@ Two forms:
   - The start/expiry time and permissions
   - The `sig=F%6GRVAZ5Cdj2Pw4txxxxx` part is an HMAC computed over a string-to-sign and key using SHA256, then encoded using Base64
 
+  The only way to revoke an ad-hoc SAS is to change the account access keys.
+
 - Service SAS with stored access policy
 
-  - Instead of specify the permissions and time on each SAS, you define a **stored access policy** at the container level (blob container or file share). Then reference this policy when you create a service SAS.
+  - Instead of specify the permissions and time on each SAS, you define a **stored access policy** at the container level (blob container, file share, queue or table). You can have a maximum of five stored access policies per container.
+  - Then reference this policy when you create a service SAS, *seems you can only do this programmatically, not in the Portal*
   - This allows you to change the permissions or duration without having to regenerate the storage account keys.
+  - Create a policy using CLI
+
+    ```sh
+    az storage container policy create \
+      --name <stored access policy identifier> \
+      --container-name <container name> \
+      --start <start time UTC datetime> \
+      --expiry <expiry time UTC datetime> \
+      --permissions <(a)dd, (c)reate, (d)elete, (l)ist, (r)ead, or (w)rite> \
+      --account-key <storage account key> \
+      --account-name <storage account name>
+    ```
 
 Two typical designs for using Azure Storage to store user data:
 
@@ -226,7 +249,7 @@ You could specify the blob type and access tier when you create a blob.
 ### Blob types
 
 - **Block blobs (default)**: blocks of data assembled to make a blob, used in most scenarios
-- **Append blobs**: like block blobs, but optimized for append operations, frequently used for logging from one or more sources.
+- **Append blobs**: specialized block blobs optimized for append operations, frequently used for logging from one or more sources (*the `add` permission is for adding a block to an append blob*)
 - **Page blobs**: can be up to 8 TB in size, more efficient for frequent read/write operations. They provide random read/write access to 512-byte pages. Azure VMs use page page blobs as OS and data disks.
 
 ### Access tiers
