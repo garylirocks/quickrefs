@@ -14,6 +14,7 @@
     - [Azure AD](#azure-ad)
     - [Access keys](#access-keys)
     - [Shared access signature (SAS)](#shared-access-signature-sas)
+  - [CLI](#cli)
 - [Blobs](#blobs)
   - [Blob types](#blob-types)
   - [Access tiers](#access-tiers)
@@ -22,12 +23,15 @@
   - [Versioning vs. snapshot](#versioning-vs-snapshot)
   - [Object replication](#object-replication)
   - [Immutable storage for Azure Blobs](#immutable-storage-for-azure-blobs)
-  - [CLI](#cli)
+  - [CLI](#cli-1)
   - [AzCopy](#azcopy)
   - [.NET Storage Client library](#net-storage-client-library)
   - [Properties and Metadata](#properties-and-metadata)
   - [Concurrency](#concurrency)
 - [Files](#files)
+  - [Snapshots](#snapshots)
+  - [File Sync](#file-sync)
+    - [Components](#components)
 
 ## Overview
 
@@ -39,6 +43,10 @@
 - Azure Files: network file shares
 - Azure Queues
 - Azure Tables: *now part of Azure Cosmos DB*
+- Azure Data Lake Storage
+  - Based on Apache Hadoop, is designed for large data volumes and can store unstructured and structured data.
+  - Azure Data Lake Storage Gen1 is a dedicated service.
+  - Azure Data Lake Storage Gen2 is **Azure Blob Storage with the hierarchical namespace** feature enabled on the account.
 
 ### Usages
 
@@ -233,6 +241,19 @@ Two typical designs for using Azure Storage to store user data:
 
     ![SAS provider](images/azure_storage-design-lightweight.png)
 
+### CLI
+
+```sh
+# Create a storage account
+#  - use `--hns` to enable hierarchical namespaces (Data Lake Gen2)
+az storage account create \
+    --name mystorageaccount \
+    --resource-group my-rg \
+    --location westus2 \
+    --sku Standard_LRS \
+    --kind StorageV2 \
+    --hns
+```
 
 ## Blobs
 
@@ -476,3 +497,30 @@ Common scenarios:
 - Storing shared configuration files for VMs, tools.
 - Log files such as diagnostics, metrics and crash dumps.
 - Shared data between on-premises applications and Azure VMs to allow migration.
+
+Compare to Blobs and Disks
+
+- Files have true directory objects, Blobs are a flat namespace.
+- File shares can be mounted concurrently by multiple cloud or on-prem machines, Disks are exclusive to a single VM.
+
+### Snapshots
+
+To protect against unintended changes, accidental deletions, or for backup/auditing purpose, you could take snapshots.
+
+- A snapshot captures a point-in-time, read-only copy of your data.
+- Snapshots are created at the file share level, retrieval is at the individual file level.
+- You cannot delete a share without deleting all the snapshots first.
+- Snapshots are incremental, only data changed after last snapshot  is saved.
+- But you only need to retain the most recent snapshot to restore the share.
+
+### File Sync
+
+- Centralizes file shares in Azure Files, and transforms Windows Server into a quick cache of your file shares.
+- You can use any available protocols to aceess your data locally, such as SMB, NFS, and FTPS.
+
+#### Components
+
+![Azure File Sync](images/azure_file-sync-components.png)
+
+- Storage Sync Service is the top-level Azure resource for Azure File Sync.
+- A Storage Sync Service instance can connect to multiple storage accounts via multiple sync groups.
