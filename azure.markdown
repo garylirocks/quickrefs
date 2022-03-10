@@ -21,6 +21,7 @@
   - [Resource group](#resource-group)
   - [Tags](#tags)
   - [Policy](#policy)
+    - [Assignment](#assignment)
   - [Blueprints](#blueprints)
   - [Locks](#locks)
   - [Azure Resource Manager (ARM)](#azure-resource-manager-arm)
@@ -52,7 +53,6 @@
   - [Azure Application Insights](#azure-application-insights)
   - [Kusto Query Language](#kusto-query-language)
   - [Alerting](#alerting)
-- [Backup and Recovery](#backup-and-recovery)
 - [Troubleshooting](#troubleshooting)
 
 ## Overview
@@ -296,6 +296,7 @@ Another way to organize resources
 - A group of policies is called an **initiative**, it's recommended to use initiatives even when there's only a few policies
 - Policy evaluation happens about once per hour
 - A custom policy definition or initiative can be defined in a **management group** or **subscription** level, not at resource group level
+
 #### Assignment
 
 - You could assign a policy or initiative to a **subscription** or **resource group**
@@ -304,7 +305,6 @@ Another way to organize resources
   - Deny: prevent noncompliant resources from being created,
   - Disabled
 - By default, an assignment will only take effect on newly created resources
-
 
 ### Blueprints
 
@@ -910,9 +910,6 @@ Heartbeat
 - Log alerts
 - Activity Log alerts (resource creation, deletion, etc)
 
-## Backup and Recovery
-
-TODO: what's the difference between Recovery Services vault and Backup vault ?
 
 ## Troubleshooting
 
