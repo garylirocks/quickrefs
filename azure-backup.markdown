@@ -49,7 +49,7 @@ There are several backup options for VMs
 
 - Managed disk snapshots
 
-  - Suitable for dev/test environments
+  - Suitable for **dev/test** environments
   - A snapshot is a read-only full copy of a managed disk
   - Snapshots exist independent of the source disk
   - A snapshot can be used to create new managed disks
@@ -57,7 +57,7 @@ There are several backup options for VMs
 
 - Azure Backup
 
-  - Suitable for VMs running production workloads
+  - Suitable for VMs running **production** workloads
   - Supports **application-consistent backups** for both Windows and Linux VMs
   - Creates recovery points that are stored in geo-redundant recovery vaults
   - When you restore from a recovery point, you can restore the whole VM or just specific files
@@ -68,6 +68,10 @@ There are several backup options for VMs
   - Can replicate to any Azure region
   - Protect from major disaster scenarios when a whole region experiences an outage
   - Recover your applications with a single click in minutes
+
+  ![Azure Site Recovery](images/azure_backup-site-recovery.png)
+
+  *Replication data is stored in Azure Storage, Azure VMs are created when failover occurs*
 
 ### Backup job
 
