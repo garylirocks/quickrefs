@@ -32,6 +32,7 @@
   - [Snapshots](#snapshots)
   - [File Sync](#file-sync)
     - [Components](#components)
+- [Troubleshooting](#troubleshooting)
 
 ## Overview
 
@@ -524,3 +525,21 @@ To protect against unintended changes, accidental deletions, or for backup/audit
 
 - Storage Sync Service is the top-level Azure resource for Azure File Sync.
 - A Storage Sync Service instance can connect to multiple storage accounts via multiple sync groups.
+
+
+## Troubleshooting
+
+- Delete a locked file in Azure File Share
+
+  A file may get locked and you cannot delete it, you need to find and close file handle on the file. See https://infra.engineer/azure/65-azure-clearing-the-lock-on-a-file-within-an-azure-file-share
+
+  ```powershell
+  # get storage account context
+  $Context = New-AzStorageContext -StorageAccountName "StorageAccountName" -StorageAccountKey "StorageAccessKey"
+
+  # find all open handles of a file share
+  Get-AzStorageFileHandle -Context $Context -ShareName "FileShareName" -Recursive
+
+  # close a handle
+  Close-AzStorageFileHandle -Context $Context -ShareName "FileShareName" -Path 'path/to/file' -CloseAll
+  ```

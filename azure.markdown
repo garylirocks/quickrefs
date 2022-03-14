@@ -47,7 +47,6 @@
   - [Vault authentication](#vault-authentication)
   - [Example](#example)
   - [Best practices](#best-practices)
-- [Troubleshooting](#troubleshooting)
 
 ## Overview
 
@@ -813,19 +812,3 @@ In Node, Azure provides packages to access Vault secrets:
 - It's recommended to set up a **separate vault for each environment of each of your applications**, so if someone gained access to one of your vaults, the impace is limited;
 - Don't read secrets from the vault everytime, you should cache secret values locally or load them into memory at startup time;
 
-## Troubleshooting
-
-- Delete a locked file in Azure File Share
-
-  A file may get locked and you cannot delete it, you need to find and close file handle on the file. See https://infra.engineer/azure/65-azure-clearing-the-lock-on-a-file-within-an-azure-file-share
-
-  ```powershell
-  # get storage account context
-  $Context = New-AzStorageContext -StorageAccountName "StorageAccountName" -StorageAccountKey "StorageAccessKey"
-
-  # find all open handles of a file share
-  Get-AzStorageFileHandle -Context $Context -ShareName "FileShareName" -Recursive
-
-  # close a handle
-  Close-AzStorageFileHandle -Context $Context -ShareName "FileShareName" -Path 'path/to/file' -CloseAll
-  ```
