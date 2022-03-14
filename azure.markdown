@@ -20,9 +20,6 @@
   - [Subscription](#subscription)
   - [Resource group](#resource-group)
   - [Tags](#tags)
-  - [Policy](#policy)
-    - [Assignment](#assignment)
-  - [Blueprints](#blueprints)
   - [Locks](#locks)
   - [Azure Resource Manager (ARM)](#azure-resource-manager-arm)
 - [Azure Cloud Adoption Framework](#azure-cloud-adoption-framework)
@@ -47,6 +44,9 @@
   - [Vault authentication](#vault-authentication)
   - [Example](#example)
   - [Best practices](#best-practices)
+- [Policy](#policy)
+  - [Assignment](#assignment)
+- [Blueprints](#blueprints)
 
 ## Overview
 
@@ -276,45 +276,6 @@ Another way to organize resources
 - There are limitations on number of tags for each resource, lengths of tag name and value;
 - Tags are not inherited;
 - Can be used to automate task, such as adding `shutdown:6PM` and `startup:7AM` to virtual machines, then create an automation job that accomplish tasks based on tags;
-
-### Policy
-
-- Policies apply and enforce rules your resources need to follow, such as:
-
-  - only allow specific types of resources to be created;
-  - only allow resources in specific regions;
-  - enforce naming conventions;
-  - specific tags are applied;
-
-- A group of policies is called an **initiative**, it's recommended to use initiatives even when there's only a few policies
-- Policy evaluation happens about once per hour
-- A custom policy definition or initiative can be defined in a **management group** or **subscription** level, not at resource group level
-
-#### Assignment
-
-- You could assign a policy or initiative to a **subscription** or **resource group**
-- An assignment could have one of the effects:
-  - Audit: highlight noncompliant resources,
-  - Deny: prevent noncompliant resources from being created,
-  - Disabled
-- By default, an assignment will only take effect on newly created resources
-
-### Blueprints
-
-Contains some artifacts that could be deployed to existing or new subscriptions:
-
-- Role assignments
-- Policy assignments
-- Resource groups
-- ARM templates
-
-![Blueprint artifacts example](images/azure_blueprint-artifacts-example.png)
-
-Notes:
-
-- Blueprints are versioned
-- The relationship between the blueprint definition and assignment (the deployed resources) is preserved, helping you track and audit your deployments
-- You assign a blueprint to a **management group**, it would deploy to existing and new subscriptions under the group
 
 ### Locks
 
@@ -812,3 +773,55 @@ In Node, Azure provides packages to access Vault secrets:
 - It's recommended to set up a **separate vault for each environment of each of your applications**, so if someone gained access to one of your vaults, the impace is limited;
 - Don't read secrets from the vault everytime, you should cache secret values locally or load them into memory at startup time;
 
+## Policy
+
+- Policies apply and enforce rules your resources need to follow, such as:
+
+  - only allow specific types of resources to be created;
+  - only allow resources in specific regions;
+  - enforce naming conventions;
+  - specific tags are applied;
+
+- A group of policies is called an **initiative**, it's recommended to use initiatives even when there's only a few policies
+- Some Azure Policy resources, such as policy definitions, initiative definitions, and assignments are visible to all users.
+
+### Assignment
+
+Scopes:
+
+|                          | Definition scopes                                       | Assignment scopes                                     |
+| ------------------------ | ------------------------------------------------------- | ----------------------------------------------------- |
+| Custom policy/initiative | <ul><li>management group</li><li>subscription</li></ul> | <ul><li>subscription</li><li>resource group</li></ul> |
+
+Effects:
+
+- An assignment could have one of the effects:
+  - Audit: highlight noncompliant resources,
+  - Deny: prevent noncompliant resources from being created,
+  - Disabled
+- By default, an assignment will only take effect on newly created resources
+
+Evaluation times or events:
+
+- A resource is created or updated
+- A new assignment created
+- A policy or initiative already assigned to a scope is updated
+- During the standard compliance evaluation cycle, once every 24 hours
+
+
+## Blueprints
+
+Contains some artifacts that could be deployed to existing or new subscriptions:
+
+- Role assignments
+- Policy assignments
+- Resource groups
+- ARM templates
+
+![Blueprint artifacts example](images/azure_blueprint-artifacts-example.png)
+
+Notes:
+
+- Blueprints are versioned
+- The relationship between the blueprint definition and assignment (the deployed resources) is preserved, helping you track and audit your deployments
+- You assign a blueprint to a **management group**, it would deploy to existing and new subscriptions under the group

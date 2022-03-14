@@ -127,8 +127,8 @@ _On prem AD is optional here_
 
 - Group types
   - Security groups: for RBAC
-  - Microsoft 365: giving members access to shared mailbox, calendar, files, teams in MS Teams, etc
-  - Distribution: seems only for a group email
+  - Microsoft 365: giving members access to shared mailbox, calendar, files, teams(not channels) in MS Teams, etc
+  - Distribution: seems from Exchange
 
 - Membership types
   - Assigned: assigned manually
@@ -137,10 +137,12 @@ _On prem AD is optional here_
 
 Note:
 
-In the Azure portal, you can see some groups whose membership and group details you can't manage in the portal:
+- In the Azure portal, you can see all the groups, but you can't edit some of them:
 
-- Groups synced from on-premises Active Directory can be managed only in on-premises Active Directory.
-- Other group types such as distribution lists and mail-enabled security groups are managed only in Exchange admin center or Microsoft 365 admin center. You must sign in to Exchange admin center or Microsoft 365 admin center to manage these groups.
+  - Groups **synced from on-premises Active Directory** can be managed only in on-premises Active Directory.
+  - Other group types such as **distribution lists** and **mail-enabled security groups** are managed only in Exchange admin center or Microsoft 365 admin center.
+
+- There is a flag determining whether a group can be assigned Azure AD Roles
 
 ## Administrative Units
 
