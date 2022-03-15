@@ -7,6 +7,8 @@
 - [Alerting](#alerting)
 - [Activity Log](#activity-log)
 - [Log Analytics](#log-analytics)
+  - [Access Control](#access-control)
+  - [VM Insights](#vm-insights)
 - [Kusto Query Language](#kusto-query-language)
 
 ## Overview
@@ -108,9 +110,41 @@ Monitoring services in logical groups:
 - More diagnostic information and metrics, eg. pull information from SQL server, free disk space of VMs, network dependencies between your systems and services
 - Azure Monitor data can be configured to be sent to a Log Analytics workspace
 - VMs can have an agent installed to send data
+- A Log Analytics workspace is the equivalent of a database inside Azure Data Explorer
+- These services all use Log Analytics workspaces to store and query logs:
+  - Microsoft Defender for Cloud
+  - Microsoft Sentinel
+  - Azure Monitor Application Insights
+
+### Access Control
+
+Log Analytics workspaces provide different levels of access control for collected logs:
+
+- Access mode: how users access a workspace
+  - *Workspace-context*: all data in all tables
+  - *Resource-context*: view logs for resources in all tables you have access to
+
+- Access control mode: how permission work for a workspace
+  - *Require workspace permissions*: all data
+  - *Use resource or workspace permissions*: allows granular RBAC
+
+- Table-level RBAC: requires custom roles to grant/deny access to specific tables
+
+### VM Insights
+
+When you enable Insights for a VM, you could get detailed performance metrics and a map showing dependencies like processes running, ports open, connection details, etc
+
+![VM Insights map](images/azure_vm-insights-map.png)
 
 
 ## Kusto Query Language
+
+KQL was originally written for Azure Data Explorer.
+
+Common table names:
+
+![Common table names](images/azure_common-log-tables.png)
+
 
 Example:
 
@@ -126,7 +160,17 @@ Heartbeat
 | summarize arg_max(TimeGenerated, *) by ComputerIP
 ```
 
-Common table names:
+```
+// Render a chart of average CPU usage in 5-minute interval for each computer
 
-![Common table names](images/azure_common-log-tables.png)
+InsightsMetrics
+| where TimeGenerated > ago(1h)
+| where Origin == "vm.azm.ms"
+| where Namespace == "Processor"
+| where Name == "UtilizationPercentage"
+| summarize avg(Val) by bin(TimeGenerated, 5m), Computer //split up by computer
+| render timechart
+```
+
+![Query result chart example](images/azure_log-analytics-chart-example.png)
 
