@@ -273,7 +273,7 @@ i", i', i`      quote block
 ![Vim motions](./images/vim_motions.png)
 
 ```
-ciw     change current word (only the word is deleted, the spaces after it are keeped)
+ciw     change current word (only the word is deleted, the spaces after it are kept)
 caw     change current word (the space after the word will be deleted too)
 
 cis     change current sentence
@@ -284,10 +284,14 @@ gUiw    change word to UPPERCASE
 
 ### Column mode
 
-1. `CTRL-v`/`CTRL-SHIFT-v` to go into column mode;
-2. Select the columns and rows;
-3. `SHIFT-i` to go into insert mode;
-4. Type in text, only the first row is chaning, after `ESC`, changes where be applied to each row;
+*Only useful when you want to edit same columns on each row*
+
+1. Place cursor at the location where you want to edit;
+1. `CTRL-v` or `CTRL-SHIFT-v` to go into column mode;
+1. Select the columns and rows;
+1. Do what you want:
+    - `SHIFT-i` to go into insert mode, type in text, only the first row is changing, after `ESC`, changes will be applied to other rows
+    - `x` to delete, `p` to paste, `~` to change case, etc
 
 ### Increase / Decrease numbers
 
