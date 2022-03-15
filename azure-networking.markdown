@@ -6,6 +6,9 @@
   - [IP addresses](#ip-addresses)
   - [CLI](#cli)
 - [Network security group (NSG)](#network-security-group-nsg)
+  - [Azure platform considerations](#azure-platform-considerations)
+  - [Virtual IP of the host node](#virtual-ip-of-the-host-node)
+    - [`168.63.129.16`](#1686312916)
 - [Network Peering](#network-peering)
   - [CLI](#cli-1)
 - [VPN](#vpn)
@@ -136,6 +139,8 @@ You could add VM NICs to an **App Security Group** (like a custom service tag), 
 ![App Security Group](images/azure_app-security-group-asg-nsg.svg)
 
 ### Azure platform considerations
+
+Details: https://docs.microsoft.com/en-us/azure/virtual-network/network-security-groups-overview#azure-platform-considerations
 
 - **Licensing (Key Management Service)**: Windows images running in a VM will send request to the Key Management Service host services. The request is made outbound through port 1688.
 - **VMs in load-balanced pools**: Source port and address are from the originating computer, not the load balancer. The destination port and address are for the destination VM, not he load balancer
