@@ -1,11 +1,13 @@
 # VS Code
 
 - [Shortcuts](#shortcuts)
-  - [VSCodeVim plugin](#vscodevim-plugin)
-    - [Selection](#selection)
-    - [Action](#action)
-    - [Editing](#editing)
-    - [With NeoVim Enabled](#with-neovim-enabled)
+- [VSCodeVim plugin](#vscodevim-plugin)
+  - [Visual block mode](#visual-block-mode)
+  - [Column selection mode](#column-selection-mode)
+  - [Selection](#selection)
+  - [Navigation/Action](#navigationaction)
+  - [Editing](#editing)
+  - [With NeoVim Enabled](#with-neovim-enabled)
 - [Formatting / Linting](#formatting--linting)
   - [ESLint](#eslint)
     - [`extends` vs `plugins`](#extends-vs-plugins)
@@ -17,30 +19,38 @@
 
 ## Shortcuts
 
-- multi word cursors/selections, allows you to change multi occurence of a word simutaneously: `Ctrl + Shift + L`
-- `Command + Alt + C`: copy absolute path of current file
+- `Ctrl + Shift + L`: multi word cursors/selections, allows you to change multi occurrences of a word simultaneously
 
-### VSCodeVim plugin
+## VSCodeVim plugin
 
-#### Selection
+### Visual block mode
+
+Usually only useful when you have fixed width fields, see note in [vim.markdown](./vim.markdown)
+
+### Column selection mode
+
+1. In visual mode, select all the lines you want to edit;
+1. Toggle Column Selection Mode, by Command Palette, or a shortcut;
+1. Escape, now you have a cursor on each line, do whatever you want;
+
+### Selection
 
 - `af`: in visual mode, select a larger block increasingly
-- `gb`: add cursor to the next word which is the same as current one under cursor
-- `gn`: add cursor to next line
 
-#### Action
+### Navigation/Action
 
 - `gd`: go to definition;
 - `gh`: show hover message (types or error messages);
 - `Shift + <Esc>`: close popup boxes;
 
-#### Editing
+### Editing
 
+- `gb`: toggle multi-cursor mode, add cursor to the next word which is the same as current one under cursor, similar to `Ctrl + Shift + L`, but add cursor one by one
 - `gc`: toggle line comment, `gcc` for current line, `gc2j` for current and next 2 lines;
 - `gC`: toggle block comment;
 - `gq`: reflow and wordwrap long comment lines
 
-#### With NeoVim Enabled
+### With NeoVim Enabled
 
 - `:g/foo/co$` copy all lines with `foo` to the end of file;
 
