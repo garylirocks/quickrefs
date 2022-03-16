@@ -1,7 +1,6 @@
 # Azure Compute
 
 - [VMs](#vms)
-  - [CLI Cheatsheet](#cli-cheatsheet)
   - [Disks](#disks)
   - [Initialize data disks](#initialize-data-disks)
   - [Availability options](#availability-options)
@@ -10,6 +9,7 @@
   - [Use AAD for Linux VM authentication](#use-aad-for-linux-vm-authentication)
   - [Linux Agent](#linux-agent)
   - [Updating](#updating)
+  - [CLI Cheatsheet](#cli-cheatsheet)
 - [App Service](#app-service)
   - [App Service plans](#app-service-plans)
     - [SKUs](#skus)
@@ -88,46 +88,11 @@ Checklist for creating VMs
   - Marketplace has VM images which include popular tech stacks
   - You can create your disk image and upload to Azure storage and use it to create a VM
 
-### CLI Cheatsheet
-
-```sh
-# create a vm
-az vm create \
-  --resource-group my-rg \
-  --location westus \
-  --name my-demo-vm \
-  --image UbuntuLTS \
-  --admin-username azureuser \
-  --generate-ssh-keys \
-  --verbose
-
-# get a table of VMs with selected columns
-az vm list \
-    -g dev \
-    --show-detail \
-    --query '[].{rg:resourceGroup,name:name,ip:privateIps,os:storageProfile.osDisk.osType,state:powerState}' \
-    --output table
-
-# Rg    Name              Ip             Os       State
-# ----  ----------------  -------------  -------  --------------
-# dev   lnx1              192.168.94.1   Linux    VM running
-# dev   web               192.168.94.2   Windows  VM deallocated
-
-# filter by name
-az vm list \
-    -g dev \
-    --show-detail \
-    --query '[?contains(name, `lnx`)].{name:name,ip:privateIps}' \
-    --output table
-
-# Name    Ip
-# ------  -------------
-# lnx1    192.168.94.31
-```
-
 ### Disks
 
-- Local SSD
+Types:
+
+- Local SSD (temporary disk)
   - The temporary disk of each VM, size depending on the size of the VM;
   - No extra charge, already included in the VM cost;
   - Local to the VM, performance is high;
@@ -142,6 +107,9 @@ az vm list \
   - Recommended for all production workloads;
   - Can only be attached to specific VM sizes (designated by a 's' in the name, eg. D2s_v3, Standard F2s_v2)
 
+Operations:
+
+- Data disk could be detached/attached without stopping the VM
 
 ### Initialize data disks
 
@@ -170,7 +138,6 @@ sudo mkfs -t ext4 /dev/sdc1
 sudo mkdir /data && sudo mount /dev/sdc1 /data
 ```
 
-
 ### Availability options
 
 ![Availability Options](images/azure-availability-options.png)
@@ -182,7 +149,10 @@ sudo mkdir /data && sudo mount /dev/sdc1 /data
 
   - 99.95% SLA (connectivity to at least one instance 99.95% of the time)
   - Multiple VMs in an availability set are spread across Fault Domains and Update Domains
+    - The maximum fault domain count is depended on region
+    - The maximum update domain count is 20
   - The VMs in a set should perform identical functionalities and have the same software installed
+  - You can only add a VM to an availability set when creating a VM, you can't add an existing VM to an availability set
   - Combine a Load Balancer with an availability set
 
   ![Availability Sets](images/azure-vm_availability_sets.png)
@@ -493,6 +463,106 @@ Azure has a solution for updating VMs called Update Management
 - You can run updates without logging into the VM. You also don't have to create passwords to install the update
 
 ![Update Management data flow](images/azure_update-management-data-flow.png)
+
+### CLI Cheatsheet
+
+- Create a basic Linux vm for testing
+
+  ```sh
+  # - this creates vnet, subnet, ip, etc
+  # - it would use your local username
+  # - and ~/.ssh/id_rsa.pub
+  # - and port 22 is accessible
+  # - Standard_B1s has 1 vCore, 1024M RAM
+  az vm create \
+    -g my-rg \
+    --name vm1 \
+    --image ubuntuLTS \
+    --size Standard_B1s
+
+  # so you could login to it using
+  ssh vm-public-ip
+  ```
+
+- Create a VM with specified username and SSH key
+
+  ```sh
+  az vm create \
+    --resource-group my-rg \
+    --name vm1 \
+    --admin-username azureuser \
+    --image UbuntuLTS \
+    --ssh-key-values ~/.ssh/azure_rsa.pub \
+    --no-wait
+  ```
+
+  *Use `--no-wait` to move on to next command and avoid blocking*
+
+- Create a VM with system assigned identity
+
+  ```sh
+  # - enable system assigned managed identity
+  # - it would have the 'Contributor' role in the specified scope
+  az vm create \
+    -g my-rg \
+    --name vm1 \
+    --image ubuntuLTS \
+    --size Standard_B1s \
+    --assign-identity '[system]' \
+    --scope $principalId
+  ```
+
+- List images/VM sizes
+
+  ```sh
+  # filter by publisher
+  az vm image list --publisher Microsoft --all --output table
+
+  # filter by location
+  az vm image list --location eastus --output table
+
+  # vm sizes
+  az vm list-sizes --location eastus --output table
+  ```
+
+- Resize a VM
+
+  ```sh
+  # list available sizes
+  az vm list-vm-resize-options \
+    --resource-group my-rg \
+    --name vm1 \
+    --output table
+
+  # resize a vm
+  az vm resize \
+    --resource-group my-rg \
+    --name vm1 \
+    --size Standard_D2s_v3
+  ```
+
+- Query a VM
+
+  ```sh
+  # get ip address
+  az vm list-ip-addresses -n vm1 -o table
+
+  # query a property
+  az vm show \
+    --resource-group my-rg \
+    --name vm1 \
+    --query osProfile.adminUsername \
+    -otsv
+
+  # open a port (on the NSG attached to the VM's NIC)
+  az vm open-port \
+    --resource-group my-rg \
+    --name vm1 \
+    --port 80
+  ```
+
+
+
 
 
 ## App Service
