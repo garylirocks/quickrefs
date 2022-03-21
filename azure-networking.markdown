@@ -150,7 +150,7 @@ Details: https://docs.microsoft.com/en-us/azure/virtual-network/network-security
 
 ### Virtual IP of the host node
 
-- Basic infrastructure services like DHCP, DNS, IMDS and health monitoring are provided through the virtualized host IP addresses **168.63.129.16** and **169.254.169.254**
+- Basic infrastructure services like DHCP, DNS, IMDS and health monitoring are provided through the virtualized host IP addresses **168.63.129.16** and **169.254.169.254** (*`169.254.0.0/16` are "link local" addresses. Routers are not allowed to forward packets sent from an IPv4 "link local" address, so they are always used by a directly connected device*)
 - These IP addresses belong to Microsoft and are the ONLY virtualized IP addresses used in all regions
 - Effective security rules and effective routes will not include these platform rules
 - To override this basic infrastructure communication, you can create a security rule to deny traffic by using these service tags on your NSG rules: AzurePlatformDNS, AzurePlatformIMDS, AzurePlatformLKM
