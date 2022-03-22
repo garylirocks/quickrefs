@@ -3,6 +3,7 @@
 - [VMs](#vms)
   - [Disks](#disks)
   - [Initialize data disks](#initialize-data-disks)
+  - [Disk encryption](#disk-encryption)
   - [Availability options](#availability-options)
   - [Scaling](#scaling)
   - [Provisioning](#provisioning)
@@ -137,6 +138,29 @@ sudo mkfs -t ext4 /dev/sdc1
 # create a mount point and mount
 sudo mkdir /data && sudo mount /dev/sdc1 /data
 ```
+
+### Disk encryption
+
+Two types of encryption (could be used together):
+
+- Azure Storage Service Encryption (SSE, also known as Server-Side Encryption, encryption-at-rest)
+- Azure Disk Encryption (ADE)
+
+Comparison:
+
+|             | SSE                                                       | ADE                                                           |
+| ----------- | --------------------------------------------------------- | ------------------------------------------------------------- |
+| Algorithm   | 256-bit AES                                               | 256-bit AES                                                   |
+| What        | Physical disks in the data center                         | VHD                                                           |
+| Access      | When accessed, data is decrypted and loaded to the memory | only accessible the by VM that owns the disk                  |
+| How         | Enabled by default, can't be disabled                     | VM CPU does the work, BitLocker on Windows, DM-Crypt on Linux |
+| Managed by  | Storage account admin                                     | VM owner                                                      |
+| Key         | Storage account admin                                     | Integrated with Key Vault                                     |
+| Performance | no noticeable impact                                      | typically negligible*                                         |
+| Note        |                                                           | Required for VMs backed up to the Recovery Vault              |
+
+`*` For a CPU-intensive application, there may be a case for leaving the OS disk un-encrypted to maximize performance, and storing application data on a separate encrypted data disk.
+
 
 ### Availability options
 
