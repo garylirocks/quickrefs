@@ -35,6 +35,7 @@
     "SSIS",
     "tfstate",
     "tfvars",
+    "toset",
     "VHDs",
     "VMSS",
     "vnet",

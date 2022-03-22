@@ -484,9 +484,9 @@ module "example_sqs_queue" {
 
 - `for_each`
 
-  - Supports map, list and set
-  - Use `each.key` and `each.value` in the block to access key and value
-
+  - Accepts a map or a **set** of strings (list needs to be converted with `toset()` function)
+  - Can be used in a resource or module block to create multiple instances, each instance is associated with a distinct infrastructure
+  - Use `each.key` and `each.value` in the block to access key and value (`each.key` and `each.value` is the same when a set is provided)
 
     ```terraform
     variable "project" {
@@ -514,7 +514,16 @@ module "example_sqs_queue" {
 
       instance_type      = each.value.instance_type
     }
+
+    # a list of strings converted to a set
+    resource "aws_iam_user" "the-accounts" {
+      for_each = toset( ["Todd", "James", "Alice", "Dottie"] )
+      name     = each.key
+    }
     ```
+
+  - To refer to the instances, **`<TYPE>.<NAME>`** refers to all the instances as a map, **`<TYPE>.<NAME>[INDEX]`** refer to a single instance, eg. `aws_iam_user.the-accounts["Todd"]`
+
 
 - `for..in`
 
@@ -707,6 +716,29 @@ name = "web-sg-${var.resource_tags["project"]}-${var.resource_tags["environment"
     associate_public_ip_address = (count.index == 0 ? true : false)
   }
   ```
+
+- `dynamic` blocks
+
+  ```terraform
+  resource "azurerm_key_vault" "main" {
+    ...
+
+    dynamic "access_policy" {
+      for_each = var.access_policies
+
+      content {
+        tenant_id               = var.tenant_id
+        object_id               = access_policy.value.object_id
+        secret_permissions      = access_policy.value.secret_permissions
+        ...
+      }
+    }
+  }
+  ```
+
+  - This creates repeatable nested blocks inside `resource`, `data`, `provider` or `provisioner` blocks
+  - Different from the `for_each` meta argument, which doesn't accept a list, this `for_each` accepts any collection type
+  - The block label `access_policy` is the default iterator variable name in the block, you could customize it with `iterator` argument
 
 - `splat` expression:
 
