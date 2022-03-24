@@ -4,6 +4,7 @@
   - [Disks](#disks)
   - [Initialize data disks](#initialize-data-disks)
   - [Disk encryption](#disk-encryption)
+    - [ADE](#ade)
   - [Availability options](#availability-options)
   - [Scaling](#scaling)
   - [Provisioning](#provisioning)
@@ -148,19 +149,61 @@ Two types of encryption (could be used together):
 
 Comparison:
 
-|             | SSE                                                       | ADE                                                           |
-| ----------- | --------------------------------------------------------- | ------------------------------------------------------------- |
-| Algorithm   | 256-bit AES                                               | 256-bit AES                                                   |
-| What        | Physical disks in the data center                         | VHD                                                           |
-| Access      | When accessed, data is decrypted and loaded to the memory | only accessible the by VM that owns the disk                  |
-| How         | Enabled by default, can't be disabled                     | VM CPU does the work, BitLocker on Windows, DM-Crypt on Linux |
-| Managed by  | Storage account admin                                     | VM owner                                                      |
-| Key         | Storage account admin                                     | Integrated with Key Vault                                     |
-| Performance | no noticeable impact                                      | typically negligible*                                         |
-| Note        |                                                           | Required for VMs backed up to the Recovery Vault              |
+|                | SSE                                                       | ADE                                                                    |
+| -------------- | --------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Algorithm      | 256-bit AES                                               | 256-bit AES                                                            |
+| What           | physical disks in the data center                         | VHD                                                                    |
+| Access         | When accessed, data is decrypted and loaded to the memory | only accessible by the VM that owns the disk, VM CPU decrypts the data |
+| How            | Enabled by default, can't be disabled                     | BitLocker on Windows, DM-Crypt on Linux                                |
+| Managed by     | Storage account admin                                     | VM owner                                                               |
+| Key management | PMK or CMK                                                | Key Vault                                                              |
+| Performance    | no noticeable impact                                      | typically negligible*                                                  |
 
 `*` For a CPU-intensive application, there may be a case for leaving the OS disk un-encrypted to maximize performance, and storing application data on a separate encrypted data disk.
 
+#### ADE
+
+To encrypt existing VM disks:
+
+1. Create a key vault (need to be in the same region as the VM)
+1. Set the key vault access policy to support disk encryption
+1. Encrypt VM disk using the key vault to store the key
+
+```sh
+az keyvault create \
+    --name "myKeyVault" \
+    --resource-group <resource-group> \
+    --location <location> \
+    --enabled-for-disk-encryption True
+
+# you could encrypt just the OS disk, data or all disks
+az vm encryption enable \
+    --resource-group <resource-group> \
+    --name <vm-name> \
+    --disk-encryption-keyvault <keyvault-name> \
+    --volume-type [all | os | data]
+
+# check encryption status
+az vm encryption show --resource-group <resource-group> --name <vm-name>
+
+# decrypt
+az vm encryption disable --resource-group <resource-group> --name <vm-name>
+
+# encrypt/decrypt could also be done with an ARM template
+az deployment group create \
+    --resource-group <my-resource-group> \
+    --name <my-deployment-name> \
+    --template-uri https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/201-encrypt-running-windows-vm-without-aad/azuredeploy.json
+```
+
+Note:
+
+- Basic size VMs do not support ADE
+- On some Linux distros, only data disks can be encrypted
+- On Windows, only NTFS format disks can be encrypted
+- When adding a new disk to an encrypted VM, it's NOT encrypted automatically, it needs to be properly partitioned, formatted, and mounted before encryption
+- When enabling encryption on new VMs, you could use an ARM template to ensure data is encrypted at the point of deployment
+- ADE is required for VMs backed up to the Recovery Vault
 
 ### Availability options
 

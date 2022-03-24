@@ -712,9 +712,16 @@ Often used for a specific type of high-flow stream of communications used for an
 
 ### Security
 
-- Use AAD to authenticate users and applications
-- Three kind of actions: Get, List and Set
-- Most apps only need 'Get' permission, some may need 'List'
+Two permission models:
+
+- **Vault access policy**: for each individual vault, set permissions for users, groups, apps
+- **RBAC**
+
+You could also enable access for:
+
+- **Azure VM for deployment**: enables Microsoft.Compute resource provider to retrieve secrets when this key vault is referenced in resource creation, for example, when creating a VM
+- **Azure Resource Manager for template deployment**: enables Azure Resource Manager to get secrets when this key vault is referenced in a template deployment
+- **Azure Disk Encryption for volume encryption**
 
 ### Vault authentication
 
@@ -722,20 +729,17 @@ Vault uses AAD to authenticate users and apps:
 
 1. Register your app as a service principle in AAD
 
-  - you register your app as a service principle, and assign vault permissions to it;
-  - the app uses its password or certificate to get an AAD authentication token;
-  - then the app can access Vault secrets using the token;
-  - there is a *bootstrapping problem*, all your secrets are securely saved in the Vault, but you still need to keep a secret outside of the vault to access them;
+    - you register your app as a service principle, and assign vault permissions to it;
+    - the app uses its password or certificate to get an AAD authentication token;
+    - then the app can access Vault secrets using the token;
+    - there is a *bootstrapping problem*, all your secrets are securely saved in the Vault, but you still need to keep a secret outside of the vault to access them;
 
 2. Managed identities for Azure resources
 
-  When you enable managed identity on your web app, Azure activates a **separate token-granting REST service** specifically for use by your app, your app request tokens from this service instead of directly from AAD. Your app needs a secret to access this service, but that **secret is injected into your app's environment variables** by App Service when it starts up. You don't need to manage or store the secret value, and nothing outside of your app can access this secret or the managed identity token service endpoint.
+    When you enable managed identity on your web app, Azure activates a **separate token-granting REST service** specifically for use by your app, your app request tokens from this service instead of directly from AAD. Your app needs a secret to access this service, but that **secret is injected into your app's environment variables** by App Service when it starts up. You don't need to manage or store the secret value, and nothing outside of your app can access this secret or the managed identity token service endpoint.
 
-  - this registers your app in AAD for you, and will delete the registration if you delete the app or disable its managed identity;
-  - managed identities are free, and you can enable/disable it on an app at any time;
-
-
-
+    - this registers your app in AAD for you, and will delete the registration if you delete the app or disable its managed identity;
+    - managed identities are free, and you can enable/disable it on an app at any time;
 
 ### Example
 

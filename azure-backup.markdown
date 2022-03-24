@@ -92,7 +92,7 @@ When you create an image from a VM
   - this image contains all managed disks associated with the VM, including *both OS and data disks*
   - you could create hundreds of VMs from this managed custom image without the need to copy or manage any storage account
 
-Images vs. Snapshots
+**Images vs. Snapshots**
 
   - An image includes **all of the disks** attached to a VM
   - A snapshot applies only to **one disk**
