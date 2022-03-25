@@ -31,7 +31,8 @@
   - [SKUs](#skus)
   - [Distribution modes](#distribution-modes)
 - [Application Gateway](#application-gateway)
-  - [NSG for the AGW subnet](#nsg-for-the-agw-subnet)
+  - [How does routing works](#how-does-routing-works)
+  - [AGW subnet and NSG](#agw-subnet-and-nsg)
 - [Traffic Manager](#traffic-manager)
 - [Front Door](#front-door)
 - [CDN](#cdn)
@@ -768,6 +769,7 @@ Example multi-tier architecture with load balancers
 - Support redirection, rewrite HTTP headers and custom error pages
 - Works at application layer (OSI layer 7)
 - Uses Azure Load Balancer at TCP level (OSI layer 4)
+- Could be internet-facing (public ip) or internal only (private ip)
 
 Benefits over a simple LB:
 
@@ -783,29 +785,72 @@ Components:
 
 ![Application Gateway components](images/azure_application-gateway-components.png)
 
-- Front end: a public IP, a private IP, or both
+- Front end: a public IP, a private IP, or both (*it is a load balancer, and AGW instances are in its backend pool, so we need to allow AzureLoadBalancer in the NSG*)
 - Listeners
   - Defined by protocol, port, host and IP address
   - Two types:
-    - Basic: routes based on path
-    - Multi-site: also route requests using the hostname
-  - Handle TLS/SSL certificates
-- Routing rules: each rule has an associated set of HTTP settings, such as whether to encrypt traffic to back-end, session stickiness, timeout period, etc
-- Back-end pools: each pool could be a fixed set of VMs, a VMSS, an app in Azure App Services, or a collections of on-prem servers
+    - Basic: each port can only have one basic listener
+    - Multi-site: each port can have multiple multi-site lisenters, you specify one or more host names in each listener
+  - Handle TLS/SSL certificates for HTTPS
+  - A listener can have **only one** associated rule
 - WAF:
   - checks each request for common threats: SQL-injection, XSS, command injection, HTTP request smuggling, crawlers, etc
   - based on OWASP rules, referred to as Core Rule Set(CRS)
   - you can opt to select only specific rules, or specify which elements to examine
+- Backend pool: a backend pool can contain one or more IP/FQDN, VM, VMSS and App Services
+- Rule: associates a listener with targets
+  - Rule target types:
+    - Backend pool: with HTTP settings
+    - Redirection: to another listener or external site with a specified HTTP code
+  - You could also have multiple targets based on path
+- HTTP settings: backend port/protocol, cookie-based affinity, time-out value, path or hostname overriding, default or custom probe, etc
 - Health probes
-  - if not configured, a default probe is created, which waits for 30s before deciding whether a server is unavailable
+  - If not configured, a default probe is created, which waits for 30s before deciding whether a server is unavailable
+  - The source IP address for health probes depends on the target
+    - If the target is a public endpoint, then the source IP is the AGW's public IP
+    - If the target is a private endpoint, then the source IP is from the AGW subnet's *private IP address space*
 
-### NSG for the AGW subnet
+### How does routing works
 
-An Application Gateway needs its own subnet, you should create an NSG just for the subnet:
+1. If a request is valid and not blocked by WAF, the rule associated with the listener is evaluated, determining which backend pool to route the request to.
+1. Use round-robin algorithm to select one healthy server from the backend pool.
+1. Opens a new TCP session to the server based on HTTP settings.
 
-| Source         | Dest        | Dest Port   | Protocol | Direction | Allow | Priority | Comment |
-| -------------- | ----------- | ----------- | -------- | --------- | ----- | -------- | ------- |
-| GatewayManager | 10.0.1.0/24 | 65200-65535 | *        | Inbound   | Allow | 100      |         |
+If the target server is:
+  - A private endpoint: AGW connects to it using its **instance private IP addresses**
+  - A public endpoint: AGW uses its frontend public IP (one is assigned if public IP not exists)
+
+AGW inserts six additional headers to all requests before it forwards the requests to the backend:
+
+- `x-forwarded-for`: comma-separated list of IP:port
+- `x-forwarded-port`: the listener port
+- `x-forwarded-proto`: HTTP or HTTPS
+- `x-original-host`
+- `x-original-url`
+- `x-appgw-trace-id`
+
+### AGW subnet and NSG
+
+See: https://docs.microsoft.com/en-us/azure/application-gateway/configuration-infrastructure
+
+An Application Gateway needs its own dedicated subnet:
+
+- An AGW can have multiple instances, each has one private IP from the subnet
+- Another private IP address needed if a private frontend IP is configured
+- A subnet can host multiple AGWs
+- You need to size this subnet appropriately based on the number of instances
+  - V2 SKU can have max. 125 instances, /24 is recommended for the subnet
+
+Suggested NSG for the subnet (See: https://aidanfinn.com/?p=21474):
+
+| Source                | Dest           | Dest Port                                  | Protocol | Direction | Allow | Comment                                                             |
+| --------------------- | -------------- | ------------------------------------------ | -------- | --------- | ----- | ------------------------------------------------------------------- |
+| Internet or IP ranges | Any            | eg. 80, 443                                | TCP      | Inbound   | Allow | Allow Internet or specified client and ports                        |
+| GatewayManager        | Any            | 65200-65535 (v2 SKU), 65503-65534 (v1 SKU) | TCP      | Inbound   | Allow | Azure infrastructure communication, protected by Azure certificates |
+| AzureLoadBalancer     | Any            | *                                          | *        | Inbound   | Allow | Required                                                            |
+| VirtualNetwork        | VirtualNetwork | *                                          | *        | Inbound   | Allow | AllowVirtualNetwork                                                 |
+| Any                   | Internet       | *                                          | *        | Outbound  | Allow | A default outbound rule, required, don't override                   |
+| Any                   | Any            | *                                          | *        | Inbound   | Deny  | Deny everything else, overridding default rules                     |
 
 
 
