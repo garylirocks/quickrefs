@@ -53,6 +53,9 @@ Monitoring services in logical groups:
     - resource logs (formerly known as diagnostic logs)
     - activity logs
     - Azure AD logs
+- Usually for a resource:
+  - Platform metrics and the Activity log are collected and stored automatically, but can be routed to other locations by using a *diagnostic setting*.
+  - Resource Logs are not collected and stored until you create a *diagnostic setting* and route them to one or more locations.
 - Azure Monitor is the service at the top, spans across other native monitoring tools in Azure.
   - Azure Application Insights and Azure Security Center store their collected data in workspace for Azure Monitor, you can then use Azure Monitor Log Analytics to interactively query the data;
 - Use Data Collector API to send data from your custom code
