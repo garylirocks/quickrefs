@@ -31,6 +31,7 @@
   - [SKUs](#skus)
   - [Distribution modes](#distribution-modes)
 - [Application Gateway](#application-gateway)
+  - [NSG for the AGW subnet](#nsg-for-the-agw-subnet)
 - [Traffic Manager](#traffic-manager)
 - [Front Door](#front-door)
 - [CDN](#cdn)
@@ -797,6 +798,15 @@ Components:
   - you can opt to select only specific rules, or specify which elements to examine
 - Health probes
   - if not configured, a default probe is created, which waits for 30s before deciding whether a server is unavailable
+
+### NSG for the AGW subnet
+
+An Application Gateway needs its own subnet, you should create an NSG just for the subnet:
+
+| Source         | Dest        | Dest Port   | Protocol | Direction | Allow | Priority | Comment |
+| -------------- | ----------- | ----------- | -------- | --------- | ----- | -------- | ------- |
+| GatewayManager | 10.0.1.0/24 | 65200-65535 | *        | Inbound   | Allow | 100      |         |
+
 
 
 ## Traffic Manager
