@@ -8,6 +8,7 @@
   - [systemd](#systemd)
     - [Usage](#usage-1)
 - [Journal](#journal)
+- [Update Grub default boot entry](#update-grub-default-boot-entry)
 
 ## Shell
 
@@ -114,3 +115,17 @@ journalctl -b
 journalctl -o [short-iso|json|json-pretty|...]
 ```
 
+## Update Grub default boot entry
+
+If you have multi-boot in a grub menu like this:
+
+```
+Ubuntu
+Memory Test
+Windows 10
+```
+
+usually `Ubuntu` is the default boot entry, if you would like to change it to `Windows 10`, follow these steps:
+
+1. Update the `GRUB_DEFAULT` in `/etc/default/grub` to `2`
+1. Run `sudo update-grub`, this would update `/boot/grub/grub.cfg`
