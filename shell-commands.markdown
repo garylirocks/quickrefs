@@ -136,9 +136,14 @@ merge lines of files, if `-s` is set, merge one file at a time, quite useful for
 echo 'a-------------b' | tr -d '-'
 # ab
 
-# condense multiple occurence of a character to one
+# squeeze multiple occurrences of a character to one
 echo 'a-------------b' | tr -s '-'
 # a-b
+
+# delete characters not in specified range
+# same as: only keep characters from a specified range
+echo abc123 | tr -dc 0-9
+# 123
 
 # lower to upper case
 echo 'ab' | tr -s '[:lower:]' '[:upper:]'
