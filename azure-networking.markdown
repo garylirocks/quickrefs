@@ -42,6 +42,7 @@
   - [Private DNS zones](#private-dns-zones)
   - [CLI](#cli-2)
 - [Networking architecutres](#networking-architecutres)
+- [Hub-spoke architecture](#hub-spoke-architecture)
 
 ## Overview
 
@@ -415,7 +416,7 @@ Additional system routes will be created when you enable:
 
 ![User defined routes](images/azure_user-defined-routes.png)
 
-- You could config user-defined routes (UDRs), by define the next hop in a route to be a virtual network gateway, virtual appliance, vNet or the Internet
+You could config user-defined routes (UDRs), by define the next hop in a route to be a virtual network gateway, virtual appliance, vNet or the Internet
 
 ![Routing example](images/azure_routing-example.png)
 
@@ -1055,3 +1056,11 @@ az network dns record-set list \
 - Hub-spoke
 
   ![Reference architecture Hub-spoke](images/azure_firewall-hub-spoke.png)
+
+
+## Hub-spoke architecture
+
+![Shared services in hub network](images/azure_networking-hub-shared-services.svg)
+
+- Shared services in hub vnet: ExpressRoute Gateway, Management, DMZ, AD DS, etc
+- Hub and each spoke could be in different subscriptions
