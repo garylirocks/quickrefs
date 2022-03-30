@@ -865,6 +865,15 @@ Comparing to Load Balancer:
 
 ![Traffic Manager](images/azure_traffic-manager.png)
 
+There are different routing methods (determines which endpoint is returned)
+
+- **Priority routing**: choose an healthy one with the highest priority
+- **Performance routing**: choose an endpoint with the lowest latency, traffic manager maintains an internet latency table by tracking the roundtrip time between IP address ranges and each Azure datacenter
+- **Weighted routing**: pick a random endpoint based on the weights
+- **Geographic routing**: choose a designated geo endpoint based on DNS query's source IP address
+- **Subnet routing**: static mapping from DNS query's source IP ranges to endpoints
+- **Multivalue routing**: return multiple healthy endpoints in a response, client can retry another one if an endpoint is unresponsive
+
 ## Front Door
 
 ![Front door](images/azure_front-door.png)
