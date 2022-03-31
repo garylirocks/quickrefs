@@ -47,6 +47,7 @@
   - [CLI](#cli-2)
 - [Networking architecutres](#networking-architecutres)
 - [Hub-spoke architecture](#hub-spoke-architecture)
+- [Network Watcher](#network-watcher)
 
 ## Overview
 
@@ -1126,3 +1127,36 @@ az network dns record-set list \
 
 - Shared services in hub vnet: ExpressRoute Gateway, Management, DMZ, AD DS, etc
 - Hub and each spoke could be in different subscriptions
+
+
+## Network Watcher
+
+A combination of network monitoring and diagnostic tools.
+
+- Monitoring
+  - **Topology**: graphical display of a vnet, its subnets, associated NICs, NSGs, route tables, etc
+    ![Network topology](images/azure_network-watcher-topology.png)
+  - **Connection Monitor**: monitor connectivity and latency between a VM and another network resource
+  - **Network Performance Monitor**: going to be replaced by *Connection Monitor*
+
+- Diagnostic tools
+  - **Effective security rules**: all effective NSG rules applied to a network interface
+  - **Next hop**: for a given VM IP and dest IP, shows you the next hop, helps troubleshoot routing table issues
+  - **Packet capture**: records all of the packets sent to and from a VM, depends on *Network Watcher Agent VM Extension* (automatically installed when you start a capture session)
+  - **VPN troubleshoot**: troubleshoots virtual network gateways or connections
+  - **IP flow verify**
+  - **NSG diagnostics**
+  - **Connection troubleshoot**
+
+  Compare these three tools:
+
+  |            | IP flow verify                                 | NSG diagnostics                                                                              | Connection Troubleshoot                                       |
+  | ---------- | ---------------------------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+  | Parameters | target VM NIC, packet details(5-tuple, in/out) | VM/NIC/VMSS/AGW, protocol, in/out, source IP/CIDR, dest IP, dest port                        | source(VM/AGW/Bastion), dest(VM/FQDN/IP), TCP/ICMP, dest port |
+  | What       | NSG rules for **one VM NIC**                   | all NSGs that will be traversed                                                              | real connectivity and latency check                           |
+  | Result     | the denying rule                               | **rules applied in each NSG** and final allow/deny status                                    | latency and **every hop** in the route                        |
+  | Note       | n/a                                            | source could be a CIDR, service tag or wildcard(\*), target IP and port could be wildcard(*) | like Connection Monitor, but only check the connection once   |
+
+- Logging
+  - NSG Flow Logs: log all traffic in your NSGs
+  - Traffic Analytics: query/visualize your NSG Flow Log data
