@@ -26,6 +26,10 @@
   - [Web Application Firewall (WAF)](#web-application-firewall-waf)
 - [DDoS Protection](#ddos-protection)
 - [Private Endpoints](#private-endpoints)
+  - [DNS resolution](#dns-resolution)
+  - [Limitations](#limitations)
+  - [CLI example:](#cli-example)
+  - [Private Link](#private-link)
 - [Service endpoints](#service-endpoints)
 - [Azure Load Balancer](#azure-load-balancer)
   - [SKUs](#skus)
@@ -159,6 +163,7 @@ Details: https://docs.microsoft.com/en-us/azure/virtual-network/network-security
 - To override this basic infrastructure communication, you can create a security rule to deny traffic by using these service tags on your NSG rules: AzurePlatformDNS, AzurePlatformIMDS, AzurePlatformLKM
 
 #### `168.63.129.16`
+
 Typically, you should allow this IP in any local (in the VM) firewall policies (outbound direction). It's not subject to user defined routes.
 
 - The VM Agent requires outbound communication over port 80/tcp and 32526/tcp with WireServer(168.63.129.16). This is not subject to the configured NSGs.
@@ -589,17 +594,14 @@ Network rules are processed before application rules
 ![Private endpoints for storage](images/azure_private-endpoints-for-storage.jpg)
 
 * **Azure Private Endpoint**: a special network interface for an Azure service in your vNet, it gets an IP from the address range of the vNet
-* Connection between the private endpoint and the storage service uses a **private link**, which traverses only Microsoft backbone network
-  - A Private Link can connect to Azure PaaS services, customer-owned or Microsoft partner services.
-  - A Private Link service receives connections from multiple private endpoints. A private endpoint connects to one Private Link service.
-  - Private Link works across Azure AD tenants
-  - No gateways, NAT devices, ExpressRoute or VPN connections, or public IP addresses are needed.
 * Applications in the vNet can connect to the service over the private endpoint seamlessly, **using the same connection string and authorization mechanisms that they would use otherwise**;
 * You **DON'T** need a firewall rule to allow traffic from a vNet that has a private endpoint, since the storage firewall only controls access through the public endpoint. Private endpoints instead rely on the consent flow for granting subnet access;
 * You need a separate private endpoint for each storage service in a storage account that you need to access: Blobs, Files, Static Websites, ...;
 * For RA-GRS accounts, you should create a separate private endpoint for the secondary instance;
 
-DNS resolution:
+### DNS resolution
+
+See here for details: https://docs.microsoft.com/en-us/azure/private-link/private-endpoint-dns#azure-services-dns-zone-configuration
 
 Clients on a vNet using the private endpoint should use the same connection string (not using the *privatelink* URL), as clients connecting to the public endpoint. This requires DNS configuration.
 
@@ -620,11 +622,46 @@ In the vNet (private DNS auto configured):
 
 ```sh
 # after
+
+# this is by public Microsoft DNS
 garystoryagefoo.blob.core.windows.net. 60 IN CNAME garystoryagefoo.privatelink.blob.core.windows.net.
+
+# this is the record in the private DNS Zone
 garystoryagefoo.privatelink.blob.core.windows.net. 9 IN A 10.0.0.5
 ```
 
-CLI example:
+A few scenarios for DNS resolution:
+
+- Single vNet without custom DNS server
+
+  ![Private endpoint DNS in single vnet](images/azure_private-endpoint-single-vnet-azure-dns.png)
+
+- Hub-spoke vnets without custom custom DNS server
+
+  ![Private endpoint DNS in hub-spoke vnets](images/azure_private-endpoint-hub-and-spoke-azure-dns.png)
+
+- Use a DNS forwarder
+
+  ![Private endpoint DNS with a DNS forwarder](images/azure_private-endpoint-dns-forwarder.png)
+
+### Limitations
+
+Private endpoint is a special network interface, there are some known limitations.
+
+- Network policies like NSGs were not supported for private endpoints, you need to explicitly disable them on the subnet hosting the endpoints.
+
+- NSG and UDR support for private endpoints are in **public review** now
+
+- Traffic that's destined for a private endpoint through a UDR might be asymmetric: return traffic from a private endpoint bypasses an NVA and attempts to return to source, to mitigate this:
+  - Use SNAT at the NVA, this ensures symmetric routing
+  - Or use a private endpoint UDR (public preview)
+
+- To enable the private endpoint UDR support:
+  - Set subnet property `PrivateEndpointNetworkPolicies` to enabled
+  - Register feature on subscription `Microsoft.Network/AllowPrivateEndpointNSG`
+
+
+### CLI example:
 
 ```sh
 # get the resource id of the storage account
@@ -670,6 +707,31 @@ az network private-endpoint dns-zone-group create \
    --name MyZoneGroup \
    --zone-name storage
 ```
+
+### Private Link
+
+Connection between the private endpoint and the storage service uses a **private link**, which traverses only Microsoft backbone network
+
+- A Private Link can connect to Azure PaaS services, Azure hosted customer-owned/partner services.
+- A Private Link service receives connections from multiple private endpoints. A private endpoint connects to one Private Link service.
+- Private Link works across Azure AD tenants
+- No gateways, NAT devices, ExpressRoute or VPN connections, or public IP addresses are needed.
+- Azure App Service and Azure Functions become inaccessible publicly when they are associated with a private endpoint, other Azure services require additional access controls.
+- To make your service private to consumers in Azure, place your service behind a standard Azure Load Balancer, then you can create a Private Link Service referencing the load balancer.
+  - Choose a subnet for NAT IP addresses
+  - You need disable `privateLinkServiceNetworkPolicies` on this subnet, only applies to the NAT IP you chose, NSG still applies to other resources in the subnet
+
+    ```sh
+    az network vnet subnet update \
+      --name default \
+      --resource-group myResourceGroup \
+      --vnet-name myVirtualNetwork \
+      --disable-private-link-service-network-policies true
+    ```
+
+  - All consumer traffic will appear to originate from this pool of private IP addresses (192.168.0.5 in the diagram below) to the service provider.
+
+  ![Private link service](images/azure_private-link-service.png)
 
 
 ## Service endpoints
