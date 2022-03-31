@@ -648,7 +648,7 @@ A few scenarios for DNS resolution:
 
 Private endpoint is a special network interface, there are some known limitations.
 
-- Network policies like NSGs were not supported for private endpoints, you need to explicitly disable them on the subnet hosting the endpoints.
+- Network policies like NSGs were not supported for private endpoints, you need to explicitly disable them on the subnet hosting the endpoints. (*other resources in the subnet are still governed by NSG*)
 
 - NSG and UDR support for private endpoints are in **public review** now
 
