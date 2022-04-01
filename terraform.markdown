@@ -372,15 +372,22 @@ In a collaborative or CI/CD context, you may want to run and save state files re
         ...
 
         backend "azurerm" {
-          resource_group_name  = "learning-rg"
-          storage_account_name = "tfstatey2hkc"
-          container_name       = "tfstate"
-          key                  = "terraform.tfstate"
         }
       }
       ```
 
-  1. There are multiple ways to authenticate to the Azure storage:
+  1. Create a file `backend.tfvars`
+
+      ```
+      resource_group_name  = "learning-rg"
+      storage_account_name = "tfstatey2hkc"
+      container_name       = "tfstate"
+      key                  = "terraform.tfstate"
+      # access_key         = 'xxxx'
+      # sas_key            = 'xxxx'
+      ```
+
+  1. `access_key` or `sas_key` is used for authentication, they could be put in the config file, or an environment variable
 
       1. access key
 
@@ -399,7 +406,8 @@ In a collaborative or CI/CD context, you may want to run and save state files re
           export ARM_SAS_TOKEN
           ```
 
-  1. A state file will be created in the storage account when you run `terraform apply`
+  1. Init with the backend config file `terraform init -backend-config="backend.tfvars"`
+  1. When you run `terraform apply`, the state file will be created or updated
 
 
 ## HCL language features
