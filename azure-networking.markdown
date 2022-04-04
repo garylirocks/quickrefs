@@ -1153,10 +1153,11 @@ A combination of network monitoring and diagnostic tools.
   |            | IP flow verify                                 | NSG diagnostics                                                                              | Connection Troubleshoot                                       |
   | ---------- | ---------------------------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
   | Parameters | target VM NIC, packet details(5-tuple, in/out) | VM/NIC/VMSS/AGW, protocol, in/out, source IP/CIDR, dest IP, dest port                        | source(VM/AGW/Bastion), dest(VM/FQDN/IP), TCP/ICMP, dest port |
-  | What       | NSG rules for **one VM NIC**                   | all NSGs that will be traversed                                                              | real connectivity and latency check                           |
+  | What       | NSG rules for **one VM NIC**                   | all NSGs that will be traversed                                                              | connectivity and latency check                                |
+  | How        | logical test only                              | logical or real ?                                                                            | real connection                                               |
   | Result     | the denying rule                               | **rules applied in each NSG** and final allow/deny status                                    | latency and **every hop** in the route                        |
   | Note       | n/a                                            | source could be a CIDR, service tag or wildcard(\*), target IP and port could be wildcard(*) | like Connection Monitor, but only check the connection once   |
 
 - Logging
   - NSG Flow Logs: log all traffic in your NSGs
-  - Traffic Analytics: query/visualize your NSG Flow Log data
+  - Traffic Analytics: query/visualize your NSG Flow Log data, requires Log Analytics
