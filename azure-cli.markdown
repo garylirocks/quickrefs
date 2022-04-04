@@ -5,6 +5,7 @@
 - [Configurations](#configurations)
 - [Groups and resources](#groups-and-resources)
 - [Storage](#storage)
+- [Preview features](#preview-features)
 - [JMESPath](#jmespath)
 
 ## General
@@ -83,7 +84,6 @@ az resource show
 ```
 
 
-
 ## Storage
 
 ```sh
@@ -113,9 +113,35 @@ az storage container create \
 ```
 
 
+## Preview features
+
+```sh
+# list preview features
+az feature list \
+  --namespace="Microsoft.Network" \
+  --query "@[?contains(@.name, 'Watcher')].{Name: name, State: properties.state}" \
+  -otable
+
+# Name                                                          State
+# ------------------------------------------------------------  -------------
+# Microsoft.Network/AllowNetworkWatcher                         NotRegistered
+# Microsoft.Network/AllowNetworkWatcherAzureReachabilityReport  NotRegistered
+# Microsoft.Network/AllowNetworkWatcherConnectivityCheck        NotRegistered
+# Microsoft.Network/DisableNetworkWatcherAutocreation           NotRegistered
+
+# register a feature on current subscription
+az feature register \
+  --namespace="Microsoft.Network" \
+  --name="AllowNetworkWatcher"
+```
+
+
 ## JMESPath
 
 `--query` uses [JMESPath](https://jmespath.org/) to query JSON data
+
+You could use `jp` (https://github.com/jmespath/jp
+) on command line to try out expressions.
 
 Given an example JSON data like this:
 
@@ -138,75 +164,60 @@ Given an example JSON data like this:
 }
 ```
 
-- Basic expressions
+Some common expressions:
 
-  - `people[1]`
+```sh
+jp -c -f temp.json "people[1]"
+# {"age":25,"name":"Barney"}
 
-    ```
-    {
-      "age": 25,
-      "name": "Barney"
-    }
-    ```
+jp -c -f temp.json "people[1].name"
+# "Barney"
 
-  - `people[1].name`
+jp -c -f temp.json "people[1:3].name"
+# ["Barney","Wilma"]
 
-    ```
-    "Barney"
-    ```
+jp -c -f temp.json "people[].name"
+# ["Fred","Barney","Wilma"]
 
-  - `people[1:3]`
+jp -c -f temp.json 'people[? age >= `27`].name'
+# ["Fred","Wilma"]
 
-    ```
-    [
-      {
-        "age": 25,
-        "name": "Barney"
-      },
-      {
-        "age": 27,
-        "name": "Wilma"
-      }
-    ]
-    ```
+jp -c -f temp.json "people[:1].{N: name, A: age}"
+# [{"A":28,"N":"Fred"}]
+```
 
-- Filtering
+With a JSON array like this
 
-  ```sh
-  people[?age>=`27`].name
+```json
+[
+  {
+    "name": "Fred",
+    "age": 28
+  },
+  {
+    "name": "Barney",
+    "age": 25
+  },
+  {
+    "name": "Wilma",
+    "age": 27
+  }
+]
+```
 
-  # [
-  #   "Fred",
-  #   "Wilma"
-  # ]
+Some common operations
 
-  people[?contains(@.name, `"F"`)]
+```sh
+jp -c -f temp.json "[?name == 'Fred']"
+# [{"age":28,"name":"Fred"}]
 
-  # [
-  #   {
-  #     "age": 28,
-  #     "name": "Fred"
-  #   }
-  # ]
-  ```
+jp -c -f temp.json "[?contains(name, 'F')]"
+# [{"age":28,"name":"Fred"}]
 
-- MultiSelect
+jp -c -f temp.json "[? starts_with(name, 'F') || starts_with(name, 'B')].name"
+# ["Fred","Barney"]
 
-  ```sh
-  # remap field names
-  people[:1].{N: name, A: age}
-
-  # [
-  #   {
-  #     "A": 28,
-  #     "N": "Fred"
-  #   }
-  # ]
-  ```
-
-
-
-
-
-
+jp -c -f temp.json "[? starts_with(name, 'F') || starts_with(name, 'B')].name | sort(@) | {names: @}"
+# {"names":["Barney","Fred"]}
+```
 
