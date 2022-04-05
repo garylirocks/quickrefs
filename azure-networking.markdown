@@ -3,14 +3,15 @@
 - [Overview](#overview)
 - [Virtual networks](#virtual-networks)
   - [Subnets](#subnets)
-  - [IP addresses](#ip-addresses)
   - [CLI](#cli)
+- [IP](#ip)
+  - [CLI](#cli-1)
 - [Network security group (NSG)](#network-security-group-nsg)
   - [Azure platform considerations](#azure-platform-considerations)
   - [Virtual IP of the host node](#virtual-ip-of-the-host-node)
     - [`168.63.129.16`](#1686312916)
 - [Network Peering](#network-peering)
-  - [CLI](#cli-1)
+  - [CLI](#cli-2)
 - [VPN](#vpn)
   - [Site to site](#site-to-site)
   - [Point to site](#point-to-site)
@@ -37,6 +38,7 @@
 - [Application Gateway](#application-gateway)
   - [How does routing works](#how-does-routing-works)
   - [AGW subnet and NSG](#agw-subnet-and-nsg)
+  - [CLI](#cli-3)
 - [Traffic Manager](#traffic-manager)
 - [Front Door](#front-door)
 - [CDN](#cdn)
@@ -44,7 +46,7 @@
   - [Custom domain HTTPS](#custom-domain-https)
 - [DNS](#dns)
   - [Private DNS zones](#private-dns-zones)
-  - [CLI](#cli-2)
+  - [CLI](#cli-4)
 - [Networking architecutres](#networking-architecutres)
 - [Hub-spoke architecture](#hub-spoke-architecture)
 - [Network Watcher](#network-watcher)
@@ -81,7 +83,19 @@ Each vNet is segmented into multiple subnets:
   - `x.x.x.2`, `x.x.x.3`: Reserved by Azure to map the Azure DNS IPs to the VNet space
   - `x.x.x.255`: Network broadcast address
 
-### IP addresses
+### CLI
+
+```sh
+# list vNets
+az network vnet list --output table
+
+# list subnets
+az network vnet subnet list \
+        --vnet-name my-vnet \
+        --output table
+```
+
+## IP
 
 Three ranges of non-routable IP addresses for internal networks:
 
@@ -108,15 +122,15 @@ Public IP SKUs
 ### CLI
 
 ```sh
-# list vNets
-az network vnet list --output table
+# create a public IP with a DNS label
+az network public-ip create \
+  --resource-group myRG \
+  --name garyPublicIP \
+  --sku Standard \
+  --dns-name garyip
 
-# list subnets
-az network vnet subnet list \
-        --vnet-name my-vnet \
-        --output table
+# then `garyip.australiaeast.cloudapp.azure.com` resolves to this IP
 ```
-
 
 ## Network security group (NSG)
 
@@ -834,6 +848,7 @@ Example multi-tier architecture with load balancers
 - Works at application layer (OSI layer 7)
 - Uses Azure Load Balancer at TCP level (OSI layer 4)
 - Could be internet-facing (public ip) or internal only (private ip)
+- Support manual or auto scaling
 
 Benefits over a simple LB:
 
@@ -907,16 +922,88 @@ An Application Gateway needs its own dedicated subnet:
 
 Suggested NSG for the subnet (See: https://aidanfinn.com/?p=21474):
 
-| Source                | Dest           | Dest Port                                  | Protocol | Direction | Allow | Comment                                                             |
-| --------------------- | -------------- | ------------------------------------------ | -------- | --------- | ----- | ------------------------------------------------------------------- |
-| Internet or IP ranges | Any            | eg. 80, 443                                | TCP      | Inbound   | Allow | Allow Internet or specified client and ports                        |
-| GatewayManager        | Any            | 65200-65535 (v2 SKU), 65503-65534 (v1 SKU) | TCP      | Inbound   | Allow | Azure infrastructure communication, protected by Azure certificates |
-| AzureLoadBalancer     | Any            | *                                          | *        | Inbound   | Allow | Required                                                            |
-| VirtualNetwork        | VirtualNetwork | *                                          | *        | Inbound   | Allow | AllowVirtualNetwork                                                 |
-| Any                   | Internet       | *                                          | *        | Outbound  | Allow | A default outbound rule, required, don't override                   |
-| Any                   | Any            | *                                          | *        | Inbound   | Deny  | Deny everything else, overridding default rules                     |
+| Source                | Dest           | Dest Port                                  | Protocol | Direction | Allow | Comment                                                                            |
+| --------------------- | -------------- | ------------------------------------------ | -------- | --------- | ----- | ---------------------------------------------------------------------------------- |
+| Internet or IP ranges | Any            | eg. 80, 443                                | TCP      | Inbound   | Allow | Allow Internet or specified client and ports                                       |
+| GatewayManager        | Any            | 65200-65535 (v2 SKU), 65503-65534 (v1 SKU) | TCP      | Inbound   | Allow | Azure infrastructure communication, protected by Azure certificates                |
+| AzureLoadBalancer     | Any            | *                                          | *        | Inbound   | Allow | Required                                                                           |
+| VirtualNetwork        | VirtualNetwork | *                                          | *        | Inbound   | Allow | AllowVirtualNetwork                                                                |
+| Any                   | Internet       | *                                          | *        | Outbound  | Allow | A default outbound rule, required (eg. connection back to clients), don't override |
+| Any                   | Any            | *                                          | *        | Inbound   | Deny  | Deny everything else, overridding default rules                                    |
 
+### CLI
 
+```sh
+# create a public ip with DNS label
+az network public-ip create \
+  --resource-group myRG \
+  --name appGatewayPublicIp \
+  --sku Standard \
+  --dns-name myapp${RANDOM}
+
+# create an AGW with the public ip
+az network application-gateway create \
+  --resource-group myRG \
+  --name myAppGateway \
+  --sku WAF_v2 \
+  --capacity 2 \
+  --vnet-name myVnet \
+  --subnet appGatewaySubnet \
+  --public-ip-address appGatewayPublicIp \
+  --http-settings-protocol Http \
+  --http-settings-port 8080 \
+  --private-ip-address 10.0.0.4 \
+  --frontend-port 8080
+
+# create a backend pool of VMs
+az network application-gateway address-pool create \
+  --gateway-name myAppGateway \
+  --resource-group myRG \
+  --name vmPool \
+  --servers 10.0.1.4 10.0.1.5
+
+# create a backend pool of app service
+az network application-gateway address-pool create \
+    --resource-group myRG \
+    --gateway-name myAppGateway \
+    --name appServicePool \
+    --servers myapp.azurewebsites.net
+
+# create a front-end port
+az network application-gateway frontend-port create \
+    --resource-group myRG \
+    --gateway-name myAppGateway \
+    --name port80 \
+    --port 80
+
+# create a listener
+az network application-gateway http-listener create \
+    --resource-group myRG \
+    --name myListener \
+    --frontend-port port80 \
+    --frontend-ip appGatewayFrontendIP \
+    --gateway-name myAppGateway
+
+# health probe
+az network application-gateway probe create ...
+# add http settings
+az network application-gateway http-settings create ...
+
+# path-based routing
+az network application-gateway url-path-map create ...
+# add a rule to the map
+az network application-gateway url-path-map rule create ...
+
+# create a routing rule
+az network application-gateway rule create \
+    --resource-group myRG \
+    --gateway-name myAppGateway \
+    --name appServiceRule \
+    --http-listener myListener \
+    --rule-type PathBasedRouting \
+    --address-pool appServicePool \
+    --url-path-map urlPathMap
+```
 
 ## Traffic Manager
 
