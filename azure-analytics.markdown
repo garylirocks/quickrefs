@@ -67,8 +67,9 @@ IR types and functions:
   - **Feature/working branch**, the branch you work on
   - **Collaboration branch**: `master` by default, don't change it directly, should only accept pull request
   - **Publish branch**: `adf_publish` by default
-    - corresponds to the live settings of ADF
-    - when you click the "Publish" button in the portal, Azure updates this branch based on your collaboration branch
+    - created/manged by ADF, don't update manually
+    - when you click the "Publish" button in the portal, ADF creates/updates this branch
+    - contains ARM templates for all the published entities in ADF
 - In the portal, you could load different branches, make changes, validate and save
 
 
@@ -79,9 +80,9 @@ IR types and functions:
 
 - The `adf_publish` branch serves as the artifact for the release pipeline, which runs an ARM task to deploy resources to Test/Prod ADF
 - A file named `arm-template-parameters-definition.json` controls what properties get parametrized when ADF generates the ARM templates
-- In the `adf_publish` branch, you will find a full template and linked templates, you could use either of them to deploy to Test/Prod:
+- In the `adf_publish` branch, you get two versions of the templates, full and linked, you could use either of them to deploy to Test/Prod:
   - `ARMTemplatedForFactory.json`: the full ARM template
-  - `linkedTemplates/`: a folder contains linked templates, to bypass resource number limitations on a single template, need to be uploaded to a storage account, so Azure can access them during deployment
+  - `linkedTemplates/`: a folder containing linked templates, to bypass resource number limitations on a single template, need to be uploaded to a storage account, so Azure can access them during deployment
 
 
 Best practices:
