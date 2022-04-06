@@ -1,13 +1,13 @@
-# Azure Analytics
+# Azure Data Factory
 
-- [Azure Data Factory](#azure-data-factory)
+- [Overview](#overview)
 - [Integration Runtime](#integration-runtime)
 - [Security](#security)
 - [Git integration](#git-integration)
 - [CI/CD process](#cicd-process)
 - [Object definition examples](#object-definition-examples)
 
-## Azure Data Factory
+## Overview
 
 Cloud-base ETL (*extract-transform-load*) and data integration service, it can:
 
