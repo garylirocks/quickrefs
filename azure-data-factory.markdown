@@ -2,6 +2,7 @@
 
 - [Overview](#overview)
 - [Integration Runtime](#integration-runtime)
+  - [Managed Virtual Network and Manged Private Endpoint](#managed-virtual-network-and-manged-private-endpoint)
 - [Security](#security)
 - [Git integration](#git-integration)
 - [CI/CD process](#cicd-process)
@@ -49,6 +50,16 @@ IR types and functions:
 | Azure       | Data Flow, Data movement, Activity dispatch |
 | Self-hosted | Data movement, Activity dispatch            | Data movement, Activity dispatch |
 | Azure-SSIS  | SSIS package execution                      | SSIS package execution           |
+
+
+### Managed Virtual Network and Manged Private Endpoint
+
+See details here: https://docs.microsoft.com/en-us/azure/data-factory/managed-virtual-network-private-endpoint
+
+- An Azure Integration Runtime could be placed within an managed vNet, and use private endpoints to securely connect to supported data stores.
+- If a PasS data store has private endpoint enabled, ADF could *ONLY* access it using a managed private endpoint, no matter whether the data store is publicly accessible or not.
+
+![Manged vNet](images/azure_managed-vnet-architecture-diagram.png)
 
 
 ## Security
