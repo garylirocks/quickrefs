@@ -2,7 +2,10 @@
 
 - [Overview](#overview)
 - [Common commands](#common-commands)
-- [Working with objects](#working-with-objects)
+- [Customize output](#customize-output)
+  - [Filtering](#filtering)
+  - [Examples](#examples)
+- [Files](#files)
 - [Networking](#networking)
 
 ## Overview
@@ -82,21 +85,113 @@ Get-Module
 Install-Module AzureADPreview
 ```
 
-## Working with objects
+
+## Customize output
+
+When output an object, if there is a registered view for the object type, it is used, which likely does not include all properties of the object.
 
 ```powershell
-# show details of a returned object
-Get-Process -Name *powershell* | Get-Member
+$p=Get-Process powershell
+$p
+
+# Handles  NPM(K)    PM(K)      WS(K)     CPU(s)     Id  SI ProcessName
+# -------  ------    -----      -----     ------     --  -- -----------
+#     604      30   189008     203916       2.75  16040   4 powershell
+```
+
+You can inspect the object, to see what properties and methods exist
+
+```powershell
+# inspect the object
+$p | Get-Member
+
 #    TypeName: System.Diagnostics.Process
 
 # Name                       MemberType     Definition
 # ----                       ----------     ----------
 # Handles                    AliasProperty  Handles = Handlecount
 # ...
-
-# filter result columns using 'Select-Object'
-Get-Process -Name *powershell* | Get-Member | Select-Object -Property MemberType -Unique
+# Kill                       Method         void Kill()
+# ...
 ```
+
+And customize the output with `Select-Object`
+
+```powershell
+# show all properties
+$p | Select-Object -Property *
+
+# show selected properties
+$p | Select-Object -Property Id,ProcessName
+
+#    Id ProcessName
+#    -- -----------
+# 11392 powershell
+```
+
+### Filtering
+
+Some cmdlet has filtering built-in, this is most efficient
+
+```powershell
+Get-ChildItem -Filter gary.* | Select-Object Name
+
+# Name
+# ----
+# gary.txt
+```
+
+If not, you could use `Where-Object`
+
+```powershell
+Get-ChildItem | Where-Object Name -Like gary*
+
+# equivalent to
+Get-ChildItem | Where-Object -Property Name -Like -Value gary*
+
+# or you could use a script block
+Get-ChildItem | Where-Object {$_.Name -Like 'gary*'}
+```
+
+### Examples
+
+- Filter with `Where-Object`, sort with `Sort-Object`, limit with `Select-Object`
+
+  ```powershell
+  ls | Where-Object {$_.Name -like '*.txt'} `
+    | Sort-Object -Property Name -Descending `
+    | Select-Object -First 2 -Property Name
+
+  # Name
+  # ----
+  # zoe.txt
+  # jack.txt
+  ```
+
+- Output as a list instead of a table
+
+  ```powershell
+  ls | Select-Object Name | Format-List
+
+  # Name : gary.txt
+  # Name : jack.txt
+  # Name : zoe.txt
+  ```
+
+
+## Files
+
+```powershell
+# list items, you could use its alias `ls`
+Get-ChildItem
+
+# create a directory
+New-Item -ItemType Directory testFolder
+
+# create a file
+New-Item -ItemType File a.txt
+```
+
 
 ## Networking
 
