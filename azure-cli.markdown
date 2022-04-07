@@ -33,13 +33,16 @@ Common parameters and shorthand syntax:
 az login
 
 # list subscriptions
-az account list
+az account list -otable
 
 # set active account/subscription
 az account set --subscription gary-default
 
 # logout a specific user
 az logout --username gary@foo.com
+
+# get tenant id of your default account
+az account show --query 'tenantId' -otsv
 ```
 
 ## Configurations
@@ -220,4 +223,3 @@ jp -c -f temp.json "[? starts_with(name, 'F') || starts_with(name, 'B')].name"
 jp -c -f temp.json "[? starts_with(name, 'F') || starts_with(name, 'B')].name | sort(@) | {names: @}"
 # {"names":["Barney","Fred"]}
 ```
-
