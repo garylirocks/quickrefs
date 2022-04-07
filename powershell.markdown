@@ -2,6 +2,7 @@
 
 - [Overview](#overview)
 - [Common commands](#common-commands)
+- [Working with objects](#working-with-objects)
 - [Networking](#networking)
 
 ## Overview
@@ -34,18 +35,26 @@ $PSVersionTable.PSVersion
 $PSVersionTable.PSVersion.Major
 ```
 
-Help
+Find commands
 
 ```powershell
 # find commands
-Get-Command *blob*
+Get-Command *file*
 
-# find commands in Azure.Storage, start with 'get' and operate on blobs
-Get-Command -Module Azure.Storage -Verb get* -Noun *blob*
+# find commands in specified modules
+Get-Command '*file*' -Module Microsoft.PowerShell.*
 
-# download help files, otherwise only summary help is available locally
-Update-Help
+# find commands that could work on parameters of "Process" type
+Get-Command -ParameterType Process
+# CommandType     Name                 Version    Source
+# -----------     ----                 -------    ------
+# Cmdlet          Get-Process          3.1.0.0    Microsoft.PowerShell.Management
+# Cmdlet          Stop-Process         3.1.0.0    Microsoft.PowerShell.Management
+```
 
+Get help
+
+```powershell
 # get help for a command
 help ls
 
@@ -55,11 +64,25 @@ Get-Help Get-ChildItem
 # show examples
 Get-Help Get-ChildItem -Examples
 
+# show more details
+Get-Help Get-ChildItem -Details
+
 # get online help
 Get-Help Get-ChildItem -Online
+
+# download help files, otherwise only summary help is available locally
+Update-Help
 ```
 
-Inspect object
+Modules
+
+```powershell
+Get-Module
+
+Install-Module AzureADPreview
+```
+
+## Working with objects
 
 ```powershell
 # show details of a returned object
@@ -73,13 +96,6 @@ Get-Process -Name *powershell* | Get-Member
 
 # filter result columns using 'Select-Object'
 Get-Process -Name *powershell* | Get-Member | Select-Object -Property MemberType -Unique
-
-# find commands operate on the Process type
-Get-Command -ParameterType Process
-# CommandType     Name                           Version    Source
-# -----------     ----                           -------    ------
-# Cmdlet          Debug-Process                  3.1.0.0    Microsoft.PowerShell.Management
-# Cmdlet          Enter-PSHostProcess            3.0.0.0    Microsoft.PowerShell.Core
 ```
 
 ## Networking
