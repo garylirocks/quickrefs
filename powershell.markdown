@@ -5,6 +5,9 @@
 - [Customize output](#customize-output)
   - [Filtering](#filtering)
   - [Examples](#examples)
+- [Modules](#modules)
+  - [Import](#import)
+  - [Inspect](#inspect)
 - [Files](#files)
 - [Networking](#networking)
 
@@ -177,6 +180,30 @@ Get-ChildItem | Where-Object {$_.Name -Like 'gary*'}
   # Name : jack.txt
   # Name : zoe.txt
   ```
+
+
+## Modules
+
+A modules is a package that contains PowerShell members, such as cmdlets, providers, functions, workflows, variables and aliases.
+
+### Import
+
+- If a module is in `$env:PSModulePath`, it is automatically imported when you call any commands in the module.
+- Otherwise, use `Import-Module` cmdlet
+- `$PSModuleAutoloadingPreference` controls the auto loading behavior
+
+### Inspect
+
+```powershell
+# list modules already imported into the session
+Get-Module
+
+# list all installed modules
+Get-Module -ListAvailable
+
+# find commands in a module
+Get-Command -Module Microsoft.PowerShell.Management
+```
 
 
 ## Files
