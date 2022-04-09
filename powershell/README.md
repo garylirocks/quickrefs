@@ -1,6 +1,6 @@
 # PowerShell
 
-- [Code examples](#code-examples)
+- [More topics](#more-topics)
 - [Overview](#overview)
   - [Components](#components)
   - [Language features](#language-features)
@@ -17,10 +17,12 @@
 - [Files](#files)
 - [Networking](#networking)
 
-## Code examples
 
-See examples and more docs here: https://github.com/garylirocks/learning-powershell
+## More topics
 
+- [Environment variables](./environment-variables/)
+- [Parameters](./parameters//)
+- [Errors](./errors/)
 
 ## Overview
 
