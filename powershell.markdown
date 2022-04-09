@@ -1,6 +1,11 @@
 # PowerShell
 
+- [Code examples](#code-examples)
 - [Overview](#overview)
+  - [Components](#components)
+  - [Language features](#language-features)
+  - [Execution policy](#execution-policy)
+- [Profiles](#profiles)
 - [Common commands](#common-commands)
 - [Customize output](#customize-output)
   - [Filtering](#filtering)
@@ -8,12 +13,18 @@
 - [Modules](#modules)
   - [Import](#import)
   - [Inspect](#inspect)
+- [Strings](#strings)
 - [Files](#files)
 - [Networking](#networking)
 
+## Code examples
+
+See examples and more docs here: https://github.com/garylirocks/learning-powershell
+
+
 ## Overview
 
-Is made of a command-line shell, a scripting language and a configuration management framework.
+### Components
 
 - Shell
   - Similar to other shells: help system, pipeline, aliases
@@ -25,6 +36,80 @@ Is made of a command-line shell, a scripting language and a configuration manage
   - Built-in support for common data formats like CSV, JSON and XML
 - Configuration management
   - PowerShell Desired State Configuration (DSC), manage infrastructure with configuration as code
+
+### Language features
+
+- **Case insensitive**, eg. `Write-Output` is the same as `write-output`
+- Works in the mid-ground between compiled and interpreted languages:
+  - First, code is compiled into an AST in memory
+  - The AST is checked for major issues
+  - If everything is OK, it is run without the need for a compiled executable program
+
+
+### Execution policy
+
+On Windows, you could set execution policy to restrict what kind of scripts can be run on the machine.
+
+```powershell
+# after this, current user can only run signed scripts
+Set-ExecutionPolicy -ExecutionPolicy AllSigned -Scope CurrentUser
+```
+
+## Profiles
+
+A profile is a script that runs when PowerShell starts. You could customize environment variables with it.
+
+Usual profile file locations:
+
+| Description                          | Path                                                                 |
+| ------------------------------------ | -------------------------------------------------------------------- |
+| All users, all hosts                 | `$PSHOME\Profile.ps1`                                                |
+| All users, current host - console    | `$PSHOME\Microsoft.PowerShell_profile.ps1`                           |
+| All users, current host - ISE        | `$PSHOME\Microsoft.PowerShellISE_profile.ps1`                        |
+| Current user, all hosts              | `$Home\[My ]Documents\PowerShell\Profile.ps1`                        |
+| Current user, current host - console | `$Home[My ]Documents\PowerShell\Microsoft.PowerShell_profile.ps1`    |
+| Current user, current host - ISE     | `$Home[My ]Documents\PowerShell\Microsoft.PowerShellISE_profile.ps1` |
+
+- "Host" here means the application hosting your current PowerShell session, PowerShell console and ISE are different hosts, :
+
+  - In Console
+
+    ```powershell
+    (Get-Host).Name
+    # ConsoleHost
+    ```
+
+  - In ISE (Integrated Scripting Environment)
+
+    ```powershell
+    (Get-Host).Name
+    # Windows PowerShell ISE Host
+    ```
+
+- The `$PROFILE` variable is an object that stores all the profile paths for current host. By default, there's no profile files, you could create one and put your customizations in it.
+
+  ```powershell
+  # shows profile file location for current host, current user
+  $PROFILE
+
+  # show all profile file locations
+  $PROFILE | Select-Object *
+
+  # create a profile file
+  New-Item -Path $Profile.CurrentUserCurrentHost
+  ```
+
+- ISE loads its own set of profiles
+
+    ```powershell
+    $profile | Select-Object *
+
+    # AllUsersAllHosts       : C:\Windows\System32\WindowsPowerShell\v1.0\profile.ps1
+    # AllUsersCurrentHost    : C:\Windows\System32\WindowsPowerShell\v1.0\Microsoft.PowerShellISE_profile.ps1
+    # CurrentUserAllHosts    : C:\Users\Gary Li\Documents\WindowsPowerShell\profile.ps1
+    # CurrentUserCurrentHost : C:\Users\Gary Li\Documents\WindowsPowerShell\Microsoft.PowerShellISE_profile.ps1
+    ```
+
 
 ## Common commands
 
@@ -206,6 +291,25 @@ Get-Command -Module Microsoft.PowerShell.Management
 ```
 
 
+
+## Strings
+
+```powershell
+$Name="Gary"
+
+# single quote, no interpretation
+Write-Host 'My name is $Name'
+# My name is $Name
+
+# double quote, backtick for escaping
+Write-Host "`$Name is $Name"
+# $Name is Gary
+
+# use $() for an expression
+Write-Host "`$Name has $($Name.length) characters"
+# $Name has 4 characters
+```
+
 ## Files
 
 ```powershell
@@ -215,8 +319,8 @@ Get-ChildItem
 # create a directory
 New-Item -ItemType Directory testFolder
 
-# create a file
-New-Item -ItemType File a.txt
+# create a file with initial content
+New-Item -ItemType File a.txt -Value "hello world"
 ```
 
 
@@ -229,3 +333,4 @@ nslookup google.com
 # check connection to a port
 Test-NetConnection 192.168.1.3 -Port 22
 ```
+
