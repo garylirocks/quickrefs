@@ -7,6 +7,7 @@
 - [Storage](#storage)
 - [Preview features](#preview-features)
 - [JMESPath](#jmespath)
+- [Azure Cloud Shell](#azure-cloud-shell)
 
 ## General
 
@@ -143,8 +144,13 @@ az feature register \
 
 `--query` uses [JMESPath](https://jmespath.org/) to query JSON data
 
-You could use `jp` (https://github.com/jmespath/jp
-) on command line to try out expressions.
+You could use `jp` (https://github.com/jmespath/jp) on command line to try out expressions.
+
+NOTE:
+
+- **Literal strings inside an expression needs to be in single quotes**, so this works: **`jp -f x.json "people[? contains(name, 'Barney')]"`**, not this: `jp -f x.json 'people[? contains(name, "Barney")]'`
+- String comparing functions are case-sensitive, and seems there are no regular expression functions
+
 
 Given an example JSON data like this:
 
@@ -223,3 +229,11 @@ jp -c -f temp.json "[? starts_with(name, 'F') || starts_with(name, 'B')].name"
 jp -c -f temp.json "[? starts_with(name, 'F') || starts_with(name, 'B')].name | sort(@) | {names: @}"
 # {"names":["Barney","Fred"]}
 ```
+
+
+## Azure Cloud Shell
+
+- You could use either Bash or PowerShell terminal
+- It could create a file share for you the first time you use it (you could specify the storage account for the file share)
+- The file share is mounted at `~/clouddrive`, **only files in this folder are persisted**
+- Config files like `.bashrc`, `.vimrc`, `.tmux.conf` in home folder are regenerated each time
