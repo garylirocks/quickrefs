@@ -367,24 +367,29 @@ retrieve getchar getcwd getdirentries getenv
 
 How folding is handled depends on the `foldmethod` option
 
-- `manual`:
+- `set foldmethod=indent`  fold by indentation levels
+- `set foldmethod=manual`:
 
   ```
-  zf{motion}            # fold with {motion}, e.g. `zfap`, zfa{
-  :{range}fo[ld]        # :,+10fo fold current with next 10 lines
+  zf{motion}            # fold with {motion}, e.g. `zfap`, `zfa{`
+
+  :{range}fo[ld]        # :,+10fo fold current line with next 10 lines
   ```
 
-- `indent`  fold by indentation levels
-- `syntax`  based on syntax files
+- `set foldmethod=syntax`  based on syntax files
 
 Folding shortcuts
 
 ```
 za/zA                    # toggle a fold (current/all level)
+zm/zM                    # fold more (one/all levels in whole buffer)
+zr/zR                    # reduce folding (one/all fold levels in whole buffer)
 zd/zD                    # delete fold marks, not the text
-zm/zM                    # fold one/all More level in whold buffer
-zr/zR                    # Reduce one/all fold level in whold buffer
+```
 
+Other settings:
+
+```
 :set foldcolumn=1     # show 1-column gutter for fold marks
 ```
 
