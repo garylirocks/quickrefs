@@ -36,6 +36,9 @@
   - [Use remote state file](#use-remote-state-file)
   - [Azure DevOps Pipeline](#azure-devops-pipeline)
 - [Internals](#internals)
+- [Terraformer](#terraformer)
+  - [Installation](#installation)
+  - [Run](#run)
 
 ## Overview
 
@@ -1138,3 +1141,48 @@ Terraform is comprised of core and plugins:
 
 - Core: reads the configurations and builds the resource dependency graph
 - Plugins: providers or provisioners
+
+
+## Terraformer
+
+Terraformer (https://github.com/GoogleCloudPlatform/terraformer) can be used to generate Terraform configs from existing resources.
+
+### Installation
+
+If you are using Azure CLI for authentication to Azure, there is an issue to run this on Linux (see https://github.com/GoogleCloudPlatform/terraformer/issues/1149), Azure CLI 2.28.0 works on Windows, follow these steps:
+
+1. Install Azure CLI 2.28.0 on Windows (remove existing one first if needed);
+1. Install Terraform - https://www.terraform.io/downloads
+   1. Download exe file for required provider from here - https://github.com/GoogleCloudPlatform/terraformer/releases
+   2. Add the exe file path to path variable
+1. Create a folder and initialize the terraform provider and run terraformer commands from there
+
+### Run
+
+In PowerShell
+
+```powershell
+az login
+
+# set subscription id
+$env:ARM_SUBSCRIPTION_ID="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+
+# list supported resources
+terraformer-azure-windows-amd64.exe import azure list
+
+# generate Terraform code
+#   - limit to "my-rg" resource group
+#   - specify resource types
+#   - filter by full resource ids
+#
+# In this case, storage_account resources are filtered, not other resources
+terraformer-azure-windows-amd64.exe import azure `
+  --resource-group my-rg `
+  --resources resource_group,storage_account,storage_container,keyvault `
+  --filter "storage_account=<full-resource-id1>:<full-resource-id2>"
+
+# or exclude a resource type
+terraformer-azure-windows-amd64.exe import azure `
+  --resource-group my-rg `
+  --excludes "keyvault"
+```
