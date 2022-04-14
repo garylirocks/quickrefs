@@ -196,7 +196,7 @@ There are three types of service principals:
     --query "[].objectId" \
     --output tsv)
 
-  # if you need to create another role assignment
+  # if you need to create another role assignment, use object id
   az role assignment create \
     --assignee $SP_OBJECT_ID \
     --role "ROLE_A" \
@@ -207,6 +207,28 @@ There are three types of service principals:
     --filter "PublisherName eq 'Default Directory'" \
     -otable
   ```
+
+  A service principal object looks like this:
+
+  ```sh
+  [
+    {
+      "appDisplayName": "MY-SP",
+      "appId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+      "objectId": "oooooooo-oooo-oooo-oooo-oooooooooooo",
+      "objectType": "ServicePrincipal",
+      "odata.type": "Microsoft.DirectoryServices.ServicePrincipal",
+      "servicePrincipalNames": [
+        "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+      ],
+      "servicePrincipalType": "Application",
+      ...
+    }
+  ]
+  ```
+
+  - Use **`appId`** (the same in `servicePrincipalNames`) as the username for CLI login `az login --service-principal -u <appId> -p <pass> --tenant <tenantId>`
+  - Use the **`objectId`** in role assignment
 
 - Managed identities for Azure services
 
