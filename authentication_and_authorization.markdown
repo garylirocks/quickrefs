@@ -14,9 +14,9 @@
 
 ## JWT
 
-JWT is a token format, containing three base64url encoded segments separated by period ('.') characters. 
+JWT is a token format, containing three base64url encoded segments separated by period (`.`) character.
 
-- The first segment represents the JOSE Header 
+- The first segment represents the JOSE Header
 
   ```json
   {"kid":"1e9gdk7","alg":"RS256"}
@@ -25,18 +25,18 @@ JWT is a token format, containing three base64url encoded segments separated by 
     - `kid` is the key identifier, used to find a key in the JWK Set to verify the signature;
     - `alg` is the signature algorithm, `RS256` here represents RSASSA-PKCS-v1_5 using SHA-256;
 
-- The second segment represents the claims in the token 
+- The second segment represents the claims in the token
 
   ```json
   {
-   "iss": "http://server.example.com",
-   "sub": "248289761001",
-   "aud": "s6BhdRkqt3",
-   "nonce": "n-0S6_WzA2Mj",
-   "exp": 1311281970,
-   "iat": 1311280970,
-   "name": "Jane Doe",
-   ...
+    "iss": "http://server.example.com",
+    "sub": "248289761001",
+    "aud": "s6BhdRkqt3",
+    "nonce": "n-0S6_WzA2Mj",
+    "exp": 1311281970,
+    "iat": 1311280970,
+    "name": "Jane Doe",
+    ...
   }
   ```
 
@@ -101,7 +101,7 @@ The simple way for user authentication is using cookies:
 
 ![Auth with cookies](images/auth_cookie.png)
 
-If website A want to access your info stored in website B, it's used to be done in this way:
+If website A wants to access your info stored in website B, it's used to be done in this way:
 
 ![Pre OAuth](images/auth_pre-oauth.png)
 
