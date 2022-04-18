@@ -8,8 +8,10 @@
 - [Users](#users)
 - [Groups](#groups)
 - [Administrative Units](#administrative-units)
-- [App registrations](#app-registrations)
-- [Providing identities to services](#providing-identities-to-services)
+- [Workload identities](#workload-identities)
+  - [App registrations vs. Service principals](#app-registrations-vs-service-principals)
+  - [Example](#example)
+  - [Service Principals](#service-principals)
 - [Role-based access control (RBAC)](#role-based-access-control-rbac)
   - [Azure RBAC roles vs. Azure AD roles](#azure-rbac-roles-vs-azure-ad-roles)
 - [Logging and analytics](#logging-and-analytics)
@@ -117,7 +119,7 @@ _On prem AD is optional here_
 ## Users
 
 - User types:
-  - Member (could be defined in this AAD, another ADD, or synced from on-prem AD)
+  - Member (could be defined in this AAD, another AAD, or synced from on-prem AD)
   - Guest (accounts from other cloud providers)
 - Users with Global Administrator or User Administrator role can create new users
 - When you delete an account, the account remains in suspended state for 30 days
@@ -149,27 +151,54 @@ Note:
 - To restrict administrative scope in organizations that are made up of independent divisions, such as School of Business and School of Engineering in a University
 - Apply scope only to management permissions
 
-## App registrations
 
-|     | App registrations | Enterprise Applications                                                                            |
-| --- | ----------------- | -------------------------------------------------------------------------------------------------- |
-|     |                   | <ul><li>service principals (application)</li><li>service principals (managed identities)</li></ul> |
+## Workload identities
 
+![Identity types](./images/azure_identity-types.svg)
 
-App registrations vs. Service principals
+Azure AD has three types of workload identities:
+
+- Application
+- Service principal (application)
+- Managed identities: A special type of service principal that eliminates the need for developers to manage credentials
+
+### App registrations vs. Service principals
+
+|                 | App registrations                                                                                                                                            | Service principals                                                                                                                               |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Where           | home tenant                                                                                                                                                  | in every tenant where the application is used                                                                                                    |
+| What            | a template or blueprint to create one or more service principal objects, has some *static properties* that are applied to all the created service principals | an instance of the application object in a single tenant                                                                                         |
+| How to create   | Create an App in the Portal, an admin adds an App from the app gallery, MS Graph API / PowerShell, etc                                                       | when an application is given permission to access resources in a tenant (upon registration or consent)                                           |
+| Defines         | <ul><li>how tokens are issued</li> <li>the resources the application needs to access</li> <li>actions the application can take</li></ul>                     | <ul><li>what the app can actually do in a specific tenant</li><li>who can access the app</li><li>and what resources the app can access</li></ul> |
+| ID              | App/Client ID (globally unique)                                                                                                                              | Object ID                                                                                                                                        |
+| In the Portal   | App Registrations                                                                                                                                            | Enterprise Applications                                                                                                                          |
+| Microsoft Graph | `application`                                                                                                                                                | `servicePrincipal`                                                                                                                               |
 
 - If you register an application in the portal, an application object as well as a service principal object are automatically created in your home tenant. If you register/create an application using the Microsoft Graph APIs, creating the service principal object is a **separate step**.
+- By default, all users in your directory have rights to register application objects and discretion over which applications they give access to their organizational data through consent (limited to their own data).
+- When the **first** user sign in to an application and grant consent, that will **create a service principal** in your tenant, any following consent grant info will be stored on the same service principal.
 
-## Providing identities to services
+
+### Example
+
+![Application objects relationship](images/azure_application-objects-relationship.svg)
+
+1. Creating the application and service principal in the home tenant
+2. In Contoso and Fabrikam, administrators complete consent, a service principal is created in their company's Azure AD tenant and assigned the permissions that the administrator granted.
+3. Each consumer tenant has its own service principal object.
+
+
+
+
+### Service Principals
 
 There are three types of service principals:
 
-- Service principals
+- **Legacy**
+- **Application**
 
-  - A service principal is an identity used by any service or application
   - You should create a different service principal for each of your application
-  - Listed under **Enterprise applications** in Azure Portal
-
+  - For history reason, it's possible to create service principals without first creating an application object. The Microsoft Graph API requires an application object before creating a service principal.
 
   ```sh
   SP_NAME='My-Service-Principal'
@@ -230,9 +259,11 @@ There are three types of service principals:
   - Use **`appId`** (the same in `servicePrincipalNames`) as the username for CLI login `az login --service-principal -u <appId> -p <pass> --tenant <tenantId>`
   - Use the **`objectId`** in role assignment
 
-- Managed identities for Azure services
+- **Managed identities**
 
   - For Azure resources only
+  - Eliminate the need for developers to manage credentials
+  - When a managed identity is enabled, a service principal representing that managed identity is created in your tenant
   - Listed under **Enterprise applications -> Managed Identities** in Azure Portal
 
   Two types:
@@ -274,6 +305,7 @@ There are three types of service principals:
         --object-id <principal id> \
         --secret-permissions get list
     ```
+
 
 ## Role-based access control (RBAC)
 
