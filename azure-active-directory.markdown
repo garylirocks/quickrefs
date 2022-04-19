@@ -188,8 +188,6 @@ Azure AD has three types of workload identities:
 3. Each consumer tenant has its own service principal object.
 
 
-
-
 ### Service Principals
 
 There are three types of service principals:
@@ -237,6 +235,73 @@ There are three types of service principals:
     -otable
   ```
 
+  Service principal with certificate-based authentication
+
+  - Use an existing local cert
+
+    ```sh
+    # CERTIFICATE must be appended to the PRIVATE KEY within the `.pem` file
+    az ad sp create-for-rbac --name myServicePrincipalName \
+                          --role roleName \
+                          --scopes /subscriptions/mySubscriptionID/resourceGroups/rg-temp-001 \
+                          --cert @/path/to/cert.pem
+    ```
+
+  - Use existing cert in a key vault
+
+    ```sh
+    az ad sp create-for-rbac --name myServicePrincipalName \
+                         --role roleName \
+                         --scopes /subscriptions/mySubscriptionID/resourceGroups/rg-temp-001 \
+                         --keyvault vaultName \
+                         --cert certificateName
+    ```
+
+  - Use a newly generated self-signed cert
+
+    ```sh
+    az ad sp create-for-rbac --name myServicePrincipalName \
+                         --role roleName \
+                         --scopes /subscriptions/mySubscriptionID/resourceGroups/rg-temp-001 \
+                         --create-cert
+    ```
+
+    This creates a `.pem` file, which looks like
+
+    ```
+    -----BEGIN PRIVATE KEY-----
+    myPrivateKeyValue
+    -----END PRIVATE KEY-----
+    -----BEGIN CERTIFICATE-----
+    myCertificateValue
+    -----END CERTIFICATE-----
+    ```
+
+  - Use a newly generated self-signed cert and put it in a key vault
+
+    ```sh
+    # generate a cert and save it to a key vault
+    az ad sp create-for-rbac --name myServicePrincipalName \
+                        --role roleName \
+                        --scopes /subscriptions/mySubscriptionID/resourceGroups/rg-temp-001 \
+                        --create-cert \
+                        --cert certificateName \
+                        --keyvault vaultName
+    ```
+
+    To retrieve the cert and convert it to a PEM file:
+
+    ```sh
+    az keyvault secret download \
+        --file /path/to/cert.pfx \
+        --vault-name VaultName \
+        --name CertName \
+        --encoding base64
+    openssl pkcs12 -in cert.pfx -passin pass: -out cert.pem -nodes
+    ```
+
+    **You need `az keyvault secret download` here to retrieve the private key and the cert, `az keyvault certificate download` only downloads the public potion of a certificate**
+
   A service principal object looks like this:
 
   ```sh
@@ -256,8 +321,20 @@ There are three types of service principals:
   ]
   ```
 
-  - Use **`appId`** (the same in `servicePrincipalNames`) as the username for CLI login `az login --service-principal -u <appId> -p <pass> --tenant <tenantId>`
-  - Use the **`objectId`** in role assignment
+  Login to a service principal:
+
+    ```sh
+    # use a password
+    az login --service-principal --username appID --tenant tenantID --password PASSWORD
+
+    # use a cert
+    # the cert must be a PEM or DER file, in ASCII format
+    # when using a PEM file, CERTIFICATE must be appended to the PRIVATE KEY section
+    az login --service-principal --username appID --tenant tenantID --password /path/to/cert
+    ```
+
+    - Use **`appId`** (the same in `servicePrincipalNames`) as the username for CLI login `az login --service-principal -u <appId> -p <pass> --tenant <tenantId>`, the service principal needs RBAC roles to login
+    - Use the **`objectId`** in role assignment
 
 - **Managed identities**
 
