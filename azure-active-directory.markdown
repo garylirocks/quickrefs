@@ -233,6 +233,11 @@ There are three types of service principals:
   az ad sp list \
     --filter "PublisherName eq 'Default Directory'" \
     -otable
+
+  # list all role assignments for an SP in current subscription
+  az role assignment list \
+      --all \
+      --assignee <SP name or object id>
   ```
 
   Service principal with certificate-based authentication
