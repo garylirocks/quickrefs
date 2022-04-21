@@ -1113,9 +1113,9 @@ Common X.509 certificate encoding formats and extensions:
 
 `*.pem`, `*.crt`, `*.ca-bundle`, `*.cer`, `*.p7b`, `*.p7s` files contain one or more X.509 digital certificate files that use base64 (ASCII) encoding.
 
-A `.pfx` file, also known as PKCS #12, is a single, password protected certificate archive that **contains the entire certificate chain plus the matching private key**. Essentially it is everything that any server will need to import a certificate and private key from a single file.
+A `.pfx` file, also known as PKCS #12, is a single archive file that **contains the entire certificate chain plus the matching private key**, it *could be password protected*. Essentially it is everything that a server needs, so often used for import/export.
 
-see:
+See:
 - https://www.ssls.com/knowledgebase/what-are-certificate-formats-and-what-is-the-difference-between-them/
 - https://blog.neilsabol.site/post/azure-cdn-custom-https-secret-contains-unsupported-content-type-x-pkcs12/
 
