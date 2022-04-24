@@ -75,7 +75,7 @@ openssl pkcs12 -in cert.pfx -passin pass: -out cert.pem -nodes
 Two permission models:
 
 - **Vault access policy**: for each individual vault, set permissions for users, groups, apps
-- **RBAC**
+- **RBAC**: access can be inherited, and can be more granular: set permissions on specific keys, secrets or certificates
 
 You could also enable access for:
 
