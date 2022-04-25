@@ -8,6 +8,8 @@
 - [Preview features](#preview-features)
 - [JMESPath](#jmespath)
 - [Azure Cloud Shell](#azure-cloud-shell)
+  - [File persistence](#file-persistence)
+  - [PowerShell](#powershell)
 
 ## General
 
@@ -234,6 +236,74 @@ jp -c -f temp.json "[? starts_with(name, 'F') || starts_with(name, 'B')].name | 
 ## Azure Cloud Shell
 
 - You could use either Bash or PowerShell terminal
-- It could create a file share for you the first time you use it (you could specify the storage account for the file share)
-- The file share is mounted at `~/clouddrive`, **only files in this folder are persisted**
-- Config files like `.bashrc`, `.vimrc`, `.tmux.conf` in home folder are regenerated each time
+- Comes with common dev tools pre-installed: zsh, tmux, Azure CLI, AzCopy, vim, git, npm, kubectl, helm, MySQL client, sqlcmd, iPython, Terraform, Ansible, etc
+- Runs on a temporary host on a per-user, per-session basis
+  - Multiple sessions are run on the same machine
+  - You could open a port, and preview whatever is served by it in browser
+- Requires an Azure file share to be mounted
+- Persists `$HOME` using a 5GB image held in the file share
+- You can find information regarding your Cloud Shell container by inspecting environment variables prefixed with `ACC_`, eg. `ACC_LOCATION` is the region or your container
+- By default Cloud Shell runs in a container in a Microsoft network separate from your resources. This means it cannot access private resources. You could deploy Cloud Shell into your own vnet, see: https://docs.microsoft.com/en-us/azure/cloud-shell/private-vnet
+
+### File persistence
+
+- On first launch, you are prompted to associate a new or existing file share to persist files across sessions.
+- For security reason, each user should provision their own storage account.
+
+*Azure storage firewall is not supported for cloud shell storage account.*
+
+Files are persisted in two ways:
+  - **Disk image**: for your `$HOME` directory, a 5GB image, at `<fileshare>/.cloudconsole/acc_<user>.img`, changes sync automatically
+  - **File share**: mounted at `$HOME/clouddrive`, which maps to the file share
+
+You could use `clouddrive` command to unmount current file share or mount a new share
+
+```sh
+# show current mounts
+df -h
+
+# unmount current file share, this terminate current sessions
+clouddrive unmount
+
+# mount a new file share
+clouddrive mount \
+  -s mySubscription \
+  -g myRG \
+  -n storageAccountName \
+  -f fileShareName
+```
+
+### PowerShell
+
+- Runs PowerShell Core 6 in a Linux environment
+- File names are case-sensitive, while cmdlet, parameter and values are not case-sensitive
+- `$HOME` is still at `/home/gary`, same as Bash
+- Some Azure resources are mapped to directories in a **special `Azure:` drive**
+
+  ```powershell
+  PS Azure:\> dir
+
+  #     Directory: Azure:/my-subscription
+
+  # Mode Name
+  # ---- ----
+  # +    AllResources
+  # +    ResourceGroups
+  # +    StorageAccounts
+  # +    VirtualMachines
+  # +    WebApps
+
+  # Azure:/my-subscription
+  PS Azure:\> cd ./ResourceGroups/
+  # Azure:/my-subscription/ResourceGroups
+  PS Azure:\> dir
+
+  #     Directory: Azure:/my-subscription/ResourceGroups
+
+  # Mode ResourceGroupName Location      ProvisioningState Tags
+  # ---- ----------------- --------      ----------------- ----
+  # +    general           australiaeast Succeeded
+  # +    NetworkWatcherRG  australiaeast Succeeded
+  ```
+
+  - Force refresh your resources with `dir -Force`
