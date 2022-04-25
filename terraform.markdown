@@ -1151,11 +1151,13 @@ Terraformer (https://github.com/GoogleCloudPlatform/terraformer) can be used to 
 
 If you are using Azure CLI for authentication to Azure, there is an issue to run this on Linux (see https://github.com/GoogleCloudPlatform/terraformer/issues/1149), Azure CLI 2.28.0 works on Windows, follow these steps:
 
-1. Install Azure CLI 2.28.0 on Windows (remove existing one first if needed);
-1. Install Terraform - https://www.terraform.io/downloads
+1. Install Azure CLI 2.28.0 on Windows
+   1. remove existing one first if needed
+   1. download https://azcliprod.blob.core.windows.net/msi/azure-cli-2.28.0.msi
+2. Install Terraform - https://www.terraform.io/downloads
    1. Download exe file for required provider from here - https://github.com/GoogleCloudPlatform/terraformer/releases
    2. Add the exe file path to path variable
-1. Create a folder and initialize the terraform provider and run terraformer commands from there
+3. Create a folder and initialize the terraform provider and run terraformer commands from there
 
 ### Run
 
