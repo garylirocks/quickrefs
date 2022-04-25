@@ -1,5 +1,16 @@
 # Windows
 
+- [SSH](#ssh)
+- [Git](#git)
+  - [Git Credential Manager](#git-credential-manager)
+- [Windows Terminal](#windows-terminal)
+- [WSL](#wsl)
+  - [Commands](#commands)
+  - [Files](#files)
+  - [Git](#git-1)
+  - [VS Code](#vs-code)
+  - [Terraform](#terraform)
+
 ## SSH
 
 - Linux config files are compatible on Windows, just move all files to `C:/Users/username/.ssh/`
@@ -121,3 +132,8 @@ You could use the Windows Git Credential Manager in WSL (https://github.com/GitC
 - Install the 'Remote Development' pack in VS Code
   - This makes VS Code run in 'client-server' mode, the UI is running on Windows, the server (your code, Git, plugins, etc) are running in WSL.
 - Then you could 'Open folder in WSL' (or run `code .` in a WSL command line)
+
+
+### Terraform
+
+There's an issue that Terraform can't authenticate with Azure, see https://github.com/microsoft/WSL/issues/8022
