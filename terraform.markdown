@@ -39,6 +39,7 @@
 - [Terraformer](#terraformer)
   - [Installation](#installation)
   - [Run](#run)
+- [CDK for Terraform](#cdk-for-terraform)
 
 ## Overview
 
@@ -1187,4 +1188,35 @@ terraformer-azure-windows-amd64.exe import azure `
 terraformer-azure-windows-amd64.exe import azure `
   --resource-group my-rg `
   --excludes "keyvault"
+```
+
+
+## CDK for Terraform
+
+![CDK for Terraform](images/terraform_cdk-for-terraform.png)
+
+You write configs in Typescript, Python, Java, GO, etc, then convert it to JSON, which can be used by Terraform.
+
+Install:
+
+```sh
+npm install --global cdktf-cli@latest
+```
+
+Init a project:
+
+```sh
+# use Typescript, use local state file
+cdktf init --template=typescript --local
+
+# install Docker provider for CDKTF
+npm install @cdktf/provider-docker
+
+# write code in main.ts
+
+# deploy
+cdktf deploy
+
+# destroy
+cdktf destroy
 ```

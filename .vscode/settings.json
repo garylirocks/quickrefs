@@ -4,6 +4,7 @@
     "azcollection",
     "azcopy",
     "azurerm",
+    "cdktf",
     "centralus",
     "cmdlets",
     "CMMI",
