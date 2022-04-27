@@ -1138,6 +1138,10 @@ Features:
 
 You could link a Private DNS Zone to a vNet (not subnet), enable auto-registration, then hostname of any VMs in the vNet would be registered in this Private DNS Zone
 
+- Note
+  - A DNS Zone can link to multiple vnets
+  - A vnet can have **ONLY ONE** registration zone, but can have multiple resolution zones
+
 - Scoped to a single vNet
 
   ![Private DNS lookup](images/azure_private-dns-1.png)

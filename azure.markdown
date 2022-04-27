@@ -586,9 +586,10 @@ Often used for a specific type of high-flow stream of communications used for an
 
 Scopes:
 
-|                          | Definition scopes                                       | Assignment scopes                                     |
-| ------------------------ | ------------------------------------------------------- | ----------------------------------------------------- |
-| Custom policy/initiative | <ul><li>management group</li><li>subscription</li></ul> | <ul><li>subscription</li><li>resource group</li></ul> |
+|                          | Definition scopes | Assignment scopes                                          |
+| ------------------------ | ----------------- | ---------------------------------------------------------- |
+| Custom policy/initiative | management group  | children management groups, subscriptions, resource groups |
+| Custom policy/initiative | subscription      | subscriptions, resource groups                             |
 
 Effects:
 
