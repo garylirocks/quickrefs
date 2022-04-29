@@ -97,6 +97,7 @@ Mixing Windows and Linux commands:
 - To access WSL files in Windows:
   - In File Explorer, visit `\\wsl$\Ubuntu\home\gary`
   - In WSL, run `explorer.exe .`
+- By default, WSL storage is located at `$env:LOCALAPPDATA\Packages\`
 
 ### Git
 

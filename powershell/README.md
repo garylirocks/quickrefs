@@ -7,6 +7,7 @@
   - [Execution policy](#execution-policy)
 - [Profiles](#profiles)
 - [Common commands](#common-commands)
+- [Aliases](#aliases)
 - [Customize output](#customize-output)
   - [Filtering](#filtering)
   - [Examples](#examples)
@@ -176,6 +177,16 @@ Install-Module AzureADPreview
 ```
 
 
+## Aliases
+
+```sh
+New-Alias tf terraform
+
+# remove an alias
+Remove-Item Alias:\tf
+```
+
+
 ## Customize output
 
 When output an object, if there is a registered view for the object type, it is used, which likely does not include all properties of the object.
@@ -335,4 +346,3 @@ nslookup google.com
 # check connection to a port
 Test-NetConnection 192.168.1.3 -Port 22
 ```
-
