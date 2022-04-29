@@ -6,6 +6,7 @@
 - [Windows Terminal](#windows-terminal)
 - [WSL](#wsl)
   - [Commands](#commands)
+  - [Configuration](#configuration)
   - [Files](#files)
   - [Git](#git-1)
   - [VS Code](#vs-code)
@@ -93,13 +94,16 @@ Mixing Windows and Linux commands:
 
 ### Configuration
 
-To configure the default user for a distro
+To configure default behavior for a distro
 
 - Add `wsl.conf` to the `/etc/` folder in the distro:
 
   ```
   [user]
-  default=gary
+  default = gary
+
+  [network]
+  generateResolvConf = false
   ```
 
 - Restart the distro
