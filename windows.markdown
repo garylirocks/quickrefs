@@ -91,6 +91,20 @@ Mixing Windows and Linux commands:
   ipconfig.exe | grep IPv4 | cut -d: -f2
   ```
 
+### Configuration
+
+To configure the default user for a distro
+
+- Add `wsl.conf` to the `/etc/` folder in the distro:
+
+  ```
+  [user]
+  default=gary
+  ```
+
+- Restart the distro
+
+
 ### Files
 
 - Windows file system is mounted at `/mnt/` in WSL, e.g. `C:` drive is mounted at `/mnt/c/`
