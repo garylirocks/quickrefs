@@ -27,8 +27,13 @@
   - [Data source blocks](#data-source-blocks)
   - [Output](#output)
   - [Move resources](#move-resources)
+  - [Providers](#providers)
+    - [`alias`](#alias)
 - [Modules](#modules)
   - [Create modules](#create-modules)
+  - [Providers within modules](#providers-within-modules)
+    - [Implicit provider inheritance](#implicit-provider-inheritance)
+    - [Passing providers explicitly](#passing-providers-explicitly)
 - [Best practices](#best-practices)
   - [Environment separation](#environment-separation)
 - [Automate Terraform](#automate-terraform)
@@ -88,6 +93,7 @@ terraform {
   required_version = ">= 0.14.9"
 }
 
+# settings for a provider, empty in this case
 provider "azurerm" {
   features {}
 }
@@ -791,7 +797,7 @@ data "aws_availability_zones" "available" {
 }
 ```
 
-Get state data from another workspace
+Get state data from another workspace (`terraform_remote_state` is a Terraform builtin provider)
 
 ```terraform
 data "terraform_remote_state" "vpc" {
@@ -858,6 +864,56 @@ moved {
 }
 ```
 
+Or you could use `terraform state mv [options] SOURCE DESTINATION` to update the state file
+
+### Providers
+
+```terraform
+provider "google" {
+  project = "acme-app"
+  region  = "us-central1"
+}
+```
+
+- `google` is the local name of the provider, should already be included in a `required_providers` block
+- arguments are specific to the provider, you could use variables as values
+- `provider` block may be omitted if no explicit configurations are needed
+
+#### `alias`
+
+```terraform
+provider "aws" {          # 1
+  region = "us-east-1"
+}
+
+provider "aws" {          # 2
+  alias  = "west"
+  region = "us-west-2"
+}
+```
+
+- #1 the default(un-aliased) provider configuration, can be referenced as `aws`, resources that begin with `aws_` will use it as its provider
+- #2 has an `alias` argument, can be referenced as `aws.west`
+- If every provider block has an `alias` argument, Terraform would create a default empty configuration as that provider's default configuration
+
+```terraform
+resource "aws_instance" "foo" {
+  provider = aws.west             # 1
+  # ...
+}
+
+module "aws_vpc" {
+  providers = {                   # 1
+    aws = aws.west
+  }
+  # ...
+}
+```
+
+- #1: To use an alternate provider, use the `provider` or `providers` meta-argument in `resource`, `module` or `data` blocks
+
+In most cases, **only root modules** should define provider configurations, with all child modules obtaining their configurations from their parents
+
 
 ## Modules
 
@@ -913,6 +969,100 @@ A typical file structure for a new module:
 
 - None of these are required, you could create a module with a single `.tf` file
 - Do not include `provider` blocks in modules, as a `module` block will inherit the provider from the enclosing configuration
+
+### Providers within modules
+
+```terraform
+terraform {
+  required_providers {
+    aws = {                                           # 1
+      source  = "hashicorp/aws"
+      version = ">= 2.7.0"
+      configuration_aliases = [ aws.alternate ]       # 2
+    }
+  }
+}
+
+# provider "aws" {                                    # 3
+#   region = "us-east-1"
+# }
+```
+
+- #1 a modules needs to declare its provider version requirements
+- #2 optional, declare an expected alias provider configuration named `aws.alternate`
+- #3 no need for `provider` block, it should be defined in the root module
+
+#### Implicit provider inheritance
+
+```terraform
+# root module
+
+provider "aws" {
+  region = "us-west-1"                    # 1
+}
+
+provider "aws" {
+  alias  = "use1
+  region = "us-east-1"                    # 2
+}
+
+module "child" {
+  source = "./child"
+}
+```
+
+```terraform
+# child module
+
+resource "aws_s3_bucket" "example" {     # 3
+  bucket = "provider-inherit-example"
+}
+```
+
+- #1 Root module's default (un-aliased) provider configuration is implicitly inherited by a child module at #3
+- #2 alias provider is not automatically inherited
+
+#### Passing providers explicitly
+
+```terraform
+# root module
+
+provider "aws" {
+  alias  = "usw1"                                   # 1
+  region = "us-west-1"
+}
+
+provider "aws" {
+  alias  = "usw2"                                   # 1
+  region = "us-west-2"
+}
+
+module "tunnel" {
+  source    = "./tunnel"
+  providers = {                                     # 2
+    aws.src = aws.usw1
+    aws.dst = aws.usw2
+  }
+}
+```
+
+```terraform
+# child module
+
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 2.7.0"
+      configuration_aliases = [ aws.src, aws.dest ]  # 3
+    }
+  }
+}
+```
+
+- #1 Root module defines aliases
+- #2 Passes down by the `providers` meta-argument in a `module` block
+- #3 Child module declares its expected alias names
 
 
 ## Best practices
