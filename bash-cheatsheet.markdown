@@ -46,6 +46,7 @@
   - [`set`](#set)
   - [`shift`](#shift)
 - [Scripting best practices](#scripting-best-practices)
+  - [Shebang](#shebang)
   - [Options](#options)
   - [`IFS`](#ifs)
   - [`trap`](#trap)
@@ -1255,6 +1256,19 @@ shellcheck script.sh
 ```sh
 while read -r line; do echo $line; done < my_file.txt
 ```
+
+Read a file in to a two-dimensional array:
+
+```sh
+readarray rows < demo.txt
+
+for row in "${rows[@]}";do
+  row_array=(${row})
+  first=${row_array[0]}
+  echo ${first}
+done
+```
+
 
 ### Generate random numbers
 
