@@ -6,6 +6,7 @@
 - [Workflow definition](#workflow-definition)
 - [Parameter referencing](#parameter-referencing)
 - [Connections](#connections)
+- [Deployment](#deployment)
 
 ## Types and host environments
 
@@ -390,4 +391,11 @@ Depending on the connection, there are different ways to authorize, you often ne
     }
     ```
 
-  - For OAuth connections, you need to authorize manually ?
+  - For OAuth connections, you need to authorize manually, an API connection you authorized could be used by multiple logic apps (see: https://docs.microsoft.com/en-us/azure/logic-apps/logic-apps-deploy-azure-resource-manager-templates#authorize-oauth-connections)
+
+
+## Deployment
+
+You could deploy a logic app with Terraform, but after you edit something in the graphical designer, you need to convert the JSON definition to Terraform code, not so straightforward.
+
+Check this repo (https://github.com/Azure-Samples/azure-logic-apps-deployment-samples) to see how to deploy logic apps using ARM template and PowerShell script (run locally or in Azure Pipelines)
