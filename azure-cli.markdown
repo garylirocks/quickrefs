@@ -5,6 +5,7 @@
 - [Configurations](#configurations)
 - [Groups and resources](#groups-and-resources)
 - [Storage](#storage)
+- [Providers](#providers)
 - [Preview features](#preview-features)
 - [JMESPath](#jmespath)
 - [Azure Cloud Shell](#azure-cloud-shell)
@@ -116,6 +117,21 @@ az storage account show-connection-string \
 az storage container create \
   -n messages \
   --connection-string "<connection string here>"
+```
+
+
+## Providers
+
+```sh
+# list providers on a subscription
+az provider list \
+  -otable \
+  --subscription sub-gary
+
+# list resource types under a provider
+az provider show \
+  --namespace "Microsoft.Network" \
+  --subscription sub-gary
 ```
 
 
