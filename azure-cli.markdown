@@ -122,24 +122,26 @@ az storage container create \
 ## Preview features
 
 ```sh
-# list preview features
+# list registered preview features on a subscription
 az feature list \
-  --namespace="Microsoft.Network" \
-  --query "@[?contains(@.name, 'Watcher')].{Name: name, State: properties.state}" \
-  -otable
+  --namespace "Microsoft.Network" \
+  --query "[? properties.state=='Registered'].{Name: name, State: properties.state}" \
+  -otable \
+  --subscription "sub-gary"
 
 # Name                                                          State
-# ------------------------------------------------------------  -------------
-# Microsoft.Network/AllowNetworkWatcher                         NotRegistered
-# Microsoft.Network/AllowNetworkWatcherAzureReachabilityReport  NotRegistered
-# Microsoft.Network/AllowNetworkWatcherConnectivityCheck        NotRegistered
-# Microsoft.Network/DisableNetworkWatcherAutocreation           NotRegistered
+# ------------------------------------------------------------  ----------
+# Microsoft.Network/AllowCortexAccess                           Registered
+# Microsoft.Network/AllowRegionalGatewayManagerForExpressRoute  Registered
+# Microsoft.Network/AllowTcpPort25Out                           Registered
 
 # register a feature on current subscription
 az feature register \
   --namespace="Microsoft.Network" \
   --name="AllowNetworkWatcher"
 ```
+
+For the query parameter `--query "[? properties.state=='Registered'].{Name: name, State: properties.state}"`, make sure **use single quotes for the string literal** in the JMESPATH expression, otherwise won't work
 
 
 ## JMESPath
