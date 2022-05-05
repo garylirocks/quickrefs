@@ -9,6 +9,8 @@
   - [`terraform.tfstate`](#terraformtfstate)
 - [Commands](#commands)
 - [Authenticate Terraform to Azure](#authenticate-terraform-to-azure)
+  - [`azurerm` provider](#azurerm-provider)
+  - [`azuread` provider](#azuread-provider)
 - [Remote runs and state](#remote-runs-and-state)
   - [Terraform Cloud](#terraform-cloud)
   - [Azure blob storage](#azure-blob-storage)
@@ -45,6 +47,7 @@
   - [Installation](#installation)
   - [Run](#run)
 - [CDK for Terraform](#cdk-for-terraform)
+- [Troubleshooting](#troubleshooting)
 
 ## Overview
 
@@ -303,47 +306,35 @@ terraform output -raw lb_url
 - When using Terraform interactively on command line, Terraform uses Azure CLI to authenticate
 - In a non-interactive context, create a service principal for Terraform
 
-  ```sh
-  SP_NAME='terraform-sp-20210905'
+### `azurerm` provider
 
-  # get default subscription id
-  ARM_SUBSCRIPTION_ID=$(az account list \
-    --query "[?isDefault][id]" \
-    --all \
-    --output tsv)
+To use a service principal for `azurerm` provider
 
-  # create a sp and get the secret
-  # - `Contributor` is the default role for a service principal, which has full permissions to read and write to an Azure subscription
-  # - get the service principal id
-  ARM_CLIENT_ID=$(az ad sp create-for-rbac \
-    --name $SP_NAME \
-    --role Contributor \
-    --scopes "/subscriptions/$ARM_SUBSCRIPTION_ID" \
-    --query appId \
-    --output tsv)
+```sh
+export ARM_SUBSCRIPTION_ID
+export ARM_CLIENT_SECRET
+export ARM_CLIENT_ID
+export ARM_TENANT_ID
+```
 
-  # password was generated in the last step, which we used to get the appId
-  # so we reset the password and get it here
-  ARM_CLIENT_SECRET=$(az ad sp credential reset \
-    --name $SP_NAME \
-    --query password \
-    --output tsv)
+### `azuread` provider
 
-  # get tenant id
-  ARM_TENANT_ID=$(az ad sp show \
-    --id $ARM_CLIENT_ID \
-    --query appOwnerTenantId \
-    --output tsv)
-  ```
+No need for subscription id in this case
 
-  Export variables, Terraform looks for them when it runs
+```sh
+export ARM_CLIENT_ID="00000000-0000-0000-0000-000000000000"
+export ARM_CLIENT_SECRET="MyCl1eNtSeCr3t"
+export ARM_TENANT_ID="10000000-2000-3000-4000-500000000000"
+```
 
-  ```sh
-  export ARM_SUBSCRIPTION_ID
-  export ARM_CLIENT_SECRET
-  export ARM_CLIENT_ID
-  export ARM_TENANT_ID
-  ```
+To grant this service principal permissions to read/write AAD objects, see https://registry.terraform.io/providers/hashicorp/azuread/latest/docs/guides/service_principal_configuration. There are two methods:
+
+1. Add API permissions to the application, then add consent to the service principal
+2. Assign AAD roles to the service principal
+    - Go to AAD's "Roles and administrators" blade, find the role, click on it
+    - Add an assignment to the service principal
+    - Roles listed in the service principal's "Roles and administrators" blade are **NOT** roles assigned to this service principal!
+
 
 ## Remote runs and state
 
@@ -1369,4 +1360,13 @@ cdktf deploy
 
 # destroy
 cdktf destroy
+```
+
+
+## Troubleshooting
+
+To troubleshoot issues, you could turn on debugging info with:
+
+```sh
+export TF_LOG=DEBUG
 ```

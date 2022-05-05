@@ -197,6 +197,7 @@ There are three types of service principals:
 
   - You should create a different service principal for each of your application
   - For history reason, it's possible to create service principals without first creating an application object. The Microsoft Graph API requires an application object before creating a service principal.
+  - Seems there is no easy way to find what AAD roles have been assigned to a SP, see [Terraform note](./terraform.markdown) for details on how to assign AAD roles/permissions to a SP
 
   ```sh
   SP_NAME='My-Service-Principal'
@@ -374,11 +375,11 @@ There are three types of service principals:
     az identity list \
         --resource-group <resource group>
 
-    # assign an identity to a function app
+    # assign identities to a function app
     az functionapp identity assign \
         --name <function app name> \
         --resource-group <resource group> \
-        --role <principal id>
+        --identities <id1 id2 ...>
 
     # grant key vault permissions to an identity
     #  ! this is policy based keyvault access, not RBAC based
