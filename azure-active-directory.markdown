@@ -15,6 +15,7 @@
 - [Role-based access control (RBAC)](#role-based-access-control-rbac)
   - [Azure RBAC roles vs. Azure AD roles](#azure-rbac-roles-vs-azure-ad-roles)
 - [Logging and analytics](#logging-and-analytics)
+- [CLI](#cli)
 
 
 Overview:
@@ -532,4 +533,16 @@ AuditLogs
 | where TimeGenerated >= ago(7d)
 | summarize auditCount = count() by OperationName
 | sort by auditCount desc
+```
+
+
+## CLI
+
+The `--filter` parameter in many `az ad` commands uses the OData filter syntax, check available expressions here: https://docs.microsoft.com/en-us/graph/query-parameters#filter-parameter
+
+*Seems you could use `startswith`, `endswith`, but not `contains`*
+
+```sh
+# "startswith" needs to be all lowercase
+az ad group list --filter "startswith(displayName, 'gary')"
 ```
