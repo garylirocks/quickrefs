@@ -32,6 +32,7 @@
 - [Artifacts](#artifacts)
 - [Tests](#tests)
 - [Deployment patterns](#deployment-patterns)
+- [CLI](#cli)
 
 
 ## Overview
@@ -137,6 +138,8 @@ Two types of boards
 - There are security groups at both organization and project level;
 - Groups could be nested;
 - All security groups are organizational level entities, even groups that only have permissions to a specific project;
+
+**A permission caveat:** *If you were in multiple groups, they have different permissions, you may get permissions inherited from the less permissive group, in this case, you could remove yourself from that less permissive group*
 
 ### Scoped under team
 
