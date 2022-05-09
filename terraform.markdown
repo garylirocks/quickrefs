@@ -384,6 +384,7 @@ In a collaborative or CI/CD context, you may want to run and save state files re
       storage_account_name = "tfstatey2hkc"
       container_name       = "tfstate"
       key                  = "terraform.tfstate"
+      subscription_id      = "00000000-0000-0000-0000-000000000000"   # optional
       # access_key         = 'xxxx'
       # sas_key            = 'xxxx'
       ```
@@ -1191,6 +1192,7 @@ resource_group_name = "tf-storage-rg"
 storage_account_name = "tfsa4962"
 container_name = "tfstate"
 key = "terraform.tfstate"
+subscription_id      = "00000000-0000-0000-0000-000000000000"   # optional
 ```
 
 Init with backend
