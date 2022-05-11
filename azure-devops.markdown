@@ -28,6 +28,7 @@
     - [Download](#download)
   - [Resources](#resources)
   - [Templates](#templates)
+  - [Variable templates](#variable-templates)
   - [Agent pools](#agent-pools)
 - [Artifacts](#artifacts)
 - [Tests](#tests)
@@ -879,6 +880,43 @@ steps:
   - template: templates/build.yml
     parameters:
       buildConfiguration: 'Release'
+```
+
+### Variable templates
+
+- Variables could be defined in a template file
+- It could have parameters
+- And you could load different templates based on parameters
+
+```yaml
+# experimental.yml
+parameters:
+- name: DIRECTORY
+  type: string
+  default: "."
+
+variables:
+- name: RELEASE_COMMAND
+  value: grep version ${{ parameters.DIRECTORY }}/package.json
+```
+
+```yaml
+# File: azure-pipelines.yml
+parameters:
+- name: isExperimental
+  displayName: 'Use experimental build process?'
+  type: boolean
+  default: false
+
+variables: # Global variables
+- ${{ if eq(parameters.isExperimental, true) }}: # Load based on parameters
+  - template: experimental.yml
+    parameters:                                  # pass parameter to a template
+      DIRECTORY: "beta"
+- ${{ if not(eq(parameters.isExperimental, true)) }}:
+  - template: stable.yml
+    parameters:
+      DIRECTORY: "stable"
 ```
 
 ### Agent pools
