@@ -1,10 +1,13 @@
 # Azure AD
 
+- [Overview](#overview)
 - [Editions](#editions)
+- [B2B](#b2b)
+  - [Best practices](#best-practices)
+- [B2C](#b2c)
 - [Azure AD vs. AD DS vs. Azure AD DS](#azure-ad-vs-ad-ds-vs-azure-ad-ds)
   - [Azure AD DS](#azure-ad-ds)
 - [Azure AD Join](#azure-ad-join)
-- [Best practices](#best-practices)
 - [Users](#users)
 - [Groups](#groups)
 - [Administrative Units](#administrative-units)
@@ -13,17 +16,21 @@
   - [Example](#example)
   - [Service Principals](#service-principals)
 - [Role-based access control (RBAC)](#role-based-access-control-rbac)
+  - [Considerations](#considerations)
+  - [Evaluation](#evaluation)
+  - [Azure subscriptions](#azure-subscriptions)
   - [Azure RBAC roles vs. Azure AD roles](#azure-rbac-roles-vs-azure-ad-roles)
 - [Logging and analytics](#logging-and-analytics)
+- [Best practices](#best-practices-1)
 - [CLI](#cli)
 
 
-Overview:
+## Overview
 
-- Each Azure subscription is associated with a single Azure AD directory (tenant);
-- Users, groups and applications in that directory can manage resources in the subscription;
-- Subscriptions use Azure AD for SSO;
-- Microsoft 365, Office 365, Azure, and Dynamics CRM Online use Azure AD, a tenant in these services is automatically an Azure AD tenant.
+Microsoft's identity and access management solution.
+
+Microsoft 365, Office 365, Azure, and Dynamics CRM Online all uses Azure AD, a tenant in these services is automatically an Azure AD tenant.
+
 
 ## Editions
 
@@ -67,13 +74,33 @@ Overview:
 
 Features:
 
-- B2B identity services (allow you to invite guest users, *available to all tiers*)
+- B2B identity services (*available to all tiers*)
+- B2C identity services (for customer users of your service, *pay-as-you-go*)
 
-  ![B2B process](images/azure_ad-b2b.svg)
 
-- B2C identity services (customer users, *pay-as-you-go*)
+## B2B
 
-  ![B2B process](images/azure_ad-b2c.svg)
+<img src="images/azure_ad-external-identities.png" width="600" alt="Guest users" />
+
+Your could invite people from other external identity providers as guest users, you control what they can access to, and for how long, the process is like this:
+
+<img src="images/azure_ad-b2b.svg" width="600" alt="B2B process" />
+
+*MFA happens in your tenant if configured*
+
+### Best practices
+
+- **Designate an application owner to manage guest users**. Application owners are in the best position to decide who should be given access to a particular application.
+- **Use conditional access policies to grant or deny access**
+- **Enable MFA**
+- **Integrate with identity providers**, you can setup federation
+- **Create as self-service sign-up user flow**, you could customize the experience
+
+
+## B2C
+
+<img src="images/azure_ad-b2c.svg" width="600" alt="B2C process" />
+
 
 ## Azure AD vs. AD DS vs. Azure AD DS
 
@@ -85,13 +112,14 @@ Features:
 | Protocols  | Kerberos authentication                                                    | SAML, WS-Federation, OpenID Connect for authN, OAuth for authZ | same as AD DS                              |
 | Structure  | Organization Units (OUs) , Group Policy Objects (GPOs)                     | flat users and groups                                          | same as AD DS                              |
 
-- Azure AD does not replace Active Directory, they can be used together, **Azure AD Connect** is a software you download and run on your on-prem host, it can synchronize changes between on-prem AD and Azure AD:
+Azure AD does not replace Active Directory, they can be used together, **Azure AD Connect** is a software you download and run on your on-prem host, it can synchronize identities between on-prem AD and Azure AD:
 
   ![Azure AD Connect](images/azure_azure-ad-connect.png)
 
 ### Azure AD DS
 
-![AADDS Syncing](images/azure_aadds-sync.png)
+<img src="images/azure_aadds-sync.png" width="800" alt="AADDS Syncing" />
+
 _On prem AD is optional here_
 
 - Intended to lift and shift your legacy applications from your on-prem to a managed domain.
@@ -109,13 +137,6 @@ _On prem AD is optional here_
   - Joining: an extension to registering, changes local state to a device, which enables your users to sign-in to a device using a work or school account instead of personal account (e.g. you add your work M365 email to your own laptop)
 - Combined with a mobile device management (MDM) solution such as Microsoft Intune, provides additional attributes in Azure AD
 
-
-## Best practices
-
-- Give at least two accounts the **Global Administrator** role, DON'T use them daily;
-- Use regular administrator roles wherever possible;
-- Create a list of banned passwords (such as company name);
-- Configure conditional-access policies to require users to pass multiple authentication challenges;
 
 ## Users
 
@@ -155,7 +176,7 @@ Note:
 
 ## Workload identities
 
-![Identity types](./images/azure_identity-types.svg)
+<img src="images/azure_identity-types.svg" width="600" alt="Identity types" />
 
 Azure AD has three types of workload identities:
 
@@ -182,7 +203,7 @@ Azure AD has three types of workload identities:
 
 ### Example
 
-![Application objects relationship](images/azure_application-objects-relationship.svg)
+<img src="images/azure_application-objects-relationship.svg" width="600" alt="Application objects relationship" />
 
 1. Creating the application and service principal in the home tenant
 2. In Contoso and Fabrikam, administrators complete consent, a service principal is created in their company's Azure AD tenant and assigned the permissions that the administrator granted.
@@ -451,6 +472,26 @@ RBAC allows you to grant access to Azure resources that you control. You do this
         --scope $vm
     ```
 
+### Considerations
+
+- Better to assign roles to groups rather than individual users to minimize role assignments
+- Use custom roles to control permissions more precisely
+- RBAC is an additive model
+- Azure policies always apply, no matter who created/updated a resource
+
+
+### Evaluation
+
+![RBAC evaluation flowchart](images/azure_role-based-access-control-flowchart.png)
+
+*Deny assignments take priority !!*
+
+### Azure subscriptions
+
+- Each Azure subscription is associated with a single Azure AD directory (tenant);
+- Users, groups and applications in that directory can manage resources in the subscription;
+- Subscriptions use Azure AD for SSO;
+
 ### Azure RBAC roles vs. Azure AD roles
 
 Different roles in Azure:
@@ -477,9 +518,9 @@ Different roles in Azure:
 ![RBAC vs. AAD roles](images/azure_rbac-vs-aad-roles.png)
 
 - Azure AD roles and Azure RBAC roles are independent from one another, AD role assignment does not grant access to Azure resources and vice versa
-- As an Azure AD Global Administrator, you might not have access to all subscriptions and management groups, but you could elevate your access:
+- As an **Azure AD Global Administrator**, you might not have access to all subscriptions and management groups, but you could elevate your access:
   - Assign yourself "**User Access Administrator**" role in Azure at root scope(`/`)
-  - View and assign access in any subscription or management group (e.g. assign yourself the Owner role of a management group)
+  - View and assign access in any subscription or management group (e.g. assign yourself the **Owner** role of a management group)
   - You should remove this elevated access once you have made the changes needed
 - Each directory is given a single top-level management group called "Tenant Root Group", it has the same id as the tenant, allows for global policies and Azure role assignments to be applied at this directory/tenant level.
 
@@ -534,6 +575,14 @@ AuditLogs
 | summarize auditCount = count() by OperationName
 | sort by auditCount desc
 ```
+
+
+## Best practices
+
+- Give at least two accounts the **Global Administrator** role, DON'T use them daily;
+- Use regular administrator roles wherever possible;
+- Create a list of banned passwords (such as company name);
+- Configure conditional-access policies to require users to pass multiple authentication challenges;
 
 
 ## CLI

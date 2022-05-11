@@ -12,7 +12,7 @@
   - [IoT services](#iot-services)
   - [DevOps](#devops)
   - [Security](#security)
-- [Resource management](#resource-management)
+- [Azure Governance](#azure-governance)
   - [Azure AD](#azure-ad)
   - [Tenant](#tenant)
   - [Regions](#regions)
@@ -22,8 +22,11 @@
   - [Tags](#tags)
   - [Locks](#locks)
   - [Azure Resource Manager (ARM)](#azure-resource-manager-arm)
+  - [Management tools](#management-tools)
+- [Policy](#policy)
+  - [Assignment](#assignment)
+- [Blueprints](#blueprints)
 - [Azure Cloud Adoption Framework](#azure-cloud-adoption-framework)
-- [Azure management tools](#azure-management-tools)
 - [Business Process Automation](#business-process-automation)
 - [API Management](#api-management)
   - [Policies](#policies)
@@ -34,9 +37,6 @@
   - [Storage Queues](#storage-queues)
   - [Event Grid](#event-grid)
   - [Event Hub](#event-hub)
-- [Policy](#policy)
-  - [Assignment](#assignment)
-- [Blueprints](#blueprints)
 
 ## Overview
 
@@ -183,7 +183,7 @@ Security posture (CIA):
 - _Integrity_: at rest and in transit
 - _Availability_: DoS attacks
 
-## Resource management
+## Azure Governance
 
 ![Azure AD, tenant, subscriptions](images/azure-ad_tenant_subscriptions.png)
 
@@ -219,53 +219,67 @@ Security posture (CIA):
 
 ![Management groups](images/azure_management-groups.png)
 
-- A way to efficiently manage access, policies, and compliance for subscriptions
+- Management groups serve as containers that help you manage access, policy and compliance for multiple subscriptions, eg.
   - Apply a policy to limit regions available to subscriptions under a group
   - Create a RBAC assignment on a group
 - All subscriptions and management groups are within a single hierarchy in each directory
-- Each directory is given a root management group, it has the same id as the tenant
+- Each directory is given a root management group, it has the same id as the tenant, it could be used for global RBAC assignments and policies
+- Up to six levels of depth, excluding the tenant root group
 
 ### Subscription
 
-- A tenant can have multiple subscriptions;
-- Billing is done monthly at subscription level;
+Subscriptions are logical containers that serve as
 
+- Units of management
+- Scale: limits and quotas
+- Billing boundaries
+
+Can have different types:
+
+- Enterprise Agreement
+- Pay-as-You-Go
+
+Things to consider:
+
+- A dedicated shared services subscription: eg. common network resources (ExpressRoute, Virtual WAN)
+- Scale limits: large specialized workloads like high-performance computing, IoT and SAP are all better suited to use separate subscriptions
+- Network topologies: virtual networks can't be shared across subscriptions, you need to use virtual network peering or VPN
 
 ### Resource group
 
 - A logical container for resources;
 - All resources must be in one and only one group;
-- Resources in one group can span multiple regions;
+- Location:
+  - A resource group has its own region, for storign metadata
+  - Resources within a group can be in **any region**
 - Groups can't be nested;
-- Cannot be renamed;
+- **Cannot be renamed**;
 - Resources can be moved between groups;
 
 You can organize resource groups in different ways:
 
-  - by resource type(vm, db),
-  - by department(hr, marketing),
-  - by environment (prod, qa, dev),
-  - Life cycle
+- By resource type(vm, db)
+- By app
+- By department(hr, marketing)
+- By environment (prod, qa, dev)
+- By life cycle
 
-    When you delete a group, all resources within are deleted, if you just want to try out something, put all new resources in one group, and then everything can be deleted together;
+  When you delete a group, all resources within are deleted, if you just want to try out something, put all new resources in one group, and then everything can be deleted together;
 
-  - Authorization
-
-    A group can be a scope for applying role-based access control (RBAC);
-
-  - Billing
-
-    Can be used to filter and sort costs in billing reports;
+- By access: A group can be a scope for applying role-based access control (RBAC), and locks
+- By billing: Can be used to filter and sort costs in billing reports
 
 
 ### Tags
 
 Another way to organize resources
 
-- **NOT** all types of resources support tags;
+- Can be assigned to subscriptions, resource groups and resources
+- **NOT** all types of resources support tags
 - There are limitations on number of tags for each resource, lengths of tag name and value;
 - Tags are not inherited;
 - Can be used to automate task, such as adding `shutdown:6PM` and `startup:7AM` to virtual machines, then create an automation job that accomplish tasks based on tags;
+- Consider using Azure policy to apply tags and enforce tagging rules and conventions
 
 ### Locks
 
@@ -282,28 +296,7 @@ A setting that can by applied to any resource to block inadvertent modification 
 
 Azure Resource Manager (ARM) is the management layer which allows you automate the deployment and configuration of resources;
 
-
-## Azure Cloud Adoption Framework
-
-Cloud Adoption Framework consists of tools, documentation, and proven practices. It has five stages:
-
-1. Define your strategy
-  1. Motivation
-  1. Goals
-  1. Financial considerations
-  1. Technical considerations
-2. Make a plan.
-  1. What digital estate to migrate
-  1. Who needs to be involved
-  1. Skills readiness
-  1. A plan that brings together development, operations and business teams
-3. Ready your organization: create a landing zone
-4. Adopt the cloud: migrate and innovate
-5. Govern and manage your cloud environments.
-
-
-
-## Azure management tools
+### Management tools
 
 - Azure Portal: Web based, not suitable for repetitive tasks
 - [Azure PowerShell](./azure-powershell.markdown)
@@ -315,6 +308,81 @@ Cloud Adoption Framework consists of tools, documentation, and proven practices.
 - Azure Rest API
 - Azure SDKs
   - SDKs are based on Rest API, but are easier to use
+
+
+## Policy
+
+- Policies apply and enforce rules your resources need to follow, such as:
+
+  - only allow specific types of resources to be created;
+  - only allow resources in specific regions;
+  - enforce naming conventions;
+  - specific tags are applied;
+
+- A group of policies is called an **initiative**, it's recommended to use initiatives even when there's only a few policies
+- Some Azure Policy resources, such as policy definitions, initiative definitions, and assignments are visible to all users.
+
+### Assignment
+
+Scopes:
+
+| Definition scopes | Assignment scopes                                          |
+| ----------------- | ---------------------------------------------------------- |
+| management group  | children management groups, subscriptions, resource groups |
+| subscription      | subscriptions, resource groups                             |
+
+Effects:
+
+- An assignment could have one of the effects:
+  - Audit: highlight noncompliant resources, can automatically remediate them (eg. tagging, diagnostic settings)
+  - Deny: prevent noncompliant resources from being created,
+  - Disabled
+- Evaluates Arc enabled resources as well
+
+Evaluation times or events:
+
+- A resource is created or updated
+- A new assignment created
+- A policy or initiative already assigned to a scope is updated
+- During the standard compliance evaluation cycle, once every 24 hours
+
+
+## Blueprints
+
+Contains some artifacts that could be deployed to existing or new subscriptions:
+
+- Role assignments
+- Policy assignments
+- Resource groups
+- ARM templates
+
+![Blueprint artifacts example](images/azure_blueprint-artifacts-example.png)
+
+Notes:
+
+- Blueprints are versioned
+- The relationship between the blueprint definition and assignment (the deployed resources) is preserved, helping you track and audit your deployments
+- You assign a blueprint to a **management group**, it would deploy to existing and new subscriptions under the group
+
+
+## Azure Cloud Adoption Framework
+
+Cloud Adoption Framework consists of tools, documentation, and proven practices. It has five stages:
+
+1. Define your strategy
+    1. Motivation
+    1. Goals
+    1. Financial considerations
+    1. Technical considerations
+2. Make a plan.
+    1. What digital estate to migrate
+    1. Who needs to be involved
+    1. Skills readiness
+    1. A plan that brings together development, operations and business teams
+3. Ready your organization: create a landing zone
+4. Adopt the cloud: migrate and innovate
+5. Govern and manage your cloud environments.
+
 
 ## Business Process Automation
 
@@ -523,57 +591,3 @@ All filters evaluate message properties, not message body.
 ### Event Hub
 
 Often used for a specific type of high-flow stream of communications used for analytics (often used with Stream Analytics)
-
-## Policy
-
-- Policies apply and enforce rules your resources need to follow, such as:
-
-  - only allow specific types of resources to be created;
-  - only allow resources in specific regions;
-  - enforce naming conventions;
-  - specific tags are applied;
-
-- A group of policies is called an **initiative**, it's recommended to use initiatives even when there's only a few policies
-- Some Azure Policy resources, such as policy definitions, initiative definitions, and assignments are visible to all users.
-
-### Assignment
-
-Scopes:
-
-|                          | Definition scopes | Assignment scopes                                          |
-| ------------------------ | ----------------- | ---------------------------------------------------------- |
-| Custom policy/initiative | management group  | children management groups, subscriptions, resource groups |
-| Custom policy/initiative | subscription      | subscriptions, resource groups                             |
-
-Effects:
-
-- An assignment could have one of the effects:
-  - Audit: highlight noncompliant resources,
-  - Deny: prevent noncompliant resources from being created,
-  - Disabled
-- By default, an assignment will only take effect on newly created resources
-
-Evaluation times or events:
-
-- A resource is created or updated
-- A new assignment created
-- A policy or initiative already assigned to a scope is updated
-- During the standard compliance evaluation cycle, once every 24 hours
-
-
-## Blueprints
-
-Contains some artifacts that could be deployed to existing or new subscriptions:
-
-- Role assignments
-- Policy assignments
-- Resource groups
-- ARM templates
-
-![Blueprint artifacts example](images/azure_blueprint-artifacts-example.png)
-
-Notes:
-
-- Blueprints are versioned
-- The relationship between the blueprint definition and assignment (the deployed resources) is preserved, helping you track and audit your deployments
-- You assign a blueprint to a **management group**, it would deploy to existing and new subscriptions under the group
