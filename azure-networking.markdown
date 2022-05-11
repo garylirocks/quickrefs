@@ -553,7 +553,7 @@ NVAIP="$(az vm list-ip-addresses \
     --query "[].virtualMachine.network.publicIpAddresses[*].ipAddress" \
     --output tsv)"
 
-# enable IP forwarding within the VNA
+# enable IP forwarding within the NVA
 ssh -t -o StrictHostKeyChecking=no azureuser@$NVAIP 'sudo sysctl -w net.ipv4.ip_forward=1; exit;'
 ```
 
@@ -674,6 +674,13 @@ Private endpoint is a special network interface, there are some known limitation
 - To enable the private endpoint UDR support:
   - Set subnet property `PrivateEndpointNetworkPolicies` to enabled
   - Register feature on subscription `Microsoft.Network/AllowPrivateEndpointNSG`
+
+Currently, when you add a private endpoint, Azure would add a route to *all the route tables in the hosting and any peered vnets*, so all traffic to the private endpoint from these vnets goes directly, bypassing NVA, unless you overwrite the route:
+
+| Source  | State  | Address Prefixes | Next Hop Type     | Next Hop IP Addres |
+| ------- | ------ | ---------------- | ----------------- | ------------------ |
+| Default | Active | 172.25.62.76/32  | InterfaceEndpoint |                    |
+
 
 
 ### CLI example:
