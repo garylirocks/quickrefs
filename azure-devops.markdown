@@ -611,7 +611,7 @@ System and user-defined variables get injected as environment variables for your
 #### Secret variables
 
 - Don't put secret in the YAML file directly
-- Define it in the Pipeline settings UI or in a variable group
+- Define it in the Pipeline settings UI or in a variable group (only accessible within the same project)
 - Secret variables are encrypted at rest with a 2048-bit RSA key
 - You could use the macro syntax `$(mySecretVar)` to include it as task input
 - They are not automatically decrypted into environment variables for scripts though, you need to map it with `env`
@@ -814,7 +814,7 @@ steps:
   These resources have security settings, you can make them accessible only to specific users and pipelines within the project, and you can run additional manual or auto checks every time a pipeline uses one of these resources
 
   - agent pools
-  - variable groups
+  - variable groups (can only be used by pipelines in the same project)
 
     ```yaml
     # you need to delcare it like this in a pipeline job for access
@@ -823,7 +823,7 @@ steps:
     ```
 
   - secure files
-  - service connections
+  - service connections (can be shared across projects)
   - environments
   - repositories
     - access token given to an build agent for running jobs will only have access to repositories explicitly mentioned in the `resources` section of the pipeline
