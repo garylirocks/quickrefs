@@ -31,6 +31,7 @@
   - [Move resources](#move-resources)
   - [Providers](#providers)
     - [`alias`](#alias)
+- [The `random` provider](#the-random-provider)
 - [Modules](#modules)
   - [Create modules](#create-modules)
   - [Providers within modules](#providers-within-modules)
@@ -905,6 +906,39 @@ module "aws_vpc" {
 - #1: To use an alternate provider, use the `provider` or `providers` meta-argument in `resource`, `module` or `data` blocks
 
 In most cases, **only root modules** should define provider configurations, with all child modules obtaining their configurations from their parents
+
+
+## The `random` provider
+
+The "random" provider allows you to generate random strings/passwords/UUIDs/pet names.
+
+- It works entirely within Terraform's logic, and doesn't interact with any other services.
+- It has resources like: `random_id`, `random_integer`, `random_password`, `random_pet`, `random_shuffle`, `random_string`, `random_uuid`
+- The generated random value is kept in the state file
+- They all have a map argument called `keepers`, if you change anything in it, the random value will be regenerated
+
+```yaml
+resource "random_id" "server" {
+  keepers = {
+    # Generate a new id each time we switch to a new AMI id
+    ami_id = "${var.ami_id}"
+  }
+
+  byte_length = 8
+}
+
+resource "aws_instance" "server" {
+  tags = {
+    Name = "web-server ${random_id.server.hex}"
+  }
+
+  # Read the AMI id "through" the random_id resource to ensure that
+  # both will change together.
+  ami = random_id.server.keepers.ami_id
+
+  # ... (other aws_instance arguments) ...
+}
+```
 
 
 ## Modules
