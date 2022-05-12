@@ -33,7 +33,7 @@ Connect-AzAccount
 Get-AzSubscription
 
 # select a subscription
-Select-AzSubscription -Subscription "gary-default"
+Set-AzContext -Subscription "gary-default"
 
 # get current subscription id
 (Get-AzContext).Subscription.Id
