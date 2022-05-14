@@ -5,24 +5,31 @@
 - [B2B](#b2b)
   - [Best practices](#best-practices)
 - [B2C](#b2c)
+  - [Best practices](#best-practices-1)
 - [Azure AD vs. AD DS vs. Azure AD DS](#azure-ad-vs-ad-ds-vs-azure-ad-ds)
   - [Azure AD DS](#azure-ad-ds)
 - [Azure AD Join](#azure-ad-join)
 - [Users](#users)
 - [Groups](#groups)
-- [Administrative Units](#administrative-units)
 - [Workload identities](#workload-identities)
   - [App registrations vs. Service principals](#app-registrations-vs-service-principals)
   - [Example](#example)
   - [Service Principals](#service-principals)
+- [Application permissions](#application-permissions)
 - [Role-based access control (RBAC)](#role-based-access-control-rbac)
   - [Considerations](#considerations)
   - [Evaluation](#evaluation)
   - [Azure subscriptions](#azure-subscriptions)
   - [Azure RBAC roles vs. Azure AD roles](#azure-rbac-roles-vs-azure-ad-roles)
+- [Conditional access](#conditional-access)
+- [Identity protection](#identity-protection)
+- [Access reviews](#access-reviews)
+- [Administrative Units](#administrative-units)
 - [Logging and analytics](#logging-and-analytics)
-- [Best practices](#best-practices-1)
+- [Best practices](#best-practices-2)
 - [CLI](#cli)
+  - [`--filter` parameter](#--filter-parameter)
+  - [Service principals](#service-principals-1)
 
 
 ## Overview
@@ -80,6 +87,9 @@ Features:
 
 ## B2B
 
+- For collaborating with business partners from external organizations like suppliers, partners and vendors
+- Users appear as guests
+
 <img src="images/azure_ad-external-identities.png" width="600" alt="Guest users" />
 
 Your could invite people from other external identity providers as guest users, you control what they can access to, and for how long, the process is like this:
@@ -99,7 +109,17 @@ Your could invite people from other external identity providers as guest users, 
 
 ## B2C
 
+<img src="images/azure_ad-b2c-tenant.png" width="600" alt="B2C process" />
+
+B2C tenant is for your application's customers, it's different from your organization's tenant
+
 <img src="images/azure_ad-b2c.svg" width="600" alt="B2C process" />
+
+### Best practices
+
+- Configure user flows
+- Customize user interface
+- Integrate with external user stores: you could save up to 100 custom attributes per user in AAD B2C. You could also use AAD B2C for authentication, but delegate to an external CRM or customer loyalty database for customer data.
 
 
 ## Azure AD vs. AD DS vs. Azure AD DS
@@ -147,6 +167,7 @@ _On prem AD is optional here_
 - When you delete an account, the account remains in suspended state for 30 days
 - Users can also be added to Azure AD through Microsoft 365 Admin Center, Microsoft Intune admin console, and the CLI
 
+
 ## Groups
 
 - Group types
@@ -168,21 +189,10 @@ Note:
 
 - There is a flag determining whether a group can be assigned Azure AD Roles
 
-## Administrative Units
-
-- To restrict administrative scope in organizations that are made up of independent divisions, such as School of Business and School of Engineering in a University
-- Apply scope only to management permissions
-
 
 ## Workload identities
 
 <img src="images/azure_identity-types.svg" width="600" alt="Identity types" />
-
-Azure AD has three types of workload identities:
-
-- Application
-- Service principal (application)
-- Managed identities: A special type of service principal that eliminates the need for developers to manage credentials
 
 ### App registrations vs. Service principals
 
@@ -200,14 +210,13 @@ Azure AD has three types of workload identities:
 - By default, all users in your directory have rights to register application objects and discretion over which applications they give access to their organizational data through consent (limited to their own data).
 - When the **first** user sign in to an application and grant consent, that will **create a service principal** in your tenant, any following consent grant info will be stored on the same service principal.
 
-
 ### Example
 
-<img src="images/azure_application-objects-relationship.svg" width="600" alt="Application objects relationship" />
+![Application objects relationship](images/azure_application-objects-relationship.png)
 
-1. Creating the application and service principal in the home tenant
-2. In Contoso and Fabrikam, administrators complete consent, a service principal is created in their company's Azure AD tenant and assigned the permissions that the administrator granted.
-3. Each consumer tenant has its own service principal object.
+- The application object only exists in its own tenant
+- The service principals reference the application object
+- Service principals are granted RBAC roles in each tenant
 
 
 ### Service Principals
@@ -219,116 +228,8 @@ There are three types of service principals:
 
   - You should create a different service principal for each of your application
   - For history reason, it's possible to create service principals without first creating an application object. The Microsoft Graph API requires an application object before creating a service principal.
-  - Seems there is no easy way to find what AAD roles have been assigned to a SP, see [Terraform note](./terraform.markdown) for details on how to assign AAD roles/permissions to a SP
-
-  ```sh
-  SP_NAME='My-Service-Principal'
-  RESOURCE_ID='resource/id'
-  ANOTHER_RESOURCE_ID='another/resource/id'
-
-  # create an SP and assign a role on multiple scopes
-  SP_PASS=$(az ad sp create-for-rbac \
-    --name $SP_NAME \
-    --role "Contributor" \
-    --scopes $RESOURCE_ID $ANOTHER_RESOURCE_ID \
-    --query password \
-    --output tsv)
-
-  # get appId, which is used in your client app
-  SP_APP_ID=$(az ad sp list \
-    --display-name $SP_NAME \
-    --query "[].appId" \
-    --output tsv)
-
-  # get objectId here, needed for role assignment
-  SP_OBJECT_ID=$(az ad sp list \
-    --display-name $SP_NAME \
-    --query "[].objectId" \
-    --output tsv)
-
-  # if you need to create another role assignment, use object id
-  az role assignment create \
-    --assignee $SP_OBJECT_ID \
-    --role "ROLE_A" \
-    --scope "SUB_or_GROUP_or_RESOURCE_ID"
-
-  # show SPs you created in your Default Directory
-  az ad sp list \
-    --filter "PublisherName eq 'Default Directory'" \
-    -otable
-
-  # list all role assignments for an SP in current subscription
-  az role assignment list \
-      --all \
-      --assignee <SP name or object id>
-  ```
-
-  Service principal with certificate-based authentication
-
-  - Use an existing local cert
-
-    ```sh
-    # CERTIFICATE must be appended to the PRIVATE KEY within the `.pem` file
-    az ad sp create-for-rbac --name myServicePrincipalName \
-                          --role roleName \
-                          --scopes /subscriptions/mySubscriptionID/resourceGroups/rg-temp-001 \
-                          --cert @/path/to/cert.pem
-    ```
-
-  - Use existing cert in a key vault
-
-    ```sh
-    az ad sp create-for-rbac --name myServicePrincipalName \
-                         --role roleName \
-                         --scopes /subscriptions/mySubscriptionID/resourceGroups/rg-temp-001 \
-                         --keyvault vaultName \
-                         --cert certificateName
-    ```
-
-  - Use a newly generated self-signed cert
-
-    ```sh
-    az ad sp create-for-rbac --name myServicePrincipalName \
-                         --role roleName \
-                         --scopes /subscriptions/mySubscriptionID/resourceGroups/rg-temp-001 \
-                         --create-cert
-    ```
-
-    This creates a `.pem` file, which looks like
-
-    ```
-    -----BEGIN PRIVATE KEY-----
-    myPrivateKeyValue
-    -----END PRIVATE KEY-----
-    -----BEGIN CERTIFICATE-----
-    myCertificateValue
-    -----END CERTIFICATE-----
-    ```
-
-  - Use a newly generated self-signed cert and put it in a key vault
-
-    ```sh
-    # generate a cert and save it to a key vault
-    az ad sp create-for-rbac --name myServicePrincipalName \
-                        --role roleName \
-                        --scopes /subscriptions/mySubscriptionID/resourceGroups/rg-temp-001 \
-                        --create-cert \
-                        --cert certificateName \
-                        --keyvault vaultName
-    ```
-
-    To retrieve the cert and convert it to a PEM file:
-
-    ```sh
-    az keyvault secret download \
-        --file /path/to/cert.pfx \
-        --vault-name VaultName \
-        --name CertName \
-        --encoding base64
-    openssl pkcs12 -in cert.pfx -passin pass: -out cert.pem -nodes
-    ```
-
-    **You need `az keyvault secret download` here to retrieve the private key and the cert, `az keyvault certificate download` only downloads the public potion of a certificate**
+  - Seems there is no easy way to find what AAD roles have been assigned to an SP, see [Terraform note](./terraform.markdown) for details on how to assign AAD roles/permissions to an SP
+  - See [below](#service-principals-1) for CLI examples
 
   A service principal object looks like this:
 
@@ -361,8 +262,8 @@ There are three types of service principals:
     az login --service-principal --username appID --tenant tenantID --password /path/to/cert
     ```
 
-    - Use **`appId`** (the same in `servicePrincipalNames`) as the username for CLI login `az login --service-principal -u <appId> -p <pass> --tenant <tenantId>`, the service principal needs RBAC roles to login
-    - Use the **`objectId`** in role assignment
+    - Use **`appId`** (the same in `servicePrincipalNames`) as the username for CLI login `az login --service-principal -u <appId> -p <pass> --tenant <tenantId>`
+    - The service principal requires RBAC roles to login
 
 - **Managed identities**
 
@@ -410,6 +311,22 @@ There are three types of service principals:
         --object-id <principal id> \
         --secret-permissions get list
     ```
+
+
+## Application permissions
+
+Microsoft identity platform implements the OAuth 2.0 authorization protocol. Web-hosted resources can define a set of permissions that you use to implement functionality in smaller chunks, eg. Microsoft Graph has defined permissions like `User.ReadWrite.All`, `Mail.Read`
+
+Two types of permissions:
+
+- **Application permissions**: used by apps that run without a signed-in user
+- **Deletegated permissions**: used by apps that have a signed-in user present, the user is simply allowing the app to act on their behalf using their permissions
+  - The effective permissions are the **intersection** of the delegated permissions granted to the app and the privileges of the currently signed-in user
+
+Best practices:
+
+- Restricting user consent to allow users to consent only for app from verified publishers, and only for permissions you select.
+
 
 
 ## Role-based access control (RBAC)
@@ -541,6 +458,53 @@ To enable the elevated access:
       az role assignment delete --role "User Access Administrator" --scope "/"
       ```
 
+
+## Conditional access
+
+![Conditional access](images/azure_ad-conditions-access.png)
+
+Best practices:
+
+- **More granular MFA experience**: eg. only trigger MFA from an unexpected location
+- **Test with report-only mode**: evaluate access policy effect before enabling them
+- **Block geographic areas**: you could define named locations, and block sign-in from them
+- **Require manged devices**
+- **Require approved client applications**
+- **Block legacy authentication protocols**
+
+
+## Identity protection
+
+Allow or deny user access based on user risk and sign-in risk
+
+![User risk level evaluation](images/azure_ad-user-risk-level-evaluation.png)
+
+- **User risk** represents the probability that a given identity or account is compromised, calculated offline
+  - Leaked credentials
+  - Threat intelligence: unusual user activity
+- **Sign-in risk** calculated real-time or offline
+  - Anonymous IP
+  - Atypical travel: sign-ins originating from distant locations
+  - Malware linked IP
+  - Password spray: brute force attach, using same password against multiple users
+
+
+## Access reviews
+
+Help ensure that the right people have the right access to the right resources, you could set up a schedule to review:
+
+- Access to applications
+- Group memberships
+- Access packages that group resources (groups, apps, and sites) into a single package
+- Azure AD roles and Azure Resource roles in Privileged Identity Management (PIM)
+
+
+## Administrative Units
+
+- To restrict administrative scope in organizations that are made up of independent divisions, such as School of Business and School of Engineering in a University
+- Apply scope only to management permissions
+
+
 ## Logging and analytics
 
 There are many different categories of logs:
@@ -582,10 +546,12 @@ AuditLogs
 - Give at least two accounts the **Global Administrator** role, DON'T use them daily;
 - Use regular administrator roles wherever possible;
 - Create a list of banned passwords (such as company name);
-- Configure conditional-access policies to require users to pass multiple authentication challenges;
+- Configure conditional access policies to require users to pass multiple authentication challenges;
 
 
 ## CLI
+
+### `--filter` parameter
 
 The `--filter` parameter in many `az ad` commands uses the OData filter syntax, check available expressions here: https://docs.microsoft.com/en-us/graph/query-parameters#filter-parameter
 
@@ -595,3 +561,122 @@ The `--filter` parameter in many `az ad` commands uses the OData filter syntax, 
 # "startswith" needs to be all lowercase
 az ad group list --filter "startswith(displayName, 'gary')"
 ```
+
+### Service principals
+
+- Create and assign roles
+
+  ```sh
+  SP_NAME='My-Service-Principal'
+  RESOURCE_ID='resource/id'
+  ANOTHER_RESOURCE_ID='another/resource/id'
+
+  # create an SP and assign a role on multiple scopes
+  SP_PASS=$(az ad sp create-for-rbac \                # 1
+    --name $SP_NAME \
+    --role "Contributor" \
+    --scopes $RESOURCE_ID $ANOTHER_RESOURCE_ID \
+    --query password \
+    --output tsv)
+
+  # get appId, which is used in your client app
+  SP_APP_ID=$(az ad sp list \
+    --display-name $SP_NAME \
+    --query "[].appId" \
+    --output tsv)
+
+  SP_OBJECT_ID=$(az ad sp list \
+    --display-name $SP_NAME \
+    --query "[].objectId" \
+    --output tsv)
+
+  # assign another role
+  az role assignment create \
+    --assignee $SP_OBJECT_ID \                        # 2
+    --role "ROLE_A" \
+    --scope "SUB_or_GROUP_or_RESOURCE_ID"
+  ```
+
+  - *#1* This creates both an app registration and a service principal, and does the RBAC assignment
+  - *#2* Must use `objectId` in role assignment
+
+- List
+
+  ```sh
+  # show SPs you created in your Default Directory
+  az ad sp list \
+    --filter "PublisherName eq 'Default Directory'" \
+    -otable
+
+  # list all role assignments for an SP in current subscription
+  az role assignment list \
+      --all \
+      --assignee <SP name or object id>
+  ```
+
+- Use certificate-based authentication
+
+  - Use an existing local cert
+
+    ```sh
+    # CERTIFICATE must be appended to the PRIVATE KEY within the `.pem` file
+    az ad sp create-for-rbac --name myServicePrincipalName \
+                          --role roleName \
+                          --scopes /subscriptions/mySubscriptionID/resourceGroups/rg-temp-001 \
+                          --cert @/path/to/cert.pem
+    ```
+
+  - Use existing cert in a key vault
+
+    ```sh
+    az ad sp create-for-rbac --name myServicePrincipalName \
+                          --role roleName \
+                          --scopes /subscriptions/mySubscriptionID/resourceGroups/rg-temp-001 \
+                          --keyvault vaultName \
+                          --cert certificateName
+    ```
+
+  - Use a newly generated self-signed cert
+
+    ```sh
+    az ad sp create-for-rbac --name myServicePrincipalName \
+                          --role roleName \
+                          --scopes /subscriptions/mySubscriptionID/resourceGroups/rg-temp-001 \
+                          --create-cert
+    ```
+
+    This creates a `.pem` file, which looks like
+
+    ```
+    -----BEGIN PRIVATE KEY-----
+    myPrivateKeyValue
+    -----END PRIVATE KEY-----
+    -----BEGIN CERTIFICATE-----
+    myCertificateValue
+    -----END CERTIFICATE-----
+    ```
+
+  - Use a newly generated self-signed cert and put it in a key vault
+
+    ```sh
+    # generate a cert and save it to a key vault
+    az ad sp create-for-rbac --name myServicePrincipalName \
+                        --role roleName \
+                        --scopes /subscriptions/mySubscriptionID/resourceGroups/rg-temp-001 \
+                        --create-cert \
+                        --cert certificateName \
+                        --keyvault vaultName
+    ```
+
+    To retrieve the cert and convert it to a PEM file:
+
+    ```sh
+    az keyvault secret download \
+        --file /path/to/cert.pfx \
+        --vault-name VaultName \
+        --name CertName \
+        --encoding base64
+    openssl pkcs12 -in cert.pfx -passin pass: -out cert.pem -nodes
+    ```
+
+    **You need `az keyvault secret download` here to retrieve the private key and the cert, `az keyvault certificate download` only downloads the public potion of a certificate**
