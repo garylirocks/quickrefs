@@ -4,15 +4,18 @@
 - [Azure Monitor](#azure-monitor)
   - [VMs](#vms)
 - [Azure Security Center](#azure-security-center)
-- [Azure Application Insights](#azure-application-insights)
 - [Alerting](#alerting)
 - [Activity Log](#activity-log)
 - [Log Analytics](#log-analytics)
   - [Design considerations](#design-considerations)
   - [Access Control](#access-control)
     - [Access modes](#access-modes)
-  - [VM Insights](#vm-insights)
 - [Kusto Query Language](#kusto-query-language)
+- [Workbooks](#workbooks)
+- [Insights](#insights)
+  - [Azure Application Insights](#azure-application-insights)
+  - [VM Insights](#vm-insights)
+- [Azure Data Explorer](#azure-data-explorer)
 
 ## Overview
 
@@ -83,14 +86,6 @@ For VMs, Azure collects some metrics(host-level) by default, such as CPU usage, 
 - Collects data from resources such as VMs by using the Log Analytics Agent, and puts it into a workspace;
   - Log Analytics Agent can be provisioned automatically
 
-
-## Azure Application Insights
-
-- Is an APM (Application Performance Management) service, mostly captures two kinds of data: *events* and *metrics*
-- Instrumentation methods:
-  - Runtime instrumentation: can be enabled without making any changes to code (Windows IIS web app only, works best with ASP.NET)
-  - Build-time instrumentation: by installing SDK to code, enables full functionality, supports custom events
-  - Client-side instrumentation: JavaScript SDK, you can configure App Service to inject it automatically (Windows IIS web app only)
 
 
 ## Alerting
@@ -176,15 +171,6 @@ The data a user has access to is determined by a combination of factors that are
 | Permissions scopes   | Workspace. Users with access to the workspace can query all logs in the workspace from tables that they have permissions to (allowed by optional table-level RBAC). | Azure resource. User can query logs for specific resources, resource groups, or subscription they have access to from any workspace but can't query logs for other resources. |
 
 
-
-
-### VM Insights
-
-When you enable Insights for a VM, you could get detailed performance metrics and a map showing dependencies like processes running, ports open, connection details, etc
-
-![VM Insights map](images/azure_vm-insights-map.png)
-
-
 ## Kusto Query Language
 
 KQL was originally written for Azure Data Explorer.
@@ -221,3 +207,56 @@ InsightsMetrics
 ```
 
 ![Query result chart example](images/azure_log-analytics-chart-example.png)
+
+
+## Workbooks
+
+Allows you to connect to multiple data sources across Azure and combine them into unified interactive reports.
+
+
+## Insights
+
+- Provide a customized monitoring experience for particular applications and services.
+- They collect and analyze both logs and metrics.
+
+Provided insights:
+
+- Application insights: monitor your live web apps on any platform
+- Container insights: ACI, AKS
+- Cosmos DB insights
+- Networks insights: identify resource dependencies
+- Resource Group insights
+- Storage insights
+- VM insights: health and performance of your VM and VMSS, monitor their processes and dependencies on other resources and external processes
+- Key Vault insights
+- Cache for Redis insights
+
+### Azure Application Insights
+
+- Is an APM (Application Performance Management) service, mostly captures two kinds of data: *events* and *metrics*
+- Instrumentation methods:
+  - **Runtime instrumentation**: can be enabled without making any changes to code (Windows IIS web app only, works best with ASP.NET)
+  - **Build-time instrumentation**: by installing SDK to code, enables full functionality, supports custom events
+  - **Client-side instrumentation**: JavaScript SDK, you can configure App Service to inject it automatically (Windows IIS web app only)
+
+
+### VM Insights
+
+Provide
+
+- Detailed performance metrics
+- A topology view showing dependencies like processes running, ports open, connection details, etc
+- VMs, VMSS, VMs connected with Azure Arc, on-prem VMs
+- Can monitor VMs **across multiple subscriptions** and resource groups
+
+![VM Insights map](images/azure_vm-insights-map.png)
+
+
+## Azure Data Explorer
+
+- Unified big data analytics platform
+- Greater flexibility for building quick and easy near-real-time analytics dashboards, granular RBAC, time series, pattern recognition and machine learning
+
+Example design:
+
+![Data Explorer](images/azure_data-explorer.png)
