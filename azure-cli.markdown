@@ -166,10 +166,19 @@ For the query parameter `--query "[? properties.state=='Registered'].{Name: name
 
 You could use `jp` (https://github.com/jmespath/jp) on command line to try out expressions.
 
-NOTE:
+- Wrap string literals with **single quotes**
 
-- **Literal strings inside an expression needs to be in single quotes**, so this works: **`jp -f x.json "people[? contains(name, 'Barney')]"`**, not this: `jp -f x.json 'people[? contains(name, "Barney")]'`
-- String comparing functions are case-sensitive, and seems there are no regular expression functions
+    ```sh
+    jp -f x.json "people[? contains(name, 'Barney')]"
+    ```
+
+- Wrap number literals with **backticks** :
+
+    ```sh
+    jp -f x.json "[? age==`27`]"
+    ```
+
+- String comparing functions are **case-sensitive**, and seems there are no regular expression functions
 
 
 Given an example JSON data like this:

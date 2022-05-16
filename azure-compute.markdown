@@ -589,14 +589,23 @@ Azure has a solution for updating VMs called Update Management
 - List images/VM sizes
 
   ```sh
-  # filter by publisher
-  az vm image list --publisher Microsoft --all --output table
+  # find vm images by offer, sku, location, publisher
+  az vm image list \
+    --offer ubuntu \
+    --sku lts \
+    --location australiaeast \
+    --publisher Canonical \
+    -otable
 
-  # filter by location
-  az vm image list --location eastus --output table
+  # Offer         Publisher    Sku        Urn                                      UrnAlias    Version
+  # ------------  -----------  ---------  ---------------------------------------  ----------  ---------
+  # UbuntuServer  Canonical    18.04-LTS  Canonical:UbuntuServer:18.04-LTS:latest  UbuntuLTS   latest
 
-  # vm sizes
-  az vm list-sizes --location eastus --output table
+  # list vm sizes, filter by number of cores
+  az vm list-sizes \
+    --location australiaeast \
+    --query '[? numberOfCores==`1`]' \
+    -otable
   ```
 
 - Resize a VM
@@ -1281,4 +1290,3 @@ There are three different functions types, the table below show how to use them 
 | Escalation task                      | Activity Function                 |
 
 - You need to run `npm install durable-functions` from the `wwwroot` folder of your function app in Kudu
-
