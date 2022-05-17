@@ -536,17 +536,9 @@ module "example_sqs_queue" {
   - To refer to the instances, **`<TYPE>.<NAME>`** refers to all the instances as a map, **`<TYPE>.<NAME>[INDEX]`** refer to a single instance, eg. `aws_iam_user.the-accounts["Todd"]`
 
 
-- `for..in`
+- For expressions: `for..in`
 
   - Creates a list out of another list or map
-
-    ```terraform
-    output "instance_id" {
-      description = "ID of the EC2 instance"
-      # output a list
-      value       = [for instance in aws_instance.app : instance.id]
-    }
-    ```
 
     ```sh
     > [ for i in { "a" = { id = 2 }, "b" = { id = 3 } }: i.id ]
@@ -562,12 +554,18 @@ module "example_sqs_queue" {
     ]
     ```
 
-  - Or create a map
+  - Or create a map (**use `if` for filtering**)
 
     ```sh
     > { for k,v in {a = {age = 20}, b = {age = 30}}: k => v.age }
     {
       "a" = 20
+      "b" = 30
+    }
+
+    # use 'if' for filtering
+    > { for k,v in {a = {age = 20}, b = {age = 30}}: k => v.age if v.age > 25}
+    {
       "b" = 30
     }
 
