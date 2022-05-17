@@ -778,34 +778,42 @@ name = "web-sg-${var.resource_tags["project"]}-${var.resource_tags["environment"
 
 ### Data source blocks
 
-Used to fetch
+- Info from cloud provider APIs
 
-- Info from cloud provider APIs (such as disk image IDs)
-- Info from other workspaces
-
-```terraform
-# info from cloud API, get available az zones in current region
-data "aws_availability_zones" "available" {
-  state = "available"
-}
-```
-
-Get state data from another workspace (`terraform_remote_state` is a Terraform builtin provider)
-
-```terraform
-data "terraform_remote_state" "vpc" {
-  backend = "local"
-
-  config = {
-    path = "../learn-terraform-data-sources-vpc/terraform.tfstate"
+  ```terraform
+  # get config of the AzureRM provider
+  data "azurerm_client_config" "current" {
   }
-}
 
-# reference data
-provider "aws" {
-  region = data.terraform_remote_state.vpc.outputs.aws_region
-}
-```
+  # you can get client_id, tenant_id, subscription_id, object_id
+  output "account_id" {
+    value = data.azurerm_client_config.current.client_id
+  }
+  ```
+
+  ```terraform
+  # get available zones in current region
+  data "aws_availability_zones" "available" {
+    state = "available"
+  }
+  ```
+
+- Info from other workspaces (`terraform_remote_state` is a Terraform builtin provider)
+
+  ```terraform
+  data "terraform_remote_state" "vpc" {
+    backend = "local"
+
+    config = {
+      path = "../learn-terraform-data-sources-vpc/terraform.tfstate"
+    }
+  }
+
+  # reference data
+  provider "aws" {
+    region = data.terraform_remote_state.vpc.outputs.aws_region
+  }
+  ```
 
 ### Output
 
