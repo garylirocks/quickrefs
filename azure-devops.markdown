@@ -517,6 +517,14 @@ Variable names **can't** be prefixed with `endpoint`, `input`, `secret` and `sec
   - processed at compile time, for reusing parts of YAML as templates
   - the same syntax as template parameters
   - can appear as either keys or values: `${{ variables.key }} : ${{ variables.value }}`
+  - could be a looping expression like:
+
+    ```yaml
+    steps:
+      - ${{ each item in parameters.my_list }}:
+        - bash: "echo ${{ item }}"
+        - bash: ...
+    ```
 
 - Macro `$(myVar)`
 
@@ -546,6 +554,16 @@ Variable names **can't** be prefixed with `endpoint`, `input`, `secret` and `sec
 
   - runtime, designed for use with conditions and expressions
   - must take up the entire right side of a definition
+  - eg. get variables outputted from a previous job
+
+    ```yaml
+    dependsOn: A
+    variables:
+      # map the output variable from A into this job
+      varFromA: $[ dependencies.A.outputs['ProduceVar.MyVar'] ]
+    ```
+
+Example:
 
 ```yaml
 variables:

@@ -857,7 +857,16 @@ moved {
 }
 ```
 
-Or you could use `terraform state mv [options] SOURCE DESTINATION` to update the state file
+Or update the state file about what changed with:
+
+```sh
+# show a list of resource IDs in the current state
+tf state list
+
+# move resource IDs
+tf state mv [options] SOURCE DESTINATION
+```
+
 
 ### Providers
 
@@ -1237,13 +1246,11 @@ terraform init -backend-config="backend.tfvars"
 
 ### Azure DevOps Pipeline
 
-In the following example,
-- you use pipeline secrets to construct a `backend.tfvars` file,
-- then terraform could access the state file,
-- then run `terraform apply` and get the output,
-- which is used in the next step for deplying an app
+- Use a extension, which provides Terraform tasks, such as https://marketplace.visualstudio.com/items?itemName=charleszipp.azure-pipelines-tasks-terraform
 
-```yaml
+- Use custom script:
+
+  ```yaml
   - stage: "Dev"
     displayName: "Deploy to the dev environment"
     dependsOn: Build
@@ -1264,7 +1271,6 @@ In the following example,
 
               # Write backend.tfvars.
               echo 'resource_group_name = "tf-storage-rg"' | tee backend.tfvars
-
               echo 'storage_account_name = "'$(StorageAccountName)'"' | tee -a backend.tfvars
               echo 'container_name = "tfstate"' | tee -a backend.tfvars
               echo 'key = "terraform.tfstate"' | tee -a backend.tfvars
@@ -1275,14 +1281,14 @@ In the following example,
               # Apply the Terraform plan.
               terraform apply -input=false -auto-approve
 
-              # Get the App Service name for the dev environment.
+              # Get output
               WebAppNameDev=$(terraform output appservice_name_dev)
 
               # Write the WebAppNameDev variable to the pipeline.
               echo "##vso[task.setvariable variable=WebAppNameDev;isOutput=true]$WebAppNameDev"
             name: "RunTerraform"
             displayName: "Run Terraform"
-            # make pipline variable available in Bash
+            # set env variables for Azure authentication
             env:
               ARM_CLIENT_ID: $(ARM_CLIENT_ID)
               ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
@@ -1308,7 +1314,7 @@ In the following example,
                     azureSubscription: "Resource Manager - Tailspin - Space Game"
                     appName: "$(WebAppNameDev)"
                     package: "$(Pipeline.Workspace)/drop/$(buildConfiguration)/*.zip"
-```
+  ```
 
 
 ## Internals
