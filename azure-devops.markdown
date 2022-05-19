@@ -596,35 +596,38 @@ Macros like `$(mySecret)`, `$(global_secret)` work, they are interpreted by the 
 
 ### Predefined variables
 
-Can be used as env variables in scripts and as parameters in build task
+Can be used as env variables in scripts and as parameters in build task, see https://docs.microsoft.com/en-us/azure/devops/pipelines/build/variables?view=azure-devops&tabs=yaml
 
 Examples:
-  - `Build.ArtifactStagingDirectory`: The local path on the agent where any artifacts are copied to before being pushed to destination, same as `Build.StagingDirectory`
-  - `Build.SourcesDirectory`: the local path where your source code files are downloaded, may contain multiple folders if you checkout multiple repos
-  - `Build.SourceBranchName`: 'main', ...
-  - `Build.Reason`: 'Manual', 'Schedule', 'PullRequest', ...
-  - `Pipeline.Workspace`
-  - `System.AccessToken`, a special variable that carries the security token used by the running build, could be used as a PAT token or a `Bearer` token to call Azure Pipelines REST API
-    - Could be used like:
+- `System.DefaultWorkingDirectory`: The local path on the agent where your source code files are downloaded. eg. `c:\agent_work\1\s` on Windows, `/azp/agent/_work/1/s` on Linux
+  - If only one repo is checked out, it's the same as `Build.SourcesDirectory`
+  - When multiple repos are checked out, each repo is checkedout as a folder in this directory
+- `Build.ArtifactStagingDirectory`: The local path on the agent where any artifacts are copied to before being pushed to destination, same as `Build.StagingDirectory`
+- `Build.SourcesDirectory`: the local path where your source code files are downloaded, may contain multiple folders if you checkout multiple repos
+- `Build.SourceBranchName`: 'main', ...
+- `Build.Reason`: 'Manual', 'Schedule', 'PullRequest', ...
+- `Pipeline.Workspace`
+- `System.AccessToken`, a special variable that carries the security token used by the running build, could be used as a PAT token or a `Bearer` token to call Azure Pipelines REST API
+  - Could be used like:
 
-      ```yaml
-      steps:
-        - bash: |
-            echo This script could use $SYSTEM_ACCESSTOKEN
-            git checkout "git::https://:${SYSTEM_ACCESSTOKEN}@dev.azure.com/myOrg/myProject/_git/my-repo"
-          env:
-            SYSTEM_ACCESSTOKEN: $(System.AccessToken)
-        - powershell: |
-            Write-Host "This is a script that could use $env:SYSTEM_ACCESSTOKEN"
-            Write-Host "$env:SYSTEM_ACCESSTOKEN = $(System.AccessToken)"
-          env:
-            SYSTEM_ACCESSTOKEN: $(System.AccessToken)
-      ```
+    ```yaml
+    steps:
+      - bash: |
+          echo This script could use $SYSTEM_ACCESSTOKEN
+          git checkout "git::https://:${SYSTEM_ACCESSTOKEN}@dev.azure.com/myOrg/myProject/_git/my-repo"
+        env:
+          SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+      - powershell: |
+          Write-Host "This is a script that could use $env:SYSTEM_ACCESSTOKEN"
+          Write-Host "$env:SYSTEM_ACCESSTOKEN = $(System.AccessToken)"
+        env:
+          SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+    ```
 
 Deployment job only:
 
-  - `Environment.Name`
-  - `Strategy.Name`: The name of the deployment strategy: `canary`, `runOnce`, or `rolling`.
+- `Environment.Name`
+- `Strategy.Name`: The name of the deployment strategy: `canary`, `runOnce`, or `rolling`.
 
 ### Templates
 
