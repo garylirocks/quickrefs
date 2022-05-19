@@ -26,6 +26,7 @@
 - [Azure Firewall](#azure-firewall)
   - [Web Application Firewall (WAF)](#web-application-firewall-waf)
 - [DDoS Protection](#ddos-protection)
+- [NAT Gateway](#nat-gateway)
 - [Private Endpoints](#private-endpoints)
   - [DNS resolution](#dns-resolution)
   - [Limitations](#limitations)
@@ -50,6 +51,7 @@
 - [Networking architecutres](#networking-architecutres)
 - [Hub-spoke architecture](#hub-spoke-architecture)
 - [Network Watcher](#network-watcher)
+- [Network design considerations](#network-design-considerations)
 
 ## Overview
 
@@ -396,7 +398,8 @@ Compare ExpressRoute to Site-to-Site VPN:
 
 ![Virtual WAN](images/azure_virtual-wan.png)
 
-- Azure regions serve as hubs that you choose to connect your branches to
+- Similar to the hub-spoke structure, virtual WAN replaces hub vNet as a managed service
+- Azure regions serve as hubs, you choose which region each branch connects to
 - Brings together many networking services: site-to-site VPN, point-to-site VPN, ExpressRoute into a single operational interface
 - The cloud hosted 'hub' enables transitive connectivity between endpoints across different types of 'spokes'
 
@@ -424,13 +427,12 @@ These are the default system routes:
 - *`100.64.0.0/10` is shared address space for communications between a service provider and its subscribers when using a carrier-grade NAT (see https://en.wikipedia.org/wiki/Carrier-grade_NAT)*
 - The `0.0.0.0/0` route is used if no other routes match, Azure routes traffic to the Internet, the exception is that traffic to the public IP addresses of Azure services remains on the Azure backbone network, not routed to the Internet.
 
-
 Additional system routes will be created when you enable:
 
-- vNet peering
+- vNet peering (a route for each address range in the peered-to vnet's address space)
 - Service chaining (lets you override default peering routes with UDRs)
 - vNet gateway
-- vNet Service endpoint
+- vNet Service endpoint (a route to the service's public IPs)
 
 ### User-defined routes
 
@@ -488,7 +490,7 @@ Usually used to advertise on-prem routes to Azure when you're connected through 
 
 ### Route selection and priority
 
-- If multiple routes are available for an IP address, the one with the longest prefix match is used. Eg. when sending message to `10.0.0.2`, route `10.0.0.0/24` is selected over route `10.0.0.0/16`
+- If multiple routes are available for an IP address, the one with **the longest prefix match** is used. Eg. when sending message to `10.0.0.2`, route `10.0.0.0/24` is selected over route `10.0.0.0/16`
 - You can't configure multiple UDRs with the same address prefix
 - If multiple routes share the same prefix, route is selected based on this order of priority:
   - UDR
@@ -579,7 +581,7 @@ More detailed:
 By default, all traffic is blocked, you can configure:
 
 - **NAT rules**:
-  - translate fireware public IP and port to a private IP and port, could be helpful in publishing SSH, RDP, or non-HTTP/S applications to the Internet
+  - translate firewall public IP and port to a private IP and port, could be helpful in publishing SSH, RDP, or non-HTTP/S applications to the Internet
   - **must be accompanied by a matching network rule**
 - **Network rules**:
   - apply to **non-HTTP/S traffic** that flow through the firewall, including traffic from one subnet to another
@@ -603,6 +605,15 @@ Network rules are processed before application rules
 
 - Basic: Free, part of your Azure subscription
 - Standard: Protection policies are tuned through dedicated traffic monitoring and machine learning algorithms
+
+
+## NAT Gateway
+
+![NAT Gateway](images/azure_nat-gateway.png)
+
+- You configure it on a subnet
+- All outbound connectivity uses your specified static public IP addresses
+
 
 ## Private Endpoints
 
@@ -1259,3 +1270,29 @@ A combination of network monitoring and diagnostic tools.
 - Logging
   - NSG Flow Logs: log all traffic in your NSGs
   - Traffic Analytics: query/visualize your NSG Flow Log data, requires Log Analytics
+
+
+## Network design considerations
+
+- Segmentation:
+
+  Some resources need their own virtual network or subnet, eg. both Application Gateway and VPN Gateway need a dedicated subnet, multiple gateways can be hosted in the same subnet
+
+- Security
+
+  - Whenever possible, ONLY associate NSGs to subnets, NOT on a network interface
+  - When VMs within a subnet need different security rules, use application security groups
+
+- IP addressing
+
+  - vNet CIDR range can't be larger than /16
+  - vNet address space shouldn't be overlapping with on-premises ranges
+
+- Subnet
+
+  - Azure retains 5 IP addresses from each subnet
+  - The smallest subnet you can create is /29, with 3 usable addresses
+
+- Load balancing
+
+  ![Load balancing decision tree](images/azure_load-balancer-decision-tree.png)
