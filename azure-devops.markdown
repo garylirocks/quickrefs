@@ -10,9 +10,8 @@
   - [Scoped under team](#scoped-under-team)
   - [Boards-GitHub Connection](#boards-github-connection)
 - [Pipelines](#pipelines)
+  - [Overview](#overview-1)
   - [Multistage pipeline](#multistage-pipeline)
-  - [Deployment jobs](#deployment-jobs)
-    - [Deployment strategies](#deployment-strategies)
   - [Variables](#variables)
     - [Scopes](#scopes)
     - [Naming](#naming)
@@ -22,15 +21,23 @@
     - [Secret variables](#secret-variables)
     - [Set variables and use output variables](#set-variables-and-use-output-variables)
   - [Predefined variables](#predefined-variables)
+  - [Templates](#templates)
+  - [Variable templates](#variable-templates)
   - [Use Key Vault secrets in pipelines](#use-key-vault-secrets-in-pipelines)
   - [Artifacts in Azure Pipelines](#artifacts-in-azure-pipelines)
     - [Publish](#publish)
     - [Download](#download)
   - [Resources](#resources)
-  - [Templates](#templates)
-  - [Variable templates](#variable-templates)
+  - [Checkout task](#checkout-task)
+    - [Triggering](#triggering)
+  - [Job authorization](#job-authorization)
+    - [Job authorization scope](#job-authorization-scope)
+    - [Built-in identities](#built-in-identities)
   - [Agent pools](#agent-pools)
+  - [Deployment jobs](#deployment-jobs)
+    - [Deployment strategies](#deployment-strategies)
 - [Artifacts](#artifacts)
+  - [GitHub integration](#github-integration)
 - [Tests](#tests)
 - [Deployment patterns](#deployment-patterns)
 - [CLI](#cli)
@@ -188,13 +195,11 @@ A commit message like `Fix #2, Fix AB#113` should
 
 ## Pipelines
 
-To integrate with GitHub:
+### Overview
 
-- Azure Pipelines has an OAuth App and a GitHub App
-  - the OAuth App allows it read your repo, update `azure-pipelines.yml` file directly from within Azure
-  - the GitHub App triggers the pipeline
+Azure Pipelines can be defined in either a YAML file (recommended), or with the Classic Editor. Some features are only available with one method, not the other (see: https://docs.microsoft.com/en-us/azure/devops/pipelines/get-started/pipelines-get-started?view=azure-devops#feature-availability).
 
-- The YAML file `azure-pipelines.yml` in your repo defines the trigger, the build agent, and the pipeline steps.
+An example pipeline YAML file:
 
 ```yaml
 ## A sample azure-pipelines.yml file
@@ -263,11 +268,9 @@ stages:
           vmImage: "ubuntu-18.04"
           demands:
             - npm
-
-        variables:  # stage level variables
+        variables:  # job level variables
           foo2: "bar2"
           foo3: "bar3"
-
         steps:
           - task: Npm@1
             displayName: "Run npm install"
@@ -281,7 +284,7 @@ stages:
 
   - stage: "Dev"
     displayName: "Deploy the web application"
-    dependsOn: Build  # depends on previous stage
+    dependsOn: Build              # 1
     condition: |  # only when the pipeline running on 'release' branch
       and (
         succeeded(),
@@ -291,7 +294,7 @@ stages:
       - deployment: Deploy  # a deployment job
         pool:
           vmImage: "ubuntu-18.04"
-        environment: dev    # an environment is created automatically if it doesn't exist
+        environment: dev          # 2
         variables:
           - group: Release  #NOTE: make a variables group available to a job
         strategy:
@@ -335,9 +338,9 @@ stages:
         ...
 ```
 
-- An environment is created automatically if it does not exist, you can create one manually and add approvals and checks to it;
-- Jobs in a stage can run in any order or in parallel, use `dependsOn` to make them run in correct order
-- Useful stage conditions:
+- *#1* By default, a job is independent from other jobs. They could run in any order or in parallel, use `dependsOn` to make sure the correct execution order.
+- *#2* An environment is created automatically if it does not exist, you can create one manually and add approvals and checks to it.
+- Example stage conditions:
 
   ```yaml
   dependsOn:    # depends on 2 stages
@@ -350,153 +353,6 @@ stages:
       in(dependencies.Stage2.result, 'Succeeded', 'Skipped')
     )
   ```
-
-### Deployment jobs
-
-```yaml
-jobs:
-  - deployment: string   # name of the deployment job, A-Z, a-z, 0-9, and underscore. The word "deploy" is a keyword and is unsupported as the deployment name.
-    displayName: string  # friendly name to display in the UI
-    pool:                # see pool schema
-      name: string       # Use only global level variables for defining a pool name. Stage/job level variables are not supported to define pool name.
-      demands: string | [ string ]
-    workspace:
-      clean: outputs | resources | all # what to clean up before the job runs
-    dependsOn: string
-    condition: string
-    continueOnError: boolean                # 'true' if future jobs should run even if this job fails; defaults to 'false'
-    container: containerReference # container to run this job inside
-    services: { string: string | container } # container resources to run as a service container
-    timeoutInMinutes: nonEmptyString        # how long to run the job before automatically cancelling
-    cancelTimeoutInMinutes: nonEmptyString  # how much time to give 'run always even if cancelled tasks' before killing them
-    variables: # several syntaxes, see specific section
-    environment: string  # target environment name and optionally a resource name to record the deployment history; format: <environment-name>.<resource-name>
-    strategy:
-      runOnce:    #rolling, canary are the other strategies that are supported
-        deploy:
-          steps: [ script | bash | pwsh | powershell | checkout | task | templateReference ]
-```
-
-A deployment job:
-
-- Doesn't automatically clone the source repo, you can do it with `checkout: self`
-- Automatically download build artifacts
-- Allow you do define the deployment strategy
-- Records history against the deployed-to environment
-
-#### Deployment strategies
-
-- `runOnce`
-
-    each hook is executed once, then run either `on:failure` or `on:success`
-
-  ```yaml
-  strategy:
-      runOnce:
-        preDeploy:
-          pool: [ server | pool ] # See pool schema.
-          steps:
-          - script: [ script | bash | pwsh | powershell | checkout | task | templateReference ]
-
-        deploy:
-          pool: [ server | pool ] # See pool schema.
-          steps: ...
-
-        routeTraffic:
-          pool: [ server | pool ]
-          steps: ...
-
-        postRouteTraffic:
-          pool: [ server | pool ]
-          steps: ...
-
-        on:
-          failure:
-            pool: [ server | pool ]
-            steps: ...
-
-          success:
-            pool: [ server | pool ]
-            steps: ...
-  ```
-
-- `rolling`
-
-  ```yaml
-  strategy:
-    rolling:
-      maxParallel: [ number or percentage as x% VMs]
-
-      preDeploy:
-        steps: ...
-
-      deploy:
-        steps: ...
-
-      routeTraffic:
-        steps: ...
-
-      postRouteTraffic:
-        steps: ...
-
-      on:
-        failure:
-          steps: ...
-
-        success:
-          steps: ...
-  ```
-
-  - Currently only support deployment to VM resources
-  - In each iteration, rolling out new version to a fixed set of VMs(rolling set)
-  - Typically waits for deployment on each set of VMs to complete before proceeding, you could do a health check after each iteration
-  - All lifecycle hook jobs are created to run on each VM
-
-- `canary`
-
-  An example, deploying to AKS, will first deploy to 10-percent pods, then 20 percent, while monitoring the health during `postRouteTraffic`
-
-  ```yaml
-  jobs:
-  - deployment:
-    environment: smarthotel-dev.bookings
-    pool:
-      name: smarthotel-devPool
-    strategy:
-      canary:
-        increments: [10,20]
-        preDeploy:
-          steps:
-          - script: initialize, cleanup....
-
-        deploy:
-          steps:
-          - script: echo deploy updates...
-              - task: KubernetesManifest@0
-                inputs:
-                  action: $(strategy.action)
-                  namespace: 'default'
-                  strategy: $(strategy.name)
-                  percentage: $(strategy.increment)
-                  manifests: 'manifest.yml'
-
-        postRouteTraffic:
-          pool: server
-          steps:
-          - script: echo monitor application health...
-        on:
-          failure:
-            steps:
-            - script: echo clean-up, rollback...
-          success:
-            steps:
-          - script: echo checks passed, notify...
-  ```
-
-  - `preDeploy` run once, then iterates with `deploy`, `routeTraffic` and `postRouteTraffic` hooks, then exits with either the `success` or `failure` hook
-
-
-
 
 ### Variables
 
@@ -514,16 +370,26 @@ Variable names **can't** be prefixed with `endpoint`, `input`, `secret` and `sec
 
 - Template expression `${{ variables.myVar }}`
 
-  - processed at compile time, for reusing parts of YAML as templates
+  - processed at compile time, based only on the YAML file content
+  - for reusing parts of YAML as templates
   - the same syntax as template parameters
   - can appear as either keys or values: `${{ variables.key }} : ${{ variables.value }}`
-  - could be a looping expression like:
+  - examples:
 
     ```yaml
     steps:
       - ${{ each item in parameters.my_list }}:
         - bash: "echo ${{ item }}"
         - bash: ...
+
+    steps:
+      - script: echo "start"
+      - ${{ if eq(variables.foo, 'adaptum') }}:
+        - script: echo "this is adaptum"
+      - ${{ elseif eq(variables.foo, 'contoso') }}: # true
+        - script: echo "this is contoso"
+      - ${{ else }}:
+        - script: echo "the value is not adaptum or contoso"
     ```
 
 - Macro `$(myVar)`
@@ -734,15 +600,115 @@ Can be used as env variables in scripts and as parameters in build task
 
 Examples:
   - `Build.ArtifactStagingDirectory`: The local path on the agent where any artifacts are copied to before being pushed to destination, same as `Build.StagingDirectory`
-  - `Build.SourcesDirectory`: the local path where your source code files are downloaded
+  - `Build.SourcesDirectory`: the local path where your source code files are downloaded, may contain multiple folders if you checkout multiple repos
   - `Build.SourceBranchName`: 'main', ...
   - `Build.Reason`: 'Manual', 'Schedule', 'PullRequest', ...
   - `Pipeline.Workspace`
+  - `System.AccessToken`, a special variable that carries the security token used by the running build, could be used as a PAT token or a `Bearer` token to call Azure Pipelines REST API
+    - Could be used like:
+
+      ```yaml
+      steps:
+        - bash: |
+            echo This script could use $SYSTEM_ACCESSTOKEN
+            git checkout "git::https://:${SYSTEM_ACCESSTOKEN}@dev.azure.com/myOrg/myProject/_git/my-repo"
+          env:
+            SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+        - powershell: |
+            Write-Host "This is a script that could use $env:SYSTEM_ACCESSTOKEN"
+            Write-Host "$env:SYSTEM_ACCESSTOKEN = $(System.AccessToken)"
+          env:
+            SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+      ```
 
 Deployment job only:
 
   - `Environment.Name`
   - `Strategy.Name`: The name of the deployment strategy: `canary`, `runOnce`, or `rolling`.
+
+### Templates
+
+For some common tasks, you could extract them into templates, then use them in each pipeline:
+
+```yaml
+parameters:
+  buildConfiguration: 'Release'
+
+steps:
+  - task: DotNetCoreCLI@2
+    displayName: 'Build the project - ${{ parameters.buildConfiguration }}'
+    inputs:
+      command: 'build'
+      arguments: '--no-restore --configuration ${{ parameters.buildConfiguration }}'
+      projects: '**/*.csproj'
+
+  - task: DotNetCoreCLI@2
+    displayName: 'Publish the project - ${{ parameters.buildConfiguration }}'
+    inputs:
+      command: 'publish'
+      projects: '**/*.csproj'
+      publishWebProjects: false
+      arguments: '--no-build --configuration ${{ parameters.buildConfiguration }} --output $(Build.ArtifactStagingDirectory)/${{ parameters.buildConfiguration }}'
+      zipAfterPublish: true
+```
+
+- Define variables in the `parameters` section
+- Read a variable using syntax like `${{ parameter.foo }}`
+
+To call the template from the pipeline:
+
+```yaml
+steps:
+  ...
+
+  # in case your template file is in the same repo at `templates/build.yml`
+  # this section actually includes two steps
+  - template: templates/build.yml
+    parameters:
+      buildConfiguration: 'Debug'
+
+  - template: templates/build.yml
+    parameters:
+      buildConfiguration: 'Release'
+```
+
+### Variable templates
+
+- Variables could be defined in a template file
+- It could have parameters
+- And you could load different templates based on parameters
+
+```yaml
+# experimental.yml
+parameters:
+- name: DIRECTORY
+  type: string
+  default: "."
+
+variables:
+- name: RELEASE_COMMAND
+  value: grep version ${{ parameters.DIRECTORY }}/package.json
+```
+
+```yaml
+# File: azure-pipelines.yml
+parameters:
+- name: isExperimental
+  displayName: 'Use experimental build process?'
+  type: boolean
+  default: false
+
+variables: # Global variables
+- ${{ if eq(parameters.isExperimental, true) }}: # Load based on parameters
+  - template: experimental.yml
+    parameters:                                  # pass parameter to a template
+      DIRECTORY: "beta"
+- ${{ if not(eq(parameters.isExperimental, true)) }}:
+  - template: stable.yml
+    parameters:
+      DIRECTORY: "stable"
+```
+
 
 ### Use Key Vault secrets in pipelines
 
@@ -844,7 +810,6 @@ steps:
   - service connections (can be shared across projects)
   - environments
   - repositories
-    - access token given to an build agent for running jobs will only have access to repositories explicitly mentioned in the `resources` section of the pipeline
 
 - Open
 
@@ -853,89 +818,129 @@ steps:
   - test plans
   - work items
 
+### Checkout task
 
-### Templates
+Scenarios:
 
-For some common tasks, you could extract them into templates, then use them in each pipeline:
+- A `checkout: self` step is added automatically to a job if nothing specified
+- Use `checkout: none` if you don't need to checkout the source code
+- Or specify one or more `checkout: ` steps
 
-```yaml
-parameters:
-  buildConfiguration: 'Release'
-
-steps:
-  - task: DotNetCoreCLI@2
-    displayName: 'Build the project - ${{ parameters.buildConfiguration }}'
-    inputs:
-      command: 'build'
-      arguments: '--no-restore --configuration ${{ parameters.buildConfiguration }}'
-      projects: '**/*.csproj'
-
-  - task: DotNetCoreCLI@2
-    displayName: 'Publish the project - ${{ parameters.buildConfiguration }}'
-    inputs:
-      command: 'publish'
-      projects: '**/*.csproj'
-      publishWebProjects: false
-      arguments: '--no-build --configuration ${{ parameters.buildConfiguration }} --output $(Build.ArtifactStagingDirectory)/${{ parameters.buildConfiguration }}'
-      zipAfterPublish: true
-```
-
-- Define variables in the `parameters` section
-- Read a variable using syntax like `${{ parameter.foo }}`
-
-To call the template from the pipeline:
+For Git repos in the same ADO organization, you could checkout like:
 
 ```yaml
 steps:
-  ...
-
-  # in case your template file is in the same repo at `templates/build.yml`
-  # this section actually includes two steps
-  - template: templates/build.yml
-    parameters:
-      buildConfiguration: 'Debug'
-
-  - template: templates/build.yml
-    parameters:
-      buildConfiguration: 'Release'
+- checkout: self
+- checkout: git://MyProject/MyRepo
+- checkout: git://MyProject/MyRepo2@features/tools # checkout specified branch
 ```
 
-### Variable templates
-
-- Variables could be defined in a template file
-- It could have parameters
-- And you could load different templates based on parameters
+For repos that require a service connection, you must declare them as repository resources:
 
 ```yaml
-# experimental.yml
-parameters:
-- name: DIRECTORY
-  type: string
-  default: "."
+resources:
+  repositories:
+  - repository: MyGitHubRepo # The name used to reference this repository in the checkout step
+    type: github
+    endpoint: MyGitHubServiceConnection
+    name: MyGitHubOrgOrUser/MyGitHubRepo
 
-variables:
-- name: RELEASE_COMMAND
-  value: grep version ${{ parameters.DIRECTORY }}/package.json
+steps:
+- checkout: self
+- checkout: MyGitHubRepo
+- script: dir $(Build.SourcesDirectory)
 ```
+
+Default checkout path(s):
+
+- Single repo: `$(Agent.BuildDirectory)/s`
+- Multiple repos: `$(Agent.BuildDirectory)/s/repo1`, `$(Agent.BuildDirectory)/s/repo2`, ...
+
+#### Triggering
+
+You could trigger a pipeline run when an update is pushed to the `self` repo or to any of the repos declared as resources (only work for Git repos in same ADO organization). This could be useful:
+
+- Trigger a run whenever a dependency repo updated
+- Keep your YAML pipeline in a separate repo
+
+Example:
 
 ```yaml
-# File: azure-pipelines.yml
-parameters:
-- name: isExperimental
-  displayName: 'Use experimental build process?'
-  type: boolean
-  default: false
+trigger:
+- main
+- feature
 
-variables: # Global variables
-- ${{ if eq(parameters.isExperimental, true) }}: # Load based on parameters
-  - template: experimental.yml
-    parameters:                                  # pass parameter to a template
-      DIRECTORY: "beta"
-- ${{ if not(eq(parameters.isExperimental, true)) }}:
-  - template: stable.yml
-    parameters:
-      DIRECTORY: "stable"
+resources:
+  repositories:
+  - repository: A
+    type: git
+    name: MyProject/A
+    ref: main
+    trigger:
+    - main
+
+  - repository: B
+    type: git
+    name: MyProject/B
+    ref: release
+    trigger:
+    - main
+    - release
 ```
+
+A run is triggered whenever:
+
+- `main` or `feature` branch updates
+- `main` branch updates in `MyProject/A`
+- `main` or `release` branch updates in `MyProject/B`
+
+
+### Job authorization
+
+See: https://docs.microsoft.com/en-us/azure/devops/pipelines/process/access-tokens?view=azure-devops&tabs=yaml
+
+At run-time, a job in a pipeline may access other resources in Azure DevOps:
+
+- Check out code from a Git repo
+- Add a tag to the repo
+- Access a feed in Azure Artifacts
+- Update a work item
+- Upload logs, test results and other artifacts from the agent to the service
+
+#### Job authorization scope
+
+Azure Pipelines uses a dynamically generated **job access token**
+
+- For a private project, the default scope is **organization**, this means a job could access all repos in an organization.
+- You could limit the scope to "project" in Organization/Project pipeline settings
+- You could further **Limit job authorization scope to referenced Azure DevOps repositories**, use a `checkout` step or `uses` statement:
+
+  ```yaml
+  steps:
+  - checkout: git://MyProject/AnotherRepo # An ADO repo in the same organization
+  - script: # Do something with that repo
+  ```
+
+  ```yaml
+  # Or you can reference it with a uses statement in the job
+  uses:
+    repositories: # List of referenced repositories
+    - AnotherRepo
+
+  steps:
+  - script: # Do something with that repo like clone it
+  ```
+
+#### Built-in identities
+
+ADO uses built-in identities(users) to execute pipelines. For a project `MyProject` in org `MyOrg`, there is:
+
+- A collection-scoped identity: `Project Collection Build Service (MyOrg)`
+- A project-scoped identity: `MyProject Build Service (MyOrg)`
+
+The collection-scoped one is used unless you limit the job access scope to "project" as described above.
+
+
 
 ### Agent pools
 
@@ -951,6 +956,150 @@ Use self-hosted agent:
     ```
   - Generate a PAT (Personal Access Token) to register your hosted agent in a pool
   - You need to install the agent software on your machine, and start a daemon service to connect to the pool
+
+### Deployment jobs
+
+```yaml
+jobs:
+  - deployment: string   # name of the deployment job, A-Z, a-z, 0-9, and underscore. The word "deploy" is a keyword and is unsupported as the deployment name.
+    displayName: string  # friendly name to display in the UI
+    pool:                # see pool schema
+      name: string       # Use only global level variables for defining a pool name. Stage/job level variables are not supported to define pool name.
+      demands: string | [ string ]
+    workspace:
+      clean: outputs | resources | all # what to clean up before the job runs
+    dependsOn: string
+    condition: string
+    continueOnError: boolean                # 'true' if future jobs should run even if this job fails; defaults to 'false'
+    container: containerReference # container to run this job inside
+    services: { string: string | container } # container resources to run as a service container
+    timeoutInMinutes: nonEmptyString        # how long to run the job before automatically cancelling
+    cancelTimeoutInMinutes: nonEmptyString  # how much time to give 'run always even if cancelled tasks' before killing them
+    variables: # several syntaxes, see specific section
+    environment: string  # target environment name and optionally a resource name to record the deployment history; format: <environment-name>.<resource-name>
+    strategy:
+      runOnce:    #rolling, canary are the other strategies that are supported
+        deploy:
+          steps: [ script | bash | pwsh | powershell | checkout | task | templateReference ]
+```
+
+A deployment job:
+
+- Doesn't automatically clone the source repo, you can do it with `checkout: self`
+- Automatically download build artifacts
+- Allow you do define the deployment strategy
+- Records history against the deployed-to environment
+
+#### Deployment strategies
+
+- `runOnce`
+
+    each hook is executed once, then run either `on:failure` or `on:success`
+
+  ```yaml
+  strategy:
+      runOnce:
+        preDeploy:
+          pool: [ server | pool ] # See pool schema.
+          steps:
+          - script: [ script | bash | pwsh | powershell | checkout | task | templateReference ]
+
+        deploy:
+          pool: [ server | pool ] # See pool schema.
+          steps: ...
+
+        routeTraffic:
+          pool: [ server | pool ]
+          steps: ...
+
+        postRouteTraffic:
+          pool: [ server | pool ]
+          steps: ...
+
+        on:
+          failure:
+            pool: [ server | pool ]
+            steps: ...
+
+          success:
+            pool: [ server | pool ]
+            steps: ...
+  ```
+
+- `rolling`
+
+  ```yaml
+  strategy:
+    rolling:
+      maxParallel: [ number or percentage as x% VMs]
+
+      preDeploy:
+        steps: ...
+
+      deploy:
+        steps: ...
+
+      routeTraffic:
+        steps: ...
+
+      postRouteTraffic:
+        steps: ...
+
+      on:
+        failure:
+          steps: ...
+
+        success:
+          steps: ...
+  ```
+
+  - Currently only support deployment to VM resources
+  - In each iteration, rolling out new version to a fixed set of VMs(rolling set)
+  - Typically waits for deployment on each set of VMs to complete before proceeding, you could do a health check after each iteration
+  - All lifecycle hook jobs are created to run on each VM
+
+- `canary`
+
+  An example, deploying to AKS, will first deploy to 10-percent pods, then 20 percent, while monitoring the health during `postRouteTraffic`
+
+  ```yaml
+  jobs:
+  - deployment:
+    environment: smarthotel-dev.bookings
+    pool:
+      name: smarthotel-devPool
+    strategy:
+      canary:
+        increments: [10,20]
+        preDeploy:
+          steps:
+          - script: initialize, cleanup....
+
+        deploy:
+          steps:
+          - script: echo deploy updates...
+              - task: KubernetesManifest@0
+                inputs:
+                  action: $(strategy.action)
+                  namespace: 'default'
+                  strategy: $(strategy.name)
+                  percentage: $(strategy.increment)
+                  manifests: 'manifest.yml'
+
+        postRouteTraffic:
+          pool: server
+          steps:
+          - script: echo monitor application health...
+        on:
+          failure:
+            steps:
+            - script: echo clean-up, rollback...
+          success:
+            steps:
+          - script: echo checks passed, notify...
+  ```
+
+  - `preDeploy` run once, then iterates with `deploy`, `routeTraffic` and `postRouteTraffic` hooks, then exits with either the `success` or `failure` hook
 
 
 ## Artifacts
@@ -971,6 +1120,14 @@ To publish an NPM package to a feed:
         publishRegistry: 'useFeed'
         publishFeed: '865b7c4e-795b-4149-8d51-fbdb16a6db21'
     ```
+
+### GitHub integration
+
+Azure Pipelines has an OAuth App and a GitHub App
+
+- the OAuth App allows it read your repo, update `azure-pipelines.yml` file directly from within Azure DevOps
+- the GitHub App triggers the pipeline
+
 
 ## Tests
 
