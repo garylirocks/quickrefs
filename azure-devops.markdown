@@ -12,6 +12,7 @@
 - [Pipelines](#pipelines)
   - [Overview](#overview-1)
   - [Multistage pipeline](#multistage-pipeline)
+    - [Stage dependencies](#stage-dependencies)
   - [Variables](#variables)
     - [Scopes](#scopes)
     - [Naming](#naming)
@@ -340,18 +341,58 @@ stages:
 
 - *#1* By default, a job is independent from other jobs. They could run in any order or in parallel, use `dependsOn` to make sure the correct execution order.
 - *#2* An environment is created automatically if it does not exist, you can create one manually and add approvals and checks to it.
-- Example stage conditions:
+
+#### Stage dependencies
+
+- By default, stages run in the order they are defined, each stage is implicitly depends on preceding stage
+- You could remove this implicit dependency:
+  ```yaml
+  stages:
+  - stage: FunctionalTest
+    ...
+
+  - stage: AcceptanceTest
+    dependsOn: []    # this removes the implicit dependency and causes this to run in parallel
+  ```
+- Use `dependsOn`
 
   ```yaml
-  dependsOn:    # depends on 2 stages
-    - Stage1
-    - Stage2
-  condition: |  # Stage1 need to be successful, Stage2 could be skipped
-    and
-    (
-      succeeded('Stage1'),
-      in(dependencies.Stage2.result, 'Succeeded', 'Skipped')
-    )
+  stages:
+  - stage: Test
+
+  - stage: DeployUS1
+    dependsOn: Test    # this stage runs after Test
+
+  - stage: DeployUS2
+    dependsOn: Test    # this stage runs in parallel with DeployUS1, after Test
+
+  - stage: DeployEurope
+    dependsOn:         # this stage runs after DeployUS1 and DeployUS2
+    - DeployUS1
+    - DeployUS2
+  ```
+
+- You could add add `condition` on a stage (the implicit one is that all the dependencies have completed and succeeded)
+
+  ```yaml
+  stages:
+  - stage: A
+
+  # stage B runs if A fails
+  - stage: B
+    condition: failed()
+
+  # C runs if A succeeded and B skipped or succeeded
+  - stage: C
+    dependsOn:
+    - A
+    - B
+    condition: |
+      and
+      (
+        succeeded('A'),
+        in(dependencies.B.result, 'Succeeded', 'Skipped')
+      )
   ```
 
 ### Variables
@@ -542,54 +583,58 @@ Macros like `$(mySecret)`, `$(global_secret)` work, they are interpreted by the 
   - script: echo $(MyVar) # this step uses the output variable
   ```
 
-
 - A different job
 
-  - You must have `isOutput=true` to the logging command
+  - You must have `isOutput=true` in the logging command
   - In following job, use the runtime expression syntax `$[ dependencies.PrevJob.outputs['Task.VarName'] ]` to map it to a variable in the job
-
 
   ```yaml
   jobs:
-  - job: A
+  - job: JobA
     steps:
     # assume that MyTask generates an output variable called "MyVar"
     # (you would learn that from the task's documentation)
     - bash: |
         echo "##vso[task.setvariable variable=MyVar;isOutput=true]true"
       name: ProduceVar  # because we're going to depend on it, we need to name the step
-  - script: echo $(ProduceVar.MyVar) # this step uses the output variable
+    - script: echo $(MyVar) # this step uses the output variable
 
-  - job: B
-    dependsOn: A
+  - job: JobB
+    dependsOn: JobA
     variables:
       # map the output variable from A into this job
-      varFromA: $[ dependencies.A.outputs['ProduceVar.MyVar'] ]
+      varFromA: $[ dependencies.JobA.outputs['ProduceVar.MyVar'] ]
     steps:
     - script: echo $(varFromA) # this step uses the mapped-in variable
   ```
 
 - A different stage
 
-  - use `stageDependencies` to reference a dependency stage
+  - At the stage level, the format for referencing variables from a different stage is `dependencies.STAGE.outputs['JOB.TASK.VARIABLE']`
+  - At the job level, the format for referencing variables from a different stage is `stageDependencies.STAGE.JOB.outputs['TASK.VARIABLE']`
 
   ```yaml
   stages:
-  - stage: One
+  - stage: StageOne
     jobs:
-    - job: A
+    - job: JobA
       steps:
       - bash: |
           echo "##vso[task.setvariable variable=MyVar;isOutput=true]true"
         name: ProduceVar  # because we're going to depend on it, we need to name the step
 
-  - stage: Two
-    dependsOn: One
+  - stage: StageTwo
+    dependsOn: StageOne
+    condition: |
+      and(
+        succeeded(),
+        eq(dependencies.StageOne.outputs['JobA.ProduceVar.MyVar'], 'true')
+      )
     jobs:
-    - job: B
+    - job: JobB
       variables:
-        # map the output variable from A into this job
-        varFromA: $[ stageDependencies.One.A.outputs['ProduceVar.MyVar'] ]
+        # map the output variable from JobA into this job
+        varFromA: $[ stageDependencies.StageOne.A.outputs['ProduceVar.MyVar'] ]
       steps:
       - script: echo $(varFromA) # this step uses the mapped-in variable
   ```
