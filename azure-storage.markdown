@@ -28,10 +28,12 @@
   - [.NET Storage Client library](#net-storage-client-library)
   - [Properties and Metadata](#properties-and-metadata)
   - [Concurrency](#concurrency)
+- [Disks](#disks)
 - [Files](#files)
   - [Snapshots](#snapshots)
   - [File Sync](#file-sync)
     - [Components](#components)
+- [NetApp Files](#netapp-files)
 - [Troubleshooting](#troubleshooting)
 
 ## Overview
@@ -84,16 +86,19 @@ Azure Storage is also used by IaaS VMs, and PaaS services:
 - Secure transer required: whether HTTPS is enforced
 - Virtual networks: only allow inbound access request from the specified network(s)
 - Account kind
-  - Standard (general-purpose v2): all services and Data Lake Storage
-  - Premium block blobs
-  - Premium page blobs: VM disks
-  - Premium file shares
+  - **Standard (general-purpose v2)**: all services and Data Lake Storage
+  - **Premium block blobs**: for low-latency, high-rate, small transactions
+  - **Premium file shares**: supports NFS
+  - **Premium page blobs**: high performance, VM disks
 - Redundancy
+  ![Redundancy in the primary region](images/azure_data-redundancy-primary-region.png)
   - LRS: three copies in one location
   - ZRS (not available in all regions)
+
+  ![Redundancy in a secondary region](images/azure_geo-redundant-storage.png)
   - GRS: replicated async to the secondary region, LRS in both regions, secondary region data _ONLY_ readable if Microsoft initiates a failover
-  - RA-GRS (default): read from secondary region any time
-  - GZRS/RA-GZRS: combines ZRS and GRS
+  - GZRS: ZRS in both regions
+  - RA-GRS, RA-GZRS: you could read from secondary region any time
 
 ### Access
 
@@ -115,10 +120,11 @@ Note:
 - Encryption at rest
 
   - All data is automatically encrypted by Storage Service Encryption (SSE) with a 256-bit AES cipher. This can't be disabled.
-  - For VMs, Azure let's you encrypt virtual hard disks(VHDs) by using Azure Disk Encryption (BitLocker for Windows images, `dm-crypt` for Linux)
   - You could use either
     - Microsoft managed keys
-    - Customer managed keys: you specify a key in a key vault, the key vault must be in the same region
+    - Customer managed keys
+      - you specify a key in a key vault (the key vault must have soft-delete and purge protection enabled)
+      - the storage account needs a user-assigned or system-assigned identity to access the key
 
 - Encryption at tansit
 
@@ -486,12 +492,29 @@ Three concurrency strategies:
     ![Blob concurrency using lease](images/azure_blob-concurrency-lease.png)
 
 
+## Disks
+
+- Managed disks and recommended
+- Types:
+  - Ultra-disk
+  - Premium SSD
+  - Standard SSD
+  - Standard HDD
+
+Caching settings
+
+- **None**: for write-only and write-heavy disks
+- **Ready only**: for read-only and read-write disks, improves read latency and IOPS
+- **Ready & Write**: only use if your app properly handles writting cached data
+
+
 ## Files
 
 Network files shares
 
-- Accessed over SMB protocol
+- Accessed over SMB/CIFS protocol
 - Multiple VMs can share the same files with both read and write access
+- Can be used to replace your on-prem NAS devices of file servers
 
 Common scenarios:
 
@@ -499,10 +522,18 @@ Common scenarios:
 - Log files such as diagnostics, metrics and crash dumps.
 - Shared data between on-premises applications and Azure VMs to allow migration.
 
+Tiers:
+
+- Premium: backed by SSD, SMB and NFS protocols
+- Transaction optimized
+- Hot
+- Cool
+
 Compare to Blobs and Disks
 
 - Files have true directory objects, Blobs have a flat namespace.
 - File shares can be mounted concurrently by multiple cloud or on-prem machines, Disks are exclusive to a single VM.
+- Files shares are best suited for random access workloads.
 
 ### Snapshots
 
@@ -525,6 +556,17 @@ To protect against unintended changes, accidental deletions, or for backup/audit
 
 - Storage Sync Service is the top-level Azure resource for Azure File Sync.
 - A Storage Sync Service instance can connect to multiple storage accounts via multiple sync groups.
+
+
+## NetApp Files
+
+- Fully managed, with advanced management capabilities
+- Support NFS and SMB
+- Example scenarios:
+  - Enterprise NAS migration
+  - Latency sensitive workloads, eg. SAP HAHA
+  - IOPS intensive high performance compute
+  - Simultaneous multi-protocol access
 
 
 ## Troubleshooting

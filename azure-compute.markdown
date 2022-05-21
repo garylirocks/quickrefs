@@ -144,25 +144,27 @@ sudo mkdir /data && sudo mount /dev/sdc1 /data
 
 Types of encryption:
 
-- Azure Storage Service Encryption (SSE, also known as Server-Side Encryption, encryption-at-rest)
-- Azure Disk Encryption (ADE)
-- Encryption at host:
-  - Encryption starts at the Azure server that your VM is hosted on
+- **Azure Storage Service Encryption** (SSE, also known as Server-Side Encryption, encryption-at-rest)
+- **Azure Disk Encryption** (ADE)
+- **Encryption at host**
+  - Disk with this aren't encrypted with SSE
+  - Instead, the server hosting your VM encrypts your data, then flows into Storage.
   - Your temp disk and OS/data disk caches are stored on the host
   - Does not use your VM's CPU and no impact on your VM's performance
   - Your must enable this feature for your subscription first: `Register-AzProviderFeature -FeatureName "EncryptionAtHost" -ProviderNamespace "Microsoft.Compute"`
 
 Comparison:
 
-|                    | SSE                                                                   | ADE                                     |
-| ------------------ | --------------------------------------------------------------------- | --------------------------------------- |
-| Algorithm          | 256-bit AES                                                           | 256-bit AES                             |
-| What               | OS/data disks                                                         | OS/data/temp disks, caches              |
-| Encrypt/Decrypt by | Azure Storage (data decrypted at Storage, before it flows to Compute) | VM CPU                                  |
-| How                | Enabled by default for Azure managed disks, can't be disabled         | BitLocker on Windows, DM-Crypt on Linux |
-| Managed by         | Storage account admin                                                 | VM owner                                |
-| Key management     | PMK or CMK (Key Vault)                                                | Key Vault                               |
-| Performance        | no noticeable impact                                                  | typically negligible*                   |
+|                    | SSE                                                                         | ADE                                                     |
+| ------------------ | --------------------------------------------------------------------------- | ------------------------------------------------------- |
+| Algorithm          | 256-bit AES                                                                 | 256-bit AES                                             |
+| What               | OS/data disks                                                               | OS/data/temp disks, caches                              |
+| Encrypt/Decrypt by | Azure Storage (performed on physical disks, flow decrypted from/to Storage) | VM CPU                                                  |
+| Who can access     |                                                                             | Disk image only accessible to the VM that owns the disk |
+| How                | Enabled by default for Azure managed disks, can't be disabled               | BitLocker on Windows, DM-Crypt on Linux                 |
+| Managed by         | Storage account admin                                                       | VM owner                                                |
+| Key management     | PMK or CMK (Key Vault)                                                      | Key Vault                                               |
+| Performance        | no noticeable impact                                                        | typically negligible*                                   |
 
 `*` For a CPU-intensive application, there may be a case for leaving the OS disk un-encrypted to maximize performance, and storing application data on a separate encrypted data disk.
 
