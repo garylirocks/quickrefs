@@ -272,7 +272,7 @@ You could specify the blob type and access tier when you create a blob.
 
 - **Block blobs (default)**: blocks of data assembled to make a blob, used in most scenarios
 - **Append blobs**: specialized block blobs optimized for append operations, frequently used for logging from one or more sources (*the `add` permission is for adding a block to an append blob*)
-- **Page blobs**: can be up to 8 TB in size, more efficient for frequent read/write operations. They provide random read/write access to 512-byte pages. Azure VMs use page page blobs as OS and data disks.
+- **Page blobs**: can be up to 8 TB in size, more efficient for frequent read/write operations. They provide random read/write access to 512-byte pages. Azure VMs use page blobs as OS and data disks.
 
 ### Access tiers
 
@@ -322,8 +322,8 @@ You could add replication rules to replicate blobs to another storage account, t
 For compliance or legal reasons, you could configure immutability policies for blob data, protecting it from overwrites and deletes.
 
 There are two types of policies:
-  - Time-based retention policy: during the retention period, objects can be created and read, but not modified or deleted. After the period has expired, objects can be deleted but not overwritten.
-  - Legal hold policies: data is immutable until the legal hold is explicitly cleared
+  - **Time-based retention policy**: during the retention period, objects can be created and read, but not modified or deleted. After the period has expired, objects can be deleted but not overwritten.
+  - **Legal hold policies**: data is immutable until the legal hold is explicitly cleared
 
 Immutability policies can be scoped to a blob version or to a container.
 
@@ -331,7 +331,7 @@ Immutability policies can be scoped to a blob version or to a container.
   - You must enable support for version-level immutability on either the storage account or a container.
   - Configure a default version-level immutability policy for the account or container.
   - A blob version supports one version-level immutability policy and one legal hold. A policy on a blob version can override a default policy specified on the account or container.
-- Container-level secope:
+- Container-level scope:
   - When support for version-level immutability has not been enabled for a storage account or a container, then any immutability policies are scoped to the container. Policies apply to all objects within the container.
 
 ### CLI
@@ -501,7 +501,7 @@ Common scenarios:
 
 Compare to Blobs and Disks
 
-- Files have true directory objects, Blobs are a flat namespace.
+- Files have true directory objects, Blobs have a flat namespace.
 - File shares can be mounted concurrently by multiple cloud or on-prem machines, Disks are exclusive to a single VM.
 
 ### Snapshots
