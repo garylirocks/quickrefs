@@ -37,8 +37,8 @@
   - [Agent pools](#agent-pools)
   - [Deployment jobs](#deployment-jobs)
     - [Deployment strategies](#deployment-strategies)
-- [Artifacts](#artifacts)
   - [GitHub integration](#github-integration)
+- [Artifacts](#artifacts)
 - [Tests](#tests)
 - [Deployment patterns](#deployment-patterns)
 - [CLI](#cli)
@@ -1150,6 +1150,14 @@ A deployment job:
   - `preDeploy` run once, then iterates with `deploy`, `routeTraffic` and `postRouteTraffic` hooks, then exits with either the `success` or `failure` hook
 
 
+### GitHub integration
+
+Azure Pipelines has an OAuth App and a GitHub App
+
+- the OAuth App allows it read your repo, update `azure-pipelines.yml` file directly from within Azure DevOps
+- the GitHub App triggers the pipeline
+
+
 ## Artifacts
 
 - Is in organization scope
@@ -1168,13 +1176,6 @@ To publish an NPM package to a feed:
         publishRegistry: 'useFeed'
         publishFeed: '865b7c4e-795b-4149-8d51-fbdb16a6db21'
     ```
-
-### GitHub integration
-
-Azure Pipelines has an OAuth App and a GitHub App
-
-- the OAuth App allows it read your repo, update `azure-pipelines.yml` file directly from within Azure DevOps
-- the GitHub App triggers the pipeline
 
 
 ## Tests
