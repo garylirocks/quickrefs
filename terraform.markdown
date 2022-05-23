@@ -275,6 +275,7 @@ terraform output -raw lb_url
 - `terraform plan`
 
     - Produces an execution plan for you to review
+    - `terraform plan -refresh-only` outputs a plan showing what has been changed to the resources, you need to apply the plan to update the state file. If you want those changes, you SHOULD update your config.
 
 - `terraform apply`
 
@@ -297,7 +298,6 @@ terraform output -raw lb_url
 - `terraform fmt` format files
 - `terraform validate` validate files
 - `terraform state list` list resources in state file
-- `terraform plan -refresh-only` refresh state file to reflect infrastructure changes
 - `terraform show [ADDRESS]` show details of a resource
 - `terraform providers` show providers for this config
 
