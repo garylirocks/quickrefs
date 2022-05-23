@@ -647,8 +647,11 @@ Examples:
 - `System.DefaultWorkingDirectory`: The local path on the agent where your source code files are downloaded. eg. `c:\agent_work\1\s` on Windows, `/azp/agent/_work/1/s` on Linux
   - If only one repo is checked out, it's the same as `Build.SourcesDirectory`
   - When multiple repos are checked out, each repo is checkedout as a folder in this directory
-- `Build.ArtifactStagingDirectory`: The local path on the agent where any artifacts are copied to before being pushed to destination, same as `Build.StagingDirectory`
-- `Build.SourcesDirectory`: the local path where your source code files are downloaded, may contain multiple folders if you checkout multiple repos
+- `Build.SourcesDirectory`: seems to be the same as `System.DefaultWorkingDirectory`
+- `Pipeline.Workspace`: the local path on an agent where all folders for a build pipeline are created, same as `Agent.BuildDirectory`, eg. `/azp/agent/_work`, other folders are under it:
+  - `$(Agent.TempDirectory)` -> `/azp/agent/_work/_temp/`
+
+- `Build.ArtifactStagingDirectory`: The local path on the agent where any artifacts are copied to before being pushed to destination, same as `Build.StagingDirectory`, you need to copy your artifacts here before publishing. **NOT RECOMMENDED ANYMORE**, you could just publish directly from where your files are.
 - `Build.SourceBranchName`: 'main', ...
 - `Build.Reason`: 'Manual', 'Schedule', 'PullRequest', ...
 - `Pipeline.Workspace`
@@ -783,6 +786,8 @@ steps:
 ```
 
 ### Artifacts in Azure Pipelines
+
+There are artifacts produced and associated with a pipeline run, *not the same as Azure Artifacts*
 
 #### Publish
 
