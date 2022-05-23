@@ -22,6 +22,7 @@
     - [Secret variables](#secret-variables)
     - [Set variables and use output variables](#set-variables-and-use-output-variables)
   - [Predefined variables](#predefined-variables)
+  - [Expressions](#expressions)
   - [Templates](#templates)
   - [Variable templates](#variable-templates)
   - [Use Key Vault secrets in pipelines](#use-key-vault-secrets-in-pipelines)
@@ -676,6 +677,46 @@ Deployment job only:
 
 - `Environment.Name`
 - `Strategy.Name`: The name of the deployment strategy: `canary`, `runOnce`, or `rolling`.
+
+### Expressions
+
+see: https://docs.microsoft.com/en-us/azure/devops/pipelines/process/expressions?view=azure-devops
+
+Expressions can be evaluated at either
+
+- Compile time:
+  - syntax: `${{ <expression> }}`
+  - evaluated when the YAML file is compiled into a plan
+  - can be used everywhere
+  - have access to `parameters` and statically defined `variables`
+- or Run time:
+  - syntax: `$[ <expression> ]`
+  - can be used in variables and conditions
+  - have access to more `variables` but *no parameters*
+
+Example:
+
+```yaml
+variables:
+  staticVar: 'my value'                                             # static variable
+  compileVar: ${{ variables.staticVar }}                            # compile time expression
+  isMain: $[eq(variables['Build.SourceBranch'], 'refs/heads/main')] # runtime expression
+
+steps:
+  - script: |
+      echo ${{variables.staticVar}} # outputs my value
+      echo $(compileVar) # outputs my value
+      echo $(isMain) # outputs True
+```
+
+Use in `condition`
+
+```yaml
+  - job: B1
+    condition: ${{ containsValue(parameters.branchOptions, variables['Build.SourceBranch']) }}
+    steps:
+      - script: echo "Matching branch found"
+```
 
 ### Templates
 
