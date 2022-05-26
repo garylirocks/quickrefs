@@ -226,6 +226,14 @@ Security posture (CIA):
 - Each directory is given a root management group, it has the same id as the tenant, it could be used for global RBAC assignments and policies
 - Up to six levels of depth, excluding the tenant root group
 
+```sh
+# list management groups
+az account management-group list -otable
+
+# show details of a management group
+az account management-group show -n "mg-gary"
+```
+
 ### Subscription
 
 Subscriptions are logical containers that serve as
