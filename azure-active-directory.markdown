@@ -21,6 +21,7 @@
   - [Evaluation](#evaluation)
   - [Azure subscriptions](#azure-subscriptions)
   - [Azure RBAC roles vs. Azure AD roles](#azure-rbac-roles-vs-azure-ad-roles)
+  - [Custom Azure RBAC roles](#custom-azure-rbac-roles)
 - [Conditional access](#conditional-access)
 - [Identity protection](#identity-protection)
 - [Access reviews](#access-reviews)
@@ -457,6 +458,36 @@ To enable the elevated access:
       # remove the elevated access
       az role assignment delete --role "User Access Administrator" --scope "/"
       ```
+
+### Custom Azure RBAC roles
+
+A custom role definition is like:
+
+```json
+{
+  "properties": {
+    "roleName": "My Custom Role",
+    "description": "My custom role for ...",
+    "assignableScopes": [
+      "/providers/Microsoft.Management/managementGroups/mg-Gary"
+    ],
+    "permissions": [
+      {
+        "actions": [
+          "*/read",
+          // ...
+        ],
+        "notActions": [],
+        "dataActions": [],
+        "notDataActions": []
+      }
+    ]
+  }
+}
+```
+
+- You could specify the assignable scopes: either management group, subscription or resource group
+- **The definition is actually tenant-scoped, the role name must be unique within a tenant**
 
 
 ## Conditional access
