@@ -264,7 +264,7 @@ There are three types of service principals:
     ```
 
     - Use **`appId`** (the same in `servicePrincipalNames`) as the username for CLI login `az login --service-principal -u <appId> -p <pass> --tenant <tenantId>`
-    - The service principal requires RBAC roles to login
+    - To login, the service principal **requires** RBAC role assignment, otherwise it can't login.
 
 - **Managed identities**
 

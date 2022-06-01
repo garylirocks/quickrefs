@@ -334,7 +334,7 @@ To grant this service principal permissions to read/write AAD objects, see https
 2. Assign AAD roles to the service principal
     - Go to AAD's "Roles and administrators" blade, find the role, click on it
     - Add an assignment to the service principal
-    - Roles listed in the service principal's "Roles and administrators" blade are **NOT** roles assigned to this service principal!
+    - **Roles listed in the service principal's "Roles and administrators" blade are NOT roles assigned to this service principal!**
 
 
 ## Remote runs and state
