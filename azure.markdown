@@ -25,6 +25,8 @@
   - [Management tools](#management-tools)
 - [Policy](#policy)
   - [Assignment](#assignment)
+  - [Effects](#effects)
+  - [Order of evaluation](#order-of-evaluation)
 - [Blueprints](#blueprints)
 - [Azure Cloud Adoption Framework](#azure-cloud-adoption-framework)
 - [Business Process Automation](#business-process-automation)
@@ -339,20 +341,44 @@ Scopes:
 | management group  | children management groups, subscriptions, resource groups |
 | subscription      | subscriptions, resource groups                             |
 
-Effects:
+### Effects
 
-- An assignment could have one of the effects:
-  - Audit: highlight noncompliant resources, can automatically remediate them (eg. tagging, diagnostic settings)
-  - Deny: prevent noncompliant resources from being created,
-  - Disabled
-- Evaluates Arc enabled resources as well
+An assignment could have one of the following effects:
+
+- **Append**:
+  - create/update: add additional fields to the requested resource, eg. allowed IPs for a storage account
+  - existing: no changes, mark the resource as non-compliant
+- **Audit**:
+  - create/update: add a warning event in the activity log
+  - existing: compliance status on the resource is updated
+- **Deny**:
+  - create/update: prevent the resources from being created
+  - existing: mark as non-compliant
+- **Disabled**
+- **AuditIfNotExists**
+- **DeployIfNotExists**
+- **Modify**
 
 Evaluation times or events:
 
 - A resource is created or updated
 - A new assignment created
 - A policy or initiative already assigned to a scope is updated
-- During the standard compliance evaluation cycle, once every 24 hours
+- Standard compliance evaluation cycle, once every 24 hours
+
+### Order of evaluation
+
+When a request to create or update a resource comes in, Azure Policy creates a list of all assignments that apply to the resource.
+
+Azure Policy evaluate policies in an order determined by policy effects:
+
+- **Disabled**: checked first
+- **Append** and **Modify**, they could alter the request
+- **Deny**
+- **Audit**
+- *sends request to Resource Provider (during creation/update)*
+- *Resource Provider returns a success code*
+- **AuditIfNotExists** and **DeployIfNotExists**: evalute to determine whether additional logging or action is required.
 
 
 ## Blueprints
