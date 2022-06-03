@@ -692,10 +692,10 @@ or try to use `CTRL-ALT-PageUp/PageDown` to switch tab (may only available in so
 ### Tag with windows
 
 ```
-^wg]        # create a new window, open the file containing tag under the cursor
+^w g]        # create a new window, open the file containing tag under the cursor
 
-^wf         # create a new window, open the file under the cursor
-^wgf        # create a new tab, open the file under the cursor
+^w f         # create a new window, open the file under the cursor
+^w gf        # create a new tab, open the file under the cursor
 ```
 
 ## Record and Play
