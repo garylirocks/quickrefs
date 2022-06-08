@@ -106,8 +106,12 @@ A version of SQL Server that runs in an Azure VM
 - Encrypt/decrypt at the data page level
 - Backups are encrypted as well (*backup operation just copies the data pages from the database file to the backup device*)
 - Encrypts the storage of an entire database by using a symmetric key called the Database Encryption Key (DEK)
-- Service-mangaged TDE: DEK is protected by a built-in server certificate
-- Customer-managed TDE: the TDE Protector that encrypts the DEK is stored in a customer managed Key Vault
+- **Service-mangaged TDE**: DEK is protected by a built-in server certificate
+- **Customer-managed TDE**: the TDE Protector that encrypts the DEK is stored in a customer managed Key Vault
+- For
+  - SQL Database and Azure Synapse, TDE protector is at the server level and inherited by all databases associated with that server.
+  - SQL Managed Instance, TDE protector is set at the instance level and inherited by all encrypted databases on that instance.
+- Cannot be used to encrypt system databases, such as `master`, which contains objects that are needed to perform the TDE operations on the user databases.
 
 ### Dynamic data masking
 
