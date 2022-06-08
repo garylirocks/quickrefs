@@ -271,6 +271,7 @@ terraform output -raw lb_url
 
     - Downloads the plug-ins you need (eg. `azurerm`, `docker`) and verifies that terraform can access your plan's state file
     - `terraform init -upgrade` update provider versions in `.terraform.lock.hcl`
+    - `terraform init -migrate-state`: after you updated the backend(eg. from local to `azurerm`), use this to migrate the state file to the new backend
 
 - `terraform plan`
 
