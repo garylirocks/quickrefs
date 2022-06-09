@@ -11,6 +11,7 @@
   - [Transparent data encryption (TDE)](#transparent-data-encryption-tde)
   - [Dynamic data masking](#dynamic-data-masking)
   - [Always Encrypted](#always-encrypted)
+- [Azure SQL Edge](#azure-sql-edge)
 
 ## Overview
 
@@ -35,27 +36,36 @@ Deployment options:
 
 ![Purchasing models](./images/azure_sql-db-purchasing-models.png)
 
-- DTU: a bundled measure of compute, storage and I/O resources
-- vCore: select compute and storage resources independently, allows you to use Azure Hybrid Benefit for SQL Server
+- DTU: a bundled measure of compute, storage and I/O resources (service tiers: Basic, Standard, Premium)
+- vCore: select compute and storage resources independently, allows you to use Azure Hybrid Benefit for SQL Server (service tiers: General Purpose, Bisness Critical, Hyperscale)
 
 ### Service tiers
 
 - General Purpose
-  ![General purpose architecture](./images/auzre_general-purpose-architecture.png)
+
+  ![General purpose architecture](./images/azure_sql-general-purpose.png)
 
   - tempdb in locally attached SSD
   - data and log files are in Azure Premium Storage
 
 - Business Critical
 
-  - like deploying an Always On availability group (AG) behind the scenes
+  ![Business critical architecture](./images/azure_sql-business-critical.png)
+
   - data and log files are stored on direct-attached SSD
+  - like deploying an Always On availability group (AG) behind the scenes
+  - there are three secondary replicas, **only one** of them could be used ad a read-only endpoint
+  - A transaction can complete a commit when at least one the secondary replicas has hardened the change for its transcation log
+  - Highest performance and availability of all Azure SQL service tiers
 
 - Hyperscale
+
   ![Hyperscale architecture](./images/azure_hyperscale-architecture.png)
 
   - Page servers serve database pages out to the compute nodes on demand
   - Data changes from the primary compute replica are propagated through the log service: it gets logs from primary compute replica, persists them, forwards them to other compute replicas and relevant page servers
+  - Transcations can commit when the log service hardens to the landing zone
+  - Can have 0 to 4 secondary replicas, can all be used for read-scale
 
 ### Scaling
 
@@ -69,7 +79,8 @@ Read Scale-out in a business critical service tier:
 ![Read Scale-out](images/azure_sql-db-business-critical-service-tier-read-scale-out.png)
 
 - You set **connection string option** to decide whether the connection is routed to the write replica or a read-only replica.
-- Data-changes are propagated asynchronously, reads are always transcationally consistent
+- Data-changes are propagated asynchronously
+- Read scale-out with one of the secondary replicas supports **session-level consistency**, if the read-only session reconnects, it might be redirected to another replica
 
 
 ## SQL Managed Instance
@@ -98,7 +109,7 @@ A version of SQL Server that runs in an Azure VM
 | Data State      | Encryption Method         |
 | --------------- | ------------------------- |
 | Data-at-rest    | TDE, Always Encrypted     |
-| Data-in-motion  | SSL/TSL, Always Encrypted |
+| Data-in-motion  | SSL/TLS, Always Encrypted |
 | Data-in-process | Dynamic data masking      |
 
 ### Transparent data encryption (TDE)
@@ -132,9 +143,27 @@ Steps:
 - Column encryption key is used to encrypt data in a column. A column master key is a key-protecting key that encrypts one or more column encryption keys
 - The DB engine only stores the encrypted values of column encryption keys and the information about the location of column master keys (eg. Azure Key Vault, Windows Certificate Store)
 - To access data stored in an encrypted column in plaintext, an application must use an *Always Encrypted enabled client driver*. Encryption and decryption occurs via the driver.
-- The drive gets from the DB engine the encrypted value of the column encryption key and the location of the corresponding column master key
+- The driver gets from the DB engine the encrypted value of the column encryption key and the location of the corresponding column master key
 - The driver contacts the key store, to decrypt the encrypted column encryption key value
 - The driver uses the plaintext column encryption key to encrypt the parameter
 - The driver substitutes the plaintext values of the parameters with their encrypted values, and it sends the query to the server for processing
 - The server computes the result set
 - The driver decrypts the results and returns plaintext values to the application
+
+
+## Azure SQL Edge
+
+- For IoT and IoT Edge deployments
+- Is a containerized Linux application, startup memory footprint is less than 500MB
+- Provides capabilities to stream, process and analyze relational and non-relational data (JSON, graph and time-series)
+- Optimized for IoT use cases and workloads
+- Can work with or without network connectivity
+
+![SQL Edge](images/azure_sql-edge.png)
+
+- **Streaming engine** allows transformation, windowed aggregation, simple anomaly detection and classification of incoming data streams
+- A **time-series storage engine** that allows storage of time-indexed data, can be aggregated and stored in cloud for future analysis
+
+Deployment models:
+- Connected: Deployed as a module for Azure IoT Edge
+- Disconnected: Deployed as a standalone docker container or on a Kubernetes cluster
