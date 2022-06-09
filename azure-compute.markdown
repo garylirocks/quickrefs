@@ -811,9 +811,9 @@ When you create a Static Web App, GitHub Actions or Azure DevOps workflow is add
       }
     }
     ```
-  - On Auzre, a reverse proxy would be setup for you automatically, so any call to `/api` is on the same origin, and proxied to the Azure Functions
+  - On Azure, a reverse proxy would be setup for you automatically, so any call to `/api` is on the same origin, and proxied to the Azure Functions
 - Free SSL certificates for custom domains
-- Staging envrionment created automatically from pull request
+- Staging environment created automatically from pull request
 
 ```sh
 az staticwebapp create \
