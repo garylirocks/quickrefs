@@ -91,7 +91,9 @@ Azure Storage is also used by IaaS VMs, and PaaS services:
   - **Premium file shares**: supports NFS
   - **Premium page blobs**: high performance, VM disks
 - Redundancy
+
   ![Redundancy in the primary region](images/azure_data-redundancy-primary-region.png)
+
   - LRS: three copies in one location
   - ZRS (not available in all regions)
 
