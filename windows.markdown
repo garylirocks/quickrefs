@@ -133,6 +133,7 @@ You could use the Windows Git Credential Manager in WSL (https://github.com/GitC
 
   ```sh
   # set as git credential helper
+  # use `git-credential-wincred.exe` if there's not `git-credential-manager-core.exe`
   git config --global credential.helper "/mnt/c/Program\ Files/Git/mingw64/libexec/git-core/git-credential-manager-core.exe"
 
   # additional config for Azure DevOps
