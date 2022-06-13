@@ -900,7 +900,22 @@ steps:
       - group: 'Release'
     ```
 
-  - secure files
+  - secure files (usually used for SSH keys, signing certificates, Apple Provisioning Profiles, Android Keystore files)
+
+    ```yaml
+    - task: DownloadSecureFile@1
+      name: caCertificate
+      displayName: 'Download CA certificate'
+      inputs:
+        secureFile: 'myCACertificate.pem'
+
+    - script: |
+        echo Installing $(caCertificate.secureFilePath) to the trusted CA directory...
+        sudo chown root:root $(caCertificate.secureFilePath)
+        sudo chmod a+r $(caCertificate.secureFilePath)
+        sudo ln -s -t /etc/ssl/certs/ $(caCertificate.secureFilePath)
+    ```
+
   - service connections (can be shared across projects)
   - environments
   - repositories
