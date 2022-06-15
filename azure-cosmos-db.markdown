@@ -27,6 +27,10 @@ Features
 
 - Global distribution
 
+Which DB solution to use?
+
+![DB solution decision tree](images/azure_db-solution-decision-tree.png)
+
 ## Common CLI operations
 
 ```sh
@@ -94,7 +98,7 @@ A sample indexing policy:
             "path": "/Item/id/?"
         },
         {
-          "path": "/Customer/email/?"
+            "path": "/Customer/email/?"
         },
         ...
     ],
