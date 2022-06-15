@@ -1,7 +1,29 @@
 # Cloud adoption framework
 
+- [Motivations](#motivations)
+- [Financial considerations](#financial-considerations)
 - [Conceptual architecture for Azure landing zones](#conceptual-architecture-for-azure-landing-zones)
 - [Deploy with Terraform](#deploy-with-terraform)
+
+
+## Motivations
+
+You could have multiple motivations.
+
+Sometimes, you'd better commit to a single motivation category for a time-bound period. So you could avoid misalignment of the people, process and projects.
+
+
+## Financial considerations
+
+Cost-saving offers:
+
+- Reserved Instances
+- Hybrid Benefit: Use your on-prem Windows Server ans SQL Server licenses on Azure
+- Spot VM: VMs for workloads that can be interrupted (eg. CI/CD, dev/test, visual rendering, etc)
+- Enterprise Agreement
+- Dev/Test pricing (requires active Visual Studio subscription)
+
+Enforce tagging conventions with Azure Policy
 
 
 ## Conceptual architecture for Azure landing zones
