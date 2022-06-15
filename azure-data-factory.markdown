@@ -75,8 +75,8 @@ See details here: https://docs.microsoft.com/en-us/azure/data-factory/managed-vi
 - ADF uses ARM templates to store the configuration of various ADF entities (pipelines, datasets, data flows, etc), these could be put in a Git repo
 - ADF natively supports integration with Azure Repos and GitHub, you could export your existing ADF configs to a new repo
 - You would usually have several branches in the repo:
-  - **Feature/working branch**, the branch you work on
-  - **Collaboration branch**: `master` by default, don't change it directly, should only accept pull request
+  - **Feature/working branch**, the branch you work on, any changes you've done in the UI is saved to this branch automatically, when you are ready, create a pull request to the collaboration branch
+  - **Collaboration branch**: `master` by default, don't change it directly, should only accept pull request, **the "Publish" button always publishes from this branch, no matter which branch is currently loaded**
   - **Publish branch**: `adf_publish` by default
     - created/manged by ADF, don't update manually
     - when you click the "Publish" button in the portal, ADF creates/updates this branch
@@ -111,7 +111,7 @@ Best practices:
                     "keyVault": {
                         "id": "/subscriptions/<subId>/resourceGroups/<resourcegroupId> /providers/Microsoft.KeyVault/vaults/<vault-name> "
                     },
-                    "secretName": " < secret - name > "
+                    "secretName": "<secret-name>"
                 }
             }
         }
