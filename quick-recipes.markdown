@@ -634,6 +634,8 @@ If you want to create a wildcard certificate, use `*.gary.local` as `$NAME`, and
 
 ## DNS tools
 
+`dig`
+
 ```sh
 # query A records of example.com using server 8.8.8.8
 dig @8.8.8.8 example.com
@@ -650,5 +652,53 @@ dig -x 8.8.8.8
 # 8.8.8.8.in-addr.arpa.   1621    IN      PTR     dns.google.
 ```
 
+`nslookup`
+
+```sh
+nslookup                                # enter interactive mode
+
+> server 8.8.8.8                        # set default name server
+Default server: 8.8.8.8
+Address: 8.8.8.8#53
+
+> google.com
+Server:         8.8.8.8
+Address:        8.8.8.8#53
+
+Non-authoritative answer:               # this is non-authoritative
+Name:   google.com
+Address: 142.250.66.206
+
+> server ns1.google.com                 # change the default name server
+Default server: ns1.google.com
+Address: 216.239.32.10#53
+Default server: ns1.google.com
+Address: 2001:4860:4802:32::a#53
+
+> google.com
+Server:         ns1.google.com
+Address:        216.239.32.10#53
+
+Name:   google.com                      # this is the authoritative answer, because you are querying the domain's name server directly
+Address: 172.217.167.110
+
+> set debug                             # turn on debugging
+> google.com
+# ------------
+#     QUESTIONS:
+#         google.com, type = A, class = IN
+#     ANSWERS:
+#     ->  google.com
+#         internet address = 172.217.167.110
+#         ...
+
+> set type=aaaa                         # set the query type
+> google.com
+# ...
+# ------------
+# Non-authoritative answer:
+# Name:   google.com
+# Address: 2404:6800:4006:813::200e
+```
 
 [RenameUSBDrive]: [https://help.ubuntu.com/community/RenameUSBDrive]
