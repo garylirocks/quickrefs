@@ -202,11 +202,11 @@ There are two ways to manage network ACL exceptions:
 
   - Only for blob containers and blobs
   - Only for read access
+  - The `AllowBlobPublicAccess` property at account level
   - A container's public access level can be:
     - Private: no anonymous access
     - Blob: anonymous read access for blobs
     - Container: anonymous **read and list** access to the entire container and blobs
-  - Storage account has a *AllowBlobPublicAccess* property
   - Both account and container settings are required to enable public access, so an account can have both public and private containers
   - No separate settings at the blob object level
 
