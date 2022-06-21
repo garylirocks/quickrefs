@@ -3,7 +3,7 @@
 - [Overview](#overview)
 - [Azure Monitor](#azure-monitor)
   - [VMs](#vms)
-- [Azure Security Center](#azure-security-center)
+- [Defender for Cloud](#defender-for-cloud)
 - [Alerting](#alerting)
 - [Activity Log](#activity-log)
 - [Log Analytics](#log-analytics)
@@ -81,8 +81,9 @@ For VMs, Azure collects some metrics(host-level) by default, such as CPU usage, 
 - **Dependency agent**: maps dependencies between VMs
 
 
-## Azure Security Center
+## Defender for Cloud
 
+- Formerly called Azure Security Center
 - Collects data from resources such as VMs by using the Log Analytics Agent, and puts it into a workspace;
   - Log Analytics Agent can be provisioned automatically
 

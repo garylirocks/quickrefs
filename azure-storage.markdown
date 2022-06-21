@@ -8,7 +8,8 @@
   - [Security](#security)
     - [Features](#features)
     - [Network access](#network-access)
-    - [Advanced threat protection](#advanced-threat-protection)
+    - [Exceptions](#exceptions)
+    - [Microsoft Defender for Cloud](#microsoft-defender-for-cloud)
   - [Authorization Options](#authorization-options)
     - [Public read access for containers and blobs](#public-read-access-for-containers-and-blobs)
     - [Azure AD](#azure-ad)
@@ -151,11 +152,49 @@ By default, connections from clients on any network are accepted.
 - You can restrict access to an account from specific public IP addresses, or subnets on Virtual Networks.
 - Subnets and Virtual Networks must exist in the same Region or Region Pair as the Storage Account.
 
-#### Advanced threat protection
+The settings in the Portal actually corresponds to two properties, could be a bit confusing, the following is the mapping:
 
+| Portal                                                  | `publicNetworkAccess` | `networkAcls.defaultAction` |
+| ------------------------------------------------------- | --------------------- | --------------------------- |
+| Enabled from all networks                               | `Enabled`             | `Allow`                     |
+| Enabled from selected virtual networks and IP addresses | `Enabled`             | `Deny`                      |
+| Disabled                                                | `Disabled`            | `Deny`                      |
+
+#### Exceptions
+
+See: https://docs.microsoft.com/en-us/azure/storage/common/storage-network-security
+
+There are two ways to manage network ACL exceptions:
+
+1. "Allow Azure services on the **trusted services list** to access this storage account", this allows:
+
+   - Trusted access for select operations to resources that are registered in your subscription.
+   - Trusted access to resources based on a managed identity. (**All instances** are allowed, as long as their managed identity has proper permissions)
+
+   ```sh
+   az storage account update \
+    --resource-group rg-demo \
+    --name stdemo001 \
+    --bypass AzureServices
+   ```
+
+1. (**Recommended**) Grant access from Azure resource instances
+
+    You specify which resource instance could access based on its managed identity
+
+    ```sh
+    az storage account network-rule add \
+      -g rg-demo \
+      --account-name stdemo001 \
+      --resource-id /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Synapse/workspaces/testworkspace \
+      --tenant-id xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+    ```
+
+#### Microsoft Defender for Cloud
+
+- Could be enabled either on an individual account or at the subscription level
 - Detects anomalies in account activity
 - Only for Blob currently
-- Security alerts are integrated with Azure Security Center
 
 ### Authorization Options
 
