@@ -23,6 +23,7 @@
   - [Locks](#locks)
   - [Azure Resource Manager (ARM)](#azure-resource-manager-arm)
   - [Management tools](#management-tools)
+- [Azure Resource Graph Explorer](#azure-resource-graph-explorer)
 - [Policy](#policy)
   - [Assignment](#assignment)
   - [Effects](#effects)
@@ -318,6 +319,30 @@ Azure Resource Manager (ARM) is the management layer which allows you automate t
 - Azure Rest API
 - Azure SDKs
   - SDKs are based on Rest API, but are easier to use
+
+
+## Azure Resource Graph Explorer
+
+Use KQL syntax to query resources:
+
+Find storage accounts with public network access
+
+```sql
+Resources
+| where type =~ 'microsoft.storage/storageaccounts'
+| where properties.publicNetworkAccess == 'Enabled' or isnull(properties.publicNetworkAccess)
+| where properties.networkAcls.defaultAction == "Allow"
+| where  subscriptionId !in ('xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx', 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx')
+| project name, type, subscriptionId
+| sort by subscriptionId
+```
+
+The above query is similar to CLI command (*it only queries one subscription*):
+
+```sh
+az storage account list \
+  --query "[? publicNetworkAccess=='Enabled' && networkRuleSet.defaultAction=='Allow'].{Name: name, ID: id}"
+```
 
 
 ## Policy
