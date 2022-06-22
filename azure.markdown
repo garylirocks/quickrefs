@@ -23,7 +23,8 @@
   - [Locks](#locks)
   - [Azure Resource Manager (ARM)](#azure-resource-manager-arm)
   - [Management tools](#management-tools)
-- [Azure Resource Graph Explorer](#azure-resource-graph-explorer)
+- [Azure Resource Graph](#azure-resource-graph)
+  - [Sample queries](#sample-queries)
 - [Policy](#policy)
   - [Assignment](#assignment)
   - [Effects](#effects)
@@ -321,28 +322,97 @@ Azure Resource Manager (ARM) is the management layer which allows you automate t
   - SDKs are based on Rest API, but are easier to use
 
 
-## Azure Resource Graph Explorer
+## Azure Resource Graph
 
-Use KQL syntax to query resources:
+- Query resources with complex filtering, grouping, and sorting by resource properties
+- Assess the impact of applying policies in a vast environment
+- Query changes made to resource properties (in last 14 days)
 
-Find storage accounts with public network access
+Compare with Azure Resource Manager
 
-```sql
-Resources
-| where type =~ 'microsoft.storage/storageaccounts'
-| where properties.publicNetworkAccess == 'Enabled' or isnull(properties.publicNetworkAccess)
-| where properties.networkAcls.defaultAction == "Allow"
-| where  subscriptionId !in ('xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx', 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx')
-| project name, type, subscriptionId
-| sort by subscriptionId
-```
+|                      | Resource Manager                                       | Resource Graph                               |
+| -------------------- | ------------------------------------------------------ | -------------------------------------------- |
+| Supported properties | name, id, type, resource group, subscription, location | all properties by resource providers         |
+| CLI example          | `az resource list`                                     | `az graph query`                             |
+| Scope                | one subscription                                       | a list of subscriptions or management groups |
+| Query syntax         | -                                                      | KQL                                          |
 
-The above query is similar to CLI command (*it only queries one subscription*):
+Tables:
 
-```sh
-az storage account list \
-  --query "[? publicNetworkAccess=='Enabled' && networkRuleSet.defaultAction=='Allow'].{Name: name, ID: id}"
-```
+- **`Resources`**: default table if not specified
+- **`ResourceContainers`**: management group, subscription, and resource group
+- **`SecurityResources`**: resources related to `Microsoft.Security`
+- ...
+
+
+### Sample queries
+
+- List top 5 resources ordered by name
+
+  ```sql
+  resources
+  | project name, type
+  | order by name asc
+  | limit 5
+  ```
+
+- Query security resources, find enabled Defender plans
+
+  ```sql
+  securityresources
+  | where type == "microsoft.security/pricings"
+  | where properties['pricingTier'] == "Standard"
+  ```
+
+- Find storage accounts with public network access
+
+  ```sql
+  Resources
+  | where type =~ 'microsoft.storage/storageaccounts'
+  | where properties.publicNetworkAccess == 'Enabled' or isnull(properties.publicNetworkAccess)
+  | where properties.networkAcls.defaultAction == "Allow"
+  | where  subscriptionId !in ('xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx', 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx')
+  | project name, type, subscriptionId
+  | sort by subscriptionId
+  ```
+
+  The above query is similar to the following CLI command (*it only queries one subscription*):
+
+  ```sh
+  az storage account list \
+    --query "[? publicNetworkAccess=='Enabled' && networkRuleSet.defaultAction=='Allow'].{Name: name, ID: id}"
+  ```
+
+- Join with `resourcecontainers` to get subscription name
+
+  ```sql
+  Resources
+  | where type == "microsoft.storage/storageaccounts"
+  | join (
+      resourcecontainers
+      | where type == "microsoft.resources/subscriptions"
+      | project subName = name, subscriptionId
+      )
+      on subscriptionId
+  | project name, subName
+  ```
+
+- A query can be saved as a shared query, then you could call it like:
+
+  ```sql
+  {{/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/rg-gary-001/providers/microsoft.resourcegraph/queries/my-share-query-001}}
+  | project id, name, type
+  ```
+
+- List resource change events
+
+  ```sql
+  resourcechanges
+  | extend changeTime=todatetime(properties.changeAttributes.timestamp)
+  | project changeTime, properties.changeType, properties.targetResourceId, properties.targetResourceType, properties.changes
+  | order by changeTime desc
+  | limit 5
+  ```
 
 
 ## Policy

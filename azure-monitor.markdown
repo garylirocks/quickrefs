@@ -174,7 +174,7 @@ The data a user has access to is determined by a combination of factors that are
 
 ## Kusto Query Language
 
-KQL was originally written for Azure Data Explorer.
+KQL was originally written for Azure Data Explorer. See a basic tutorial here: https://docs.microsoft.com/en-us/azure/data-explorer/kusto/query/tutorial
 
 Common table names:
 
