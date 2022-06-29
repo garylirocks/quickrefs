@@ -37,13 +37,18 @@ Scopes:
 | management group  | children management groups, subscriptions, resource groups |
 | subscription      | subscriptions, resource groups                             |
 
+An assignment could have
+
+- **Excluded scopes**: a property of the assignment, apply to all policies in a set
+- **Exemptions**: a separate resource associated with an assignment, you could specify the scope, expiration date and which policies to exempt
+
 ## Effects
 
 An assignment could have one of the following effects:
 
 - **Append**:
   - create/update: add additional fields to the requested resource, eg. allowed IPs for a storage account
-  - existing: no changes, mark the resource as non-compliant
+  - existing: no changes, mark the resource as non-compliant, use "modify" if you need to remediate existing resources
 - **Audit**:
   - create/update: add a warning event in the activity log
   - existing: compliance status on the resource is updated
@@ -85,6 +90,9 @@ An assignment could have one of the following effects:
 
 - **DeployIfNotExists**
 - **Modify**
+  - When assign a policy with this effect, the assignment must have a managed identity, which
+    - should have proper roles for remediation (eg. "Tag Contributor" for tags)
+    - needs to be residing in a location
 
 Evaluation times or events:
 
