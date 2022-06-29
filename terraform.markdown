@@ -1011,6 +1011,7 @@ A typical file structure for a new module:
 
 - None of these are required, you could create a module with a single `.tf` file
 - Do not include `provider` blocks in modules, as a `module` block will inherit the provider from the enclosing configuration
+- **Try to avoid `data` block (such as a resource group data block) in a module, if it reads a resource managed by the same configuration, there could be dependencies issues: it tries to read a resource at the plan stage, before the resource is even created.**
 
 ### Providers within modules
 
