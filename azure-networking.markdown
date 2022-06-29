@@ -1159,6 +1159,7 @@ You could link a Private DNS Zone to a vNet (not subnet), enable auto-registrati
 - Note
   - A DNS Zone can link to multiple vnets
   - A vnet can have **ONLY ONE** registration zone, but can have multiple resolution zones
+  - Even your vnet is configured with custom DNS servers, the auto-registration still happens
 
 - Scoped to a single vNet
 
