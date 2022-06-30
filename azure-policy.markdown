@@ -7,6 +7,7 @@
 - [Remediation](#remediation)
 - [RBAC Permissions](#rbac-permissions)
 - [Best practices](#best-practices)
+- [Gotchas](#gotchas)
 
 
 ## Overview
@@ -135,3 +136,11 @@ For making existing resources compliant
 - Creating definitions at higher levels, then create the assignment at the next child level
 - Put everything in code
 - Start with an "audit" effect instead of a "deny" effect to track impact of your policy definition
+
+
+## Gotchas
+
+- You can't remove/rename parameter(s) when updating a policy/initiative
+- New parameters could only be added to an existing policy/initiative if they have a default value
+
+So with Terraform, you'd better put md5 hash of the parameters file in the name of the policy/set, whenever you update/remove/rename a parameter, it would force replacing the old policy/set with a new one.
