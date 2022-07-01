@@ -49,6 +49,7 @@
   - [Run](#run)
 - [CDK for Terraform](#cdk-for-terraform)
 - [Troubleshooting](#troubleshooting)
+- [Gotchas](#gotchas)
 
 ## Overview
 
@@ -1420,3 +1421,19 @@ To troubleshoot issues, you could turn on debugging info with:
 ```sh
 export TF_LOG=DEBUG
 ```
+
+
+## Gotchas
+
+- `azurerm_management_group`
+
+  You need to explicitly set `subscription_ids` to `[]` to clear all subscriptions from a management group, setting to `null` won't work
+
+  ```
+  resource "azurerm_management_group" "my" {
+    display_name               = "my-mg"
+    parent_management_group_id = azurerm_management_group.parent.id
+
+    subscription_ids = []
+  }
+  ```
