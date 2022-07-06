@@ -16,6 +16,7 @@
   - [Example](#example)
   - [Service Principals](#service-principals)
 - [Application permissions](#application-permissions)
+- [App roles](#app-roles)
 - [Role-based access control (RBAC)](#role-based-access-control-rbac)
   - [Considerations](#considerations)
   - [Evaluation](#evaluation)
@@ -328,6 +329,18 @@ Best practices:
 
 - Restricting user consent to allow users to consent only for app from verified publishers, and only for permissions you select.
 
+
+## App roles
+
+This allows you to adopt RBAC for authorization in your application code.
+
+1. Define your custom roles in "Application registrations" -> "App roles"
+  ![App roles](./images/azure_ad-app-roles.png)
+2. Add users/groups/applications to a role in "Enterprise Application" -> "User and Groups"
+  ![App role assignment](images/azure_ad-app-role-assignment.png)
+3. Now, when user login to your app, AAD adds `roles` claim to tokens it issues.
+
+See: https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-add-app-roles-in-azure-ad-apps
 
 
 ## Role-based access control (RBAC)

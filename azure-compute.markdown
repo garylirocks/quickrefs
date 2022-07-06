@@ -21,6 +21,11 @@
   - [Scaling](#scaling-1)
   - [Node app](#node-app)
   - [App Logs](#app-logs)
+  - [Authentication](#authentication)
+    - [Authentication flow](#authentication-flow)
+    - [Authorization behavior](#authorization-behavior)
+    - [Azure AD](#azure-ad)
+    - [Token store](#token-store)
   - [Backup](#backup)
 - [Static Web Apps](#static-web-apps)
 - [Docker Container Registry](#docker-container-registry)
@@ -788,11 +793,59 @@ az webapp log download \
   --name my-web-app
 ```
 
+### Authentication
+
+You could turn on the built-in authentication and authorization middleware component.
+
+![App authentication architecture](./images/azure_app-service-auth-architecture.png)
+
+This module
+
+- Is a feature of the platform that runs on the same VM as your app.
+- Validates, stores and refreshes OAuth tokens issued by the configured IdP.
+- Manages the authenticated session.
+- Inject identity information into HTTP request headers, so your app code has access to current user's info.
+- Runs separately, you don't need to modify your code.
+- In Windows, it's a native IIS module, in Linux/Container, it's in a separate container.
+- Each deployment slot should have its own config.
+
+#### Authentication flow
+
+| Step                               | Without provider SDK                                                                             | With provider SDK                                                                                                                               |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. Sign user in                    | Redirects client to `/.auth/login/<provider>`.                                                   | Client code signs user in directly with provider's SDK and receives an authentication token. For information, see the provider's documentation. |
+| 2. Post-authentication             | Provider redirects client to `/.auth/login/<provider>/callback`.                                 | Client code posts token from provider to `/.auth/login/<provider>` for validation.                                                              |
+| 3. Establish authenticated session | App Service adds authenticated cookie to response.                                               | App Service returns its own authentication token to client code.                                                                                |
+| 4. Serve authenticated content     | Client includes authentication cookie in subsequent requests (automatically handled by browser). | Client code presents authentication token in `X-ZUMO-AUTH` header (automatically handled by Mobile Apps client SDKs).                           |
+
+#### Authorization behavior
+
+You could either
+
+- Allow unauthenticated requests: then handles this in your code, such as presenting multiple sign-in providers
+- Require authentication
+
+You can inspect the user's claims for finer authorization. App service pass these two headers to your app code: `X-MS-CLIENT-PRINCIPAL-NAME`, `X-MS-CLIENT-PRINCIPAL-ID`
+
+
+#### Azure AD
+
+- If you use Azure AD, then an app registration is created
+- The sign-in endpoint is at `/.auth/login/aad`, where user is redirected to automatically when un-authenticated
+- By default, every user in your tenant can login/access the app, you could configure the application in AAD to restrict access to a defined set of users
+  - Turn on the "Assignment required?" property
+  - Assign the users/groups who need access
+
+#### Token store
+
+Tokens are cached in the store and passed to app code in headers like: `X-MS-TOKEN-AAD-ACCESS-TOKEN`, see https://docs.microsoft.com/en-us/azure/app-service/configure-authentication-oauth-tokens
+
 ### Backup
 
 - You could do a full or partial backup
 - Backup goes to a storage account and container in the same subscription
 - Backup contains app configuration, files, and database connected to your app
+
 
 ## Static Web Apps
 
