@@ -16,6 +16,7 @@
   - [App Service plans](#app-service-plans)
     - [SKUs](#skus)
   - [Deployment](#deployment)
+  - [App settings and connection strings](#app-settings-and-connection-strings)
   - [Deployment slots](#deployment-slots)
     - [Swap](#swap)
   - [Scaling](#scaling-1)
@@ -732,6 +733,14 @@ There are multiple ways to deploy an app:
 If your app is based on a docker container, then there will be a webhook url, which allows you to receive notifications from a docker registry when an image is updated. Then App Service can pull the latest image and restart your app.
 
 If you are using an image from Azure Container Registry, when you enable '**Continuous Deployment**', the webhook is automatically configured in Container Registry.
+
+### App settings and connection strings
+
+App settings are passed to app code as environment variables, your app restarts when you update them
+  - Linux/Container: passed as `--env` flags
+  - ASP.NET/ASP.NET Core, like setting them in `Web.config` or `appsettings.json`, the values in App Service override the ones in the files
+
+*Connection strings are similar to App settings, mainly for ASP.NET/ASP.NET Core app, for other language stack, it's better to use App settings.*
 
 ### Deployment slots
 
