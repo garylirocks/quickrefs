@@ -4,6 +4,8 @@
 - [Financial considerations](#financial-considerations)
 - [Conceptual architecture for Azure landing zones](#conceptual-architecture-for-azure-landing-zones)
 - [Deploy with Terraform](#deploy-with-terraform)
+  - [ALZ Terraform module](#alz-terraform-module)
+  - [CAF Terraform landing zones](#caf-terraform-landing-zones)
 
 
 ## Motivations
@@ -38,15 +40,114 @@ Enforce tagging conventions with Azure Policy
 ![Terraform options](images/azure_caf-tf-module-compare.png)
 
 There are two options:
-- ALZ Terraform module, takes care:
-  - Management hierarchy
-  - Policies/role definition and assignment
+- ALZ Terraform module
+- CAF Terraform landing zones
 
-- CAF Terraform landing zones:
-  - A superset of the ALZ Terraform module, deploys workload resources as well
-  - Consist of
-    - multiple Terraform modules (including ALZ Terraform module),
-    - a custom provider,
-    - open-source automation for Terrafrom (Rover),
-    - reference deployment templates
-  - Configs written in YAML files, used to generate Terraform variable files
+### ALZ Terraform module
+
+- Management hierarchy
+- Policies/policy sets definition and assignment
+- Creating proper role assignment for the managed identity of policy assignment !
+- Resources in platform landing zones (Connectivity/Management/Identity)
+
+Limitations:
+
+- Doesn't create network peering from spoke to hub
+- `Modify` and `DeployIfNotExists` assignments modify resources, may conflicts with Terraform configs for workload resources.
+
+**Archetype** is a package of Azure Policy(policies/policy sets/policy assignments) and IAM(role definitions) resources, which could be associated to a management group.
+
+- There are built-in archetypes in the module
+- You could define your own custom archetypes, such as in `/lib`, then use argument `library_path = "${path.root}/lib"`
+- All the definitions are defined in ARM templates (JSON or YAML)
+
+Example archetype definition
+
+```json
+{
+    "my_archetype_id": {
+        "policy_assignments": [
+          "Policy-Assignment-Name-1",
+          "Policy-Assignment-Name-2"
+        ],
+        "policy_definitions": [
+          // We recommend only creating Policy Definitions at the root_id scope
+          "Policy-Definition-Name-1",
+          "Policy-Definition-Name-2"
+        ],
+        "policy_set_definitions": [
+          // We recommend only creating Policy Set Definitions at the root_id scope
+          "Policy-Set-Definition-Name-1",
+          "Policy-Set-Definition-Name-2"
+        ],
+        "role_definitions": [
+          // We recommend only creating Role Definitions at the root_id scope
+          "Role-Definition-Name-1"
+        ],
+        "archetype_config": {
+            "parameters": {
+              // Map of parameters, grouped by Policy Assignment
+              // Key should match the "name" field from Policy Assignment
+              "Policy-Assignment-Name-1": {
+                "parameterName1": "myStringValue",
+                "parameterName2": 100,
+                "parameterName3": true,
+                "parameterName4": [
+                  "myListValue1",
+                  "myListValue2",
+                  "myListValue3"
+                ],
+                "parameterName5": {
+                  "myObjectKey1": "myObjectValue1",
+                  "myObjectKey2": "myObjectValue2"
+                }
+              }
+            },
+            "access_control": {
+              // Map of Role Assignments to create, grouped by Role Definition name
+              // Key should match the "name" of the Role Definition to assign
+              // Value should be a list of strings, specifying the Object Id(s) (from Azure AD) of all identities to assign to the role
+              "Reader": [
+                "00000000-0000-0000-0000-000000000000",
+                "11111111-1111-1111-1111-111111111111",
+                "22222222-2222-2222-2222-222222222222"
+              ],
+              "Role-Definition-Name-1": [
+                "33333333-3333-3333-3333-333333333333"
+              ]
+            }
+        }
+    }
+}
+```
+
+Associate an archetype with a management group
+
+```
+custom_landing_zones = {
+  my-landing-zone-id = {
+    display_name               = "Example Landing Zone"
+    parent_management_group_id = "tf-landing-zones"
+    subscription_ids           = []
+    archetype_config = {
+      archetype_id = "default_empty"
+      parameters   = {}
+      access_control = {}
+    }
+  }
+}
+```
+
+- *`parameters`, `access_control` are merged into the archetype definition.*
+- *Use the built-in `default_empty` archetype if you need a management group without any custom policies/roles/etc.*
+
+
+### CAF Terraform landing zones
+
+- A superset of the ALZ Terraform module, deploys workload resources as well
+- Consist of
+  - multiple Terraform modules (including ALZ Terraform module),
+  - a custom provider,
+  - open-source automation for Terrafrom (Rover),
+  - reference deployment templates
+- Configs written in YAML files, used to generate Terraform variable files

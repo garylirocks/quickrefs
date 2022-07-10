@@ -781,7 +781,8 @@ name = "web-sg-${var.resource_tags["project"]}-${var.resource_tags["environment"
 - Info from cloud provider APIs
 
   ```terraform
-  # get config of the AzureRM provider
+  # get config of the AzureRM default provider
+  # you could also pass in a provider attribute to target other subscriptions
   data "azurerm_client_config" "current" {
   }
 
