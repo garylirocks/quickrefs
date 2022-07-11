@@ -211,6 +211,7 @@ Note:
 - If you register an application in the portal, an application object as well as a service principal object are automatically created in your home tenant. If you register/create an application using the Microsoft Graph APIs, creating the service principal object is a **separate step**.
 - By default, all users in your directory have rights to register application objects and discretion over which applications they give access to their organizational data through consent (limited to their own data).
 - When the **first** user sign in to an application and grant consent, that will **create a service principal** in your tenant, any following consent grant info will be stored on the same service principal.
+- When you update the name of an application, the name of the service principal gets updated automatically
 
 ### Example
 
