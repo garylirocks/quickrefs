@@ -31,6 +31,7 @@
 - [Best practices](#best-practices-2)
 - [CLI](#cli)
   - [`--filter` parameter](#--filter-parameter)
+  - [Application and service principal owners](#application-and-service-principal-owners)
   - [Service principals](#service-principals-1)
 
 
@@ -605,6 +606,27 @@ The `--filter` parameter in many `az ad` commands uses the OData filter syntax, 
 ```sh
 # "startswith" needs to be all lowercase
 az ad group list --filter "startswith(displayName, 'gary')"
+```
+
+### Application and service principal owners
+
+- In the Portal, you could only add a user as app and SP owners
+- To add an SP as owner, use CLI or API, see https://github.com/Azure/azure-cli/issues/9250#issuecomment-603621148.
+- Groups can't be added as owners.
+
+```sh
+# the target app and SP
+appId="00000000-0000-0000-0000-000000000000"
+spObjectId=$(az ad sp show --id $appId --query id --output tsv)
+
+# this could be object id of a user or another SP
+ownerObjectId="00000000-0000-0000-0000-000000000000"
+
+# add as app owner
+az ad app owner add --id $appId --owner-object-id "ownerObjectId"
+
+# as as SP owner (need `az rest`, no CLI support yet)
+az rest -m POST -u https://graph.microsoft.com/beta/servicePrincipals/$spObjectId/owners/\$ref -b "{\"@odata.id\": \"https://graph.microsoft.com/beta/servicePrincipals/$ownerObjectId\"}"
 ```
 
 ### Service principals
