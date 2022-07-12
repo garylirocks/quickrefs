@@ -623,7 +623,7 @@ spObjectId=$(az ad sp show --id $appId --query id --output tsv)
 ownerObjectId="00000000-0000-0000-0000-000000000000"
 
 # add as app owner
-az ad app owner add --id $appId --owner-object-id "ownerObjectId"
+az ad app owner add --id $appId --owner-object-id "$ownerObjectId"
 
 # as as SP owner (need `az rest`, no CLI support yet)
 az rest -m POST -u https://graph.microsoft.com/beta/servicePrincipals/$spObjectId/owners/\$ref -b "{\"@odata.id\": \"https://graph.microsoft.com/beta/servicePrincipals/$ownerObjectId\"}"
