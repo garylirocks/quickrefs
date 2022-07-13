@@ -15,8 +15,10 @@
   - [App registrations vs. Service principals](#app-registrations-vs-service-principals)
   - [Example](#example)
   - [Service Principals](#service-principals)
-- [Application permissions](#application-permissions)
-- [App roles](#app-roles)
+- [Application](#application)
+  - [API Permissions](#api-permissions)
+  - [App roles](#app-roles)
+  - [Expose API](#expose-api)
 - [Role-based access control (RBAC)](#role-based-access-control-rbac)
   - [Considerations](#considerations)
   - [Evaluation](#evaluation)
@@ -317,7 +319,9 @@ There are three types of service principals:
     ```
 
 
-## Application permissions
+## Application
+
+### API Permissions
 
 Microsoft identity platform implements the OAuth 2.0 authorization protocol. Web-hosted resources can define a set of permissions that you use to implement functionality in smaller chunks, eg. Microsoft Graph has defined permissions like `User.ReadWrite.All`, `Mail.Read`
 
@@ -331,8 +335,7 @@ Best practices:
 
 - Restricting user consent to allow users to consent only for app from verified publishers, and only for permissions you select.
 
-
-## App roles
+### App roles
 
 This allows you to adopt RBAC for authorization in your application code.
 
@@ -343,6 +346,11 @@ This allows you to adopt RBAC for authorization in your application code.
 3. Now, when user login to your app, AAD adds `roles` claim to tokens it issues.
 
 See: https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-add-app-roles-in-azure-ad-apps
+
+### Expose API
+
+- The "Expose an API" menu in the Portal allows you to define scopes for an API. This creates only "deletegated permissions". Use "App roles" assignable to application type for "application-only" scopes.
+- You could add another application as an authorized client application to the scopes.
 
 
 ## Role-based access control (RBAC)
