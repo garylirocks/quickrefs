@@ -357,8 +357,11 @@ For block blobs, there are three access tiers: "hot", "cool" and "archive", from
 
 ### Object replication
 
-You could add replication rules to replicate blobs to another storage account, the destination could be in another region, subscription, even another tenant.
+You could add replication rules to replicate blobs to another storage account.
 
+- The destination could be in another region, subscription, even another tenant (`AllowCrossTenantReplication` property controls whether this is allowed).
+- Only one replication policy may be created for each source account/destination account pair.
+- Each policy can have multiple rules
 - Blob content, versions, properties and metadata are all copied from source container to the destination container. Snapshots are not replicated.
 - Blob versioning needs to be enabled on both accounts.
 
