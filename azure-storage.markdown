@@ -160,6 +160,8 @@ The settings in the Portal actually corresponds to two properties, could be a bi
 | Enabled from selected virtual networks and IP addresses | `Enabled`             | `Deny`                      |
 | Disabled                                                | `Disabled`            | `Deny`                      |
 
+*`publicNetworkAccess=Disabled` takes precedence, disables access from any IP or virtual network rule, means you could only access this storage account from private endpoints*
+
 #### Exceptions
 
 See: https://docs.microsoft.com/en-us/azure/storage/common/storage-network-security
