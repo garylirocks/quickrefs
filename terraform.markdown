@@ -49,6 +49,8 @@
   - [Run](#run)
 - [CDK for Terraform](#cdk-for-terraform)
 - [Troubleshooting](#troubleshooting)
+- [Azure](#azure)
+  - [`AzAPI` provider](#azapi-provider)
 - [Gotchas](#gotchas)
 
 ## Overview
@@ -1421,6 +1423,80 @@ To troubleshoot issues, you could turn on debugging info with:
 
 ```sh
 export TF_LOG=DEBUG
+```
+
+
+## Azure
+
+### `AzAPI` provider
+
+- A thin layer on top of the Azure ARM REST APIs
+- Compliments the AzureRM provider, allows you to manage an Azure service that is not yet supported by the AzureRM provider, such as private/public preview services and features
+- Two resources:
+  - `azapi_resource`: manage a resource
+  - `azapi_update_resource`: manage a subset of any existing resource's properties
+
+```terraform
+# providers.tf
+
+terraform {
+  required_providers {
+    azapi = {
+      source  = "azure/azapi"
+      version = "=0.1.0"
+    }
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "=3.0.2"
+    }
+  }
+}
+
+provider "azapi" {
+  default_location = "eastus"
+  default_tags = {
+    team = "Azure deployments"
+  }
+}
+
+provider "azurerm" {
+  features {}
+}
+```
+
+```terraform
+# main.tf
+
+resource "azurerm_resource_group" "qs101" {
+  name     = "rg-qs101"
+  location = "westus2"
+}
+
+# Provision a Lab Service Account and a Lab that are in public preview
+resource "azapi_resource" "qs101-account" {
+  type      = "Microsoft.LabServices/labaccounts@2018-10-15"
+  name      = "qs101LabAccount"
+  parent_id = azurerm_resource_group.qs101.id
+
+  body = jsonencode({
+    properties = {
+      enabledRegionSelection = false
+    }
+  })
+}
+
+resource "azapi_resource" "qs101-lab" {
+  type      = "Microsoft.LabServices/labaccounts/labs@2018-10-15"
+  name      = "qs101Lab"
+  parent_id = azapi_resource.qs101-account.id
+
+  body = jsonencode({
+    properties = {
+      maxUsersInLab  = 10
+      userAccessMode = "Restricted"
+    }
+  })
+}
 ```
 
 
