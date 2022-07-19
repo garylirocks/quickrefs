@@ -1021,8 +1021,8 @@ At run-time, a job in a pipeline may access other resources in Azure DevOps:
 Azure Pipelines uses a dynamically generated **job access token**
 
 - For a private project, the default scope is **organization**, this means a job could access all repos in an organization.
-- You could limit the scope to "project" in Organization or Project pipeline settings
-- If you enable **Limit job authorization scope to referenced Azure DevOps repositories** option, use a `checkout` step or `uses` statement in the YAML pipeline:
+- You could limit the scope to "project" in Organization or Project level pipeline settings
+- If you enable **Protect access to repositories in YAML pipelines** option, use a `checkout` step or `uses` statement in the YAML pipeline to explicitly reference repos:
 
   ```yaml
   steps:
