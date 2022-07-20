@@ -91,9 +91,58 @@ An assignment could have one of the following effects:
 
 - **DeployIfNotExists**
 - **Modify**
+  - Used to add, update, or remove properties or tags on a subscription or resource during creation or update
+  - A single modify rule can have multiple operations
+  - Evaluates before the request gets processed by a Resource Provider
+  -  If you're managing tags, it's recommended to use `Modify` instead of `Append` as `Modify` provides additional operation types and the ability to remediate existing resources. However, `Append` is recommended if you aren't able to create a managed identity or `Modify` doesn't yet support the alias for the resource property.
   - When assign a policy with this effect, the assignment must have a managed identity, which
     - should have proper roles for remediation (eg. "Tag Contributor" for tags)
     - needs to be residing in a location
+  - Example: tags
+    ```json
+    "then": {
+      "effect": "modify",
+      "details": {
+          "roleDefinitionIds": [
+              "/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c"
+          ],
+          "conflictEffect": "deny",
+          "operations": [
+              {
+                  "operation": "Remove",
+                  "field": "tags['env']"
+              },
+              {
+                  "operation": "addOrReplace",
+                  "field": "tags['environment']",
+                  "value": "[parameters('tagValue')]"
+              }
+          ]
+      }
+    }
+    ```
+  - Example: property
+
+    ```json
+    "then": {
+        "effect": "modify",
+        "details": {
+            "roleDefinitionIds": [
+                "/providers/microsoft.authorization/roleDefinitions/17d1049b-9a84-46fb-8f53-869881c3d3ab"
+            ],
+            "conflictEffect": "audit",
+            "operations": [
+                {
+                    "condition": "[greaterOrEquals(requestContext().apiVersion, '2019-04-01')]",
+                    "operation": "addOrReplace",
+                    "field": "Microsoft.Storage/storageAccounts/allowBlobPublicAccess",
+                    "value": false
+                }
+            ]
+        }
+    }
+    ```
+
 
 Evaluation times or events:
 
@@ -120,6 +169,24 @@ Azure Policy evaluate policies in an order determined by policy effects:
 ## Remediation
 
 For making existing resources compliant
+
+- Accomplished through remediation tasks that deploy the `deployIfNotExists` template or the `modify` operations of the assigned policy
+- Uses a managed identity(system or user assigned) that is associated with the policy assignment
+- The managed identity needs to be assigned the minimum Rbac roles required
+- When using the Portal, Azure Policy automatically grants the managed identity the listed roles once assignment starts
+- When using an Azure SDK, **the roles must manually be granted to the managed identity**, the location of the managed identity doesn't impact its operation with Azure Policy
+
+A `deployIfNotExists` or `modify` policy should define the roles it requires:
+
+```json
+"details": {
+    ...
+    "roleDefinitionIds": [
+        "/subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/{roleGUID}",
+        "/providers/Microsoft.Authorization/roleDefinitions/{builtinroleGUID}"
+    ]
+}
+```
 
 
 ## RBAC Permissions
