@@ -168,11 +168,11 @@ Azure Policy evaluate policies in an order determined by policy effects:
 
 ## Remediation
 
-For making existing resources compliant
-
-- Accomplished through remediation tasks that deploy the `deployIfNotExists` template or the `modify` operations of the assigned policy
+- When you create or update resources, `deployIfNotExists` or `modify` happens automatically
+- **But during standard evaluation cycle, existing resources are only marked as non-compliant, you need to create remediation tasks manually to remediate them**
+- Remediation tasks deploy the `deployIfNotExists` template or the `modify` operations of the assigned policy
 - Uses a managed identity(system or user assigned) that is associated with the policy assignment
-- The managed identity needs to be assigned the minimum Rbac roles required
+- The managed identity needs to be assigned the minimum RBAC roles required
 - When using the Portal, Azure Policy automatically grants the managed identity the listed roles once assignment starts
 - When using an Azure SDK, **the roles must manually be granted to the managed identity**, the location of the managed identity doesn't impact its operation with Azure Policy
 

@@ -11,7 +11,7 @@ There are multiple methods for using and managing environment variables:
 
 - The variable syntax
 - The Environment provider and Item cmdlets
-- The .Net **`System.Environment`** class
+- The .NET **`System.Environment`** class
 
 ## Variable syntax
 
