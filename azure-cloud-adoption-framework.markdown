@@ -2,6 +2,7 @@
 
 - [Motivations](#motivations)
 - [Financial considerations](#financial-considerations)
+- [Operating models](#operating-models)
 - [Conceptual architecture for Azure landing zones](#conceptual-architecture-for-azure-landing-zones)
 - [Deploy with Terraform](#deploy-with-terraform)
   - [ALZ Terraform module](#alz-terraform-module)
@@ -26,6 +27,41 @@ Cost-saving offers:
 - Dev/Test pricing (requires active Visual Studio subscription)
 
 Enforce tagging conventions with Azure Policy
+
+
+## Operating models
+
+Common IT operating models
+
+<img src="images/azure_operating-models.png" width="600" alt="Operating models" />
+
+- Decentralized
+
+  <img src="images/azure_decentralized-operations.png" width="400" alt="Decentralized opetations" />
+
+  - Organized around workloads, minimal dependency on centralized operations
+  - Prioritize innovation over control
+
+- Central
+
+  <img src="images/azure_centralized-operations.png" width="400" alt="Central opetations" />
+
+  - Most common model
+  - Controlled production environment that's managed solely by centralized operations
+  - Prioritize control and stability, often third-party compliance requirements drive environmental decisions
+
+- Enterprise
+
+  <img src="images/azure_enterprise-operations.png" width="400" alt="Enterprise opetations" />
+
+  - For migrating entire datacenters or large portfolios
+  - Large number of landing zones with foundational utilities centralized into a platform foundation
+  - Balance the need for innovation in some landing zones and tight control in others
+  - Build-and-operate for each workload team
+
+- Distributed
+  - Usually a result of acquisitions
+  - Should consider transitioning to one of other models
 
 
 ## Conceptual architecture for Azure landing zones
