@@ -5,6 +5,7 @@
 - [Effects](#effects)
 - [Order of evaluation](#order-of-evaluation)
 - [Remediation](#remediation)
+- [Conditions](#conditions)
 - [RBAC Permissions](#rbac-permissions)
 - [Best practices](#best-practices)
 - [Gotchas](#gotchas)
@@ -150,6 +151,7 @@ Evaluation times or events:
 - A new assignment created
 - A policy or initiative already assigned to a scope is updated
 - Standard compliance evaluation cycle, once every 24 hours
+- You could trigger an on-demand scan with `az policy state trigger-scan`
 
 ## Order of evaluation
 
@@ -189,6 +191,21 @@ A `deployIfNotExists` or `modify` policy should define the roles it requires:
 ```
 
 
+## Conditions
+
+- There is no support for regex yet
+- `like`, `notLike`, you could use one wildcard `*`
+
+    ```
+    {
+        "field": "type",
+        "notLike": "Microsoft.Network/*"
+    }
+    ```
+- Most conditions evaluate *stringValue* case-insensitively
+- `match`, `notMatch`, case-sensitive, `#` for a digit, `?` for a letter, `.` matches any character
+
+
 ## RBAC Permissions
 
 - `Owner`: full rights
@@ -210,4 +227,6 @@ A `deployIfNotExists` or `modify` policy should define the roles it requires:
 - You can't remove/rename parameter(s) when updating a policy/initiative
 - New parameters could only be added to an existing policy/initiative if they have a default value
 
-So with Terraform, you'd better put md5 hash of the parameters file in the name of the policy/set, whenever you update/remove/rename a parameter, it would force replacing the old policy/set with a new one.
+    So with Terraform, you'd better put **md5 hash of the parameters file** in the name of the policy/set, whenever you update/remove/rename a parameter, it would force replacing the old policy/set with a new one.
+
+-
