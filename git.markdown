@@ -32,6 +32,7 @@
   - [Examples](#examples)
   - [Negate pattern](#negate-pattern)
 - [Hooks](#hooks)
+  - [`pre-commit`](#pre-commit)
 - [Merge & Diff](#merge--diff)
 - [Submodules](#submodules)
 - [Recipes](#recipes)
@@ -929,6 +930,18 @@ in `.ssh/config`
   ```sh
   # add -n for dry run
   git remote prune [-n] origin
+  ```
+
+- Show refs
+
+  ```sh
+  git show-ref
+  # xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx refs/heads/dev
+  # xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx refs/heads/main
+  # xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx refs/remotes/origin/HEAD
+  # xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx refs/remotes/origin/dev
+  # xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx refs/remotes/origin/main
+  # xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx refs/tags/1.0.0
   ```
 
 ## Rules
