@@ -205,6 +205,7 @@ A typical use for peering is creating hub-spoke architecture:
 
 - A vNet only allows **one gateway**, when configuring peering, you could choose whether to use gateway in this vNet or the remote vNet
 - In above diagram, to allow connection between vNet B and on-prem, you need configure **Allow Gateway Transit** in the hub vNet, and **Use Remote Gateway** in vNet B
+  - In the background, this adds routes to vNet B's route table, VPN Gateway's IP would be the Next Hop if on-prem is the destination
 - Spoke networks can **NOT** connect with each other by default through the hub network, you need to add peering between the spokes or consider using user defined routes (UDRs)
   - Peering enables the next hop in a UDR to be the IP address of an NVA (network virtual appliance) or VPN gateway. Then traffic between spoke networks can flow through the NVA or VPN gateway in the hub vNet.
 - Azure Bastion in hub network can be used to access VMs in spoke network (networks must be in same tenant)

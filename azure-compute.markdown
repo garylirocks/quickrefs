@@ -652,7 +652,14 @@ Azure has a solution for updating VMs called Update Management
     --port 80
   ```
 
+- Agree the terms of a Marketplace image (in the Portal, you will see this at the last step when you create a VM)
 
+  ```sh
+  az vm image terms accept \
+    --publisher redhat \
+    --offer rhel-byos \
+    --plan rhel-lvm75
+  ```
 
 
 
