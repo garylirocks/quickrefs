@@ -50,6 +50,7 @@
   - [CLI](#cli-4)
 - [Networking architecutres](#networking-architecutres)
 - [Hub-spoke architecture](#hub-spoke-architecture)
+- [Azure Virtual Network Manager](#azure-virtual-network-manager)
 - [Network Watcher](#network-watcher)
 - [Network design considerations](#network-design-considerations)
 
@@ -1238,6 +1239,35 @@ az network dns record-set list \
 
 - Shared services in hub vnet: ExpressRoute Gateway, Management, DMZ, AD DS, etc
 - Hub and each spoke could be in different subscriptions
+
+
+## Azure Virtual Network Manager
+
+- Scope: A manager instance could be created at a paticular scope: a management group or subscription, then you could targe all vnets within the scope
+  - So a vnet could be targeted by multiple manager instances
+- Cost: you pay per subscription per AVNM instance, so if a subscription is included in two AVNM instances, you pay for it twice
+- Entities: Network Groups, Configurations (Connectivity or Security Admin)
+
+Connectivity:
+
+- Allows you to deploy a topology(hub-spoke or mesh) to network groups, saving you time to create and manage the peerings one by one
+- For the Hub-Spoke topology, every vnet in a network group is peered to the hub, you could also enable
+  - Direct Connectivity: all vnets in the same region and network group can talk to each other directly (**This is NOT done by peerings, a route with "ConnectedGroup" type is added to the effective routes**)
+  - Global Mesh: each vnet in the same network group can talk to all other vnets, regardless of regions
+- For the mesh topology
+  - Also uses the "ConnectedGroup" type route, not by peerings
+  - By default it's mesh within regions, **across network groups**
+  - You could turn on global mesh
+- If you add/remove vnets in a group, connectivity gets updated automatically (seems done by Azure Policy ?)
+- If the connectivity settings are updated, you need to redeploy
+
+Security Admin rules:
+
+- Similar to NSGs, but target at vnets level
+- They are populated to all NICs within the vnets
+- They are checked before NSGs
+- Rules from manager instances with a higher scope level are checked first
+- A rule has three possible actions: "Allow", "Deny", "Always allow", if it's "Always allow", rules from lower level manager instances and NSGs are ignored
 
 
 ## Network Watcher
