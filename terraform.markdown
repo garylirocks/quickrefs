@@ -11,6 +11,7 @@
 - [Authenticate Terraform to Azure](#authenticate-terraform-to-azure)
   - [`azurerm` provider](#azurerm-provider)
   - [`azuread` provider](#azuread-provider)
+- [State file](#state-file)
 - [Remote runs and state](#remote-runs-and-state)
   - [Terraform Cloud](#terraform-cloud)
   - [Azure blob storage](#azure-blob-storage)
@@ -32,6 +33,7 @@
   - [Providers](#providers)
     - [`alias`](#alias)
 - [The `random` provider](#the-random-provider)
+- [Provisioners](#provisioners)
 - [Modules](#modules)
   - [Create modules](#create-modules)
   - [Providers within modules](#providers-within-modules)
@@ -339,6 +341,20 @@ To grant this service principal permissions to read/write AAD objects, see https
     - Go to AAD's "Roles and administrators" blade, find the role, click on it
     - Add an assignment to the service principal
     - **Roles listed in the service principal's "Roles and administrators" blade are NOT roles assigned to this service principal!**
+
+
+## State file
+
+Why state file is required:
+
+- Ensures a one-to-one mapping from resource instances to remote objects
+- Tracks metadata such as resource dependencies
+  - Terraform could use your configuration to determine dependencies when creating objects
+  - However, when you remote resources from your configuration, Terraform could only rely on the state file to determine how to destroy the resources in correct order
+- Performance: Terraform stores a cache of the attribute values for all resources in the state
+  - When running `terrafrom plan`, Terraform must know the current state of resources to effectively determine the changes it needs
+  - The default behavior: for every plan and apply, Terraform query providers and sync the latest attributes for all resources in your state file
+  - For large infrastructures, it could be too slow due to API restrictions (no API for multiple resources at once, rate limiting, etc). So people use `-refresh=false` or `-target` to walk around this. In these scenarios, the cached state is treated as the record of truth.
 
 
 ## Remote runs and state
@@ -957,6 +973,43 @@ resource "aws_instance" "server" {
   ami = random_id.server.keepers.ami_id
 
   # ... (other aws_instance arguments) ...
+}
+```
+
+
+## Provisioners
+
+- Used to run actions on local or remote machines
+- Built-in provisioners:
+  - `file`: for copying files to remote machines
+  - `local-exec`: run something on localhost
+  - `remote-exec`: run something on remote host
+- Use it as a last resort: when building VMs, most cloud provider allows you to utilize tools like `cloud-init` to pass in user data
+- Mostly used within a resource block, you could also use it within `null_resource`
+- You could have multiple `provisioner` block in a containing block, executed in order of definition
+- `file` and `remote-exec` needs a `connection` block, you could use either `ssh` or `winrm`
+
+Example:
+
+```terraform
+resource "aws_instance" "web" {
+  # ...
+
+  # Establishes connection to be used by all
+  # generic remote provisioners (i.e. file/remote-exec)
+  connection {
+    type     = "ssh"
+    user     = "root"
+    password = var.root_password
+    host     = self.public_ip
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "puppet apply",
+      "consul join ${aws_instance.web.private_ip}",
+    ]
+  }
 }
 ```
 
