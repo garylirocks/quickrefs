@@ -13,7 +13,7 @@
 ## Keys
 
   - Such as asymmetric master key of Microsoft Azure RMS, SQL Server TDE (Transparent Data Encryption), CLE.
-  - Once created or added to a key vault, your app **NEVER** has direct access to the keys
+  - Once generated or imported to a key vault, your app **NEVER** has direct access to the private keys, public keys could be retrieved
   - A key pair could be used for operations like: encryption/decryption, signing/verifying, wrapkey/unwrapkey
   - Can be single instanced or be versioned (primary and secondary keys)
   - There are hardware-protected and software-protected keys.
@@ -22,6 +22,7 @@
 
   - Name-value pair of strings
   - Can be passwords, SQL connection strings, etc
+  - An SSH private key is like a password, should be saved as a "Secret", not as a "Key"
   - You app can retrive secrets through REST API
   - You could import a certificate to be a secret (*deprecated, use certificate service instead*)
 
@@ -139,4 +140,3 @@ In Node, Azure provides packages to access Vault secrets:
 - `ms-rest-azure` authenticate to Azure:
   - `loginWithAppServiceMSI` login using managed identity credentials available via your environment variables;
   - `loginWithServicePrincipalSecret` login using your service principle secret;
-
