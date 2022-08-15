@@ -396,6 +396,91 @@ stages:
       )
   ```
 
+- An example with parameters, expressions and conditions:
+
+  ![Stage dependency example](./images/ado_pipeline-stage-dependencies-example.png)
+
+  ```yaml
+  # defined as parameters, because variables don't support object data type
+  # two sets of apps
+  parameters:
+    - name: switch
+      type: string
+      default: one
+      values:
+        - one
+        - two
+
+    # use a explicit `prev` property here as a walkaround, as there's no other good way to handle the dependencies
+    - name: apps_one
+      type: object
+      default:
+        - name: foo
+          envs:
+            - name: dev
+              prev: ""
+            - name: nonprod
+              prev: dev
+            - name: prod
+              prev: nonprod
+        - name: bar
+          envs:
+            - name: nonprod
+              prev: ""
+            - name: prod
+              prev: nonprod
+
+    - name: apps_two
+      type: object
+      default:
+        - name: baz
+          envs:
+            - name: dev
+              prev: ""
+            - name: nonprod
+              prev: dev
+            - name: prod
+              prev: nonprod
+
+  stages:
+      # this determines which set to run
+      - ${{ each app in parameters[format('{0}{1}', 'apps_', parameters.switch)] }}:
+        - stage: plan_${{app.name}}
+          displayName: plan_${{app.name}}
+          dependsOn: []
+          jobs:
+            - job: dummy
+              displayName: Dummy Job
+              steps:
+                - bash: |
+                    echo "plan ${{app.name}}"
+
+        # loop through the envs, no good way to get the index in a collection, so use `prev` property
+        - ${{ each env in app.envs }}:
+            - stage: apply_${{app.name}}_${{env.name}}
+              displayName: ${{app.name}}_${{env.name}}
+              dependsOn:
+                - plan_${{app.name}}
+                - ${{ if ne(env.prev, '') }}:   # add dependency on previous apply stage if this is not the first apply stage
+                  - apply_${{app.name}}_${{env.prev}}
+              # condition: plan stage is successful, no previous apply stage or previous apply stage succeeded/skipped
+              condition: |
+                and(
+                  succeeded('plan_${{app.name}}'),
+                  or(
+                    eq('${{env.prev}}', ''),
+                    in(dependencies.apply_${{app.name}}_${{env.prev}}.result, 'Succeeded', 'Skipped')
+                  )
+                )
+              jobs:
+                - job: dummy
+                  displayName: Dummy Job
+                  steps:
+                    - bash: |
+                        echo "${{ app.name }}_${{ env.name }}"
+  ```
+
+
 ### Variables
 
 #### Scopes
