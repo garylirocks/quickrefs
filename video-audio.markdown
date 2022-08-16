@@ -24,6 +24,13 @@
 
 ## Transcoding
 
+- Trim a video
+
+  ```sh
+  # keep the same codecs and metadata
+  ffmpeg -i input.mp4 -ss "00:00:02" -to "00:00:06" -c:v copy -c:a copy -map_metadata 0 out.mp4
+  ```
+
 - update file format (change extensions), keep codecs
 
   ```bash
@@ -33,7 +40,9 @@
 - use specified codecs
 
   ```bash
-  # -crf can be used to control the output file quality, the higher the value, the lower the output bitrate, and the smaller the output file (the value is usually between 18 to 24)
+  # -crf can be used to control the output file quality,
+  #   the higher the value, the lower the output bitrate
+  #   and the smaller the output file (the value is usually between 18 to 24)
   ffmpeg -i gary.mp4 -crf 28 -vcodec h264 -acodec copy gary-compressed.mp4
   ```
 
