@@ -676,17 +676,17 @@ A few scenarios for DNS resolution:
 
 Private endpoint is a special network interface, there are some known limitations.
 
-- Network policies like NSGs were not supported for private endpoints, you need to explicitly disable them on the subnet hosting the endpoints. (*other resources in the subnet are still governed by NSG*)
+- NSG (**TODO**: draw a diagram for this !)
+  - Network policies (NSG, ASG, UDR) do not apply to private endpoints, unless you set the containing subnet's **`PrivateEndpointNetworkPolicies`** property to be "Enabled". The property seems to be "Disabled" by default for subnets created in the Portal.
+  - **NO NEED** to register this preview feature `Microsoft.Network/AllowPrivateEndpointNSG` on subscription (**although the name mentions "NSG", but it's only needed for UDR**)
 
-- NSG and UDR support for private endpoints are in **public review** now
-
-- Traffic that's destined for a private endpoint through a UDR might be asymmetric: return traffic from a private endpoint bypasses an NVA and attempts to return to source, to mitigate this:
-  - Use SNAT at the NVA, this ensures symmetric routing
-  - Or use a private endpoint UDR (public preview)
-
-- To enable the private endpoint UDR support:
-  - Set subnet property `PrivateEndpointNetworkPolicies` to enabled
-  - Register feature on subscription `Microsoft.Network/AllowPrivateEndpointNSG`
+- UDR
+  - If the containing subnet has a UDR which routes all traffic through an NVA, since UDR does not apply to the private endpoints, the return traffic could be asymmetric, it will go to the source IP (by the built-in routes ?), bypassing NVA.
+  - To mitigate this:
+    - Use SNAT at the NVA, then the private endpoint see the NVA IP as source IP, this ensures symmetric routing
+    - Or turn on UDR support for private endpoints (in public preview)
+      - Set subnet property `PrivateEndpointNetworkPolicies` to enabled
+      - Register a preview feature on subscription `Microsoft.Network/AllowPrivateEndpointNSG` (**although the name mentions "NSG", but it's only needed for UDR**)
 
 Currently, when you add a private endpoint, Azure would add a route to *all the route tables in the hosting and any peered vnets*, so all traffic to the private endpoint from these vnets goes directly, bypassing NVA, unless you overwrite the route:
 
@@ -707,7 +707,8 @@ id=$(az storage account show \
       -o tsv
     )
 
-# disable private endpoint network policies for the subnet
+# disable `PrivateEndpointNetworkPolicies` for the subnet
+# Seems it's disabled by default when creating a subnet in the Portal
 az network vnet subnet update \
     --name default \
     --resource-group default-rg \
