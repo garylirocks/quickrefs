@@ -1487,7 +1487,7 @@ export TF_LOG=DEBUG
 - Compliments the AzureRM provider, allows you to manage an Azure service that is not yet supported by the AzureRM provider, such as private/public preview services and features
 - Two resources:
   - `azapi_resource`: manage a resource
-  - `azapi_update_resource`: manage a subset of any existing resource's properties, WON'T remove the properties when this resource is removed
+  - `azapi_update_resource`: manage a subset of any existing resource's properties, **WON'T remove the properties when this resource is removed**
 
 ```terraform
 # providers.tf
