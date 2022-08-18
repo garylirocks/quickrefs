@@ -730,9 +730,9 @@ Macros like `$(mySecret)`, `$(global_secret)` work, they are interpreted by the 
 Can be used as env variables in scripts and as parameters in build task, see https://docs.microsoft.com/en-us/azure/devops/pipelines/build/variables?view=azure-devops&tabs=yaml
 
 Examples:
-- `System.DefaultWorkingDirectory`: The local path on the agent where your source code files are downloaded. eg. `c:\agent_work\1\s` on Windows, `/azp/agent/_work/1/s` on Linux
-  - If only one repo is checked out, it's the same as `Build.SourcesDirectory`
-  - When multiple repos are checked out, each repo is checkedout as a folder in this directory
+- `System.DefaultWorkingDirectory`: The absolute path of the working directory on an agent. eg. `c:\agent_work\1\s` on Windows, `/azp/agent/_work/1/s` on Linux
+  - If only one repo is checked out, this corresponds to the root folder of your repo
+  - When multiple repos are checked out, each repo is checked out as a folder in this directory
 - `Build.SourcesDirectory`: seems to be the same as `System.DefaultWorkingDirectory`
 - `Pipeline.Workspace`: the local path on an agent where all folders for a build pipeline are created, same as `Agent.BuildDirectory`, eg. `/azp/agent/_work`, other folders are under it:
   - `$(Agent.TempDirectory)` -> `/azp/agent/_work/_temp/`
@@ -829,8 +829,8 @@ steps:
       zipAfterPublish: true
 ```
 
-- Define variables in the `parameters` section
-- Read a variable using syntax like `${{ parameter.foo }}`
+- A template could have `parameters`, use them with `${{ parameter.foo }}`
+- **No `variables`**
 
 To call the template from the pipeline:
 
@@ -1179,7 +1179,7 @@ jobs:
 
 A deployment job:
 
-- Doesn't automatically clone the source repo, you can do it with `checkout: self`
+- **Doesn't automatically clone the source repo, you can do it with `checkout: self`**
 - Automatically download build artifacts
 - Allow you do define the deployment strategy
 - Records history against the deployed-to environment
