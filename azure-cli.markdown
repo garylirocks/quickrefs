@@ -6,6 +6,7 @@
 - [Groups and resources](#groups-and-resources)
 - [Storage](#storage)
 - [Providers](#providers)
+- [REST API](#rest-api)
 - [Preview features](#preview-features)
 - [JMESPath](#jmespath)
 - [Azure Cloud Shell](#azure-cloud-shell)
@@ -132,6 +133,21 @@ az provider list \
 az provider show \
   --namespace "Microsoft.Network" \
   --subscription sub-gary
+```
+
+
+## REST API
+
+Use `az rest` to query REST API.
+
+```sh
+az rest --method get --url "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-temp-001?api-version=2022-01-01"
+```
+
+Seems there are some inconsistencies in the API, usually for a non existent resource, "GET" call returns 404, but the Private DNS Zone Group API returns 200.
+
+```sh
+az rest --method get --url "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-temp-001/providers/Microsoft.Network/privateEndpoints/pe-vault-temp-001/privateDnsZoneGroups/nonExistGroup?api-version=2022-01-01" --debug
 ```
 
 
