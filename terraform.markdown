@@ -46,9 +46,11 @@
   - [Use remote state file](#use-remote-state-file)
   - [Azure DevOps Pipeline](#azure-devops-pipeline)
 - [Internals](#internals)
-- [Terraformer](#terraformer)
-  - [Installation](#installation)
-  - [Run](#run)
+- [Import existing infrastructure to Terraform configs](#import-existing-infrastructure-to-terraform-configs)
+  - [Azure Terrafy](#azure-terrafy)
+  - [Terraformer](#terraformer)
+    - [Installation](#installation)
+    - [Run](#run)
 - [CDK for Terraform](#cdk-for-terraform)
 - [Troubleshooting](#troubleshooting)
 - [Azure](#azure)
@@ -1392,11 +1394,39 @@ Terraform is comprised of core and plugins:
 - Plugins: providers or provisioners
 
 
-## Terraformer
+## Import existing infrastructure to Terraform configs
+
+### Azure Terrafy
+
+- Only import resources supported by Terraform AzureRM provider
+- Imports into Terraform state
+- And generates corresponding Terraform configuration
+
+```sh
+# import a resource group in non-interactive way
+aztfy rg \
+  -output-dir configs \
+  --overwrite \
+  --batch \
+  --continue \
+  rg-gary-001
+
+# import another RG with append mode
+# use another name pattern to avoid resource name conflicts
+aztfy rg \
+  -output-dir configs \
+  --append \
+  --batch \
+  --continue \
+  --name-pattern 'spoke-' \
+  rg-gary-002
+```
+
+### Terraformer
 
 Terraformer (https://github.com/GoogleCloudPlatform/terraformer) can be used to generate Terraform configs from existing resources.
 
-### Installation
+#### Installation
 
 If you are using Azure CLI for authentication to Azure, there is an issue to run this on Linux (see https://github.com/GoogleCloudPlatform/terraformer/issues/1149), Azure CLI 2.28.0 works on Windows, follow these steps:
 
@@ -1408,7 +1438,7 @@ If you are using Azure CLI for authentication to Azure, there is an issue to run
    2. Add the exe file path to path variable
 3. Create a folder and initialize the terraform provider and run terraformer commands from there
 
-### Run
+#### Run
 
 In PowerShell
 
