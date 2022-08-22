@@ -149,13 +149,14 @@ az network public-ip create \
 - To access a VM, traffic must be allowed on both subnet and NIC NSG rules
 - For inbound traffic, subnet NSG rules are evaluated first, then NIC NSG rules, the other way around for outbound traffic
 
-Service tags represent a group of IP addresses, these could be used in an NSG rule:
+Service tags represent a group of address prefixes, these could be used in NSG rule, UDR, Azure Firewall, for example:
 
-  - VirtualNetwork
+  - VirtualNetwork (current and peered vnets)
+  - AzureCloud (> 4500 prefixes)
   - Internet
   - SQL
   - Storage
-  - AzureLoadBalancer and
+  - AzureLoadBalancer
   - AzureTrafficManager
   - AppService
 
@@ -681,25 +682,23 @@ A few scenarios for DNS resolution:
 
 Private endpoint is a special network interface, there are some known limitations.
 
-- NSG (**TODO**: draw a diagram for this !)
-  - Network policies (NSG, ASG, UDR) do not apply to private endpoints, unless you set the containing subnet's **`PrivateEndpointNetworkPolicies`** property to be "Enabled". The property seems to be "Disabled" by default for subnets created in the Portal.
-  - **NO NEED** to register this preview feature `Microsoft.Network/AllowPrivateEndpointNSG` on subscription (**although the name mentions "NSG", but it's only needed for UDR**)
+- Network policies (NSG, UDR, AST) are only applied to endpoints when a subnet level property when `PrivateEndpointNetworkPolicies` is "Enabled".
 
-- UDR
-  - If the containing subnet has a UDR which routes all traffic through an NVA, since UDR does not apply to the private endpoints, the return traffic could be asymmetric, it will go to the source IP (by the built-in routes ?), bypassing NVA.
+- When `PrivateEndpointNetworkPolicies` is "Disabled"
+  - NSG does not apply
+  - UDR
+    - When you add a private endpoint, Azure would add a route to *all the route tables in the hosting and any peered vnets*, so all traffic to the private endpoint from these vnets goes directly, bypassing NVA, unless you overwrite the route:
+
+      | Source  | State  | Address Prefixes | Next Hop Type     | Next Hop IP Addres |
+      | ------- | ------ | ---------------- | ----------------- | ------------------ |
+      | Default | Active | 172.25.62.76/32  | InterfaceEndpoint |                    |
+
+  - If the containing subnet has a UDR which routes all traffic through an NVA, since UDR does not apply to the private endpoints, the return traffic could be asymmetric, it will go to the source IP (*by the built-in routes ?*), bypassing NVA.
   - To mitigate this:
     - Use SNAT at the NVA, then the private endpoint see the NVA IP as source IP, this ensures symmetric routing
-    - Or turn on UDR support for private endpoints (in public preview)
-      - Set subnet property `PrivateEndpointNetworkPolicies` to enabled
-      - Register a preview feature on subscription `Microsoft.Network/AllowPrivateEndpointNSG` (**although the name mentions "NSG", but it's only needed for UDR**)
+    - Or set subnet property `PrivateEndpointNetworkPolicies` to "Enabled" (before 2022/08/17, you need to enable a preview flag on the subscription as well: `Microsoft.Network/AllowPrivateEndpointNSG`, see https://azure.microsoft.com/en-us/updates/general-availability-of-user-defined-routes-support-for-private-endpoints/, not sure it works, seems even when `PrivateEndpointNetworkPolicies` is "Enabled", it's still add the /32 route to all peered vnets)
 
-Currently, when you add a private endpoint, Azure would add a route to *all the route tables in the hosting and any peered vnets*, so all traffic to the private endpoint from these vnets goes directly, bypassing NVA, unless you overwrite the route:
-
-| Source  | State  | Address Prefixes | Next Hop Type     | Next Hop IP Addres |
-| ------- | ------ | ---------------- | ----------------- | ------------------ |
-| Default | Active | 172.25.62.76/32  | InterfaceEndpoint |                    |
-
-
+ - **Seems NSG flow logs (Traffic Analytics) do not capture traffic logs to private endpoints**
 
 ### CLI example:
 
