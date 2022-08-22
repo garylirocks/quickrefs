@@ -621,7 +621,7 @@ Network rules are processed before application rules
 
 ![Private endpoints for storage](images/azure_private-endpoints-for-storage.jpg)
 
-* **Azure Private Endpoint**: a special network interface for an Azure service in your vNet, it gets an IP from the address range of the vNet
+* **Azure Private Endpoint**: a special network interface for an Azure service in your vNet, it gets an IP from the address range of a subnet
 * Applications in the vNet can connect to the service over the private endpoint seamlessly, **using the same connection string and authorization mechanisms that they would use otherwise**;
 * You **DON'T** need a firewall rule to allow traffic from a vNet that has a private endpoint, since the storage firewall only controls access through the public endpoint. Private endpoints instead rely on the consent flow for granting subnet access;
 * You need a separate private endpoint for each storage service in a storage account that you need to access: Blobs, Files, Static Websites, ...;
@@ -631,7 +631,12 @@ Network rules are processed before application rules
 
 See here for details: https://docs.microsoft.com/en-us/azure/private-link/private-endpoint-dns#azure-services-dns-zone-configuration
 
-Clients on a vNet using the private endpoint should use the same connection string (not using the *privatelink* URL), as clients connecting to the public endpoint. This requires DNS configuration.
+Let's say you have a blob endpoint at `garystoryagefoo.blob.core.windows.net`, after you add a private endpoint, the FQDN would be a CNAME to `garystoryagefoo.privatelink.blob.core.windows.net.`
+
+- If you use Azure's public DNS, it would at the end resolve to a public IP address.
+- Or you could use Azure Private DNS Zone or your own DNS server to resolve `garystoryagefoo.privatelink.blob.core.windows.net.` to the private IP address
+
+**The Azure Portal actually just load data from `garystoryagefoo.blob.core.windows.net`, depending on your VM's DNS setting, it could be resolved to either a public IP or a private one.**
 
 Out of vNet:
 
@@ -651,7 +656,7 @@ In the vNet (private DNS auto configured):
 ```sh
 # after
 
-# this is by public Microsoft DNS
+# this is by public Microsoft DNS (168.63.129.16), if you have private DNS Zone "privatelink.blob.core.windows.net." linked to the same vnet, it would forward this to the private DNS ZONE
 garystoryagefoo.blob.core.windows.net. 60 IN CNAME garystoryagefoo.privatelink.blob.core.windows.net.
 
 # this is the record in the private DNS Zone
