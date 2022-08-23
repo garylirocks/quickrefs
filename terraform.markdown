@@ -30,6 +30,7 @@
   - [Data source blocks](#data-source-blocks)
   - [Output](#output)
   - [Move resources](#move-resources)
+  - [`lifecycle`](#lifecycle)
   - [Providers](#providers)
     - [`alias`](#alias)
 - [The `random` provider](#the-random-provider)
@@ -896,6 +897,30 @@ tf state list
 tf state mv [options] SOURCE DESTINATION
 ```
 
+### `lifecycle`
+
+- The `ignore_changes` block allows you to ignore changes to certain attributes
+  - Must be a list of static attribute names, no functions, expressions, etc
+  - Can have sub-attribute, like `tags["tag1"]`, *does not support the dot syntax `tags.tag1`*
+  - Example:
+
+    ```terraform
+    resource "azurerm_resource_group" "rg" {
+      name     = "rg-testing"
+      location = "australiaeast"
+      tags     = {
+        tag1 = "foo"
+        tag2 = "bar"
+      }
+
+      lifecycle {
+        ignore_changes = [
+          tags["tag2"],
+          tags["extra"]
+        ]
+      }
+    }
+    ```
 
 ### Providers
 
