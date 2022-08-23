@@ -1367,7 +1367,7 @@ A combination of network monitoring and diagnostic tools.
   | Note       | n/a                                            | source could be a CIDR, service tag or wildcard(\*), target IP and port could be wildcard(*) | like Connection Monitor, but only check the connection once   |
 
 - Logging
-  - NSG Flow Logs: log all traffic in your NSGs
+  - NSG Flow Logs: log all traffic in your NSGs (a sub-resource under Network Watcher)
   - Traffic Analytics: query/visualize your NSG Flow Log data, requires Log Analytics
 
 
