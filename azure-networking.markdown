@@ -7,6 +7,9 @@
 - [IP](#ip)
   - [CLI](#cli-1)
 - [Network security group (NSG)](#network-security-group-nsg)
+  - [Service Tag](#service-tag)
+    - [`VirtualNetwork` tag](#virtualnetwork-tag)
+  - [App Security Group](#app-security-group)
   - [Azure platform considerations](#azure-platform-considerations)
   - [Virtual IP of the host node](#virtual-ip-of-the-host-node)
     - [`168.63.129.16`](#1686312916)
@@ -149,16 +152,53 @@ az network public-ip create \
 - To access a VM, traffic must be allowed on both subnet and NIC NSG rules
 - For inbound traffic, subnet NSG rules are evaluated first, then NIC NSG rules, the other way around for outbound traffic
 
-Service tags represent a group of address prefixes, these could be used in NSG rule, UDR, Azure Firewall, for example:
+### Service Tag
 
-  - VirtualNetwork (current and peered vnets)
-  - AzureCloud (> 4500 prefixes)
+Service tags represent a group of address prefixes, these could be used in NSG rules, UDR, Azure Firewall, for example:
+
+  - VirtualNetwork (*see below*)
+  - AzureCloud (*> 4500 prefixes*)
   - Internet
+  - Storage (*Azure Storage for the entire cloud*)
+  - Storage.WestUS (*some tags could be regional*)
   - SQL
-  - Storage
   - AzureLoadBalancer
   - AzureTrafficManager
   - AppService
+  - Dynamics365ForMarketingEmail
+
+Example:
+
+![Service tags](images/azure_service-tags.png)
+
+This NSG allows traffic to public IPs of Storage and Sql.EastUS, denies anything else to the Internet.
+
+Notes:
+
+- Underlying IP ranges corresponding to a service tag are cloud specific. So IP addresses encompassed in `Storage` in Azure Public Cloud are different from Azure USGov Cloud.
+- When you enable a service endpoint in a subnet, Azure adds a route to the subnet, the address prefixes in the route are the same address prefixes of the corresponding service tag.
+
+#### `VirtualNetwork` tag
+
+This tag includes all the following address prefixes:
+
+- virtual network address space
+- peered virtual networks
+- all connected on-premises address spaces
+- virtual networks connected to a virtual network gateway
+- the virtual IP address of the host (168.63.129.16 and 169.254.169.254)
+- **address prefixes used in UDRs**
+- might also contain default routes
+
+When you have `0.0.0.0/0` in a UDR associated with the same subnet, `VirtualNetwork` denotes `0.0.0.0/0`. So the default `AllowVnetInBound` rule allows everything.
+
+See details:
+- https://docs.microsoft.com/en-us/azure/virtual-network/service-tags-overview
+- https://github.com/MicrosoftDocs/azure-docs/issues/22178
+- https://journeyofthegeek.com/2022/06/22/virtualnetwork-service-tag-and-network-security-groups/
+
+
+### App Security Group
 
 You could add VM NICs to an **App Security Group** (like a custom service tag), which could be used in an NSG rule to make management easier, you just add/remove VMs to/from the ASG, no need to manually add/remove IPs to the NSG rules
 
@@ -178,7 +218,7 @@ Details: https://docs.microsoft.com/en-us/azure/virtual-network/network-security
 
 - Basic infrastructure services like DHCP, DNS, IMDS and health monitoring are provided through the virtualized host IP addresses **168.63.129.16** and **169.254.169.254** (*`169.254.0.0/16` are "link local" addresses. Routers are not allowed to forward packets sent from an IPv4 "link local" address, so they are always used by a directly connected device*)
 - These IP addresses belong to Microsoft and are the ONLY virtualized IP addresses used in all regions
-- Effective security rules and effective routes will not include these platform rules
+- Effective security rules and effective routes *WILL NOT* include these platform rules
 - To override this basic infrastructure communication, you can create a security rule to deny traffic by using these service tags on your NSG rules: AzurePlatformDNS, AzurePlatformIMDS, AzurePlatformLKM
 
 #### `168.63.129.16`
@@ -418,14 +458,14 @@ Compare ExpressRoute to Site-to-Site VPN:
 
 These are the default system routes:
 
-| Address prefix | Next hop type   |
-| -------------- | --------------- |
-| vNet addresses | Virtual network |
-| 0.0.0.0/0      | Internet        |
-| 10.0.0.0/8     | None            |
-| 172.16.0.0/12  | None            |
-| 192.168.0.0/16 | None            |
-| 100.64.0.0/10  | None            |
+| Address prefix     | Next hop type   |
+| ------------------ | --------------- |
+| vNet address range | Virtual network |
+| 0.0.0.0/0          | Internet        |
+| 10.0.0.0/8         | None            |
+| 172.16.0.0/12      | None            |
+| 192.168.0.0/16     | None            |
+| 100.64.0.0/10      | None            |
 
 - *`100.64.0.0/10` is shared address space for communications between a service provider and its subscribers when using a carrier-grade NAT (see https://en.wikipedia.org/wiki/Carrier-grade_NAT)*
 - The `0.0.0.0/0` route is used if no other routes match, Azure routes traffic to the Internet, the exception is that traffic to the public IP addresses of Azure services remains on the Azure backbone network, not routed to the Internet.
@@ -441,7 +481,17 @@ Additional system routes will be created when you enable:
 
 ![User defined routes](images/azure_user-defined-routes.png)
 
-You could config user-defined routes (UDRs), by define the next hop in a route to be a virtual network gateway, virtual appliance, vNet or the Internet
+You could config user-defined routes (UDRs), to override Azure's default system routes, or add more routes. For each route, the next hop could be
+- **Virtual network appliance**
+  - you need to specify an IP address of the NVA
+  - the IP address could be:
+    - Of a network interface attached to a VM, the NIC must have "Enable IP forwarding"
+    - Of an internal load balancer, which connects to multiple NVAs for high availability
+  - the IP must have direct connectivity
+- Virtual network gateway (*can only be a VPN gateway, not ExpressRoute gateway*)
+- Virtual network (*could be helpful if you want to keep traffic within a subnet remain within it, but direct everything else to an NVA*)
+- Internet
+- None
 
 ![Routing example](images/azure_routing-example.png)
 
@@ -488,6 +538,18 @@ traceroute to private.xxx.gx.internal.cloudapp.net (10.0.1.4), 64 hops max
 Border gateway protocol (BGP) is the standard routing protocol to exchange routing and information among two or more networks.
 
 Usually used to advertise on-prem routes to Azure when you're connected through ExpressRoute or S2S VPN.
+
+- ExpressRoute
+  - You must use BGP to advertise on-prem routes to Azure
+  - You can't create UDR to force traffic to a ExpressRoute gateway
+  - You can use UDR to force traffic from an ExpressRoute gateway to an NVA
+- VPN
+  - You can optionally use BGP
+  - You could create UDR with a next hop type of *Virtual network gateway* (VPN gateway)
+
+On a route table, you could define whether virtual network gateway route propagation should happen,
+- If it's "Disabled", the on-prem routes won't be propagated to NICs in the subnet.
+- This shouldn't be disabled on the "GatewaySubnet".
 
 ![BGP](images/azure_bgp.svg)
 
