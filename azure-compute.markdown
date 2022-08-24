@@ -337,7 +337,7 @@ Note:
 - Cloud-init
 
   - A way to customize a Linux VM as it boots for the first time, you can use it to install packages, write files, and configure users
-  - Cloud-init files use YAML format, the following example installs the package `pythong-pip` and `numpy`
+  - Cloud-init files use YAML format, the following example installs the package `python-pip` and `numpy`
 
 
   ```yaml
