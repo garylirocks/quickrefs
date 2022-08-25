@@ -31,8 +31,11 @@
 - [DDoS Protection](#ddos-protection)
 - [NAT Gateway](#nat-gateway)
 - [Private Endpoints](#private-endpoints)
-  - [DNS resolution](#dns-resolution)
   - [Limitations](#limitations)
+    - [NSG](#nsg)
+    - [UDR](#udr)
+  - [Network architecture design with Azure Firewall](#network-architecture-design-with-azure-firewall)
+  - [DNS resolution](#dns-resolution)
   - [CLI example:](#cli-example)
   - [Private Link](#private-link)
 - [Service endpoints](#service-endpoints)
@@ -684,11 +687,71 @@ Network rules are processed before application rules
 
 ![Private endpoints for storage](images/azure_private-endpoints-for-storage.jpg)
 
+In the above diagram:
+
 * **Azure Private Endpoint**: a special network interface for an Azure service in your vNet, it gets an IP from the address range of a subnet
 * Applications in the vNet can connect to the service over the private endpoint seamlessly, **using the same connection string and authorization mechanisms that they would use otherwise**;
-* You **DON'T** need a firewall rule to allow traffic from a vNet that has a private endpoint, since the storage firewall only controls access through the public endpoint. Private endpoints instead rely on the consent flow for granting subnet access;
-* You need a separate private endpoint for each storage service in a storage account that you need to access: Blobs, Files, Static Websites, ...;
-* For RA-GRS accounts, you should create a separate private endpoint for the secondary instance;
+* You **DON'T** need a firewall rule to allow traffic from a vNet which can connect to a private endpoint, since the storage firewall only controls access through the public endpoint. Private endpoints instead rely on the consent flow for granting subnet access;
+
+Notes
+
+- Connections can only be initiated in one direction: from client to the endpoint.
+- For some service, you need separate private endpoints for each sub-resource, for a RA-GRS storage account, there are sub-resources like `blob`, `blob_secondary`, `file`, `file_secondary`, ...
+- Private endpoints do **NOT** restrict public network access to services, except **Azure App Service** and **Azure Functions**, they become inaccessible publicly when they are associated with a private endpoint. All other Azure services require additional access control. (*such as a `publicNetworkAccess` property*)
+- The connected private-link resource could be in a different region
+- To allow automatic approval for private endpoints, you need this permission on the private-link resource: `Microsoft.<Provider>/<resource_type>/privateEndpointConnectionsApproval/action`
+
+### Limitations
+
+See: https://docs.microsoft.com/en-us/azure/private-link/private-endpoint-overview#limitations
+
+Private endpoint is a special network interface, there are limitations:
+
+#### NSG
+
+- Effective routes and security rules won't be displayed for the private endpoint NIC in the Azure portal, making debugging hard.
+- NSG flow logs (Traffic Analytics as well) are not supported.
+- NSG only apply when `PrivateEndpointNetworkPolicies` property on the containing subnet is "Enabled".
+- Source port is interpreted as `*`
+- Rules with multiple port ranges may not work as expected (see the doc)
+- No need for outbound deny rules on a private endpoint, as it can't initiate traffic
+- NSG rules are bypassed by traffic coming from private endpoints
+
+#### UDR
+
+- When you add a private endpoint, Azure would add a route to *all the route tables in the hosting and any peered vnets*, so all traffic to the private endpoint from these vnets goes directly, bypassing NVA:
+
+      | Source  | State  | Address Prefixes | Next Hop Type     | Next Hop IP Addres |
+      | ------- | ------ | ---------------- | ----------------- | ------------------ |
+      | Default | Active | 172.25.62.76/32  | InterfaceEndpoint |                    |
+
+  To overwrite this `/32` rule, when `PrivateEndpointNetworkPolicies` (on the containing subnet ?)
+    - is "Disabled", you need to add another rule with the same `/32` prefix
+    - is "Enabled", you could use a shorter prefix to overwrite it, so you won't running into the limit of 400 routes per table
+
+- Even `PrivateEndpointNetworkPolicies` is "Enabled", **UDR are bypassed by traffic coming from private endpoints**, the return traffic could be asymmetric, it will go to the source IP (*by the built-in routes ?*), bypassing NVA.
+  - To mitigate this, use SNAT at the NVA, then the private endpoint see the NVA IP as source IP, this ensures symmetric routing
+  - Exceptions (https://github.com/MicrosoftDocs/azure-docs/issues/69403):
+    - SNAT is not required for connecting to storage PE
+    - SNAT is not required when connecting via VPN
+    - SNAT is not required when NVA and client accessing the PE are in different VNETs ?
+
+### Network architecture design with Azure Firewall
+
+See: https://docs.microsoft.com/en-us/azure/private-link/inspect-traffic-with-azure-firewall
+
+- Hub and spoke - Dedicated VNET for PEs
+
+  ![Dedicated VNET for PEs](images/azure_private-endpoint-hub-and-spoke.png)
+
+  *This was recommended to avoid the 400 route limit, but now if you enable `PrivateEndpointNetworkPolicies` on the PE subnet, you probably won't need to worry about this limit anymore. So this design is similar to the one below.*
+
+- Hub and spoke - Shared
+
+  ![Shared VNET for PEs](images/azure_private-endpoint-shared-spoke.png)
+
+  *If you enable `PrivateEndpointNetworkPolicies` on the PE subnet, you don't need the overwrite with `/32` route anymore, you could overwrite with a shorter prefix , such as `/16`*
+
 
 ### DNS resolution
 
@@ -740,27 +803,6 @@ A few scenarios for DNS resolution:
 
   ![Private endpoint DNS with a DNS forwarder](images/azure_private-endpoint-dns-forwarder.png)
 
-### Limitations
-
-Private endpoint is a special network interface, there are some known limitations.
-
-- Network policies (NSG, UDR, AST) are only applied to endpoints when a subnet level property when `PrivateEndpointNetworkPolicies` is "Enabled".
-
-- When `PrivateEndpointNetworkPolicies` is "Disabled"
-  - NSG does not apply
-  - UDR
-    - When you add a private endpoint, Azure would add a route to *all the route tables in the hosting and any peered vnets*, so all traffic to the private endpoint from these vnets goes directly, bypassing NVA, unless you overwrite the route:
-
-      | Source  | State  | Address Prefixes | Next Hop Type     | Next Hop IP Addres |
-      | ------- | ------ | ---------------- | ----------------- | ------------------ |
-      | Default | Active | 172.25.62.76/32  | InterfaceEndpoint |                    |
-
-  - If the containing subnet has a UDR which routes all traffic through an NVA, since UDR does not apply to the private endpoints, the return traffic could be asymmetric, it will go to the source IP (*by the built-in routes ?*), bypassing NVA.
-  - To mitigate this:
-    - Use SNAT at the NVA, then the private endpoint see the NVA IP as source IP, this ensures symmetric routing
-    - Or set subnet property `PrivateEndpointNetworkPolicies` to "Enabled" (before 2022/08/17, you need to enable a preview flag on the subscription as well: `Microsoft.Network/AllowPrivateEndpointNSG`, see https://azure.microsoft.com/en-us/updates/general-availability-of-user-defined-routes-support-for-private-endpoints/, not sure it works, seems even when `PrivateEndpointNetworkPolicies` is "Enabled", it's still add the /32 route to all peered vnets)
-
- - **Seems NSG flow logs (Traffic Analytics) do not capture traffic logs to private endpoints**
 
 ### CLI example:
 
