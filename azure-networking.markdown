@@ -695,10 +695,11 @@ In the above diagram:
 
 Notes
 
-- Connections can only be initiated in one direction: from client to the endpoint.
+- Connections can only be initiated in one direction: from client to the endpoint
+- **Outbound NSG rules do not affect PE connectivity, you could set a Deny-all outbound rule on the NSG, a PE could still connect to its service**
 - For some service, you need separate private endpoints for each sub-resource, for a RA-GRS storage account, there are sub-resources like `blob`, `blob_secondary`, `file`, `file_secondary`, ...
 - Private endpoints do **NOT** restrict public network access to services, except **Azure App Service** and **Azure Functions**, they become inaccessible publicly when they are associated with a private endpoint. All other Azure services require additional access control. (*such as a `publicNetworkAccess` property*)
-- The connected private-link resource could be in a different region
+- The connected private link resource could be in a different region
 - To allow automatic approval for private endpoints, you need this permission on the private-link resource: `Microsoft.<Provider>/<resource_type>/privateEndpointConnectionsApproval/action`
 
 ### Limitations
@@ -710,24 +711,34 @@ Private endpoint is a special network interface, there are limitations:
 #### NSG
 
 - Effective routes and security rules won't be displayed for the private endpoint NIC in the Azure portal, making debugging hard.
-- NSG flow logs (Traffic Analytics as well) are not supported.
+- **NSG flow logs** (Traffic Analytics as well) are not supported.
 - NSG only apply when `PrivateEndpointNetworkPolicies` property on the containing subnet is "Enabled".
 - Source port is interpreted as `*`
 - Rules with multiple port ranges may not work as expected (see the doc)
 - No need for outbound deny rules on a private endpoint, as it can't initiate traffic
-- NSG rules are bypassed by traffic coming from private endpoints
 
 #### UDR
 
 - When you add a private endpoint, Azure would add a route to *all the route tables in the hosting and any peered vnets*, so all traffic to the private endpoint from these vnets goes directly, bypassing NVA:
 
-      | Source  | State  | Address Prefixes | Next Hop Type     | Next Hop IP Addres |
-      | ------- | ------ | ---------------- | ----------------- | ------------------ |
-      | Default | Active | 172.25.62.76/32  | InterfaceEndpoint |                    |
+    | Source  | State  | Address Prefixes | Next Hop Type     | Next Hop IP Addres |
+    | ------- | ------ | ---------------- | ----------------- | ------------------ |
+    | Default | Active | 10.1.1.4/32      | InterfaceEndpoint |                    |
 
-  To overwrite this `/32` rule, when `PrivateEndpointNetworkPolicies` (on the containing subnet ?)
-    - is "Disabled", you need to add another rule with the same `/32` prefix
-    - is "Enabled", you could use a shorter prefix to overwrite it, so you won't running into the limit of 400 routes per table
+  To overwrite this `/32` route, when `PrivateEndpointNetworkPolicies` property (of the hosting subnet, not client vnets)
+    - is "Enabled", you could use a shorter prefix to overwrite it, so you won't running into the limit of 400 routes per table, in the following table, *a UDR with a shorter `/16` prefix overwrites a `/32` private endpoint route, this is an exception to the general precedence order*
+
+      | Source  | State   | Address Prefixes | Next Hop Type     | Next Hop IP Addres |
+      | ------- | ------- | ---------------- | ----------------- | ------------------ |
+      | User    | Active  | **10.1.0.0/16**  | Virtual appliance | 10.0.1.4           | my-custom-route |
+      | Default | Invalid | 10.1.1.4/32      | InterfaceEndpoint |                    |
+
+    - is "Disabled", you need to add another route with the same `/32` prefix(on client subnet's UDR), you could easily hit the 400 routes per table limit if there are a lot of PEs
+
+      | Source  | State   | Address Prefixes | Next Hop Type     | Next Hop IP Addres |
+      | ------- | ------- | ---------------- | ----------------- | ------------------ |
+      | User    | Active  | **10.1.1.4/32**  | Virtual appliance | 10.0.1.4           | my-custom-route |
+      | Default | Invalid | 10.1.1.4/32      | InterfaceEndpoint |                    |
 
 - Even `PrivateEndpointNetworkPolicies` is "Enabled", **UDR are bypassed by traffic coming from private endpoints**, the return traffic could be asymmetric, it will go to the source IP (*by the built-in routes ?*), bypassing NVA.
   - To mitigate this, use SNAT at the NVA, then the private endpoint see the NVA IP as source IP, this ensures symmetric routing
