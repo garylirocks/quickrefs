@@ -740,12 +740,12 @@ Private endpoint is a special network interface, there are limitations:
       | User    | Active  | **10.1.1.4/32**  | Virtual appliance | 10.0.1.4           | my-custom-route |
       | Default | Invalid | 10.1.1.4/32      | InterfaceEndpoint |                    |
 
-- Even `PrivateEndpointNetworkPolicies` is "Enabled", **UDR are bypassed by traffic coming from private endpoints**, the return traffic could be asymmetric, it will go to the source IP (*by the built-in routes ?*), bypassing NVA.
+- Even `PrivateEndpointNetworkPolicies` is "Enabled", return traffic from PEs always go back to the source IP directly, **UDRs do not apply**, the return traffic could be asymmetric, bypassing NVA.
   - To mitigate this, use SNAT at the NVA, then the private endpoint see the NVA IP as source IP, this ensures symmetric routing
-  - Exceptions (https://github.com/MicrosoftDocs/azure-docs/issues/69403):
-    - SNAT is not required for connecting to storage PE
-    - SNAT is not required when connecting via VPN
-    - SNAT is not required when NVA and client accessing the PE are in different VNETs ?
+  - But there are exceptions (https://github.com/MicrosoftDocs/azure-docs/issues/69403), in the following cases, the return traffic does go through NVA, SNAT is not required:
+    - Connecting to a storage PE (tested `blob`, not sure about other services)
+    - Connecting via VPN
+    - **Source and NVA are in different VNETs** (no matter whether source and PE are in the same VNET or not), this seems to be the best way to handle it, keeping NVA in the hub vnet, workload and PEs in spoke vnets
 
 ### Network architecture design with Azure Firewall
 
