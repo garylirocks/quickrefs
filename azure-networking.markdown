@@ -53,6 +53,7 @@
   - [Custom domain HTTPS](#custom-domain-https)
 - [DNS](#dns)
   - [Private DNS zones](#private-dns-zones)
+  - [DNS resolution](#dns-resolution-1)
   - [CLI](#cli-4)
 - [Networking architecutres](#networking-architecutres)
 - [Hub-spoke architecture](#hub-spoke-architecture)
@@ -1321,6 +1322,11 @@ You could link a Private DNS Zone to a vNet (not subnet), enable auto-registrati
   # ;; ->>HEADER<<- opcode: QUERY, status: NXDOMAIN, id: 4990
   # ;4.0.0.10.in-addr.arpa.         IN      PTR
   ```
+
+### DNS resolution
+
+- By default, your VMs use Azure DNS (virtual IP `168.63.129.16`)
+- You could configure custom DNS servers at both vnet level and VM NIC level (if not specified, NIC inherits DNS settings from vnet)
 
 ### CLI
 
