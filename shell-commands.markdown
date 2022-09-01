@@ -32,6 +32,7 @@
   - [`nc`, `netcat`](#nc-netcat)
     - [Port scanning](#port-scanning)
     - [Data transfer](#data-transfer)
+  - [`tcpdump`](#tcpdump)
   - [`ssh`](#ssh)
     - [ProxyJump](#proxyjump)
   - [`curl`](#curl)
@@ -692,6 +693,20 @@ at localhost:
 $ nc dev 5555               # connect to a remote port
 hello world
 ```
+
+### `tcpdump`
+
+- Capture hosts based on IP address
+
+    ```sh
+    # -nn: don't resolve host and port
+    sudo tcpdump -nn host 8.8.8.8
+
+    # ...
+    # 20:49:09.586763 IP 172.27.247.166.47917 > 8.8.8.8.53: 55856+ [1au] A? apple.com. (50)
+    # 20:49:09.622909 IP 8.8.8.8.53 > 172.27.247.166.47917: 55856 1/0/1 A 17.253.144.10 (54)
+    ```
+
 
 ### `ssh`
 
