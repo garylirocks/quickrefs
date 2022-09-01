@@ -815,6 +815,9 @@ A few scenarios for DNS resolution:
 
   ![Private endpoint DNS with a DNS forwarder](images/azure_private-endpoint-dns-forwarder.png)
 
+  A Domain Controller integrated DNS Server as a DNS forwarder:
+
+  ![Private endpoint DNS with DC integrated DNS](images/azure_dns-resolution.drawio.svg)
 
 ### CLI example:
 
