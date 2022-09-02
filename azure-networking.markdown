@@ -36,7 +36,7 @@
     - [UDR](#udr)
   - [Network architecture design with Azure Firewall](#network-architecture-design-with-azure-firewall)
   - [DNS resolution](#dns-resolution)
-  - [CLI example:](#cli-example)
+  - [CLI example](#cli-example)
   - [Private Link](#private-link)
 - [Service endpoints](#service-endpoints)
 - [Azure Load Balancer](#azure-load-balancer)
@@ -412,13 +412,15 @@ echo ${a//:}    # remove ':'
 ## ExpressRoute
 
 ![ExpressRoute overview](images/azure_expressroute.svg)
-
 - A direct, private connection(but NOT encrypted) to Microsoft services, including Azure, Microsoft 365, Dynamics 365
 - Facilitated by a connectivity provider (e.g. AT&T, Verizon, Vodafone)
-- Connect with one peering location, gain access to all regions within the same geopolitical region
+
+![ExpressRoute connections](images/azure_expressroute-connections.drawio.svg)
+
+- A ExpressRoute circuit located in one peering location could connect up to 10 vnets within the same geopolitical region
+- Each gateway could have connections to multiple ER circuits, you specify the routing weight of each connection
 - **ExpressRoute Global Reach** allows you to connect multiple ExpressRoute circuits
 - DNS queries, certificate revocation list checking and Azure CDN requests are still sent over the public internet
-- Up to 10 vNets can be linked to an ExpressRoute circuit
 
 Three connectivity models
 
@@ -819,7 +821,15 @@ A few scenarios for DNS resolution:
 
   ![Private endpoint DNS with DC integrated DNS](images/azure_dns-resolution.drawio.svg)
 
-### CLI example:
+Seems there is a gotcha in all the above scenarios:
+
+  - `kv-foo.vault.azure.net` is in another tenant, it has no private endpoint
+  - from within your vnet, you connect to it by `kv-foo.vault.azure.net`, Azure provided DNS resolves it to a public IP
+  - private endpoint is enabled on `kv-foo.vault.azure.net`
+  - now `kv-foo.vault.azure.net` can't be resolved, since now it CNAME to `kv-foo.privatelink.vaultcore.azure.net`, Azure provided DNS consults the linked private DNS zone, which doesn't have a record for `kv-foo`
+  - **To remediate this, you probably need to conditionally forward `kv-foo.vault.azure.net` to another DNS server** ?
+
+### CLI example
 
 ```sh
 # get the resource id of the storage account
