@@ -31,6 +31,7 @@
   - [Concurrency](#concurrency)
 - [Disks](#disks)
 - [Files](#files)
+  - [Authentication](#authentication)
   - [Snapshots](#snapshots)
   - [File Sync](#file-sync)
     - [Components](#components)
@@ -560,7 +561,7 @@ Network files shares
 
 - Accessed over SMB/CIFS protocol
 - Multiple VMs can share the same files with both read and write access
-- Can be used to replace your on-prem NAS devices of file servers
+- Can be used to replace your on-prem NAS devices or file servers
 
 Common scenarios:
 
@@ -580,6 +581,14 @@ Compare to Blobs and Disks
 - Files have true directory objects, Blobs have a flat namespace.
 - File shares can be mounted concurrently by multiple cloud or on-prem machines, Disks are exclusive to a single VM.
 - Files shares are best suited for random access workloads.
+
+### Authentication
+
+You can use Active Directory for permissions management at file-share level:
+
+- On-prem AD (incl. AD servers hosted in Azure)
+- Azure AD DS
+- Azure AD (Kerberos auth from Azure AD joined clients, user accounts must be hybrid identities)
 
 ### Snapshots
 
