@@ -769,7 +769,11 @@ See: https://docs.microsoft.com/en-us/azure/private-link/inspect-traffic-with-az
 
 ### DNS resolution
 
-See here for details: https://docs.microsoft.com/en-us/azure/private-link/private-endpoint-dns#azure-services-dns-zone-configuration
+Microsoft documentation: https://docs.microsoft.com/en-us/azure/private-link/private-endpoint-dns#azure-services-dns-zone-configuration
+
+**There are many pitfalls regarding private endpoint DNS resolution (and network routing), see:**
+- https://github.com/dmauser/PrivateLink
+- https://journeyofthegeek.com/2020/03/06/azure-private-link-and-dns-part-2/
 
 Let's say you have a blob endpoint at `garystoryagefoo.blob.core.windows.net`, after you add a private endpoint, the FQDN would be a CNAME to `garystoryagefoo.privatelink.blob.core.windows.net.`
 
@@ -1287,6 +1291,11 @@ Features:
 - Alias record sets: allows you to setup alias record to direct traffic to an Azure public IP address(load balancer), an Azure Traffic Manager profile, or an Azure CDN endpoint.
   - It's a dynamic link between a record and a resource, so when the resource's IP changes, it's automatically handled;
   - Supports these record types: A, AAAA, CNAME;
+
+Missing features:
+
+- No conditional forwarding and no query logging
+  - You need to Bring-Your-Own DNS service, and conditionally forward queries to Azure DNS
 
 ### Private DNS zones
 
