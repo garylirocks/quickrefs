@@ -8,6 +8,7 @@
 - [Conditions](#conditions)
 - [RBAC Permissions](#rbac-permissions)
 - [Best practices](#best-practices)
+- [Built-in policies](#built-in-policies)
 - [Gotchas](#gotchas)
 
 
@@ -193,7 +194,7 @@ A `deployIfNotExists` or `modify` policy should define the roles it requires:
 
 ## Conditions
 
-- There is no support for regex yet
+- There is NO support for regex yet
 - `like`, `notLike`, you could use one wildcard `*`
 
     ```
@@ -202,8 +203,8 @@ A `deployIfNotExists` or `modify` policy should define the roles it requires:
         "notLike": "Microsoft.Network/*"
     }
     ```
-- Most conditions evaluate *stringValue* case-insensitively
-- `match`, `notMatch`, case-sensitive, `#` for a digit, `?` for a letter, `.` matches any character
+- `match`, `notMatch`, `#` for a digit, `?` for a letter, `.` matches any character, you need to match the whole string, not just part of it
+- Most conditions evaluate *stringValue* case-insensitively, but `match`, `notMatch`, use `matchInsensitively`/`notMatchInsensitively` fro case-insensitive matching
 
 
 ## RBAC Permissions
@@ -222,6 +223,21 @@ A `deployIfNotExists` or `modify` policy should define the roles it requires:
 - Start with an "audit" effect instead of a "deny" effect to track impact of your policy definition
 
 
+## Built-in policies
+
+- There are often similar built-in policies with different effects:
+
+    - "Network Watcher should be enabled", which has "AuditIfNotExists" effect, this is in the `Azure Security Benchmark` initiative
+    - "Deploy network watcher when virtual networks are created" which has `DeployIfNotExists` effect
+
+- Defender for Cloud (aka Azure Security Center) assigns initiatives automatically to your subscriptions when you enable certain features:
+
+    | When                                                   | Initiative                                                                      | Assignment                                                              |
+    | ------------------------------------------------------ | ------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+    | When on-boarding Defender for Cloud for a subscription | Azure Security Benchmark                                                        | ASC Default (subscription: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)        |
+    | When Databases plan is enabled ?                       | Configure Azure Defender to be enabled on SQL Servers and SQL Managed Instances | ASC DataProtection (subscription: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx) |
+
+
 ## Gotchas
 
 - You can't remove/rename parameter(s) when updating a policy/initiative
@@ -229,4 +245,4 @@ A `deployIfNotExists` or `modify` policy should define the roles it requires:
 
     So with Terraform, you'd better put **md5 hash of the parameters file** in the name of the policy/set, whenever you update/remove/rename a parameter, it would force replacing the old policy/set with a new one.
 
--
+- For resource groups, use `Microsoft.Resources/subscriptions/resourceGroups` as alias, not `Microsoft.Resources/resourceGroups`

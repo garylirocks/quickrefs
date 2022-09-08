@@ -84,9 +84,13 @@ For VMs, Azure collects some metrics(host-level) by default, such as CPU usage, 
 ## Defender for Cloud
 
 - Formerly called Azure Security Center
+- Free features are automatically enabled for your subscriptions when you visit "Defender for Cloud" in the Portal
+- You could turn on "Enhanced security features" (Defender plan by resource type)
+- Some plans could be enabled at either subscription level or resource level
+  - Defender for Storage account
+  - Defender for SQL
 - Collects data from resources such as VMs by using the Log Analytics Agent, and puts it into a workspace;
   - Log Analytics Agent can be provisioned automatically
-
 
 
 ## Alerting

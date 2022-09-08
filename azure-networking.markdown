@@ -59,6 +59,7 @@
 - [Hub-spoke architecture](#hub-spoke-architecture)
 - [Azure Virtual Network Manager](#azure-virtual-network-manager)
 - [Network Watcher](#network-watcher)
+  - [Auto creation](#auto-creation)
 - [Network design considerations](#network-design-considerations)
 
 ## Overview
@@ -1450,6 +1451,11 @@ A combination of network monitoring and diagnostic tools.
 - Logging
   - NSG Flow Logs: log all traffic in your NSGs (a sub-resource under Network Watcher)
   - Traffic Analytics: query/visualize your NSG Flow Log data, requires Log Analytics
+
+### Auto creation
+
+- NetworkWatcher resources are created automatically when you use the tools, they are place in a resource group called `NetworkWatcherRG`, there is a subscription feature called `Microsoft.Network/DisableNetworkWatcherAutocreation`
+- There are also built-in policies regarding this, see [Azure Policy note](./azure-policy.markdown)
 
 
 ## Network design considerations
