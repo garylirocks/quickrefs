@@ -36,6 +36,8 @@
     - [UDR](#udr)
   - [Network architecture design with Azure Firewall](#network-architecture-design-with-azure-firewall)
   - [DNS resolution](#dns-resolution)
+  - [Resolve PaaS endpoint in other tenants](#resolve-paas-endpoint-in-other-tenants)
+  - [DNS integration at scale](#dns-integration-at-scale)
   - [CLI example](#cli-example)
   - [Private Link](#private-link)
 - [Service endpoints](#service-endpoints)
@@ -689,7 +691,7 @@ Network rules are processed before application rules
 
 ## Private Endpoints
 
-![Private endpoints for storage](images/azure_private-endpoints-for-storage.jpg)
+<img src="images/azure_private-endpoints-for-storage.jpg" width="600" alt="Private endpoints for storage" />
 
 In the above diagram:
 
@@ -778,35 +780,40 @@ Microsoft documentation: https://docs.microsoft.com/en-us/azure/private-link/pri
 
 Let's say you have a blob endpoint at `garystoryagefoo.blob.core.windows.net`, after you add a private endpoint, the FQDN would be a CNAME to `garystoryagefoo.privatelink.blob.core.windows.net.`
 
-- If you use Azure's public DNS, it would at the end resolve to a public IP address.
-- Or you could use Azure Private DNS Zone or your own DNS server to resolve `garystoryagefoo.privatelink.blob.core.windows.net.` to the private IP address
+- For external users, it should resolve to a public IP
+- For internal users, it should resolve to a private IP (by Azure Private DNS Zone or your own DNS server)
 
-**The Azure Portal actually just load data from `garystoryagefoo.blob.core.windows.net`, depending on your VM's DNS setting, it could be resolved to either a public IP or a private one.**
-
-Out of vNet:
+Before private endpoint (Internal or external):
 
 ```sh
-# before private endpoint
 garystoryagefoo.blob.core.windows.net. 78 IN CNAME blob.syd26prdstr02a.store.core.windows.net.
 blob.syd26prdstr02a.store.core.windows.net. 75 IN A 20.150.66.4
-
-# after
-garystoryagefoo.blob.core.windows.net. 120 IN CNAME garystoryagefoo.privatelink.blob.core.windows.net.
-garystoryagefoo.privatelink.blob.core.windows.net. 119 IN CNAME blob.syd26prdstr02a.store.core.windows.net.
-blob.syd26prdstr02a.store.core.windows.net. 119 IN A 20.150.66.4
 ```
 
-In the vNet (private DNS auto configured):
+After:
 
-```sh
-# after
+  - External:
 
-# this is by public Microsoft DNS (168.63.129.16), if you have private DNS Zone "privatelink.blob.core.windows.net." linked to the same vnet, it would forward this to the private DNS ZONE
-garystoryagefoo.blob.core.windows.net. 60 IN CNAME garystoryagefoo.privatelink.blob.core.windows.net.
+    ```sh
+    # after
+    garystoryagefoo.blob.core.windows.net. 120 IN CNAME garystoryagefoo.privatelink.blob.core.windows.net.
+    garystoryagefoo.privatelink.blob.core.windows.net. 119 IN CNAME blob.syd26prdstr02a.store.core.windows.net.
+    blob.syd26prdstr02a.store.core.windows.net. 119 IN A 20.150.66.4
+    ```
 
-# this is the record in the private DNS Zone
-garystoryagefoo.privatelink.blob.core.windows.net. 9 IN A 10.0.0.5
-```
+  - Internal (private DNS auto configured):
+
+    ```sh
+    # this is by Azure provided DNS (168.63.129.16)
+    # if you have private DNS Zone "privatelink.blob.core.windows.net." linked to the same vnet, it would consult the zone
+    garystoryagefoo.blob.core.windows.net. 60 IN CNAME garystoryagefoo.privatelink.blob.core.windows.net.
+    # this is the record in the private DNS Zone
+    garystoryagefoo.privatelink.blob.core.windows.net. 9 IN A 10.0.0.5
+    ```
+
+On the client side, you must use the PasS service public FQDN, this is to ensure SNI (Service Name Indication) on TLS still works (see https://github.com/dmauser/PrivateLink/tree/master/DNS-Integration-Scenarios#74-server-name-indication-sni-on-tls-request-client-hello).
+
+For example, when you access the data in the storage account from an Azure VM, **the Portal always loads data from `garystoryagefoo.blob.core.windows.net`, depending on your VM's DNS setting, it could be resolved to either a public IP or a private one**
 
 A few scenarios for DNS resolution:
 
@@ -826,13 +833,39 @@ A few scenarios for DNS resolution:
 
   ![Private endpoint DNS with DC integrated DNS](images/azure_dns-resolution.drawio.svg)
 
-Seems there is a gotcha in all the above scenarios:
+- Using Active Directory (see https://github.com/dmauser/PrivateLink/tree/master/DNS-Scenario-Using-AD)
 
-  - `kv-foo.vault.azure.net` is in another tenant, it has no private endpoint
-  - from within your vnet, you connect to it by `kv-foo.vault.azure.net`, Azure provided DNS resolves it to a public IP
-  - private endpoint is enabled on `kv-foo.vault.azure.net`
-  - now `kv-foo.vault.azure.net` can't be resolved, since now it CNAME to `kv-foo.privatelink.vaultcore.azure.net`, Azure provided DNS consults the linked private DNS zone, which doesn't have a record for `kv-foo`
-  - **To remediate this, you probably need to conditionally forward `kv-foo.vault.azure.net` to another DNS server** ?
+  The key here is to setup **different AD DNS Application Partitions**, one for Azure, one for on-prem
+
+  ![DC integrated DNS](images/azure_private-link-ad-scenario.png)
+
+### Resolve PaaS endpoint in other tenants
+
+See: https://github.com/dmauser/PrivateLink/tree/master/Issue-Customer-Unable-to-Access-PaaS-AfterPrivateLink
+
+There is a gotcha in all the above scenarios:
+
+  - Company A access its KV `kv-a.vault.azure.net` through a private endpoint, it also access a KV in company B's tenant, `kv-b.vault.azure.net` through a public endpoint (resolves to a public IP).
+  - Company B enables private endpoint for `kv-b.vault.azure.net`
+  - Now company A can't resolve `kv-b.vault.azure.net`, since now it CNAME to `kv-b.privatelink.vaultcore.azure.net`, Azure provided DNS consults the linked private DNS zone, which doesn't have a record for `kv-b`
+
+To remediate this, you could
+  - (**recommended**) create a private endpoint in Company A's vnet to `kv-b.vault.azure.net` (need approval from Company B's side)
+  - in your custom DNS server, conditionally forward `kv-b.vault.azure.net` to an Internet DNS resolver
+  - (**not recommended**) on client VMs, use dnsmasq for Linux or NRPT (Name Resolution Policy Table) feature for Windows (see: https://github.com/dmauser/PrivateLink/tree/master/DNS-Client-Configuration-Options)
+
+### DNS integration at scale
+
+See: https://docs.microsoft.com/en-us/azure/cloud-adoption-framework/ready/azure-best-practices/private-link-and-dns-integration-at-scale
+
+With hub-spoke network architecture in an Enterprise landing zone scenario, you would like to
+  - put all private DNS zones for private link endpoints in the connectivity subscription
+  - allow each application team to create private endpoint, and have A records added to the central private DNS zones automatically (without help from the central IT team)
+
+You could achieve this by using Azure Policy (assigned to landingzone subscriptions, not the connectivity subscription):
+  - (Optional) `Deny` public endpoint for PaaS services
+  - `Deny` creating of a private DNS zone with `privatelink` prefix
+  - `DeployIfNotExists` policy to automatically create `privateDnsZoneGroups`, which associate private endpoints to private DNS zones in the connectivity subscription (the managed identity needs to be able to write to the private DNS zones)
 
 ### CLI example
 
@@ -910,7 +943,7 @@ Connection between the private endpoint and the storage service uses a **private
 
 ## Service endpoints
 
-![Service endpoints overview](images/azure_vnet_service_endpoints_overview.png)
+<img src="images/azure_vnet_service_endpoints_overview.png" width="600" alt="Service endpoints overview" />
 
 - The purpose is to secure your network access to PaaS services (by default, all PaaS services have public IP addresses and are exposed to the internet), such as:
 
