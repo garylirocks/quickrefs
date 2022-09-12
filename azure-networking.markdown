@@ -815,6 +815,13 @@ On the client side, you must use the PasS service public FQDN, this is to ensure
 
 For example, when you access the data in the storage account from an Azure VM, **the Portal always loads data from `garystoryagefoo.blob.core.windows.net`, depending on your VM's DNS setting, it could be resolved to either a public IP or a private one**
 
+For a web app, there will be two endpoints: `my-webapp.azurewebsites.net`, `my-webapp.scm.azurewebsites.net` pointing to the same IP, when enabling private endpoints, you only need one private DNS zone `privatelink.azurewebsites.net`, with two record sets in it like the following
+
+```
+my-webapp         10.0.0.4
+my-webapp.scm     10.0.0.4
+```
+
 A few scenarios for DNS resolution:
 
 - Single vNet without custom DNS server
