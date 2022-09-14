@@ -367,7 +367,7 @@ Tables:
   | where type =~ 'microsoft.storage/storageaccounts'
   | where properties.publicNetworkAccess == 'Enabled' or isnull(properties.publicNetworkAccess)
   | where properties.networkAcls.defaultAction == "Allow"
-  | where  subscriptionId !in ('xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx', 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx')
+  | where subscriptionId !in ('xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx', 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx')
   | project name, type, subscriptionId
   | sort by subscriptionId
   ```
@@ -379,9 +379,10 @@ Tables:
     --query "[? publicNetworkAccess=='Enabled' && networkRuleSet.defaultAction=='Allow'].{Name: name, ID: id}"
   ```
 
-- Join with `resourcecontainers` to get subscription name
+- Join with `resourcecontainers`
 
   ```sql
+  -- get subscription name
   Resources
   | where type == "microsoft.storage/storageaccounts"
   | join (
@@ -392,6 +393,29 @@ Tables:
       on subscriptionId
   | project name, subName
   ```
+
+  ```sql
+  -- get storage accounts with private endpoints
+  -- "join" twice to get both resource group and subscription name
+  -- output tags on resources and resource groups
+  resources
+  | where type == "microsoft.storage/storageaccounts"
+  | where array_length(properties['privateEndpointConnections']) > 0
+  | join kind=leftouter (
+      resourcecontainers
+      | where type =~ "microsoft.resources/subscriptions/resourcegroups"
+      | project rgTags = tags, resourceGroup
+      )
+      on resourceGroup
+  | join kind=leftouter (
+    resourcecontainers
+    | where type == "microsoft.resources/subscriptions"
+    | project subName = name, subscriptionId
+    )
+    on subscriptionId
+  | project name, resourceGroup, subName, tags, rgTags
+  ```
+
 
 - A query can be saved as a shared query, then you could call it like:
 
