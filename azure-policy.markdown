@@ -246,3 +246,10 @@ A `deployIfNotExists` or `modify` policy should define the roles it requires:
     So with Terraform, you'd better put **md5 hash of the parameters file** in the name of the policy/set, whenever you update/remove/rename a parameter, it would force replacing the old policy/set with a new one.
 
 - For resource groups, use `Microsoft.Resources/subscriptions/resourceGroups` as alias, not `Microsoft.Resources/resourceGroups`
+
+- While the Azure Policy VS Code extension is handy for verifying policy rules locally, it has some shortcomings:
+  - Can't verify rules targeting subscriptions or resource groups
+  - It doesn't validate some of the limits, sometimes a rule is fine locally, but would be rejected by Azure when you deploy:
+    - 100 "value count" iterations per policy
+    - Use of `current()` or `field()` in `count.value`
+    - ...
