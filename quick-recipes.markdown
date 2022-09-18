@@ -36,6 +36,9 @@ Quick productivity tips, shortcuts, command line snippets.
 - [Hash](#hash)
 - [Self-signed SSL certs](#self-signed-ssl-certs)
 - [DNS tools](#dns-tools)
+  - [`systemd-resolve`](#systemd-resolve)
+  - [`dig`](#dig)
+  - [`nslookup`](#nslookup)
 
 ## Shortcuts
 
@@ -634,7 +637,48 @@ If you want to create a wildcard certificate, use `*.gary.local` as `$NAME`, and
 
 ## DNS tools
 
-`dig`
+### `systemd-resolve`
+
+- Find DNS configs on each network interface
+
+  ```sh
+  systemd-resolve --status
+
+  # Global
+  #           DNSSEC NTA: 10.in-addr.arpa
+  #                       16.172.in-addr.arpa
+  #                       ...
+  # Link 2 (eth0)
+  #       Current Scopes: DNS
+  #        LLMNR setting: yes
+  # MulticastDNS setting: no
+  #       DNSSEC setting: no
+  #     DNSSEC supported: no
+  #          DNS Servers: 168.63.129.16
+  #           DNS Domain: bkz3n5lfd3kufhikua4wl40kwg.px.internal.cloudapp.net
+  ```
+
+- Show statistics and clear local cache
+
+  ```sh
+  systemd-resolve --statistics
+  # ...
+  # Cache
+  #   Current Cache Size: 6
+  #           Cache Hits: 23
+  #         Cache Misses: 67
+
+  sudo systemd-resolve --flush-caches
+
+  systemd-resolve --statistics
+  # ...
+  # Cache
+  #   Current Cache Size: 0
+  #           Cache Hits: 23
+  #         Cache Misses: 69
+  ```
+
+### `dig`
 
 ```sh
 # query A records of example.com using server 8.8.8.8
@@ -652,7 +696,7 @@ dig -x 8.8.8.8
 # 8.8.8.8.in-addr.arpa.   1621    IN      PTR     dns.google.
 ```
 
-`nslookup`
+### `nslookup`
 
 ```sh
 nslookup                                # enter interactive mode
