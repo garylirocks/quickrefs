@@ -54,8 +54,11 @@
   - [Standard rules engine notes](#standard-rules-engine-notes)
   - [Custom domain HTTPS](#custom-domain-https)
 - [DNS](#dns)
+  - [Overview](#overview-1)
+  - [DNS resolution within virtual networks](#dns-resolution-within-virtual-networks)
+  - [Azure-provided name resolution](#azure-provided-name-resolution)
   - [Private DNS zones](#private-dns-zones)
-  - [DNS resolution](#dns-resolution-1)
+  - [Your own DNS server](#your-own-dns-server)
   - [CLI](#cli-4)
 - [Networking architecutres](#networking-architecutres)
 - [Hub-spoke architecture](#hub-spoke-architecture)
@@ -1320,6 +1323,8 @@ See:
 
 ## DNS
 
+### Overview
+
 Concepts:
 
 - **DNS Zone** corresponds to a domain name, parent and children zones could be in different resource groups
@@ -1337,6 +1342,58 @@ Missing features:
 
 - No conditional forwarding and no query logging
   - You need to Bring-Your-Own DNS service, and conditionally forward queries to Azure DNS
+
+### DNS resolution within virtual networks
+
+There are a few options:
+
+- Azure DNS private zones
+- Azure-provided name resolution
+- Your own DNS server
+- Azure DNS Private Resolver (*replaces setting up your own DNS servers*)
+
+### Azure-provided name resolution
+
+Example (a VM `vm-demo-001` in a vNet)
+
+```sh
+hostname --fqdn
+# vm-demo-001.bkz3n5lfd3kufhikua4wl40kwg.px.internal.cloudapp.net
+
+hostname --all-fqdns
+# vm-demo-001.internal.cloudapp.net
+
+# get DNS Server name (not the local 127.0.0.1:53)
+systemd-resolve --status
+# ...
+# DNS Servers: 168.63.129.16
+# DNS Domain: bkz3n5lfd3kufhikua4wl40kwg.px.internal.cloudapp.net
+
+nslookup -type=PTR 10.0.0.4
+# Non-authoritative answer:
+# 4.0.0.10.in-addr.arpa   name = vm-demo-001.internal.cloudapp.net.
+
+# after you link private DNS zone `example.private` to the vNet with auto-registration
+nslookup -type=PTR 10.0.0.4
+# Non-authoritative answer:
+# 4.0.0.10.in-addr.arpa   name = vm-demo-001.internal.cloudapp.net.
+# 4.0.0.10.in-addr.arpa   name = vm-demo-001.example.private.
+```
+
+- DNS IP is `168.63.129.16`, this is static, same in every vNet
+- DNS zone names and records are automatically managed
+- DNS suffix is consistent across all the VMs in a vNet
+- DNS names can be assigned to both VMs and network interfaces
+- PTR queries return FQDNs of form
+  - `[vm].internal.cloudapp.net.`
+  - `[vm].[privatednszonename].` (when private DNS zone linked to the vNet, and auto-registration enabled)
+- See here for client side DNS caching(`dnsmasq`) and retry configs: https://learn.microsoft.com/en-us/azure/virtual-network/virtual-networks-name-resolution-for-vms-and-role-instances#dns-client-configuration
+
+Considerations:
+
+- Scoped to vNet, a DNS name created in one vNet can't be resolved in another vNet
+- You should use a unique name for each VM in a vNet to avoid conflicts
+- WINS and NetBIOS are not supported, you cannot see your VMs in Windows Explorer
 
 ### Private DNS zones
 
@@ -1368,6 +1425,7 @@ You could link a Private DNS Zone to a vNet (not subnet), enable auto-registrati
   - Both vNets are linked to the private DNS zone
   - Auto registration enabled for vNet1, disabled for vNet2 (you could still add entries manually)
   - DNS queries resolve across vNets, reverse queries are scoped to the same vNet
+  - To make reverse lookup work across multiple vNets, you can create a reverse lookup zone `in-addr.arpa`, link it to multiple vNets, and manage the records yourself
 
   On a VM in vNet2:
 
@@ -1386,18 +1444,53 @@ You could link a Private DNS Zone to a vNet (not subnet), enable auto-registrati
   # ;4.0.0.10.in-addr.arpa.         IN      PTR
   ```
 
-### DNS resolution
+### Your own DNS server
 
-- By default, your VMs use Azure DNS (virtual IP `168.63.129.16`)
-- You could configure custom DNS servers at both vnet level and VM NIC level (if not specified, NIC inherits DNS settings from vnet)
+- You could configure custom DNS servers at both vnet level and VM NIC level (takes precedence, if not specified, NIC inherits DNS settings from vnet)
+
+- After custom DNS servers are configured, your VM won't get the `.internal.cloudapp.net` DNS suffix anymore, it gets a non-functioning placeholder `reddog.microsoft.com`
+
+- If you change the custom DNS servers, you need to perform DHCP lease renewal on all affected VMs in the vNet, for Windows VMs, you could do it by `ipconfig /renew`
+
+- You could configure your custom DNS to forward to Azure-provided DNS to resolve hostnames
+
+- Or, you could use Dynamic DNS (DDNS) to register VM hostnames in your DNS server
+  - Non-domain-joined Windows VMs attempt DDNS updates when they boot, or IP changes. DNS name is the hostname, you could set primary DNS suffix in the VM
+  - Domain-joined Windows VMs register their IP using DDNS. The domain-join process sets the primary DNS suffix on the VMs.
+  - Linux clients generally don't register themselves with the DNS server on startup, they assume the DHCP server does it. Azure's DHCP servers do not have the credentials to register records in your DNS server. You can use a tool called `nsupdate`
+
+
+```sh
+systemd-resolve --status
+# Link 2 (eth0)
+#       Current Scopes: DNS
+#        LLMNR setting: yes
+# MulticastDNS setting: no
+#       DNSSEC setting: no
+#     DNSSEC supported: no
+#          DNS Servers: 172.16.0.10
+#           DNS Domain: reddog.microsoft.com
+```
+
+Even with custom DNS configured, the VM host name is still **registered** to auto-registration-enabled private DNS zones:
+
+```sh
+nslookup -type=PTR 10.0.0.4 168.63.129.16
+Server:         168.63.129.16
+Address:        168.63.129.16#53
+
+Non-authoritative answer:
+4.0.0.10.in-addr.arpa   name = vm-demo-001.internal.cloudapp.net.
+4.0.0.10.in-addr.arpa   name = vm-demo-001.example.private.
+```
 
 ### CLI
 
 ```sh
-az network dns zone list \
+az network private-dns zone list
     --output table
 
-az network dns record-set list \
+az network private-dns record-set list \
     -g <resource-group> \
     -z <zone-name> \
     --output table
