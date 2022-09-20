@@ -875,7 +875,9 @@ With hub-spoke network architecture in an Enterprise landing zone scenario, you 
 You could achieve this by using Azure Policy (assigned to landingzone subscriptions, not the connectivity subscription):
   - (Optional) `Deny` public endpoint for PaaS services
   - `Deny` creating of a private DNS zone with `privatelink` prefix
-  - `DeployIfNotExists` policy to automatically create `privateDnsZoneGroups`, which associate private endpoints to private DNS zones in the connectivity subscription (the managed identity needs to be able to write to the private DNS zones)
+  - `DeployIfNotExists` policy to automatically create `privateDnsZoneGroups`, which associate private endpoints to private DNS zones in the connectivity subscription, the managed identity needs two permissions:
+    - `Network Contributor` for the private endpoint to add `privateDnsZoneGroups` to the PE
+    - `Private DNS Zone Contributor` for the private DNS zones to add 'A' records
 
 ### CLI example
 
