@@ -7,11 +7,14 @@
   - [Execution policy](#execution-policy)
 - [Profiles](#profiles)
 - [Common commands](#common-commands)
+- [Common parameters](#common-parameters)
+  - [`-passthru`](#-passthru)
 - [Aliases](#aliases)
 - [Customize output](#customize-output)
   - [Filtering](#filtering)
   - [Examples](#examples)
 - [Modules](#modules)
+  - [Install](#install)
   - [Import](#import)
   - [Inspect](#inspect)
 - [Strings](#strings)
@@ -135,11 +138,14 @@ Find commands
 # find commands
 Get-Command *file*
 
+# Or, use alias gcm
+gcm *file*
+
 # find commands in specified modules
-Get-Command '*file*' -Module Microsoft.PowerShell.*
+gcm '*file*' -Module Microsoft.PowerShell.*
 
 # find commands that could work on parameters of "Process" type
-Get-Command -ParameterType Process
+gcm -ParameterType Process
 # CommandType     Name                 Version    Source
 # -----------     ----                 -------    ------
 # Cmdlet          Get-Process          3.1.0.0    Microsoft.PowerShell.Management
@@ -168,12 +174,33 @@ Get-Help Get-ChildItem -Online
 Update-Help
 ```
 
-Modules
+
+## Common parameters
+
+Some common parameters:
+
+- Verbose
+- Debug
+- WarningAction
+- WarningVariable
+- ErrorAction
+- ErrorVariable
+- OutVariable
+- OutBuffer
+
+### `-passthru`
+
+Forces Windows PowerShell to go ahead and pass newly created or modified objects instead of hiding them.
 
 ```powershell
-Get-Module
+Start-Process notepad
 
-Install-Module AzureADPreview
+# only output result with `-PassThru`
+Start-Process notepad -PassThru
+
+# Handles  NPM(K)    PM(K)      WS(K)     CPU(s)     Id  SI ProcessName
+# -------  ------    -----      -----     ------     --  -- -----------
+#      18       3      452        860       0.08   1256   2 notepad
 ```
 
 
@@ -283,6 +310,12 @@ Get-ChildItem | Where-Object {$_.Name -Like 'gary*'}
 ## Modules
 
 A modules is a package that contains PowerShell members, such as cmdlets, providers, functions, workflows, variables and aliases.
+
+### Install
+
+```powershell
+Install-Module AzureADPreview
+```
 
 ### Import
 
