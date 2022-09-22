@@ -70,15 +70,15 @@ Checklist for creating VMs
 - Costs
   - Compute
     - Billed on per-minute basis
-    - Stop the VM only shuts down the guest OS, doesn't release the compute resource
-    - Deallocating releases the compute resource and stops charging
-    - Linux VMs are cheaper than Windows which includes license charges
     - Two payment options:
       - Pay as you go
       - Reserved VM instances
+    - Linux VMs are cheaper than Windows which includes license charges
+    - Two stopped status:
+      - **Stopped**: by `az vm stop`, or shutdown from within the guest OS, you are still being charged for the compute resources
+      - **Stopped (deallocated)**: by `az vm deallocate`, or "Stop" from the Portal, compute resources are released, you will not be charged for compute (still paying the related disk storage, etc)
 
-  - Storage
-    - charged separately from VM, you will be charged for storage used by the disks even if the VM is deallocated
+  - Storage for disks are charged separately from VM, you will be charged for storage used by the disks even if the VM were deallocated
 
 - Storage
 
