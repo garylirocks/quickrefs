@@ -9,6 +9,7 @@
     - [Usage](#usage-1)
 - [Journal](#journal)
 - [Update Grub default boot entry](#update-grub-default-boot-entry)
+- [Update hostname](#update-hostname)
 
 ## Shell
 
@@ -129,3 +130,20 @@ usually `Ubuntu` is the default boot entry, if you would like to change it to `W
 
 1. Update the `GRUB_DEFAULT` in `/etc/default/grub` to `2`
 1. Run `sudo update-grub`, this would update `/boot/grub/grub.cfg`
+
+
+## Update hostname
+
+Use `hostnamectl` to query and update hostname
+
+```sh
+hostnamectl
+  #  Static hostname: vm-hub-workload
+  #  ...
+```
+
+To update hostname
+
+1. `sudo hostnamectl set-hostname new-name`
+1. (Optional) Update hostname in `/etc/hosts`
+1. (Optional) If the `cloud-init` package is installed, you may need to update `/etc/cloud/cloud.cfg`, change `preserve_hostname` to `true` (seems this setting doesn't matter in a Ubuntu VM in Azure)
