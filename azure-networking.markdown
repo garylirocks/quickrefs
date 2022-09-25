@@ -25,11 +25,14 @@
 - [ExpressRoute](#expressroute)
   - [Virtual WAN](#virtual-wan)
 - [Routing](#routing)
-  - [System routes](#system-routes)
+  - [Default system routes](#default-system-routes)
   - [User-defined routes](#user-defined-routes)
   - [BGP](#bgp)
   - [Route selection and priority](#route-selection-and-priority)
   - [NVA](#nva)
+  - [Route Server (TODO)](#route-server-todo)
+  - [Forced tunneling](#forced-tunneling)
+  - [Troubleshooting](#troubleshooting)
 - [Azure Firewall](#azure-firewall)
   - [Web Application Firewall (WAF)](#web-application-firewall-waf)
 - [DDoS Protection](#ddos-protection)
@@ -185,9 +188,27 @@ az network public-ip create \
 
 ![NAT Gateway](images/azure_nat-gateway.png)
 
-- You configure it on a subnet
-- All outbound connectivity uses your specified static public IP addresses
+- Allows you to share public IPs among multiple internal resources
+- You associated it to a subnet (a subnet can only have one NAT gateway)
+- An NAT gateway can be associated to multiple subnets (must be in the same vNet)
+- Subnets with following resources are not compatible:
+  - IPv6 address space
+  - An existing NAT gateway
+  - A vNet gateway
+  - A Basic SKU public IP (attached to a NIC in the subnet)
+  - A Basic SKU load balancer
+- Can only use Standard SKU Public IPs or public IP prefixes
+- After NAT is configured
+  - All UDP and TCP outbound flows from any VM instance will use NAT for Internet connectivity (**takes precedence over other public IPs on its NIC**)
+  - No further configuration is necessary, and you don't need to create any UDR
+  - NAT takes precedence over other outbound scenarios and replaces the default Internet destination of a subnet
+- Allows flows from vNet to the Internet, return traffic is only allowed in response to an active flow
+- You could configure the TCP idle timeout, default is 4 minutes
+- Compatible with Standard SKU load balancer, public IP/prefix
 
+  ![NAT compatibility](images/azure_networking-nat-flow-direction-inbound-outbound.png)
+
+  *Traffic coming in from a load balancer will return to it, not to the NAT*
 
 ## Network security group (NSG)
 
@@ -288,20 +309,37 @@ Connect two virtual networks together, resources in one network can communicate 
 ![network peering](images/azure_network-peering.png)
 
 - The networks can be in **different** subscriptions, AAD tenants, or regions
-  - For different subscription scenarios, you must have the `Network Contributor` role in both subs to configure the peering
 - Traffic between networks is **private**, on Microsoft backbone network
+- You need proper permission over both vNets to configure the peering (such as `Network Contributor` role)
+- Global vNet peering has same settings as regional vnet peering
+- Under the hood, routes of type `VNetPeering`/`VNetGlobalPeering` are added on both sides
+- No downtime to resources
+- Peerings on both side are created and removed at the same time
 - Non-transitive, for example, with peering like this A <-> B <-> C, A can't communicate with C, you need to peer A <-> C
 
 A typical use for peering is creating hub-spoke architecture:
 
 ![Azure gateway transit](images/azure_gateway-transit.png)
 
-- A vNet only allows **one gateway**, when configuring peering, you could choose whether to use gateway in this vNet or the remote vNet
 - In above diagram, to allow connection between vNet B and on-prem, you need configure **Allow Gateway Transit** in the hub vNet, and **Use Remote Gateway** in vNet B
   - In the background, this adds routes to vNet B's route table, VPN Gateway's IP would be the Next Hop if on-prem is the destination
 - Spoke networks can **NOT** connect with each other by default through the hub network, you need to add peering between the spokes or consider using user defined routes (UDRs)
   - Peering enables the next hop in a UDR to be the IP address of an NVA (network virtual appliance) or VPN gateway. Then traffic between spoke networks can flow through the NVA or VPN gateway in the hub vNet.
 - Azure Bastion in hub network can be used to access VMs in spoke network (networks must be in same tenant)
+
+Peering on each side has these settings:
+
+<img src="images/azure_vnet-peering-options.png" width="600" alt="vNet peering options" style="border: 1px solid grey" />
+
+- **Traffic to remote virtual network**
+  - If "Allow", remote vNet address space is included in the "VirtualNetwork" service tag (in all NSGs attached to subnets/NICs in this vNet), so the default `AllowVnetInBound` and `AllowVnetOutBound` would allow the traffic
+  - If "Block", you could still add a custom NSG rule to allow traffic
+- **Traffic forwarded from remote virtual network**
+  - Whether allow forwarded traffic from remote vNet (not originating from inside remote vNet) into this vNet.
+  - **This is not done via the "VirtualNetwork" service tag, if "Block", traffic will be blocked, even NSG rules allow it**
+- **Virtual network gateway or Route Server**
+  - A vNet only allows **one gateway**, you choose whether to use gateway in this vNet or the remote vNet
+  - Under the hood, the chosen gateway IP would be used as next hop in system defined routes for related address prefixes
 
 ### CLI
 
@@ -502,7 +540,7 @@ Compare ExpressRoute to Site-to-Site VPN:
 
 ## Routing
 
-### System routes
+### Default system routes
 
 ![Azure system routes](images/azure_system-routes.png)
 
@@ -521,14 +559,13 @@ These are the default system routes:
 | 100.64.0.0/10      | None            |
 
 - *`100.64.0.0/10` is shared address space for communications between a service provider and its subscribers when using a carrier-grade NAT (see https://en.wikipedia.org/wiki/Carrier-grade_NAT)*
-- The `0.0.0.0/0` route is used if no other routes match, Azure routes traffic to the Internet, the exception is that traffic to the public IP addresses of Azure services remains on the Azure backbone network, not routed to the Internet.
+- The `0.0.0.0/0` route is used if no other routes match, Azure routes traffic to the Internet, the **exception is that traffic to the public IP addresses of Azure services remains on the Azure backbone network**, not routed to the Internet.
 
-Additional system routes will be created when you enable:
+Additional system routes will be created when you enable certain Azure capabilities:
 
 - vNet peering (a route for each address range in the peered-to vnet's address space)
-- Service chaining (lets you override default peering routes with UDRs)
-- vNet gateway
-- vNet Service endpoint (a route to the service's public IPs)
+- vNet gateway (prefixes advertised from on-prem via BGP, or configured in the local network gateway)
+- vNet Service endpoint (a route to the service's public IPs, only added to the subnets for which a service endpoint is enabled)
 
 ### User-defined routes
 
@@ -675,6 +712,47 @@ NVAIP="$(az vm list-ip-addresses \
 
 # enable IP forwarding within the NVA
 ssh -t -o StrictHostKeyChecking=no azureuser@$NVAIP 'sudo sysctl -w net.ipv4.ip_forward=1; exit;'
+```
+
+### Route Server (TODO)
+
+Simplifies dynamic routing between your NVA and your vNet.
+
+- You peer NVA with Route Server.
+- Routes are exchanged using BGP protocol.
+
+### Forced tunneling
+
+![Forced tunneling](images/azure_networking-forced-tunneling.png)
+
+- Redirect all Internet-bound traffic back to your on-prem location via a S2S VPN tunnel for inspection and auditing.
+- Can only be configured by Azure PowerShell, not in the Portal
+- You to this by creating a route table, adding a UDR to the VPN Gateway
+- The vNet must have a route-based VPN gateway, the on-prem VPN device must be configured using 0.0.0.0/0 as traffic selectors.
+
+### Troubleshooting
+
+To troubleshoot routing issues, you often need to check the effective routes of a network interface.
+  - This requires `Microsoft.Network/networkInterfaces/effectiveRouteTable/action` permission.
+  - You can only get this when the attached-to VM is running.
+
+```sh
+az network nic show-effective-route-table \
+  --name nic-hub-workload \
+  --resource-group rg-hub \
+  -otable
+
+# Source    State    Address Prefix    Next Hop Type      Next Hop IP
+# --------  -------  ----------------  -----------------  -------------
+# Default   Active   10.0.0.0/16       VnetLocal
+# Default   Active   10.2.0.0/16       VNetPeering
+# Default   Active   10.1.0.0/16       VNetPeering
+# Default   Active   0.0.0.0/0         Internet
+# Default   Active   10.0.0.0/8        None
+# ...
+# User      Active   10.1.1.0/24       VirtualAppliance   10.0.1.4
+# Default   Invalid  10.1.1.4/32       InterfaceEndpoint
+# Default   Invalid  10.1.1.5/32       InterfaceEndpoint
 ```
 
 
@@ -1422,6 +1500,7 @@ nslookup -type=PTR 10.0.0.4
 - The domain name is `.internal.cloudapp.net.`
 - Any VM created in the vNet is registered
 - It's the Azure Resource name that is registered, not the name of the guest OS on the VM
+  - *Tested in Ubuntu, if you update VM hostname, the DNS record updates automatically*
 - DNS names can be assigned to both VMs and network interfaces
 - PTR queries return FQDNs of form
   - `[vm].internal.cloudapp.net.`
