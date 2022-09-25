@@ -16,6 +16,7 @@
   - [Azure AD](#azure-ad)
   - [Tenant](#tenant)
   - [Regions](#regions)
+  - [Availability Zones](#availability-zones)
   - [Management groups](#management-groups)
   - [Subscription](#subscription)
   - [Resource group](#resource-group)
@@ -214,6 +215,17 @@ Security posture (CIA):
   - Sequential updates
   - Data residency
 
+### Availability Zones
+
+![Availability Zones](images/azure-availability-zones.png)
+
+Designed for high availability, each zone is made up of one or more datacenters equipped with independent power, cooling and networking.
+
+Three types of Availability Zone support:
+
+- Zonal services: can be pinned to a specific zone, such as VMs, managed disks, or standard IP addresses. You can have multiple instances spread across zones.
+- Zone-redundant services: data replicated across zones automatically
+- Non-regional services: always available, resilient to region-wide outages.
 
 ### Management groups
 

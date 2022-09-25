@@ -3,9 +3,13 @@
 - [Overview](#overview)
 - [Virtual networks](#virtual-networks)
   - [Subnets](#subnets)
+    - [IP addressing](#ip-addressing)
+    - [Design](#design)
   - [CLI](#cli)
 - [IP](#ip)
+  - [IP prefixes](#ip-prefixes)
   - [CLI](#cli-1)
+- [NAT Gateway](#nat-gateway)
 - [Network security group (NSG)](#network-security-group-nsg)
   - [Service Tag](#service-tag)
     - [`VirtualNetwork` tag](#virtualnetwork-tag)
@@ -29,7 +33,6 @@
 - [Azure Firewall](#azure-firewall)
   - [Web Application Firewall (WAF)](#web-application-firewall-waf)
 - [DDoS Protection](#ddos-protection)
-- [NAT Gateway](#nat-gateway)
 - [Private Endpoints](#private-endpoints)
   - [Limitations](#limitations)
     - [NSG](#nsg)
@@ -72,19 +75,43 @@
 - Logically isolated network
 - Scoped to a single region
 - Can be segmented into one or more *subnets*
-- Can use a *VPN gateway* to connect to an on-premises network
+- Can use VPN or ExpressRoute to connect to on-premises networks
 
 ## Virtual networks
 
 ![vnet](images/azure_virtual-networks.png)
 
-The vNet can be
-- cloud-only, or
-- connected to on-prem network through site-2-site VPN, or ExpressRoute circuit
+A vNet can be cloud-only or connected to on-prem network through site-2-site VPN, or ExpressRoute circuit
+
+- Some resources are connected directly:
+  - VM
+  - VMSS
+  - App Service Environment
+  - AKS
+- Use service endpoints to connect to other PaaS services: storage accounts, key vaults, SQL databases, etc
+- Or use private endpoints to connect to PaaS or your own custom services.
 
 ### Subnets
 
-Each vNet is segmented into multiple subnets:
+#### IP addressing
+
+- You should use address ranges defined by RFC 1918 (not routable on public networks):
+  - 10.0.0.0/8
+  - 172.16.0.0/12
+  - 192.168.0.0/16
+- You cannot use these ranges:
+  - 224.0.0.0/4 (Multicast)
+  - 255.255.255.255/32 (Broadcast)
+  - 127.0.0.0/8 (Loopback)
+  - 169.254.0.0/16 (Link-local)
+  - 168.63.129.16/32 (Internal DNS)
+- Each subnet has **5 reserved IP addresses**, so the smallest supported IPv4 subnet is /29 (e.g 10.0.1.0/29, 5 Azure reserved addresses + 3 available)
+  - `x.x.x.0`: Network address
+  - `x.x.x.1`: Reserved by Azure for the default gateway
+  - `x.x.x.2`, `x.x.x.3`: Reserved by Azure to map the Azure DNS IPs to the VNet space
+  - `x.x.x.255`: Network broadcast address
+
+#### Design
 
 - Each subnet should have non-overlapping CIDR address space
 - Some services require its own dedicated subnet, such as VPN gateway
@@ -93,11 +120,6 @@ Each vNet is segmented into multiple subnets:
   - You could also route inter-subnet traffic through a network virtual appliance(NVA)
 - You could enable **service endpoints** in subnets, this allows some public-facing Azure services(e.g. Azure storage account or Azure SQL database) to be accessible from these subnets and deny access from internet
 - A subnet can have zero or one NSG, and an NSG could be associated to multiple subnets
-- Each subnet has **5 reserved IP addresses**, so the maximum prefix in the subnet CIDR is /29 (e.g 10.0.1.0/29, 5 Azure reserved addresses + 3 available)
-  - `x.x.x.0`: Network address
-  - `x.x.x.1`: Reserved by Azure for the default gateway
-  - `x.x.x.2`, `x.x.x.3`: Reserved by Azure to map the Azure DNS IPs to the VNet space
-  - `x.x.x.255`: Network broadcast address
 
 ### CLI
 
@@ -113,27 +135,37 @@ az network vnet subnet list \
 
 ## IP
 
-Three ranges of non-routable IP addresses for internal networks:
-
-- `10.0.0.0/8`
-- `172.16.0.0/12`
-- `192.168.0.0/16`
+- Public IP addresses enable Internet resources to communicate with Azure resources and enable Azure resources to communicate outbound with Internet and public-facing Azure services.
+- A public IP address in Azure is dedicated to a specific resource, until it's unassigned by a network engineer.
+- A resource without a public IP assigned can communicate outbound through network address translation services, where Azure dynamically assigns an available IP address that isn't dedicated to the resource.
 
 Private vs. Public IPs:
 
-| Feature    | Private IP                                                                             | Public IP                                                                                                           |
-| ---------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| Resources  | <ul><li>VM NICs</li><li>internal load balancers</li><li>application gateways</li></ul> | <ul><li>VM NICs</li><li>internet-facing load balancers</li><li>application gateways</li> <li>VPN gateways</li></ul> |
-| Assignment | Dynamic (DHCP lease) or Static (DHCP reservation)                                      | Dynamic or Static                                                                                                   |
+| Feature    | Private IP                                                                             | Public IP                                                                                                                                                                                                             |
+| ---------- | -------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Resources  | <ul><li>VM NICs</li><li>internal load balancers</li><li>application gateways</li></ul> | <ul><li>VM NICs</li><li>VMSS</li><li>Public Load Balancers</li><li>vNet gateways(VPN/ER)</li><li>NAT gateways</li><li>application gateways</li><li>Azure Firewall</li><li>Bastion Host</li><li>Route Server</li></ul> |
+| Assignment | Dynamic (DHCP lease) or Static (DHCP reservation)                                      | Dynamic or Static                                                                                                                                                                                                     |
+
+Dynamic vs. Static IP assignment:
+
+- Dynamic: IP is not allocated when you create the IP resource, only allocated when needed (eg. when you create or start a VM, released when you stop or delete a VM)
+- Static: assigned immediately, only released when you delete the IP resource
+
 
 Public IP SKUs
 
-| Feature       | Basic SKU                                           | Standard SKU                                                                                                       |
-| ------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| IP assignment | Static or dynamic                                   | Static                                                                                                             |
-| Security      | Open by default, available for inbound only traffic | **Are secure by default and closed to inbound traffic**, you must enable inbound traffic by using NSG              |
-| Resources     | all that can be assigned a public IP                | <ul><li>VM NICs</li><li>Standard public load balancers</li><li>application gateways</li><li>VPN gateways</li></ul> |
-| Redundancy    | Not zone redundant                                  | Zone redundant, or assigned to be in a specific zone                                                               |
+| Feature           | Basic SKU                                           | Standard SKU                                                                                                       |
+| ----------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| IP assignment     | Static or dynamic                                   | Static                                                                                                             |
+| Security          | Open by default, available for inbound only traffic | **Are secure by default and closed to inbound traffic**, you must enable inbound traffic by using NSG              |
+| Resources         | all that can be assigned a public IP                | <ul><li>VM NICs</li><li>Standard public load balancers</li><li>Application gateways</li><li>VPN gateways</li></ul> |
+| Availability Zone | Not supported                                       | Zone redundant by default, or zonal                                                                                |
+
+### IP prefixes
+
+- You specify the name and prefix size
+- After the public IP prefix is created, you can create public IP addresses
+- You could also bring your own IP prefixes to Azure (BYOIP)
 
 ### CLI
 
@@ -147,6 +179,15 @@ az network public-ip create \
 
 # then `garyip.australiaeast.cloudapp.azure.com` resolves to this IP
 ```
+
+
+## NAT Gateway
+
+![NAT Gateway](images/azure_nat-gateway.png)
+
+- You configure it on a subnet
+- All outbound connectivity uses your specified static public IP addresses
+
 
 ## Network security group (NSG)
 
@@ -682,14 +723,6 @@ Network rules are processed before application rules
 
 - Basic: Free, part of your Azure subscription
 - Standard: Protection policies are tuned through dedicated traffic monitoring and machine learning algorithms
-
-
-## NAT Gateway
-
-![NAT Gateway](images/azure_nat-gateway.png)
-
-- You configure it on a subnet
-- All outbound connectivity uses your specified static public IP addresses
 
 
 ## Private Endpoints
@@ -1330,7 +1363,9 @@ See:
 Concepts:
 
 - **DNS Zone** corresponds to a domain name, parent and children zones could be in different resource groups
-- A **record set** is a collection of records in a zone that have the same name and type (e.g. multiple IP addresses for name 'www' and type 'A')
+- A **record set** is a collection of records in a zone that have the same name and type, e.g.
+  - multiple IP addresses for name 'www' and type 'A'
+  - "CNAME" record sets can only have one record at most
 
 Features:
 
@@ -1383,8 +1418,10 @@ nslookup -type=PTR 10.0.0.4
 ```
 
 - DNS IP is `168.63.129.16`, this is static, same in every vNet
-- DNS zone names and records are automatically managed
-- DNS suffix is consistent across all the VMs in a vNet
+- The IP is assigned to NICs for DNS by the default Azure DHCP assignment
+- The domain name is `.internal.cloudapp.net.`
+- Any VM created in the vNet is registered
+- It's the Azure Resource name that is registered, not the name of the guest OS on the VM
 - DNS names can be assigned to both VMs and network interfaces
 - PTR queries return FQDNs of form
   - `[vm].internal.cloudapp.net.`
@@ -1402,9 +1439,9 @@ Considerations:
 You could link a Private DNS Zone to a vNet (not subnet), enable auto-registration, then hostname of any VMs in the vNet would be registered in this Private DNS Zone
 
 - Note
-  - A DNS Zone can link to multiple vnets
-  - A vnet can have **ONLY ONE** registration zone, but can have multiple resolution zones
-  - Even your vnet is configured with custom DNS servers, the auto-registration still happens
+  - They are global, could be accessed from any region, sny subscription, any tenant.
+  - A zone can be linked to multiple vnets
+  - A vnet can have **ONLY ONE** registration zone, but can have multiple resolution zones, even your vnet is configured with custom DNS servers, the auto-registration still happens
 
 - Scoped to a single vNet
 
