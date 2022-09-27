@@ -39,6 +39,7 @@ Quick productivity tips, shortcuts, command line snippets.
   - [`systemd-resolve`](#systemd-resolve)
   - [`dig`](#dig)
   - [`nslookup`](#nslookup)
+  - [`ipconfig`](#ipconfig)
 
 ## Shortcuts
 
@@ -744,5 +745,16 @@ Address: 172.217.167.110
 # Name:   google.com
 # Address: 2404:6800:4006:813::200e
 ```
+
+### `ipconfig`
+
+```powershell
+# clear local DNS cache
+ipconfig /flushdns
+
+# renew IP address lease from DHCP server
+ipconfig /renew
+```
+
 
 [RenameUSBDrive]: [https://help.ubuntu.com/community/RenameUSBDrive]
