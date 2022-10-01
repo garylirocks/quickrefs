@@ -36,6 +36,9 @@
 - [Azure Firewall](#azure-firewall)
   - [Web Application Firewall (WAF)](#web-application-firewall-waf)
 - [DDoS Protection](#ddos-protection)
+- [Service endpoints](#service-endpoints)
+  - [Create](#create)
+  - [Private endpoints vs. service endpoints](#private-endpoints-vs-service-endpoints)
 - [Private Endpoints](#private-endpoints)
   - [Limitations](#limitations)
     - [NSG](#nsg)
@@ -46,7 +49,7 @@
   - [DNS integration at scale](#dns-integration-at-scale)
   - [CLI example](#cli-example)
   - [Private Link](#private-link)
-- [Service endpoints](#service-endpoints)
+- [Deploy Azure service to vNets](#deploy-azure-service-to-vnets)
 - [Azure Load Balancer](#azure-load-balancer)
   - [SKUs](#skus)
   - [Distribution modes](#distribution-modes)
@@ -226,18 +229,20 @@ az network public-ip create \
 
 ### Service Tag
 
-Service tags represent a group of address prefixes, these could be used in NSG rules, UDR, Azure Firewall, for example:
-
-  - VirtualNetwork (*see below*)
-  - AzureCloud (*> 4500 prefixes*)
-  - Internet
-  - Storage (*Azure Storage for the entire cloud*)
-  - Storage.WestUS (*some tags could be regional*)
-  - SQL
-  - AzureLoadBalancer
-  - AzureTrafficManager
-  - AppService
-  - Dynamics365ForMarketingEmail
+Service tags represent a group of address prefixes, usually from a given Azure service
+  - Microsoft maintains and automatically updates the prefixes
+  - These tags could be used in NSG rules, UDR, Azure Firewall, for example:
+  - Examples:
+    - VirtualNetwork (*see below*)
+    - AzureCloud (*> 4500 prefixes*)
+    - Internet
+    - Storage (*Azure Storage for the entire cloud*)
+    - Storage.WestUS (*some tags could be regional*)
+    - SQL
+    - AzureLoadBalancer
+    - AzureTrafficManager
+    - AppService
+    - Dynamics365ForMarketingEmail
 
 Example:
 
@@ -295,7 +300,7 @@ Details: https://docs.microsoft.com/en-us/azure/virtual-network/network-security
 
 #### `168.63.129.16`
 
-Typically, you should allow this IP in any local (in the VM) firewall policies (outbound direction). It's not subject to user defined routes.
+A virtual public IP address, used to facilitate a communication channel to Azure platform resources. Typically, you should allow this IP in any local (in the VM) firewall policies (outbound direction). It's not subject to user defined routes.
 
 - The VM Agent requires outbound communication over port 80/tcp and 32526/tcp with WireServer(`168.63.129.16`). This is not subject to the configured NSGs.
 - `168.63.129.16` can provide DNS services to the VM when there's no custom DNS servers definition. By default this is not subject to NSGs unless specifically targeted using the "AzurePlatformDNS" service tag. You could also block 53/udp and 53/tcp in local firewall on the VM.
@@ -803,6 +808,92 @@ Network rules are processed before application rules
 - Standard: Protection policies are tuned through dedicated traffic monitoring and machine learning algorithms
 
 
+## Service endpoints
+
+<img src="images/azure_vnet_service_endpoints_overview.png" width="600" alt="Service endpoints overview" />
+
+- The purpose is to secure your network access to PaaS services (by default, all PaaS services have public IP addresses and are exposed to the internet), such as:
+
+  - Azure Storage
+  - Azure SQL Database
+  - Azure Cosmos DB
+  - Azure Key Vault
+  - Azure Service Bus
+  - Azure Data Lake
+
+- A virtual network service endpoint provides the identity of your virtual network to an Azure service. You secure the access to an Azure service to your vNet by adding a virtual network rule. You could fully remove public Internet access to this service.
+
+- After enabling a service endpoint, the source IP addresses switch from using public IPv4 addresses to using their private IPv4 address when communicating with the service from that subnet. This switch allows you to access the services without the need for reserved, public IP addresses used in Azure service IP firewalls.
+
+- With service endpoints, DNS domain names for the PaaS services won't change, still resolves to public IP addresses. (**Different from private endpoints**)
+  - When a service endpoint is created, **Azure actually creates routes in the route table to direct the traffic, keeping it within Microsoft network**. The route table would like:
+
+    | SOURCE  | STATE  | ADDRESS PREFIXES        | NEXT HOP TYPE                     |
+    | ------- | ------ | ----------------------- | --------------------------------- |
+    | Default | Active | 10.1.1.0/24             | VNet                              |
+    | Default | Active | 0.0.0.0./0              | Internet                          |
+    | ...     | ...    | ...                     | ...                               |
+    | Default | Active | 20.38.106.0/23, 10 more | **VirtualNetworkServiceEndpoint** |
+    | Default | Active | 20.150.2.0/23, 9 more   | **VirtualNetworkServiceEndpoint** |
+
+- Virtual networks and Azure service resources can be in the same or different subscriptions. Certain Azure Services (not all) such as Azure Storage and Azure Key Vault also support service endpoints across different Active Directory(AD) tenants.
+
+- Service endpoint doesn't work with in on-prem scenarios, for on-prem clients, you need to
+  - either setup ExpressRoute **public peering**
+  - or add on-prem **NAT IPs** to the service's IP firewall
+
+### Create
+
+- On the service side, you need to add proper network rules
+
+  ```sh
+  # deny all network access
+  az storage account update \
+      --resource-group my-rg \
+      --name my-storage-account \
+      --default-action Deny
+
+  # add network rule for the subnet
+  az storage account network-rule add \
+      --resource-group my-rg \
+      --vnet-name my-vnet \
+      --subnet my-subnet \
+      --account-name my-storage-account
+  ```
+
+- On the vNet side, you need to:
+    ```sh
+    # enable service endpoint in a subnet
+    az network vnet subnet update \
+      --resource-group my-rg \
+      --vnet-name my-vnet \
+      --name my-subnet \
+      --service-endpoints Microsoft.Storage
+
+    # add NSG rule
+    az network nsg rule create \
+      --resource-group my-rg \
+      --nsg-name nsg-demo-001 \
+      --name Allow_Storage \
+      --priority 120 \
+      --direction Outbound \
+      --source-address-prefixes "VirtualNetwork" \
+      --source-port-ranges '*' \
+      --destination-address-prefixes "Storage" \
+      --destination-port-ranges '*' \
+      --access Allow \
+      --protocol '*' \
+      --description "Allow access to Azure Storage"
+    ```
+
+### Private endpoints vs. service endpoints
+
+- Both solutions tackle the same issue: how to connect to a public PaaS service privately
+- A service endpoint remains a publicly routable IP address, scoped to subnets, you need to do it in each subnet
+- Private Endpoints allows you to connect to a service via a private IP address in a vNet, working for peered vNets and any connected on-prem network
+- Private endpoint is the next evolution and usually preferrable
+
+
 ## Private Endpoints
 
 <img src="images/azure_private-endpoints-for-storage.jpg" width="600" alt="Private endpoints for storage" />
@@ -811,10 +902,11 @@ In the above diagram:
 
 * **Azure Private Endpoint**: a special network interface for an Azure service in your vNet, it gets an IP from the address range of a subnet
 * Applications in the vNet can connect to the service over the private endpoint seamlessly, **using the same connection string and authorization mechanisms that they would use otherwise**;
-* You **DON'T** need a firewall rule to allow traffic from a vNet which can connect to a private endpoint, since the storage firewall only controls access through the public endpoint. Private endpoints instead rely on the consent flow for granting subnet access;
+* The Storage account **DOESN'T** need a network rule to allow traffic from the private endpoint, the network rules only control access through the public endpoint. Private endpoints instead rely on the consent flow for granting subnet access.
 
 Notes
 
+- A read-only network interface is created alongside a private endpoint
 - Connections can only be initiated in one direction: from client to the endpoint
 - **Outbound NSG rules do not affect PE connectivity, you could set a Deny-all outbound rule on the NSG, a PE could still connect to its service**
 - For some service, you need separate private endpoints for each sub-resource, for a RA-GRS storage account, there are sub-resources like `blob`, `blob_secondary`, `file`, `file_secondary`, ...
@@ -1064,68 +1156,9 @@ Connection between the private endpoint and the storage service uses a **private
   ![Private link service](images/azure_private-link-service.png)
 
 
-## Service endpoints
+## Deploy Azure service to vNets
 
-<img src="images/azure_vnet_service_endpoints_overview.png" width="600" alt="Service endpoints overview" />
 
-- The purpose is to secure your network access to PaaS services (by default, all PaaS services have public IP addresses and are exposed to the internet), such as:
-
-  - Azure Storage
-  - Azure SQL Database
-  - Azure Cosmos DB
-  - Azure Key Vault
-  - Azure Service Bus
-  - Azure Data Lake
-
-- A virtual network service endpoint provides the identity of your virtual network to an Azure service. You secure the access to an Azure service to your vNet by adding a virtual network rule. You could fully remove public Internet access to this service.
-
-- After enabling a service endpoint, the source IP addresses switch from using public IPv4 addresses to using their private IPv4 address when communicating with the service from that subnet. This switch allows you to access the services without the need for reserved, public IP addresses used in Azure service IP firewalls.
-
-- With service endpoints, DNS entries for Azure services don't change, continue to resolve to public IP addresses assigned to the Azure service. (**Different from private endpoints**)
-  - When a service endpoint is created, **Azure actually creates routes in the route table to direct the traffic, keeping it within Microsoft network**. The route table would like:
-
-    | SOURCE  | STATE  | ADDRESS PREFIXES        | NEXT HOP TYPE                 |
-    | ------- | ------ | ----------------------- | ----------------------------- |
-    | Default | Active | 10.1.1.0/24             | VNet                          |
-    | Default | Active | 0.0.0.0./0              | Internet                      |
-    | Default | Active | 10.0.0.0/8              | None                          |
-    | Default | Active | 100.64.0.0./10          | None                          |
-    | Default | Active | 192.168.0.0/16          | None                          |
-    | Default | Active | 20.38.106.0/23, 10 more | VirtualNetworkServiceEndpoint |
-    | Default | Active | 20.150.2.0/23, 9 more   | VirtualNetworkServiceEndpoint |
-
-- If you use ExpressRoute for connectivity from on-prem to Azure, you need to add the two NAT IPs of the ExpressRoute to the service's IP firewall.
-
-- Virtual networks and Azure service resources can be in the same or different subscriptions. Certain Azure Services (not all) such as Azure Storage and Azure Key Vault also support service endpoints across different Active Directory(AD) tenants i.e., the virtual network and Azure service resource can be in different Active Directory (AD) tenants.
-
-CLI
-
-```sh
-# enable service endpoint in a subnet
-az network vnet subnet update \
-    --resource-group my-rg \
-    --vnet-name my-vnet \
-    --name my-subnet \
-    --service-endpoints Microsoft.Storage
-
-# deny all network access
-az storage account update \
-    --resource-group my-rg \
-    --name my-storage-account \
-    --default-action Deny
-
-# add network rule for the subnet
-az storage account network-rule add \
-    --resource-group my-rg \
-    --vnet-name my-vnet \
-    --subnet my-subnet \
-    --account-name my-storage-account
-```
-
-**Private endpoints** vs. **service endpoints**:
-
-- Private Endpoints allows you to connect to a service via a private IP address in a vNet, easily extensible to on-prem network;
-- A service endpoint remains a publicly routable IP address, scoped to subnets;
 
 ## Azure Load Balancer
 
