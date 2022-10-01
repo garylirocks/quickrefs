@@ -23,6 +23,7 @@
     "jsonencode",
     "kubectl",
     "kubelet",
+    "Kubenet",
     "Kubernetes",
     "Mbps",
     "minikube",

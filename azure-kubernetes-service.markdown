@@ -2,6 +2,8 @@
 
 - [Overview](#overview)
 - [Node pools](#node-pools)
+- [Networking](#networking)
+  - [kubenet](#kubenet)
 - [Settings](#settings)
 
 ## Overview
@@ -81,6 +83,24 @@ You could scale Pods and nodes manually or automatically
   ![AKS auto scaler](images/aks_autoscaler.png)
 
   Cluster Autoscaler scales nodes, Horizontal Pod Autoscaler scales pods on existing nodes
+
+## Networking
+
+AKS clusters can use kubenet (basic networking) or Azure CNI (advanced networking)
+
+### kubenet
+
+![Kubenet overview](images/azure_kubenet-overview.png)
+
+- Only nodes receive an IP in the subnet
+- Pods can't communicated directly with each other
+- AKS creates and maintains UDR and IP forwarding, which is used for connectivity between pods across nodes
+- Multiple kubenet clusters can't share a subnet
+- Some features not supported:
+  - Azure network policies, but Calico are supported
+  - Windows node pools
+  - Virtual nodes add-on
+
 
 ## Settings
 
