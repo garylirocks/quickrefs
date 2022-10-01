@@ -31,6 +31,7 @@
   - [Concurrency](#concurrency)
 - [Disks](#disks)
 - [Files](#files)
+  - [Create and mount a share](#create-and-mount-a-share)
   - [Authentication](#authentication)
   - [Snapshots](#snapshots)
   - [File Sync](#file-sync)
@@ -581,6 +582,23 @@ Compare to Blobs and Disks
 - Files have true directory objects, Blobs have a flat namespace.
 - File shares can be mounted concurrently by multiple cloud or on-prem machines, Disks are exclusive to a single VM.
 - Files shares are best suited for random access workloads.
+
+### Create and mount a share
+
+```sh
+az storage share create \
+  --account-name stdemo001 \
+  --account-key xxxxxx \
+  --name "share-demo-001"
+
+# on client VM
+mkdir Azureshare
+sudo mount -t cifs \
+  //stdemo001.file.core.windows.net/erp-data-share Azureshare \
+  -o vers=3.0,username=[my-username],password=xxxxxxxx,dir_mode=0777,file_mode=0777,sec=ntlmssp
+
+findmnt -t cifs
+```
 
 ### Authentication
 
