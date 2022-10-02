@@ -19,6 +19,7 @@
     - [`168.63.129.16`](#1686312916)
 - [Network Peering](#network-peering)
   - [CLI](#cli-2)
+- [vNet Gateways](#vnet-gateways)
 - [VPN](#vpn)
   - [Site to site](#site-to-site)
   - [Point to site](#point-to-site)
@@ -387,6 +388,22 @@ az network nic show-effective-route-table \
 # Default   Active   10.3.0.0/16       VNetGlobalPeering
 ```
 
+## vNet Gateways
+
+A vNet gateway serves two purposes: to exchange IP routes between the networks and to route network traffic.
+
+There are two types of gateways: VPN and ExpressRoute
+
+The configuration of the Azure public IP resource determines whether the gateway that you deploy is zone-redundant, or zonal.
+
+- Public IP Standard SKU without specifying a zone
+  - VPN gateway: the two instances will be deployed in any 2 out of these three zones
+  - ExpressRoute gateway: there can be more than 2 instances, so it could span across all three zones
+- Public IP Standard SKU specifying a zone (1, 2 or 3)
+  - All gateway instances will be in the same zone as the public IP
+- Public IP Basic SKU
+  - A regional gateway without any zone-redundancy
+
 ## VPN
 
 Different types:
@@ -502,21 +519,46 @@ echo ${a//:}    # remove ':'
 ## ExpressRoute
 
 ![ExpressRoute overview](images/azure_expressroute.svg)
+- A circuit represents a logical connection between your on-prem infrastructure and Microsoft cloud through a connectivity provider (e.g. AT&T, Verizon, Vodafone)
+- A circuit does not map to any physical entities, is uniquely identified by a standard GUID called a service key
 - A direct, private connection(but NOT encrypted) to Microsoft services, including Azure, Microsoft 365, Dynamics 365
-- Facilitated by a connectivity provider (e.g. AT&T, Verizon, Vodafone)
+- Private peering:
+  - For VMs (IaaS) and PaaS services deployed within a vNet
+  - Connect your on-prem network to Azure vNets, lets you connect to VMs and cloud services directly on their private IP addresses
+- Microsoft peering:
+  - For Microsoft 365 and Azure PaaS services
+  - Recommended for specific scenarios
+  - Bidirectional connectivity between your WAN and Microsoft services
+  - Only over public IPs owned by you or your connectivity provider
+  - Route filter:
+    - Why:  Connectivity to all Azure and Microsoft 365 services causes many prefixes to gets advertised through BGP. The large number of prefixes significantly increases the size of the route tables maintained by routers within your network.
+    - How: You must associate a route filter to your ER circuit to enable route advertisement to your network.  A route filter lets you select the list of services that you plan to consume through Microsoft peering
+    - A route filter can only have one rule of type "Allow", which has a list of BGP community values associated
+
+
+![Connectivity models](images/azure_expressroute-connectivity-models.png)
+
+Connectivity can be from:
+
+- Virtual cross-connection via an Ethernet exchange (layer 2 and 3)
+- Point-to-point Ethernet connection (layer 2 and 3)
+- Any-to-any(IP VPN) network (Microsoft will behave just like another location on your private WAN)
 
 ![ExpressRoute connections](images/azure_expressroute-connections.drawio.svg)
 
 - A ExpressRoute circuit located in one peering location could connect up to 10 vnets within the same geopolitical region
+  - *ExpressRoute locations (peering locations) are co-location facilities where Microsoft Enterprise Edge (MSEE) devices are located, not the same as Azure regions*
 - Each gateway could have connections to multiple ER circuits, you specify the routing weight of each connection
-- **ExpressRoute Global Reach** allows you to connect multiple ExpressRoute circuits
+- **ExpressRoute Global Reach** allows you to connect multiple ExpressRoute circuits, which allows you to connect your multiple data centers in different geopolitical regions
+  <img src="images/azure_expressroute-global-reach.png" width="400" alt="ExpressRoute global reach" />
+
+  *Global Reach enables connectivity between 10.0.1.0/24 and 10.0.2.0/24*
 - DNS queries, certificate revocation list checking and Azure CDN requests are still sent over the public internet
 
-Three connectivity models
+Design redundancy for an ExpressRoute deployment
 
-- CloudExchange co-location (layer 2 and 3)
-- Point-to-point Ethernet connection (layer 2 and 3)
-- Any-to-any(IPVPN) connection (Microsoft will behave just like another location on your private WAN)
+- Configure ExpressRoute and S2S VPN coexisting connections (VPN could serve as a failover)
+- Create a zone redundant vNet gateway in Azure Availability zones
 
 A vNet can have both ExpressRoute and VPN gateways at the same time.
 
