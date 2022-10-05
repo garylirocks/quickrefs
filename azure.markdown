@@ -446,6 +446,13 @@ Tables:
   | limit 5
   ```
 
+- Operators
+
+  ```sh
+  # use "matches regex @'<regex>'" for regex matching
+  | where name matches regex @'.*vault.azure.net.*'
+  ```
+
 
 ## Blueprints
 
