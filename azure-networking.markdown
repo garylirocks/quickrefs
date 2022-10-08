@@ -21,8 +21,11 @@
   - [CLI](#cli-2)
 - [vNet Gateways](#vnet-gateways)
 - [VPN](#vpn)
+  - [VPN Gateway](#vpn-gateway)
   - [Site to site](#site-to-site)
+  - [High availability](#high-availability)
   - [Point to site](#point-to-site)
+    - [Native Azure certificate auth](#native-azure-certificate-auth)
 - [ExpressRoute](#expressroute)
   - [Virtual WAN](#virtual-wan)
 - [Routing](#routing)
@@ -408,26 +411,36 @@ The configuration of the Azure public IP resource determines whether the gateway
 
 Different types:
 
-- **site to site**: your on-premise to vNet (needs a on-prem VPN device)
+- **Site to Site**: your on-premise to vNet
+  - needs a on-prem VPN device
+  - This could be over the Internet or a dedicated network, such as Azure ExpressRoute
+  - Could be used to connect two vNets
   ![Azure VPN site to site](images/azure_vpn-site-to-site.svg)
-- **point to site**: your local machine to a vNet (doesn't require on-prem VPN device)
-  ![Azure VPN point to site](images/azure_vpn-point-to-site.svg)
-- **vNet to vNet**
 
-VPN Gateway:
+- **Point to Site**: your local machine to a vNet (doesn't require on-prem VPN device)
+
+### VPN Gateway
 
 - Each vNet can have **only one** VPN gateway
-- Underlyingly, a gateway actually is composed of **two or more VMs** that are deployed to a specific subnet you create
+- Each gateway supports a max. 30 S2S tunnels, use Virtual WAN if more are needed
+- Within each gateway there are usually **two or more VMs** that are deployed to a gateway subnet
   - this gateway subnet must be named  **`GatewaySubnet`**
   - better use a CIDR block of /27 to allow enough IP addresses for future config requirements
   - never put other resources in this subnet
+  - ExpressRoute and VPN could co-exist in a subnet, this configuration requires a larger subnet
 - These VMs contain routing tables and specific services, they are created automatically, you can't configure them directly
 - VPN gateways can be deployed to multiple AZs for high availability
 
-VPN gateway type
 
-- **Route-based**: for most cases
+VPN types:
+
+- **Route-based**: suitable for most cases, required by P2S
+  - Use "routes" to direct traffic into their corresponding tunnel interfaces
+  - The tunnel interfaces then encrypt/decrypt the packets in/out of the tunnels
 - **Policy-based**: only for some S2S connections
+  - Only allow 1 S2S tunnel
+  - No support for P2S
+  - No support for IKEv2
 
 ### Site to site
 
@@ -437,18 +450,98 @@ VPN gateway type
 
 ![VPN gateway resources](images/azure_vpn-gateway-resources.svg)
 
-- Create local network gateway: this gateway refers to the on-prem location, you specify the IP or FQDN of the on-prem VPN device, and the CIDR of your on-prem network
+- Create local network gateway
+  - this gateway refers to the on-prem location,
+  - you specify the IP or FQDN of the on-prem VPN device,
+  - address space of your on-prem network, if you want to use this for a BGP-enabled connection, then the minimum prefix you need to declare is the host address of your BGP Peer IP address on your VPN device
+  - vNet-to-vNet connection doesn't require local network gateways, you need to create a connection on either side to the VPN gateway on the other side
+
 - Configure on-prem VPN device: steps differ based on your device, you need a **shared key**(a ASCII string of up to 128 characters) and the public IP of the Azure VPN gateway
 - Create the VPN connection: specify the VPN gateway, the local network gateway and the shared key (same as previous step)
 
-For high availability, you could have either active-standby or active-active configurations:
+### High availability
 
-![Active standby](images/azure_vpn-gateway-active-standby.png)
-![Active active](images/azure_vpn-gateway-active-active.png)
+A few options available:
 
+- VPN Gateway redundancy (Active-standby)
 
+  ![Active standby](images/azure_vpn-active-standby.png)
+
+  - One VM is active, another standby
+  - S2S or vNet-to-vNet connections fail over automatically, brief disruptions:
+    - Planned maintennace: 10-15 seconds
+    - Unplanned: 1-3 minutes
+  - P2S: users need to reconnect
+
+- Multiple on-premises VPN devices
+
+  ![Multiple on-premises VPN devices](images/azure_vpn-multiple-onprem-vpns.png)
+
+  - One local network gateway for each VPN device, one connection from VPN gateway to each local network gateway
+  - BGP is required, each local network gateway must have a unique BGP peer IP
+  - Use BGP to advertise the same on-prem network prefixes to your Azure VPN gateway, traffic will be forwarded through these tunnels simultaneously
+  - You must use Equal-cost multi-path routing (ECMP)
+  - Each connection is counted against the max. number of tunnels
+
+- Active-active Azure VPN gateway
+
+  ![Active-active Azure VPN gateway
+](images/azure_vpn-active-active.png)
+
+  - Each VM has a unique public IP address, each establish a tunnel to the on-prem VPN device
+  - Both tunnels are part of the same connection
+  - You on-prem VPN device needs to accept/establish the two S2S tunnels
+  - Both tunnels are active. For a single TCP/UDP flow, Azure attempts to use the same tunnel when sending packets to your on-prem network. However, your on-prem network could use a different tunnel to send packets to Azure.
+  - When disruption happens to one instance, IPsec tunnel from that instance to your on-prem VPN device will be disconnected. The corresponding routes on your VPN device should be removed automatically so traffic could be switched to the other active tunnel.
+
+- Combination of both
+
+  ![Combination of both](images/azure_vpn-dual-redundancy.png)
+
+  - A full mesh with 4 IPsec tunnels
+  - Require two local network gateways and two connections
+  - BGP is required
+
+- vNet to vNet
+
+  ![vNet to vNet](images/azure_vpn-vnet-vnet.png)
+
+  - Unlike the cross-premises scenario above, this needs only one connection for each gateway.
+  - BGP is optional unless transit routing over the connection is required.
 
 ### Point to site
+
+![Azure VPN point to site](images/azure_vpn-point-to-site.png)
+
+Supported protocols:
+
+- OpenVPN
+  - SSL/TLS based, can penetrate firewalls, since most firewalls open TCP 443 outbound
+  - Can be used to connect from Android, iOS, Windows, Linux, Mac
+- SSTP
+  - A proprietary TLS-based protocol
+  - Only supported on Windows device
+- IKEv2
+  - A standards-based IPsec VPN solution
+  - Mac only
+
+Authentication methods:
+
+- Native Azure certificate auth
+  - Get a root certificate (self-signed or from a CA)
+  - Upload root certificate to Azure
+  - Each client need a certificate signed by the root certificate
+  - When a client tries to establish a P2S VPN connection, the VPN gateway validates the client certificate
+  - You also need to upload any revoked certs to Azure
+- Native AAD auth
+  - Only supports OpenVPN protocol and Windows 10 and Azure VPN client
+- AD Domain Server
+  - Requires a RADIUS server that integrates with the AD server
+  - The RADIUS server could be on-prem or in a vNet, the VPN gateway must be able to connect to the RADIUS server, if the RADIUS server is on-prem, then a VPN S2S connection must be in place
+    ![VPN P2S RADIUS server](images/azure_vpn-p2s-authenticate-with-ad.png)
+  - The RADIUS server can also integrate with AD certificate service, allowing you do all certificate management in AD, you don't need to upload root certs and revoked certs to Azure
+
+#### Native Azure certificate auth
 
 Follow the doc (https://docs.microsoft.com/en-us/azure/vpn-gateway/vpn-gateway-howto-point-to-site-resource-manager-portal)
 
