@@ -141,7 +141,7 @@ Looks like this behaviour is not consistent across browsers (Firefox will always
 
 ### Get a certificate
 
-1. A company/organization/individual creates a certificate signing request file (`.csr`, which contains a public key) and a private key file (`.key`), sends the file to a CA;
+1. A company/organization/individual creates a certificate signing request file (`.csr`, which contains a public key) and a private key file (`.key`), sends the `.csr` to a CA;
 2. If the CA approves, it issues a certificate, the format of a certificate is like:
    ![x.509 certificate](./images/encryption-x509-certificate.jpg)
 
@@ -186,8 +186,8 @@ ssl_certificate_key file;
 
 - Server Name Indication (SNI) is an extension to the Transport Layer Security (TLS)
 - A client indicates which hostname it is attempting to connect to at the start of the handshaking process.
-- This allows a server to present multiple certificates on the same IP address and TCP port number and hence allows multiple secure (HTTPS) websites (or any other service over TLS) to be served by the same IP address without requiring all those sites to use the same certificate. 
-- It is the conceptual equivalent to HTTP/1.1 name-based virtual hosting, but for HTTPS. 
+- This allows a server to present multiple certificates on the same IP address and TCP port number and hence allows multiple secure (HTTPS) websites (or any other service over TLS) to be served by the same IP address without requiring all those sites to use the same certificate.
+- It is the conceptual equivalent to HTTP/1.1 name-based virtual hosting, but for HTTPS.
 - This also allows a proxy to forward client traffic to the right server during TLS/SSL handshake. The desired hostname is not encrypted in the original SNI extension, so an eavesdropper can see which site is being requested.
 
 
