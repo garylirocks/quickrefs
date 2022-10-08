@@ -28,6 +28,8 @@
     - [Native Azure certificate auth](#native-azure-certificate-auth)
 - [ExpressRoute](#expressroute)
 - [Virtual WAN](#virtual-wan)
+  - [Virtual Hub Routing](#virtual-hub-routing)
+  - [NVAs in a Virtual Hub](#nvas-in-a-virtual-hub)
 - [Routing](#routing)
   - [Default system routes](#default-system-routes)
   - [User-defined routes](#user-defined-routes)
@@ -675,12 +677,52 @@ Compare ExpressRoute to Site-to-Site VPN:
 - Similar to the hub-spoke structure, virtual WAN replaces hub vNet as a managed service
 - Organizations will generally only require one instance of a Virtual WAN
 - Each Virtual WAN can have one or more hubs, all hubs are connected in a full mesh topology, allowing any-to-any transitive connectivity
-- Azure regions serve as hubs, you choose which region each branch connects to
 - Brings together many networking services: site-to-site VPN, point-to-site VPN, ExpressRoute into a single operational interface
+- **A virtual hub is a Microsoft-managed virtual network**
+  - There can be only **ONE** hub per Azure region
+  - Minimum address space is /24
+  - Azure automatically creates subnets in the vNet for different gateways/services (ExpressRoute/VPN gateways, Firewall, routing, etc).
 - Each secured virtual hub
   - Has associated security and routing policies configured by Azure Firewall Manager
   - At each hub, you could filter traffic between virtual networks(V2V), virtual netwoks and branch offices(B2V) and traffic to the Internet (B2I/V2I)
   - Provides automated routing, there's no need to configure your own UDRs
+
+### Virtual Hub Routing
+
+- Routing in a virtual hub is provided by a router that manages all routing between gateways using BGP.
+- This router provides transit connectivity between virtual networks that connect to a virtual hub.
+- Each virtual hub has its own
+  - Default route table, static routes could be added, taking precedence over dynamic routes
+  - None route table, propagating to this means no routes are required to be propagated from the connection
+- Four types of connections:
+  - VPN
+  - ExpressRoute
+  - P2S configuration
+  - Hub virtual network
+- By default, all connections associate and propagate to the Default route table
+- Each connection is associated with one route table, which controls where traffic from this connection will be routed to.
+- Each connection can propagate routes to multiple route tables. VPN, ExpressRoute, and User VPN connections propagate routes to the same set of route tables.
+
+![Virtual hub route propagation](images/azure_virtual-wan-routes-propagation.png)
+
+### NVAs in a Virtual Hub
+
+- You can deploy NVAs from a third party to a virtual hub, such as
+  - Barracuda CloudGen WAN
+  - Cisco Cloud OnRamp for Multi-Cloud
+  - VMware SD-WAN
+- Each will have a public facing IP address
+
+Deployment process:
+
+![NVA deployment process](images/azure_virtual-wan-nva-high-level-process.png)
+
+- Like all Managed Applications, there will be two Resource Groups created in your subscription:
+  - **Managed Resource Group**: contains the NVA resource, you cannot change anything here, it's controlled by the publisher of the Managed Application
+  - **Customer Resource Group**: contains an application placeholder, partners can use this resource group to expose whatever customer properties they choose
+- Once deployed, any additional configuration must be performed via the **NVA partners portal or management application**.
+- You do not need to create S2S/P2S connection resources to connect your branch site to the virtual hub. This is all managed via the NVA.
+- You still need to create Hub-to-vNet connections to connect your virtual WAN hub to your vNets.
 
 
 ## Routing
