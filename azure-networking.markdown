@@ -27,7 +27,7 @@
   - [Point to site](#point-to-site)
     - [Native Azure certificate auth](#native-azure-certificate-auth)
 - [ExpressRoute](#expressroute)
-  - [Virtual WAN](#virtual-wan)
+- [Virtual WAN](#virtual-wan)
 - [Routing](#routing)
   - [Default system routes](#default-system-routes)
   - [User-defined routes](#user-defined-routes)
@@ -668,14 +668,19 @@ Compare ExpressRoute to Site-to-Site VPN:
 | Use cases          | <ul><li>Dev, test and lab</li><li>Small-scale production</li></ul> | <ul><li>Enterprise-class and mission-critical workloads</li><li>Big data solutions</li></ul> |
 
 
-### Virtual WAN
+## Virtual WAN
 
 ![Virtual WAN](images/azure_virtual-wan.png)
 
 - Similar to the hub-spoke structure, virtual WAN replaces hub vNet as a managed service
+- Organizations will generally only require one instance of a Virtual WAN
+- Each Virtual WAN can have one or more hubs, all hubs are connected in a full mesh topology, allowing any-to-any transitive connectivity
 - Azure regions serve as hubs, you choose which region each branch connects to
 - Brings together many networking services: site-to-site VPN, point-to-site VPN, ExpressRoute into a single operational interface
-- The cloud hosted 'hub' enables transitive connectivity between endpoints across different types of 'spokes'
+- Each secured virtual hub
+  - Has associated security and routing policies configured by Azure Firewall Manager
+  - At each hub, you could filter traffic between virtual networks(V2V), virtual netwoks and branch offices(B2V) and traffic to the Internet (B2I/V2I)
+  - Provides automated routing, there's no need to configure your own UDRs
 
 
 ## Routing
