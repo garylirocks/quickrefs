@@ -39,9 +39,6 @@
   - [Route Server (TODO)](#route-server-todo)
   - [Forced tunneling](#forced-tunneling)
   - [Troubleshooting](#troubleshooting)
-- [Azure Firewall](#azure-firewall)
-  - [Web Application Firewall (WAF)](#web-application-firewall-waf)
-- [DDoS Protection](#ddos-protection)
 - [Service endpoints](#service-endpoints)
   - [Create](#create)
   - [Private endpoints vs. service endpoints](#private-endpoints-vs-service-endpoints)
@@ -63,6 +60,9 @@
   - [How does routing works](#how-does-routing-works)
   - [AGW subnet and NSG](#agw-subnet-and-nsg)
   - [CLI](#cli-3)
+- [Azure Firewall](#azure-firewall)
+  - [Web Application Firewall (WAF)](#web-application-firewall-waf)
+- [DDoS Protection](#ddos-protection)
 - [Traffic Manager](#traffic-manager)
 - [Front Door](#front-door)
 - [CDN](#cdn)
@@ -943,53 +943,6 @@ az network nic show-effective-route-table \
 ```
 
 
-## Azure Firewall
-
-Firewall in a hub-spoke network:
-
-![Azure Firewall](images/azure_firewall-overview.png)
-
-More detailed:
-
-![Azure Firewall architecture](images/azure_firewall-hub-spoke.png)
-
-- Typically deployed on a **central vNet**, so you can centrally create, enforce, and log application and network connectivity policies **across subscriptions and virtual networks**
-- Uses **one or multiple static public IP** addresses, so outside firewalls can identify traffic originating from your vNet
-- Built-in high availability (no need to configure additional load balancers), and can span multiple availability zones
-- Inbound and outbound filtering rules
-- Inbound Destination Network Address Translation (DNAT)
-- Is **stateful**, analyzes the complete context of a network connection, not just an individual packet
-- You should use it along with NSG and WAF
-
-By default, all traffic is blocked, you can configure:
-
-- **NAT rules**:
-  - translate firewall public IP and port to a private IP and port, could be helpful in publishing SSH, RDP, or non-HTTP/S applications to the Internet
-  - **must be accompanied by a matching network rule**
-- **Network rules**:
-  - apply to **non-HTTP/S traffic** that flow through the firewall, including traffic from one subnet to another
-  - inbound/outbound filtering rules by source, destination, port and protocol(TCP, UDP, ICMP or any), it can distinguish legitimate packets for different type of connections
-- **Application rules**:
-  - only allow **a list of specified FQDNs for outbound HTTP/S** and Azure SQL traffic
-  - could use FQDN tags: Windows Update, Azure Backup, App Service Environment
-- **Threat Intelligence**
-  - alert/deny traffic from known malicious IP and domains
-
-Network rules are processed before application rules
-
-### Web Application Firewall (WAF)
-
-- Centralized, inbound protection for your web applications agains common exploits and vulnerabilities
-- Provided by Application Gateway, Front Door and CDN services
-
-## DDoS Protection
-
-![DDoS Protection](images/azure_ddos-protection.png)
-
-- Basic: Free, part of your Azure subscription
-- Standard: Protection policies are tuned through dedicated traffic monitoring and machine learning algorithms
-
-
 ## Service endpoints
 
 <img src="images/azure_vnet_service_endpoints_overview.png" width="600" alt="Service endpoints overview" />
@@ -1534,6 +1487,54 @@ az network application-gateway rule create \
     --address-pool appServicePool \
     --url-path-map urlPathMap
 ```
+
+
+## Azure Firewall
+
+Firewall in a hub-spoke network:
+
+![Azure Firewall](images/azure_firewall-overview.png)
+
+More detailed:
+
+![Azure Firewall architecture](images/azure_firewall-hub-spoke.png)
+
+- Typically deployed on a **central vNet**, so you can centrally create, enforce, and log application and network connectivity policies **across subscriptions and virtual networks**
+- Uses **one or multiple static public IP** addresses, so outside firewalls can identify traffic originating from your vNet
+- Built-in high availability (no need to configure additional load balancers), and can span multiple availability zones
+- Inbound and outbound filtering rules
+- Inbound Destination Network Address Translation (DNAT)
+- Is **stateful**, analyzes the complete context of a network connection, not just an individual packet
+- You should use it along with NSG and WAF
+
+By default, all traffic is blocked, you can configure:
+
+- **NAT rules**:
+  - translate firewall public IP and port to a private IP and port, could be helpful in publishing SSH, RDP, or non-HTTP/S applications to the Internet
+  - **must be accompanied by a matching network rule**
+- **Network rules**:
+  - apply to **non-HTTP/S traffic** that flow through the firewall, including traffic from one subnet to another
+  - inbound/outbound filtering rules by source, destination, port and protocol(TCP, UDP, ICMP or any), it can distinguish legitimate packets for different type of connections
+- **Application rules**:
+  - only allow **a list of specified FQDNs for outbound HTTP/S** and Azure SQL traffic
+  - could use FQDN tags: Windows Update, Azure Backup, App Service Environment
+- **Threat Intelligence**
+  - alert/deny traffic from known malicious IP and domains
+
+Network rules are processed before application rules
+
+### Web Application Firewall (WAF)
+
+- Centralized, inbound protection for your web applications agains common exploits and vulnerabilities
+- Provided by Application Gateway, Front Door and CDN services
+
+## DDoS Protection
+
+![DDoS Protection](images/azure_ddos-protection.png)
+
+- Basic: Free, part of your Azure subscription
+- Standard: Protection policies are tuned through dedicated traffic monitoring and machine learning algorithms
+
 
 ## Traffic Manager
 
