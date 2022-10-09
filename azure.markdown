@@ -223,9 +223,9 @@ Designed for high availability, each zone is made up of one or more datacenters 
 
 Three types of Availability Zone support:
 
-- Zonal services: can be pinned to a specific zone, such as VMs, managed disks, or standard IP addresses. You can have multiple instances spread across zones.
-- Zone-redundant services: data replicated across zones automatically
-- Non-regional services: always available, resilient to region-wide outages.
+- **Zonal services**: can be pinned to a specific zone, such as VMs, managed disks, or standard IP addresses. You can have multiple instances spread across zones.
+- **Zone-redundant services**: data replicated across all 3 zones automatically
+- **Non-regional services**: always available, resilient to region-wide outages.
 
 ### Management groups
 
