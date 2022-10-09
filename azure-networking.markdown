@@ -53,6 +53,7 @@
   - [CLI example](#cli-example)
   - [Private Link](#private-link)
 - [Deploy Azure service to vNets](#deploy-azure-service-to-vnets)
+- [Load balancing](#load-balancing)
 - [Azure Load Balancer](#azure-load-balancer)
   - [SKUs](#skus)
   - [Distribution modes](#distribution-modes)
@@ -64,6 +65,9 @@
   - [Web Application Firewall (WAF)](#web-application-firewall-waf)
 - [DDoS Protection](#ddos-protection)
 - [Traffic Manager](#traffic-manager)
+  - [DNS resolution example](#dns-resolution-example)
+  - [Traffic-routing methods](#traffic-routing-methods)
+  - [Nested profiles](#nested-profiles)
 - [Front Door](#front-door)
 - [CDN](#cdn)
   - [Standard rules engine notes](#standard-rules-engine-notes)
@@ -1293,13 +1297,40 @@ Connection between the private endpoint and the storage service uses a **private
 
 ## Deploy Azure service to vNets
 
+TODO
+
+
+## Load balancing
+
+HTTP(S) vs. Non-HTTP(S)
+
+- **Non-HTTP(S)**: for non-web workloads
+- **HTTP(S)**: Layer 7, SSL offload, WAF, path-based load balancing, session affinity
+
+Global vs. regional:
+
+- **Global**: distribute traffic across regional backends, clouds or hybrid on-prem services
+- **Regional**: distribute traffic between VMs, containers, or clusters within a region in a vNet
+
+| Service             | HTTP(S)/Non-HTTP(S) | Global/Regional | Features                                                            | Cons                                   |
+| ------------------- | ------------------- | --------------- | ------------------------------------------------------------------- | -------------------------------------- |
+| Load Balancer       | Non-HTTP(S)         | Regional        | Layer 4, TCP/UDP, zone-redundant                                    |                                        |
+| Application Gateway | HTTP(S)             | Regional        | Layer 7, SSL offloading                                             |                                        |
+| Front Door          | HTTP(S)             | Global          | Layer 7, SSL offloading, path-based routing, fast failover, caching |                                        |
+| Traffic Manager     | Non-HTTP(S)         | Global          | DNS-based                                                           | can't failover as quickly as FrontDoor |
+
+![Load balancing decision tree](images/azure_load-balancing-decision-tree.png)
 
 
 ## Azure Load Balancer
 
 - Can be used with incoming internet traffic, internal traffic, port forwarding for specific traffic, or outbound connectivity for VMs
-- Public load balancers can only have public IPs, they seem to be **not in a vNet**
-- Internal load balancers are **not in a paticular subnet**, they could have frontend IPs from multiple subnets in a vNet
+- Public load balancers
+  - can only have public IPs
+  - **not in a vNet**
+  - provide outbound connections for VMs via NAT
+- Internal load balancers
+  - are **not in a paticular subnet**, they could have frontend IPs from multiple subnets in a vNet
 
 Example multi-tier architecture with load balancers
 
@@ -1307,11 +1338,23 @@ Example multi-tier architecture with load balancers
 
 ### SKUs
 
-| SKU          | Basic                                     | Standard (extra features) |
-| ------------ | ----------------------------------------- | ------------------------- |
-| Health probe | TCP, HTTP                                 | HTTPS                     |
-| Back-end     | single availability set or scale set      | availability zones        |
-| Outbound     | source network address translation (SNAT) | outbound rules            |
+| SKU                | Basic                                     | Standard (extra features)    |
+| ------------------ | ----------------------------------------- | ---------------------------- |
+| Health probe       | TCP, HTTP                                 | HTTPS                        |
+| Back-end           | VMs in a single availability set or VMSS  | VMs or VMSS in a single vNet |
+| Availability Zones | -                                         | Zone-redundant or zonal      |
+| Secure by default  | Open by default, NSG optional             | Closed by default            |
+| Outbound           | source network address translation (SNAT) | outbound rules               |
+
+- Standard SKU is recommended
+- VMs, availability sets, and VMSS can be connected to only one SKU
+- When public IPs are used, the SKU must match
+- Availability zones
+  - Zone-redundant (Need a zone redundant frontend IP)
+    ![Zone redundant](images/azure_load-balancer-zone-redundant.png)
+  - Zonal (Need zonal frontend IPs)
+    ![Zonal](images/azure_load-balancer-zonal.png)
+
 
 ### Distribution modes
 
@@ -1538,6 +1581,11 @@ Network rules are processed before application rules
 
 ## Traffic Manager
 
+- Works at the DNS level which is at the Application layer (Layer-7)
+- Supports built-in endpoint monitoring and automatic endpoint failover
+- Is not a gateway or proxy, it does not see the traffic between the client and the service
+- Allows DNS record TTL as low as 0
+
 Comparing to Load Balancer:
 
 |                 | Use                                                                                     | Resiliency                                                                                                   |
@@ -1545,16 +1593,37 @@ Comparing to Load Balancer:
 | Load Balancer   | makes your service **highly available** by distributing traffic within the same region  | monitor the health of VMs                                                                                    |
 | Traffic Manager | works at the DNS level, directs the client to a preferred endpoint, **reduces latency** | monitors the health of endpoints, when one endpoint is unresponsive, directs traffic to the next closest one |
 
-![Traffic Manager](images/azure_traffic-manager.png)
+### DNS resolution example
 
-There are different routing methods (determines which endpoint is returned)
+![Traffic Manager name resolution example](images/azure_traffic-manager-dns-configuration.png)
+![Client usage flow](images/azure_traffic-manager-client-usage-flow.png)
+
+- Your public facing domain name `partners.contoso.com` CNAME to a Traffic Manager domain name `contoso.trafficmanager.net`
+- According to the traffic-routing rule, Traffic Manager responds with another CNAME (not the final IP)
+- Your DNS server resolves the CNAME (`contoso-eu.cloudapp.net` in above example) to an IP
+
+### Traffic-routing methods
 
 - **Priority routing**: choose an healthy one with the highest priority
-- **Performance routing**: choose an endpoint with the lowest latency, traffic manager maintains an internet latency table by tracking the roundtrip time between IP address ranges and each Azure datacenter
-- **Weighted routing**: pick a random endpoint based on the weights
+  ![Traffic Manager priority routing](images/azure_traffic-manager-routing-method-priority.png)
+- **Weighted routing**: pick a random endpoint, based on the weights, the endpoint with the highest weight gets most hits
+- **Performance routing**
+  ![Traffic Manager performance routing](images/azure_traffic-manager-routing-method-performance.png)
+  - Traffic manager maintains an internet latency table by tracking the roundtrip time **between IP address ranges and each Azure datacenter, NOT latency to the actual endpoints !**
+  - You need to specify the region for each endpoint
+  - The one with lowest latency is chosen based on the query source IP and the region of the endpoints
 - **Geographic routing**: choose a designated geo endpoint based on DNS query's source IP address
 - **Subnet routing**: static mapping from DNS query's source IP ranges to endpoints
-- **Multivalue routing**: return multiple healthy endpoints in a response, client can retry another one if an endpoint is unresponsive
+- **Multivalue routing**: when you have only IPv4/IPv6 addresses as endpoints, all healthy IPs are returned, client chooses one to connect
+
+### Nested profiles
+
+Within one Traffic Manager profile, you can use only one traffic-routing method.
+
+You could have nested Traffic Manager profiles, to combine multiple routing methods to create sophisticated and flexible rules.
+
+![Nested Traffic Manager profiles](images/azure_traffic-manager-nested-profiles.png)
+
 
 ## Front Door
 
@@ -1945,7 +2014,3 @@ A combination of network monitoring and diagnostic tools.
 
   - Azure retains 5 IP addresses from each subnet
   - The smallest subnet you can create is /29, with 3 usable addresses
-
-- Load balancing
-
-  ![Load balancing decision tree](images/azure_load-balancer-decision-tree.png)
