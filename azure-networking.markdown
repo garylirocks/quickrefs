@@ -61,9 +61,6 @@
   - [How does routing works](#how-does-routing-works)
   - [AGW subnet and NSG](#agw-subnet-and-nsg)
   - [CLI](#cli-3)
-- [Azure Firewall](#azure-firewall)
-  - [Web Application Firewall (WAF)](#web-application-firewall-waf)
-- [DDoS Protection](#ddos-protection)
 - [Traffic Manager](#traffic-manager)
   - [DNS resolution example](#dns-resolution-example)
   - [Traffic-routing methods](#traffic-routing-methods)
@@ -79,12 +76,15 @@
   - [Private DNS zones](#private-dns-zones)
   - [Your own DNS server](#your-own-dns-server)
   - [CLI](#cli-4)
-- [Networking architecutres](#networking-architecutres)
-- [Hub-spoke architecture](#hub-spoke-architecture)
+- [Azure Firewall](#azure-firewall)
+  - [Web Application Firewall (WAF)](#web-application-firewall-waf)
+- [DDoS Protection](#ddos-protection)
 - [Azure Virtual Network Manager](#azure-virtual-network-manager)
 - [Network Watcher](#network-watcher)
   - [Auto creation](#auto-creation)
 - [Network design considerations](#network-design-considerations)
+- [Networking architecutres](#networking-architecutres)
+- [Hub-spoke architecture](#hub-spoke-architecture)
 
 ## Overview
 
@@ -1532,53 +1532,6 @@ az network application-gateway rule create \
 ```
 
 
-## Azure Firewall
-
-Firewall in a hub-spoke network:
-
-![Azure Firewall](images/azure_firewall-overview.png)
-
-More detailed:
-
-![Azure Firewall architecture](images/azure_firewall-hub-spoke.png)
-
-- Typically deployed on a **central vNet**, so you can centrally create, enforce, and log application and network connectivity policies **across subscriptions and virtual networks**
-- Uses **one or multiple static public IP** addresses, so outside firewalls can identify traffic originating from your vNet
-- Built-in high availability (no need to configure additional load balancers), and can span multiple availability zones
-- Inbound and outbound filtering rules
-- Inbound Destination Network Address Translation (DNAT)
-- Is **stateful**, analyzes the complete context of a network connection, not just an individual packet
-- You should use it along with NSG and WAF
-
-By default, all traffic is blocked, you can configure:
-
-- **NAT rules**:
-  - translate firewall public IP and port to a private IP and port, could be helpful in publishing SSH, RDP, or non-HTTP/S applications to the Internet
-  - **must be accompanied by a matching network rule**
-- **Network rules**:
-  - apply to **non-HTTP/S traffic** that flow through the firewall, including traffic from one subnet to another
-  - inbound/outbound filtering rules by source, destination, port and protocol(TCP, UDP, ICMP or any), it can distinguish legitimate packets for different type of connections
-- **Application rules**:
-  - only allow **a list of specified FQDNs for outbound HTTP/S** and Azure SQL traffic
-  - could use FQDN tags: Windows Update, Azure Backup, App Service Environment
-- **Threat Intelligence**
-  - alert/deny traffic from known malicious IP and domains
-
-Network rules are processed before application rules
-
-### Web Application Firewall (WAF)
-
-- Centralized, inbound protection for your web applications agains common exploits and vulnerabilities
-- Provided by Application Gateway, Front Door and CDN services
-
-## DDoS Protection
-
-![DDoS Protection](images/azure_ddos-protection.png)
-
-- Basic: Free, part of your Azure subscription
-- Standard: Protection policies are tuned through dedicated traffic monitoring and machine learning algorithms
-
-
 ## Traffic Manager
 
 - Works at the DNS level which is at the Application layer (Layer-7)
@@ -1899,31 +1852,52 @@ az network private-dns record-set list \
     --output table
 ```
 
-## Networking architecutres
+## Azure Firewall
 
-- Site-to-site VPN
+Firewall in a hub-spoke network:
 
-  ![Reference architecture site-to-site VPN](images/azure_networking-reference-architecture-site-to-site-vpn.svg)
+![Azure Firewall](images/azure_firewall-overview.png)
 
-- ExpressRoute
+More detailed:
 
-  ![Reference architecture ExpressRoute](images/azure_networking-reference-architecture-expressroute.svg)
+![Azure Firewall architecture](images/azure_firewall-hub-spoke.png)
 
-- ExpressRoute with VPN failover
+- Typically deployed on a **central vNet**, so you can centrally create, enforce, and log application and network connectivity policies **across subscriptions and virtual networks**
+- Uses **one or multiple static public IP** addresses, so outside firewalls can identify traffic originating from your vNet
+- Built-in high availability (no need to configure additional load balancers), and can span multiple availability zones
+- Inbound and outbound filtering rules
+- Inbound Destination Network Address Translation (DNAT)
+- Is **stateful**, analyzes the complete context of a network connection, not just an individual packet
+- You should use it along with NSG and WAF
 
-  ![Reference architecture ExpressRoute with VPN failover](images/azure_networking-reference-architecture-expressroute-with-vpn-failover.svg)
+By default, all traffic is blocked, you can configure:
 
-- Hub-spoke
+- **NAT rules**:
+  - translate firewall public IP and port to a private IP and port, could be helpful in publishing SSH, RDP, or non-HTTP/S applications to the Internet
+  - **must be accompanied by a matching network rule**
+- **Network rules**:
+  - apply to **non-HTTP/S traffic** that flow through the firewall, including traffic from one subnet to another
+  - inbound/outbound filtering rules by source, destination, port and protocol(TCP, UDP, ICMP or any), it can distinguish legitimate packets for different type of connections
+- **Application rules**:
+  - only allow **a list of specified FQDNs for outbound HTTP/S** and Azure SQL traffic
+  - could use FQDN tags: Windows Update, Azure Backup, App Service Environment
+- **Threat Intelligence**
+  - alert/deny traffic from known malicious IP and domains
 
-  ![Reference architecture Hub-spoke](images/azure_firewall-hub-spoke.png)
+Network rules are processed before application rules
+
+### Web Application Firewall (WAF)
+
+- Centralized, inbound protection for your web applications agains common exploits and vulnerabilities
+- Provided by Application Gateway, Front Door and CDN services
 
 
-## Hub-spoke architecture
+## DDoS Protection
 
-![Shared services in hub network](images/azure_networking-hub-shared-services.svg)
+![DDoS Protection](images/azure_ddos-protection.png)
 
-- Shared services in hub vnet: ExpressRoute Gateway, Management, DMZ, AD DS, etc
-- Hub and each spoke could be in different subscriptions
+- Basic: Free, part of your Azure subscription
+- Standard: Protection policies are tuned through dedicated traffic monitoring and machine learning algorithms
 
 
 ## Azure Virtual Network Manager
@@ -2014,3 +1988,30 @@ A combination of network monitoring and diagnostic tools.
 
   - Azure retains 5 IP addresses from each subnet
   - The smallest subnet you can create is /29, with 3 usable addresses
+
+
+## Networking architecutres
+
+- Site-to-site VPN
+
+  ![Reference architecture site-to-site VPN](images/azure_networking-reference-architecture-site-to-site-vpn.svg)
+
+- ExpressRoute
+
+  ![Reference architecture ExpressRoute](images/azure_networking-reference-architecture-expressroute.svg)
+
+- ExpressRoute with VPN failover
+
+  ![Reference architecture ExpressRoute with VPN failover](images/azure_networking-reference-architecture-expressroute-with-vpn-failover.svg)
+
+- Hub-spoke
+
+  ![Reference architecture Hub-spoke](images/azure_firewall-hub-spoke.png)
+
+
+## Hub-spoke architecture
+
+![Shared services in hub network](images/azure_networking-hub-shared-services.svg)
+
+- Shared services in hub vnet: ExpressRoute Gateway, Management, DMZ, AD DS, etc
+- Hub and each spoke could be in different subscriptions
