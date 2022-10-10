@@ -1369,12 +1369,15 @@ Example multi-tier architecture with load balancers
 
 ## Application Gateway
 
+Features:
+
 - Is a load balancer for web apps, supports HTTP, HTTPS, HTTP/2 and WebSocket protocols
-- Support redirection, rewrite HTTP headers and custom error pages
 - Works at application layer (OSI layer 7)
-- Uses Azure Load Balancer at TCP level (OSI layer 4)
+- Auto or manual scaling
+- Support **redirection**: to another side, or from HTTP to HTTPS
+- Rewrite HTTP headers
+- Custom error pages
 - Could be internet-facing (public ip) or internal only (private ip)
-- Support manual or auto scaling
 
 Benefits over a simple LB:
 
@@ -1390,27 +1393,40 @@ Components:
 
 ![Application Gateway components](images/azure_application-gateway-components.png)
 
-- Front end: a public IP, a private IP, or both (*it is a load balancer, and AGW instances are in its backend pool, so we need to allow AzureLoadBalancer in the NSG*)
-- Listeners
+- **Frontend**
+  - *it is actually a load balancer, and AGW instances are in its backend pool, so we need to allow AzureLoadBalancer in the NSG*
+  - could have a public IP, a private IP, or both
+  - An AGW could have up to 125 instances
+- **Listeners**
   - Defined by protocol, port, host and IP address
   - Two types:
-    - Basic: each port can only have one basic listener
-    - Multi-site: each port can have multiple multi-site lisenters, you specify one or more host names in each listener
+    - Basic: doesn't care host names, each port can only have one basic listener
+    - Multi-site: you specify one or more host names, AGW matches incoming requests using HTTP 1.1 `host` headers, each port can have multiple multi-site listeners
+  - For v2 SKU, multi-site listeners are processed before basic listeners
   - Handle TLS/SSL certificates for HTTPS
   - A listener can have **only one** associated rule
-- WAF:
+  - You could redirect from one listener to another (eg. HTTP to HTTPS)
+- **WAF**:
   - checks each request for common threats: SQL-injection, XSS, command injection, HTTP request smuggling, crawlers, etc
   - based on OWASP rules, referred to as Core Rule Set(CRS)
   - you can opt to select only specific rules, or specify which elements to examine
-- Backend pool: a backend pool can contain one or more IP/FQDN, VM, VMSS and App Services
-- Rule: associates a listener with targets
+- **Backend pool**: a backend pool can contain one or more IP/FQDN, VM, VMSS and App Services
+- **Rule**: associates a listener with targets
+  - Rule types:
+    - Basic
+    - Path-based: request is routed to the first-matching path, you should add a default one for any un-matched requests
   - Rule target types:
     - Backend pool: with HTTP settings
-    - Redirection: to another listener or external site with a specified HTTP code
-  - You could also have multiple targets based on path
-- HTTP settings: backend port/protocol, cookie-based affinity, time-out value, path or hostname overriding, default or custom probe, etc
-- Health probes
+    - Redirection: to another listener or external site with a specified HTTP code, you can choose to include the original query string in redirection, but not the path in the original request
+  - Each rule could have a rewrite rule set associated, it could rewrite:
+    - Request headers
+    - Response headers
+    - URL components (path, query string)
+- **HTTP settings**: backend port/protocol, cookie-based affinity, time-out value, path or hostname overriding, default or custom probe, etc
+- **Health probes**
   - If not configured, a default probe is created, which waits for 30s before deciding whether a server is unavailable
+  - If there are multiple listeners, each listener sends health probes independently
+  - Each AGW instance sends health probes independently
   - The source IP address for health probes depends on the target
     - If the target is a public endpoint, then the source IP is the AGW's public IP
     - If the target is a private endpoint, then the source IP is from the AGW subnet's *private IP address space*
@@ -1419,7 +1435,7 @@ Components:
 
 1. If a request is valid and not blocked by WAF, the rule associated with the listener is evaluated, determining which backend pool to route the request to.
 1. Use round-robin algorithm to select one healthy server from the backend pool.
-1. Opens a new TCP session to the server based on HTTP settings.
+1. Opens a new TCP session to the server based on HTTP settings. (If you want end-to-end TLS encryption, the traffic is **re-encrypted** when it travels from AGW to the back end)
 
 If the target server is:
   - A private endpoint: AGW connects to it using its **instance private IP addresses**
