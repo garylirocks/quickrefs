@@ -1597,8 +1597,10 @@ You could have nested Traffic Manager profiles, to combine multiple routing meth
 ## Front Door
 
 ![Front door](images/azure_front-door.png)
+![Front door split TCP](images/azure_frontdoor-split-tcp.png)
 
 It's like the Application Gateway at a global scale, plus a CDN
+  - works at layer 7 using **anycast** protocol with **split TCP**
   - operates at the edge, not within a vNet
   - resilient to failures to an entire Azure region
   - can cache content
