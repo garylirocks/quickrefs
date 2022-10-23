@@ -9,6 +9,7 @@
 - [RBAC Permissions](#rbac-permissions)
 - [Best practices](#best-practices)
 - [Built-in policies](#built-in-policies)
+- [Terminology](#terminology)
 - [Gotchas](#gotchas)
 
 
@@ -236,6 +237,13 @@ A `deployIfNotExists` or `modify` policy should define the roles it requires:
     | ------------------------------------------------------ | ------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
     | When on-boarding Defender for Cloud for a subscription | Azure Security Benchmark                                                        | ASC Default (subscription: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)        |
     | When Databases plan is enabled ?                       | Configure Azure Defender to be enabled on SQL Servers and SQL Managed Instances | ASC DataProtection (subscription: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx) |
+
+
+## Terminology
+
+- Control: high-level description, not specific to a technology or implementation, eg. Data Protection
+- Benchmark: security recommendations for a specific technology, eg. Azure Security Benchmark
+- Baseline: implementation of the benchmark on individual Azure service, eg. Azure SQL security baseline
 
 
 ## Gotchas

@@ -77,6 +77,8 @@
   - [Your own DNS server](#your-own-dns-server)
   - [CLI](#cli-4)
 - [Azure Firewall](#azure-firewall)
+  - [Azure Firewall Manager](#azure-firewall-manager)
+  - [Firewall policy](#firewall-policy)
   - [Web Application Firewall (WAF)](#web-application-firewall-waf)
 - [DDoS Protection](#ddos-protection)
 - [Azure Virtual Network Manager](#azure-virtual-network-manager)
@@ -1885,7 +1887,9 @@ More detailed:
 - Built-in high availability (no need to configure additional load balancers), and can span multiple availability zones
 - Inbound and outbound filtering rules
 - Inbound Destination Network Address Translation (DNAT)
+- Outbound SNAT support
 - Is **stateful**, analyzes the complete context of a network connection, not just an individual packet
+- Forced tunneling: route internet-bound traffic through an NVA
 - You should use it along with NSG and WAF
 
 By default, all traffic is blocked, you can configure:
@@ -1897,17 +1901,60 @@ By default, all traffic is blocked, you can configure:
   - apply to **non-HTTP/S traffic** that flow through the firewall, including traffic from one subnet to another
   - inbound/outbound filtering rules by source, destination, port and protocol(TCP, UDP, ICMP or any), it can distinguish legitimate packets for different type of connections
 - **Application rules**:
-  - only allow **a list of specified FQDNs for outbound HTTP/S** and Azure SQL traffic
+  - does not apply to inbound traffic
+  - only allow a list of specified FQDNs for outbound HTTP/S or Azure SQL traffic to a specified list of FQDN including wild card. Does not require TLS termination.
+    - For HTTP, matches the **"Host" header**
+    - For HTTPS, matches according to **Server Name Indication**
   - could use FQDN tags: Windows Update, Azure Backup, App Service Environment
 - **Threat Intelligence**
   - alert/deny traffic from known malicious IP and domains
 
 Network rules are processed before application rules
 
+### Azure Firewall Manager
+
+![Firewall manager overview](images/azure_firewall-manager.png)
+
+In a large network deployment, you could have multiple firewall instances in hub vNets and secured virtual hubs, Azure Firewall Manager helps to manage rules across all the instances.
+
+- Centrally deploy and configure multiple multiple Azure Firewall instances
+- Can span different Azure regions and subscriptions
+- Hierarchical policies:
+  - Central IT author global policies
+  - DevOps team could author local firewall rules for better agility
+- Integrated with third-party security-as-a-service: (only for secured virtual hubs)
+- Centralized route management (only for secured virtual hubs)
+  - easily route traffic to your secured hub for filtering and logging without the need to manually setup UDR on spoke vNets
+
+### Firewall policy
+
+- Contains:
+  - NAT, network, application rule collections
+  - Threat Intelligence settings
+- Is global resource
+  - Works across regions and subscriptions
+  - can be used by multiple Azure Firewall instances
+- Could be inherited:
+  - allows DevOps to create local firewall policies on top of organization mandated base policy
+
+![Firewall policies](images/azure_firewall-manager-policies.png)
+
 ### Web Application Firewall (WAF)
 
 - Centralized, inbound protection for your web applications agains common exploits and vulnerabilities
 - Provided by Application Gateway, Front Door and CDN services
+- Two modes: Detection and prevention
+- Two types of custom rules: match rules and rate-limit rules
+- Azure-managed Default Rule Set:
+  - Cross-site scripting
+  - Java attacks
+  - Local file inclusion
+  - PHP injection attacks
+  - Remote command execution
+  - Remote file inclusion
+  - Session fixation
+  - SQL injection protection
+  - Protocol attackers
 
 
 ## DDoS Protection
@@ -1915,7 +1962,23 @@ Network rules are processed before application rules
 ![DDoS Protection](images/azure_ddos-protection.png)
 
 - Basic: Free, part of your Azure subscription
-- Standard: Protection policies are tuned through dedicated traffic monitoring and machine learning algorithms
+- Standard:
+  - Protection policies are tuned through dedicated traffic monitoring and machine learning algorithms
+  - Policies are applied to public IP addresses associated to resources deployed in virtual networks, such as VMs, Azure Load Balancer, AGW and Azure Fabric instances
+  - Does NOT apply to App Service Environments
+
+Types of DDoS attack:
+
+- Volumetric attacks
+  - Flood the network layer with a substantial amount of seemingly legitimate traffic
+  - UDP floods, amplification floods, spoofed-packet floods
+- Protocol attacks:
+  - exploits weakness in layer 3 and layer 4 protocol stack
+  - SYN flood attacks, reflection attacks and other protocol attacks
+- Application layer attacks
+  - target web application packets
+  - HTTP protocol violations, SQL injection, cross-site scripting
+  - WAF should be used to provide defense against these attacks
 
 
 ## Azure Virtual Network Manager
@@ -1996,6 +2059,29 @@ A combination of network monitoring and diagnostic tools.
 
   - Whenever possible, ONLY associate NSGs to subnets, NOT on a network interface
   - When VMs within a subnet need different security rules, use application security groups
+  - Network security controls:
+    - NS-1: Establish network security boundaries
+      - vNets and subnets
+    - NS-2: Secure cloud services with network controls
+      - private link
+      - vNet integration
+    - NS-3: Deploy firewall at the edge of enterprise network
+    - NS-4: Deploy intrusion detection/prevention systems
+    - NS-5: Deploy DDoS protection
+    - NS-6: Deploy web application firewall
+      - at AGW, Front Door, CDN
+      - built-in ruleset, such as OWASP Top 10
+    - NS-7: Simplify network security configuration
+      - Microsoft Defender for Cloud Network
+      - Azure Firewall Manager: centralize firewall policy, NSG and route management
+    - NS-8: Detect and disable insecure services and protocols
+    - NS-9: Connect on-prem or cloud network privately
+      - ExpressRoute, virtual WAN, VPN
+    - NS-10: DNS security
+      - Azure recursive DNS
+      - Azure Private DNS
+      - Azure Defender for DNS
+      - Azure Defender for App Service to detect dangling DNS records
 
 - IP addressing
 
