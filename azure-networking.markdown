@@ -41,6 +41,7 @@
   - [Troubleshooting](#troubleshooting)
 - [Service endpoints](#service-endpoints)
   - [Create](#create)
+  - [Service endpoint policies](#service-endpoint-policies)
   - [Private endpoints vs. service endpoints](#private-endpoints-vs-service-endpoints)
 - [Private Endpoints](#private-endpoints)
   - [Limitations](#limitations)
@@ -1026,6 +1027,17 @@ az network nic show-effective-route-table \
       --protocol '*' \
       --description "Allow access to Azure Storage"
     ```
+
+### Service endpoint policies
+
+![Service endpoint policies](images/azure_networking-vnet-service-endpoint-policies-overview.png)
+
+- You could attach a policy to allow access only to
+  - all storage accounts in a subscription
+  - all storage accounts in a resource group
+  - specified storage accounts
+- Managed services other than Azure SQL Managed Instance are not currently supported with service endpoints.
+- Managed Storage Accounts are not supported with service endpoint policies.
 
 ### Private endpoints vs. service endpoints
 
@@ -2018,6 +2030,7 @@ A combination of network monitoring and diagnostic tools.
   - **Topology**: graphical display of a vnet, its subnets, associated NICs, NSGs, route tables, etc
     ![Network topology](images/azure_network-watcher-topology.png)
   - **Connection Monitor**: monitor connectivity and latency between a VM and another network resource
+    - You need to install monitoring agents in the VMs
   - **Network Performance Monitor**: going to be replaced by *Connection Monitor*
 
 - Diagnostic tools
@@ -2040,12 +2053,13 @@ A combination of network monitoring and diagnostic tools.
   | Note       | n/a                                            | source could be a CIDR, service tag or wildcard(\*), target IP and port could be wildcard(*) | like Connection Monitor, but only check the connection once   |
 
 - Logging
-  - NSG Flow Logs: log all traffic in your NSGs (a sub-resource under Network Watcher)
+  - NSG Flow Logs: log all traffic in your NSGs (a sub-resource under Network Watcher), not supported for private endpoints
   - Traffic Analytics: query/visualize your NSG Flow Log data, requires Log Analytics
+    ![Traffic analytics data flow](images/azure_traffic-analytics.png)
 
 ### Auto creation
 
-- NetworkWatcher resources are created automatically when you use the tools, they are place in a resource group called `NetworkWatcherRG`, there is a subscription feature called `Microsoft.Network/DisableNetworkWatcherAutocreation`
+- A NetworkWatcher resource is created automatically when you create or update a virtual network, in the same region as the vNet, it is placed in a resource group called `NetworkWatcherRG`, there is a subscription feature called `Microsoft.Network/DisableNetworkWatcherAutocreation`
 - There are also built-in policies regarding this, see [Azure Policy note](./azure-policy.markdown)
 
 

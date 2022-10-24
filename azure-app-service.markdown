@@ -54,7 +54,7 @@ You can start from an cheaper plan and scale up later.
 
 - Allows your app to make outbound calls to resources in or through a vNet
 - **DOESN'T** grant inbound private access to your apps from the vNet
-- This is for Standard and Premium plans
+- This is for **Standard and Premium** plans
   - Doesn't support Free, Shared and Basic plans
   - Isolated plan apps are deployed into App Service Environment, which has all compute instances in your vNet already
 - Behaves differently depending on whether the vNet is in the same or other regions:
@@ -80,6 +80,7 @@ You can start from an cheaper plan and scale up later.
   - NSG outbound rules apply on your integration subnet, inbound rules do not, because vNet integration do not provide inbound access to your app.
   - UDRs apply to outbound calls, **do not** affect replies to inbound app requests
   - By default, your app only routes RFC1918 traffic into your vNet, if you add application setting `WEBSITE_VNET_ROUTE_ALL=1` into your app, all outbound traffic is routed to the vNet
+    - You could add a NAT gateway to the integration subnet for connection to the Internet
   - Outbound traffic is still sent from addresses listed in your app properties
   - After integration, your app uses the same DNS servers configured for your vNet. To work with private DNS zones, you need these app settings:
     - `WEBSITE_DNS_SERVER=168.63.129.16`
