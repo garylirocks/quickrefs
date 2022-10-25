@@ -1895,6 +1895,7 @@ More detailed:
 ![Azure Firewall architecture](images/azure_firewall-hub-spoke.png)
 
 - Typically deployed on a **central vNet**, so you can centrally create, enforce, and log application and network connectivity policies **across subscriptions and virtual networks**
+- Needs a dedicated subnet
 - Uses **one or multiple static public IP** addresses, so outside firewalls can identify traffic originating from your vNet
 - Built-in high availability (no need to configure additional load balancers), and can span multiple availability zones
 - Inbound and outbound filtering rules
