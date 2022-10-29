@@ -216,6 +216,7 @@ az network public-ip create \
 - Can only use Standard SKU Public IPs or public IP prefixes
 - After NAT is configured
   - All UDP and TCP outbound flows from any VM instance will use NAT for Internet connectivity (**takes precedence over other public IPs on its NIC**)
+  - Does not support ICMP
   - No further configuration is necessary, and you don't need to create any UDR
   - NAT takes precedence over other outbound scenarios and replaces the default Internet destination of a subnet
 - Allows flows from vNet to the Internet, return traffic is only allowed in response to an active flow
