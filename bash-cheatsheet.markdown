@@ -39,6 +39,7 @@
 - [Input / output](#input--output)
   - [How to redirect output to a protected (root-only) file](#how-to-redirect-output-to-a-protected-root-only-file)
 - [Here documents](#here-documents)
+  - [`<<<` for here strings](#-for-here-strings)
 - [Builtins](#builtins)
   - [`source`, `.`](#source-)
   - [`read`](#read)
@@ -979,30 +980,64 @@ sudo ls /root | sudo tee out
 
 ## Here documents
 
-Used in place of standard input
+- Used in place of standard input
 
-```sh
-name='Gary'
+    ```sh
+    name='Gary'
 
-# write something to a file, varialbes expanded
-cat > result.txt <<EOT
-hello ${name}
-EOT
+    # write something to a file, varialbes expanded
+    cat > result.txt <<EOT
+    hello ${name}
+    EOT
 
-cat result.txt
-# hello Gary
+    cat result.txt
+    # hello Gary
 
-# quote EOT to disable variable expansion
-cat > result2.txt <<'EOT'
-hello ${name}
-EOT
+    # quote EOT to disable variable expansion
+    cat > result2.txt <<'EOT'
+    hello ${name}
+    EOT
 
-cat result2.txt
-# hello ${name}
-```
+    cat result2.txt
+    # hello ${name}
+    ```
 
-use here documents to edit an file:
+- Use `tee` to output, `echo` doesn't work
 
+    ```sh
+    tee /dev/null <<EOT
+        hello
+        world
+    EOT
+    #    hello
+    #    world
+    ```
+
+- Use `<<-` to strip leading tabs (doesn't work with whitespaces)
+
+    ```sh
+    tee /dev/null <<-EOT
+            a tab
+    a whitespace
+    EOT
+    # a tab
+    #  a whitespace
+    ```
+
+- To strip all the leading spaces (tabs and whitespaces), use `sed`
+
+    ```sh
+    tee /dev/null <<-EOT | sed -E 's/^\s*//'
+            a tab
+    a whitespace
+    EOT
+    a tab
+    a whitespace
+    ```
+
+- use here documents to edit a file:
+
+    ```sh
     $ cat inc
     foo
 
@@ -1018,6 +1053,42 @@ use here documents to edit an file:
 
     $ cat inc
     BAR
+    ```
+
+
+### `<<<` for here strings
+
+- do not use delimiters
+- leading and trailing newlines are retained
+
+```sh
+tr a-z A-Z <<< '
+> one
+>  two
+> '
+#
+# ONE
+#  TWO
+#
+```
+
+Here strings are particularly useful when the last command needs to run in the current process, as is the case with the read builtin:
+
+```sh
+$ echo 'one two three' | read -r a b c
+$ echo "$a $b $c"
+```
+
+yields nothing, while
+
+```sh
+$ read -r a b c <<< 'one two three'
+$ echo "$a $b $c"
+one two three
+```
+
+This happens because in the previous example piping causes `read` to run in a subprocess, and as such can not affect the environment of the parent process.
+
 
 ## Builtins
 
