@@ -47,14 +47,19 @@ wsl --list --online
 # install default distro (Ubuntu)
 wsl --install
 
-# run a command in WSL
-wsl date +%Y%m%d
-
 # use the root user
 wsl -u root
 
 # stop a WSL distro
 wsl -t Ubuntu
+
+# show WSL distros, state and version
+wsl -l -v
+#   NAME            STATE           VERSION
+# * Ubuntu-20.04    Running         1
+
+# update a distro to version 2
+wsl --set-version Ubuntu-20.04 2
 ```
 
 Export / Import
