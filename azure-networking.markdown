@@ -1138,7 +1138,7 @@ Microsoft documentation: https://docs.microsoft.com/en-us/azure/private-link/pri
 - https://github.com/dmauser/PrivateLink
 - https://journeyofthegeek.com/2020/03/06/azure-private-link-and-dns-part-2/
 
-Let's say you have a blob endpoint at `garystoryagefoo.blob.core.windows.net`, after you add a private endpoint, the FQDN would be a CNAME to `garystoryagefoo.privatelink.blob.core.windows.net.`
+Let's say you have a blob endpoint at `garystoryagefoo.blob.core.windows.net`, after you add a private endpoint, the FQDN would be a CNAME to `garystoryagefoo.privatelink.blob.core.windows.net.` (CNAME insertion only happens when the **PE is in "Approved", not if "Rejected"**)
 
 - For external users, it should resolve to a public IP
 - For internal users, it should resolve to a private IP (by Azure Private DNS Zone or your own DNS server)
