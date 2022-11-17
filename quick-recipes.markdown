@@ -31,7 +31,7 @@ Quick productivity tips, shortcuts, command line snippets.
 - [Limit Google Chrome memory usage](#limit-google-chrome-memory-usage)
 - [Chrom DevTools](#chrom-devtools)
 - [Limit memory/cpu usage using cgroups](#limit-memorycpu-usage-using-cgroups)
-- [`resolve.conf`](#resolveconf)
+- [`resolv.conf`](#resolvconf)
 - [Search files (grep)](#search-files-grep)
 - [Hash](#hash)
 - [Self-signed SSL certs](#self-signed-ssl-certs)
@@ -539,18 +539,23 @@ cgroups can be used to limit a process groups resource(memory/cpu/...) usage
 
 - Then the cgroup should be applied when the system starts
 
-## `resolve.conf`
+## `resolv.conf`
 
   ```
   search a.com b.com
+  options timeout:1 attempts:2 rotate
   nameserver 172.24.16.11
   nameserver 10.10.39.65
+
   # domain gary.com
   ```
 
   If you try to query a non FQDN, such as `app`, then it will append domains in the `search` line to it, so it will query `app.a.com`, `app.b.com` in turn;
 
-  `domain` directive is obsolete, replaced by `search`
+  - `domain` directive is obsolete, replaced by `search`
+  - `rotate` rotate nameservers in round-robin
+  - `attempts` how many attempts to make before giving up
+  - `timeout` DNS query timeout
 
 ## Search files (grep)
 
