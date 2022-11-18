@@ -27,7 +27,7 @@ Notes
 - Connections can only be initiated in one direction: from client to the endpoint
 - **Outbound NSG rules do not affect PE connectivity, you could set a Deny-all outbound rule on the NSG, a PE could still connect to its service**
 - For some service, you need separate private endpoints for each sub-resource, for a RA-GRS storage account, there are sub-resources like `blob`, `blob_secondary`, `file`, `file_secondary`, ...
-- Private endpoints do **NOT** restrict public network access to services, except **Azure App Service** and **Azure Functions**, they become inaccessible publicly when they are associated with a private endpoint. All other Azure services require additional access control. (*such as a `publicNetworkAccess` property*)
+- Private endpoints **DO NOT** restrict public network access to services, except **Azure App Service** and **Azure Functions**, they become inaccessible publicly when they are associated with a private endpoint. Other PaaS services may have additional access control. (*such as the `publicNetworkAccess` property, this property is not always visible in the Portal*)
 - The connected private link resource could be in a different region
 - To allow automatic approval for private endpoints, you need this permission on the private-link resource: `Microsoft.<Provider>/<resource_type>/privateEndpointConnectionsApproval/action`
 
