@@ -8,6 +8,7 @@
 - [DNS resolution](#dns-resolution)
   - [DNS integration at scale](#dns-integration-at-scale)
   - [Pitfall - Resolve PaaS endpoint in other tenants](#pitfall---resolve-paas-endpoint-in-other-tenants)
+- [Multi-region scenarios](#multi-region-scenarios)
 - [CLI example](#cli-example)
 - [Private Link](#private-link)
 
@@ -97,7 +98,7 @@ See: https://docs.microsoft.com/en-us/azure/private-link/inspect-traffic-with-az
 
 Microsoft documentation: https://docs.microsoft.com/en-us/azure/private-link/private-endpoint-dns#azure-services-dns-zone-configuration
 
-**There are many pitfalls regarding private endpoint DNS resolution (and network routing), see:**
+**There are many pitfalls/challenges regarding private endpoint DNS resolution (and network routing), see:**
 - https://github.com/dmauser/PrivateLink
 - https://journeyofthegeek.com/2020/03/06/azure-private-link-and-dns-part-2/
 
@@ -200,6 +201,24 @@ To remediate this, you could
   - (**not recommended**) on client VMs, use dnsmasq for Linux or NRPT (Name Resolution Policy Table) feature for Windows (see: https://github.com/dmauser/PrivateLink/tree/master/DNS-Client-Configuration-Options)
 
 
+## Multi-region scenarios
+
+See: https://github.com/adstuart/azure-privatelink-multiregion
+
+When designing for multi-region deployment, BCDR scenarios, there are two options for private endpoint DNS zones, you could have:
+
+1. Private DNS zone per region, a PaaS service could have an endpoint in each region, same FQDN could have a different IP in each zone
+2. Shared private DNS zone across regions
+
+Each option has its advantage and disadvantages.
+
+1. Azure private link/SDN
+
+- Zone per region: Optimal, ingress to private link close to source, inter-region routing transit handled by the underlying Azure platform
+- Shared zone: Non-optimal, inter-region data path relies on customer's inter-region routing solution
+
+![Private DNS zones inter region transit](./images/azure-private-dns-zone-multi-region-datapath.drawio.svg)
+
 
 ## CLI example
 
@@ -257,7 +276,7 @@ Connection between the private endpoint and the storage service uses a **private
 - A Private Link service receives connections from multiple private endpoints. A private endpoint connects to one Private Link service.
 - Private Link works across Azure AD tenants
 - No gateways, NAT devices, ExpressRoute or VPN connections, or public IP addresses are needed.
-- Azure App Service and Azure Functions become inaccessible publicly when they are associated with a private endpoint, other Azure services require additional access controls.
+- **Azure App Service** and **Azure Functions** become inaccessible publicly when they are associated with a private endpoint, other Azure services require additional access controls.
 - To make your service private to consumers in Azure, place your service behind a standard Azure Load Balancer, then you can create a Private Link Service referencing the load balancer.
   - Choose a subnet for NAT IP addresses
   - You need disable `privateLinkServiceNetworkPolicies` on this subnet, only applies to the NAT IP you chose, NSG still applies to other resources in the subnet
