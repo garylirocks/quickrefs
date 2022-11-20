@@ -9,6 +9,9 @@
   - [DNS integration at scale](#dns-integration-at-scale)
   - [Pitfall - Resolve PaaS endpoint in other tenants](#pitfall---resolve-paas-endpoint-in-other-tenants)
 - [Multi-region scenarios](#multi-region-scenarios)
+  - [Use of Azure Private Link / SDN](#use-of-azure-private-link--sdn)
+  - [Inter-region failover](#inter-region-failover)
+  - [Hybrid private link connectivity](#hybrid-private-link-connectivity)
 - [CLI example](#cli-example)
 - [Private Link](#private-link)
 
@@ -207,17 +210,47 @@ See: https://github.com/adstuart/azure-privatelink-multiregion
 
 When designing for multi-region deployment, BCDR scenarios, there are two options for private endpoint DNS zones, you could have:
 
-1. Private DNS zone per region, a PaaS service could have an endpoint in each region, same FQDN could have a different IP in each zone
-2. Shared private DNS zone across regions
+1. Private DNS zone per region: a PaaS service could have a separate endpoint in each region, same FQDN with different IP in each zone
+2. Shared private DNS zone: one zone, one IP, one active endpoint
 
 Each option has its advantage and disadvantages.
 
-1. Azure private link/SDN
-
-- Zone per region: Optimal, ingress to private link close to source, inter-region routing transit handled by the underlying Azure platform
-- Shared zone: Non-optimal, inter-region data path relies on customer's inter-region routing solution
+### Use of Azure Private Link / SDN
 
 ![Private DNS zones inter region transit](./images/azure-private-dns-zone-multi-region-datapath.drawio.svg)
+
+- **Zone per region**: Optimal, each region has its own private endpoint to the same PaaS services, ingress to private link close to source, inter-region routing transit handled by Azure. *(in the corresponding zone, they have same FQDN, but a different IP)*
+- **Shared zone**: Non-optimal, inter-region data path relies on customer's inter-region routing solution *(only possible to have one endpoint, one record in the shared zone)*
+
+###  Inter-region failover
+
+![Private DNS zones inter region failover](./images/azure-private-dns-zone-multi-region-failover.drawio.svg)
+
+*We use storage account as example above, because it's GRS, data is replicated to paired region automatically, after failover, the one in the failover region is effectively an LRS account*
+
+- **Zone per region**: Optimal, no manual intervention needed (same as using the PaaS public endpoint)
+- **Shared zone**: Upon failover, need user-intervention in the shared zone to point FQDN to IP of the private endpoint in the failover region
+
+Actually, there are different scenarios for different PaaS services, it the PaaS service use the same FQDN for regional replicas, then you need user-intervention during failover if using a shared zone
+
+| Service   | FQDN                                                     | How to replicate                                           | Failover simulation ? |
+| --------- | -------------------------------------------------------- | ---------------------------------------------------------- | --------------------- |
+| Key Vault | Only one                                                 | KeyVault data is automatically replicated to paired region | No                    |
+| Storage   | Only one (a read-only secondary one for RA-GRS, RA-GZRS) | GRS, GZRS, RA-GRS, RA-GZRS                                 | Yes                   |
+
+Some PaaS services have different FQDNs for regional replicas, you could add both to the shared zone, so you may not need any user-intervention during failover
+
+| Service | FQDN                                                     | How to replicate                                  | Failover simulation ? |
+| ------- | -------------------------------------------------------- | ------------------------------------------------- | --------------------- |
+| SQL     | Failover group FQDN -> regional FQDN -> privatelink FQDN | Failover group (one PaaS instance in each region) | Yes                   |
+
+
+### Hybrid private link connectivity
+
+See https://github.com/adstuart/azure-privatelink-multiregion#6-appendix-a---hybrid-forwarding-and-multi-region-private-link-considerations-when-accessing-from-on-premises
+
+- **Zone per region**: could be a problem, depending on-prem DNS software used (BIND v9, Infoblox)
+- **Shared zone**: no issues
 
 
 ## CLI example

@@ -5,6 +5,7 @@
   - [Purchasing models](#purchasing-models)
   - [Service tiers](#service-tiers)
   - [Scaling](#scaling)
+  - [Business continuity (BCDR)](#business-continuity-bcdr)
 - [SQL Managed Instance](#sql-managed-instance)
 - [SQL Server on VM](#sql-server-on-vm)
 - [Data security](#data-security)
@@ -81,6 +82,39 @@ Read Scale-out in a business critical service tier:
 - You set **connection string option** to decide whether the connection is routed to the write replica or a read-only replica.
 - Data-changes are propagated asynchronously
 - Read scale-out with one of the secondary replicas supports **session-level consistency**, if the read-only session reconnects, it might be redirected to another replica
+
+### Business continuity (BCDR)
+
+You can add databases to a failover group, they'll be replicated automatically to a server in a paired region.
+
+A failover group has its own listener endpoints like:
+
+- Read/write: `my-fog.database.windows.net`
+- Read-only:  `my-fog.secondary.database.windows.net`
+
+
+The DNS resolution chain is like:
+
+```
+my-fog.database.windows.net.     30 IN CNAME my-sql-eus.database.windows.net.
+# if private endpoint is enabled
+my-sql-eus.database.windows.net. 30 IN CNAME my-sql-eus.privatelink.database.windows.net.
+...
+```
+
+After failover, it would be like:
+
+```
+my-fog.database.windows.net.     30 IN CNAME my-sql-wus.database.windows.net.
+# if private endpoint is enabled
+my-sql-wus.database.windows.net. 30 IN CNAME my-sql-wus.privatelink.database.windows.net.
+...
+```
+
+Notes:
+
+- You should use these failover listener endpoints in connection string for your application, so you don't need to manually update the connection string when failover happens, the connection is always routed to whichever instance which is currently primary.
+- Removing a failover group for a single or pooled database does not stop replication, and it does not delete the replicated database.
 
 
 ## SQL Managed Instance
