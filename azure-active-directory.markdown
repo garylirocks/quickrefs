@@ -607,7 +607,7 @@ AuditLogs
 
 ### `--filter` parameter
 
-The `--filter` parameter in many `az ad` commands uses the OData filter syntax, check available expressions here: https://docs.microsoft.com/en-us/graph/query-parameters#filter-parameter
+The `--filter` parameter in many `az ad` commands uses the OData filter syntax, check available expressions here: https://learn.microsoft.com/en-us/graph/filter-query-parameter
 
 *Seems you could use `startswith`, `endswith`, but not `contains`*
 
@@ -633,7 +633,7 @@ ownerObjectId="00000000-0000-0000-0000-000000000000"
 # add as app owner
 az ad app owner add --id $appId --owner-object-id "$ownerObjectId"
 
-# as as SP owner (need `az rest`, no CLI support yet)
+# as SP owner (need `az rest`, no CLI support yet)
 az rest -m POST -u https://graph.microsoft.com/beta/servicePrincipals/$spObjectId/owners/\$ref -b "{\"@odata.id\": \"https://graph.microsoft.com/beta/servicePrincipals/$ownerObjectId\"}"
 ```
 
