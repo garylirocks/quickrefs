@@ -169,10 +169,14 @@ Azure Policy evaluate policies in an order determined by policy effects:
 - *Resource Provider returns a success code*
 - **AuditIfNotExists** and **DeployIfNotExists**: evalute to determine whether additional logging or action is required.
 
+After create or update requests, **`then.details.evaluationDelay`** determines when the existence of the related resources should be evaluated. Allowed values are `AfterProvisioning`, `AfterProvisioningSuccess`, `AfterProvisioningFailure` or an ISO 8601 duration between 0 and 360 minutes. Default is `PT10M` (10 minutes)
+
+**BuiltIn policies usually don't specify the `evaluationDelay`, which means it's 10 minutes. You need to duplicate a builtin policy to change it.**
+
 
 ## Remediation
 
-- When you create or update resources, `deployIfNotExists` or `modify` happens automatically
+- When you create or update resources, `deployIfNotExists` or `modify` operations happens automatically
 - **But during standard evaluation cycle, existing resources are only marked as non-compliant, you need to create remediation tasks manually to remediate them**
 - Remediation tasks deploy the `deployIfNotExists` template or the `modify` operations of the assigned policy
 - Uses a managed identity(system or user assigned) that is associated with the policy assignment
