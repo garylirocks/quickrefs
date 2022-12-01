@@ -14,6 +14,7 @@
   - [Hybrid private link connectivity](#hybrid-private-link-connectivity)
 - [CLI example](#cli-example)
 - [Private Link](#private-link)
+- [Quick Recipes](#quick-recipes)
 
 ## Private Endpoint Overview
 
@@ -334,3 +335,32 @@ Connection between the private endpoint and the storage service uses a **private
   - All consumer traffic will appear to originate from this pool of private IP addresses (192.168.0.5 in the diagram below) to the service provider.
 
   ![Private link service](images/azure_private-link-service.png)
+
+
+## Quick Recipes
+
+- List private endpoints and linked private DNS zones
+
+  **NOTE**: A private endpoint could have an empty private DNS zone group, then the built-in private DNS zone group policies can't catch it, because it's compliant.
+
+  The following script could help find endpoints that don't have a DNS zone group or have an empty one.
+
+  ```sh
+  #!/bin/env bash
+
+  # get PE name and resource group in a file
+  az network private-endpoint list --query "[].[name, resourceGroup]"  -otsv > "pe-name-rg-list.txt"
+
+  readarray rows < pe-name-rg-list.txt
+
+  for row in "${rows[@]}";do
+    row_array=(${row})
+    name=${row_array[0]}
+    rg=${row_array[1]}
+
+    # an endpoint can only have one DNS zone group
+    DNS_ZONE_ID=$(az network private-endpoint dns-zone-group list --endpoint-name $name -g $rg --query "[0].privateDnsZoneConfigs[0].privateDnsZoneId" -otsv)
+
+    echo ${name} - ${DNS_ZONE_ID}
+  done
+  ```
