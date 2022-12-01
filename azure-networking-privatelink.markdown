@@ -339,7 +339,7 @@ Connection between the private endpoint and the storage service uses a **private
 
 ## Quick Recipes
 
-- List private endpoints and linked private DNS zones
+- List private endpoints with linked private DNS zones
 
   **NOTE**: A private endpoint could have an empty private DNS zone group, then the built-in private DNS zone group policies can't catch it, because it's compliant.
 
@@ -363,4 +363,17 @@ Connection between the private endpoint and the storage service uses a **private
 
     echo ${name} - ${DNS_ZONE_ID}
   done
+  ```
+
+- Re-enable a private endpoint
+
+  Seems like you cannot approve a "Rejected" private endpoint in the Portal, it could be done via CLI:
+
+  ```sh
+  az network private-endpoint-connection approve \
+    -g rg-test \
+    -n pe-test \
+    --resource-name kv-test \
+    --type Microsoft.Keyvault/vaults \
+    --description "Re-enable the endpoint"
   ```
