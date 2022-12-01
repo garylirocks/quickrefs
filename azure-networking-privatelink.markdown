@@ -264,8 +264,17 @@ id=$(az storage account show \
       -o tsv
     )
 
-# disable `PrivateEndpointNetworkPolicies` for the subnet
-# Seems it's disabled by default when creating a subnet in the Portal
+# the `PrivateEndpointNetworkPolicies` controls whether NSG and UDR are applied to private endpoints
+# when "Enabled" -> NSG and UDR applie
+# when "Disabled" -> NSG and UDR don't apply
+#
+# In the Portal, you could enable just NSG or UDR, then the value would be
+# "NetworkSecurityGroupEnabled" or "RouteTableEnabled"
+# With CLI or Terraform, you can only set it to be "Enabled" or "Disabled"
+#
+# By default,
+#   if creating a subnet in Portal, this property is "Disabled"
+#   if creating with Terraform, this property is "Enabled"
 az network vnet subnet update \
     --name default \
     --resource-group default-rg \
