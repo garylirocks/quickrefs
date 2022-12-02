@@ -232,19 +232,24 @@ Each option has its advantage and disadvantages.
 - **Zone per region**: Optimal, no manual intervention needed (same as using the PaaS public endpoint)
 - **Shared zone**: Upon failover, need user-intervention in the shared zone to point FQDN to IP of the private endpoint in the failover region
 
-Actually, there are different scenarios for different PaaS services, it the PaaS service use the same FQDN for regional replicas, then you need user-intervention during failover if using a shared zone
+Actually, there are different scenarios for different PaaS services, if the PaaS service use the same FQDN for regional replicas, then you need user-intervention during failover if using a shared zone
 
-| Service   | FQDN                                                     | How to replicate                                           | Failover simulation ? |
-| --------- | -------------------------------------------------------- | ---------------------------------------------------------- | --------------------- |
-| Key Vault | Only one                                                 | KeyVault data is automatically replicated to paired region | No                    |
-| Storage   | Only one (a read-only secondary one for RA-GRS, RA-GZRS) | GRS, GZRS, RA-GRS, RA-GZRS                                 | Yes                   |
+| Service   | FQDN                                                                                                           | How to replicate                                           | Failover simulation ? |
+| --------- | -------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- | --------------------- |
+| Key Vault | Only one                                                                                                       | KeyVault data is automatically replicated to paired region | No                    |
+| Storage   | Only one (a read-only secondary one for RA-GRS, RA-GZRS)                                                       | GRS, GZRS, RA-GRS, RA-GZRS                                 | Yes                   |
+| Cosmos DB | `cosmon-demo.mongo.cosmos.azure.com` (global FQDN)<br/>-> `cosmon-demo.privatelink.`<br/>-> regional endpoints | Multi-region support                                       | Yes                   |
 
-Some PaaS services have different FQDNs for regional replicas, you could add both to the shared zone, so you may not need any user-intervention during failover
+Some PaaS services have a global alias, and different FQDNs for regional replicas, you could add both to the shared zone, so you may not need any user-intervention during failover
 
-| Service | FQDN                                                     | How to replicate                                  | Failover simulation ? |
-| ------- | -------------------------------------------------------- | ------------------------------------------------- | --------------------- |
-| SQL     | Failover group FQDN -> regional FQDN -> privatelink FQDN | Failover group (one PaaS instance in each region) | Yes                   |
+For example, PaaS SQL instance in East US (`sql-demo-eus`) is replicated to West US as `sql-demo-wus`, you could add both to a shared private DNS zone `privatelink.database.windows.net`
 
+They are in one failover group `fog-demo`, usually it points to `sql-demo-eus`, after failover, it points to `sql-demo-wus`
+
+| Service               | FQDN                                                                                                                                         | How to replicate                                     | Failover simulation ? |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- | --------------------- |
+| SQL                   | `fog-demo.database.windows.net` (failover group) <br/>-> `sql-demo-eus`, `sql-demo-wus` (regional)<br/>-> privatelink FQDN                   | Failover group (one PaaS instance in each region)    | Yes                   |
+| Event Hub/Service Bus | `evhns-alias-demo.servicebus.windows.net` (alias)<br/> -> `evhns-demo-eus`, `evhns-demo-wus` (regional)<br/> -> privatelink FQDN     </html> | Namespace pairing (one PaaS instance in each region) | Yes                   |
 
 ### Hybrid private link connectivity
 

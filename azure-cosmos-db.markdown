@@ -9,6 +9,7 @@
 - [User-defined functions (UDF)](#user-defined-functions-udf)
 - [Global distribution](#global-distribution)
     - [Multi-region writes](#multi-region-writes)
+  - [Private endpoint](#private-endpoint)
 - [Consistency levels](#consistency-levels)
 
 ## Overview
@@ -175,6 +176,27 @@ Rarely, conflicts can happen when an item is changed simultaneously in multiple 
 - **Last-Writer-Wins (LWW)** - this is the default mode, based on the `_ts` timestamp
 - **Custom - User-defined function** - a user-defined function is a special type of stored procedure
 - **Custom - Async** - all conflicts are registered in the read-only conflicts feed for deferred resolution
+
+### Private endpoint
+
+One private endpoint could put multiple domains in a private DNS zone:
+
+```
+cosmon-demo           10.0.0.4
+cosmon-demo-eastus    10.0.0.5
+cosmon-demo-westus    10.0.0.6
+```
+
+The global name CNAME to the privatelink FQDN first:
+
+```
+cosmon-demo.mongo.cosmos.azure.com CNAME cosmon-demo.privatelink.mongo.cosmos.azure.com
+cosmon-demo.privatelink.mongo.cosmos.azure.com CNAME XXXX.westus.cloudapps.azure.com
+...
+```
+
+So if you use the global FQDN in your application, it doesn't work well with one global private DNS zone, regional private DNS zone works better.
+
 
 ## Consistency levels
 

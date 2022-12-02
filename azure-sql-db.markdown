@@ -89,25 +89,25 @@ You can add databases to a failover group, they'll be replicated automatically t
 
 A failover group has its own listener endpoints like:
 
-- Read/write: `my-fog.database.windows.net`
-- Read-only:  `my-fog.secondary.database.windows.net`
+- Read/write: `fog-demo.database.windows.net`
+- Read-only:  `fog-demo.secondary.database.windows.net`
 
 
 The DNS resolution chain is like:
 
 ```
-my-fog.database.windows.net.     30 IN CNAME my-sql-eus.database.windows.net.
+fog-demo.database.windows.net.     30 IN CNAME sql-demo-eus.database.windows.net.
 # if private endpoint is enabled
-my-sql-eus.database.windows.net. 30 IN CNAME my-sql-eus.privatelink.database.windows.net.
+sql-demo-eus.database.windows.net. 30 IN CNAME sql-demo-eus.privatelink.database.windows.net.
 ...
 ```
 
 After failover, it would be like:
 
 ```
-my-fog.database.windows.net.     30 IN CNAME my-sql-wus.database.windows.net.
+fog-demo.database.windows.net.     30 IN CNAME sql-demo-wus.database.windows.net.
 # if private endpoint is enabled
-my-sql-wus.database.windows.net. 30 IN CNAME my-sql-wus.privatelink.database.windows.net.
+sql-demo-wus.database.windows.net. 30 IN CNAME sql-demo-wus.privatelink.database.windows.net.
 ...
 ```
 
