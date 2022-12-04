@@ -129,14 +129,75 @@ Connect-AzureAD
 
 ### PIM
 
+Prepare
+
 ```powershell
+# need this module
+Install-Module AzureADPreview
+
+# !! This does not work in PowerShell Core (v7)
+# See https://github.com/PowerShell/PowerShell/issues/10473
+Connect-AzureAD
+
 # find all related commands
 Get-Command -Module AzureADPreview "*privileged*"
+```
 
-# get AAD PIM roles
-Get-AzureADMSPrivilegedRoleDefinition -ProviderId aadRoles -ResourceId $tenantId
+Get definitions
+
+```powershell
+$tenantId = (Get-AzContext).Tenant.Id
+$uid = (Get-AzADUser -UserPrincipalName (Get-AzContext).Account).Id
+
+# get all AAD roles
+Get-AzureADMSPrivilegedRoleDefinition `
+  -ProviderId aadRoles `
+  -ResourceId $tenantId
 
 # get role assignments for the specified user
-Get-AzureADMSPrivilegedRoleAssignment -ProviderId "aadRoles" `
-  -ResourceId $tenantId -Filter "subjectId eq '$uid'"
+Get-AzureADMSPrivilegedRoleAssignment `
+  -ProviderId "aadRoles" `
+  -ResourceId $tenantId `
+  -Filter "subjectId eq '$uid'"
+```
+
+Activate a role assignment
+
+<div style="background: #efd9fd">
+<em>NOTE: </em><br />
+If the activation requires either <br />
+  <ol>
+    <li>ticket system/ticket number</li>
+    <li>MFA</li>
+  </ol>
+Then you need to do it in the Portal
+</div>
+
+
+```powershell
+$durationInHours = 2
+$roleDefName = "Application Administrator"
+$reason = "Business Justification for the role assignment"
+
+$start = Get-Date
+$end = $start.AddHours($durationInHours)
+$roleDefId = (Get-AzureADMSPrivilegedRoleDefinition -ProviderId aadRoles -ResourceId $tenantId -Filter "DisplayName eq '$roleDefName'").Id
+
+$schedule = New-Object Microsoft.Open.MSGraph.Model.AzureADMSPrivilegedSchedule
+$schedule.Type = "Once"
+$schedule.StartDateTime = $start.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+$schedule.endDateTime = $end.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+
+$tenantId = (Get-AzContext).Tenant.Id
+$uid = (Get-AzADUser -UserPrincipalName (Get-AzContext).Account).Id
+
+Open-AzureADMSPrivilegedRoleAssignmentRequest `
+  -ProviderId 'aadRoles' `
+  -Type 'UserAdd' `
+  -AssignmentState 'Active' `
+  -ResourceId $tenantId `
+  -RoleDefinitionId $roleDefId `
+  -SubjectId $uid `
+  -Schedule $schedule `
+  -Reason $reason
 ```
