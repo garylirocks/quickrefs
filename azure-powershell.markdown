@@ -6,6 +6,8 @@
 - [VM](#vm)
 - [Azure AD](#azure-ad)
   - [PIM](#pim)
+    - [Azure resources](#azure-resources)
+    - [AAD roles](#aad-roles)
 
 
 ## On Linux/Mac
@@ -129,75 +131,137 @@ Connect-AzureAD
 
 ### PIM
 
-Prepare
+There are two related modules:
+  - `Az.Resources`: for Azure Resource Manager roles, connects to `https://management.azure.com`
+  - `AzureADPreview`: for Azure AD roles, cmdlets with different conventions:
+    - `-AzureAD` connects to Azure AD graph endpoint `https://graph.windows.net`
+    - `-AzureADMS` connects to Microsoft Graph endpoint `https://graph.microsoft.com`
 
-```powershell
-# need this module
-Install-Module AzureADPreview
+#### Azure resources
 
-# !! This does not work in PowerShell Core (v7)
-# See https://github.com/PowerShell/PowerShell/issues/10473
-Connect-AzureAD
-
-# find all related commands
-Get-Command -Module AzureADPreview "*privileged*"
-```
-
-Get definitions
-
-```powershell
-$tenantId = (Get-AzContext).Tenant.Id
-$uid = (Get-AzADUser -UserPrincipalName (Get-AzContext).Account).Id
-
-# get all AAD roles
-Get-AzureADMSPrivilegedRoleDefinition `
-  -ProviderId aadRoles `
-  -ResourceId $tenantId
-
-# get role assignments for the specified user
-Get-AzureADMSPrivilegedRoleAssignment `
-  -ProviderId "aadRoles" `
-  -ResourceId $tenantId `
-  -Filter "subjectId eq '$uid'"
-```
-
-Activate a role assignment
-
-<div style="background: #efd9fd">
-<em>NOTE: </em><br />
-If the activation requires either <br />
-  <ol>
-    <li>ticket system/ticket number</li>
-    <li>MFA</li>
-  </ol>
-Then you need to do it in the Portal
+<div style="background: #efd9fd; padding: 1em">
+  <em>NOTE: </em><br />
+    <ol>
+      <li>You can specify ticket system/ticket number</li>
+      <li>Scope could be
+        <ul>
+          <li>management group ("/providers/Microsoft.Management/managementGroups/mg-foo")</li>
+          <li>subscription ("/subscriptions/xxxx-xxxx-xxxx-xxxx")</li>
+          <li>resource group ("/subscriptions/xxxx-xxxx-xxxx-xxxx/resourceGroups/rg-foo")</li>
+        </ul>
+      </li>
+      <li>Seems there is no easy way to "Deactivate" an assignment via script</li>
+    </ol>
 </div>
 
-
 ```powershell
-$durationInHours = 2
-$roleDefName = "Application Administrator"
-$reason = "Business Justification for the role assignment"
+$durationInHours = 1
+$roleName = "Contributor"
+$justification = "Discovery"
+$ticketNumber = 'FOO-123'
 
-$start = Get-Date
-$end = $start.AddHours($durationInHours)
-$roleDefId = (Get-AzureADMSPrivilegedRoleDefinition -ProviderId aadRoles -ResourceId $tenantId -Filter "DisplayName eq '$roleDefName'").Id
-
-$schedule = New-Object Microsoft.Open.MSGraph.Model.AzureADMSPrivilegedSchedule
-$schedule.Type = "Once"
-$schedule.StartDateTime = $start.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
-$schedule.endDateTime = $end.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
-
-$tenantId = (Get-AzContext).Tenant.Id
+$guid = (New-Guid).guid
 $uid = (Get-AzADUser -UserPrincipalName (Get-AzContext).Account).Id
+$startTime = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+$roleId = (Get-AzRoleDefinition -Name $roleName).Id
+$subscriptionId = ((Get-AzContext).Subscription).Id
 
-Open-AzureADMSPrivilegedRoleAssignmentRequest `
-  -ProviderId 'aadRoles' `
-  -Type 'UserAdd' `
-  -AssignmentState 'Active' `
-  -ResourceId $tenantId `
-  -RoleDefinitionId $roleDefId `
-  -SubjectId $uid `
-  -Schedule $schedule `
-  -Reason $reason
+$scope = "/subscriptions/${subscriptionId}"
+$fullRoleDefId = "$scope/providers/Microsoft.Authorization/roleDefinitions/${roleId}"
+
+New-AzRoleAssignmentScheduleRequest `
+  -RequestType SelfActivate `
+  -PrincipalId $uid `
+  -Name $guid `
+  -Scope $scope `
+  -RoleDefinitionId $fullRoleDefId `
+  -ScheduleInfoStartDateTime $startTime `
+  -ExpirationDuration "PT${durationInHours}H" `
+  -ExpirationType AfterDuration `
+  -Justification $justification `
+  -TicketNumber $ticketNumber `
+  -TicketSystem JIRA
 ```
+
+#### AAD roles
+
+<div style="background: #efd9fd; padding: 1em">
+  <em>NOTE: </em><br />
+  If the activation requires either <br />
+    <ol>
+      <li>ticket system/ticket number</li>
+      <li>MFA</li>
+    </ol>
+  Then you need to do it in the Portal
+</div>
+
+- Prepare
+
+  ```powershell
+  # need this module
+  Install-Module AzureADPreview
+
+  # !! This does not work in PowerShell Core (v7)
+  # See https://github.com/PowerShell/PowerShell/issues/10473
+  Connect-AzureAD
+
+  # find all related commands
+  Get-Command  -Module AzureADPreview -Noun *privileged* -verb 'get'
+
+  # CommandType     Name                                               Version    Source
+  # -----------     ----                                               -------    ------
+  # Cmdlet          Get-AzureADMSPrivilegedResource                    2.0.2.149  AzureADPreview
+  # Cmdlet          Get-AzureADMSPrivilegedRoleAssignment              2.0.2.149  AzureADPreview
+  # Cmdlet          Get-AzureADMSPrivilegedRoleAssignmentRequest       2.0.2.149  AzureADPreview
+  # Cmdlet          Get-AzureADMSPrivilegedRoleDefinition              2.0.2.149  AzureADPreview
+  # Cmdlet          Get-AzureADMSPrivilegedRoleSetting                 2.0.2.149  AzureADPreview
+  # Cmdlet          Get-AzureADPrivilegedRole                          2.0.2.149  AzureADPreview
+  # Cmdlet          Get-AzureADPrivilegedRoleAssignment                2.0.2.149  AzureADPreview
+  ```
+
+- Get definitions
+
+  ```powershell
+  $tenantId = (Get-AzContext).Tenant.Id
+  $uid = (Get-AzADUser -UserPrincipalName (Get-AzContext).Account).Id
+
+  # get all AAD roles
+  Get-AzureADMSPrivilegedRoleDefinition `
+    -ProviderId aadRoles `
+    -ResourceId $tenantId
+
+  # get role assignments for the specified user
+  Get-AzureADMSPrivilegedRoleAssignment `
+    -ProviderId "aadRoles" `
+    -ResourceId $tenantId `
+    -Filter "subjectId eq '$uid'"
+  ```
+
+- Activate a role assignment
+
+  ```powershell
+  $durationInHours = 2
+  $roleDefName = "Application Administrator"
+  $reason = "Business Justification for the role assignment"
+  $tenantId = (Get-AzContext).Tenant.Id
+  $uid = (Get-AzADUser -UserPrincipalName (Get-AzContext).Account).Id
+
+  $start = Get-Date
+  $end = $start.AddHours($durationInHours)
+  $roleDefId = (Get-AzureADMSPrivilegedRoleDefinition -ProviderId aadRoles -ResourceId $tenantId -Filter "DisplayName eq '$roleDefName'").Id
+
+  $schedule = New-Object Microsoft.Open.MSGraph.Model.AzureADMSPrivilegedSchedule
+  $schedule.Type = "Once"
+  $schedule.StartDateTime = $start.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+  $schedule.endDateTime = $end.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+
+  Open-AzureADMSPrivilegedRoleAssignmentRequest `
+    -ProviderId 'aadRoles' `
+    -Type 'UserAdd' `
+    -AssignmentState 'Active' `
+    -ResourceId $tenantId `
+    -RoleDefinitionId $roleDefId `
+    -SubjectId $uid `
+    -Schedule $schedule `
+    -Reason $reason
+  ```
