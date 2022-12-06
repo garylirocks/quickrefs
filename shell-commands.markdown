@@ -809,6 +809,14 @@ ssh -L 80:localhost:8080 -N dest
   - Works for HTTP only
   - If you follow redirects, the fake `Host:` header would be sent to those requests as well
 
+- Domain fronting
+
+    ```sh
+    curl -H 'Host: forbidden.com' "https://allowed.com" -verbose
+    ```
+
+  - Use "allowed.com" to bypass Firewall, establish SSL connection, but actually get contents from "forbidden.com"
+
 - For HTTPS
 
     ```sh
