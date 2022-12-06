@@ -11,6 +11,7 @@
   - [Password Flow](#password-flow)
   - [OpenID Connect](#openid-connect)
   - [How to choose](#how-to-choose)
+- [SAML](#saml)
 
 ## JWT
 
@@ -277,3 +278,31 @@ A few differences:
 - Microservices and APIs: client credentials flow
 
 [implicit-flow-dead]: (https://developer.okta.com/blog/2019/05/01/is-the-oauth-implicit-flow-dead)
+
+
+## SAML
+
+An mature identify federation solution.
+
+Three parties involved:
+  - User
+  - Identity Provider (IdP) (eg. Azure AD)
+  - Service Provider (SP) (eg. Salesforce)
+
+Setup process:
+
+1. Register SP in IdP, providing ID and a bunch of URLs
+2. Upload IdP's certificate to SP, so SP can trust IdP
+
+Authentication process:
+
+1. User tries to sign in
+2. SP identifies this is from a paticular IdP
+3. SP redirects user to IdP login page with a request (an encoded XML passed via GET parameter)
+3. IdP authenticate user and POST to SP a response (a signed XML which includes the user's attributes)
+4. SP validate the response using IdP certificate
+5. SP signs in the user
+
+The request and response are
+  - In XML format
+  - Passed through the browser, IdP and SP do not need to talk to each other directly
