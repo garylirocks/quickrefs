@@ -317,6 +317,26 @@ A modules is a package that contains PowerShell members, such as cmdlets, provid
 Install-Module AzureADPreview
 ```
 
+In some scenarios, you may want to install a module to a custom location:
+
+```powershell
+Find-Module -Name 'XXX' -Repository 'PSGallery' | Save-Module -Path 'E:\Modules'
+```
+
+Then you could either
+
+- Import with a fully qualified name
+
+  ```powershell
+  Import-Module -FullyQualifiedName 'E:\Modules\XXX'
+  ```
+
+- Or add the custom location to the `$env:PSModulePath`
+
+  ```powershell
+  $env:PSModulePath = "E:\Modules;" + $env:PSModulePath
+  ```
+
 ### Import
 
 - If a module is in `$env:PSModulePath`, it is automatically imported when you call any commands in the module.
