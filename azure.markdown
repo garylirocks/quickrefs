@@ -341,7 +341,7 @@ Compare with Azure Resource Manager
 |                      | Resource Manager                                       | Resource Graph                               |
 | -------------------- | ------------------------------------------------------ | -------------------------------------------- |
 | Supported properties | name, id, type, resource group, subscription, location | all properties by resource providers         |
-| CLI example          | `az resource list`                                     | `az graph query`                             |
+| CLI command          | `az resource list`                                     | `az graph query`                             |
 | Scope                | one subscription                                       | a list of subscriptions or management groups |
 | Query syntax         | -                                                      | KQL                                          |
 
