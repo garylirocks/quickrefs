@@ -379,13 +379,17 @@ to make ubuntu terminal to correctly display gbk characters, see: http://blog.si
 
 ## `mktemp`
 
-create temporary files or folders
+Create temporary files or folders
 
-    $ mktemp /tmp/data.XXXX
-    /tmp/data.zUFP
+```sh
+# a temporary file with random characters and current time
+mktemp data_XXXX_$(date +%Y%m%d-%H%M%S)
+# data_vFl7_20221208-154803
 
-    $ mktemp -d /tmp/data-folder.XXXX   # create directory
-    /tmp/data-folder.0Fss
+# make a directory
+mktemp -d /tmp/data-folder.XXXX   # create directory
+# /tmp/data-folder.0Fss
+```
 
 ## `expand`
 
