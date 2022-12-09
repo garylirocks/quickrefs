@@ -817,8 +817,8 @@ Usually used to advertise on-prem routes to Azure when you're connected through 
 
 - ExpressRoute
   - You must use BGP to advertise on-prem routes to Azure
-  - You can't create UDR to force traffic to a ExpressRoute gateway
-  - You can use UDR to force traffic from an ExpressRoute gateway to an NVA
+  - You can't create UDR to force traffic to an ExpressRoute gateway
+  - You can use UDR to force traffic from an ExpressRoute gateway to an NVA (eg. You could add a UDR on `GatewaySubnet` to route traffic to a firewall)
 - VPN
   - You can optionally use BGP
   - You could create UDR with a next hop type of *Virtual network gateway* (VPN gateway)
@@ -854,9 +854,10 @@ On a route table, you could define whether virtual network gateway route propaga
   - proxies
   - an SD-WAN edge
 - Firewall could inspect all packets at OSI Layer 4 and possible Layer 7
-- Some NVAs require multiple network interfaces, one of which is dedicated to the management network for the appliance
-- NVAs should be deployed in a highly available architecture
+- Some NVAs require **multiple network interfaces**, one of which is dedicated to the management network for the appliance
 - You need to enable **IP forwarding** for an NVA, when traffic flows to the NVA but is meant for another target, the NVA will route the traffic to its correct destination
+- NVAs should be deployed in a highly available architecture (eg. availability set in the diagram above)
+- The `GatewaySubnet` ususally has UDR to route traffic to the NVA
 
 Example: use a Linux VM as an NVA
 

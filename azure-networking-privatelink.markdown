@@ -47,13 +47,18 @@ Private endpoint is a special network interface, there are limitations:
 - Effective routes and security rules won't be displayed for the private endpoint NIC in the Azure portal, making debugging hard.
 - **NSG flow logs** (Traffic Analytics as well) are not supported.
 - NSG only apply when `PrivateEndpointNetworkPolicies` property on the containing subnet is "Enabled".
+  - By default,
+      - if creating a subnet in Portal, this property is `Disabled`
+      - if creating with Terraform `azurerm` provider, this property is `Enabled`
+  - With CLI or Terraform, you can only set it to be `Enabled` or `Disabled`
+  - In the Portal, you could enable only NSG or UDR, then the value would be `NetworkSecurityGroupEnabled` or `RouteTableEnabled`
 - Source port is interpreted as `*`
 - Rules with multiple port ranges may not work as expected (see the doc)
 - No need for outbound deny rules on a private endpoint, as it can't initiate traffic
 
 ### UDR
 
-- When you add a private endpoint, Azure would add a route to *all the route tables in the hosting and any peered vnets*, so all traffic to the private endpoint from these vnets goes directly, bypassing NVA:
+- When you add a private endpoint, Azure would add a route to ***all the route tables in the hosting and any peered vnets***, so all traffic to the private endpoint from these vnets goes directly, bypassing NVA:
 
     | Source  | State  | Address Prefixes | Next Hop Type     | Next Hop IP Addres |
     | ------- | ------ | ---------------- | ----------------- | ------------------ |
@@ -271,16 +276,7 @@ id=$(az storage account show \
     )
 
 # the `PrivateEndpointNetworkPolicies` controls whether NSG and UDR are applied to private endpoints
-# when "Enabled" -> NSG and UDR applie
-# when "Disabled" -> NSG and UDR don't apply
-#
-# In the Portal, you could enable just NSG or UDR, then the value would be
-# "NetworkSecurityGroupEnabled" or "RouteTableEnabled"
-# With CLI or Terraform, you can only set it to be "Enabled" or "Disabled"
-#
-# By default,
-#   if creating a subnet in Portal, this property is "Disabled"
-#   if creating with Terraform, this property is "Enabled"
+# this step is not required, see notes above about NSG limitations
 az network vnet subnet update \
     --name default \
     --resource-group default-rg \
