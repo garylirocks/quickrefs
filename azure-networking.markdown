@@ -236,11 +236,11 @@ az network public-ip create \
 
 Service tags represent a group of address prefixes, usually from a given Azure service
   - Microsoft maintains and automatically updates the prefixes
-  - These tags could be used in NSG rules, UDR, Azure Firewall, for example:
+  - These tags could be used in NSG rules, UDR, Azure Firewall
   - Examples:
     - VirtualNetwork (*see below*)
-    - AzureCloud (*> 4500 prefixes*)
     - Internet
+    - AzureCloud (*> 4500 prefixes*)
     - Storage (*Azure Storage for the entire cloud*)
     - Storage.WestUS (*some tags could be regional*)
     - SQL
@@ -300,7 +300,7 @@ Details: https://docs.microsoft.com/en-us/azure/virtual-network/network-security
 
 - Basic infrastructure services like DHCP, DNS, IMDS and health monitoring are provided through the virtualized host IP addresses **168.63.129.16** and **169.254.169.254** (*`169.254.0.0/16` are "link local" addresses. Routers are not allowed to forward packets sent from an IPv4 "link local" address, so they are always used by a directly connected device*)
 - These IP addresses belong to Microsoft and are the ONLY virtualized IP addresses used in all regions
-- Effective security rules and effective routes *WILL NOT* include these platform rules
+- **Effective security rules and effective routes WILL NOT include these platform rules**
 - To override this basic infrastructure communication, you can create a security rule to deny traffic by using these service tags on your NSG rules: AzurePlatformDNS, AzurePlatformIMDS, AzurePlatformLKM
 
 #### `168.63.129.16`
