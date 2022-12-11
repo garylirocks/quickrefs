@@ -59,6 +59,8 @@ An assignment could have one of the following effects:
 - **Deny**:
   - create/update: prevent the resources from being created
   - existing: mark as non-compliant
+- **DenyAction**
+  - "DELETE": prevent accidental deletion of critical resources
 - **Disabled**
 - **AuditIfNotExists**
   - Runs after Resource Provider has handled a create/update resource request and has returned a success status code.
