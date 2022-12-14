@@ -16,6 +16,7 @@
   - [Azure AD](#azure-ad)
   - [Tenant](#tenant)
   - [Regions](#regions)
+    - [Paired regions](#paired-regions)
   - [Availability Zones](#availability-zones)
   - [Management groups](#management-groups)
   - [Subscription](#subscription)
@@ -203,17 +204,36 @@ Security posture (CIA):
 
 ### Regions
 
+Why
+
 - Bring applications closer to users
 - Offer data residency, compliance and resiliency options
-- A region contains at least one, but potentially multiple datacenters (Availability Zones)
-- Some services or features are only available in certain regions: such as specific VM sizes or storage types
-- Some services are global: Azure AD, DNS, Traffic Manager
-- Each regions is paired with another region within the same geography, making a **regional pair**
-  - Physical isolation
-  - Replication: Geo-Redundant Storage provide automatic replication to the paired region
-  - Recovery order: one region is prioritized out of every pair
-  - Sequential updates
+- A region contains at least one, but potentially multiple datacenters, which could be grouped into Availability Zones
+
+Some resources/SKUs are available globally, some only in specific regions
+
+  | Regional                             | Global                              |
+  | ------------------------------------ | ----------------------------------- |
+  | specific VM sizes, sotrage SKUs, etc | Azure AD, DNS, Traffic Manager, etc |
+
+Latency
+- Within a region: **2ms**
+  - allows active-active architecture
+  - this allows for synchronous read/write to multiple replicas of a DB
+  - to guarantee the lowest possible latency, use **Proximity placement groups** to place compute resources (VMs, VM availability sets, VMSS) close to each other (within a zone)
+- Between regions: **> 10ms**
+  - DB operations need to by replicated asynchronously
+  - usually use active-passive architecture
+
+#### Paired regions
+
+Each regions is paired with another region within the same geopolitical boundary, which provides some benefits:
+
   - Data residency
+  - Physical isolation (> 300 miles apart)
+  - Sequential updates
+  - Recovery order: one region is prioritized out of every pair
+  - Native Replication: some services have native replication to paired region: Storage Account(GRS, GRZS), Key Vault, Recovery Service Vault
 
 ### Availability Zones
 
@@ -223,9 +243,14 @@ Designed for high availability, each zone is made up of one or more datacenters 
 
 Three types of Availability Zone support:
 
-- **Zonal services**: can be pinned to a specific zone, such as VMs, managed disks, or standard IP addresses. You can have multiple instances spread across zones.
-- **Zone-redundant services**: data replicated across all 3 zones automatically
-- **Non-regional services**: always available, resilient to region-wide outages.
+| **Zonal**                        | **Zone-redundant**                                                               | **Non-regional (Global)**                          |
+| -------------------------------- | -------------------------------------------------------------------------------- | -------------------------------------------------- |
+| Can be pinned to a specific zone | Data or underlying resources are replicated or spread across zones automatically | Always available, resilient to region-wide outages |
+| VMs, managed disks, etc          | ZRS storage account, VMSS, AKS Node Pool, App Service Plan, etc                  | DNS, Traffic Manager, etc                          |
+
+- *Standard Public IP could be zonal or zone-redundant, which also decides the zone support for Load Balancers and vNet Gateways*
+- For VMSS/AKS Node Pool/App Service Plan, you would need at least two (ideally three) underlying instances to make them zone-redundant
+
 
 ### Management groups
 
