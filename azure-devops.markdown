@@ -777,7 +777,7 @@ Expressions can be evaluated at either
 - or Run time:
   - syntax: `$[ <expression> ]`
   - can be used in variables and conditions
-  - have access to more `variables` but *no parameters*
+  - have access to `variables` but *not parameters*
 
 Example:
 
