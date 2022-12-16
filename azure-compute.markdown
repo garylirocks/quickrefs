@@ -1,7 +1,9 @@
 # Azure Compute
 
 - [VMs](#vms)
+  - [Considerations](#considerations)
   - [Disks](#disks)
+    - [Shared disk](#shared-disk)
   - [Initialize data disks](#initialize-data-disks)
   - [Disk encryption](#disk-encryption)
     - [ADE](#ade)
@@ -23,6 +25,8 @@
 
 ## VMs
 
+### Considerations
+
 Checklist for creating VMs
 
 - Network (vNets)
@@ -39,14 +43,23 @@ Checklist for creating VMs
   - consider proximity, compliance, price
 
 - Size
-  - based on workload
+  - Metrics to consider
+    - vCPU
+    - Memory
+    - Temp Storage size
+    - Max temp disk IOPS/throughput
+    - Max data disks
+    - Max data disk IOPS/throughput
+    - Max NICs/Network bandwidth
+
+  - Based on workload
     - general purpose: ideal for testing and dev, small to medium DBs, low to medium traffic web servers
     - compute optimized: medium traffic web servers, network appliances, batch processes, and application servers
     - memory optimized: DBs, caches, in-memory analytics
     - storage optimized: DBs
     - GPU: graphics rendering and video editing
     - high performance compute
-  - sizes can be changed
+  - Sizes can be changed
 
 - Costs
   - Compute
@@ -69,7 +82,7 @@ Checklist for creating VMs
     - **Data disk**, for database files, website static content, app code, etc
   - VHDs are page blobs in Azure Storage
   - Two options for managing the relationship between the storage account and each VHD:
-    - **unmanaged disks**: expose the underlying storage accounts and page blobs, an account is capable of supporting 40 standard VHDs, it's hard to scale out
+    - **unmanaged disks**: expose the underlying storage accounts and page blobs, an account is capable of supporting 40 standard VHDs, it's hard to scale out, you need to take care IOPS limit, etc
     - **managed disks**: newer and recommended, you only need to specify the type (Ultra/Premium/Standard SSD, Standard HDD) and size, only show the disks, hide the underlying storage account and page blobs
 
 - OS
@@ -79,7 +92,14 @@ Checklist for creating VMs
 
 ### Disks
 
-Types:
+Performance:
+
+- Capacity (GiB, TiB - power of 1024)
+- IOPS
+- Throughput (IOPS x size per operation)
+- Latency
+
+Managed Disk Types:
 
 - Local SSD (temporary disk)
   - The temporary disk of each VM, size depending on the size of the VM;
@@ -99,6 +119,17 @@ Types:
 Operations:
 
 - Data disk could be detached/attached without stopping the VM
+- You could increase the disk size
+- To decrease the size, you need to create a new disk and copy the data over
+
+#### Shared disk
+
+Some disks could be attached to multiple VMs at the same time, this could be useful in a failover cluster.
+
+- Must be Premium SSD disks
+- Have a `maxShares` limit depending on the disk size
+- The VMs need to be in the same proximity group
+
 
 ### Initialize data disks
 
