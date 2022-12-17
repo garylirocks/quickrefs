@@ -221,8 +221,9 @@ az deployment group create \
     --template-uri https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/201-encrypt-running-windows-vm-without-aad/azuredeploy.json
 ```
 
-Note:
+Limitations:
 
+- The encryption key must be in a key vault in the **same region**, so it won't work if you move the disk to another region ?
 - Basic size VMs do not support ADE
 - On some Linux distros, only data disks can be encrypted
 - On Windows, only NTFS format disks can be encrypted

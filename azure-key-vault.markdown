@@ -6,6 +6,7 @@
   - [Certificate composition](#certificate-composition)
 - [Security](#security)
 - [Vault authentication](#vault-authentication)
+- [Replication](#replication)
 - [Best practices](#best-practices)
 - [CLI](#cli)
 
@@ -22,7 +23,7 @@
 
   - Name-value pair of strings
   - Can be passwords, SQL connection strings, etc
-  - An SSH private key is like a password, should be saved as a "Secret", not as a "Key"
+  - **An SSH private key is like a password, should be saved as a "Secret", not as a "Key"**
   - You app can retrive secrets through REST API
   - You could import a certificate to be a secret (*deprecated, use certificate service instead*)
 
@@ -31,7 +32,7 @@
 
 - Create or import self-signed or CA-signed certificates
 - When importing, you need a `.pfx`, or a `.pem` that includes the private key
-- You could config a lifetime action: auto renew or email contacts
+- You could config a **lifetime** action: auto renew or email contacts
 - Request and renew certificates through parternership with certificate authorities
 - Certs could be renewed automatically if issued by a partner CA
 
@@ -103,9 +104,21 @@ Vault uses AAD to authenticate users and apps:
     - managed identities are free, and you can enable/disable it on an app at any time;
 
 
+## Replication
+
+Key Vault in one region is natively replicated to the paired region
+
+To replicate/move it to other regions, you could back up then restore it
+
+- Backup/restore operation is at individual secret/key/cert level
+- The backup is encrypted
+- Backup can only be restored to a KV in the same subscription
+- Backup can only be restored to a KV in the same **security boundary** (eg. backup from Australia East, restore at Australia Central, not US East)
+
+
 ## Best practices
 
-- It's recommended to set up a **separate vault for each environment of each of your applications**, so if someone gained access to one of your vaults, the impace is limited;
+- It's recommended to set up a **separate vault for each environment of each of your applications**, so if someone gained access to one of your vaults, the impact is limited;
 - Don't read secrets from the vault everytime, you should cache secret values locally or load them into memory at startup time;
 
 

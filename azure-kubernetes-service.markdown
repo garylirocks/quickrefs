@@ -18,7 +18,7 @@
 When you create an AKS cluster, you need to specify
 - Node pool
 
-  You specify the VM size, node pools use virtual machine scale sets as the underlying infrastructure
+  You specify the VM size, node pools use VMSS(virtual machine scale sets) as the underlying infrastructure
 - Node count
 - Automatic routing
 

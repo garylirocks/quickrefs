@@ -7,6 +7,7 @@
 - [Images](#images)
 - [On-prem file backup](#on-prem-file-backup)
 - [Backup and Recovery](#backup-and-recovery)
+- [Region failover](#region-failover)
 
 ## Features
 
@@ -34,7 +35,8 @@
 
 - Recovery Service Vault
 
-  - A storage entity in Azure, could be LRS or GRS(default)
+  - A storage entity in Azure, could be LRS or GRS(default, data replicated to the paired region)
+    - Some backups could be restored to files, and then copied to another region
   - Can be used for both Azure and on-prem workloads
 
 - Backup policy
@@ -67,11 +69,10 @@ There are several backup options for VMs
 
   - Can replicate to any Azure region
   - Protect from major disaster scenarios when a whole region experiences an outage
+  - The managed disks are replicated to DR site, VMs are created in DR site when failover occurs
   - Recover your applications with a single click in minutes
 
   ![Azure Site Recovery](images/azure_backup-site-recovery.png)
-
-  *Replication data is stored in Azure Storage, Azure VMs are created when failover occurs*
 
 ### Backup job
 
@@ -109,3 +110,29 @@ The Backup Agent can be deployed to any Windows Server VM or physical machine.
 ## Backup and Recovery
 
 TODO: what's the difference between Recovery Services vault and Backup vault ?
+
+
+## Region failover
+
+Though reduncy at AZ (Availability Zone) level should be enough in most cases, you should still prepare for a region-wide disaster.
+There are a few things to consider based on resource types:
+
+- Compute:
+  - These resources are often regional, they don't have service level failover mechanism, you need to prepare it yourself
+  - Azure Site Recovery could replicate managed disks to another region
+  - VM, VMSS, AKS
+    - Active-passive: start them up in DR region during failover
+    - Active-active: keep a duplicate running in DR region
+  - Azure Compute Gallery
+    - Replicate artifacts to another region
+  - Azure Container Registry
+    - Replicate artifacts to another region
+- Key vault:
+  - You need a separate key vault in DR region
+  - CMK (Customer managed keys) should be different in DR region
+  - If keys/secrets need to be shared, you may need to use your own scripts or the backup/restore function to replicate the keys/secrets
+- Relational DBs: SQL, MySQL, PostgreSQL
+  - Usually have a failover group setup, data in primary region is asynchronously replicated to other regions
+  - Usaully have a active-passive setup, you only write to the pirmary region and read from any region
+  - CMK is at the DB server level, it should be different in each region
+- CosmosDB

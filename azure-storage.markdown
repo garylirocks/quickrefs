@@ -101,7 +101,7 @@ Azure Storage is also used by IaaS VMs, and PaaS services:
   - ZRS (not available in all regions)
 
   ![Redundancy in a secondary region](images/azure_geo-redundant-storage.png)
-  - GRS: replicated async to the secondary region, LRS in both regions, secondary region data _ONLY_ readable if Microsoft initiates a failover
+  - GRS: replicated async to the secondary region (the paired region), LRS in both regions, secondary region data _ONLY_ readable if Microsoft initiates a failover
   - GZRS: ZRS in both regions
   - RA-GRS, RA-GZRS: you could read from secondary region any time
 
@@ -542,7 +542,7 @@ Three concurrency strategies:
 
 ## Disks
 
-- Managed disks and recommended
+- Managed disks are recommended
 - Types:
   - Ultra-disk
   - Premium SSD
@@ -553,7 +553,7 @@ Caching settings
 
 - **None**: for write-only and write-heavy disks
 - **Ready only**: for read-only and read-write disks, improves read latency and IOPS
-- **Ready & Write**: only use if your app properly handles writting cached data
+- **Ready & Write**: only use if your app properly handles writing cached data
 
 
 ## Files
