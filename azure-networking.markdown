@@ -640,7 +640,7 @@ Connectivity can be from:
 
 ![ExpressRoute connections](images/azure_expressroute-connections.drawio.svg)
 
-- A ExpressRoute circuit located in one peering location could connect up to 10 vnets within the same geopolitical region
+- An ExpressRoute circuit located in one peering location could connect up to 10 vnets within the same geopolitical region
   - *ExpressRoute locations (peering locations) are co-location facilities where Microsoft Enterprise Edge (MSEE) devices are located, not the same as Azure regions*
 - Each gateway could have connections to multiple ER circuits, you specify the routing weight of each connection
 - **ExpressRoute Global Reach** allows you to connect multiple ExpressRoute circuits, which allows you to connect your multiple data centers in different geopolitical regions
