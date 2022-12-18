@@ -1,4 +1,32 @@
-# python cheatsheet
+# Python cheatsheet
+
+- [Preface](#preface)
+- [List](#list)
+- [Tuples](#tuples)
+- [Set](#set)
+- [Strings vs. Bytes](#strings-vs-bytes)
+- [Functions](#functions)
+  - [decorators](#decorators)
+- [Module](#module)
+  - [Set Module Searching paths](#set-module-searching-paths)
+- [Scoping and namespaces](#scoping-and-namespaces)
+- ['sys' module](#sys-module)
+- [filesystem, path related](#filesystem-path-related)
+- [Files](#files)
+- [Classes / Object-oriented programming / OOP](#classes--object-oriented-programming--oop)
+- [Regular Expressions](#regular-expressions)
+  - [Syntax](#syntax)
+  - [compiled vs. simple functions](#compiled-vs-simple-functions)
+  - [flags](#flags)
+  - [raw string notation](#raw-string-notation)
+  - [functions](#functions-1)
+- [Python 3](#python-3)
+  - [encoding](#encoding)
+  - [strings](#strings)
+- [Style tips](#style-tips)
+  - [Naming conventions](#naming-conventions)
+- [Uninstall a package](#uninstall-a-package)
+
 
 ## Preface
 
@@ -157,7 +185,7 @@ set operations:
         In [28]: b
         Out[28]: b'abc'
 
-`bytes` object is immutable, you can change a single byte by convert it to bytearray first
+    `bytes` object is immutable, you can change a single byte by convert it to bytearray first
 
         In [29]: ba = bytearray(b)
 
@@ -204,76 +232,92 @@ generator funtion:
     for i in gen():
         print(i)
 
-decorators:
+### decorators
 
-    def my_decorator(func):
-        print('in my_decorator, decorating', func.__name__)
-        def wrapper_func(*args):
-            print("Executing", func.__name__)
-            func(*args)
-        return wrapper_func
+```python
+def my_decorator(func):
+    print('in my_decorator, decorating', func.__name__)
+    def wrapper_func(*args):
+        print("Executing", func.__name__)
+        func(*args)
+    return wrapper_func
 
-    @my_decorator   # decorator's name
-    def my_func(x):
-        print(x ** 2)
+@my_decorator   # decorator's name
+def my_func(x):
+    print(x ** 2)
 
-    my_func(3)
+my_func(3)
+```
 
-outputs:
+Outputs:
 
-    in my_decorator, decorating my_func
-    Executing my_func
-    9
+```
+in my_decorator, decorating my_func
+
+Executing my_func
+9
+```
 
 ## Module
 
-three forms of import:
+Three forms of importing:
 
-    import modulename
-    from modulename import name1, name2, ...
-    from modulename import *
+```python
+import modulename
+from modulename import name1, name2, ...
+from modulename import *
+```
 
-The \* stands for all the exported names in modulename. This imports all public names from modulename—that is, those that don't begin with an underscore, and makes them available to the importing code without the necessity of prepending the module name. But if a list of names called `__all__` exists in the module (or the package's `__init__.py`), then the names are the ones imported, whether they begin with an underscore or not.
+- The `*` stands for all the exported names in a module. This imports all public names, eg. those that don't begin with an underscore, and makes them available to the importing code without prepending the module name.
+- But if a list of names called `__all__` exists in the module (or the package's `__init__.py`), then those names are imported, whether they begin with an underscore or not.
 
-## Set Module Searching paths
+### Set Module Searching paths
 
 - set the `PYTHONPATH` environment variable (sucha as in `~/.bashrc`), direcotries in `PYTHONPATH` will be prepend to `sys.path`
 - add to a `sys.path` directory a file like `xxx.pth`, which contains paths you want append to `sys.path`
 
-## scoping and namespaces
+## Scoping and namespaces
 
-there are always three namespaces in python: _local, global, built-in_
+There are always three namespaces in python:
 
-The global namespace of a function is the global namespace of the containing block of the function (where the function is defined). It's **independent** of the dynamic context from which it's called.
+- local
+- global
+- built-in
 
-## the 'sys' module
+The global namespace of a function is the global namespace of the containing block of the function definition. It's **independent** of the dynamic context from where it's been called.
 
-    sys.path        module importing paths list
-    sys.argv        arguments
-    sys.stdin
-    sys.stdout
-    sys.stderr
-    sys.exit
+## 'sys' module
 
-redirect standard out to a file:
+```
+sys.path        # list of module module importing paths
+sys.argv        # arguments
+sys.stdin
+sys.stdout
+sys.stderr
+sys.exit
+```
 
-    import sys
+To redirect standard out to a file:
 
-    class RedirectStdoutTo:
-        def __init__(self, out_new):
-            self.out_new = out_new
+```python
+import sys
 
-        def __enter__(self):
-            self.out_old = sys.stdout
-            sys.stdout = self.out_new
+class RedirectStdoutTo:
+    def __init__(self, out_new):
+        self.out_new = out_new
 
-        def __exit__(self, *args):
-            sys.stdout = self.out_old
+    def __enter__(self):
+        self.out_old = sys.stdout
+        sys.stdout = self.out_new
 
-    print('A')
-    with open('out.log', mode='w', encoding='utf-8') as a_file, RedirectStdoutTo(a_file):
-        print('B')
-    print('C')
+    def __exit__(self, *args):
+        sys.stdout = self.out_old
+
+print('A')
+with open('out.log', mode='w', encoding='utf-8') as a_file, RedirectStdoutTo(a_file):
+    print('B')
+print('C')
+```
 
 ## filesystem, path related
 
@@ -323,73 +367,84 @@ useful functions:
 - `glob.glob(pattern)` Gets matches to a wildcard pattern
 - `os.walk(path)` Gets all filenames in a directory tree
 
-## files
+## Files
 
-use file object as an iterator, iterate all lines in it:
+- Use file object as an iterator, iterate all lines in it:
 
+    ```python
     file_object = open("myfile", 'r')
+
     count = 0
     for line in file_object:
         count = count + 1
     print(count)
+
     file_object.close()
+    ```
 
-read file lines to a list:
+- Read file lines to a list:
 
+    ```python
     a = [l.rstrip() for l in open('/path/to/file')]
+    ```
 
-open and close files using `with` statement:
+- Open and close files using `with` statement:
 
+    ```python
     with open('path/to/file', encoding='utf-8') as a_file:
         line_count = 0
         for line in a_file:
             line_count += 1
         print(line_count)
+    ```
+
 
 ## Classes / Object-oriented programming / OOP
 
-- private methods or instance variables: name begin with (but not terminated by) a '\_\_'
+- Private methods or instance variables: name begin with (but not terminated by) two underscores `__`
+- Access private variables:
 
-- access private variables:
+    ```python
+    class Foo:
+        def __init__(self):
+            self.__x = 100
 
-        class Foo:
-            def __init__(self):
-                self.__x = 100
+    f = Foo()
+    print(f._Foo__x)  # you can access a private variable this way
+    print(f.__x)      # this will result in an error
+    ```
 
-        f = Foo()
-        print(f._Foo__x)  # you can access a private variable this way
-        print(f.__x)      # this will result in an error
+- `@property` to define a property getter, `@prop.setter` to define a setter
 
-- @property
+    ```python
+    class Temperature:
+        def __init__(self):
+            self._temp_fahr = 32
 
-        class Temperature:
-            def __init__(self):
-                self._temp_fahr = 0
+        @property
+        def temp(self):
+            return (self._temp_fahr - 32) * 5 / 9
 
-            @property
-            def temp(self):
-                return (self._temp_fahr - 32) * 5 / 9
+        @temp.setter
+        def temp(self, new_temp):
+            self._temp_fahr = new_temp * 9 / 5 + 32
 
-            @temp.setter
-            def temp(self, new_temp):
-                self._temp_fahr = new_temp * 9 / 5 + 32
 
-        >>> t = Temperature()
-        >>> t._temp_fahr
-        0
-        >>> t.temp
-        -17.777777777777779
-        >>> t.temp = 34
-        >>> t._temp_fahr
-        93.200000000000003
-        >>> t.temp
-        34.0
+    t = Temperature()
+    print(t._temp_fahr)
+    print(t.temp)
+
+    t.temp = 30
+
+    print(t._temp_fahr)
+    print(t.temp)
+    ```
 
 ## Regular Expressions
 
-### syntax
+### Syntax
 
-only syntaxes need attentions are listed here
+Only syntaxes need attentions are listed here
 
 - `*?`, `+?`, `??`
 
@@ -407,7 +462,7 @@ only syntaxes need attentions are listed here
 
 - `(...)`
 
-  specify a match group, the content of a group can be _retrived after a match or matched later in the string with the `\number` sequence_
+  specify a match group, the content of a group can be _retrieved after a match or matched later in the string with the `\number` sequence_
 
 - `(?aiLmsux)`
 
@@ -474,7 +529,7 @@ only syntaxes need attentions are listed here
 
 - `(?(id/name)yes-pattern|no-pattern)`
 
-  Will try to match with `yes-pattern` if the group with given id or name exists, and with `no-pattern` if it doesn’t. `no-pattern` is optional and can be omitted. For example, `(<)?(\w+@\w+(?:\.\w+)+)(?(1)>|$)` is a poor email matching pattern, which will match with `<user@host.com>` as well as `user@host.com`, but not with `<user@host.com` nor `user@host.com>`.
+  Will try to match with `yes-pattern` if the group with given id or name exists, and with `no-pattern` if it doesn’t. `no-pattern` is optional and can be omitted. For example, `(<)?(\w+@\w+(?:\.\w+)+)(?(1)>|$)` is a email matching pattern, which will match `<user@host.com>` as well as `user@host.com`, but not `<user@host.com` nor `user@host.com>`.
 
 - `\A`
 
@@ -610,24 +665,27 @@ use triple quotes as delimiter when you want to include a quote mark in the stri
 
 - Use `locals()`, `globals()`, `dir()` for debugging
 
-### naming conventions
+### Naming conventions
 
-    package: all_lower_case
-    module: all_lower_case_and_short
-    class: CamelCase, _CamelCase for internal use
-    exception: SomeError
+- package: `all_lower_case`
+- module: `all_lower_case_and_short`
+- class: `CamelCase`, `_CamelCase` for internal use
+- exception: `SomeError`
+- function: `lower_case`
+- global variable: `lower_case`
+- constants: `ALL_CAPS`
 
-    function: lower_case
-    global variable: lower_case
 
-    constants: ALL_CAPS
+## Uninstall a package
 
-## uninstall a package
+```sh
+sudo pip uninstall phpsh
+```
 
-    sudo pip uninstall phpsh
+Locate any remaining files
 
-and remove any remaining files
-
-    locate phpsh
+```sh
+locate phpsh
+```
 
 [quick_python_book]: http://www.manning.com/TheQuickPythonBookSecondEdition
