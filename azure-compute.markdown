@@ -8,7 +8,8 @@
   - [Disk encryption](#disk-encryption)
     - [ADE](#ade)
   - [Availability options](#availability-options)
-  - [Scaling](#scaling)
+  - [VMSS - Virtual Machine Scale Sets](#vmss---virtual-machine-scale-sets)
+  - [Azure Batch](#azure-batch)
   - [Provisioning](#provisioning)
   - [Use AAD for Linux VM authentication](#use-aad-for-linux-vm-authentication)
   - [Linux Agent](#linux-agent)
@@ -260,17 +261,17 @@ Limitations:
   ![Availability Zones](images/azure-availability-zones.png)
 
 
-### Scaling
+### VMSS - Virtual Machine Scale Sets
 
-- Virtual Machine Scale Sets
+- All instances are created from the same base OS image and configuration.
+- Support Load Balancer for layer-4 traffic distribution, and Application Gateway for layer-7 traffic distribution and SSL termination.
+- Number of instances can automatically increase or decrease in response to demand or a defined schedule.
+- You could use your own custom VM images.
+- It has instance repair feature which replaces a VM if it health check fails.
 
-  - All instances are created from the same base OS image and configuration.
-  - Support Load Balancer for layer-4 traffic distribution, and Application Gateway for layer-7 traffic distribution and SSL termination.
-  - Number of instances can automatically increase or decrease in response to demand or a defined schedule.
-  - You could use your own custom VM images.
+### Azure Batch
 
-- Azure Batch
-  - large-scale job scheduling and compute management;
+Large-scale job scheduling for HPC (High Performance Compute) workload
 
 ### Provisioning
 

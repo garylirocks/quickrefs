@@ -8,6 +8,7 @@
   - [Business continuity (BCDR)](#business-continuity-bcdr)
 - [SQL Managed Instance](#sql-managed-instance)
 - [SQL Server on VM](#sql-server-on-vm)
+- [Backup](#backup)
 - [Data security](#data-security)
   - [Transparent data encryption (TDE)](#transparent-data-encryption-tde)
   - [Dynamic data masking](#dynamic-data-masking)
@@ -37,8 +38,12 @@ Deployment options:
 
 ![Purchasing models](./images/azure_sql-db-purchasing-models.png)
 
-- DTU: a bundled measure of compute, storage and I/O resources (service tiers: Basic, Standard, Premium)
-- vCore: select compute and storage resources independently, allows you to use Azure Hybrid Benefit for SQL Server (service tiers: General Purpose, Bisness Critical, Hyperscale)
+- DTU: a bundled measure of compute, storage and I/O resources
+- vCore: select compute and storage resources independently, allows you to use Azure Hybrid Benefit for SQL Server
+
+| Purchasing Model | DTU                      | vCore                                         |
+| ---------------- | ------------------------ | --------------------------------------------- |
+| Service tiers    | Basic, Standard, Premium | General Purpose, Bisness Critical, Hyperscale |
 
 ### Service tiers
 
@@ -140,6 +145,20 @@ A version of SQL Server that runs in an Azure VM
 - Responsible for updating and patching the OS and SQL Server
 
 There's a VM extention that helps with licensing, patching, backing up, etc
+
+
+## Backup
+
+SQL, SQL MI:
+
+- A minimum 7 day default backup retention period
+- Standard and premium can be configured for retention up to 35 days without having to configure long-term retention(LTR), only up to 7 days for basic tier.
+- For all SQL DB tiers, LTR can be configured for up to 10 year retention.
+
+Synapse SQL pool:
+
+- Minimum 7 day default retention
+- LTR not supported
 
 
 ## Data security

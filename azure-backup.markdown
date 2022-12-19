@@ -6,7 +6,6 @@
   - [Backup job](#backup-job)
 - [Images](#images)
 - [On-prem file backup](#on-prem-file-backup)
-- [Backup and Recovery](#backup-and-recovery)
 - [Region failover](#region-failover)
 
 ## Features
@@ -41,6 +40,14 @@
     - Some backups could be restored to files, and then copied to another region
   - Can be used for both Azure and on-prem workloads
 
+- Backup Vault
+
+  Similar to Recovery Service Vault, but does not support:
+  - Integrated monitoring
+  - Recovering of individual folders and files
+
+   **TODO** more notes here
+
 - Backup policy
 
   Defines when to take snapshots, how long those snapshots are retained
@@ -59,7 +66,17 @@ There are several backup options for VMs
   - A snapshot can be used to create new managed disks
   - Billed based on actual used size, eg. if you create a snapshot of a managed disk with provisioned capacity of 64 GiB and actual used size of 10 GiB, the snapshot is billed only for the used size of 10 GiB
 
-- Azure Backup
+- Azure Disk Backup
+  - Doesn't interrupt VM
+  - Doesn't affect application performance
+  - Doesn't require agents
+  - Cost-effective
+  - Supports multiple backups per day
+  - Supports both OS and data disks (including shared disks)
+  - Supports crash-consistent backup, not application-consistent
+  - Can be used alongside Azure VM backup
+
+- Azure VM Backup
 
   - Suitable for VMs running **production** workloads
   - Supports **application-consistent backups** for both Windows and Linux VMs
@@ -67,8 +84,12 @@ There are several backup options for VMs
   - When you restore from a recovery point, you can restore the whole VM or just specific files
   - Requires VM Agent been installed on the VM
 
+
 - Azure Site Recovery
 
+  - Run on virtual or physical machines
+  - Replicates continuously for Azure and VMware VMs
+  - Replication frequency for Hyper-V is as low as 30 seconds
   - Can replicate to any Azure region
   - Protect from major disaster scenarios when a whole region experiences an outage
   - The managed disks are replicated to DR site, VMs are created in DR site when failover occurs
@@ -108,15 +129,9 @@ When you create an image from a VM
 The Backup Agent can be deployed to any Windows Server VM or physical machine.
 
 
-
-## Backup and Recovery
-
-TODO: what's the difference between Recovery Services vault and Backup vault ?
-
-
 ## Region failover
 
-Though reduncy at AZ (Availability Zone) level should be enough in most cases, you should still prepare for a region-wide disaster.
+Though redundancy at AZ (Availability Zone) level should be enough in most cases, you should still prepare for a region-wide disaster.
 There are a few things to consider based on resource types:
 
 - Compute:
