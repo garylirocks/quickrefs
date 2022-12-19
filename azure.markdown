@@ -36,6 +36,8 @@
 - [Messaging platforms](#messaging-platforms)
   - [Messages vs. Events](#messages-vs-events)
   - [Service bus](#service-bus)
+    - [Queue](#queue)
+    - [Topic](#topic)
   - [Storage Queues](#storage-queues)
   - [Event Grid](#event-grid)
   - [Event Hub](#event-hub)
@@ -677,8 +679,7 @@ Events:
 
 - Is a brokered messaging system, stores messages in a "broker" (e.g. a queue) until the consuming party is ready.
 
-
-Queue:
+#### Queue
 
 ![Service Bus Queue](./images/azure_service-bus-queue.png)
 
@@ -695,12 +696,11 @@ Storage queues are simpler to use but less sophisticated and flexible than Servi
 | Queue polling on destination end | Not required                         | -              |
 | Log                              | -                                    | Yes            |
 
+#### Topic
 
-
-Topic (supports multiple receivers):
+Unlike a queue, a topic supports multiple receivers
 
 ![Service Bus Topic](./images/azure_service-bus-topic.png)
-
 
 Three filter conditions:
 
@@ -710,16 +710,21 @@ Three filter conditions:
 
 All filters evaluate message properties, not message body.
 
-
 ### Storage Queues
 
 ![storage queue message flow](images/azure_storage-queue-message-flow.png)
 
 - `get` and `delete` are separate operations, this ensures the *at-least-once delivery*, in case there is a failure in the receiver, after receiver gets a message, the message remains in the queue but is invisible for 30 seconds, after that if not deleted, it becomes visible again and another instance of the receive can process it
 
+
 ### Event Grid
+
+//TODO
 
 
 ### Event Hub
 
 Often used for a specific type of high-flow stream of communications used for analytics (often used with Stream Analytics)
+
+- It's one of the options in "Diagnostic settings" for resource logs/metrics
+- Event Hub can work with Event Grid, could be either event source or handler
