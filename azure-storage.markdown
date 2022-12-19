@@ -12,7 +12,7 @@
     - [Microsoft Defender for Cloud](#microsoft-defender-for-cloud)
   - [Authorization Options](#authorization-options)
     - [Public read access for containers and blobs](#public-read-access-for-containers-and-blobs)
-    - [Azure AD](#azure-ad)
+    - [RBAC](#rbac)
     - [Access keys](#access-keys)
     - [Shared access signature (SAS)](#shared-access-signature-sas)
   - [CLI](#cli)
@@ -30,6 +30,7 @@
   - [Properties and Metadata](#properties-and-metadata)
   - [Concurrency](#concurrency)
 - [Disks](#disks)
+  - [Bursting](#bursting)
 - [Files](#files)
   - [Create and mount a share](#create-and-mount-a-share)
   - [Authentication](#authentication)
@@ -74,18 +75,6 @@ Azure Storage is also used by IaaS VMs, and PaaS services:
 
 - Subscription
 - Location
-- Performance tiers
-  - Standard: HDD, low cost
-  - Premium:
-    - SSD
-    - additional services: unstructured object data as block blobs or append blobs, specialized file storage
-- Replication
-  - LRS: locally-redundant storage, three copies within a datacenter
-  - GRS: geo-redundant storage
-- Access tier
-  - Hot or cool
-  - *Only apply to blobs*
-  - Can be specified for each blob
 - Secure transer required: whether HTTPS is enforced
 - Virtual networks: only allow inbound access request from the specified network(s)
 - Account kind
@@ -93,6 +82,14 @@ Azure Storage is also used by IaaS VMs, and PaaS services:
   - **Premium block blobs**: for low-latency, high-rate, small transactions
   - **Premium file shares**: supports NFS
   - **Premium page blobs**: high performance, VM disks
+
+  *Premium accounts use SSD, but do not support GRS, GZRS*
+
+- Default access tier (*Standard accounts only, Does not apply to Premium accounts*)
+  - Hot or cool
+  - *Only applies to blobs*
+  - Can be specified for each blob (Hot/Cool/Archive)
+
 - Redundancy
 
   ![Redundancy in the primary region](images/azure_data-redundancy-primary-region.png)
@@ -204,30 +201,30 @@ There are two ways to manage network ACL exceptions:
 
 #### Public read access for containers and blobs
 
-  - Only for blob containers and blobs
-  - Only for read access
-  - The `AllowBlobPublicAccess` property at account level
-  - A container's public access level can be:
-    - Private: no anonymous access
-    - Blob: anonymous read access for blobs
-    - Container: anonymous **read and list** access to the entire container and blobs
-  - Both account and container settings are required to enable public access, so an account can have both public and private containers
-  - No separate settings at the blob object level
+- Only for read access
+- The `AllowBlobPublicAccess` property at account level must be enabled
+- A container's public access level can be:
+  - Private: no anonymous access
+  - Blob: anonymous read access for blobs
+  - Container: anonymous **read and list** access to the entire container and blobs
+- Both account and container settings are required to enable public access, so an account can have both public and private containers
+- No separate settings at the blob object level
 
-#### Azure AD
+#### RBAC
 
 Can be used for
 
-- Resource management operations: such as key management
-- and data operations on the Blob and Queue services, eg. you need *Storage Blob Data Contributor* role to write to a blob
+- Control plane (Resource management operations): such as key management
+- Data plane: data operations on the Blob and Queue services, eg. you need *Storage Blob Data Contributor* role to write to a blob
 
 Use this when you are
-  - running an app with managed identities
-  - or using security principals (users, service principals)
+- running an app with managed identities
+- or using security principals (users, service principals)
 
 #### Access keys
 
-- Like a root password, allow **full access**.
+- Like a root password, allow **full access**
+- Generally a bad idea, you **should avoid them**, there's now account level settings to disable these keys
 - Typically stored within env variables, database, or configuration file.
 - Should be private, don't include the config file in source control or store in public repos
 - It's recommended that you manage access keys in Azure Key Vault
@@ -243,19 +240,22 @@ SAS grants access to storage resources for a specific time range without sharing
 
 There are three types:
 
-- **User delegation SAS**
-  - Secured with Azure AD credentials and also permissions specified for the SAS
-  - For Blob only: could be at container or blob level
-  - Recommended over signing with an access key
-- **Service SAS**: scoped at container level, which can be a blob container, a file share, a queue or a table
 - **Account SAS**
 
   You could specify:
     - Allowed services: Blob, File, Queue, Table
     - Allowed resource types: Service, Container, Object
     - Allowed permissions: Read, Write, Delete, List, ...
+- **Service SAS**: scoped at container level, which can be a blob container, a file share, a queue or a table
+- **User delegation SAS**
+  - Secured with Azure AD credentials and also permissions specified for the SAS
+  - For Blob only: could be at container or blob level
+  - Recommended over signing with an access key
 
-Two forms:
+NOTE: *Account SAS and Service SAS are signed by account key, so if you disable account key, they won't work*
+
+There are two forms:
+
 - Ad hoc SAS
 
   An ad hoc SAS URI looks like `https://myaccount.blob.core.windows.net/?restype=service&comp=properties&sv=2015-04-05&ss=bf&srt=s&st=2015-04-29T22%3A18%3A26Z&se=2015-04-30T02%3A23%3A26Z&sr=b&sp=rw&sip=168.1.5.60-168.1.5.70&spr=https&sig=F%6GRVAZ5Cdj2Pw4txxxxx`, it contains:
@@ -332,9 +332,9 @@ For block blobs, there are three access tiers: "hot", "cool" and "archive", from
 - An account has a default tier, either hot or cool
 - A blob can be at any tier
 - Archive
-  - can only be set at blob level;
-  - data is offline, only metadata available for online query;
-  - to access data, the blob must first be **rehydrated** (changing the blob tier from Archive to Hot or Cool, this can take hours);
+  - can only be set at blob level
+  - data is **offline**, only metadata available for online query
+  - to access data, the blob must first be **rehydrated** (changing the blob tier from Archive to Hot or Cool, this can take hours)
 
 
 ### Organization
@@ -543,11 +543,17 @@ Three concurrency strategies:
 ## Disks
 
 - Managed disks are recommended
+- Managed disks run on top of page blob (the underlying storage account is hidden)
 - Types:
   - Ultra-disk
+    - You could customize size, IOPS and throughput
   - Premium SSD
-  - Standard SSD
-  - Standard HDD
+    - A disk could be shared by multiple VMs
+    - You can pick a performance level without increase the disk size
+  - Standard SSD / Standard HDD
+    - Performance (IOPS/throughput) is tied to capacity, so you may need to increase the disk size simply because you need higher IOPS
+
+- You could increase disk size, but can't decrease it (workaround: create a new one and copy data to it)
 
 Caching settings
 
@@ -555,12 +561,27 @@ Caching settings
 - **Ready only**: for read-only and read-write disks, improves read latency and IOPS
 - **Ready & Write**: only use if your app properly handles writing cached data
 
+### Bursting
+
+- Only for certain sizes of Standard/Premium SSD
+- No bursting for standard HDD, or Ultra
+
+- For P20 disks and smaller:
+  - Enabled by default
+  - Credit-based bursting (you accumulate credits when you disk is under-used, spend credits while bursting)
+  - Up to 3500 IOPS and 170MB/s
+  - Up to 30min
+
+- For P30 disks and larger
+  - There's monthly enablement fee and a burst transaction fee (pay by additional IOPS)
+  - Up to 30,000IOPS and 1000MB/s
+
 
 ## Files
 
 Network files shares
 
-- Accessed over SMB/CIFS protocol
+- Accessed over SMB/CIFS/NFS protocol
 - Multiple VMs can share the same files with both read and write access
 - Can be used to replace your on-prem NAS devices or file servers
 
@@ -580,7 +601,7 @@ Tiers:
 Compare to Blobs and Disks
 
 - Files have true directory objects, Blobs have a flat namespace.
-- File shares can be mounted concurrently by multiple cloud or on-prem machines, Disks are exclusive to a single VM.
+- File shares can be mounted concurrently by multiple cloud or on-prem machines, Disks are exclusive to a single VM (except shared disks).
 - Files shares are best suited for random access workloads.
 
 ### Create and mount a share

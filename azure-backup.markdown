@@ -26,12 +26,14 @@
   - Centered on datasource, you could filter views by datasource subscription, resource group or tags.
   - Supported datasources:
     - Azure VM
-    - Azure Files
     - Azure Blobs
+    - Azure Files
     - Azure-manged disks
     - SQL in Azure VM
     - SAP HANA in Azure VM
     - Azure Database for PostgreSQL Server
+  - For Blobs and Files, Azure Backup does NOT copy anything to a recovery service vault, it **ONLY works as an orchestrator**, defining when to take snapshots, retain them for how long, etc
+
 
 - Recovery Service Vault
 
