@@ -49,7 +49,7 @@
 - Azure Containers (Blobs): unstructured text or binary data
 - Azure Files: network file shares
 - Azure Queues
-- Azure Tables: *now part of Azure Cosmos DB*
+- Azure Tables: *could be migrated to Azure Cosmos DB, which has a API for Azure Tables*
 - Azure Data Lake Storage
   - Based on Apache Hadoop, is designed for large data volumes and can store unstructured and structured data.
   - Azure Data Lake Storage Gen1 is a dedicated service.
