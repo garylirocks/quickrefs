@@ -63,7 +63,7 @@ Deployment options:
 
   ![Hyperscale architecture](./images/azure_hyperscale-architecture.png)
 
-  - Page servers serve database pages out to the compute nodes on demand
+  - Page servers (sharding) serve database pages out to the compute nodes on demand
   - Data changes from the primary compute replica are propagated through the log service: it gets logs from primary compute replica, persists them, forwards them to other compute replicas and relevant page servers
   - Transcations can commit when the log service hardens to the landing zone
   - Can have 0 to 4 secondary replicas, can all be used for read-scale
@@ -73,7 +73,7 @@ Deployment options:
 - Vertical scaling
 - Horizontal scaling
   - Read Scale-out
-  - Sharding
+  - Sharding (Hyperscale does this automatically, or you can do it manually with some tools)
 
 Read Scale-out in a business critical service tier:
 
@@ -119,15 +119,17 @@ Notes:
 
 ## SQL Managed Instance
 
-No need to manage a VM, most of the SQL Server instance-scoped features are still available:
-
-- SQL Server Agent
-- Service Broker
-- Common language runtime (CLR)
-- Database Mail
-- Linked servers
-- Distributes transcations
-- Machine Learning Services
+- A PaaS service, but deployed into your own vNet
+- No need to manage a VM
+- Most of the SQL Server instance-scoped features are still available:
+  - SQL Server Agent
+  - Service Broker
+  - Common language runtime (CLR)
+  - Cross-database transactions
+  - Database Mail
+  - Linked servers
+  - Distributes transcations
+  - Machine Learning Services
 
 
 ## SQL Server on VM
@@ -136,6 +138,8 @@ A version of SQL Server that runs in an Azure VM
 
 - Access to full capabilities of SQL Server
 - Responsible for updating and patching the OS and SQL Server
+
+There's a VM extention that helps with licensing, patching, backing up, etc
 
 
 ## Data security
@@ -162,12 +166,12 @@ A version of SQL Server that runs in an Azure VM
 
 - A presentation layer feature
 - Data in the database is not changed, admins can always view the unmasked data
-- You set data masking policy on columns
+- You set data masking policy on columns (such as Social security number)
 
 ### Always Encrypted
 
 - Protect sensitive data stored in specific database columns
-- Data can only be decrypted by client applications with access to the encryption key
+- Data can only be decrypted by **client applications** with access to the encryption key, a DBA can't see the data if he does not have the key
 - Could be used in cases like: you want a third-party to manage the DB for you without exposing all the data
 - Can't be used together with dynamic data masking
 
