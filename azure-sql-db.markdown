@@ -64,7 +64,7 @@ Elastic pool: multiple databases in a single logical SQL server, and all the DBs
 
   - data and log files are stored on direct-attached SSD
   - like deploying an Always On availability group (AG) behind the scenes
-  - there are three secondary replicas, **only one** of them could be used ad a read-only endpoint
+  - there are three secondary replicas, **only one** of them could be used as a read-only endpoint
   - A transaction can complete a commit when at least one the secondary replicas has hardened the change for its transcation log
   - Highest performance and availability of all Azure SQL service tiers
 

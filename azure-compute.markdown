@@ -2,6 +2,7 @@
 
 - [VMs](#vms)
   - [Considerations](#considerations)
+  - [Series](#series)
   - [Disks](#disks)
     - [Shared disk](#shared-disk)
   - [Initialize data disks](#initialize-data-disks)
@@ -90,6 +91,34 @@ Checklist for creating VMs
   - Multiple versions of Windows and Linux
   - Marketplace has VM images which include popular tech stacks
   - You can create your disk image and upload to Azure storage and use it to create a VM
+
+
+### Series
+
+- A: entry-level for dev/test
+- B: economical, burstable (on accumulated CPU credits)
+- D: general purpose
+- E:
+  - optimized for in-memory applications, high memory-to-core ratios
+  - SAP HANA
+- F:
+  - compute optimized
+  - batch processing, web servers, analytics, gaming
+- G:
+  - memory and storage optimized
+  - large SQL/NoSQL DBs, ERP, SAP
+- H:
+  - high performance computing
+- Ls
+  - Storaged optimized
+- M
+  - memory optimized
+- M2
+  - largest memory optimized
+- N
+  - GPU enabled
+  - simulation, deep learning, redendring, video editing, gaming
+
 
 ### Disks
 

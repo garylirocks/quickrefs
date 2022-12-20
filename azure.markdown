@@ -689,22 +689,24 @@ Events:
 
 Storage queues are simpler to use but less sophisticated and flexible than Service Bus queues:
 
-| Feature                          | Service Bus Queues                   | Storage Queues |
-| -------------------------------- | ------------------------------------ | -------------- |
-| Message size                     | 256KB(std tier) / 1MB (premium tier) | 64KB           |
-| Queue size                       | 80 GB                                | unlimited      |
-| Delivery                         | at-least-once or at-most-once        | -              |
-| Guarantee                        | FIFO guarantee                       | -              |
-| Transaction                      | Yes                                  | No             |
-| Role-based security              | Yes                                  | No             |
-| Queue polling on destination end | Not required                         | -              |
-| Log                              | -                                    | Yes            |
+| Feature                          | Service Bus Queues                                        | Storage Queues |
+| -------------------------------- | --------------------------------------------------------- | -------------- |
+| Message size                     | 256KB(std tier) / 1MB (premium tier)                      | 64KB           |
+| Queue size                       | 80 GB                                                     | unlimited      |
+| Delivery                         | at-least-once or at-most-once                             | -              |
+| Guarantee                        | FIFO guarantee                                            | -              |
+| Transaction                      | Yes                                                       | No             |
+| Role-based security              | Yes                                                       | No             |
+| Queue polling on destination end | Not required (could use a long-polling receive operation) | Yes            |
+| Log                              | -                                                         | Yes            |
 
 #### Topic
 
 Unlike a queue, a topic supports multiple receivers
 
 ![Service Bus Topic](./images/azure_service-bus-topic.png)
+
+Receivers do not need to poll the topic
 
 Three filter conditions:
 

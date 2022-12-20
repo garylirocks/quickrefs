@@ -4,6 +4,7 @@
 - [Node pools](#node-pools)
 - [Networking](#networking)
   - [kubenet](#kubenet)
+- [Application Gateway Ingress Controller](#application-gateway-ingress-controller)
 - [Settings](#settings)
 
 ## Overview
@@ -100,6 +101,11 @@ AKS clusters can use kubenet (basic networking) or Azure CNI (advanced networkin
   - Azure network policies, but Calico are supported
   - Windows node pools
   - Virtual nodes add-on
+
+
+## Application Gateway Ingress Controller
+
+AGIC is a Kubernetes application, it monitors the cluster to update Application Gateway whenever a new service is selected to be exposed to the outside world.
 
 
 ## Settings
