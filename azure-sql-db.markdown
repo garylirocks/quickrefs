@@ -21,10 +21,14 @@ Deployment options:
 
 ![Deployment options](./images/azure_sql-db-deployment-options.png)
 
-|            | SQL Databases         | SQL Managed Instance     | SQL Server on VM |
-| ---------- | --------------------- | ------------------------ | ---------------- |
-| Type       | PaaS                  | PaaS                     | IaaS             |
-| Why choose | Modern cloud solution | Instance-scoped features | OS level access  |
+Elastic pool: multiple databases in a single logical SQL server, and all the DBs share the server's resources
+
+|                   | SQL Databases                  | SQL Managed Instance               | SQL Server on VM |
+| ----------------- | ------------------------------ | ---------------------------------- | ---------------- |
+| Type              | PaaS                           | PaaS                               | IaaS             |
+| Why choose        | Modern cloud solution          | Instance-scoped features           | OS level access  |
+| Purchasing models | DTU, vCore                     | vCore                              | -                |
+| HA                | geo-replication, auto-failover | automated backup, no auto-failover | no auto-failover |
 
 ## SQL Database
 
@@ -78,7 +82,12 @@ Deployment options:
 - Vertical scaling
 - Horizontal scaling
   - Read Scale-out
-  - Sharding (Hyperscale does this automatically, or you can do it manually with some tools)
+  - Sharding
+    - Hyperscale does this automatically, or you can do it manually with some tools
+    - Partitions database into multiple databases/shards
+    - Shards can be in different regions, and scale independently
+    - The solution uses a special database named shard map manager, which maintains mapping about all shards
+
 
 Read Scale-out in a business critical service tier:
 

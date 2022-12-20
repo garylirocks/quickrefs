@@ -9,6 +9,7 @@ Five pillars, use "CORPS" as a mnemonic
 - Right size, sku
 - Stop/deallocate/delete when not used
 - VM: spot instance, resevered instance
+- SQL DB: elastic pool, reserved capacity
 - Autoscaling
 - Policy
 - Budget

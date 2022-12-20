@@ -78,7 +78,9 @@ Azure Storage is also used by IaaS VMs, and PaaS services:
 - Secure transer required: whether HTTPS is enforced
 - Virtual networks: only allow inbound access request from the specified network(s)
 - Account kind
-  - **Standard (general-purpose v2)**: all services and Data Lake Storage
+  - **General-purpose v2**: all services and Data Lake Storage
+    - Standard or Premium performance tier
+  - **BlobStorage**: block and append blobs, only standard tier
   - **Premium block blobs**: for low-latency, high-rate, small transactions
   - **Premium file shares**: supports NFS
   - **Premium page blobs**: high performance, VM disks
@@ -88,7 +90,7 @@ Azure Storage is also used by IaaS VMs, and PaaS services:
 - Default access tier (*Standard accounts only, Does not apply to Premium accounts*)
   - Hot or cool
   - *Only applies to blobs*
-  - Can be specified for each blob (Hot/Cool/Archive)
+  - Can be specified for each blob individually (Hot/Cool/Archive)
 
 - Redundancy
 
@@ -122,11 +124,13 @@ Note:
 - Encryption at rest
 
   - All data is automatically encrypted by Storage Service Encryption (SSE) with a 256-bit AES cipher. This can't be disabled.
+  - This applies to all services (blobs, files, tables, queues, etc) in the account
   - You could use either
     - Microsoft managed keys
-    - Customer managed keys
+    - Customer managed keys (CMK)
       - you specify a key in a key vault (the key vault must have soft-delete and purge protection enabled)
       - the storage account needs a user-assigned or system-assigned identity to access the key
+      - a CMK could be scoped to the whole account or only a specified service
 
 - Encryption at tansit
 
