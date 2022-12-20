@@ -496,7 +496,11 @@ Notes:
 
 - Blueprints are versioned
 - The relationship between the blueprint definition and assignment (the deployed resources) is preserved, helping you track and audit your deployments
-- You assign a blueprint to a **management group**, it would deploy to existing and new subscriptions under the group
+- Can be assigned at management group or subscription level
+  - If assigned at a **management group** level, it would deploy to **existing and new** subscriptions under the group
+- Resource deployed by blueprints are **locked**
+  - When you un-assign a blueprint, the resource locking is removed, resources and RBAC assignments do not change
+  - A subscription owner can't remove the lock, but can un-assign the blueprint if it's assigned at the subscription level
 
 
 ## Azure Cloud Adoption Framework
@@ -719,7 +723,8 @@ All filters evaluate message properties, not message body.
 
 ### Event Grid
 
-//TODO
+- Designed to react to status changes
+- Lets you integrate third-party tools to react to events without having to continually poll for event status
 
 
 ### Event Hub

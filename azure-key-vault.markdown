@@ -74,14 +74,18 @@ openssl pkcs12 -in cert.pfx -passin pass: -out cert.pem -nodes
 
 ## Security
 
-Two permission models:
+Control plane permissions are always controlled by RBAC
 
-- **Vault access policy**: for each individual vault, set permissions for users, groups, apps
-- **RBAC**: access can be inherited, and can be more granular: set permissions on specific keys, secrets or certificates
+For data plane, there are two models:
 
-You could also enable access for:
+- **Vault access policy**: for each individual vault, assign secret/key/cert permissions for users/groups/apps
+- **RBAC**:
+  - access can be inherited
+  - and can be more granular: set permissions on specific keys, secrets or certificates
 
-- **Azure VM for deployment**: enables Microsoft.Compute resource provider to retrieve secrets when this key vault is referenced in resource creation, for example, when creating a VM
+Three advanced access policy options:
+
+- **Azure VM for deployment**: enables `Microsoft.Compute` resource provider to retrieve secrets when this key vault is referenced in resource creation, for example, when creating a VM
 - **Azure Resource Manager for template deployment**: enables Azure Resource Manager to get secrets when this key vault is referenced in a template deployment
 - **Azure Disk Encryption for volume encryption**
 
@@ -106,14 +110,17 @@ Vault uses AAD to authenticate users and apps:
 
 ## Replication
 
-Key Vault in one region is natively replicated to the paired region
+Key Vault contents are natively replicated
+  - within the region (allow failover to another datacenter)
+  - and to the paired region (allow failover in case of a region-wide failure)
 
 To replicate/move it to other regions, you could back up then restore it
 
 - Backup/restore operation is at individual secret/key/cert level
 - The backup is encrypted
-- Backup can only be restored to a KV in the same subscription
-- Backup can only be restored to a KV in the same **security boundary** (eg. backup from Australia East, restore at Australia Central, not US East)
+- Backup can only be restored to a KV in the
+  - same subscription
+  - and in the same **geography/security boundary** (eg. backup from Australia East, restore at Australia Central, not US East)
 
 
 ## Best practices

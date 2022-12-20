@@ -1,7 +1,7 @@
 # Azure Monitor
 
 - [Overview](#overview)
-- [Azure Monitor](#azure-monitor)
+- [Azure Monitor](#azure-monitor-1)
   - [VMs](#vms)
 - [Defender for Cloud](#defender-for-cloud)
 - [Alerting](#alerting)
@@ -123,6 +123,7 @@ For VMs, Azure collects some metrics(host-level) by default, such as CPU usage, 
 
 - Azure Monitor stores log data in a Log Analytics workspace
 - A Log Analytics workspace is the **equivalent of a database** inside Azure Data Explorer, data is organized into tables
+- Data collected can be retained for a maximum of two years
 - These services all use Log Analytics workspaces to store and query logs:
   - Microsoft Defender for Cloud
   - Microsoft Sentinel

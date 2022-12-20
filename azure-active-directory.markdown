@@ -78,8 +78,8 @@ Microsoft 365, Office 365, Azure, and Dynamics CRM Online all uses Azure AD, a t
   - conditional access policy (based on user's location, device etc, then allow/block access or require multi-factor authentication)
 
 - Premium P2
-  - Active Directory Identity Protection: risk-based conditional access
-  - Privileged Identity Management: discover, restrict and monitor administrators
+  - Active Directory Identity Protection: identify risky users and risky sign-ins
+  - Privileged Identity Management: just-in-time (JIT) privileged access control
 
 - Pay-as-you-go
   - Azure AD B2C: manage identity and access for consumer users
@@ -94,6 +94,7 @@ Features:
 
 - For collaborating with business partners from external organizations like suppliers, partners and vendors
 - Users appear as guests
+- Guest user could login by an email code, SMS code, Google/Facebook account, etc
 
 <img src="images/azure_ad-external-identities.png" width="600" alt="Guest users" />
 
@@ -101,13 +102,11 @@ Your could invite people from other external identity providers as guest users, 
 
 <img src="images/azure_ad-b2b.svg" width="600" alt="B2B process" />
 
-*MFA happens in your tenant if configured*
-
 ### Best practices
 
 - **Designate an application owner to manage guest users**. Application owners are in the best position to decide who should be given access to a particular application.
 - **Use conditional access policies to grant or deny access**
-- **Enable MFA**
+- **Enable MFA, this happens in your tenant**
 - **Integrate with identity providers**, you can setup federation
 - **Create as self-service sign-up user flow**, you could customize the experience
 
@@ -141,6 +140,32 @@ Azure AD does not replace Active Directory, they can be used together, **Azure A
 
   ![Azure AD Connect](images/azure_azure-ad-connect.png)
 
+Some technologies involved in hybrid scenarios:
+
+- Password hash synchronization
+
+  - Most basic and least-effort solution in hybrid scenario
+  - On-prem AD stores user password as a hash
+  - AD Connect retrieves the hash and hashes that hash, sends the second hash to Azure AD
+  - Allows on-prem user to auth against Azure AD for cloud applications
+
+- Password writeback
+
+  - Changes made in Azure AD are written back to on-prem AD
+
+- Pass-through authentication
+
+  - Passwords only in on-prem AD, not in the cloud (Azure AD)
+  - Only on-prem AD is used to authenticate
+  - A light weight agent in used on-prem to communicate with Azure AD
+
+- Federated authentication
+
+  - Allows an external, third-party system to authenticate users, including biometrics, smart-cards, etc
+  - Does not authenticate against on-prem AD
+
+
+
 ### Azure AD DS
 
 <img src="images/azure_aadds-sync.png" width="800" alt="AADDS Syncing" />
@@ -158,7 +183,7 @@ _On prem AD is optional here_
 - Provide access to organizational resources of work-related devices
 - Intended for organizations that do not have on-prem AD
 - Connection options:
-  - Registering a device to Azure AD enables you to manage a device's identity, which can be used to enable or disable a device
+  - Registering: registering a device to Azure AD enables you to manage a device's identity, which can be used to enable or disable a device
   - Joining: an extension to registering, changes local state to a device, which enables your users to sign-in to a device using a work or school account instead of personal account (e.g. you add your work M365 email to your own laptop)
 - Combined with a mobile device management (MDM) solution such as Microsoft Intune, provides additional attributes in Azure AD
 
@@ -293,7 +318,9 @@ There are three types of service principals:
 
   - User-assigned
 
-    A user-assigned managed identity is independent of any resources, so if your app is running on multiple VMs, it can use the same identity
+    A user-assigned managed identity is independent of any resources, so if your app is running on multiple VMs, it can use the same identity.
+
+    A resource can have multiple user-assigned managed identities.
 
     ```sh
     az identity create \
