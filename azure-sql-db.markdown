@@ -8,6 +8,9 @@
   - [Business continuity (BCDR)](#business-continuity-bcdr)
 - [SQL Managed Instance](#sql-managed-instance)
 - [SQL Server on VM](#sql-server-on-vm)
+  - [HADR](#hadr)
+    - [Always On availability group](#always-on-availability-group)
+    - [Failover cluster instance (FCI)](#failover-cluster-instance-fci)
 - [Backup](#backup)
 - [Data security](#data-security)
   - [Transparent data encryption (TDE)](#transparent-data-encryption-tde)
@@ -62,9 +65,9 @@ Elastic pool: multiple databases in a single logical SQL server, and all the DBs
 
   ![Business critical architecture](./images/azure_sql-business-critical.png)
 
-  - data and log files are stored on direct-attached SSD
-  - like deploying an Always On availability group (AG) behind the scenes
-  - there are three secondary replicas, **only one** of them could be used as a read-only endpoint
+  - Data and log files are stored on direct-attached SSD
+  - It deploys an Always On availability group (AG) behind the scenes
+  - There are three secondary replicas, **only one** of them could be used as a read-only endpoint
   - A transaction can complete a commit when at least one the secondary replicas has hardened the change for its transcation log
   - Highest performance and availability of all Azure SQL service tiers
 
@@ -152,8 +155,60 @@ A version of SQL Server that runs in an Azure VM
 
 - Access to full capabilities of SQL Server
 - Responsible for updating and patching the OS and SQL Server
+- You could use either Windows or Linux VMs(with prebuilt Linux images)
 
-There's a VM extention that helps with licensing, patching, backing up, etc
+There's SQL IaaS Agent extention that helps with licensing, patching, backing up, etc
+
+### HADR
+
+Most SQL Server HADR solutions are supported on VMs, as both Azure-only and hybrid solutions.
+
+- Always On availability groups
+- Always On failover cluster instances(FCIs)
+- Log shipping
+- Backup and restore with Azure Blob storage
+- Replicate and fail over SQL Server with Azure Site Recovery
+
+|                   | Always On AG                                                  | Always On FCIs                                                |
+| ----------------- | ------------------------------------------------------------- | ------------------------------------------------------------- |
+|                   | database level                                                | instance level                                                |
+| Requirement       | A domain controller VM                                        | Shared storage (Azure shared disks, Premium file shares, etc) |
+| Best practices    | VMs in an availability set or different AZs                   |                                                               |
+| Disaster recovery | an AG could span multiple Azure regions, or Azure and on-prem |                                                               |
+
+#### Always On availability group
+
+- Azure Only
+
+  <img src="./images/azure_sql-server-on-azure-vm-availability-group.png" width="400" alt="Always On availability group overview" />
+
+- Hybrid
+
+  <img src="images/azure_sql-server-hybrid-dr-alwayson-ag.png" width="400" alt="Always On AG hybrid" />
+
+  With Software Assurance, Passive and DR instances do not require liscenses
+
+  <img src="images/azure_sql-server-hybrid-failover-liscense.png" width="400" alt="Always On AG free DR license" />
+
+- Rely on the underlying Windeos Server Failover Clustering (WSFC)
+- SQL Server VMs should be in an availability set, or different availability zones
+  - VMs in one availability set could be placed in a proximity placement group, minimize latency
+  - VMs in different AZs offer better availability, but a greater network latency
+- An AG could be across different Azure regions (for disaster recovery)
+
+#### Failover cluster instance (FCI)
+
+- Relies on WSFC
+- An FCI is a single SQL Server instance that's installed across WSFC nodes (could be across multiple subnets)
+- On the network, an FCI appears to be a single instance on a single computer
+- SQL Server files needs to be on a shared storage, only the active node can access it at one time, a few options:
+  - Azure shared disks
+  - Premium file shares
+  - Storage Spaces Direct(S2D)
+- Cluster quorum supports using:
+  - a disk witness
+  - a cloud witness
+  - a file share witness
 
 
 ## Backup
