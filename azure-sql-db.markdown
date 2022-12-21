@@ -7,11 +7,12 @@
   - [Scaling](#scaling)
   - [Business continuity (BCDR)](#business-continuity-bcdr)
 - [SQL Managed Instance](#sql-managed-instance)
-- [SQL Server on VM](#sql-server-on-vm)
+- [Backup for SQL, SQL MI](#backup-for-sql-sql-mi)
+- [SQL Server on Azure VM](#sql-server-on-azure-vm)
   - [HADR](#hadr)
     - [Always On availability group](#always-on-availability-group)
     - [Failover cluster instance (FCI)](#failover-cluster-instance-fci)
-- [Backup](#backup)
+  - [Backup](#backup)
 - [Data security](#data-security)
   - [Transparent data encryption (TDE)](#transparent-data-encryption-tde)
   - [Dynamic data masking](#dynamic-data-masking)
@@ -149,15 +150,29 @@ Notes:
   - Machine Learning Services
 
 
-## SQL Server on VM
+## Backup for SQL, SQL MI
+
+SQL, SQL MI:
+
+- A minimum 7 day default backup retention period
+- Standard and premium can be configured for retention up to 35 days without having to configure long-term retention(LTR), only up to 7 days for basic tier.
+- For all SQL DB tiers, LTR can be configured for up to 10 year retention.
+
+Synapse SQL pool:
+
+- Minimum 7 day default retention
+- LTR not supported
+
+
+## SQL Server on Azure VM
 
 A version of SQL Server that runs in an Azure VM
 
 - Access to full capabilities of SQL Server
 - Responsible for updating and patching the OS and SQL Server
-- You could use either Windows or Linux VMs(with prebuilt Linux images)
+- You could use either Windows or Linux VMs
 
-There's SQL IaaS Agent extention that helps with licensing, patching, backing up, etc
+There's SQL IaaS Agent Extention that helps with licensing, patching, backing up, etc
 
 ### HADR
 
@@ -210,19 +225,29 @@ Most SQL Server HADR solutions are supported on VMs, as both Azure-only and hybr
   - a cloud witness
   - a file share witness
 
+### Backup
 
-## Backup
+- Automated Backup
+  - Provied by SQL Server IaaS Agent Extension
+  - Stored in a storage account you specify
+  - Backups retained up to 90 days
+  - With SQL Server 2016 and later: manual backup schedule and time window, backup frequency
+  - To restore: locate the backup files and restore using SQL Server Management Studio or Transact-SQL commands
 
-SQL, SQL MI:
+- Azure Backup for SQL VMs
+  - Azure Backup benefits: zero-infrastructure, long-term retension, central management
+  - Azure Backup installs a workload backup extension on the VM
+  - Additional features for SQL Server on VMs:
+    - Workload-aware backups that supports - full, differential, and log
+    - SQL transaction log backup RPO up to 15 minutes
+    - Point in time recovery up to a second
+    - Individual database level backup and restore
+    - Support for SQL Always  On
+  - To restore, do it in Azure Backups, not with SSMS or Transact-SQL
 
-- A minimum 7 day default backup retention period
-- Standard and premium can be configured for retention up to 35 days without having to configure long-term retention(LTR), only up to 7 days for basic tier.
-- For all SQL DB tiers, LTR can be configured for up to 10 year retention.
-
-Synapse SQL pool:
-
-- Minimum 7 day default retention
-- LTR not supported
+- Manual Backup
+  - Back up to attached disks or Blob storage
+  - Use SSMS or SQL scripts
 
 
 ## Data security
