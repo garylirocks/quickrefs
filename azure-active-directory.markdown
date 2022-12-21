@@ -157,7 +157,7 @@ Some technologies involved in hybrid scenarios:
 
   - Passwords only in on-prem AD, not in the cloud (Azure AD)
   - Only on-prem AD is used to authenticate
-  - A light weight agent in used on-prem to communicate with Azure AD
+  - A light weight agent is used on-prem to communicate with Azure AD
 
 - Federated authentication
 
