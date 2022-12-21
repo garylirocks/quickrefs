@@ -1011,9 +1011,10 @@ resource "aws_instance" "server" {
   - `file`: for copying files to remote machines
   - `local-exec`: run something on localhost
   - `remote-exec`: run something on remote host
-- Use it as a last resort: when building VMs, most cloud provider allows you to utilize tools like `cloud-init` to pass in user data
-- Mostly used within a resource block, you could also use it within `null_resource`
+- **Use it as a last resort**: when building VMs, most cloud provider allows you to utilize tools like `cloud-init` to pass in user data
+- Mostly used within a resource block, you could also use it within **`null_resource`**
 - You could have multiple `provisioner` block in a containing block, executed in order of definition
+- Use `self` object to access the parent resource's attributes
 - `file` and `remote-exec` needs a `connection` block, you could use either `ssh` or `winrm`
 
 Example:
