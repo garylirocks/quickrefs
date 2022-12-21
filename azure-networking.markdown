@@ -5,6 +5,7 @@
   - [Subnets](#subnets)
     - [IP addressing](#ip-addressing)
     - [Design](#design)
+    - [Delegation](#delegation)
   - [CLI](#cli)
 - [IP](#ip)
   - [IP prefixes](#ip-prefixes)
@@ -130,6 +131,13 @@ A vNet can be cloud-only or connected to on-prem network through site-2-site VPN
   - You could also route inter-subnet traffic through a network virtual appliance(NVA)
 - You could enable **service endpoints** in subnets, this allows some public-facing Azure services(e.g. Azure storage account or Azure SQL database) to be accessible from these subnets and deny access from internet
 - A subnet can have zero or one NSG, and an NSG could be associated to multiple subnets
+
+#### Delegation
+
+- You could delegate a specific subnet to an Azure PaaS service, such as VNet data gateway (`Microsoft.PowerPlatform/vnetaccesslinks`)
+- The purpose usually is to allow the PaaS service to access resources within the VNet
+- You need `Microsoft.Network/virtualNetworks/subnets/join/action` permission (included in "Network Contributor" role)
+
 
 ### CLI
 
