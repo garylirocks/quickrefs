@@ -1,8 +1,10 @@
 # Azure Backup
 
+- [Vaults](#vaults)
+  - [Recovery Service Vault](#recovery-service-vault)
+  - [Backup Vault](#backup-vault)
 - [Concepts](#concepts)
   - [Backup](#backup)
-  - [Vaults](#vaults)
   - [Restore](#restore)
   - [Consistency](#consistency)
 - [VM backup](#vm-backup)
@@ -14,6 +16,44 @@
 - [On-prem file backup](#on-prem-file-backup)
 - [Region failover](#region-failover)
 
+
+## Vaults
+
+**Backup Center**: A single unified interface to efficiently manage backups spanning multiple workload types, vaults, subscriptions, regions and tenants.
+
+### Recovery Service Vault
+
+- Resource type `Microsoft.RecoveryServices/vaults`
+- Used to back up these workloads: Azure VMs, SQL in Azure VMs, Azure Files, SAP HANA in Azure VMs, on-prem workloads via MARS, MABS, System Center DPM
+  - For Azure Files, backup is kept in the source storage account, won't be copied to the vault storage
+- A config is called "backup item"
+- Storage redundancy setting (does not apply to the operational tier): LRS, GRS
+  - Upgrades to RA-GRS if cross-region restore feature enabled
+- Unlimited data transfer: Azure Backup doesn't limit or charge inbound or outbound data transfers.
+- Storage tiers:
+  - **Operational tier**
+    - First phase of VM backup, copied to vault tier later
+    - Instant restore
+    - For VM: Restore Point Collection is saved in a dedicated RG in your subscription
+  - **Vault-standard tier**
+    - For all workload
+    - An auto-scaling set of storage accounts in a **Microsoft managed tenant**
+
+### Backup Vault
+
+- Resource type `Microsoft.DataProtection/BackupVaults`
+- Supports certain newer workloads: Azure Disks, Azure Blobs, Azure Databases for PostgreSQL servers
+  - For Azure Blobs, backup is kept in the source storage account, won't be copied to the vault storage
+  - For Azure Disks, backup is kept as snapshots in your subscription, won't be copied to the vault storage
+- A config is called "backup instance"
+- Three types of redundancy: LRS, ZRS, GRS
+- Storage tiers:
+  - Operational data store
+  - Vault storage
+- Has Soft delete settings, free up to 14 days
+- Similar to Recovery Service Vault, but does not support:
+  - Integrated monitoring
+  - Recovering of individual folders and files
 
 ## Concepts
 
@@ -51,43 +91,6 @@
 
 - **System state backup**: back up operating system files
 
-### Vaults
-
-- **Recovery Service Vault**
-
-  - Resource type `Microsoft.RecoveryServices/vaults`
-  - Used to back up these workloads: Azure VMs, SQL in Azure VMs, Azure Files, SAP HANA in Azure VMs, on-prem workloads via MARS, MABS, System Center DPM
-    - For Azure Files, backup is kept in the source storage account, won't be copied to the vault storage
-  - A config is called "backup item"
-  - Storage redundancy setting (does not apply to the operational tier): LRS, GRS
-    - Upgrades to RA-GRS if cross-region restore feature enabled
-  - Unlimited data transfer: Azure Backup doesn't limit or charge inbound or outbound data transfers.
-  - Storage tiers:
-    - **Operational tier**
-      - First phase of VM backup, copied to vault tier later
-      - Snapshot is stored along with the disk
-      - Instant restore
-    - **Vault-standard tier**
-      - For all workload
-      - An auto-scaling set of storage accounts in a **Microsoft managed tenant**
-
-- **Backup Vault**
-  - Resource type `Microsoft.DataProtection/BackupVaults`
-  - Supports certain newer workloads: Azure Disks, Azure Blobs, Azure Databases for PostgreSQL servers
-    - For Azure Blobs, backup is kept in the source storage account, won't be copied to the vault storage
-    - For Azure Disks, backup is kept as snapshots in your subscription, won't be copied to the vault storage
-  - A config is called "backup instance"
-  - Three types of redundancy: LRS, ZRS, GRS
-  - Storage tiers:
-    - Operational data store
-    - Vault storage
-  - Has Soft delete settings, free up to 14 days
-  - Similar to Recovery Service Vault, but does not support:
-    - Integrated monitoring
-    - Recovering of individual folders and files
-
-- **Backup center**
-  - A single unified interface to efficiently manage backups spanning multiple workload types, vaults, subscriptions, regions and tenants.
 
 ### Restore
 
@@ -116,7 +119,7 @@
 
 There are several backup options for VMs
 
-|               | Managed disk snapshots      | VM restore points                                                                           | Azure Disk Backup                                       | Azure VM Backup                                                 | Azure Site Recovery |
+|               | Disk snapshots              | VM restore points                                                                           | Azure Disk Backup                                       | Azure VM Backup                                                 | Azure Site Recovery |
 | ------------- | --------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------- | --------------------------------------------------------------- | ------------------- |
 | Backup Center | No                          | No                                                                                          | Yes                                                     | Yes                                                             | No                  |
 | Suited for    | dev/test, quick and simple  | small number of VMs, REST API                                                               | production                                              | production                                                      | regional outage     |
@@ -129,6 +132,8 @@ There are several backup options for VMs
 | Cons          | manual, management overhead | no shared disks                                                                             | -                                                       | impact on VM performance                                        | -                   |
 
 ### Azure Disk Backup
+
+This is a managed version of the "disk snapshot" backup method
 
 Backup
 
@@ -178,14 +183,12 @@ Limitations:
 
 ![Azure VM backup job](images/azure_backup-vm-snapshot.png)
 
-- When the snapshot is finished, a recovery point of type "**snapshot**" is created, which offers "instant restore"
-- When the snapshot is transferred to the vault, the recovery point type changes to "snapshot and vault"
-- To reduce backup and restore times, the snapshots are retained locally in the operational tier
-  - Incremental snapshots are stored as page blobs
-  - not visible in your subscription
+- This is a managed version of the "VM restore points" backup method
 - Policy types:
   - Standard: once-a-day, 1-5 days operational tier (LRS)
   - Enhanced: multiple times a day, 1-30 days operational tier (ZRS)
+- The snapshot of VM is saved as a **"Restore Point Collection" resource in a dedicated resource group in your subscription**
+- The restore point type is "**snapshot**" when first created, after the snapshot is transferred to the vault, the type changes to "**snapshot and vault**"
 - Restore options:
   - Replacing existing disks in the source VM
   - New disks: unattached
