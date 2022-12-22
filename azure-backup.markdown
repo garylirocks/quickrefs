@@ -1,39 +1,19 @@
 # Azure Backup
 
-- [Features](#features)
 - [Concepts](#concepts)
   - [Backup](#backup)
   - [Vaults](#vaults)
   - [Restore](#restore)
   - [Consistency](#consistency)
 - [VM backup](#vm-backup)
-  - [Managed disk snapshots](#managed-disk-snapshots)
   - [Azure Disk Backup](#azure-disk-backup)
-  - [Azure VM Backup](#azure-vm-backup)
   - [VM restore points](#vm-restore-points)
+  - [Azure VM Backup](#azure-vm-backup)
   - [Azure Site Recovery](#azure-site-recovery)
 - [Images](#images)
 - [On-prem file backup](#on-prem-file-backup)
 - [Region failover](#region-failover)
 
-## Features
-
-- Storage replication options
-
-  - LRS: replicated three times in a datacenter
-  - GRS: replicate to a secondary region
-    - Upgrades to RA-GRS if cross-region restore feature enabled
-
-- Unlimited data transfer: Azure Backup doesn't limit or charge inbound or outbound data transfers.
-
-- Storage tiers:
-  - **Snapshot tier**
-    - First phase of VM backup, copied to vault tier later
-    - Snapshot is stored along with the disk
-    - Instant restore
-  - **Vault-standard tier**
-    - For all workload
-    - An auto-scaling set of storage accounts in a Microsoft managed tenant
 
 ## Concepts
 
@@ -46,15 +26,29 @@
 - **MARS Agent**: to backup data from on-prem machines and Azure VMs to a Recovery Services vault in Azure
 
 - **Backup policy**:
-  - backup rules: when, how often, snapshot method (full, incremental, differential)
+  - backup schedule: when, how often, snapshot method (full, incremental, differential)
   - retention rules: how long those snapshots are retained
+    - A backup policy can have **multiple retention rules**
+      - a default one target all backups
+      - custom ones can target first successful backup of every day/week
 
 - **GFS Backup Policy**
   - Grandfather-father-son
   - Define weekly, monthly, and yearly backup schedules in addition to the daily schedule
   - Each of these sets of backup copies can be configure to be retained for different durations
 
-- **Snapshot**: a *full, ready-only* copy fo a virtual hard drive or an Azure File share
+- **Disk Snapshot**
+  - Resource type `Microsoft.Snapshot`
+  - a *full, ready-only* copy fo a virtual hard drive or an Azure File share, you could create a incremental one based on a previous snapshot
+  - Can be created for attached or unattached disks
+  - Snapshots exist independent of the source disk
+  - Like a disk, it can be
+    - downloaded
+    - Set CMK (disk encryption set)
+    - Control access through private endpoint with Disk Access
+  - A snapshot can be used to create new managed disks
+  - Billed based on actual used size, eg. if you create a snapshot of a managed disk with provisioned capacity of 64 GiB and actual used size of 10 GiB, the snapshot is billed only for the used size of 10 GiB
+
 - **System state backup**: back up operating system files
 
 ### Vaults
@@ -62,29 +56,38 @@
 - **Recovery Service Vault**
 
   - Resource type `Microsoft.RecoveryServices/vaults`
-  - Used to back up these workloads: Azure VMs, SQL on Azure VMs, SAP HANA in Azure VMs, Azure File shares, on-prem workloads via MARS, MABS, System Center DPM
-  - A storage entity in Azure, could be LRS or GRS(default, data replicated to the paired region)
-    - Some backups could be restored to files, and then copied to another region
-  - An auto-scaling set of storage accounts in a Microsoft managed tenant
+  - Used to back up these workloads: Azure VMs, SQL in Azure VMs, Azure Files, SAP HANA in Azure VMs, on-prem workloads via MARS, MABS, System Center DPM
+    - For Azure Files, backup is kept in the source storage account, won't be copied to the vault storage
+  - A config is called "backup item"
+  - Storage redundancy setting (does not apply to the operational tier): LRS, GRS
+    - Upgrades to RA-GRS if cross-region restore feature enabled
+  - Unlimited data transfer: Azure Backup doesn't limit or charge inbound or outbound data transfers.
+  - Storage tiers:
+    - **Operational tier**
+      - First phase of VM backup, copied to vault tier later
+      - Snapshot is stored along with the disk
+      - Instant restore
+    - **Vault-standard tier**
+      - For all workload
+      - An auto-scaling set of storage accounts in a **Microsoft managed tenant**
 
 - **Backup Vault**
   - Resource type `Microsoft.DataProtection/BackupVaults`
-  - Used for Azure Databases for PostgreSQL Server
+  - Supports certain newer workloads: Azure Disks, Azure Blobs, Azure Databases for PostgreSQL servers
+    - For Azure Blobs, backup is kept in the source storage account, won't be copied to the vault storage
+    - For Azure Disks, backup is kept as snapshots in your subscription, won't be copied to the vault storage
+  - A config is called "backup instance"
+  - Three types of redundancy: LRS, ZRS, GRS
+  - Storage tiers:
+    - Operational data store
+    - Vault storage
+  - Has Soft delete settings, free up to 14 days
   - Similar to Recovery Service Vault, but does not support:
     - Integrated monitoring
     - Recovering of individual folders and files
 
 - **Backup center**
   - A single unified interface to efficiently manage backups spanning multiple workload types, vaults, subscriptions, regions and tenants.
-  - Supported datasources:
-    - Azure Blobs
-    - Azure Files
-    - Azure VM
-    - Azure-managed disks
-    - SQL in Azure VM
-    - SAP HANA in Azure VM
-    - Azure Database for PostgreSQL Server
-  - *For Blobs and Files, Azure Backup does NOT copy anything to a recovery service vault, it ONLY works as an orchestrator, defining when to take snapshots, retain them for how long, etc*
 
 ### Restore
 
@@ -113,42 +116,42 @@
 
 There are several backup options for VMs
 
-|             | Managed disk snapshots                        | Azure Disk Backup | Azure VM Backup                                               | VM restore points                                                                           | Azure Site Recovery |
-| ----------- | --------------------------------------------- | ----------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | ------------------- |
-| Why         | quick and simple                              |                   | managed                                                       | -                                                                                           | regional outage     |
-| Suited for  | dev/test                                      |                   | production                                                    | -                                                                                           |                     |
-| What        | single managed disk                           |                   | entire VM                                                     | entire VM                                                                                   | managed disks       |
-| Consistency | file system consistent                        | crash-consistent  | application-consistent                                        | application-consistent                                                                      | -                   |
-| Agent       | No                                            | No                | Yes                                                           | VSS writer (for Windows), pre/post scripts (for Linux) required for application consistency | -                   |
-| Storage     | -                                             |                   | snapshot tier and vault tier, geo-replicated to paired region | -                                                                                           | any region          |
-| Restore     | create new managed disks when a VM is rebuilt |                   | entire VM or specific files                                   | single disk or a new VM                                                                     | in another region   |
-| RTO         |                                               |                   |                                                               | -                                                                                           | in minutes          |
-
-### Managed disk snapshots
-
-- Resource type `Microsoft.Snapshot`
-- A snapshot is a read-only full copy of a managed disk, you could create a incremental one based on a previous snapshot
-- Snapshots exist independent of the source disk
-- A snapshot can be used to create new managed disks
-- Billed based on actual used size, eg. if you create a snapshot of a managed disk with provisioned capacity of 64 GiB and actual used size of 10 GiB, the snapshot is billed only for the used size of 10 GiB
+|               | Managed disk snapshots      | VM restore points                                                                           | Azure Disk Backup                                       | Azure VM Backup                                                 | Azure Site Recovery |
+| ------------- | --------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------- | --------------------------------------------------------------- | ------------------- |
+| Backup Center | No                          | No                                                                                          | Yes                                                     | Yes                                                             | No                  |
+| Suited for    | dev/test, quick and simple  | small number of VMs, REST API                                                               | production                                              | production                                                      | regional outage     |
+| What          | per managed disk            | entire VM (could exclude specified data disks)                                              | per managed disk                                        | entire VM (could exclude specified data disks)                  | managed disks       |
+| Consistency   | file system consistent      | application-consistent                                                                      | crash-consistent                                        | application-consistent                                          | -                   |
+| Agent         | No                          | VSS writer (for Windows), pre/post scripts (for Linux) required for application consistency | No                                                      | Yes                                                             | -                   |
+| Storage       | -                           | -                                                                                           | operational tier only (LRS or ZRS), not copied to vault | operational and vault tier, geo-replicated to paired region     | any region          |
+| Restore       | a new disk                  | single disk or a new VM                                                                     | a new disk                                              | entire VM or specific files/folder, could to a secondary region | in another region   |
+| RTO           | -                           | -                                                                                           | instant restore                                         | -                                                               | in minutes          |
+| Cons          | manual, management overhead | no shared disks                                                                             | -                                                       | impact on VM performance                                        | -                   |
 
 ### Azure Disk Backup
 
-- Doesn't interrupt VM
-- Doesn't affect application performance
-- Cost-effective
+Backup
+
+- No agent, no impact on application performance
+- Cost-effective, incremental
 - Supports multiple backups per day
 - Supports both OS and data disks (including shared disks)
-- Can be used alongside Azure VM backup
+- Operational tier backup only, it creates resources in a snapshot RG in your subscription, won't copy to Backup vault storage
+- Always stored on most cost-effective storage: **standard HDD** (LRS or ZRS depending on region)
+- Older snapshots are deleted according to the retention policy
+- Can be used alongside Azure VM backup (eg. back up VM once a day, back up critical disks multiple times a day)
+- Limit to 200 snapshots per disk
 
-### Azure VM Backup
+Backup vault
 
-![Azure VM backup job](images/azure_backup-vm-snapshot.png)
+- Uses Backup vault, not Recovery Services vault
+- A "backup instance" is created within the backup vault, allows you to view operation health, trigger on-demand backup, restore
+- Backup vault can be in a different subscription, but must be in the same region as the source disk
+- Backup vault uses a managed identity, requires permissions on the source disk, snapshot RG and the restore target RG, see https://learn.microsoft.com/en-us/azure/backup/disk-backup-faq?source=recommendations#what-are-the-permissions-used-by-azure-backup-during-backup-and-restore-operation-
 
-- When the snapshot is finished, a recovery point of type "**snapshot**" is created, which offers "instant restore"
-- When the snapshot is transferred to the vault, the recovery point type changes to "snapshot and vault"
-- To reduce backup and restore times, the snapshots are retained locally, the retention value is configurable between 1 to 5 days
-- Incremental snapshots are stored as page blobs
+Restore
+
+- Can restore to a different subscription
 
 ### VM restore points
 
@@ -170,6 +173,23 @@ Limitations:
 - No support for Ultra-disks, Ephemeral OS disks, and Shared disks
 - No support for VMSS in Uniform orchestration mode
 - Can't move VM to another RG or Subscription when the VM has restore points
+
+### Azure VM Backup
+
+![Azure VM backup job](images/azure_backup-vm-snapshot.png)
+
+- When the snapshot is finished, a recovery point of type "**snapshot**" is created, which offers "instant restore"
+- When the snapshot is transferred to the vault, the recovery point type changes to "snapshot and vault"
+- To reduce backup and restore times, the snapshots are retained locally in the operational tier
+  - Incremental snapshots are stored as page blobs
+  - not visible in your subscription
+- Policy types:
+  - Standard: once-a-day, 1-5 days operational tier (LRS)
+  - Enhanced: multiple times a day, 1-30 days operational tier (ZRS)
+- Restore options:
+  - Replacing existing disks in the source VM
+  - New disks: unattached
+  - A new VM: including VM, disks, NIC, public IP
 
 ### Azure Site Recovery
 

@@ -22,6 +22,7 @@
   - [Organization](#organization)
   - [Life cycle management rules](#life-cycle-management-rules)
   - [Versioning vs. snapshot](#versioning-vs-snapshot)
+  - [Operational backup](#operational-backup)
   - [Object replication](#object-replication)
   - [Immutable storage for Azure Blobs](#immutable-storage-for-azure-blobs)
   - [CLI](#cli-1)
@@ -362,6 +363,10 @@ For block blobs, there are three access tiers: "hot", "cool" and "archive", from
 
 - When blob versioning is enabled: A blob version is created automatically on a write or delete operation
 - A blob snapshot is created manually, not necessary if versioning is enabled
+
+### Operational backup
+
+You can turn on this feature, you need a backup policy in a Backup vault, this enables soft delete for blobs, and blob versioning automatically
 
 ### Object replication
 
