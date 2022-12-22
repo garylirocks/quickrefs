@@ -26,7 +26,6 @@
 - Resource type `Microsoft.RecoveryServices/vaults`
 - Used to back up these workloads: Azure VMs, SQL in Azure VMs, Azure Files, SAP HANA in Azure VMs, on-prem workloads via MARS, MABS, System Center DPM
   - For Azure Files, backup is kept in the source storage account, won't be copied to the vault storage
-- A config is called "backup item"
 - Storage redundancy setting (does not apply to the operational tier): LRS, GRS
   - Upgrades to RA-GRS if cross-region restore feature enabled
 - Unlimited data transfer: Azure Backup doesn't limit or charge inbound or outbound data transfers.
@@ -190,9 +189,10 @@ Limitations:
 - The snapshot of VM is saved as a **"Restore Point Collection" resource in a dedicated resource group in your subscription**
 - The restore point type is "**snapshot**" when first created, after the snapshot is transferred to the vault, the type changes to "**snapshot and vault**"
 - Restore options:
-  - Replacing existing disks in the source VM
-  - New disks: unattached
-  - A new VM: including VM, disks, NIC, public IP
+  - Files: a script is provided for you to attach disks to a VM, to retrieve files
+  - Disks: replacing existing disks in the source VM
+  - Disks: new unattached disks
+  - VM: a new VM, including VM, disks, NIC, public IP
 
 ### Azure Site Recovery
 
