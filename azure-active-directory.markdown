@@ -1,14 +1,20 @@
 # Azure AD
 
 - [Overview](#overview)
-- [Editions](#editions)
+- [SKUs/Licenses](#skuslicenses)
 - [B2B](#b2b)
   - [Best practices](#best-practices)
+  - [Cross-tenant access settings](#cross-tenant-access-settings)
 - [B2C](#b2c)
   - [Best practices](#best-practices-1)
 - [Azure AD vs. AD DS vs. Azure AD DS](#azure-ad-vs-ad-ds-vs-azure-ad-ds)
+  - [Azure AD Connect](#azure-ad-connect)
+  - [Hybrid authentication](#hybrid-authentication)
   - [Azure AD DS](#azure-ad-ds)
-- [Azure AD Join](#azure-ad-join)
+- [Devices](#devices)
+  - [Register](#register)
+  - [Join](#join)
+  - [Hybrid](#hybrid)
 - [Users](#users)
 - [Groups](#groups)
 - [Workload identities](#workload-identities)
@@ -26,10 +32,13 @@
   - [Azure RBAC roles vs. Azure AD roles](#azure-rbac-roles-vs-azure-ad-roles)
   - [Custom Azure RBAC roles](#custom-azure-rbac-roles)
 - [Conditional access](#conditional-access)
+- [Privileged Identity Management (PIM)](#privileged-identity-management-pim)
+- [Entra permissions management](#entra-permissions-management)
 - [Identity protection](#identity-protection)
 - [Access reviews](#access-reviews)
 - [Administrative Units](#administrative-units)
 - [Logging and analytics](#logging-and-analytics)
+- [Application Proxy](#application-proxy)
 - [Best practices](#best-practices-2)
 - [CLI](#cli)
   - [`--filter` parameter](#--filter-parameter)
@@ -41,10 +50,22 @@
 
 Microsoft's identity and access management solution.
 
-Microsoft 365, Office 365, Azure, and Dynamics CRM Online all uses Azure AD, a tenant in these services is automatically an Azure AD tenant.
+- Azure, Microsoft 365, and Dynamics 365 all use Azure AD, a tenant in these services is automatically an Azure AD tenant.
+- Could be managed in either Azure Portal or Entra admin portal
+  - Some aspects could be managed in Office admin portal
+- Default domain names are like `*.onmicrosoft.com`, you could bring your own domain name
+- "Entra" is the new name for all of Microsoft's identity management service
+
+Objects in AAD
+
+- Users
+- Groups
+- Applications
+- Service principals (including managed identities)
+- Devices
 
 
-## Editions
+## SKUs/Licenses
 
 | Feature                                             | Free      | Microsoft 365 Apps | Premium P1 | Premium P2 |
 | --------------------------------------------------- | --------- | ------------------ | ---------- | ---------- |
@@ -57,8 +78,11 @@ Microsoft 365, Office 365, Azure, and Dynamics CRM Online all uses Azure AD, a t
 | Hybrid Identities                                   |           |                    | X          | X          |
 | Advanced Group Access Management                    |           |                    | X          | X          |
 | Conditional Access                                  |           |                    | X          | X          |
-| Identity Protection                                 |           |                    |            | X          |
-| Identity Governance                                 |           |                    |            | X          |
+| Identity Protection (risk users)                    |           |                    |            | X          |
+| Identity Governance (PIM)                           |           |                    |            | X          |
+| Access Reviews                                      |           |                    |            | X          |
+
+Licenses are per user, so one user can have P1, another have P2
 
 - Free
   - user, groups, basic reports
@@ -94,7 +118,7 @@ Features:
 
 - For collaborating with business partners from external organizations like suppliers, partners and vendors
 - Users appear as guests
-- Guest user could login by an email code, SMS code, Google/Facebook account, etc
+- Guest user won't have credentials saved in your tenant, they will login via another AAD, an email code, SMS code, Google/Facebook account, etc
 
 <img src="images/azure_ad-external-identities.png" width="600" alt="Guest users" />
 
@@ -105,10 +129,17 @@ Your could invite people from other external identity providers as guest users, 
 ### Best practices
 
 - **Designate an application owner to manage guest users**. Application owners are in the best position to decide who should be given access to a particular application.
-- **Use conditional access policies to grant or deny access**
-- **Enable MFA, this happens in your tenant**
+- Use **conditional access** policies to grant or deny access
+- Enable MFA, this happens **in your tenant**
 - **Integrate with identity providers**, you can setup federation
 - **Create as self-service sign-up user flow**, you could customize the experience
+
+### Cross-tenant access settings
+
+Controls trust between tenants, such as
+
+- Trust MFA in a guest's tenant, so they don't need to do MFA again in your tenant
+- Config which tenants can invite users from your tenant
 
 
 ## B2C
@@ -136,22 +167,27 @@ B2C tenant is for your application's customers, it's different from your organiz
 | Protocols  | Kerberos authentication                                                    | SAML, WS-Federation, OpenID Connect for authN, OAuth for authZ | same as AD DS                              |
 | Structure  | Organization Units (OUs) , Group Policy Objects (GPOs)                     | flat users and groups, no OU hierarchy                         | same as AD DS                              |
 
+### Azure AD Connect
+
 Azure AD does not replace Active Directory, they can be used together, **Azure AD Connect** is a software you download and run on your on-prem host, it can synchronize identities between on-prem AD and Azure AD:
 
-  ![Azure AD Connect](images/azure_azure-ad-connect.png)
+![Azure AD Connect](images/azure_azure-ad-connect.png)
 
-Some technologies involved in hybrid scenarios:
+- AD is the source of truth (most of the time)
+- An AAD instance can only sync from one AAD Connect
+- But one AD can be linked to multiple AAD Connect, so sync to multiple AAD instances
+  - eg. sync one AD to both Azure commercial cloud and Azure US Gov cloud
+- Use **Azure AD Connect Cloud Sync** to run the syncing in cloud instead of on-prem
 
-- Password hash synchronization
+### Hybrid authentication
+
+- Password hash synchronization (recommended)
 
   - Most basic and least-effort solution in hybrid scenario
   - On-prem AD stores user password as a hash
   - AD Connect retrieves the hash and hashes that hash, sends the second hash to Azure AD
   - Allows on-prem user to auth against Azure AD for cloud applications
-
-- Password writeback
-
-  - Changes made in Azure AD are written back to on-prem AD
+  - Allows AAD to check if the password is leaked
 
 - Pass-through authentication
 
@@ -163,8 +199,11 @@ Some technologies involved in hybrid scenarios:
 
   - Allows an external, third-party system to authenticate users, including biometrics, smart-cards, etc
   - Does not authenticate against on-prem AD
+  - You authenticate against a third party federation service, which gives you a SAML token, you then exchange this SAML token for AAD tokens (refresh & access tokens)
 
+- Password writeback
 
+  - Changes made in Azure AD are written back to on-prem AD
 
 ### Azure AD DS
 
@@ -178,14 +217,28 @@ _On prem AD is optional here_
 - You don't need to deploy, manage and patch Domain Controllers (DCs).
 - A one-way sync is configured from Azure AD to the managed domain, so you could login to a Windows VM using your Azure AD credentials.
 
-## Azure AD Join
+
+## Devices
 
 - Provide access to organizational resources of work-related devices
 - Intended for organizations that do not have on-prem AD
-- Connection options:
-  - Registering: registering a device to Azure AD enables you to manage a device's identity, which can be used to enable or disable a device
-  - Joining: an extension to registering, changes local state to a device, which enables your users to sign-in to a device using a work or school account instead of personal account (e.g. you add your work M365 email to your own laptop)
 - Combined with a mobile device management (MDM) solution such as Microsoft Intune, provides additional attributes in Azure AD
+
+### Register
+
+- Registering a device to Azure AD enables you to manage a device's identity, which can be used to enable or disable a device
+- Usually a user's personal device, you login with your personal Microsoft account
+- Works on Windows, iOS, Android, Ubuntu etc.
+
+### Join
+
+- An extension to registering, changes local state to a device
+- Usually a work/school device, you login with your work/school account
+- Only works on Windows 10 (and above) and Azure Windows VMs with certain extensions installed
+
+### Hybrid
+
+- The device is joined to AD and registered with Azure AD
 
 
 ## Users
@@ -201,9 +254,13 @@ _On prem AD is optional here_
 ## Groups
 
 - Group types
-  - Security groups: for RBAC
-  - Microsoft 365: giving members access to shared mailbox, calendar, files, teams(not channels) in MS Teams, etc
-  - Distribution: seems from Exchange
+  - Security groups
+    - Members can be users, devices, service principals, and other groups
+    - For access control(RBAC), assigning licenses, etc
+  - Microsoft 365
+    - Members can only be users
+    - For sharing/collaboration over M365 apps: giving members access to shared mailbox, calendar, files, teams(not channels) in MS Teams, etc
+  - Distribution: seems for Exchange
 
 - Membership types
   - Assigned: assigned manually
@@ -217,7 +274,7 @@ Note:
   - Groups **synced from on-premises Active Directory** can be managed only in on-premises Active Directory.
   - Other group types such as **distribution lists** and **mail-enabled security groups** are managed only in Exchange admin center or Microsoft 365 admin center.
 
-- There is a flag determining whether a group can be assigned Azure AD Roles
+- There is a flag determining whether a group can be assigned "Azure AD Roles"
 
 
 ## Workload identities
@@ -468,6 +525,10 @@ Different roles in Azure:
 
   To manage Azure AD resources, such as users, groups and domains, find them in **"Roles and administrators" menu under Azure AD**
 
+  - Usually can only be assigned to users/applications, not groups (unless the groups has enabled "AD Role assignment" toggle)
+  - The assignment scope is either the whole directory or an "Administrative Unit"
+  - Custom roles can only have permissions for Application registrations and Enterprise applications
+
 - RBAC roles
 
   The new Authorization system, find them in the **"Access Control (IAM)" menu under management groups, subscriptions, resource groups or resources**
@@ -544,14 +605,37 @@ A custom role definition is like:
 
 ![Conditional access](images/azure_ad-conditions-access.png)
 
+P1 feature
+
 Best practices:
 
-- **More granular MFA experience**: eg. only trigger MFA from an unexpected location
+- **More granular MFA experience**: eg. only trigger MFA from an unexpected location (Free license user only have a default MFA option, can't customize conditions)
 - **Test with report-only mode**: evaluate access policy effect before enabling them
 - **Block geographic areas**: you could define named locations, and block sign-in from them
 - **Require manged devices**
 - **Require approved client applications**
 - **Block legacy authentication protocols**
+- You can opt for **Passwordless MFA** or **Phishing-resistant MFA**
+
+
+## Privileged Identity Management (PIM)
+
+- P2 feature
+- Just-in-time elevate role assignment
+- Could be
+  - AAD Role
+  - RBAC Role
+  - A privileged group membership
+- Most common use case: create "Eligible Assignment" of roles/memberships to some users/groups, who need to active them when needed
+
+
+## Entra permissions management
+
+- Ad-hoc, on-demand elevation
+- At very granular permission level
+- Works across clouds (Azure, AWS, GCP)
+- Can analyze permissions used and optionally right size
+- Separate license based on resources scanned
 
 
 ## Identity protection
@@ -572,6 +656,8 @@ Allow or deny user access based on user risk and sign-in risk
 
 ## Access reviews
 
+P2 feature
+
 Help ensure that the right people have the right access to the right resources, you could set up a schedule to review:
 
 - Access to applications
@@ -583,7 +669,13 @@ Help ensure that the right people have the right access to the right resources, 
 ## Administrative Units
 
 - To restrict administrative scope in organizations that are made up of independent divisions, such as School of Business and School of Engineering in a University
-- Apply scope only to management permissions
+- You could put users/groups/devices in a unit
+- Support dynamic membership rules
+- Doesn't support nesting
+- A unit is a scope for Azure AD role assignment
+  - You only get permissions over direct members in the unit, not users in a group, you need to add them explicitly to the unit
+  - Only a subset AAD roles can be assigned
+- You need a P1 license to manage an administrative unit
 
 
 ## Logging and analytics
@@ -620,6 +712,34 @@ AuditLogs
 | summarize auditCount = count() by OperationName
 | sort by auditCount desc
 ```
+
+## Application Proxy
+
+Allow remote uses to access on-prem applications, benefits:
+
+- Publish on-prem web apps externally without a DMZ
+- SSO across cloud and on-prem
+- MFA
+- Centralize account management
+
+It's intended to be a replace for the legacy **VPN and reverse proxy solution** for remote users, not for users on the corporate network.
+
+![AAD application proxy architecture](images/azure_ad-application-proxy-architecture.png)
+
+- It publishes a public URL for your app
+- Application Proxy Service runs in the cloud
+- Application Proxy connector is a lightweight agent that runs on-prem
+
+Networking
+
+- Only outbound connection over port 80 and 443 to the Application Proxy Service
+- No inbound traffic to on-prem apps, so no need to open any port
+
+Authentication
+
+![AAD application proxy authentication](images/azure_ad-application-proxy-authentication-flow.png)
+
+- Put connecters in a group for high availability
 
 
 ## Best practices

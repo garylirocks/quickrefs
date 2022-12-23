@@ -282,7 +282,7 @@ A few differences:
 
 ## SAML
 
-An mature identify federation solution.
+A mature identify federation solution.
 
 Three parties involved:
   - User
