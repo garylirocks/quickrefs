@@ -67,27 +67,23 @@ A profile is a script that runs when PowerShell starts. You could customize envi
 
 Usual profile file locations:
 
-| Description                          | Path                                                                 |
-| ------------------------------------ | -------------------------------------------------------------------- |
-| All users, all hosts                 | `$PSHOME\Profile.ps1`                                                |
-| All users, current host - console    | `$PSHOME\Microsoft.PowerShell_profile.ps1`                           |
-| All users, current host - ISE        | `$PSHOME\Microsoft.PowerShellISE_profile.ps1`                        |
-| Current user, all hosts              | `$Home\[My ]Documents\PowerShell\Profile.ps1`                        |
-| Current user, current host - console | `$Home[My ]Documents\PowerShell\Microsoft.PowerShell_profile.ps1`    |
-| Current user, current host - ISE     | `$Home[My ]Documents\PowerShell\Microsoft.PowerShellISE_profile.ps1` |
+| Description            | Path                                                                 |
+| ---------------------- | -------------------------------------------------------------------- |
+| All users, any host    | `$PSHOME\Profile.ps1`                                                |
+| All users, console     | `$PSHOME\Microsoft.PowerShell_profile.ps1`                           |
+| All users, ISE         | `$PSHOME\Microsoft.PowerShellISE_profile.ps1`                        |
+| Current user, any host | `$Home\[My ]Documents\PowerShell\Profile.ps1`                        |
+| Current user, console  | `$Home[My ]Documents\PowerShell\Microsoft.PowerShell_profile.ps1`    |
+| Current user, ISE      | `$Home[My ]Documents\PowerShell\Microsoft.PowerShellISE_profile.ps1` |
 
-- "Host" here means the application hosting your current PowerShell session, PowerShell console and ISE are different hosts, :
-
-  - In Console
+- "Host" here means the application hosting your current PowerShell session, PowerShell console and ISE are different hosts:
 
     ```powershell
+    # In console
     (Get-Host).Name
     # ConsoleHost
-    ```
 
-  - In ISE (Integrated Scripting Environment)
-
-    ```powershell
+    # In ISE (Integrated Scripting Environment)
     (Get-Host).Name
     # Windows PowerShell ISE Host
     ```
