@@ -4,10 +4,13 @@
 - [Overview](#overview)
   - [Components](#components)
   - [Language features](#language-features)
+  - [Versions](#versions)
   - [Execution policy](#execution-policy)
 - [Profiles](#profiles)
 - [Common commands](#common-commands)
-- [Common parameters](#common-parameters)
+- [Help system](#help-system)
+- [Parameters](#parameters)
+  - [Common parameters](#common-parameters)
   - [`-passthru`](#-passthru)
 - [Aliases](#aliases)
 - [Customize output](#customize-output)
@@ -51,13 +54,55 @@
   - The AST is checked for major issues
   - If everything is OK, it is run without the need for a compiled executable program
 
+### Versions
+
+|                        | PowerShell                                   | Windows PowerShell                  |
+| ---------------------- | -------------------------------------------- | ----------------------------------- |
+| OS                     | Windows, Mac, Linux                          | Windows only                        |
+| Version                | v7.3                                         | v5.1                                |
+| Executable             | `pwsh.exe`                                   | `powershell.exe`                    |
+| $env:PSModulePath      | including module paths of Windows PowerShell | -                                   |
+| Profiles               | `$HOME\Documents\PowerShell`                 | `$HOME\Documents\WindowsPowerShell` |
+| Windows PowerShell ISE | No                                           | Yes                                 |
+
+Most cmdlets work on either platform.
+
+Use `$PSVersionTable` to determine the version:
+
+```powershell
+$PSVersionTable
+
+# Name                           Value
+# ----                           -----
+# PSVersion                      7.2.8
+# PSEdition                      Core
+# GitCommitId                    7.2.8
+# OS                             Microsoft Windows 10.0.19044
+# Platform                       Win32NT
+# PSCompatibleVersions           {1.0, 2.0, 3.0, 4.0...}
+# PSRemotingProtocolVersion      2.3
+# SerializationVersion           1.1.0.1
+# WSManStackVersion              3.0
+```
 
 ### Execution policy
 
-On Windows, you could set execution policy to restrict what kind of scripts can be run on the machine.
+A safety feature that prevent the execution of malicious scripts.
+
+It's not a security feature that restricts user actions, eg. if users can't run a script, they can easily bypass a policy by entering the script contents at the command line.
+
+Available policies:
+
+- `AllSigned`: all scripts must be signed by a trusted publisher, including scripts that you write on the local computer
+- `Default`: `Restricted` for Windows client and `RemoteSigned` for Windows servers
+- `RemoteSigned`: require signatures for scripts downloaded from the internet, not the ones on the local computer
+- `Restricted`: allow individual commands, not scripts
+- `Unrestricted`: the default policy for non-Windows
 
 ```powershell
-# after this, current user can only run signed scripts
+Get-ExecutionPolicy
+
+# Set the policy
 Set-ExecutionPolicy -ExecutionPolicy AllSigned -Scope CurrentUser
 ```
 
@@ -115,19 +160,6 @@ Usual profile file locations:
 
 ## Common commands
 
-Versions
-
-```powershell
-# show versions/editions of powershell, os, CLR, ...
-$PSVersionTable
-
-# or just powershell version
-$PSVersionTable.PSVersion
-
-# only major version
-$PSVersionTable.PSVersion.Major
-```
-
 Find commands
 
 ```powershell
@@ -148,7 +180,8 @@ gcm -ParameterType Process
 # Cmdlet          Stop-Process         3.1.0.0    Microsoft.PowerShell.Management
 ```
 
-Get help
+
+## Help system
 
 ```powershell
 # get help for a command
@@ -166,12 +199,40 @@ Get-Help Get-ChildItem -Details
 # get online help
 Get-Help Get-ChildItem -Online
 
+# show help in a separate window
+Get-Help Get-ChildItem -ShowWindow
+
 # download help files, otherwise only summary help is available locally
 Update-Help
 ```
 
+There are `about_` help files, containing general PowerShell concepts and topics, could be accessed with:
 
-## Common parameters
+```powershell
+Get-Help about*
+
+# Name                              Category  Module                    Synopsis
+# ----                              --------  ------                    --------
+# about_PSFzf                       HelpFile
+# about_az                          HelpFile                            about_Az
+# ...
+# about_Foreach-Parallel            HelpFile
+# about_InlineScript                HelpFile
+# about_Parallel                    HelpFile
+# about_Sequence                    HelpFile
+
+Get-Help about_az
+```
+
+
+## Parameters
+
+A parameter could be either required or optional
+
+Parameter name could be omitted if it's a positional parameter, eg. `Get-ChildItem -Path C:\` is the same as `Get-ChildItem C:\`
+
+
+### Common parameters
 
 Some common parameters:
 
