@@ -7,19 +7,23 @@
   - [Versions](#versions)
   - [Execution policy](#execution-policy)
 - [Profiles](#profiles)
-- [Common commands](#common-commands)
 - [Help system](#help-system)
+  - [Find commands](#find-commands)
+  - [Get help](#get-help)
+  - [Help files](#help-files)
 - [Parameters](#parameters)
+  - [Syntax](#syntax)
+  - [`Show-Command`](#show-command)
   - [Common parameters](#common-parameters)
   - [`-passthru`](#-passthru)
 - [Aliases](#aliases)
+- [Modules](#modules)
+  - [Import](#import)
+  - [Inspect](#inspect)
+  - [Install](#install)
 - [Customize output](#customize-output)
   - [Filtering](#filtering)
   - [Examples](#examples)
-- [Modules](#modules)
-  - [Install](#install)
-  - [Import](#import)
-  - [Inspect](#inspect)
 - [Strings](#strings)
 - [Files](#files)
 - [Networking](#networking)
@@ -56,13 +60,16 @@
 
 ### Versions
 
-|                        | PowerShell                                   | Windows PowerShell                  |
-| ---------------------- | -------------------------------------------- | ----------------------------------- |
-| OS                     | Windows, Mac, Linux                          | Windows only                        |
-| Version                | v7.3                                         | v5.1                                |
-| Executable             | `pwsh.exe`                                   | `powershell.exe`                    |
-| $env:PSModulePath      | including module paths of Windows PowerShell | -                                   |
-| Profiles               | `$HOME\Documents\PowerShell`                 | `$HOME\Documents\WindowsPowerShell` |
+|                     | PowerShell                                   | Windows PowerShell                           |
+| ------------------- | -------------------------------------------- | -------------------------------------------- |
+| OS                  | Windows, Mac, Linux                          | a component of Windows OS                    |
+| Version             | v6, v7                                       | v5                                           |
+| Executable          | `pwsh.exe`                                   | `powershell.exe`                             |
+| `$env:PSModulePath` | including module paths of Windows PowerShell | -                                            |
+| `$PSHOME`           | `C:\Program Files\PowerShell\7`              | `C:\Windows\System32\WindowsPowerShell\v1.0` |
+| Profiles            | `$HOME\Documents\PowerShell`                 | `$HOME\Documents\WindowsPowerShell`          |
+
+
 | Windows PowerShell ISE | No                                           | Yes                                 |
 
 Most cmdlets work on either platform.
@@ -158,9 +165,9 @@ Usual profile file locations:
     ```
 
 
-## Common commands
+## Help system
 
-Find commands
+### Find commands
 
 ```powershell
 # find commands
@@ -178,10 +185,12 @@ gcm -ParameterType Process
 # -----------     ----                 -------    ------
 # Cmdlet          Get-Process          3.1.0.0    Microsoft.PowerShell.Management
 # Cmdlet          Stop-Process         3.1.0.0    Microsoft.PowerShell.Management
+
+# you can also use Get-Help to find commands, which matches against both command name and help text
+Get-Help *dns*
 ```
 
-
-## Help system
+### Get help
 
 ```powershell
 # get help for a command
@@ -196,15 +205,17 @@ Get-Help Get-ChildItem -Examples
 # show more details
 Get-Help Get-ChildItem -Details
 
-# get online help
-Get-Help Get-ChildItem -Online
-
 # show help in a separate window
 Get-Help Get-ChildItem -ShowWindow
+
+# open help in a browser
+Get-Help Get-ChildItem -Online
 
 # download help files, otherwise only summary help is available locally
 Update-Help
 ```
+
+### Help files
 
 There are `about_` help files, containing general PowerShell concepts and topics, could be accessed with:
 
@@ -229,8 +240,20 @@ Get-Help about_az
 
 A parameter could be either required or optional
 
-Parameter name could be omitted if it's a positional parameter, eg. `Get-ChildItem -Path C:\` is the same as `Get-ChildItem C:\`
+### Syntax
 
+- Parameter name could be omitted if it's positional, eg. `Get-ChildItem -Path C:\` is the same as `Get-ChildItem C:\`
+- Some parameters accept multiple values: `Get-ChildItem -Path "C:\Users\Gary Li",D:`
+  - use comma to separate them
+  - enclose a value in quotation marks if it has whitespace in it
+
+### `Show-Command`
+
+```powershell
+Show-Command Get-ChildItem
+```
+
+This opens a window, allowing you to discover parameter sets and parameters
 
 ### Common parameters
 
@@ -263,12 +286,93 @@ Start-Process notepad -PassThru
 
 ## Aliases
 
-```sh
+Common aliases:
+
+```powershell
+Get-Alias
+
+# CommandType     Name                                               Version    Source
+# -----------     ----                                               -------    ------
+# Alias           % -> ForEach-Object
+# Alias           ? -> Where-Object
+# Alias           cat -> Get-Content
+# Alias           cd -> Set-Location
+# Alias           clear -> Clear-Host
+# Alias           cp -> Copy-Item
+# Alias           diff -> Compare-Object
+# Alias           dir -> Get-ChildItem
+# Alias           echo -> Write-Output
+# Alias           history -> Get-History
+# Alias           ls -> Get-ChildItem
+# Alias           man -> help
+# Alias           mv -> Move-Item
+# Alias           rm -> Remove-Item
+# Alias           rmdir -> Remove-Item
+# Alias           tee -> Tee-Object
+# Alias           wget -> Invoke-WebRequest
+# Alias           where -> Where-Object
+```
+
+Define or delete an alias
+
+```powershell
 New-Alias tf terraform
 
 # remove an alias
 Remove-Item Alias:\tf
 ```
+
+
+## Modules
+
+A modules is a package that contains PowerShell members, such as cmdlets, providers, functions, workflows, variables and aliases.
+
+### Import
+
+- If a module is in `$env:PSModulePath`, it is automatically imported when you call any commands in the module.
+- Otherwise, use `Import-Module` cmdlet
+- `$PSModuleAutoloadingPreference` controls the auto loading behavior
+
+### Inspect
+
+```powershell
+# list modules already imported into the session
+Get-Module
+
+# list all installed modules
+Get-Module -ListAvailable
+
+# find commands in a module
+Get-Command -Module Microsoft.PowerShell.Management
+```
+
+### Install
+
+`PowerShellGet` module contains cmdlets for finding and installing modules/scripts from the "PowerShell Gallery" repository, such as `Find-Module`, `Install-Module`
+
+```powershell
+Install-Module AzureADPreview
+```
+
+In some scenarios, you may want to install a module to a custom location:
+
+```powershell
+Find-Module -Name 'XXX' -Repository 'PSGallery' | Save-Module -Path 'E:\Modules'
+```
+
+Then you could either
+
+- Import with a fully qualified name
+
+  ```powershell
+  Import-Module -FullyQualifiedName 'E:\Modules\XXX'
+  ```
+
+- Or add the custom location to the `$env:PSModulePath`
+
+  ```powershell
+  $env:PSModulePath = "E:\Modules;" + $env:PSModulePath
+  ```
 
 
 ## Customize output
@@ -362,57 +466,6 @@ Get-ChildItem | Where-Object {$_.Name -Like 'gary*'}
   # Name : jack.txt
   # Name : zoe.txt
   ```
-
-
-## Modules
-
-A modules is a package that contains PowerShell members, such as cmdlets, providers, functions, workflows, variables and aliases.
-
-### Install
-
-```powershell
-Install-Module AzureADPreview
-```
-
-In some scenarios, you may want to install a module to a custom location:
-
-```powershell
-Find-Module -Name 'XXX' -Repository 'PSGallery' | Save-Module -Path 'E:\Modules'
-```
-
-Then you could either
-
-- Import with a fully qualified name
-
-  ```powershell
-  Import-Module -FullyQualifiedName 'E:\Modules\XXX'
-  ```
-
-- Or add the custom location to the `$env:PSModulePath`
-
-  ```powershell
-  $env:PSModulePath = "E:\Modules;" + $env:PSModulePath
-  ```
-
-### Import
-
-- If a module is in `$env:PSModulePath`, it is automatically imported when you call any commands in the module.
-- Otherwise, use `Import-Module` cmdlet
-- `$PSModuleAutoloadingPreference` controls the auto loading behavior
-
-### Inspect
-
-```powershell
-# list modules already imported into the session
-Get-Module
-
-# list all installed modules
-Get-Module -ListAvailable
-
-# find commands in a module
-Get-Command -Module Microsoft.PowerShell.Management
-```
-
 
 
 ## Strings
