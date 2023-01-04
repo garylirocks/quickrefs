@@ -18,6 +18,8 @@ Write-Host "Name is $Name"
 .\simple.ps1 -Name gary
 ```
 
+Unnamed parameters can be accessed by `$args`
+
 ## Decorators
 
 You could add decorators to the parameter, specifing properties:
@@ -29,16 +31,16 @@ You could add decorators to the parameter, specifing properties:
 ```powershell
 Param(
   [Parameter(Mandatory, HelpMessage = "Please provide your name")]
-  [string]$Name = "Gary",
-  [Parameter(Mandatory, HelpMessage = "Please provide your age")]
+  [string]$Name,
   [int]$Age = 20
 )
 
 Write-Host "$Name is $Age years old"
 ```
 
-Run it with
+`$Name` is mandatory, you will be prompted, `$Age` is optional
 
 ```powershell
-.\decorators.ps1 -Name Jack -Age 33
+.\decorators.ps1
+.\decorators.ps1 -Age 15
 ```

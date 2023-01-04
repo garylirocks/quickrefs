@@ -6,6 +6,7 @@
   - [Language features](#language-features)
   - [Versions](#versions)
   - [Execution policy](#execution-policy)
+  - [Sign a script](#sign-a-script)
 - [Profiles](#profiles)
 - [Help system](#help-system)
   - [Find commands](#find-commands)
@@ -34,6 +35,8 @@
 - [Hash tables](#hash-tables)
 - [Files](#files)
 - [Networking](#networking)
+- [Secrets](#secrets)
+- [Tricks](#tricks)
 
 
 ## More topics
@@ -103,7 +106,7 @@ $PSVersionTable
 
 A safety feature that prevent the execution of malicious scripts.
 
-It's not a security feature that restricts user actions, eg. if users can't run a script, they can easily bypass a policy by entering the script contents at the command line.
+It's not a security feature that restricts user actions, could always be bypassed with `Powershell.exe -ExecutionPolicy ByPass`
 
 Available policies:
 
@@ -119,6 +122,14 @@ Get-ExecutionPolicy
 # Set the policy
 Set-ExecutionPolicy -ExecutionPolicy AllSigned -Scope CurrentUser
 ```
+
+### Sign a script
+
+```powershell
+$cert =  Get-ChildItem -Path "Cert:\CurrentUser\My" -CodeSigningCert
+Set-AuthenticodeSignature -FilePath "C:\Scripts\MyScript.ps1" -Certificate $cert
+```
+
 
 ## Profiles
 
@@ -355,7 +366,13 @@ Get-Command -Module Microsoft.PowerShell.Management
 
 ### Install
 
-`PowerShellGet` module contains cmdlets for finding and installing modules/scripts from the "PowerShell Gallery" repository, such as `Find-Module`, `Install-Module`
+`PowerShellGet` module contains cmdlets for finding and installing modules/scripts from the "PowerShell Gallery" repository, such as
+- It uses NuGet to interact with PowerShell Gallery
+- Common cmdlets:
+  - `Find-Module`
+  - `Find-Script`
+  - `Install-Module`
+
 
 ```powershell
 Install-Module AzureADPreview
@@ -608,6 +625,22 @@ New-Item -ItemType Directory testFolder
 New-Item -ItemType File a.txt -Value "hello world"
 ```
 
+Read text file
+
+```powershell
+# read lines in a file to an array
+$lines = Get-Content ./foo.txt
+
+# read only the last 3 lines
+$last3Lines = Get-Content ./foo.txt -Tail 3
+```
+
+Read files of other formats:
+
+- `$users = Get-Content .\Users.json | ConvertFrom-Json`: read JSON files
+- `$users = Import-Csv .\Users.csv`: read CSV data to an array of objects
+- `Import-Clixml`: read XML files
+
 
 ## Networking
 
@@ -618,3 +651,30 @@ nslookup google.com
 # check connection to a port
 Test-NetConnection 192.168.1.3 -Port 22
 ```
+
+
+## Secrets
+
+- Use `Read-Host "Your secret" -AsSecureString`
+
+- Use `Get-Credential` to collect username and password, many cmdlets accept a credential parameter
+
+  ```powershell
+  $cred = Get-Credential
+  Set-ADUser -Identity $user -Department "Marketing" -Credential $cred
+  ```
+
+- Use `Microsoft.PowerShell.SecretManagement` module, which works with
+  - KeePass
+  - LastPass
+  - CredMan
+  - Azure KeyVault
+
+
+## Tricks
+
+- Select items from a list interactively
+
+  ```powershell
+  $selection = $users | Out-GridView -PassThru
+  ```

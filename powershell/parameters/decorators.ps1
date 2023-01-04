@@ -1,7 +1,6 @@
 Param(
   [Parameter(Mandatory, HelpMessage = "Please provide your name")]
-  [string]$Name = "Gary",
-  [Parameter(Mandatory, HelpMessage = "Please provide your age")]
+  [string]$Name,
   [int]$Age = 20
 )
 
