@@ -24,7 +24,14 @@
 - [Customize output](#customize-output)
   - [Filtering](#filtering)
   - [Examples](#examples)
+- [Variables](#variables)
+  - [Predefined variables](#predefined-variables)
+  - [Types](#types)
+  - [Common operations](#common-operations)
 - [Strings](#strings)
+- [Arrays](#arrays)
+  - [ArrayList](#arraylist)
+- [Hash tables](#hash-tables)
 - [Files](#files)
 - [Networking](#networking)
 
@@ -468,6 +475,63 @@ Get-ChildItem | Where-Object {$_.Name -Like 'gary*'}
   ```
 
 
+## Variables
+
+### Predefined variables
+
+`$true`, `$false`, `$null` are predefined variables
+
+```powershell
+# list all variables by querying the Variable: drive
+Get-ChildItem Variable:
+```
+
+### Types
+
+- String
+- Int
+- Double
+- DateTime
+- Bool
+
+Types are usually determined dynamically based on the value
+
+```powershell
+$num = 2
+$num.GetType()
+
+# IsPublic IsSerial Name                                     BaseType
+# -------- -------- ----                                     --------
+# True     True     Int32                                    System.ValueType
+```
+
+you could also assign a type explicitly:
+
+```powershell
+[Double]$num = 2
+$num.GetType()
+
+# IsPublic IsSerial Name                                     BaseType
+# -------- -------- ----                                     --------
+# True     True     Double                                   System.ValueType
+```
+
+### Common operations
+
+```powershell
+# to unset a variable
+$var = $null
+```
+
+Get properties and methods of a variable
+
+```powershell
+$str = "hello"
+
+$str | Get-Member
+```
+
+
 ## Strings
 
 ```powershell
@@ -485,6 +549,51 @@ Write-Host "`$Name is $Name"
 Write-Host "`$Name has $($Name.length) characters"
 # $Name has 4 characters
 ```
+
+
+## Arrays
+
+```powershell
+# an empty array
+$arr1 = @()
+
+# an array with three strings
+$arr2 = "dog","cat","parrot"
+
+# an array with three numbers
+$arr3 = 1,9,30
+
+# an array of DirectoryInfo objects
+$arr4 = Get-ChildItem
+
+# properties/methods of each item
+$arr2 | Get-Member
+
+# properties/methods of the array
+Get-Member -InputObject $arr2
+```
+
+### ArrayList
+
+An array has a fixed size, if you add an item, a new array is created.
+
+An arrayList doesn't have a fixed size, you could add/remove items more efficiently
+
+```powershell
+[System.Collections.ArrayList]$arr = "dog","cat","parrot"
+$arr.Remove('parrot')
+$arr.Add('fish')
+```
+
+
+## Hash tables
+
+```powershell
+$pets = @{ "cat" = "white"; "dog" = "brown" }
+
+$pets['cat']
+```
+
 
 ## Files
 
