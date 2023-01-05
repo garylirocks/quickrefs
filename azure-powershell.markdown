@@ -1,9 +1,12 @@
 # Azure PowerShell
 
 - [On Linux/Mac](#on-linuxmac)
+- [Login](#login)
 - [Account](#account)
 - [Resource groups](#resource-groups)
 - [VM](#vm)
+  - [Creating](#creating)
+  - [Management](#management)
 - [Azure AD](#azure-ad)
   - [PIM](#pim)
     - [Azure resources](#azure-resources)
@@ -25,12 +28,18 @@ Import-Module Az
 ```
 
 
+## Login
+
+The first step is always login
+
+```powershell
+Connect-AzAccount
+```
+
+
 ## Account
 
 ```powershell
-# login
-Connect-AzAccount
-
 # list subscriptions
 Get-AzSubscription
 
@@ -64,6 +73,8 @@ Get-AzResource -ResourceType Microsoft.Compute/virtualMachines
 
 ## VM
 
+### Creating
+
 ```powershell
 # create a VM
 # 'Get-Credential' cmdlet will prompt you for username/password
@@ -83,15 +94,9 @@ $vm
 # get a field
 $vm.Location
 # eastus
-
-# stop vm
-Stop-AzVM -Name $vm.Name -ResourceGroup $vm.ResourceGroupName
-
-# remove vm (it doesn't cleanup related resources)
-Remove-AzVM -Name $vm.Name -ResourceGroup $vm.ResourceGroupName
 ```
 
-PowerShell script example, creating three VMs
+Creating three VMs
 
 ```powershell
 # assign first param to a variable
@@ -112,6 +117,22 @@ Run the script by
 
 ```
 ./script.ps1 my-RG
+```
+
+### Management
+
+```powershell
+$vm = Get-AzVM -Name "testvm-eus-01" -ResourceGroupName my-RG
+
+# resize vm
+$vm.HardwareProfile.VmSize = "Standard_DS3_v2"
+Update-AzVM -VM $vm -ResourceGroupName my-RG
+
+# stop vm
+Stop-AzVM -Name $vm.Name -ResourceGroup $vm.ResourceGroupName
+
+# remove vm (it doesn't cleanup related resources)
+Remove-AzVM -Name $vm.Name -ResourceGroup $vm.ResourceGroupName
 ```
 
 

@@ -310,10 +310,10 @@ Examples:
 - Runs on a temporary host on a per-user, per-session basis
   - Multiple sessions are run on the same machine
   - You could open a port, and preview whatever is served by it in browser
-- Requires an Azure file share to be mounted
+- Requires an Azure file share to be mounted (same share used for both Bash and PowerShell)
 - Persists `$HOME` using a 5GB image held in the file share
 - You can find information regarding your Cloud Shell container by inspecting environment variables prefixed with `ACC_`, eg. `ACC_LOCATION` is the region or your container
-- By default Cloud Shell runs in a container in a Microsoft network separate from your resources. This means it cannot access private resources. You could deploy Cloud Shell into your own vnet, see: https://docs.microsoft.com/en-us/azure/cloud-shell/private-vnet
+- By default, Cloud Shell runs in a container in a Microsoft network separate from your resources. This means it cannot access private resources. You could deploy Cloud Shell into your own VNet, see: https://docs.microsoft.com/en-us/azure/cloud-shell/private-vnet
 
 ### File persistence
 

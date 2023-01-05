@@ -105,7 +105,7 @@ Get-MgGroupMember -GroupId $groupId | ForEach-Object { @{UserId=$_.Id} } | Get-M
 #    Gary Li         gary@24g85s.onmicrosoft.com
 #    Patti Fernandez PattiF@24g85s.onmicrosoft.com
 #    Lee Gu          LeeG@24g85s.onmicrosoft.com
-#    Miriam Graham   MiriamG@24g85s.onmicrosoft.cΓÇª
+#    Miriam Graham   MiriamG@24g85s.onmicrosoft.com
 #    ...
 ```
 
