@@ -336,7 +336,7 @@ Define or delete an alias
 ```powershell
 New-Alias tf terraform
 
-# remove an alias
+# you need to use the "Alias" drive to remove an alias
 Remove-Item Alias:\tf
 ```
 
