@@ -18,6 +18,11 @@
 - [Enumeration](#enumeration)
   - [Advanced techniques](#advanced-techniques)
 - [Measure](#measure)
+- [How objects are passed](#how-objects-are-passed)
+  - [ByValue](#byvalue)
+  - [ByProperty](#byproperty)
+- [Parenthetical commands](#parenthetical-commands)
+- [Expand a property](#expand-a-property)
 
 
 ## Overview
@@ -384,4 +389,107 @@ Get-ChildItem -File | Measure-Object -Property Length -Sum -Average -Min -Max
 # Minimum           : 0
 # StandardDeviation :
 # Property          : Length
+```
+
+
+## How objects are passed
+
+PowerShell has two techniques to pass data from one command to another in a pipeline: "ByValue" and "ByPropertyName".
+
+### ByValue
+
+Let's look at this example:
+
+```powershell
+ls | Sort-Object -Property Name
+```
+
+`Sort-Object` got two parameters, one is `-Property`, another one is an invisible `-InputObject` parameter, if we look at the help of `Sort-Object`, we could see that `-InputObject` accepts pipeline input, using "ByValue" technique
+
+```
+-InputObject <System.Management.Automation.PSObject>
+    To sort objects, send them down the pipeline to `Sort-Object` ...
+
+    Required?                    false
+    Position?                    named
+    Default value                None
+    Accept pipeline input?       True (ByValue)
+    Accept wildcard characters?  false
+```
+
+Notes:
+
+- If a command has multiple parameters accepting pipeline input, data is passed to the parameter with the most specific matching data types
+  - `PSObject` and `Object` are generic types which match any data, it's how commands like `Select-Object`, `Sort-Object` are working
+
+### ByProperty
+
+If "ByValue" fails, PowerShell would use the "ByProperty" technique, passing property of the incoming data to the matching parameters of next command
+
+```powershell
+ls | Get-Process
+```
+
+If this example, `ls` produces objects of type `System.IO.FileInfo`, but no parameters of `Get-Process` accept it. It then tries the 'ByProperty' technique, value of the `Name` property are passed to the `-Name` parameter of `Get-Process`
+
+```
+-Name <System.String[]>
+    Specifies one or ...
+
+    Required?                    false
+    Position?                    0
+    Default value                None
+    Accept pipeline input?       True (ByPropertyName)
+    Accept wildcard characters?  true
+```
+
+If the property doesn't match the parameter name, you could remap the name by creating a calculated property:
+
+```powershell
+Get-ADComputer -Filter * | Select-Object @{n='ComputerName';e={$PSItem.Name}} | Get-Process
+```
+
+
+## Parenthetical commands
+
+If a command accepts multiple inputs, since pipeline can only provide one input, you could use a parenthetical command to provide inputs to other parameters.
+
+```powershell
+Get-ADGroup "London Users" | Add-ADGroupMember -Members (Get-ADUser -Filter {City -eq 'London'})
+```
+
+
+## Expand a property
+
+```powershell
+ls *.txt | Select-Object Name | Get-Member
+
+#    TypeName: Selected.System.IO.FileInfo
+
+# Name        MemberType   Definition
+# ----        ----------   ----------
+# ...
+# ToString    Method       string ToString()
+# Name        NoteProperty string Name=a.txt
+```
+
+With `Select-Object Name`, you end up with objects of type `Selected.System.IO.FileInfo`, it has the `Name` property, with other `FileInfo` properties removed
+
+If you want to just extract the `Name` as a collection of strings, you need to use `-ExpandProperty` parameter
+
+```powershell
+ls *.txt | Select-Object -ExpandProperty Name | Get-Member
+
+  #  TypeName: System.String
+
+ls *.txt | Select-Object -ExpandProperty Name
+
+# a.txt
+# b.txt
+```
+
+This technique could be used in cases where a parameter expects a specific data type
+
+```powershell
+Get-Process -Name (ls | select -ExpandProperty name)
 ```
