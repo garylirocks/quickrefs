@@ -22,9 +22,6 @@
   - [Import](#import)
   - [Inspect](#inspect)
   - [Install](#install)
-- [Customize output](#customize-output)
-  - [Filtering](#filtering)
-  - [Examples](#examples)
 - [Variables](#variables)
   - [Predefined variables](#predefined-variables)
   - [Types](#types)
@@ -34,6 +31,9 @@
   - [ArrayList](#arraylist)
 - [Hash tables](#hash-tables)
 - [Files](#files)
+  - [Reading](#reading)
+  - [Writing](#writing)
+- [Output](#output)
 - [Networking](#networking)
 - [Secrets](#secrets)
 - [Tricks](#tricks)
@@ -399,99 +399,6 @@ Then you could either
   ```
 
 
-## Customize output
-
-When output an object, if there is a registered view for the object type, it is used, which likely does not include all properties of the object.
-
-```powershell
-$p=Get-Process powershell
-$p
-
-# Handles  NPM(K)    PM(K)      WS(K)     CPU(s)     Id  SI ProcessName
-# -------  ------    -----      -----     ------     --  -- -----------
-#     604      30   189008     203916       2.75  16040   4 powershell
-```
-
-You can inspect the object, to see what properties and methods exist
-
-```powershell
-# inspect the object
-$p | Get-Member
-
-#    TypeName: System.Diagnostics.Process
-
-# Name                       MemberType     Definition
-# ----                       ----------     ----------
-# Handles                    AliasProperty  Handles = Handlecount
-# ...
-# Kill                       Method         void Kill()
-# ...
-```
-
-And customize the output with `Select-Object`
-
-```powershell
-# show all properties
-$p | Select-Object -Property *
-
-# show selected properties
-$p | Select-Object -Property Id,ProcessName
-
-#    Id ProcessName
-#    -- -----------
-# 11392 powershell
-```
-
-### Filtering
-
-Some cmdlet has filtering built-in, this is most efficient
-
-```powershell
-Get-ChildItem -Filter gary.* | Select-Object Name
-
-# Name
-# ----
-# gary.txt
-```
-
-If not, you could use `Where-Object`
-
-```powershell
-Get-ChildItem | Where-Object Name -Like gary*
-
-# equivalent to
-Get-ChildItem | Where-Object -Property Name -Like -Value gary*
-
-# or you could use a script block
-Get-ChildItem | Where-Object {$_.Name -Like 'gary*'}
-```
-
-### Examples
-
-- Filter with `Where-Object`, sort with `Sort-Object`, limit with `Select-Object`
-
-  ```powershell
-  ls | Where-Object {$_.Name -like '*.txt'} `
-    | Sort-Object -Property Name -Descending `
-    | Select-Object -First 2 -Property Name
-
-  # Name
-  # ----
-  # zoe.txt
-  # jack.txt
-  ```
-
-- Output as a list instead of a table
-
-  ```powershell
-  ls | Select-Object Name | Format-List
-
-  # Name : gary.txt
-  # Name : jack.txt
-  # Name : zoe.txt
-  ```
-
-
 ## Variables
 
 ### Predefined variables
@@ -625,7 +532,7 @@ New-Item -ItemType Directory testFolder
 New-Item -ItemType File a.txt -Value "hello world"
 ```
 
-Read text file
+### Reading
 
 ```powershell
 # read lines in a file to an array
@@ -640,6 +547,45 @@ Read files of other formats:
 - `$users = Get-Content .\Users.json | ConvertFrom-Json`: read JSON files
 - `$users = Import-Csv .\Users.csv`: read CSV data to an array of objects
 - `Import-Clixml`: read XML files
+
+### Writing
+
+Use `Out-File` to output text to a file, you could also use `>`, `>>`, as in Bash
+
+```powershell
+echo "hello world" | Out-File "myFile.txt"
+
+echo "append this line" >> "myFile.txt"
+```
+
+To convert data to other formats before writing:
+
+- `ConvertTo-Csv`, `Export-Csv`
+- `ConvertTo-Clixml`, `Export-Clixml`
+- `ConvertTo-Json`, no `Export-` version
+- `ConvertTo-Html`, put objects in an HTML table, you could customize with `-Head`, `-Title`, `-PreContent`, `-PostContent`
+
+Example:
+
+```powershell
+Get-Service | ConvertTo-Csv | Out-File Services.csv
+```
+
+`Export-Csv` combines `ConvertTo-Csv` and `Out-File`, the above is equivalent to
+
+```powershell
+Get-Service | Export-Csv Services.csv
+```
+
+
+## Output
+
+Apart from writing data to a file, there are other ways to output data:
+
+- `Out-Host`, this is the default output option, which displays everything
+- `Out-Host -Paging`, displays one page at a time
+- `Out-GridView`, displays objects in a separate window, like a Excel spreadsheet, you could sort/filter/copy data
+- `Out-Printer`, send to printer
 
 
 ## Networking
