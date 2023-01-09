@@ -624,21 +624,43 @@ echo ${a//:}    # remove ':'
 - A circuit represents a logical connection between your on-prem infrastructure and Microsoft cloud through a connectivity provider (e.g. AT&T, Verizon, Vodafone)
 - A circuit does not map to any physical entities, is uniquely identified by a standard GUID called a service key
 - A direct, private connection(but NOT encrypted) to Microsoft services, including Azure, Microsoft 365, Dynamics 365
+- A circuit is always active-active, two BGP sessions
+- Ingress is not chared, Egress is charged (could be metered or unlimited)
 - Private peering:
   - For VMs (IaaS) and PaaS services deployed within a vNet
   - Connect your on-prem network to Azure vNets, lets you connect to VMs and cloud services directly on their private IP addresses
 - Microsoft peering:
-  - For Microsoft 365 and Azure PaaS services
-  - Recommended for specific scenarios
+  - For Microsoft 365 and Azure PaaS services that are not deployed into a vNet
+  - Microsoft 365 is designed to be used over the Internet, there is only some very limited scenarios in which you may want connect to it over an ER
   - Bidirectional connectivity between your WAN and Microsoft services
-  - Only over public IPs owned by you or your connectivity provider
   - Route filter:
     - Why:  Connectivity to all Azure and Microsoft 365 services causes many prefixes to gets advertised through BGP. The large number of prefixes significantly increases the size of the route tables maintained by routers within your network.
     - How: You must associate a route filter to your ER circuit to enable route advertisement to your network.  A route filter lets you select the list of services that you plan to consume through Microsoft peering
     - A route filter can only have one rule of type "Allow", which has a list of BGP community values associated
 
+- For a peering
+  - Requires a /29 address range, or two /30 ranges
+    - One /30 range for primary link, one for secondary link
+    - In each /30 range, you router gets one IP, MS uses another to setup BGP session
+    - For Microsoft peering, you must use public IPs
 
-![Connectivity models](images/azure_expressroute-connectivity-models.png)
+  - MS uses ASN 12076, and have 65515-65520 reserved for internal use
+    - For Microsoft peering, you need a publicly registered ASN for your network
+    - When a ER gateway is connected to two circuits, you could use either routing weight or AS prepending to set the preferred route
+
+  - MS advertise routes tagged with appropriate community values
+    - if you configure a custom BGP community value on your Azure vNet, you will see this custom value and a regional BGP value on the Azure routes advertised to your on-prem over ER
+    - the regional BGP community values help you decide which routes take precedence when you have circuits in different regions
+
+
+- SKUs:
+  - Local: only connect to local regions, egress traffic not charged
+  - Standard: connect to regions in the same geopolitical boundary
+  - Premium: global connectivity, more than 4k routes, connect to more than 10 vNets
+
+- ER Direct: you buy a port from an MS edge router directly, up to 100Gbps, so your traffic does not go through a provider router
+
+<img src="images/azure_expressroute-connectivity-models.png" width="600" alt="Connectivity models" />
 
 Connectivity can be from:
 
