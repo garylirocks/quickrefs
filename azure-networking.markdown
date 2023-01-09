@@ -1762,7 +1762,7 @@ Types of DDoS attack:
 
 ## Azure Virtual Network Manager
 
-- Scope: A manager instance could be created at a paticular scope: a management group or subscription, then you could targe all vnets within the scope
+- Scope: A manager instance could be created at a paticular scope: a management group or subscription, then you could target all vnets within the scope
   - So a vnet could be targeted by multiple manager instances
 - Cost: you pay per subscription per AVNM instance, so if a subscription is included in two AVNM instances, you pay for it twice
 - Entities: Network Groups, Configurations (Connectivity or Security Admin)
@@ -1787,6 +1787,8 @@ Security Admin rules:
 - They are checked before NSGs
 - Rules from manager instances with a higher scope level are checked first
 - A rule has three possible actions: "Allow", "Deny", "Always allow", if it's "Always allow", rules from lower level manager instances and NSGs are ignored
+
+![Security admin rules evaluation](./images/azure_networking-virtual-network-manager-security-admin-rules.png)
 
 
 ## Network Watcher
