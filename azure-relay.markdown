@@ -1,4 +1,4 @@
-# Azure Replay
+# Azure Relay
 
 - [Overview](#overview)
 - [Basic flow](#basic-flow)
@@ -12,7 +12,7 @@ Enables you to securely expose on-prem service to the public cloud (or another o
 
 - The on-prem service doesn't need any inbound ports open on the firewall
 - Comparing to VPN
-  - it can be scoped to a single application endpoint on a single maching
+  - it can be scoped to a single application endpoint on a single machine
   - not intrusive
 
 Two features:
