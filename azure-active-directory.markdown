@@ -236,6 +236,52 @@ _On prem AD is optional here_
 - Usually a work/school device, you login with your work/school account
 - Only works on Windows 10 (and above) and Azure Windows VMs with certain extensions installed
 
+```sh
+# check status
+dsregcmd /status
+
+# +----------------------------------------------------------------------+
+# | Device State                                                         |
+# +----------------------------------------------------------------------+
+
+#              AzureAdJoined : YES
+#           EnterpriseJoined : NO
+#               DomainJoined : YES
+#                 DomainName : MyAAD
+#                Device Name : hostname.MyAAD.example.com
+
+# +----------------------------------------------------------------------+
+# | Tenant Details                                                       |
+# +----------------------------------------------------------------------+
+
+#                 TenantName : My Tenant
+#                   TenantId : xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+#                        Idp : login.windows.net
+
+# ...
+
+# +----------------------------------------------------------------------+
+# | Ngc Prerequisite Check                                               |
+# +----------------------------------------------------------------------+
+
+#             IsDeviceJoined : YES
+#              IsUserAzureAD : YES
+#              PolicyEnabled : NO
+#           PostLogonEnabled : YES
+#             DeviceEligible : YES
+#         SessionIsNotRemote : YES
+#             CertEnrollment : none
+#               PreReqResult : WillNotProvision
+```
+
+- You can still login to an AAD-joined machine using a non-AAD account
+- If you want to RDP an AAD joined machine using an AAD account
+  - you use username in the form like `MyAAD\gary@example.com`
+  - your local machine needs to be AAD joined/registered or hybrid joined
+  - you can't use MFA during RDP login, but you could assign conditional access policy
+- Windows Servers can not join Azure AD, you need the "AADLoginForWindows" extension, to be able to login via an AAD account
+  - the user needs either "Virtual Machine User Login" or "Virtual Machine Administrator Login" RBAC role
+
 ### Hybrid
 
 - The device is joined to AD and registered with Azure AD
