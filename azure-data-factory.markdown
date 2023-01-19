@@ -3,6 +3,7 @@
 - [Overview](#overview)
 - [Integration Runtime](#integration-runtime)
   - [Managed Virtual Network and Manged Private Endpoint](#managed-virtual-network-and-manged-private-endpoint)
+  - [Connect to a storage account](#connect-to-a-storage-account)
 - [Security](#security)
 - [Git integration](#git-integration)
 - [CI/CD process](#cicd-process)
@@ -41,7 +42,9 @@ Concepts
   - Activity dispatch
   - SSIS package execution: execute SSIS (SQL Server Integration Service) packages in a managed Azure compute environment
 - Bridge between the activity and linked services, provides the compute environment where the activity either runs on or gets dispatched from
-- When an ADF instance is created, a default IR is created, can be viewed when the integration runtime is set to *Auto-Resolve*
+- When an ADF instance is created, a default IR is created, can be viewed when the integration runtime is set to *AutoResolveIntegrationRuntime*
+- "AutoResolveIntegrationRuntime" is the default Azure IR, you could create more Azure IRs with or without managed VNet
+  - You could have managed private endpoints in these managed VNets pointing to PaaS services
 
 IR types and functions:
 
@@ -56,10 +59,20 @@ IR types and functions:
 
 See details here: https://docs.microsoft.com/en-us/azure/data-factory/managed-virtual-network-private-endpoint
 
-- An Azure Integration Runtime could be placed within an managed vNet, and use private endpoints to securely connect to supported data stores.
-- If a PasS data store has private endpoint enabled, ADF could *ONLY* access it using a managed private endpoint, no matter whether the data store is publicly accessible or not.
+An Azure Integration Runtime could be placed within an managed vNet, and use private endpoints to securely connect to supported data stores.
 
 ![Manged vNet](images/azure_managed-vnet-architecture-diagram.png)
+
+
+### Connect to a storage account
+
+| IR                         | Storage account access control                                                                                                                                                                     |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AutoResolve                | <li>Enable from all networks</li> <li>Enabled from selected virtual networks and IP addresses (with exception: Allow Azure services)</li> <li>Disabled (with exception: Allow Azure services)</li> |
+| Azure IR with managed VNet | Managed private endpoint                                                                                                                                                                           |
+
+- Seems like with the "Allow Azure services" exception still applies even when "Public network access" is "Disabled"
+- You could have "AutoResolve" IR access a storage account through exception, and another Azure IR in managed VNet access it via a managed private endpoint.
 
 
 ## Security
