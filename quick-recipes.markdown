@@ -754,6 +754,11 @@ Address: 172.217.167.110
 ### `ipconfig`
 
 ```powershell
+# show cached DNS entries
+ipconfig /displaydns
+# or
+Get-DnsClientCache
+
 # clear local DNS cache
 ipconfig /flushdns
 
