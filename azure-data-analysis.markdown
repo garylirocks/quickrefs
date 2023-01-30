@@ -1,7 +1,13 @@
 # Azure data analysis
 
 - [Overview](#overview)
+- [Azure Synapse Analytics](#azure-synapse-analytics)
 - [Databricks](#databricks)
+- [HDInsight](#hdinsight)
+- [Stream Analytics](#stream-analytics)
+- [Azure Data Explorer](#azure-data-explorer)
+- [Microsoft Purview](#microsoft-purview)
+- [Power BI](#power-bi)
 - [On-prem data gateways](#on-prem-data-gateways)
   - [Auth](#auth)
   - [Networking](#networking)
@@ -14,6 +20,17 @@
 
 //TODO
 
+
+## Azure Synapse Analytics
+
+A comprehensive, unified data analytics solutions that provides a single service interface for multiple analytical capabilities:
+
+- Pipelines, same technology as ADF
+- SQL, optimized for data warehouse workloads
+- Apache Spark
+- Azure Synapse Data Explorer
+
+
 ## Databricks
 
 - Run big data pipelines using both batch and real-time data
@@ -21,6 +38,39 @@
   - Real-time data from Event Hub, IoT hub
 - Train machine-learning models
 - Uses Spark
+
+
+## HDInsight
+
+Azure-hosted clusters for popular Apache open-source big data processing technologies:
+
+- Apache Spark: distributed data processing system
+- Apache Hadoop: distributed system that uses *MapReduce* jobs to process large volumes of data efficiently across multiple cluster nodes
+- Apache HBase: large-scale NoSQL data storage and querying
+- Apache Kafka: message broker for data stream processing
+
+
+## Stream Analytics
+
+Real-time stream processing engine
+
+
+## Azure Data Explorer
+
+A standalone service, high-performance querying of logs and telemetry data as the Data Explorer in Azure Synapse Analytics
+
+
+## Microsoft Purview
+
+A solution for enterprise-wide data governance and discoverability.
+
+Create a map of your data and track data lineage across multiple data sources and systems.
+
+
+## Power BI
+
+A platform for analytical data modeling and reporting, create and share interactive data visualizations.
+
 
 ## On-prem data gateways
 
