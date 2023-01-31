@@ -2,8 +2,11 @@
 
 - [Overview](#overview)
 - [Integration Runtime](#integration-runtime)
+  - [Azure IR](#azure-ir)
+  - [Self-hosted IR](#self-hosted-ir)
   - [Managed Virtual Network and Manged Private Endpoint](#managed-virtual-network-and-manged-private-endpoint)
   - [Connect to a storage account](#connect-to-a-storage-account)
+  - [Which IR is used ?](#which-ir-is-used-)
 - [Security](#security)
 - [Git integration](#git-integration)
 - [CI/CD process](#cicd-process)
@@ -30,7 +33,7 @@ Concepts
 - **Linked services**
   - Data sources for ingest
   - Compute resources for transformation
-- **Data flows**: activities within pipelines, data transformation logic (could be created using a graphical interface) that run on Spark cluster
+- **Data flows**: data transformation logic that runs on ADF-managed Spark clusters, could be created using a graphical interface
 - **Integration runtimes (IR)**: (see below)
 
 
@@ -38,22 +41,39 @@ Concepts
 
 - The compute infrastructure used by ADF, providing the following capabilities:
   - Data Flow
-  - Data movement
-  - Activity dispatch
+  - Data movement (copy activities)
+  - Activity dispatch (could be dispatched to Databricks, HDInsight, SQL Database, SQL Server, etc)
   - SSIS package execution: execute SSIS (SQL Server Integration Service) packages in a managed Azure compute environment
 - Bridge between the activity and linked services, provides the compute environment where the activity either runs on or gets dispatched from
-- When an ADF instance is created, a default IR is created, can be viewed when the integration runtime is set to *AutoResolveIntegrationRuntime*
-- "AutoResolveIntegrationRuntime" is the default Azure IR, you could create more Azure IRs with or without managed VNet
-  - You could have managed private endpoints in these managed VNets pointing to PaaS services
+- Integration runtimes can be referenced by activities, datasets or data flows
 
 IR types and functions:
 
-| IR type     | Public network                              | Private network                  |
-| ----------- | ------------------------------------------- | -------------------------------- |
-| Azure       | Data Flow, Data movement, Activity dispatch |
-| Self-hosted | Data movement, Activity dispatch            | Data movement, Activity dispatch |
-| Azure-SSIS  | SSIS package execution                      | SSIS package execution           |
+| IR type     | Public network                                                                                    | Private network                  |
+| ----------- | ------------------------------------------------------------------------------------------------- | -------------------------------- |
+| Azure       | Data Flow, Data movement (between cloud data stores), Activity dispatch                           |
+| Self-hosted | Data movement (between a cloud data store and a data store in private network), Activity dispatch | Data movement, Activity dispatch |
+| Azure-SSIS  | SSIS package execution                                                                            | SSIS package execution           |
 
+### Azure IR
+
+- Fully managed, serverless compute, scales automatically according to how many data integration units are set on the copy activity
+- When an ADF instance is created, a default IR is created: *AutoResolveIntegrationRuntime*
+- An Azure IR have two sub-types:
+  - Public: connect to data stores and compute services via public accessible endpoints
+  - With managed VNet: could have managed private endpoints in these managed VNets pointing to PaaS services
+- You could have multiple "Auto Resolve" IRs, the location of the IR depends on the sub-type and activities:
+  - Public
+    - Copy activity: automatically detect **sink data store's location**, use the IR in either the same region, or closest one, falling back to the ADF instance's region
+    - Other activities: same region as the ADF instance
+  - With managed VNet
+    - IR is in the same region as the instance
+
+### Self-hosted IR
+
+- Could be installed on-prem behind a fireall, or inside a VNet
+- Supports data stores that require bring-your-own driver, such as SAP Hana, MySQL
+- JRE is a dependency of Self-hosted IR
 
 ### Managed Virtual Network and Manged Private Endpoint
 
@@ -66,13 +86,35 @@ An Azure Integration Runtime could be placed within an managed vNet, and use pri
 
 ### Connect to a storage account
 
-| IR                         | Storage account access control                                                                                                                                                                     |
-| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| AutoResolve                | <li>Enable from all networks</li> <li>Enabled from selected virtual networks and IP addresses (with exception: Allow Azure services)</li> <li>Disabled (with exception: Allow Azure services)</li> |
-| Azure IR with managed VNet | Managed private endpoint                                                                                                                                                                           |
+| IR                           | Storage account access control                                                                                                                                                                     |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Azure IR (Public)            | <li>Enable from all networks</li> <li>Enabled from selected virtual networks and IP addresses (with exception: Allow Azure services)</li> <li>Disabled (with exception: Allow Azure services)</li> |
+| Azure IR (with managed VNet) | Managed private endpoint                                                                                                                                                                           |
+| Self Hosted IR               | public endpoint, storage firewall or private endpoint                                                                                                                                              |
 
 - Seems like with the "Allow Azure services" exception still applies even when "Public network access" is "Disabled"
+  - With the exception, you must use the "Managed Identity" credential
 - You could have "AutoResolve" IR access a storage account through exception, and another Azure IR in managed VNet access it via a managed private endpoint.
+
+A few ways to authenticate an IR to a storage account:
+
+- Account key
+- SAS URI
+- Service Principal
+- System Assigned Managed Identity (of the ADF instance)
+- User Assigned Managed Identity (of the ADF instance)
+
+If you use a self-hosted IR, then the credentials would be saved in the IR. If you use managed identity, it means the **identity of the ADF instance, not the IR VM**.
+
+### Which IR is used ?
+
+If an activity associates with multiple IRs, it will **resolve to one of them**, the precedence is like:
+
+**Self-hosted IR > Azure IR (managed VNet) > Azure IR (public)**
+
+**Azure IR (regional) > Azure IR (auto resolve)**
+
+In a copy activity, if source linked service is associated to Self-hosted IR, sink linked service is associated with Azure IR (public), then Self-hosted IR is used
 
 
 ## Security
