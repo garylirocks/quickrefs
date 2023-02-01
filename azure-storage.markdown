@@ -250,10 +250,16 @@ There are three types:
 - **Account SAS**
 
   You could specify:
+
     - Allowed services: Blob, File, Queue, Table
     - Allowed resource types: Service, Container, Object
     - Allowed permissions: Read, Write, Delete, List, ...
-- **Service SAS**: scoped at container level, which can be a blob container, a file share, a queue or a table
+
+- **Service SAS**
+  - Could be scoped at container level (blob container, file share, queue or table)
+  - Or at individual blob level
+  - Could associate a stored access policy
+
 - **User delegation SAS**
   - Secured with Azure AD credentials and also permissions specified for the SAS
   - For Blob only: could be at container or blob level
@@ -275,7 +281,7 @@ There are two forms:
 - Service SAS with stored access policy
 
   - Instead of specify the permissions and time on each SAS, you define a **stored access policy** at the container level (blob container, file share, queue or table). You can have a maximum of five stored access policies per container.
-  - Then reference this policy when you create a service SAS, *seems you can only do this programmatically, not in the Portal*
+  - Then reference this policy when you create a service SAS
   - This allows you to change the permissions or duration without having to regenerate the storage account keys.
   - Create a policy using CLI
 
