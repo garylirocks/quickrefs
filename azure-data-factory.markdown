@@ -3,10 +3,12 @@
 - [Overview](#overview)
 - [Integration Runtime](#integration-runtime)
   - [Azure IR](#azure-ir)
+    - [With Managed VNet and private endpoints](#with-managed-vnet-and-private-endpoints)
   - [Self-hosted IR](#self-hosted-ir)
-  - [Managed Virtual Network and Manged Private Endpoint](#managed-virtual-network-and-manged-private-endpoint)
-  - [Connect to a storage account](#connect-to-a-storage-account)
+    - [Sharing](#sharing)
   - [Which IR is used ?](#which-ir-is-used-)
+- [Linked services](#linked-services)
+  - [Storage account](#storage-account)
 - [Security](#security)
 - [Git integration](#git-integration)
 - [CI/CD process](#cicd-process)
@@ -60,31 +62,73 @@ IR types and functions:
 - Fully managed, serverless compute, scales automatically according to how many data integration units are set on the copy activity
 - When an ADF instance is created, a default IR is created: *AutoResolveIntegrationRuntime*
 - An Azure IR have two sub-types:
-  - Public: connect to data stores and compute services via public accessible endpoints
-  - With managed VNet: could have managed private endpoints in these managed VNets pointing to PaaS services
-- You could have multiple "Auto Resolve" IRs, the location of the IR depends on the sub-type and activities:
+  - Public:
+    - connect to data stores and compute services via public accessible endpoints
+    - Azure provides a range of static public IP addresses which could be added to allowlist of the target data store firewalls
+  - With managed VNet: *see below*
+- Two options for region: "Auto Resolve" or a specific region
+- For "Auto Resolve" IRs, the location of the IR depends on the sub-type and activities:
   - Public
     - Copy activity: automatically detect **sink data store's location**, use the IR in either the same region, or closest one, falling back to the ADF instance's region
     - Other activities: same region as the ADF instance
   - With managed VNet
     - IR is in the same region as the instance
 
+#### With Managed VNet and private endpoints
+
+See details here: https://docs.microsoft.com/en-us/azure/data-factory/managed-virtual-network-private-endpoint
+
+An Azure IR could be placed within an managed vNet, and use private endpoints to securely connect to supported data stores.
+
+<img src="images/azure_adf-integration-runtime-with-managed-virtual-network.png" width="800" alt="Manged vNet" />
+
+- Private endpoints can't be shared across environments
+- Private endpoints can be used to access
+  - Data stores
+  - External compute resources (Azure Databricks, Azure Functions, etc)
+  - On-prem private link service
+- The managed VNet can't be peered to your own VNet
+
 ### Self-hosted IR
 
 - Could be installed on-prem behind a fireall, or inside a VNet
 - Supports data stores that require bring-your-own driver, such as SAP Hana, MySQL
-- JRE is a dependency of Self-hosted IR
+- To ensure sufficient isolation, you generally should have a separate integration runtime for each environment
 
-### Managed Virtual Network and Manged Private Endpoint
+  <img src="images/azure_adf-self-hosted-integration-runtime-across-environments.png" width="600" alt="Self-hosted integration runtime across environments" />
 
-See details here: https://docs.microsoft.com/en-us/azure/data-factory/managed-virtual-network-private-endpoint
+#### Sharing
 
-An Azure Integration Runtime could be placed within an managed vNet, and use private endpoints to securely connect to supported data stores.
+Within each environment, a self-hosted IR could be shared by ADFs across projects
 
-![Manged vNet](images/azure_managed-vnet-architecture-diagram.png)
+![Shared self-hosted integration runtime](./images/azure_adf-self-hosted-integration-runtime-sharing.png)
+
+- SHIR could be installed on-prem or in a VNet
+- On-prem SHIR can access cloud data store through
+  - either public endpoints
+  - or private endpoints (when there is ExpressRoute or S2S VPN)
+- How SHIR is shared:
+  - A primary ADF reference it as shared SHIR OR use a ternary factory just to contain the shared SHIR
+  - Other ADFs refer to it as a linked SHIR
+- A SHIR can have multiple nodes in a cluster, primary nodes communicate with ADF, and distribute work to secondary nodes
+- Credentials of on-prem data stores could be stored in either local machine or an Azure Key Vault (recommended)
+- Communication between SHIR and ADF can go through private link. But currently, interactive authoring and automatic updating form the download center don't support private link, the traffic goes through the on-prem firewall.
+  - Private link is only required for the primary ADF
+
+### Which IR is used ?
+
+If an activity associates with multiple IRs, it will **resolve to one of them**, the precedence is like:
+
+**Self-hosted IR > Azure IR (managed VNet) > Azure IR (public)**
+
+**Azure IR (regional) > Azure IR (auto resolve)**
+
+In a copy activity, if source linked service is associated to Self-hosted IR, sink linked service is associated with Azure IR (public), then Self-hosted IR is used
 
 
-### Connect to a storage account
+## Linked services
+
+### Storage account
 
 | IR                           | Storage account access control                                                                                                                                                                     |
 | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -105,16 +149,6 @@ A few ways to authenticate an IR to a storage account:
 - User Assigned Managed Identity (of the ADF instance)
 
 If you use a self-hosted IR, then the credentials would be saved in the IR. If you use managed identity, it means the **identity of the ADF instance, not the IR VM**.
-
-### Which IR is used ?
-
-If an activity associates with multiple IRs, it will **resolve to one of them**, the precedence is like:
-
-**Self-hosted IR > Azure IR (managed VNet) > Azure IR (public)**
-
-**Azure IR (regional) > Azure IR (auto resolve)**
-
-In a copy activity, if source linked service is associated to Self-hosted IR, sink linked service is associated with Azure IR (public), then Self-hosted IR is used
 
 
 ## Security
