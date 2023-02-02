@@ -160,6 +160,19 @@ There are two related modules:
 
 #### Azure resources
 
+Get eligible role assignment at a paticular scope for a principal
+
+```powershell
+$scope='<full-resource-id>'
+$principal='xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
+
+Get-AzRoleEligibilitySchedule -Scope $scope -Filter "principalId eq $principal" `
+| Select-Object ScopeDisplayName,PrincipalDisplayName,PrincipalType,RoleDefinitionDisplayName,EndDateTime,Status `
+| Format-Table
+```
+
+To activate a PIM role:
+
 <div style="background: #efd9fd; padding: 1em">
   <em>NOTE: </em><br />
     <ol>
