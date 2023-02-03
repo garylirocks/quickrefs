@@ -430,7 +430,7 @@ If "ByValue" fails, PowerShell would use the "ByProperty" technique, passing pro
 ls | Get-Process
 ```
 
-If this example, `ls` produces objects of type `System.IO.FileInfo`, but no parameters of `Get-Process` accept it. It then tries the 'ByProperty' technique, value of the `Name` property are passed to the `-Name` parameter of `Get-Process`
+In this example, `ls` produces objects of type `System.IO.FileInfo`, but no parameters of `Get-Process` accept it. It then tries the 'ByProperty' technique, value of the `Name` property are passed to the `-Name` parameter of `Get-Process`
 
 ```
 -Name <System.String[]>
