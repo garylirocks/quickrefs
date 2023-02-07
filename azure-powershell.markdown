@@ -160,16 +160,31 @@ There are two related modules:
 
 #### Azure resources
 
-Get eligible role assignment at a paticular scope for a principal
+Get eligible role assignments or active role assignments:
 
 ```powershell
 $scope='<full-resource-id>'
 $principal='xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
 
+# get eligible ones
 Get-AzRoleEligibilitySchedule -Scope $scope -Filter "principalId eq $principal" `
-| Select-Object ScopeDisplayName,PrincipalDisplayName,PrincipalType,RoleDefinitionDisplayName,EndDateTime,Status `
+| Select-Object ScopeDisplayName,ScopeType,PrincipalDisplayName,PrincipalType,RoleDefinitionDisplayName,RoleDefinitionType,EndDateTime,Status `
+| Format-Table
+
+# Get active role assignments and who it's been eligible to (could be current user or a containing group):
+Get-AzRoleAssignmentSchedule -Scope $scope -Filter "principalId eq $principal" `
+| Select-Object ScopeDisplayName,ScopeType,PrincipalDisplayName,RoleDefinitionDisplayName,RoleDefinitionType,EndDateTime,AssignmentType,@{
+    n='PIMRoleAssignedTo';
+    e={(Get-AzRoleEligibilitySchedule -Scope $_.ScopeId -Name ($_.LinkedRoleEligibilityScheduleId -Split '/' | Select -Last 1)).PrincipalDisplayName}
+}`
 | Format-Table
 ```
+
+Usable filters:
+
+- `-Filter "asTarget()"` limit to current user/service principal
+- `-Filter "atScope()"` limit to specified scope, including inherited roles from ancestor scopes, excluding subscopes
+- `-Filter "asTarget() and atScope()"` combined
 
 To activate a PIM role:
 
