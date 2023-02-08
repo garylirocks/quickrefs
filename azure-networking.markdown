@@ -37,7 +37,8 @@
   - [BGP](#bgp)
   - [Route selection and priority](#route-selection-and-priority)
   - [NVA](#nva)
-  - [Route Server (TODO)](#route-server-todo)
+  - [Autonomous systems](#autonomous-systems)
+  - [Route Server](#route-server)
   - [Forced tunneling](#forced-tunneling)
   - [Troubleshooting](#troubleshooting)
 - [Service endpoints](#service-endpoints)
@@ -931,12 +932,42 @@ NVAIP="$(az vm list-ip-addresses \
 ssh -t -o StrictHostKeyChecking=no azureuser@$NVAIP 'sudo sysctl -w net.ipv4.ip_forward=1; exit;'
 ```
 
-### Route Server (TODO)
+### Autonomous systems
 
-Simplifies dynamic routing between your NVA and your vNet.
+An Autonomous system (AS) is a large network or group of networks that uses a unique policy for routing. Each AS on the internet is registered and has its own pool of IP addresses. For example, an ISP's network, some university networks, some large companies, Azure network.
 
+Each AS is registered under a specific name, called *ASN*. An ASN could be 16-bit (1 ~ 65534) or 32-bit (131072 ~ 4294967294)
+
+Azure service has the AS number 65515.
+
+Azure Route Server uses ASN to identify the peers with which it exchanges routing information.
+
+### Route Server
+
+When you add an ExpressRoute gateway, S2S VPN gateway, VNet peering, Service endpoints, private endpoints, the system routes are updated automatically, but this does not happen for NVAs, you need to add them to UDRs manually.
+
+Azure Route Server could help address this.
+
+- Fully managed service that simplifies dynamic routing between your NVA and vNet (Software-defined network).
+- Supports connecting to SD-WAN when performing route exchange.
 - You peer NVA with Route Server.
 - Routes are exchanged using BGP protocol.
+- Doesn't route actual data traffic.
+- Injects route to the route tables in the VNet (NICs in the VNet).
+- NVAs could be in peered VNet
+- Branch-to-branch: whether routes should be exchanged between NVAs and ER gateways, this could effectively enable spoke-to-spoke traffic transit via a hub
+- Has to be in a dedicated subnet called "RouteServerSubnet", with at least a "/27" address space
+
+Drawbacks:
+
+- Does not work with Azure Firewall, which does not talk BGP
+- If you have a load balancer in front of multiple NVAs, route server can't propagate the load balancer IP as next hop
+
+Behind the scenes:
+
+- A VMSS with 2 VMs
+- Each VM establish a BGP peer to an NVA
+
 
 ### Forced tunneling
 
