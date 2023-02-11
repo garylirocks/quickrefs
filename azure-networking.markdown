@@ -39,6 +39,8 @@
   - [NVA](#nva)
   - [Autonomous systems](#autonomous-systems)
   - [Route Server](#route-server)
+    - [Usage scenarios](#usage-scenarios)
+    - [Commands](#commands)
   - [Forced tunneling](#forced-tunneling)
   - [Troubleshooting](#troubleshooting)
 - [Service endpoints](#service-endpoints)
@@ -944,19 +946,23 @@ Azure Route Server uses ASN to identify the peers with which it exchanges routin
 
 ### Route Server
 
-When you add an ExpressRoute gateway, S2S VPN gateway, VNet peering, Service endpoints, private endpoints, the system routes are updated automatically, but this does not happen for NVAs, you need to add them to UDRs manually.
+When you add an ExpressRoute gateway, S2S VPN gateway, VNet peering, Service endpoints, private endpoints, the system routes in a vNet are updated automatically, but this does not happen for NVAs, you need to add them as UDRs manually.
 
 Azure Route Server could help address this.
 
 - Fully managed service that simplifies dynamic routing between your NVA and vNet (Software-defined network).
+- It's not a router, it only exchanges routes, doesn't route/forward traffic or provide gateway functionalities.
 - Supports connecting to SD-WAN when performing route exchange.
 - You peer NVA with Route Server.
 - Routes are exchanged using BGP protocol.
-- Doesn't route actual data traffic.
 - Injects route to the route tables in the VNet (NICs in the VNet).
-- NVAs could be in peered VNet
-- Branch-to-branch: whether routes should be exchanged between NVAs and ER gateways, this could effectively enable spoke-to-spoke traffic transit via a hub
-- Has to be in a dedicated subnet called "RouteServerSubnet", with at least a "/27" address space
+- NVAs could be in peered vNets.
+- Branch-to-branch: whether routes should be exchanged between NVAs and ER gateways, this could effectively enable spoke-to-spoke traffic transit via a hub.
+
+Requirements:
+
+- Has to be in a dedicated subnet called "RouteServerSubnet", with at least a "/27" address space.
+- It needs a public IP address to help ensure connectivity to the backend service that manages the Route Server configuration.
 
 Drawbacks:
 
@@ -967,6 +973,26 @@ Behind the scenes:
 
 - A VMSS with 2 VMs
 - Each VM establish a BGP peer to an NVA
+
+#### Usage scenarios
+
+- With firewall and SD-WAN appliances, need to be configured as BGP peers
+
+  ![Azure Route Server scenario NVAs](./images/azure_route-server-scenario-nvas.png)
+
+- With network gateways, no need to configure peering, you should enable "Branch-to-branch" traffic
+
+  ![Azure Route Server scenario expressroute and VPN gateways](./images/azure_route-server-scenario-expressroute-vpn-gateways.png)
+
+
+#### Commands
+
+```powershell
+# get route learned from a peer
+Get-AzRouteServerPeerLearnedRoute -RouteServerName TestARS -ResourceGroupName RG1 -PeerName NVA1 | Format-Table
+```
+
+  ![Azure Route Server learned routes](./images/azure_route-server-learned-routes.png)
 
 
 ### Forced tunneling
