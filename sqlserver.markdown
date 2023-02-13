@@ -62,11 +62,21 @@ SELECT * FROM #mytemptable
 
 ## Cheatsheets
 
+- A join query
+
+  ```sql
+  SELECT p.ProductID, p.Name AS ProductName,
+          c.Name AS Category, p.ListPrice
+  FROM SalesLT.Product AS p
+  JOIN [SalesLT].[ProductCategory] AS c
+      ON p.ProductCategoryID = c.ProductCategoryID;
+  ```
+
 - Loop through a list of tables/dbs to get some stats
 
   ```sql
   -- get all table names
-  DROP TABLE IF EXISTS #tablenames 
+  DROP TABLE IF EXISTS #tablenames
   CREATE TABLE #tablenames (name NVARCHAR(50));
   INSERT INTO #tablenames VALUES ('Table1'), ('Table2')
 
@@ -80,21 +90,21 @@ SELECT * FROM #mytemptable
   DECLARE @tblname VARCHAR(50)
   DECLARE @sql NVARCHAR(300)
   -- use a cursor for looping
-  DECLARE db_cursor CURSOR FOR  
+  DECLARE db_cursor CURSOR FOR
     SELECT name FROM #tablenames
 
-  OPEN db_cursor   
+  OPEN db_cursor
     FETCH NEXT FROM db_cursor INTO @tblname -- get value into a variable
-    WHILE @@FETCH_STATUS = 0   
+    WHILE @@FETCH_STATUS = 0
       BEGIN
           PRINT @tblname
-            
+
           SET @sql = 'INSERT INTO #tablestats VALUES (''' + @tblname + ''', (SELECT COUNT(id) FROM TestDB.dbo.' + @tblname + ')  )'
           EXEC(@sql)
-      
-          FETCH NEXT FROM db_cursor INTO @tblname   
+
+          FETCH NEXT FROM db_cursor INTO @tblname
       END
-  CLOSE db_cursor   
+  CLOSE db_cursor
   DEALLOCATE db_cursor
 
   SELECT * FROM #tablestats
