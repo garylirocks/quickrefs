@@ -2,6 +2,7 @@
 
 - [Overview](#overview)
 - [SQL Database](#sql-database)
+  - [Concepts](#concepts)
   - [Purchasing models](#purchasing-models)
   - [Service tiers](#service-tiers)
   - [Scaling](#scaling)
@@ -40,7 +41,14 @@ Elastic pool: multiple databases in a single logical SQL server, and all the DBs
 - Hyperscale storage: up to 100TB
 - Autoscaling for unpredictable workloads (serverless)
 
-**Elastic pools**: you buy a set of compute and storage resources that are shared among all the databases in the pool
+### Concepts
+
+- **Elastic pools**: you buy a set of compute and storage resources that are shared among all the databases in the pool
+- **SQL DB Server**: a logic container for databases (could be a mix of single databases and elastic pools), it defines
+  - Access: connection string (FQDN), location, authentication method (SQL auth, AAD auth, or both)
+  - Backup settings
+  - Business continuity management: failover groups
+  - Security: networking, TDE, Defender for Cloud, identity, auditing
 
 ### Purchasing models
 
