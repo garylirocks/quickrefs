@@ -30,6 +30,7 @@
   - [.NET Storage Client library](#net-storage-client-library)
   - [Properties and Metadata](#properties-and-metadata)
   - [Concurrency](#concurrency)
+- [Azure Data Lake Storage Gen2](#azure-data-lake-storage-gen2)
 - [Disks](#disks)
   - [Bursting](#bursting)
 - [Files](#files)
@@ -39,6 +40,7 @@
   - [File Sync](#file-sync)
     - [Components](#components)
 - [NetApp Files](#netapp-files)
+- [Tables](#tables)
 - [Troubleshooting](#troubleshooting)
 
 ## Overview
@@ -334,9 +336,20 @@ You could specify the blob type and access tier when you create a blob.
 
 ### Blob types
 
-- **Block blobs (default)**: blocks of data assembled to make a blob, used in most scenarios
-- **Append blobs**: specialized block blobs optimized for append operations, frequently used for logging from one or more sources (*the `add` permission is for adding a block to an append blob*)
-- **Page blobs**: can be up to 8 TB in size, more efficient for frequent read/write operations. They provide random read/write access to 512-byte pages. Azure VMs use page blobs as OS and data disks.
+- **Block blobs (default)**
+  - The block is the smallest amount of data that can be read or written as an individual unit.
+  - Blocks vary in size, from 64KiB to 100MiB.
+  - A blob can contain up to 50,000 blocks, giving a max size of 4.7TB.
+  - Best used for discrete, large, binary objects that change infrequently.
+- **Append blobs**:
+  - Specialized block blobs
+  - Only supports "add" operation, no updateing or deleting existing blocks (*the `add` permission is for adding a block to an append blob*)
+  - Block size up to 4MB, blob size up to 195GB.
+- **Page blobs**:
+  - Fixed size 512-byte pages.
+  - Optimized for random read and write operations.
+  - Can be up to 8 TB in size.
+  - Used for virtual disks.
 
 ### Access tiers
 
@@ -557,6 +570,22 @@ Three concurrency strategies:
     ![Blob concurrency using lease](images/azure_blob-concurrency-lease.png)
 
 
+## Azure Data Lake Storage Gen2
+
+Build on top of blob storage. Support big data analytics.
+
+- Has real folders, you could
+  - Rename a folder
+  - Set ACL permissions on a folder
+  - Genearate a SAS token on a folder
+- You can upgrade a storage account to ADLS Gen2 (can't revert back), some features need to be disabled:
+  - Page blob
+  - Container soft delete
+  - Point-in-time restore
+  - Blob tagging
+  - ...
+
+
 ## Disks
 
 - Managed disks are recommended
@@ -598,9 +627,10 @@ Caching settings
 
 Network files shares
 
-- Accessed over SMB/CIFS/NFS protocol
+- Support SMB protocol, or NFS protocol for *Premium* tier
 - Multiple VMs can share the same files with both read and write access
 - Can be used to replace your on-prem NAS devices or file servers
+- Up to 1TB for a single file, 100TB in a storage account, 2000 concurrent connections per shared file
 
 Common scenarios:
 
@@ -610,7 +640,7 @@ Common scenarios:
 
 Tiers:
 
-- Premium: backed by SSD, SMB and NFS protocols
+- Premium: backed by SSD, supports NFS protocol
 - Transaction optimized
 - Hot
 - Cool
@@ -640,11 +670,16 @@ findmnt -t cifs
 
 ### Authentication
 
-You can use Active Directory for permissions management at file-share level:
+- Access Key
+  - Works for all OS: Windows, Mac, Linux
+  - Use the primary key of the storage account as password
 
-- On-prem AD (incl. AD servers hosted in Azure)
-- Azure AD DS
-- Azure AD (Kerberos auth from Azure AD joined clients, user accounts must be hybrid identities)
+- Identity-based access (Windows only)
+  - First, enable an Active Directory source, options:
+    - On-prem AD (incl. AD servers hosted in Azure)
+    - Azure AD DS
+    - Azure AD (Kerberos auth from Azure AD-joined clients, user accounts must be hybrid identities)
+  - Then set grant permissions at share-level to users/groups
 
 ### Snapshots
 
@@ -678,6 +713,18 @@ To protect against unintended changes, accidental deletions, or for backup/audit
   - Latency sensitive workloads, eg. SAP HAHA
   - IOPS intensive high performance compute
   - Simultaneous multi-protocol access
+
+
+## Tables
+
+A NoSQL solution, makes use of tables containing key/value data items
+
+![Azure Storage Account tables](images/azure_storage-tables.png)
+
+- A row always has three columns `PartitionKey`, `RowKey` and `Timestamp` (last update time)
+- The composite of `PartitionKey` and `RowKey` uniquely identify a row
+- No foreign keys, stored procedures, views, or other objects
+- You can set RBAC permissions at table level
 
 
 ## Troubleshooting
