@@ -31,6 +31,15 @@
   - [Properties and Metadata](#properties-and-metadata)
   - [Concurrency](#concurrency)
 - [Azure Data Lake Storage Gen2](#azure-data-lake-storage-gen2)
+  - [Authorization](#authorization)
+  - [ACLs](#acls)
+    - [Common scenarios](#common-scenarios)
+    - [Users and identities](#users-and-identities)
+    - [Permission evaluation](#permission-evaluation)
+    - [Mask](#mask)
+    - [CLI](#cli-2)
+    - [Best practices](#best-practices)
+    - [RBAC and ACL](#rbac-and-acl)
 - [Disks](#disks)
   - [Bursting](#bursting)
 - [Files](#files)
@@ -221,18 +230,21 @@ There are two ways to manage network ACL exceptions:
 
 #### RBAC
 
-Can be used for
+Two types:
 
-- Control plane (Resource management operations): such as key management
-- Data plane: data operations on the Blob and Queue services, eg. you need *Storage Blob Data Contributor* role to write to a blob
+| Type          | Roles                                                   | Use                                       |
+| ------------- | ------------------------------------------------------- | ----------------------------------------- |
+| Control plane | Owner, Contributor, Storage Account Contributor, Reader | manage the account settings, keys         |
+| Data plane    | Storage Blob/Table/Queue Data Owner/Contributor/Reader  | read/write access to containers and files |
 
-Use this when you are
-- running an app with managed identities
-- or using security principals (users, service principals)
+- *Control plane roles (except "Reader") can access data because they can get the access keys, and most clients (Azure Portal, CLI, Storage Explorer etc) support access data via access those keys*
+- Managed identity, service principals usually should only have data plane roles
+
 
 #### Access keys
 
 - Like a root password, allow **full access**
+- Client doesn't need an identity in Azure AD
 - Generally a bad idea, you **should avoid them**, there's now account level settings to disable these keys
 - Typically stored within env variables, database, or configuration file.
 - Should be private, don't include the config file in source control or store in public repos
@@ -585,6 +597,110 @@ Build on top of blob storage. Support big data analytics.
   - Blob tagging
   - ...
 
+### Authorization
+
+Four mechanisms:
+
+- Shared Key
+- SAS
+- RBAC: "coarse-grained", at storage account or container level
+- Access control lists (ACL): "fine-grained", at root/directory/file level
+
+RBAC and ACL do not apply when using a Shared Key or SAS token, because the caller do not have an associated identity.
+  - Shared Key: means 'super-user' access, can access data, setting owner, changing ACLs
+  - SAS: whatever permissions included in the SAS token
+
+### ACLs
+
+![An example ACL](images/azure_storage-adls2-acls.png)
+
+- Each container has a root folder
+- Root/Folders can have default ACLs, which are copied to:
+  - A child directory's access ACL and default ACL
+  - A child file's access ACL
+- The "Execute" permission only has effects on directories, allowing you to traverse the child items of a directory.
+- ACLs do not inherit:
+  - Default ACLs can be used to set ACLs for child items
+  - For existing items, you will need to add/update/remove ACLs recursively for the directory
+
+#### Common scenarios
+
+| Scenario                 | ACL                                                                  |
+| ------------------------ | -------------------------------------------------------------------- |
+| Read a file              | `R--` on the file                                                    |
+| Append to a file         | `RW-` on the file                                                    |
+| List file in a directory | `R-X` on the directory                                               |
+| Create/delete file       | `-WX` on the containing directory, no permssion required on the file |
+
+Always required: *`--X` on from root to parent directory*
+
+#### Users and identities
+
+| Identity     | Who                                                                                               | Can                                                                    | Can't        |
+| ------------ | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ------------ |
+| Owner        | OAuth: current user, otherwise: `$superuser`                                                      | change ACLs, change owning group (to another one the owner belongs to) | change owner |
+| Owning group | <li>Root: OAuth: current user, otherwise: `$superuser`</li><li>Otherwise: copied from parent</li> | similar to other named groups                                          | change ACLs  |
+
+#### Permission evaluation
+
+Order:
+
+1. Superuser
+1. Owner
+1. Named user, SP, managed identity
+1. Owning group or named group
+1. All other
+
+Algorithm (https://learn.microsoft.com/en-us/azure/storage/blobs/data-lake-storage-access-control#how-permissions-are-evaluated):
+
+1. If super user, allow, stop
+2. If owner, check owner permission (without mask), stop
+3. If named user, check permission (with mask), stop
+4. Go through named/owning groups the user belongs to, if any group has the right permissions (with mask), then allow, otherwise go next
+5. Consider "Other" permissions (with mask)
+
+#### Mask
+
+- Mask limits access for names users, owning/named groups, and other
+- For root directory, defaults to 750 for directories and 640 for files
+- May be specified on a per-call basis, overrides the default mask
+
+#### CLI
+
+```sh
+# Get ACL permissions of a folder
+az storage fs access show \
+  --file-system data \
+  --path myfolder \
+  --account-name adsl2gary \
+  --auth-mode login
+
+# {
+#   "acl": "user::rwx,user:4abac5a4-ae5f-4f63-8c62-4d7d307c28fd:r-x,group::r-x,mask::r-x,other::---,default:user::rwx,default:group::r-x,default:other::---",
+#   "group": "$superuser",
+#   "owner": "$superuser",
+#   "permissions": "rwxr-x---+"
+# }
+
+# Update ACLs recursively
+az storage fs access set-recursive ...
+```
+
+#### Best practices
+
+- Always use groups in an ACL entry, instead of individual users
+
+#### RBAC and ACL
+
+RBAC roles are evaluated first, eg. `Storage Blob Data Contributor` can always read/write a file, regardless of ACLs
+
+Some RBAC roles allow a user to change ACLs:
+
+| RBAC                                       | ACL                                     |
+| ------------------------------------------ | --------------------------------------- |
+| Owner/Contributor, Storage Blob Data Owner | set the owner, modify ACLs of all items |
+| Storage Blob Data Contributor              | can modify ACLs of owned items          |
+
 
 ## Disks
 
@@ -610,7 +726,7 @@ Caching settings
 ### Bursting
 
 - Only for certain sizes of Standard/Premium SSD
-- No bursting for standard HDD, or Ultra
+- No bursting for Standard HDD, or Ultra
 
 - For P20 disks and smaller:
   - Enabled by default
@@ -722,7 +838,7 @@ A NoSQL solution, makes use of tables containing key/value data items
 ![Azure Storage Account tables](images/azure_storage-tables.png)
 
 - A row always has three columns `PartitionKey`, `RowKey` and `Timestamp` (last update time)
-- The composite of `PartitionKey` and `RowKey` uniquely identify a row
+- The composite of `PartitionKey` and `RowKey` uniquely identifies a row
 - No foreign keys, stored procedures, views, or other objects
 - You can set RBAC permissions at table level
 
