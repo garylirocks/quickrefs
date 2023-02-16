@@ -31,7 +31,8 @@
     - [Download](#download)
   - [Resources](#resources)
   - [Checkout task](#checkout-task)
-    - [Triggering](#triggering)
+  - [Triggering](#triggering)
+    - [Trigger by another pipeline](#trigger-by-another-pipeline)
   - [Job authorization](#job-authorization)
     - [Job authorization scope](#job-authorization-scope)
     - [Built-in identities](#built-in-identities)
@@ -1050,7 +1051,7 @@ Default checkout path(s):
 - Single repo: `$(Agent.BuildDirectory)/s`
 - Multiple repos: `$(Agent.BuildDirectory)/s/repo1`, `$(Agent.BuildDirectory)/s/repo2`, ...
 
-#### Triggering
+### Triggering
 
 You could trigger a pipeline run when an update is pushed to the `self` repo or to any of the repos declared as resources (only work for Git repos in same ADO organization). This could be useful:
 
@@ -1088,6 +1089,19 @@ A run is triggered whenever:
 - `main` branch updates in `MyProject/A`
 - `main` or `release` branch updates in `MyProject/B`
 
+#### Trigger by another pipeline
+
+In the following example, the `test-pipeline` will be triggered whenever `my-build-pipeline` completes successfully
+
+```yaml
+# test-pipeline.yaml
+
+resources:
+  pipelines:
+    - pipeline: build-pipeline
+      source: my-build-pipeline
+      trigger: true # Trigger this pipeline
+```
 
 ### Job authorization
 
