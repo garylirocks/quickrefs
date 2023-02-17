@@ -9,6 +9,7 @@
   - [Configuration](#configuration)
   - [Files](#files)
   - [Git](#git-1)
+    - [Multiple accounts for GitHub on one machine](#multiple-accounts-for-github-on-one-machine)
   - [VS Code](#vs-code)
   - [Terraform](#terraform)
 
@@ -141,16 +142,30 @@ You could use the Windows Git Credential Manager in WSL (https://github.com/GitC
   # use `git-credential-wincred.exe` if there's not `git-credential-manager-core.exe`
   git config --global credential.helper "/mnt/c/Program\ Files/Git/mingw64/libexec/git-core/git-credential-manager-core.exe"
 
-  # additional config for Azure DevOps
+  # By default the credential manager saves one credential per hostname
+  # If your want the credential manager to save a credential for each url path, set `useHttpPath` to `true`, this allows you to have one credential per repo, meaning you can use different accounts
   git config --global credential.https://dev.azure.com.useHttpPath true
   ```
 
-- Make Windows GCM use WSL Git config, run this in *Administrator* Command Prompt:
+- Make Windows GCM use WSL Git config, run this in *Administrator* Command Prompt (*seems not working sometimes ?*):
 
   ```sh
   SETX WSLENV %WSLENV%:GIT_EXEC_PATH/wp
   ```
 
+#### Multiple accounts for GitHub on one machine
+
+1. Set `useHttpPath` to `false` globally, this will be the default
+
+    ```sh
+    git config --global credential.https://github.com.useHttpPath false
+    ```
+
+2. In a repo where you want to use another account, set the value to `true`, this will make the credential manager save another credential for this repo
+
+    ```sh
+    git config --local credential.https://github.com.useHttpPath true
+    ```
 
 ### VS Code
 
