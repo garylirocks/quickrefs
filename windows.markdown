@@ -167,6 +167,8 @@ You could use the Windows Git Credential Manager in WSL (https://github.com/GitC
     git config --local credential.https://github.com.useHttpPath true
     ```
 
+**Seems in WSL, it won't popup the Git credential manager dialog for you to sign in, you need to do it in Windows (PowerShell, cmd)**
+
 ### VS Code
 
 - Install the 'Remote Development' pack in VS Code
