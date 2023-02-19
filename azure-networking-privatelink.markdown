@@ -223,14 +223,14 @@ Each option has its advantage and disadvantages.
 
 ### Use of Azure Private Link / SDN
 
-![Private DNS zones inter region transit](./images/azure-private-dns-zone-multi-region-datapath.drawio.svg)
+![Private DNS zones inter region transit](./images/azure_private-dns-zone-multi-region-datapath.drawio.svg)
 
 - **Zone per region**: Optimal, each region has its own private endpoint to the same PaaS services, ingress to private link close to source, inter-region routing transit handled by Azure. *(in the corresponding zone, they have same FQDN, but a different IP)*
 - **Shared zone**: Non-optimal, inter-region data path relies on customer's inter-region routing solution *(only possible to have one endpoint, one record in the shared zone)*
 
 ###  Inter-region failover
 
-![Private DNS zones inter region failover](./images/azure-private-dns-zone-multi-region-failover.drawio.svg)
+![Private DNS zones inter region failover](./images/azure_private-dns-zone-multi-region-failover.drawio.svg)
 
 *We use storage account as example above, because it's GRS, data is replicated to paired region automatically, after failover, the one in the failover region is effectively an LRS account*
 
