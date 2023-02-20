@@ -1,6 +1,7 @@
 # Azure Cosmos DB
 
 - [Overview](#overview)
+- [Multi Models (APIs)](#multi-models-apis)
 - [Common CLI operations](#common-cli-operations)
 - [Request unit](#request-unit)
 - [Partitioning](#partitioning)
@@ -17,16 +18,28 @@
 Features
 
 - Multi-model
-
-  It supports multiple API and data models(*each account only supports one model*):
-
-    - Core (SQL) *this is for NoSQL document DB as well, and is recommended, other APIs are mainly for migration purposes*
-    - MongoDB
-    - Cassandra
-    - Azure Table (for migrating data from Azure Table, Cosmos offers global distribution, high availability, scalable throughput)
-    - Gremlin(graph)
-
 - Global distribution
+
+## Multi Models (APIs)
+
+![Multi models](images/azure_cosmosdb-multiple-data-models.png)
+
+It supports multiple API and data models(*each account only supports one model*):
+
+- NoSQL
+  - For document data model, manages data in JSON format
+  - Uses SQL syntax
+- PostgreSQL
+  - Single node or multiple node clusters
+- MongoDB
+  - Data stored in Binary JSON (BSON)
+  - MongoDB Query Language: `db.products.find({id: 123})`
+- Apache Cassandra
+  - Column-family storage
+- Azure Table
+  - key-value
+  - for migrating data from Azure Table, Cosmos offers global distribution, high availability, scalable throughput
+- Gremlin(graph)
 
 Which DB solution to use?
 
