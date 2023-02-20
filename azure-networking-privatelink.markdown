@@ -2,6 +2,7 @@
 
 - [Private Endpoint Overview](#private-endpoint-overview)
 - [Limitations](#limitations)
+  - [Routing](#routing)
   - [NSG](#nsg)
   - [UDR](#udr)
 - [Network architecture design with Azure Firewall](#network-architecture-design-with-azure-firewall)
@@ -40,7 +41,18 @@ Notes
 
 See: https://docs.microsoft.com/en-us/azure/private-link/private-endpoint-overview#limitations
 
-Private endpoint is a special network interface, there are limitations:
+Private endpoint is a **special** network interface, works differently to VM NICs
+
+### Routing
+
+![Private link routing](./images/azure_private-link-routing.drawio.svg)
+
+In the scenario above, you might expect the data packet goes from VM in West Europe to PEP in East US, then back to the storage account. But in reality, Azure SDN does some intelligent optimization, the PEP is bypassed, the packet stays in the same region, goes to the storage account directly.
+
+- This applies to connection from on-prem as well.
+- If any NSG applies to the PEP, it's still checked.
+- If there is an NVA/Firewall in between, and traffic routes through it, then the optimization won't apply.
+- This explains the unusual behaviors (comparing to VM NICs) of PEPs regarding NSG and UDR.
 
 ### NSG
 
@@ -226,7 +238,7 @@ Each option has its advantage and disadvantages.
 ![Private DNS zones inter region transit](./images/azure_private-dns-zone-multi-region-datapath.drawio.svg)
 
 - **Zone per region**: Optimal, each region has its own private endpoint to the same PaaS services, ingress to private link close to source, inter-region routing transit handled by Azure. *(in the corresponding zone, they have same FQDN, but a different IP)*
-- **Shared zone**: Non-optimal, inter-region data path relies on customer's inter-region routing solution *(only possible to have one endpoint, one record in the shared zone)*
+- **Shared zone**: Non-optimal, inter-region data path relies on customer's inter-region routing solution *(you can only have one record for a PaaS service instance in a shared zone)*
 
 ###  Inter-region failover
 
