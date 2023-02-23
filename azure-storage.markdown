@@ -238,6 +238,8 @@ Two types:
 | Data plane    | Storage Blob/Table/Queue Data Owner/Contributor/Reader  | read/write access to containers and files |
 
 - *Control plane roles (except "Reader") can access data because they can get the access keys, and most clients (Azure Portal, CLI, Storage Explorer etc) support access data via access those keys*
+  - `az storage blob download --auth-mode key ...` retrives an account key first
+  - `az storage blob download --auth-mode login ...` uses your RBAC roles
 - Managed identity, service principals usually should only have data plane roles
 
 
