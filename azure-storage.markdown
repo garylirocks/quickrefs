@@ -15,6 +15,7 @@
     - [RBAC](#rbac)
     - [Access keys](#access-keys)
     - [Shared access signature (SAS)](#shared-access-signature-sas)
+  - [CLI and curl commands with different auth methods](#cli-and-curl-commands-with-different-auth-methods)
   - [CLI](#cli)
 - [Blobs](#blobs)
   - [Blob types](#blob-types)
@@ -238,10 +239,10 @@ Two types:
 | Data plane    | Storage Blob/Table/Queue Data Owner/Contributor/Reader  | read/write access to containers and files |
 
 - *Control plane roles (except "Reader") can access data because they can get the access keys, and most clients (Azure Portal, CLI, Storage Explorer etc) support access data via access those keys*
-  - `az storage blob download --auth-mode key ...` retrives an account key first
+  - `az storage blob download --auth-mode key ...` retrieves an account key first
   - `az storage blob download --auth-mode login ...` uses your RBAC roles
+- Does not support File shares, see the "Files" section
 - Managed identity, service principals usually should only have data plane roles
-
 
 #### Access keys
 
@@ -270,6 +271,7 @@ There are three types:
     - Allowed services: Blob, File, Queue, Table
     - Allowed resource types: Service, Container, Object
     - Allowed permissions: Read, Write, Delete, List, ...
+    - No support for stored access policies
 
 - **Service SAS**
   - Could be scoped at container level (blob container, file share, queue or table)
@@ -321,6 +323,93 @@ Two typical designs for using Azure Storage to store user data:
   - SAS provider: only generates a SAS and pass it to the client
 
     ![SAS provider](images/azure_storage-design-lightweight.png)
+
+### CLI and curl commands with different auth methods
+
+Some parameters can be set via environment variables:
+
+  - `AZURE_STORAGE_ACCOUNT`
+  - `AZURE_STORAGE_SERVICE_ENDPOINT`
+  - `AZURE_STORAGE_AUTH_MODE`
+  - `AZURE_STORAGE_CONNECTION_STRING`
+  - `AZURE_STORAGE_KEY`
+  - `AZURE_STORAGE_SAS_TOKEN`
+
+With CLI, if nothing specified explicitly, environment variables or config files are tried in this order:
+
+1. auth_mode
+1. connection_string
+1. storage key
+1. sas_token
+
+Examples:
+
+- RBAC
+
+  ```sh
+  az storage container list --account-name sttest001 --auth-mode login
+
+  # curl
+  accessToken=$(az account get-access-token \
+                          --resource='https://storage.azure.com/' \
+                          --query accessToken \
+                          -otsv)
+
+  curl --header "Authorization: Bearer $accessToken" \
+       --header "x-ms-version: 2017-11-09" \
+       "https://sttest001.blob.core.windows.net/?comp=list"
+  ```
+
+- Access keys
+
+  ```sh
+  az storage container list --account-name sttest001 --auth-mode key
+  ```
+
+  or
+
+  ```sh
+  export AZURE_STORAGE_KEY=$(az storage account keys list \
+                                  --account-name sttest001 \
+                                  --query '[0].value' \
+                                  -otsv)
+
+  # List containers
+  az storage container list --account-name sttest001
+
+  # Download a blob
+  az storage blob download --account-name sttest001 \
+                           --container-name mycontainer \
+                           --name test.txt \
+                           --file downloaded.txt
+
+  # curl
+  # Requires an "Authorization" header like
+  #   Authorization="[SharedKey|SharedKeyLite] <AccountName>:<Signature>"
+  ```
+
+- SAS
+
+  ```sh
+  # List containers
+  az storage container list --connection-string <connection-string>
+  az storage container list --account-name sttest001 --sas-token <sas-token>
+
+  # Download a blob
+  az storage blob download --container-name mycontainer \
+                           --name test.txt \
+                           --file downloaded.txt \
+                           --connection-string <connection-string>
+  az storage blob download --account-name sttest001 \
+                           --container-name mycontainer \
+                           --name test.txt \
+                           --file downloaded.txt \
+                           --sas-token <sas-token>
+
+  # curl
+  curl 'https://sttest001.blob.core.windows.net/?comp=list&<sas-token>'
+  curl 'https://sttest001.blob.core.windows.net/mycontainer/test.txt?<sas-token>'
+  ```
 
 ### CLI
 
@@ -797,7 +886,7 @@ findmnt -t cifs
     - On-prem AD (incl. AD servers hosted in Azure)
     - Azure AD DS
     - Azure AD (Kerberos auth from Azure AD-joined clients, user accounts must be hybrid identities)
-  - Then set grant permissions at share-level to users/groups
+  - Then grant permissions at share-level to users/groups
 
 ### Snapshots
 
