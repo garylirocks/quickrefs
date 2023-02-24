@@ -61,7 +61,9 @@ In the scenario above, you might expect the data packet goes from VM in West Eur
 - NSG only apply when `PrivateEndpointNetworkPolicies` property on the containing subnet is "Enabled".
   - By default,
       - if creating a subnet in Portal, this property is `Disabled`
-      - if creating with Terraform `azurerm` provider, this property is `Enabled`
+      - if creating with Terraform `azurerm_subnet` resource,
+        - `private_endpoint_network_policies_enabled` attribute defaults to `true`, which sets this property to `Enabled`
+        - the old `enforce_private_link_endpoint_network_policies` attribute works the other way, if it's `true`, the property will be `Disabled`
   - With CLI or Terraform, you can only set it to be `Enabled` or `Disabled`
   - In the Portal, you could enable only NSG or UDR, then the value would be `NetworkSecurityGroupEnabled` or `RouteTableEnabled`
 - Source port is interpreted as `*`
