@@ -14,10 +14,13 @@
 ## Keys
 
   - Such as asymmetric master key of Microsoft Azure RMS, SQL Server TDE (Transparent Data Encryption), CLE.
+    - The one saved in a key vault is usually a key-protecting key, it just encrypts another key (which encypts the data in storage account or SQL Server).
   - Once generated or imported to a key vault, your app **NEVER** has direct access to the private keys, public keys could be retrieved
   - A key pair could be used for operations like: encryption/decryption, signing/verifying, wrapkey/unwrapkey
   - Can be single instanced or be versioned (primary and secondary keys)
   - There are hardware-protected and software-protected keys.
+  - You can configure a key rotation policy, which would rotate your keys automatically before expiration.
+    - Some clients (such as Azure Storage) support querying for the latest version of a key, so you don't need to do anything on the client side.
 
 ## Secrets
 
