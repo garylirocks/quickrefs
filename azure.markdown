@@ -359,9 +359,13 @@ Azure Resource Manager (ARM) is the management layer which allows you automate t
 
 ## Azure Resource Graph
 
+- A readonly database of metadata of all your Azure resource
+  - Exposes a separate endpoint other than ARM
+  - Faster than ARM, does not need to send query to resource providers
+  - Gets updated when you update a resource
 - Query resources with complex filtering, grouping, and sorting by resource properties
+- Change tracking (in last 14 days)
 - Assess the impact of applying policies in a vast environment
-- Query changes made to resource properties (in last 14 days)
 
 Compare with Azure Resource Manager
 
@@ -371,6 +375,8 @@ Compare with Azure Resource Manager
 | CLI command          | `az resource list`                                     | `az graph query`                             |
 | Scope                | one subscription                                       | a list of subscriptions or management groups |
 | Query syntax         | -                                                      | KQL                                          |
+| Quota                | 12000 per hour ?                                       | 15 per 5 seconds ?                           |
+
 
 Tables:
 
