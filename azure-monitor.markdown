@@ -8,6 +8,7 @@
 - [Activity Log](#activity-log)
 - [Log Analytics](#log-analytics)
   - [Design considerations](#design-considerations)
+  - [Storage](#storage)
   - [Access Control](#access-control)
     - [Access modes](#access-modes)
 - [Kusto Query Language](#kusto-query-language)
@@ -155,6 +156,24 @@ Scale and ingestion volume:
 - Workspace are **NOT limited** in storage space, so no need to split workspaces due to scale.
 - There is a default ingestion rate limit (6GB/minute) to protect from spikes and floods situations.
 - If you need to ingest more than 4TB data per day, consider moving to *dedicated clusters*
+
+### Storage
+
+To better manage cost, there are different plans which could be configured for each table:
+
+- Analytics
+  - Support all queries
+
+- Basic
+  - Cheaper
+  - Can only search within the table, no joins
+  - Search jobs bring the logs to analytics log tables
+  - Fixed interactive period of 8 days
+
+- Archive
+  - After the interactive periods, both "Analytics" and "Basic" logs are archived
+  - To query archived logs, you need to bring it back to Analytics log tables, by either "Search jobs" or "Restore"
+  - Up to 7 years
 
 ### Access Control
 
