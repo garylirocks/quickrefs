@@ -9,6 +9,7 @@
 - [DNS resolution](#dns-resolution)
   - [DNS integration at scale](#dns-integration-at-scale)
   - [Pitfall - Resolve PaaS endpoint in other tenants](#pitfall---resolve-paas-endpoint-in-other-tenants)
+  - [Subresources and DNS zone group](#subresources-and-dns-zone-group)
 - [Multi-region scenarios](#multi-region-scenarios)
   - [Use of Azure Private Link / SDN](#use-of-azure-private-link--sdn)
   - [Inter-region failover](#inter-region-failover)
@@ -222,6 +223,25 @@ To remediate this, you could
   - (**recommended**) create a private endpoint in Company A's vnet to `kv-b.vault.azure.net` (need approval from Company B's side)
   - in your custom DNS server, conditionally forward `kv-b.vault.azure.net` to an Internet DNS resolver
   - (**not recommended**) on client VMs, use dnsmasq for Linux or NRPT (Name Resolution Policy Table) feature for Windows (see: https://github.com/dmauser/PrivateLink/tree/master/DNS-Client-Configuration-Options)
+
+### Subresources and DNS zone group
+
+- Subresources
+
+  - Some services have multiple subresources, eg. A storage account could have endpoints for `blob`, `blob_secondary`, `file`, `file_secondary`, ..., one private endpoint supports **ONLY ONE** subresource
+
+  - Some subresources could have multiple DNS records, using the same IP address, eg. an Azure Web Apps endpoint have two DNS records:
+    - `app-xxx.privatelink.azurewebsites.net`
+    - `app-xxx.scm.privatelink.azurewebsites.net`
+
+  - Some subresources could have multiple DNS records, each with a different IP, eg. ACR `registry`, Azure File Sync `afs`, AKS `management`
+    - `app-xxx.privatelink.azurewebsites.net`
+    - `app-xxx.scm.privatelink.azurewebsites.net`
+
+
+- DNS zone group
+  - A private endpoint can only have none or one private DNS zone group
+  - A DNS zone group support up to 5 DNS zones, which means the same records could be added to multiple DNS zones
 
 
 ## Multi-region scenarios
