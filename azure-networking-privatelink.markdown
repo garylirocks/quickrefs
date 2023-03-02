@@ -230,14 +230,35 @@ To remediate this, you could
 
   - Some services have multiple subresources, eg. A storage account could have endpoints for `blob`, `blob_secondary`, `file`, `file_secondary`, ..., one private endpoint supports **ONLY ONE** subresource
 
-  - Some subresources could have multiple DNS records, using the same IP address, eg. an Azure Web Apps endpoint have two DNS records:
+  - Some subresources could have multiple DNS records, using the **same IP**, eg. an Azure Web Apps endpoint have two DNS records:
     - `app-xxx.privatelink.azurewebsites.net`
     - `app-xxx.scm.privatelink.azurewebsites.net`
 
-  - Some subresources could have multiple DNS records, each with a different IP, eg. ACR `registry`, Azure File Sync `afs`, AKS `management`
-    - `app-xxx.privatelink.azurewebsites.net`
-    - `app-xxx.scm.privatelink.azurewebsites.net`
+  - Some subresources could have multiple DNS records, each with a **different IP**, eg. ACR `registry`, Azure File Sync `afs`, AKS `management`, Cosmos DB `Sql`, this could be configured in Terraform like this:
 
+    ```terraform
+    resource "azurerm_private_endpoint" "cosmos" {
+
+      ...
+
+      ip_configuration {
+        name               = "ip-config-01"
+        private_ip_address = "10.0.1.11"
+        subresource_name   = "Sql"
+        member_name        = "cosmos-db-001"
+      }
+
+      ip_configuration {
+        name               = "ip-config-02"
+        private_ip_address = "10.0.1.12"
+        subresource_name   = "Sql"
+        member_name        = "cosmos-db-001-australiaeast"
+      }
+
+      ...
+
+    }
+    ```
 
 - DNS zone group
   - A private endpoint can only have none or one private DNS zone group
