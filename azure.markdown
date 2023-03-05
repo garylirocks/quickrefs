@@ -29,6 +29,8 @@
   - [Sample queries](#sample-queries)
 - [Blueprints](#blueprints)
 - [Azure Cloud Adoption Framework](#azure-cloud-adoption-framework)
+- [Billing](#billing)
+  - [Tag inheritance](#tag-inheritance)
 - [Business Process Automation](#business-process-automation)
 - [API Management](#api-management)
   - [Policies](#policies)
@@ -526,6 +528,26 @@ Cloud Adoption Framework consists of tools, documentation, and proven practices.
 3. Ready your organization: create a landing zone
 4. Adopt the cloud: migrate and innovate
 5. Govern and manage your cloud environments.
+
+
+## Billing
+
+### Tag inheritance
+
+- Tags are inherited to resource usage records, NOT resources
+
+  ![Tag inheritance](./images/azure_tags-inheritance.svg)
+
+- Works for these billing account types:
+  - Enterprise Agreement (EA)
+  - Microsoft Customer Agreement (MCA)
+  - Microsoft Partner Agreement (MPA) with Azure plan subscriptions
+
+- If the same tag is on both subscription and resource group levels, the subscription one takes precedence.
+
+- When enabled, the resource usage records are updated for the current month.
+
+- If a resource that doesn't emit usage at a subscription scope, they will not have the subscription tags applied.
 
 
 ## Business Process Automation
