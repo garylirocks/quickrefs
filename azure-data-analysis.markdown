@@ -2,6 +2,9 @@
 
 - [Overview](#overview)
 - [Azure Synapse Analytics](#azure-synapse-analytics)
+  - [Deployment](#deployment)
+  - [SQL](#sql)
+  - [Spark](#spark)
 - [Databricks](#databricks)
 - [HDInsight](#hdinsight)
 - [Stream Analytics](#stream-analytics)
@@ -30,9 +33,56 @@ A comprehensive, unified data analytics solutions that provides a single service
 - Apache Spark
 - Azure Synapse Data Explorer
 
+The UI of Synapse Studio is very similar to ADF's
+
+### Deployment
+
+- Requires two resource groups, including a managed one
+- Requires a Data Lake storage account, to store data, scripts and other artifacts
+  - A linked service is created to this storage account, using the workspace's managed identity, which has the "Storage Blob Data Contributor" role
+- Deploys a serverless SQL pool by default, you need to set the SQL admin username, password, AAD admin, etc
+  - The SQL server's endpoint is like: `<synapse-workspace-name>.sql.azuresynapse.net`
+  - A linked service is created to this SQL server, using the workspace's managed identity
+- One instance can have multiple
+  - Dedicated SQL pools
+  - Apache Spark pools
+  - Data Explorer pools
+
+### SQL
+
+You can use SQL to query CSV data in the storage account:
+
+```sql
+SELECT
+    Category, Count(*) as ProductCount
+FROM
+    OPENROWSET(
+        BULK 'https://mydatalake.dfs.core.windows.net/fs-synapse/products.csv',
+        FORMAT = 'CSV',
+        PARSER_VERSION = '2.0',
+        HEADER_ROW = TRUE
+    ) AS [result]
+Group by Category;
+```
+
+### Spark
+
+- You could create a Spark pool, 3 nodes at minimum
+- You could load CSV data to a DataFrame and query it using the Spark pool
+
+  ```
+  %%pyspark
+  df = spark.read.load('abfss://fs-synapse@mydatalake.dfs.core.windows.net/products.csv', format='csv', header=True)
+  display(df.limit(10))
+
+  df_counts = df.groupBy(df.Category).count()
+  display(df_counts)
+  ```
+
 
 ## Databricks
 
+- Could be used on multiple clouds
 - Run big data pipelines using both batch and real-time data
   - Batch data from Data Factory
   - Real-time data from Event Hub, IoT hub
@@ -42,12 +92,12 @@ A comprehensive, unified data analytics solutions that provides a single service
 
 ## HDInsight
 
-Azure-hosted clusters for popular Apache open-source big data processing technologies:
-
-- Apache Spark: distributed data processing system
-- Apache Hadoop: distributed system that uses *MapReduce* jobs to process large volumes of data efficiently across multiple cluster nodes
-- Apache HBase: large-scale NoSQL data storage and querying
-- Apache Kafka: message broker for data stream processing
+- Not as user-friendly as Azure Synapse Analytics and Azure Databricks
+- Support multiple Apache open-source data analytics cluster types:
+  - Apache Spark: distributed data processing system
+  - Apache Hadoop: distributed system that uses *MapReduce* jobs to process large volumes of data efficiently across multiple cluster nodes
+  - Apache HBase: large-scale NoSQL data storage and querying
+  - Apache Kafka: message broker for data stream processing
 
 
 ## Stream Analytics
