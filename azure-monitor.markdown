@@ -200,6 +200,8 @@ The data a user has access to is determined by a combination of factors that are
 
 KQL was originally written for Azure Data Explorer. See a basic tutorial here: https://docs.microsoft.com/en-us/azure/data-explorer/kusto/query/tutorial
 
+- Case sensitive - table names, column names, operators, functions, etc
+
 Common table names:
 
 ![Common table names](images/azure_common-log-tables.png)

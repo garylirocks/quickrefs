@@ -107,7 +107,31 @@ Real-time stream processing engine
 
 ## Azure Data Explorer
 
-A standalone service, high-performance querying of logs and telemetry data as the Data Explorer in Azure Synapse Analytics
+- An end-to-end solution for data ingestion, query, visualization and management.
+- Features:
+  - Uses Kusto query language.
+  - Full text search
+  - Dynamic schema
+  - Advanced analytics: anomaly detection, root cause analysis, regression, geospatial analysis, embedding Python code in KQL queries
+  - Data visualization: integrate with Power BI, Grafana, Kibana, etc
+- A good fit for:
+  - Interactive, near real-time analytics
+  - High volume, varied data
+- Not a good fit for:
+  - Real-time analytics
+  - Long running tasks including recurring ETL and large ML model training
+  - Classis data warehouse, Star schema
+
+![ADX Overview](./images/azure_adx-overview.png)
+
+- All data is automatically indexed and partitioned (to shards) based on the ingestion time
+- There are no primary foreign key and uniqueness constraints
+- A database can have tables and external tables (underlying storage is in other locations such as Azure Data Lake)
+- KQL supports:
+  - Cross-cluster and cross-database queries
+  - Parsing JSON, XML etc
+  - Advanced analytics
+- There are control commands for creating new clusters or databases, data connections, auto scaling, managing permissions, security policies, etc
 
 
 ## Microsoft Purview
