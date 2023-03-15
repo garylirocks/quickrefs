@@ -54,7 +54,9 @@
   - ['strict' mode](#strict-mode)
   - [Checking](#checking)
 - [Quick recipes](#quick-recipes)
-  - [Read lines of a file](#read-lines-of-a-file)
+  - [Read text to an array](#read-text-to-an-array)
+  - [Read a file line by line](#read-a-file-line-by-line)
+  - [Read file to an array](#read-file-to-an-array)
   - [Generate random numbers](#generate-random-numbers)
   - [Generate random strings](#generate-random-strings)
   - [Multiple commands on a single line](#multiple-commands-on-a-single-line)
@@ -1002,6 +1004,16 @@ sudo ls /root | sudo tee out
     # hello ${name}
     ```
 
+- Assign to a variable
+
+    ```sh
+    arr=$(cat <<EOT
+    line1
+    line2
+    EOT
+    )
+    ```
+
 - Use `tee` to output, `echo` doesn't work
 
     ```sh
@@ -1320,13 +1332,34 @@ sudo apt install shellcheck
 shellcheck script.sh
 ```
 
+
 ## Quick recipes
 
-### Read lines of a file
+### Read text to an array
 
 ```sh
-while read -r line; do echo $line; done < my_file.txt
+readarray rows << EOT
+gary 20
+amy 30
+EOT
+
+for row in "${rows[@]}"; do
+  rowArr=($row)
+  name=${rowArr[0]}
+  age=${rowArr[1]}
+  echo "${name} - ${age}"
+done
 ```
+
+### Read a file line by line
+
+```sh
+while read -r line; do
+  echo $line;
+done < my_file.txt
+```
+
+### Read file to an array
 
 Read a file in to a two-dimensional array:
 
@@ -1339,7 +1372,6 @@ for row in "${rows[@]}";do
   echo ${first}
 done
 ```
-
 
 ### Generate random numbers
 
