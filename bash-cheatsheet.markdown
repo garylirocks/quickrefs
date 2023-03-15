@@ -1247,7 +1247,7 @@ Always add the shebang on first line, use `env` to find `bash` in `$PATH`:
 
 ### `IFS`
 
-`IFS` stands for Internal Field Seperator, by default, its values is `$' \n\t'` (`$'...'` is the construct that allows escaped characters);
+`IFS` stands for Internal Field Separator, by default, its values is `$' \n\t'` (`$'...'` is the construct that allows escaped characters);
 
 ```sh
 for arg in $@; do
