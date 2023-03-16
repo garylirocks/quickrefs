@@ -68,6 +68,7 @@
   - [Sum up a column of numbers](#sum-up-a-column-of-numbers)
   - [Add content hash to file name](#add-content-hash-to-file-name)
   - [Check whether a command exits](#check-whether-a-command-exits)
+  - [Test connection to multiple IPs and ports](#test-connection-to-multiple-ips-and-ports)
 
 ## Resources
 
@@ -1491,7 +1492,68 @@ fi
   - invoke a command on disk even when a function with the same name exists
   - display information about a command
 
+### Test connection to multiple IPs and ports
 
+```sh
+readarray rows << EOT
+10.0.0.4	AGW
+10.1.1.5	VM-DB-APP
+10.2.2.6	LINUX
+EOT
+
+tcp_port_is_open() {
+   local code
+   curl --telnet-option BOGUS --connect-timeout 2 -s telnet://"$1:$2" </dev/null
+   code=$?
+   case $code in
+     49) echo -n "Y" ;;
+     *) echo -n "N" ;;
+   esac
+}
+
+# loop through ports
+test_vm_ports() {
+  local IP=$1
+  shift
+  PORTS=$*
+  echo -n -e "$IP \t| "
+  for p in 3389 1433 443 22; do
+    if [[ $PORTS =~ $p ]]; then         # test this port if matching
+      IS_OPEN=$(tcp_port_is_open $IP $p)
+      [[ $IS_OPEN == "Y" ]] && echo -n -e "$p O\t" || echo -n -e "$p X\t"
+    else
+      echo -n -e "$(tr "[:digit:]" " " <<< $p)  \t"
+    fi
+    echo -n "| "
+  done
+}
+
+## main, loop through IPs
+for row in "${rows[@]}"; do
+  rowArr=($row)
+  IP=${rowArr[0]}
+  TYPE=${rowArr[1]}
+  RUNNING=${rowArr[2]}
+
+  case $TYPE in
+    'AGW')        PORTS="443" ;;
+    'VM-DB-APP')  PORTS="3389 1433 443" ;;
+    'LINUX')      PORTS="22" ;;
+    *)            echo "Wrong type"
+  esac
+
+  test_vm_ports $IP $PORTS
+  echo ""
+done
+```
+
+Output is like:
+
+```
+10.0.0.4 	      |       	|       	| 443 O	|     	|
+10.1.1.5 	      | 3389 O	| 1433 O	| 443 X	|     	|
+10.2.2.6 	      |       	|       	|      	| 22 O	|
+```
 
 
 <a name="end"></a>

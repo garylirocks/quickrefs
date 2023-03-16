@@ -842,6 +842,15 @@ ssh -L 80:localhost:8080 -N dest
     curl -sSL -D - -o /dev/null www.example.com.org
     ```
 
+- Could be used to test port connection
+
+    See discussions here about how to exit immediately after successful connection: https://stackoverflow.com/a/71962683
+
+    ```sh
+    curl --telnet-option 'BOGUS=1' --connect-timeout 2 -s telnet://google.com:443 </dev/null
+    ```
+
+
 ## One liner
 
 - `man 7 ascii` get ASCII table
