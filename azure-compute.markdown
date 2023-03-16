@@ -704,6 +704,16 @@ Azure has a solution for updating VMs called Update Management
     --plan rhel-lvm75
   ```
 
+- Action Run Command in a VM
+
+  ```sh
+  az vm run-command invoke \
+    -g rg-test \
+    -n vm-test-001 \
+    --command-id RunShellScript \
+    --scripts "date"
+  ```
+
 
 ## Docker Container Registry
 
