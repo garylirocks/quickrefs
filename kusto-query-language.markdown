@@ -68,6 +68,7 @@ TABLE_NAME
   - **Fact tables**: like Sales, which do not change, often have foreign keys to dimension tables
   - **Dimension tables**: like Customers, Products, the data changes
 - `join`
+  - Syntax: `| join kind=inner RightTable on $left.id == $right.id2`
   - For best performance, use the table with less rows as the left one
   - See diagram below for kinds of join
     - `innerunique` keeps the first row of each unique value of the matching column, this row is duplicated if the value is duplicated in the right table
