@@ -1,0 +1,94 @@
+# Kusto Query Language
+
+## Aggregation
+
+All elements are grouped by the same column(s) after `by`, other columns are dropped.
+
+```kusto
+BooksTable
+| summarize Count_Total = count(),
+    Count_Fiction = countif(Type == "fiction"),
+    Count_Language = dcount(Language) by PublishYear
+| sort by Count_Total
+```
+
+## Time series
+
+```kusto
+StormEvents
+| summarize count() by bin(StartTime, 7d)
+| render columnchart
+```
+
+
+## Visualization
+
+```kusto
+StormEvents
+| summarize Count_total = count(),
+    Count_type = dcount(EventType) by State
+| top 3 by Count_total asc
+| render columnchart
+```
+
+## Variables and functions
+
+Use `let` to define variables (scalar or tabular), and functions
+
+```kusto
+let MinDamage = 1; // int
+let EventLocation = "ARIZONA"; // string
+
+// convert tabular to scalar
+let MostFrequentEventType = toscalar(
+    BooksTable
+    | summarize count() by Genre
+    | top 1 by count_
+    | project Genre);
+
+// function
+let Pcent = (portion:real, total:real){round(100 * portion / total, 2)};
+```
+
+## Schema
+
+```kusto
+// get table schema
+TABLE_NAME
+| getschema
+```
+
+## Multi-table queries
+
+- Types of tables:
+  - **Fact tables**: like Sales, which do not change, often have foreign keys to dimension tables
+  - **Dimension tables**: like Customers, Products, the data changes
+- `join`
+  - For best performance, use the table with less rows as the left one
+  - See diagram below for kinds of join
+    - `innerunique` keeps the first row of each unique value of the matching column, this row is duplicated if the value is duplicated in the right table
+    - `leftsemi`, `leftantisemi` only keep columns from left table, the former keeps rows which has a match in the right table, the latter keeps un-matching rows
+
+    ![Kinds of join](./images/azure_kql-kinds-of-join.svg)
+
+- `lookup` works like `leftouter`, it's optimized for getting looking up data from dimension tables
+
+    ```kusto
+    SalesFact
+    | lookup Customers on CustomerKey
+    | take 10
+    ```
+
+- Combine tables
+  - `union TABLE_A TABLE_B` keeps all columns
+  - `union inner TABLE_A TABLE_B` only keep common columns
+
+- `materialize` function caches the results of a subquery when it runs, so that other parts of the query can reference the partial result, **`let` by itself only represents the query, it does not cache the result**
+
+  ```kusto
+  let ResultTable = materialize(
+      TABLE
+      | summarize ...);
+  ResultTable
+  | query ...
+  ```
