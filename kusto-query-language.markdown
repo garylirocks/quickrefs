@@ -6,7 +6,9 @@
   - [`project`](#project)
   - [Text matching](#text-matching)
   - [Datetime](#datetime)
+- [Advanced operations](#advanced-operations)
   - [`range`](#range)
+  - [`as`](#as)
 - [Aggregation](#aggregation)
 - [Time series](#time-series)
 - [Visualization](#visualization)
@@ -77,6 +79,9 @@ Could be `null`, any other scalar data type, or an array, property bag (aka. map
   | where StartTime between (datetime(2023-01-01)..datetime(2023-03-01))
   ```
 
+
+## Advanced operations
+
 ### `range`
 
   ```kusto
@@ -85,6 +90,42 @@ Could be `null`, any other scalar data type, or an array, property bag (aka. map
 
   // a datetime range
   range myCol from ago(4h) to now() step 1h
+  ```
+
+### `as`
+
+  Put tabular input into a variable within a query, the variable could be used later in the query, this saves you from spliting the query and defining a variable using `let`.
+
+  `hint.materialized=true` caches the result
+
+  ```kusto
+  let People = datatable(FirstName:string, LastName:string, Age:int)
+  [
+      "John", "Doe", 35,
+      "Jane", "Doe", 30,
+      "Bob", "Smith", 45,
+      "Alice", "Johnson", 28,
+      "Mike", "Brown", 50,
+      "Samantha", "Davis", 25,
+      "Tom", "Wilson", 42,
+      "Sarah", "Jones", 33,
+      "David", "Garcia", 39,
+      "Emily", "Taylor", 29
+  ];
+  People
+  | summarize count() by bin(Age, 10)
+  | as hint.materialized=true Table
+  | sort by Age asc
+  | extend total=toscalar(Table | summarize sum(count_))
+  | extend percentage = (count_ * 100 / total)
+  ```
+
+  ```
+  Age   count_   total    percentage
+  20    3        10       30
+  30    4        10       40
+  40    2        10       20
+  50    1        10       10
   ```
 
 
