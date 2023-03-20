@@ -26,7 +26,7 @@
   - [Azure Resource Manager (ARM)](#azure-resource-manager-arm)
   - [Management tools](#management-tools)
 - [Azure Resource Graph](#azure-resource-graph)
-  - [Sample queries](#sample-queries)
+  - [Sample KQL queries](#sample-kql-queries)
 - [Blueprints](#blueprints)
 - [Azure Cloud Adoption Framework](#azure-cloud-adoption-framework)
 - [Billing](#billing)
@@ -388,11 +388,11 @@ Tables:
 - ...
 
 
-### Sample queries
+### Sample KQL queries
 
 - List top 5 resources ordered by name
 
-  ```sql
+  ```kusto
   resources
   | project name, type
   | order by name asc
@@ -401,7 +401,7 @@ Tables:
 
 - Query security resources, find enabled Defender plans
 
-  ```sql
+  ```kusto
   securityresources
   | where type == "microsoft.security/pricings"
   | where properties['pricingTier'] == "Standard"
@@ -409,7 +409,7 @@ Tables:
 
 - Find storage accounts with public network access
 
-  ```sql
+  ```kusto
   Resources
   | where type =~ 'microsoft.storage/storageaccounts'
   | where properties.publicNetworkAccess == 'Enabled' or isnull(properties.publicNetworkAccess)
@@ -428,8 +428,8 @@ Tables:
 
 - Join with `resourcecontainers`
 
-  ```sql
-  -- get subscription name
+  ```kusto
+  // get subscription name
   Resources
   | where type == "microsoft.storage/storageaccounts"
   | join (
@@ -441,10 +441,9 @@ Tables:
   | project name, subName
   ```
 
-  ```sql
-  -- get storage accounts with private endpoints
-  -- "join" twice to get both resource group and subscription name
-  -- output tags on resources and resource groups
+  ```kusto
+  // get storage accounts with private endpoints
+  // "join" twice to get tags on resource group and subscription name
   resources
   | where type == "microsoft.storage/storageaccounts"
   | where array_length(properties['privateEndpointConnections']) > 0
@@ -463,29 +462,21 @@ Tables:
   | project name, resourceGroup, subName, tags, rgTags
   ```
 
-
 - A query can be saved as a shared query, then you could call it like:
 
-  ```sql
+  ```kusto
   {{/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/rg-gary-001/providers/microsoft.resourcegraph/queries/my-share-query-001}}
   | project id, name, type
   ```
 
 - List resource change events
 
-  ```sql
+  ```kusto
   resourcechanges
   | extend changeTime=todatetime(properties.changeAttributes.timestamp)
   | project changeTime, properties.changeType, properties.targetResourceId, properties.targetResourceType, properties.changes
   | order by changeTime desc
   | limit 5
-  ```
-
-- Operators
-
-  ```sh
-  # use "matches regex @'<regex>'" for regex matching
-  | where name matches regex @'.*vault.azure.net.*'
   ```
 
 
