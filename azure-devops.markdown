@@ -739,8 +739,9 @@ Examples:
   - `$(Agent.TempDirectory)` -> `/azp/agent/_work/_temp/`
 
 - `Build.ArtifactStagingDirectory`: The local path on the agent where any artifacts are copied to before being pushed to destination, same as `Build.StagingDirectory`, you need to copy your artifacts here before publishing. **NOT RECOMMENDED ANYMORE**, you could just publish directly from where your files are.
-- `Build.SourceBranchName`: 'main', ...
-- `Build.Reason`: 'Manual', 'Schedule', 'PullRequest', ...
+- `Build.SourceBranch`: 'refs/heads/main', 'refs/pull/123/merge', 'refs/tags/my-tag-name', ...
+- `Build.SourceBranchName`: 'main', 'my-tag-name' ..., if the full ref is `refs/heads/feature/tools`, then this value is just `tools`
+- `Build.Reason`: 'Manual', 'IndividualCI', 'Schedule', 'PullRequest', ...
 - `Pipeline.Workspace`
 - `System.AccessToken`, a special variable that carries the security token used by the running build, could be used as a PAT token or a `Bearer` token to call Azure Pipelines REST API
   - Could be used like:
@@ -774,7 +775,7 @@ Expressions can be evaluated at either
   - syntax: `${{ <expression> }}`
   - evaluated when the YAML file is compiled into a plan
   - can be used everywhere
-  - have access to `parameters` and statically defined `variables`
+  - have access to `parameters` and *statically defined `variables`*
 - or Run time:
   - syntax: `$[ <expression> ]`
   - can be used in variables and conditions
@@ -787,6 +788,16 @@ variables:
   staticVar: 'my value'                                             # static variable
   compileVar: ${{ variables.staticVar }}                            # compile time expression
   isMain: $[eq(variables['Build.SourceBranch'], 'refs/heads/main')] # runtime expression
+
+# load different variable template based on how the pipeline is triggered
+variables:
+  # use prod-vars.yml if
+  #   - explicitly selected 'prod' env as parameter
+  #   - or automatically triggered on 'main' branch
+  - ${{ if or(eq(parameters.env, 'prod'), and(eq(variables['Build.Reason'], 'IndividualCI'), eq(variables['Build.SourceBranchName'], 'main'))) }}:
+      - template: prod-vars.yml
+  - ${{ else }}:
+      - template: dev-vars.yml
 
 steps:
   - script: |
