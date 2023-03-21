@@ -395,16 +395,46 @@ Tables:
   ```kusto
   resources
   | project name, type
-  | order by name asc
-  | limit 5
+  | top 5 by name asc
   ```
 
-- Query security resources, find enabled Defender plans
+- `securityresources` table, find enabled Defender plans
 
   ```kusto
   securityresources
   | where type == "microsoft.security/pricings"
   | where properties['pricingTier'] == "Standard"
+  ```
+
+- `resourcechanges` table
+
+  ```kusto
+  resourcechanges
+  | extend changeTime=todatetime(properties.changeAttributes.timestamp)
+  | project changeTime, properties.changeType, properties.targetResourceId, properties.targetResourceType, properties.changes
+  | top 5 by changeTime desc
+  ```
+
+- A query can be saved as a shared query, then you could call it like:
+
+  ```kusto
+  {{/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/rg-gary-001/providers/microsoft.resourcegraph/queries/my-share-query-001}}
+  | project id, name, type
+  ```
+
+- Join with `resourcecontainers` to get subscription name
+
+  ```kusto
+  // get subscription name
+  Resources
+  | where type == "microsoft.storage/storageaccounts"
+  | join (
+      resourcecontainers
+      | where type == "microsoft.resources/subscriptions"
+      | project subName = name, subscriptionId
+      )
+      on subscriptionId
+  | project name, subName
   ```
 
 - Find storage accounts with public network access
@@ -426,23 +456,9 @@ Tables:
     --query "[? publicNetworkAccess=='Enabled' && networkRuleSet.defaultAction=='Allow'].{Name: name, ID: id}"
   ```
 
-- Join with `resourcecontainers`
+- Find storage accounts with private endpoints
 
   ```kusto
-  // get subscription name
-  Resources
-  | where type == "microsoft.storage/storageaccounts"
-  | join (
-      resourcecontainers
-      | where type == "microsoft.resources/subscriptions"
-      | project subName = name, subscriptionId
-      )
-      on subscriptionId
-  | project name, subName
-  ```
-
-  ```kusto
-  // get storage accounts with private endpoints
   // "join" twice to get tags on resource group and subscription name
   resources
   | where type == "microsoft.storage/storageaccounts"
@@ -462,21 +478,47 @@ Tables:
   | project name, resourceGroup, subName, tags, rgTags
   ```
 
-- A query can be saved as a shared query, then you could call it like:
+- Find storage account network access settings, with allowed subnets, allowed IPs, count of private endpoints, etc
+
+  Utilizes `mv-expand`, `split()`, `make_list()` to extract the subnet IDs and IPs
 
   ```kusto
-  {{/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/rg-gary-001/providers/microsoft.resourcegraph/queries/my-share-query-001}}
-  | project id, name, type
-  ```
-
-- List resource change events
-
-  ```kusto
-  resourcechanges
-  | extend changeTime=todatetime(properties.changeAttributes.timestamp)
-  | project changeTime, properties.changeType, properties.targetResourceId, properties.targetResourceType, properties.changes
-  | order by changeTime desc
-  | limit 5
+  // seems this Explorer does not support `as`, `mv-apply`, `let`, otherwise the query below would be simpler
+  resources
+  | where type == "microsoft.storage/storageaccounts"
+  | where subscriptionId == "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+  | project id, name, type, kind, location, resourceGroup,
+      vNetRules = properties.networkAcls.virtualNetworkRules,
+      ipRules = properties.networkAcls.ipRules,
+      PEPCount=iff(isnull(properties.privateEndpointConnections), 0, array_length(properties.privateEndpointConnections)),
+      PublicAccess=iff(
+          properties.networkAcls.defaultAction=="Allow",
+          "All",
+          iff(
+              properties.publicNetworkAccess!="Disabled",
+              "Limited",
+              "No"
+          )
+      )
+  | mv-expand subnet=iff(array_length(vNetRules) > 0, vNetRules, dynamic(null))
+  | extend subnetID = iff(array_length(split(subnet.id, "/")) > 8, strcat((split(subnet.id, "/"))[8], '/', (split(subnet.id, "/")[10])), "")
+  | summarize make_list_if(subnetID, strlen(subnetID) > 0) by id, name, kind, location, resourceGroup, PEPCount, PublicAccess
+  | join (
+      resources
+      | where type == "microsoft.storage/storageaccounts"
+      | where subscriptionId == "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+      | project id, ipRules = properties.networkAcls.ipRules
+      | mv-expand ipRule=iff(array_length(ipRules) > 0, ipRules, dynamic(null))
+      | extend IP = ipRule.value
+      | summarize make_list(IP) by id
+  ) on id
+  | extend
+      c_subnets = array_length(list_subnetID),
+      c_IPs = array_length(list_IP),
+      subnetIDs = iff(array_length(list_subnetID) > 0, list_subnetID, dynamic(null)),
+      IPs = iff(array_length(list_IP) > 0, list_IP, dynamic(null))
+  | project id, name, PublicAccess, c_subnets, c_IPs, PEPCount, subnetIDs, IPs, kind, location, resourceGroup
+  | sort by PublicAccess, array_length(subnetIDs)
   ```
 
 
