@@ -96,8 +96,6 @@ Could be `null`, any other scalar data type, or an array, property bag (aka. map
 
   Put tabular input into a variable within a query, the variable could be used later in the query, this saves you from spliting the query and defining a variable using `let`.
 
-  `hint.materialized=true` caches the result
-
   ```kusto
   let People = datatable(FirstName:string, LastName:string, Age:int)
   [
@@ -126,6 +124,40 @@ Could be `null`, any other scalar data type, or an array, property bag (aka. map
   30    4        10       40
   40    2        10       20
   50    1        10       10
+  ```
+
+  `hint.materialized=true` caches the result, without it, the expression would be re-calculated everytime it appears
+
+  ```kusto
+  range x from 1 to 100 step 1
+  | sample 1
+  | as T
+  | union T
+  ```
+
+  might result in
+
+  ```
+  X
+  63
+  62
+  ```
+
+  while
+
+  ```kusto
+  range x from 1 to 100 step 1
+  | sample 1
+  | as hint.materialized=true T
+  | union T
+  ```
+
+  will result in something like
+
+  ```
+  X
+  95
+  95
   ```
 
 
@@ -247,7 +279,7 @@ let Pcent = (portion:real, total:real){round(100 * portion / total, 2)};
   - `union TABLE_A TABLE_B` keeps all columns
   - `union inner TABLE_A TABLE_B` only keep common columns
 
-- `materialize` function caches the results of a subquery when it runs, so that other parts of the query can reference the partial result, **`let` by itself only represents the query, it does not cache the result**
+- `materialize()` caches the results in memory, so that other parts of the query can reference the result, otherwise the subquery will be calculated everytime, leading to non-deterministic results
 
   ```kusto
   let ResultTable = materialize(
