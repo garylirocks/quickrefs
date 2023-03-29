@@ -762,7 +762,7 @@ AuditLogs
 
 ## Application Proxy
 
-Allow remote uses to access on-prem applications, benefits:
+Allow remote users to access on-prem applications, benefits:
 
 - Publish on-prem web apps externally without a DMZ
 - SSO across cloud and on-prem
