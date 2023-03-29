@@ -316,9 +316,9 @@ TABLE_NAME
 - Persisted table and data ingestion
 
   ```kusto
+  .execute database script <|
   // dynamic is just like any other type:
   .create table Logs (Timestamp:datetime, Trace:dynamic)
-
   // values in `[]` are in CSV format,
   // the JSON string is quoted in double quotes, the double quotes within it need to be doubled up
   .ingest inline into table Logs
