@@ -9,13 +9,14 @@
 - [Advanced operations](#advanced-operations)
   - [`range`](#range)
   - [`as`](#as)
+- [Functions](#functions)
+- [Variables and custom functions](#variables-and-custom-functions)
 - [Aggregation](#aggregation)
 - [Time series](#time-series)
-- [Visualization](#visualization)
-- [Variables and functions](#variables-and-functions)
 - [Multi-table queries](#multi-table-queries)
 - [Schema](#schema)
 - [Create a table](#create-a-table)
+- [Visualization](#visualization)
 
 
 ## Data types
@@ -161,6 +162,43 @@ Could be `null`, any other scalar data type, or an array, property bag (aka. map
   ```
 
 
+## Functions
+
+- `prev()`, `next()`
+
+  ```kusto
+  PrimeNumbers
+  | top 10 by number asc
+  | extend gap = number - prev(number, 1, 0)
+
+  # 2   2
+  # 3   1
+  # 5   2
+  # 7   2
+  # 11  4
+  ```
+
+
+## Variables and custom functions
+
+Use `let` to define variables (scalar or tabular), and functions
+
+```kusto
+let MinDamage = 1; // int
+let EventLocation = "ARIZONA"; // string
+
+// convert tabular to scalar
+let MostFrequentEventType = toscalar(
+    BooksTable
+    | summarize count() by Genre
+    | top 1 by count_
+    | project Genre);
+
+// function
+let Pcent = (portion:real, total:real){round(100 * portion / total, 2)};
+```
+
+
 ## Aggregation
 
 - `summarize`, all elements are grouped by the same column(s) after `by`, other columns are dropped.
@@ -224,34 +262,6 @@ StormEvents
 ```
 
 
-## Visualization
-
-```kusto
-StormEvents
-| summarize Count_total = count(),
-    Count_type = dcount(EventType) by State
-| top 3 by Count_total asc
-| render columnchart
-```
-
-## Variables and functions
-
-Use `let` to define variables (scalar or tabular), and functions
-
-```kusto
-let MinDamage = 1; // int
-let EventLocation = "ARIZONA"; // string
-
-// convert tabular to scalar
-let MostFrequentEventType = toscalar(
-    BooksTable
-    | summarize count() by Genre
-    | top 1 by count_
-    | project Genre);
-
-// function
-let Pcent = (portion:real, total:real){round(100 * portion / total, 2)};
-```
 
 ## Multi-table queries
 
@@ -324,3 +334,20 @@ TABLE_NAME
   .ingest inline into table Logs
     [2015-01-01,"{""EventType"":""Demo"", ""EventValue"":""Double-quote love!""}"]
   ```
+
+  Or ingest a CSV file
+
+  ```kusto
+  .ingest into table PrimeNumbers ('https://example.com/prime-numbers.csv.gz') with (ignoreFirstRecord=true)
+  ```
+
+
+## Visualization
+
+```kusto
+StormEvents
+| summarize Count_total = count(),
+    Count_type = dcount(EventType) by State
+| top 3 by Count_total asc
+| render columnchart
+```
