@@ -17,6 +17,10 @@
 - [Schema](#schema)
 - [Create a table](#create-a-table)
 - [Visualization](#visualization)
+- [Geospatial](#geospatial)
+  - [Functions](#functions-1)
+  - [Plot points on a map](#plot-points-on-a-map)
+  - [Variable-sized bubbles](#variable-sized-bubbles)
 
 
 ## Data types
@@ -198,6 +202,16 @@ let MostFrequentEventType = toscalar(
 let Pcent = (portion:real, total:real){round(100 * portion / total, 2)};
 ```
 
+To create a **saved function**
+
+```kusto
+.create-or-alter function
+    with (docstring = "My custom function")
+    Pcent(portion:real, total:real) {
+        round(100 * portion / total, 2)
+}
+```
+
 
 ## Aggregation
 
@@ -260,7 +274,6 @@ StormEvents
 | summarize count() by bin(StartTime, 7d)
 | render columnchart
 ```
-
 
 
 ## Multi-table queries
@@ -351,3 +364,55 @@ StormEvents
 | top 3 by Count_total asc
 | render columnchart
 ```
+
+
+## Geospatial
+
+### Functions
+
+- `geo_point_in_polygon` gets points within a region
+
+  ```kusto
+  let southern_california = dynamic({
+      "type": "Polygon",
+      "coordinates": [[[-119.5, 34.5], [-115.5, 34.5], [-115.5, 32.5], [-119.5, 32.5], [-119.5, 34.5]]
+      ]});
+  StormEvents
+  | where geo_point_in_polygon(BeginLon, BeginLat, southern_california)
+  ...
+  ```
+
+### Plot points on a map
+
+Plot multiple series of points on a map
+
+```kusto
+StormEvents
+| take 100
+| project BeginLon, BeginLat, EventType
+| render scatterchart with (kind = map)
+
+// same as
+StormEvents
+| take 100
+| render scatterchart with (kind = map, xcolumn = BeginLon, ycolumns = BeginLat, series = EventType)
+```
+
+![Map with series](images/kql_map-with-series.png)
+
+### Variable-sized bubbles
+
+Use `piechart` to plot variable-sized bubbles
+
+```kusto
+StormEvents
+| where EventType == "Tornado"
+| project BeginLon, BeginLat
+| where isnotnull(BeginLat) and isnotnull(BeginLon)
+| summarize count_summary=count() by hash = geo_point_to_s2cell(BeginLon, BeginLat, 4)
+| project geo_s2cell_to_central_point(hash), count_summary
+| extend category = "xxx"               // NOTE: this is required
+| render piechart with (kind = map)
+```
+
+![Map with variable-sized bubbles](images/kql_map-variable-sized-bubbles.png)
