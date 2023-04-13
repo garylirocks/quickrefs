@@ -406,7 +406,8 @@ There are three types of service principals:
   - For Azure resources only
   - Eliminate the need for developers to manage credentials
   - When a managed identity is enabled, a service principal representing that managed identity is created in your tenant
-  - Listed under **Enterprise applications -> Managed Identities** in Azure Portal
+    - The service principal is listed under **Enterprise applications -> Managed Identities** in Azure Portal
+    - There is NO corresponding app registration in your tenant
 
   Two types:
 
