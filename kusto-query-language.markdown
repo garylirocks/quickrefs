@@ -18,6 +18,7 @@
 - [Create a table](#create-a-table)
 - [Visualization](#visualization)
 - [Geospatial](#geospatial)
+  - [GeoJSON](#geojson)
   - [Functions](#functions-1)
   - [Plot points on a map](#plot-points-on-a-map)
   - [Variable-sized bubbles](#variable-sized-bubbles)
@@ -217,13 +218,13 @@ To create a **saved function**
 
 - `summarize`, all elements are grouped by the same column(s) after `by`, other columns are dropped.
 
-```kusto
-BooksTable
-| summarize Count_Total = count(),
-    Count_Fiction = countif(Type == "fiction"),
-    Count_Language = dcount(Language) by PublishYear
-| sort by Count_Total
-```
+  ```kusto
+  BooksTable
+  | summarize Count_Total = count(),
+      Count_Fiction = countif(Type == "fiction"),
+      Count_Language = dcount(Language) by PublishYear
+  | sort by Count_Total
+  ```
 
 - `mv-expand`, expand arrays/property bags
 
@@ -241,18 +242,18 @@ BooksTable
   1	{"age":20}
   ```
 
-- `mv-apply`, does `mv-expand` first, then apply a subquery on the subtable, then return the union of the results
+- `mv-apply`, does `mv-expand` first, which create a subtable for each row, then apply a subquery on the subtable, then return the union of the results
 
   ```kusto
-  datatable (a:int, b:dynamic) [
-      1, dynamic([1,3,5,7]),
-      2, dynamic([2,4,6,8])
+  datatable (id:int, arrayCol:dynamic) [
+    1, dynamic([1,3,5,7]),
+    2, dynamic([2,4,6,8])
   ]
-  | mv-apply newCol=b to typeof(long) on
-      (
-          top 2 by newCol
-          | summarize SumOfTop2=sum(newCol)
-      )
+  | mv-apply elementCol=arrayCol to typeof(long) on
+    (
+      top 2 by elementCol
+      | summarize SumOfTop2=sum(elementCol)
+    )
   ```
 
   returns:
@@ -368,9 +369,72 @@ StormEvents
 
 ## Geospatial
 
+### GeoJSON
+
+[GeoJSON](https://www.rfc-editor.org/rfc/rfc7946) is used to represent geospatial entities, for example:
+
+```json
+// point
+dynamic({
+  "type": "Point",
+  "coordinates": [100.0, 0.0]
+})
+
+// lineString
+dynamic({
+  "type": "LineString",
+  "coordinates": [
+    [100.0, 0.0],
+    [101.0, 1.0]
+  ]
+})
+
+// polygon without holes
+dynamic({
+  "type": "Polygon",
+  "coordinates": [
+    [
+      [100.0, 0.0],
+      [101.0, 0.0],
+      [101.0, 1.0],
+      [100.0, 1.0],
+      [100.0, 0.0]
+    ]
+  ]
+})
+
+// polygon with holes, the first element represents the outer ring,
+//  subsequent elements represent inner rings (holes)
+dynamic({
+  "type": "Polygon",
+  "coordinates": [
+    [
+      [100.0, 0.0],
+      [101.0, 0.0],
+      [101.0, 1.0],
+      [100.0, 1.0],
+      [100.0, 0.0]
+    ],
+    [
+      [100.8, 0.8],
+      [100.8, 0.2],
+      [100.2, 0.2],
+      [100.2, 0.8],
+      [100.8, 0.8]
+    ]
+  ]
+})
+```
+
 ### Functions
 
-- `geo_point_in_polygon` gets points within a region
+- `geo_point_in_circle` whether a point is in a circle
+
+  ```kusto
+  geo_point_in_circle(latitude, longitude, center_latitude, center_longitude, radius)
+  ```
+
+- `geo_point_in_polygon` whether a point is in a polygon
 
   ```kusto
   let southern_california = dynamic({
@@ -402,16 +466,15 @@ StormEvents
 
 ### Variable-sized bubbles
 
-Use `piechart` to plot variable-sized bubbles
+Use `piechart` to plot variable-sized pies on a map (*only in Kusto Explorer Desktop*)
 
 ```kusto
 StormEvents
-| where EventType == "Tornado"
-| project BeginLon, BeginLat
+| where EventType in~ ("Lightning", "Tornado", "Flood")
+| project BeginLon, BeginLat, EventType
 | where isnotnull(BeginLat) and isnotnull(BeginLon)
-| summarize count_summary=count() by hash = geo_point_to_s2cell(BeginLon, BeginLat, 4)
-| project geo_s2cell_to_central_point(hash), count_summary
-| extend category = "xxx"               // NOTE: this is required
+| summarize count() by hash = geo_point_to_s2cell(BeginLon, BeginLat, 4), EventType
+| project geo_s2cell_to_central_point(hash), EventType, count_
 | render piechart with (kind = map)
 ```
 
