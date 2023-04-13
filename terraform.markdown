@@ -1117,7 +1117,7 @@ terraform {
 ```
 
 - #1 a modules needs to declare its provider version requirements
-- #2 optional, declare an expected alias provider configuration named `aws.alternate`
+- #2 optional, declare an expected alias provider configuration named `aws.alternate`, the calling module should provide this
 - #3 no need for `provider` block, it should be defined in the root module
 
 #### Implicit provider inheritance
