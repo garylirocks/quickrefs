@@ -43,6 +43,7 @@
 - [CLI](#cli)
   - [`--filter` parameter](#--filter-parameter)
   - [Application and service principal owners](#application-and-service-principal-owners)
+  - [Applications](#applications)
   - [Service principals](#service-principals-1)
 
 
@@ -829,6 +830,14 @@ az ad app owner add --id $appId --owner-object-id "$ownerObjectId"
 
 # as SP owner (need `az rest`, no CLI support yet)
 az rest -m POST -u https://graph.microsoft.com/beta/servicePrincipals/$spObjectId/owners/\$ref -b "{\"@odata.id\": \"https://graph.microsoft.com/beta/servicePrincipals/$ownerObjectId\"}"
+```
+
+### Applications
+
+```sh
+# app regs created by me
+az ad app list \
+  --filter "publisherDomain eq 'garyli.onmicrosoft.com'" -otable
 ```
 
 ### Service principals

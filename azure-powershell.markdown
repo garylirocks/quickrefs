@@ -163,7 +163,7 @@ There are two related modules:
 Get eligible role assignments or active role assignments:
 
 ```powershell
-$scope='<full-resource-id>'
+$scope='<full-resource-id>' // FULL id required
 $principal='xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
 
 # get eligible ones
@@ -182,7 +182,10 @@ Get-AzRoleAssignmentSchedule -Scope $scope -Filter "principalId eq $principal" `
 
 Usable filters:
 
-- `-Filter "asTarget()"` limit to current user/service principal
+- `-Filter "principalId eq $principal"`
+  - works for active assignments
+  - **DOES NOT** work for a user if the eligible role assignments are on a group, not directly on the user
+- `-Filter "asTarget()"` limit to current user/service principal, works even if the eligible assignment is via a group
 - `-Filter "atScope()"` limit to specified scope, including inherited roles from ancestor scopes, excluding subscopes
 - `-Filter "asTarget() and atScope()"` combined
 
