@@ -446,6 +446,30 @@ dynamic({
   ...
   ```
 
+- Geospatial clustering
+
+  Three methods are supported: Geohash, S2 Cell, H3 Cell, see details here https://learn.microsoft.com/en-us/azure/data-explorer/kusto/query/geospatial-grid-systems
+
+  For Geohash, the level parameter dictates the length of the hash string. If two hashes has common prefixes, they are close to each other, but it's not true other way around: two close points may not have a common hash prefixs
+
+  ```kusto
+  print geo_point_to_geohash(174.762191, -36.848448, 2), geo_point_to_geohash(174.762191, -36.848448, 6), geo_point_to_geohash(174.762191, -36.848448, 10);
+
+  # print_0  print_1  print_2
+  # rc       rckq2g   rckq2gcynp
+  ```
+
+  A **common pattern for clustering**, calculate the hash, then get the central point:
+
+  ```kusto
+  StormEvents
+  | project BeginLon, BeginLat
+  | summarize by hash=geo_point_to_s2cell(BeginLon, BeginLat, 5)
+  | project geo_s2cell_to_central_point(hash)
+  | render scatterchart with (kind=map)
+  ```
+
+
 ### Plot points on a map
 
 Plot multiple series of points on a map
