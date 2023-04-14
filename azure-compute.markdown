@@ -4,6 +4,7 @@
   - [Considerations](#considerations)
   - [Series](#series)
   - [Disks](#disks)
+    - [Behind the scenes](#behind-the-scenes)
     - [Shared disk](#shared-disk)
   - [Initialize data disks](#initialize-data-disks)
   - [Disk encryption](#disk-encryption)
@@ -71,8 +72,8 @@ Checklist for creating VMs
       - Reserved VM instances
     - Linux VMs are cheaper than Windows which includes license charges
     - Two stopped status:
-      - **Stopped**: by `az vm stop`, or shutdown from within the guest OS, you are still being charged for the compute resources
-      - **Stopped (deallocated)**: by `az vm deallocate`, or "Stop" from the Portal, compute resources are released, you will not be charged for compute (still paying the related disk storage, etc)
+      - **Stopped**: by `az vm stop`, or **shutdown from within the guest OS**, you are still being charged for the compute resources
+      - **Stopped (deallocated)**: by `az vm deallocate`, or **"Stop" from the Portal**, compute resources are released, you will not be charged for compute (still paying the related disk storage, etc)
 
   - Storage for disks are charged separately from VM, you will be charged for storage used by the disks even if the VM were deallocated
 
@@ -150,7 +151,21 @@ Operations:
 
 - Data disk could be detached/attached without stopping the VM
 - You could increase the disk size
+  - You could increase size of an attached disk, either below 4TiB, or above it
+  - To increase the size from < 4TiB to > 4TiB, you need to detach it the disk or stop the VM first, this is because the page blob needs to be copied to another storage account if the size goes over 4TiB
 - To decrease the size, you need to create a new disk and copy the data over
+
+#### Behind the scenes
+
+A managed disk is actually an abstraction over a page blob, when you attach it to a VM, a lease is put on the blob.
+
+Grant/Revoke an SAS token of the blob (this put a lease on it as well):
+
+```sh
+Grant-AzDiskAccess -ResourceGroupName 'rg-demo-001' -Name 'disk-demo-001' -DurationInSecond 60 -Access Read
+
+Revoke-AzDiskAccess -ResourceGroupName 'rg-demo-001' -Name 'disk-demo-001'
+```
 
 #### Shared disk
 

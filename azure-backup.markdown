@@ -78,13 +78,13 @@
 
 - **Disk Snapshot**
   - Resource type `Microsoft.Snapshot`
-  - a *full, ready-only* copy fo a virtual hard drive or an Azure File share, you could create a incremental one based on a previous snapshot
+  - a *full, ready-only* copy fo a virtual hard drive or an Azure File share, you could create an incremental one based on a previous snapshot
   - Can be created for attached or unattached disks
   - Snapshots exist independent of the source disk
   - Like a disk, it can be
-    - downloaded
+    - Downloaded
     - Set CMK (disk encryption set)
-    - Control access through private endpoint with Disk Access
+    - Accessed through private endpoint with "Disk Access" resource
   - A snapshot can be used to create new managed disks
   - Billed based on actual used size, eg. if you create a snapshot of a managed disk with provisioned capacity of 64 GiB and actual used size of 10 GiB, the snapshot is billed only for the used size of 10 GiB
 
