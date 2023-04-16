@@ -7,6 +7,7 @@
   - [Spark](#spark)
 - [Databricks](#databricks)
 - [HDInsight](#hdinsight)
+- [Apache Spark](#apache-spark)
 - [Stream Analytics](#stream-analytics)
 - [Azure Data Explorer](#azure-data-explorer)
 - [Microsoft Purview](#microsoft-purview)
@@ -37,7 +38,7 @@ The UI of Synapse Studio is very similar to ADF's
 
 ### Deployment
 
-- Requires two resource groups, including a managed one
+- Requires two resource groups, including a **managed** one (you can specify the name to satisfy your group name policies)
 - Requires a Data Lake storage account, to store data, scripts and other artifacts
   - A linked service is created to this storage account, using the workspace's managed identity, which has the "Storage Blob Data Contributor" role
 - Deploys a serverless SQL pool by default, you need to set the SQL admin username, password, AAD admin, etc
@@ -100,9 +101,32 @@ Group by Category;
   - Apache Kafka: message broker for data stream processing
 
 
+## Apache Spark
+
+- Could be used in the following services:
+
+  - Synapse Analytics
+  - Databricks
+  - HDInsight
+
+- Can be used to run code (often in Python, Scala, Java) in parallel across multiple cluster nodes
+- For both batch processing and stream processing
+- `dataframe`: A ubiquitous structure in Spark, which encapsulates a table of data, used to represent both input and output
+- **Delta Lake**, an open-source storage layer that supports for
+  - transactional consistency
+  - schema enforcement
+  - unifies storage for streaming and batch data
+
+
 ## Stream Analytics
 
 Real-time stream processing engine
+
+- Uses SQL to filter or process data
+- Could run as
+  - a job (shared infrastructure)
+  - or in a cluster (dedicated infrastructure)
+- Can have reference inputs for static reference data (storage, SQL DB)
 
 
 ## Azure Data Explorer
@@ -115,12 +139,13 @@ Real-time stream processing engine
   - Advanced analytics: anomaly detection, root cause analysis, regression, geospatial analysis, embedding Python code in KQL queries
   - Data visualization: integrate with Power BI, Grafana, Kibana, etc
 - A good fit for:
-  - Interactive, near real-time analytics
-  - High volume, varied data
-- Not a good fit for:
+  - Capture and analyze real-time or batch data that includes a **time-series** element; such as log telemetry or values emitted by Internet-of-things (IoT) devices
+  - Explore, filter, and aggregate data quickly by using the intuitive and powerful Kusto Query Language (KQL)
+
+- **Not** a good fit for:
   - Real-time analytics
   - Long running tasks including recurring ETL and large ML model training
-  - Classis data warehouse, Star schema
+  - Classic data warehouse, Star schema
 
 ![ADX Overview](./images/azure_adx-overview.png)
 
