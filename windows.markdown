@@ -12,6 +12,8 @@
     - [Multiple accounts for GitHub on one machine](#multiple-accounts-for-github-on-one-machine)
   - [VS Code](#vs-code)
   - [Terraform](#terraform)
+- [Quick recipes](#quick-recipes)
+  - [Copy files](#copy-files)
 
 ## SSH
 
@@ -179,3 +181,26 @@ You could use the Windows Git Credential Manager in WSL (https://github.com/GitC
 ### Terraform
 
 There's an issue that Terraform can't authenticate with Azure, see https://github.com/microsoft/WSL/issues/8022
+
+
+## Quick recipes
+
+### Copy files
+
+```powershell
+robocopy F:\ G:\ *.* /J /E /COPYALL /XD "System Volume Information" "$RECYCLE.BIN" /XO
+
+# to get help on options
+robocopy /?
+```
+
+- `F:\`: old disk (source)
+- `G:\`: new disk (destination);
+- `*.*`: copy every file using every extension;
+- `/J`: copy using unbuffered I/O;
+- `/E`: include all empty sub-folders;
+- `/COPYALL`: to copy all data/attributes/timestamps/DACLs/Owner info/auditing info;
+- `/XD`: exclude directories matching the names on the right;
+- "System Volume Information": do not robocopy the system information of the old disk, the new disk needs to build its own partition/volume information;
+- "$RECYCLE.BIN": ignore recycle bin;
+- `/XO`: exclude older files (files which has a newer version in destination)
