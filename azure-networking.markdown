@@ -220,10 +220,10 @@ az network public-ip create \
   - All UDP and TCP outbound flows from any VM instance will use NAT for Internet connectivity (**takes precedence over other public IPs on its NIC**)
   - Does not support ICMP
   - No further configuration is necessary, and you don't need to create any UDR
-  - NAT takes precedence over other outbound scenarios and replaces the default Internet destination of a subnet
+  - NAT **takes precedence** over other outbound scenarios and replaces the default Internet destination of a subnet
 - Allows flows from vNet to the Internet, return traffic is only allowed in response to an active flow
 - You could configure the TCP idle timeout, default is 4 minutes
-- Compatible with Standard SKU load balancer, public IP/prefix
+- Compatible with Standard SKU load balancer, Standard SKU public IP/prefix (those could still accept inbound connections)
 
   ![NAT compatibility](images/azure_networking-nat-flow-direction-inbound-outbound.png)
 
