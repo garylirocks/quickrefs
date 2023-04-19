@@ -1,5 +1,13 @@
 # SQL Server
 
+- [Run with Docker](#run-with-docker)
+- [Create and query data](#create-and-query-data)
+  - [Temporary tables](#temporary-tables)
+- [Datatypes](#datatypes)
+  - [`varchar` vs `nvarchar`](#varchar-vs-nvarchar)
+- [Cheatsheets](#cheatsheets)
+
+
 ## Run with Docker
 
 ```sh
@@ -71,6 +79,32 @@ SELECT * FROM #mytemptable
   JOIN [SalesLT].[ProductCategory] AS c
       ON p.ProductCategoryID = c.ProductCategoryID;
   ```
+
+- Show client name and IP
+
+  ```sql
+  SELECT  hostname,
+          net_library,
+          net_address,
+          client_net_address
+  FROM    sys.sysprocesses AS S
+  INNER JOIN    sys.dm_exec_connections AS decc ON S.spid = decc.session_id
+
+  -- hostname      net_library    net_address     client_net_address
+  -- vm-demo       TCP/IP         FCAC0BDC7F1C    10.0.0.8
+  -- GARY-WIN10    TCP/IP         87C81F2C585D    218.101.119.105
+
+
+  -- for current client only
+  SELECT  hostname,
+        net_library,
+        net_address,
+        client_net_address
+  FROM    sys.sysprocesses AS S
+  INNER JOIN    sys.dm_exec_connections AS decc ON S.spid = decc.session_id
+  where spid = @@SPID
+  ```
+
 
 - Loop through a list of tables/dbs to get some stats
 

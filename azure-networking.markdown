@@ -1868,26 +1868,33 @@ A combination of network monitoring and diagnostic tools.
   - **VPN troubleshoot**: troubleshoots virtual network gateways or connections
   - **IP flow verify**
   - **NSG diagnostics**
-  - **Connection troubleshoot**
+  - **Connection troubleshoot**: an amalgamation of 4 diagnostic tests: "Connectivity", "NSG diagnostic", "Next hop", "Port scanner", you could choose which ones to run
 
   Compare these three tools:
 
-  |            | IP flow verify                                 | NSG diagnostics                                                                              | Connection Troubleshoot                                       |
-  | ---------- | ---------------------------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-  | Parameters | target VM NIC, packet details(5-tuple, in/out) | VM/NIC/VMSS/AGW, protocol, in/out, source IP/CIDR, dest IP, dest port                        | source(VM/AGW/Bastion), dest(VM/FQDN/IP), TCP/ICMP, dest port |
-  | What       | NSG rules for **one VM NIC**                   | NSGs on both NIC and subnet (*only on the VM/NIC you are checking, not the other end*)       | connectivity and latency check                                |
-  | How        | logical only                                   | logical only                                                                                 | real connection                                               |
-  | Result     | the denying rule                               | **rules applied in each NSG** and final allow/deny status                                    | latency and **every hop** in the route                        |
-  | Note       | n/a                                            | source could be a CIDR, service tag or wildcard(\*), target IP and port could be wildcard(*) | like Connection Monitor, but only check the connection once   |
+  |            | IP flow verify                                 | NSG diagnostics                                                                              | Connection troubleshoot                                            |
+  | ---------- | ---------------------------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+  | Parameters | target VM NIC, packet details(5-tuple, in/out) | VM/NIC/VMSS/AGW, protocol, in/out, source IP/CIDR, dest IP, dest port                        | source(VM/VMSS/AGW/Bastion), dest(VM/FQDN/IP), TCP/ICMP, dest port |
+  | What       | NSG rules for **one VM NIC**                   | NSGs on both NIC and subnet (*only on the VM/NIC you are checking, not the other end*)       | NSG, connectivity, next hop                                        |
+  | How        | logical only                                   | logical only                                                                                 | real connection                                                    |
+  | Result     | the denying rule                               | **rules applied in each NSG** and final allow/deny status                                    | latency and **every hop** in the route                             |
+  | Note       | n/a                                            | source could be a CIDR, service tag or wildcard(\*), target IP and port could be wildcard(*) | like Connection Monitor, but only check the connection once        |
+
+- Connection troubleshoot
+
+  - This is the recommended way to test connectivity, as it covers other tools
+  - In some cases, a successful connectivity test does not mean you could connect to the service:
+    - eg. a connectivity test to `sql-temp-001.database.windows.net:1433` might be successful, but the SQL Server's firewall could block the actual connection
 
 - Logging
-  - NSG Flow Logs: log all traffic in your NSGs (a sub-resource under Network Watcher), not supported for private endpoints
-  - Traffic Analytics: query/visualize your NSG Flow Log data, requires Log Analytics
+  - NSG Flow Logs: log all traffic in your NSGs (a sub-resource under Network Watcher), does not support private endpoints, logs saved in a storage account
+  - Traffic Analytics: ingest logs to Log Analytics, help query/visualize your NSG Flow Log data
     ![Traffic analytics data flow](images/azure_traffic-analytics.png)
 
 ### Auto creation
 
 - A NetworkWatcher resource is created automatically when you create or update a virtual network, in the same region as the vNet, it is placed in a resource group called `NetworkWatcherRG`, there is a subscription feature called `Microsoft.Network/DisableNetworkWatcherAutocreation`
+- When you use a NetworkWatcher feature on a VM without the `AzureNetworkWatcherExtension` extension, it's installed to the VM automatically
 - There are also built-in policies regarding this, see [Azure Policy note](./azure-policy.markdown)
 
 

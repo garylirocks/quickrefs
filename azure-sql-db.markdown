@@ -7,6 +7,7 @@
   - [Service tiers](#service-tiers)
   - [Scaling](#scaling)
   - [Business continuity (BCDR)](#business-continuity-bcdr)
+  - [Networking](#networking)
 - [SQL Managed Instance](#sql-managed-instance)
 - [Backup for SQL, SQL MI](#backup-for-sql-sql-mi)
 - [SQL Server on Azure VM](#sql-server-on-azure-vm)
@@ -141,6 +142,16 @@ Notes:
 
 - You should use these failover listener endpoints in connection string for your application, so you don't need to manually update the connection string when failover happens, the connection is always routed to whichever instance which is currently primary.
 - Removing a failover group for a single or pooled database does not stop replication, and it does not delete the replicated database.
+
+### Networking
+
+There is a networking setting called "**Allow Azure services and resources to access this server**",
+  - when turned **ON**, it creates a subresource `Microsoft.Sql/servers/<sql-name>/firewallRules/AllowAllWindowsAzureIps`, this enables connection in both of the following scenarios, you don't need to allow the client subnet:
+    - Client Azure VM subnet does not have a `Sql` ServiceEndpoint (via Internet)
+    - Client Azure VM subnet has a `Sql` ServiceEndpoint (via ServiceEndpoint)
+  - when turned **OFF**, you need to either
+    - Allow the client subnet (to connect via ServiceEndpoint)
+    - Allow public IP (to connect via Internet)
 
 
 ## SQL Managed Instance
