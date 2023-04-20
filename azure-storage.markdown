@@ -894,7 +894,7 @@ To protect against unintended changes, accidental deletions, or for backup/audit
 
 - A snapshot captures a point-in-time, read-only copy of your data.
 - Snapshots are created at the file share level, retrieval is at the individual file level.
-- You cannot delete a share without deleting all the snapshots first.
+- You **cannot delete** a share without deleting all the snapshots first.
 - Snapshots are incremental, only data changed after last snapshot  is saved.
 - But you only need to retain the most recent snapshot to restore the share.
 

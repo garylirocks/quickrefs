@@ -17,6 +17,7 @@
   - [Linux Agent](#linux-agent)
   - [Updating](#updating)
   - [CLI Cheatsheet](#cli-cheatsheet)
+- [Azure Compute Gallery](#azure-compute-gallery)
 - [Docker Container Registry](#docker-container-registry)
   - [Tasks feature](#tasks-feature)
   - [Authentication options](#authentication-options)
@@ -171,7 +172,8 @@ Revoke-AzDiskAccess -ResourceGroupName 'rg-demo-001' -Name 'disk-demo-001'
 
 Some disks could be attached to multiple VMs at the same time, this could be useful in a failover cluster.
 
-- Must be Premium SSD disks
+- Limited to ultra disks, premium SSD v2 managed disks, premium SSD managed disks, and standard SSDs
+- Can't be expanded without either deallocating VM or detaching the disk
 - Have a `maxShares` limit depending on the disk size
 - The VMs need to be in the same proximity group
 
@@ -729,6 +731,23 @@ Azure has a solution for updating VMs called Update Management
     --scripts "date"
   ```
 
+
+## Azure Compute Gallery
+
+Organization:
+
+- Gallery: `Microsoft.Compute/galleries`
+  - could be either shared with community or not
+- Image: `Microsoft.Compute/galleries/images`
+  - `osType`: Windows or Linux
+  - `osState`: Generalized or Specified
+  - `identifier` -> `publisher`, `offer`, `sku`
+  - `architecture`, `hyperVGeneration`
+  - Recommended vCPUs, memory, disk
+- Image Version: `Microsoft.Compute/galleries/images/versions`
+  - Replica count in target regions
+  - `endOfLifeDate`
+  - `StorageAccountType`
 
 ## Docker Container Registry
 

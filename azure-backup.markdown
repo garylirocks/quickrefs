@@ -8,6 +8,8 @@
   - [Restore](#restore)
   - [Consistency](#consistency)
 - [VM backup](#vm-backup)
+  - [Disk Snapshot](#disk-snapshot)
+    - [Create a disk from a snapshot](#create-a-disk-from-a-snapshot)
   - [Azure Disk Backup](#azure-disk-backup)
   - [VM restore points](#vm-restore-points)
   - [Azure VM Backup](#azure-vm-backup)
@@ -130,6 +132,21 @@ There are several backup options for VMs
 | RTO           | -                           | -                                                                                           | instant restore                                         | -                                                               | in minutes          |
 | Cons          | manual, management overhead | no shared disks                                                                             | -                                                       | impact on VM performance                                        | -                   |
 
+### Disk Snapshot
+
+- A snapshot could be of type:
+  - **Full**
+  - **Incremental**: a partial copy of the disk based on the difference between the last snapshot
+    - they all show as the same size as the original disk
+    - if you have a series of incremental snapshots like `snap-001`, `snap-002`, ..., `snap-010`, you could still delete any snapshot
+- Original disk **can be deleted** without deleting its snapshots
+
+#### Create a disk from a snapshot
+
+- The new disk size **could be bigger** than the original one, not smaller, the extra space would be "unallocated"
+- An OS disk snapshot could be used to create a new VM or VM image version
+
+
 ### Azure Disk Backup
 
 This is a managed version of the "disk snapshot" backup method
@@ -215,7 +232,15 @@ You can create an image from
   - custom VHD in a storage account
   - or a generalized(sysprepped), *deallocated* VM
 
+If you **capture** an image of a running VM, the image could be:
+
+  - **Generalized**: VMs created from this image require hostname, admin user, and other VM related setup to be completed on first boot
+    - **The VM will be stopped and can't be used anymore !!**
+    - But, seems like I could create a generalized image version just from the OS disk, not by VM "Capture"
+  - **Specialized**: VMs created from this image are completely configured and do not require parameters such as hostname and admin user/password
+
 When you create an image from a VM
+
   - this image contains all managed disks associated with the VM, including *both OS and data disks*
   - you could create hundreds of VMs from this managed custom image without the need to copy or manage any storage account
 
