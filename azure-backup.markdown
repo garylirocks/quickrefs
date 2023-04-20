@@ -213,15 +213,17 @@ Limitations:
 
 ### Azure Site Recovery
 
-- Run on virtual or physical machines
+- Not a independent resource type, part of Recovery Service Vault
+- Relies on a SiteRecovery agent running in VM or physical machines
+- You could define a **mapping of properties** between source VM to destination VM: like VM name, NIC name, VNET, IP, etc
 - Replicates continuously for Azure and VMware VMs
 - Replication frequency for Hyper-V is as low as 30 seconds
 - Can replicate to any Azure region
 - Protect from major disaster scenarios when a whole region experiences an outage
-- The managed disks are replicated to DR site, VMs are created in DR site when failover occurs
+- The managed disks are replicated to DR site, VMs are only created when failover occurs, you could reserve compute capacity at the destination beforehand
 - Recover your applications with a single click in minutes
 - On-demand test failover, without affecting your prod workloads or ongoing replication
-- Recovery plans to orchestrate failover and failback of entire application running on multiple VMs, this feature is integrated with Automation runbooks
+- **Recovery plans** can be created to orchestrate failover and failback of entire application running on **multiple VMs**, this feature is integrated with Automation runbooks
 
 ![Azure Site Recovery](images/azure_backup-site-recovery.png)
 
