@@ -297,6 +297,8 @@ You could add VM NICs to an **App Security Group** (like a custom service tag), 
 
 ![App Security Group](images/azure_app-security-group-asg-nsg.svg)
 
+*Private endpoint could be added to an ASG as well*
+
 ### Azure platform considerations
 
 Details: https://docs.microsoft.com/en-us/azure/virtual-network/network-security-groups-overview#azure-platform-considerations
@@ -1169,7 +1171,7 @@ Global vs. regional:
   - **not in a vNet**
   - provide outbound connections for VMs via NAT
 - Internal load balancers
-  - are **not in a paticular subnet**, they could have frontend IPs from multiple subnets in a vNet
+  - could have frontend IPs from **multiple subnets** in a vNet, but CAN'T be in multiple vNets
 
 Example multi-tier architecture with load balancers
 
@@ -1186,7 +1188,7 @@ Example multi-tier architecture with load balancers
 | Outbound           | source network address translation (SNAT) | outbound rules               |
 
 - Standard SKU is recommended
-- VMs, availability sets, and VMSS can be connected to only one SKU
+- VMs, availability sets, and VMSS can be connected to either Basic or Standart SKU LB, not both
 - When public IPs are used, the SKU must match
 - Availability zones
   - Zone-redundant (Need a zone redundant frontend IP)
@@ -1213,7 +1215,7 @@ Features:
 - Is a load balancer for web apps, supports HTTP, HTTPS, HTTP/2 and WebSocket protocols
 - Works at application layer (OSI layer 7)
 - Auto or manual scaling
-- Support **redirection**: to another side, or from HTTP to HTTPS
+- Support **redirection**: to another site, or from HTTP to HTTPS
 - Rewrite HTTP headers
 - Custom error pages
 - Could be internet-facing (public ip) or internal only (private ip)
@@ -1233,27 +1235,28 @@ Components:
 ![Application Gateway components](images/azure_application-gateway-components.png)
 
 - **Frontend**
-  - *it is actually a load balancer, and AGW instances are in its backend pool, so we need to allow AzureLoadBalancer in the NSG*
-  - could have a public IP, a private IP, or both
+  - *It is actually a load balancer, and AGW instances are in its backend pool, so we need to allow AzureLoadBalancer in the NSG*
+  - Could have a public IP, a private IP, or both
   - An AGW could have up to 125 instances
 - **Listeners**
-  - Defined by protocol, port, host and IP address
-  - Two types:
-    - Basic: doesn't care host names, each port can only have one basic listener
-    - Multi-site: you specify one or more host names, AGW matches incoming requests using HTTP 1.1 `host` headers, each port can have multiple multi-site listeners
-  - For v2 SKU, multi-site listeners are processed before basic listeners
+  - Defined by IP address (private or public), host name, port and protocol
   - Handle TLS/SSL certificates for HTTPS
+  - Two types:
+    - Basic: doesn't care host names, **each port can only have one basic listener**
+    - Multi-site: you specify one or more host names, AGW matches incoming requests using **HTTP 1.1 `host` header**, each port could have multiple multi-site listeners
+  - For v2 SKU, multi-site listeners are processed before basic listeners
   - A listener can have **only one** associated rule
   - You could redirect from one listener to another (eg. HTTP to HTTPS)
 - **WAF**:
-  - checks each request for common threats: SQL-injection, XSS, command injection, HTTP request smuggling, crawlers, etc
-  - based on OWASP rules, referred to as Core Rule Set(CRS)
-  - you can opt to select only specific rules, or specify which elements to examine
+  - Checks each request for common threats: SQL-injection, XSS, command injection, HTTP request smuggling, crawlers, etc
+  - Based on OWASP rules, referred to as Core Rule Set(CRS), you can opt to enable only specific rules
+  - Could have exclusions
 - **Backend pool**: a backend pool can contain one or more IP/FQDN, VM, VMSS and App Services
-- **Rule**: associates a listener with targets
+- **Rule**:
+  - Maps one-to-one to a listener
   - Rule types:
-    - Basic
-    - Path-based: request is routed to the first-matching path, you should add a default one for any un-matched requests
+    - **Basic**
+    - **Path-based**: request is routed to the first-matching path, you should add a default one for any un-matched requests
   - Rule target types:
     - Backend pool: with HTTP settings
     - Redirection: to another listener or external site with a specified HTTP code, you can choose to include the original query string in redirection, but not the path in the original request
@@ -1261,7 +1264,7 @@ Components:
     - Request headers
     - Response headers
     - URL components (path, query string)
-- **HTTP settings**: backend port/protocol, cookie-based affinity, time-out value, path or hostname overriding, default or custom probe, etc
+- **Backend settings (aka. HTTP settings)**: backend port/protocol, cookie-based affinity, time-out value, path or hostname overriding, default or custom probe, etc
 - **Health probes**
   - If not configured, a default probe is created, which waits for 30s before deciding whether a server is unavailable
   - If there are multiple listeners, each listener sends health probes independently
