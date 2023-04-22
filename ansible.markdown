@@ -10,7 +10,8 @@ Ansible
 - [Loops](#loops)
 - [Testing](#testing)
 - [Roles](#roles)
-- [Galaxy](#galaxy)
+  - [Example](#example)
+- [Collections](#collections)
 - [Secrets](#secrets)
   - [File-level encryption](#file-level-encryption)
   - [Variable-level encryption](#variable-level-encryption)
@@ -275,7 +276,13 @@ Using `--check` flag
 ansible-playbook demo.yml --check
 ```
 
+
 ## Roles
+
+- Roles is a way to organize your Ansible code and make it reusable and modular.
+- Ansible Galaxy is a public repository for Ansible roles and collections.
+- Use `ansible-galaxy` command to create a role, install roles/collections from Galaxy.
+
 
 ```sh
 # init a role, this creates a bunch of folders and files
@@ -290,21 +297,86 @@ ls -AF
 - `tasks/` tasks for this role
 - `templates/` jinja2 template files for the `template` task
 
-## Galaxy
+### Example
 
-Install Ansible roles and collections
+Define and use a role called `webserver-config`
 
-```sh
-# install a role (into ~/.ansible by default)
-ansible-galaxy install huxoll.azure-cli
+File structure:
 
-# install a collection
-ansible-galaxy collection install azure.azcollection
-
-pip install -r ~/.ansible/collections/ansible_collections/azure/azcollection/requirements-azure.txt
+```
+playbook.yml
+roles
+|- webserver-config
+   |- tasks
+      |- main.yml
 ```
 
+`main.yml` for `webserver-config` role, defining two tasks
+
+```yaml
+---
+- name: Install Apache
+  apt:
+    name: apache2
+    state: latest
+
+- name: Enable Apache service
+  systemd:
+    name: apache2
+    enabled: yes
+```
+
+`playbook.yml` using the `webserver-config` role
+
+```yaml
+---
+- name: Playbook with Role Example
+  hosts: webserver
+  become: yes
+  roles:
+    - webserver-config
+```
+
+
+## Collections
+
+Example: using `azure.azcollection` to read resource groups
+
+```sh
+# install
+ansible-galaxy collection install azure.azcollection
+
+# install required Python packages of the collection
+pip install -r ~/.ansible/collections/ansible_collections/azure/azcollection/requirements-azure.txt
+
+ansible-playbook rg.yml --extra-vars "subscription_id=<sub-id> client_id=<client-id> secret=<secret> tenant=<tenant> cloud_environment=AzureCloud"
+```
+
+```yaml
+# rg.yml
+# a playbook using the `azure.azcollection.azure_rm_resourcegroup_info` module
+---
+- name: Example playbook using the azure.azcollection
+  hosts: localhost
+  tasks:
+    - name: Get resource groups in the Azure subscription
+      azure.azcollection.azure_rm_resourcegroup_info:
+        cloud_environment: "{{ cloud_environment }}"
+        tenant: "{{ tenant }}"
+        subscription_id: "{{ subscription_id }}"
+        client_id: "{{ client_id }}"
+        secret: "{{ secret }}"
+      register: rg_info
+
+    - name: Print the list of resource groups
+      debug:
+        var: rg_info.resourcegroups
+```
+
+
 ## Secrets
+
+"Vault" is a feature that allows you to encrypt sensitive data in your playbooks and roles. The encrypted data can then be safely stored in a source control system.
 
 ### File-level encryption
 
