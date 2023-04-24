@@ -3,12 +3,6 @@
 - [VMs](#vms)
   - [Considerations](#considerations)
   - [Series](#series)
-  - [Disks](#disks)
-    - [Behind the scenes](#behind-the-scenes)
-    - [Shared disk](#shared-disk)
-  - [Initialize data disks](#initialize-data-disks)
-  - [Disk encryption](#disk-encryption)
-    - [ADE](#ade)
   - [Availability options](#availability-options)
   - [VMSS - Virtual Machine Scale Sets](#vmss---virtual-machine-scale-sets)
   - [Azure Batch](#azure-batch)
@@ -17,6 +11,17 @@
   - [Linux Agent](#linux-agent)
   - [Updating](#updating)
   - [CLI Cheatsheet](#cli-cheatsheet)
+- [Disks](#disks)
+  - [Behind the scenes](#behind-the-scenes)
+  - [Shared disk](#shared-disk)
+  - [Initialize data disks](#initialize-data-disks)
+    - [Linux](#linux)
+    - [Windows](#windows)
+  - [Host caching](#host-caching)
+  - [Disk performance](#disk-performance)
+  - [Bursting](#bursting)
+  - [Disk encryption](#disk-encryption)
+    - [ADE](#ade)
 - [Azure Compute Gallery](#azure-compute-gallery)
 - [Docker Container Registry](#docker-container-registry)
   - [Tasks feature](#tasks-feature)
@@ -39,12 +44,12 @@ Checklist for creating VMs
   - Network security groups (NSG)
 
 - Name
-  - used as the computer name
-  - also defines a manageable Azure resource, not trivial to change later (it can be applied to the associated storage account, VNets, network interface, NSGs, public IPs)
-  - a good example `dev-usc-web01` includes environment, location, role and instance of this VM
+  - Used as the computer name
+  - Also defines a manageable Azure resource, not trivial to change later (it could get applied to the associated disks, VNets, network interface, NSGs, public IPs, if those are created along with the VM)
+  - A good example `dev-usc-web01` includes environment, location, role and instance of this VM
 
 - Location
-  - consider proximity, compliance, price
+  - Consider proximity, compliance, price
 
 - Size
   - Metrics to consider
@@ -57,12 +62,12 @@ Checklist for creating VMs
     - Max NICs/Network bandwidth
 
   - Based on workload
-    - general purpose: ideal for testing and dev, small to medium DBs, low to medium traffic web servers
-    - compute optimized: medium traffic web servers, network appliances, batch processes, and application servers
-    - memory optimized: DBs, caches, in-memory analytics
-    - storage optimized: DBs
+    - General purpose: ideal for testing and dev, small to medium DBs, low to medium traffic web servers
+    - Compute optimized: medium traffic web servers, network appliances, batch processes, and application servers
+    - Memory optimized: DBs, caches, in-memory analytics
+    - Storage optimized: DBs
     - GPU: graphics rendering and video editing
-    - high performance compute
+    - High performance compute
   - Sizes can be changed
 
 - Costs
@@ -70,7 +75,7 @@ Checklist for creating VMs
     - Billed on per-minute basis
     - Two payment options:
       - Pay as you go
-      - Reserved VM instances
+      - Reserved VM instances (with hugh discounts)
     - Linux VMs are cheaper than Windows which includes license charges
     - Two stopped status:
       - **Stopped**: by `az vm stop`, or **shutdown from within the guest OS**, you are still being charged for the compute resources
@@ -84,10 +89,9 @@ Checklist for creating VMs
     - **OS disk** (`/dev/sda` on Linux),
     - **Temporary disk**, is a short-term storage (`D:` on Windows, `/mnt` on Linux, page files, swap files), **local to the server, NOT in a storage account**
     - **Data disk**, for database files, website static content, app code, etc
-  - VHDs are page blobs in Azure Storage
-  - Two options for managing the relationship between the storage account and each VHD:
-    - **unmanaged disks**: expose the underlying storage accounts and page blobs, an account is capable of supporting 40 standard VHDs, it's hard to scale out, you need to take care IOPS limit, etc
+  - Disks are actually VHDs files (page blobs) in Azure Storage account, two options for managing the relationship between disks and storage accounts:
     - **managed disks**: newer and recommended, you only need to specify the type (Ultra/Premium/Standard SSD, Standard HDD) and size, only show the disks, hide the underlying storage account and page blobs
+    - **unmanaged disks**: expose the underlying storage accounts and page blobs, an account is capable of supporting 40 standard VHDs, it's hard to scale out, you need to take care IOPS limit, etc
 
 - OS
   - Multiple versions of Windows and Linux
@@ -121,163 +125,11 @@ Checklist for creating VMs
   - GPU enabled
   - simulation, deep learning, redendring, video editing, gaming
 
+Example:
 
-### Disks
+`D4as_v4`, D Series, 4 vCPUs, `a` for AMD-based processor, `s` for premium storage support, `v4` is the version
 
-Performance:
-
-- Capacity (GiB, TiB - power of 1024)
-- IOPS
-- Throughput (IOPS x size per operation)
-- Latency
-
-Managed Disk Types:
-
-- Local SSD (temporary disk)
-  - The temporary disk of each VM, size depending on the size of the VM;
-  - No extra charge, already included in the VM cost;
-  - Local to the VM, performance is high;
-  - Data could be lost during a maintenance or redeployment of the VM;
-  - Suitable for temporary data storage, eg. page or swap file, tempdb for SQL Server;
-- Standard HDD
-  - Inconsistent latency or lower levels of throughput;
-  - Suitable for dev/test workload;
-- Standard SSD
-- Premium SSD
-  - Consistent low latency, high levels of throughput and IOPS;
-  - Recommended for all production workloads;
-  - Can only be attached to specific VM sizes (designated by a 's' in the name, eg. D2s_v3, Standard F2s_v2)
-
-Operations:
-
-- Data disk could be detached/attached without stopping the VM
-- You could increase the disk size
-  - You could increase size of an attached disk, either below 4TiB, or above it
-  - To increase the size from < 4TiB to > 4TiB, you need to detach it the disk or stop the VM first, this is because the page blob needs to be copied to another storage account if the size goes over 4TiB
-- To decrease the size, you need to create a new disk and copy the data over
-
-#### Behind the scenes
-
-A managed disk is actually an abstraction over a page blob, when you attach it to a VM, a lease is put on the blob.
-
-Grant/Revoke an SAS token of the blob (this put a lease on it as well):
-
-```sh
-Grant-AzDiskAccess -ResourceGroupName 'rg-demo-001' -Name 'disk-demo-001' -DurationInSecond 60 -Access Read
-
-Revoke-AzDiskAccess -ResourceGroupName 'rg-demo-001' -Name 'disk-demo-001'
-```
-
-#### Shared disk
-
-Some disks could be attached to multiple VMs at the same time, this could be useful in a failover cluster.
-
-- Limited to ultra disks, premium SSD v2 managed disks, premium SSD managed disks, and standard SSDs
-- Can't be expanded without either deallocating VM or detaching the disk
-- Have a `maxShares` limit depending on the disk size
-- The VMs need to be in the same proximity group
-
-
-### Initialize data disks
-
-Any additional drives you create from scratch need to be initialized and formatted.
-
-```sh
-# list block devices, 'sdc' is not mounted
-lsblk
-# NAME    MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
-# sda       8:0    0   16G  0 disk
-# └─sda1    8:1    0   16G  0 part /mnt
-# sdb       8:16   0   30G  0 disk
-# ├─sdb1    8:17   0 29.9G  0 part /
-# ├─sdb14   8:30   0    4M  0 part
-# └─sdb15   8:31   0  106M  0 part /boot/efi
-# sdc       8:32   0    1T  0 disk
-# sr0      11:0    1  628K  0 rom
-
-# create a new primary partition
-(echo n; echo p; echo 1; echo ; echo ; echo w) | sudo fdisk /dev/sdc
-
-# write a file system to the partition
-sudo mkfs -t ext4 /dev/sdc1
-
-# create a mount point and mount
-sudo mkdir /data && sudo mount /dev/sdc1 /data
-```
-
-### Disk encryption
-
-Types of encryption:
-
-- **Azure Storage Service Encryption** (SSE, also known as Server-Side Encryption, encryption-at-rest)
-- **Azure Disk Encryption** (ADE)
-- **Encryption at host**
-  - Disk with this aren't encrypted with SSE
-  - Instead, the server hosting your VM encrypts your data, then flows into Storage.
-  - Your temp disk and OS/data disk caches are stored on the host
-  - Does not use your VM's CPU and no impact on your VM's performance
-  - Your must enable this feature for your subscription first: `Register-AzProviderFeature -FeatureName "EncryptionAtHost" -ProviderNamespace "Microsoft.Compute"`
-
-Comparison:
-
-|                    | SSE                                                                         | ADE                                                     |
-| ------------------ | --------------------------------------------------------------------------- | ------------------------------------------------------- |
-| Algorithm          | 256-bit AES                                                                 | 256-bit AES                                             |
-| What               | OS/data disks                                                               | OS/data/temp disks, caches                              |
-| Encrypt/Decrypt by | Azure Storage (performed on physical disks, flow decrypted from/to Storage) | VM CPU                                                  |
-| Who can access     |                                                                             | Disk image only accessible to the VM that owns the disk |
-| How                | Enabled by default for Azure managed disks, can't be disabled               | BitLocker on Windows, DM-Crypt on Linux                 |
-| Managed by         | Storage account admin                                                       | VM owner                                                |
-| Key management     | PMK or CMK (Key Vault)                                                      | Key Vault                                               |
-| Performance        | no noticeable impact                                                        | typically negligible*                                   |
-
-`*` For a CPU-intensive application, there may be a case for leaving the OS disk un-encrypted to maximize performance, and storing application data on a separate encrypted data disk.
-
-#### ADE
-
-To encrypt existing VM disks:
-
-1. Create a key vault (need to be in the same region as the VM)
-1. Set the key vault access policy to support disk encryption
-1. Encrypt VM disk using the key vault to store the key
-
-```sh
-az keyvault create \
-    --name "myKeyVault" \
-    --resource-group <resource-group> \
-    --location <location> \
-    --enabled-for-disk-encryption True
-
-# you could encrypt just the OS disk, data or all disks
-az vm encryption enable \
-    --resource-group <resource-group> \
-    --name <vm-name> \
-    --disk-encryption-keyvault <keyvault-name> \
-    --volume-type [all | os | data]
-
-# check encryption status
-az vm encryption show --resource-group <resource-group> --name <vm-name>
-
-# decrypt
-az vm encryption disable --resource-group <resource-group> --name <vm-name>
-
-# encrypt/decrypt could also be done with an ARM template
-az deployment group create \
-    --resource-group <my-resource-group> \
-    --name <my-deployment-name> \
-    --template-uri https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/201-encrypt-running-windows-vm-without-aad/azuredeploy.json
-```
-
-Limitations:
-
-- The encryption key must be in a key vault in the **same region**, so it won't work if you move the disk to another region ?
-- Basic size VMs do not support ADE
-- On some Linux distros, only data disks can be encrypted
-- On Windows, only NTFS format disks can be encrypted
-- When adding a new disk to an encrypted VM, it's NOT encrypted automatically, it needs to be properly partitioned, formatted, and mounted before encryption
-- When enabling encryption on new VMs, you could use an ARM template to ensure data is encrypted at the point of deployment
-- ADE is required for VMs backed up to the Recovery Vault
-- **SSE with CMK improves on ADE** by enabling you to use any OS types and images for your VMs
+See naming convention here: https://learn.microsoft.com/en-us/azure/virtual-machines/vm-naming-conventions
 
 
 ### Availability options
@@ -730,6 +582,265 @@ Azure has a solution for updating VMs called Update Management
     --command-id RunShellScript \
     --scripts "date"
   ```
+
+
+## Disks
+
+Performance metrics:
+
+- Capacity
+  - Size in unit of MiB (Mebibyte), GiB (Gibibyte), TiB (Tebibyte) - power of 1024 instead of 1000, `1MiB == 1024 x 1024 Byte`, `1MB == 1000 x 1000 Byte`
+- IOPS
+- Throughput (IOPS x size per operation)
+- Latency
+
+Types:
+
+|              | Performance                  | Bursting | Shareable | For                  | Limit                                                                                                                         |
+| ------------ | ---------------------------- | -------- | --------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Ultra disk   | customizable                 | N        | Y         |                      |                                                                                                                               |
+| Premium SSD  | customizable                 | Y        | Y         | production workloads | Can only be attached to specific VM sizes (designated by the `s` feature flag in the VM size, eg. `D2s_v3`, `Standard F2s_v2` |
+| Standard SSD | IOPS/throughput tied to size | Y        | Y         |                      |                                                                                                                               |
+| Standard HDD | tied to size                 | N        | N         | dev/test             |                                                                                                                               |
+
+- Local SSD (temporary disk)
+  - The temporary disk of each VM, size depending on the size of the VM;
+  - No extra charge, already included in the VM cost;
+  - Local to the VM, performance is high;
+  - Data could be lost during a maintenance or redeployment of the VM;
+  - Suitable for temporary data storage, eg. page or swap file, tempdb for SQL Server;
+
+Operations:
+
+- Data disk could be detached/attached without stopping the VM
+- You could increase the disk size
+  - You could increase size of an attached disk, either below 4TiB, or above it
+  - To increase the size from < 4TiB to > 4TiB, you need to detach it the disk or stop the VM first, this is because the page blob needs to be copied to another storage account if the size goes over 4TiB
+- To shrink the size, you need to create a new disk and copy the data over
+
+### Behind the scenes
+
+A managed disk is actually an abstraction over a page blob, when you attach it to a VM, a lease is put on the blob.
+
+Grant/Revoke an SAS token of the blob (this put a lease on it as well, so can only do it on an unattached disk):
+
+```sh
+Grant-AzDiskAccess -ResourceGroupName 'rg-demo-001' `
+                   -Name 'disk-demo-001' `
+                   -DurationInSecond 60 `
+                   -Access Read
+
+Revoke-AzDiskAccess -ResourceGroupName 'rg-demo-001' `
+                    -Name 'disk-demo-001'
+```
+
+### Shared disk
+
+Some disks could be attached to multiple VMs at the same time, this could be useful in a failover cluster.
+
+- Limited to ultra disks, premium SSD v2 managed disks, premium SSD managed disks, and standard SSDs
+- A shared disk can't be expanded without either deallocating VM or detaching the disk
+- Have a `maxShares` limit depending on the disk size
+- The VMs using the disk need to be in the same proximity group
+
+### Initialize data disks
+
+Any new disks you attach to a VM need to be initialized and formatted.
+
+#### Linux
+
+```sh
+# list block devices, 'sdc' is not mounted
+lsblk
+# NAME    MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+# sda       8:0    0   16G  0 disk
+# └─sda1    8:1    0   16G  0 part /mnt
+# sdb       8:16   0   30G  0 disk
+# ├─sdb1    8:17   0 29.9G  0 part /
+# ├─sdb14   8:30   0    4M  0 part
+# └─sdb15   8:31   0  106M  0 part /boot/efi
+# sdc       8:32   0    1T  0 disk
+# sr0      11:0    1  628K  0 rom
+
+# create a new primary partition
+(echo n; echo p; echo 1; echo ; echo ; echo w) | sudo fdisk /dev/sdc
+
+# write a file system to the partition
+sudo mkfs -t ext4 /dev/sdc1
+
+# create a mount point and mount
+sudo mkdir /data && sudo mount /dev/sdc1 /data
+```
+
+#### Windows
+
+Use the Disk Management tool
+
+
+### Host caching
+
+![Host caching](images/azure_vm-host-caching.drawio.svg)
+
+- Called BlobCache, uses a combination of the host RAM and local SSD
+- Available for Premium Storage persistent disks and VM local disks
+- Default caching seeting:
+  - `Read/Write` for OS disks
+  - `ReadOnly` for data disks
+- Suggested cache setting:
+  | Cache     | When to use                                                                                                             |
+  | --------- | ----------------------------------------------------------------------------------------------------------------------- |
+  | None      | write-only / write-heavy, eg. disks for SQL Server log files                                                            |
+  | ReadOnly  | read-only / read-write, eg. disks for SQL Server data files                                                             |
+  | ReadWrite | only if your app properly handles writing cached data to persistent disks <br />(eg. SQL Server can do this on its own) |
+
+Limitations:
+
+- NOT supported for disks >= 4TiB (4096GiB, not 4000GiB)
+- Changing cache settings will **detach and re-attach** the target disk. If it is OS disk, the VM is **restarted**
+- Using `ReadWrite` cache with an application that does not handle persisting the required data can lead to data loss, if the VM crashes.
+
+
+### Disk performance
+
+- Each VM size has its own IOPS and throughput limits
+- Each disk has its own IOPS and throughput limits as well
+
+So the disk IO performance could be **capped** by limit on either the VM or disk.
+
+For VMs that are enabled for both premium storage and premium storage caching, there are two different storage bandwith limits.
+
+- ***uncached***, when caching is not enabled, only operation to the disk is counted
+- ***cached***, a separate limit on top of the *uncached* limit, only operation to the cache is counted
+
+| Size            | vCPU | Temp storage (SSD) GiB | Max data disks | Max cached and temp storage throughput: IOPS/MBps (cache size in GiB) | Max burst cached and temp storage throughput: IOPS/MBps2 | Max uncached disk throughput: IOPS/MBps | Max burst uncached disk throughput: IOPS/MBps1 | Max NICs/ Expected network bandwidth (Mbps) |
+| --------------- | ---- | ---------------------- | -------------- | --------------------------------------------------------------------- | -------------------------------------------------------- | --------------------------------------- | ---------------------------------------------- | ------------------------------------------- |
+| Standard_D8s_v3 | 8    | 64                     | 16             | 16000/128 (200)                                                       | 16000/400                                                | 12800/192                               | 16000/400                                      | 4/4000                                      |
+
+* This is **VM level bursting** (not disk bursting), could last up to 30 minutes at a time
+
+Example:
+
+- Standard_D8s_v3
+  - Cached IOPS: 16,000
+  - Uncached IOPS: 12,800
+- P30 OS disk
+  - IOPS: 5,000
+  - Host caching: Read/write
+- Two P30 data disks × 2
+  - IOPS: 5,000
+  - Host caching: Read/write
+- Two P30 data disks × 2
+  - IOPS: 5,000
+  - Host caching: Disabled
+
+The cached and uncached limits (16,000 and 12,800) could be combined to achieve 25,000 IOPS
+
+![Combined IOPS](images/azure_disk-caching-combined-IOPS.jpg)
+
+### Bursting
+
+- Only for certain sizes of Standard/Premium SSD
+- No bursting for Standard HDD, or Ultra
+- Helps in scenarios like:
+  - VM startup
+  - Traffic spikes
+  - Batch jobs, eg. month-end reconciling job
+- For P20 disks and smaller:
+  - Enabled by default
+  - Credit-based bursting (you accumulate credits when you disk is under-used, spend credits while bursting)
+  - Up to 3500 IOPS and 170MB/s
+  - Up to 30min
+- For P30 disks and larger
+  - Could be enabled per disk
+  - There's monthly enablement fee and a burst transaction fee (pay by additional IOPS)
+  - Up to 30,000IOPS and 1000MB/s
+- **VM-level bursting**
+  - Enabled by default for most Premium Storage supported VM sizes
+  - Always credit-based
+  - Could last up to 30 minutes
+  - Credits are accrued according to how much the provisioned capacity has been underutilized
+
+![Bursting graph](images/azure_disk-performance-bursting-graph.png)
+
+*Performance drop when burstring credits used up*
+
+<img src="images/azure_disk-bursting-bucket-diagram.jpg" width="600" alt="Bursting bucket" />
+
+*Bursing bucket gets refilled when usage is lower than provisioned capacity*
+
+### Disk encryption
+
+Types of encryption:
+
+- **Azure Storage Service Encryption** (SSE, also known as Server-Side Encryption, encryption-at-rest)
+- **Azure Disk Encryption** (ADE)
+- **Encryption at host**
+  - Disk with this aren't encrypted with SSE
+  - Instead, the server hosting your VM encrypts your data, then flows into Storage.
+  - Your temp disk and OS/data disk caches are stored on the host
+  - Does not use your VM's CPU and no impact on your VM's performance
+  - Your must enable this feature for your subscription first: `Register-AzProviderFeature -FeatureName "EncryptionAtHost" -ProviderNamespace "Microsoft.Compute"`
+
+Comparison:
+
+|                    | SSE                                                                         | ADE                                                     |
+| ------------------ | --------------------------------------------------------------------------- | ------------------------------------------------------- |
+| Algorithm          | 256-bit AES                                                                 | 256-bit AES                                             |
+| What               | OS/data disks                                                               | OS/data/temp disks, caches                              |
+| Encrypt/Decrypt by | Azure Storage (performed on physical disks, flow decrypted from/to Storage) | VM CPU                                                  |
+| Who can access     |                                                                             | Disk image only accessible to the VM that owns the disk |
+| How                | Enabled by default for Azure managed disks, can't be disabled               | BitLocker on Windows, DM-Crypt on Linux                 |
+| Managed by         | Storage account admin                                                       | VM owner                                                |
+| Key management     | PMK or CMK (Key Vault)                                                      | Key Vault                                               |
+| Performance        | no noticeable impact                                                        | typically negligible*                                   |
+
+`*` For a CPU-intensive application, there may be a case for leaving the OS disk un-encrypted to maximize performance, and storing application data on a separate encrypted data disk.
+
+#### ADE
+
+To encrypt existing VM disks:
+
+1. Create a key vault (need to be in the same region as the VM)
+1. Set the key vault access policy to support disk encryption
+1. Encrypt VM disk using the key vault to store the key
+
+```sh
+az keyvault create \
+    --name "myKeyVault" \
+    --resource-group <resource-group> \
+    --location <location> \
+    --enabled-for-disk-encryption True
+
+# you could encrypt just the OS disk, data or all disks
+az vm encryption enable \
+    --resource-group <resource-group> \
+    --name <vm-name> \
+    --disk-encryption-keyvault <keyvault-name> \
+    --volume-type [all | os | data]
+
+# check encryption status
+az vm encryption show --resource-group <resource-group> --name <vm-name>
+
+# decrypt
+az vm encryption disable --resource-group <resource-group> --name <vm-name>
+
+# encrypt/decrypt could also be done with an ARM template
+az deployment group create \
+    --resource-group <my-resource-group> \
+    --name <my-deployment-name> \
+    --template-uri https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/201-encrypt-running-windows-vm-without-aad/azuredeploy.json
+```
+
+Limitations:
+
+- The encryption key must be in a key vault in the **same region**, so it won't work if you move the disk to another region ?
+- Basic size VMs do not support ADE
+- On some Linux distros, only data disks can be encrypted
+- On Windows, only NTFS format disks can be encrypted
+- When adding a new disk to an encrypted VM, it's NOT encrypted automatically, it needs to be properly partitioned, formatted, and mounted before encryption
+- When enabling encryption on new VMs, you could use an ARM template to ensure data is encrypted at the point of deployment
+- ADE is required for VMs backed up to the Recovery Vault
+- **SSE with CMK improves on ADE** by enabling you to use any OS types and images for your VMs
 
 
 ## Azure Compute Gallery

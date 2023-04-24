@@ -41,8 +41,6 @@
     - [CLI](#cli-2)
     - [Best practices](#best-practices)
     - [RBAC and ACL](#rbac-and-acl)
-- [Disks](#disks)
-  - [Bursting](#bursting)
 - [Files](#files)
   - [Create and mount a share](#create-and-mount-a-share)
   - [Authentication](#authentication)
@@ -791,43 +789,6 @@ Some RBAC roles allow a user to change ACLs:
 | ------------------------------------------ | --------------------------------------- |
 | Owner/Contributor, Storage Blob Data Owner | set the owner, modify ACLs of all items |
 | Storage Blob Data Contributor              | can modify ACLs of owned items          |
-
-
-## Disks
-
-- Managed disks are recommended
-- Managed disks run on top of page blob (the underlying storage account is hidden)
-- Types:
-  - Ultra-disk
-    - You could customize size, IOPS and throughput
-  - Premium SSD
-    - A disk could be shared by multiple VMs
-    - You can pick a performance level without increase the disk size
-  - Standard SSD / Standard HDD
-    - Performance (IOPS/throughput) is tied to capacity, so you may need to increase the disk size simply because you need higher IOPS
-
-- You could increase disk size, but can't decrease it (workaround: create a new one and copy data to it)
-
-Caching settings
-
-- **None**: for write-only and write-heavy disks
-- **Ready only**: for read-only and read-write disks, improves read latency and IOPS
-- **Ready & Write**: only use if your app properly handles writing cached data
-
-### Bursting
-
-- Only for certain sizes of Standard/Premium SSD
-- No bursting for Standard HDD, or Ultra
-
-- For P20 disks and smaller:
-  - Enabled by default
-  - Credit-based bursting (you accumulate credits when you disk is under-used, spend credits while bursting)
-  - Up to 3500 IOPS and 170MB/s
-  - Up to 30min
-
-- For P30 disks and larger
-  - There's monthly enablement fee and a burst transaction fee (pay by additional IOPS)
-  - Up to 30,000IOPS and 1000MB/s
 
 
 ## Files
