@@ -12,14 +12,18 @@
   - [Updating](#updating)
   - [CLI Cheatsheet](#cli-cheatsheet)
 - [Disks](#disks)
+  - [Overview](#overview)
+  - [Host caching](#host-caching)
+  - [VM IOPS/MBps limit](#vm-iopsmbps-limit)
+  - [Performance troubleshooting](#performance-troubleshooting)
+  - [Bursting](#bursting)
+    - [Disk bursting](#disk-bursting)
+    - [VM-level bursting](#vm-level-bursting)
   - [Behind the scenes](#behind-the-scenes)
   - [Shared disk](#shared-disk)
   - [Initialize data disks](#initialize-data-disks)
     - [Linux](#linux)
     - [Windows](#windows)
-  - [Host caching](#host-caching)
-  - [Disk performance](#disk-performance)
-  - [Bursting](#bursting)
   - [Disk encryption](#disk-encryption)
     - [ADE](#ade)
 - [Azure Compute Gallery](#azure-compute-gallery)
@@ -586,6 +590,8 @@ Azure has a solution for updating VMs called Update Management
 
 ## Disks
 
+### Overview
+
 Performance metrics:
 
 - Capacity
@@ -594,14 +600,23 @@ Performance metrics:
 - Throughput (IOPS x size per operation)
 - Latency
 
+Performance considerations:
+
+- Disk type
+- Performance tier
+- Bursting
+- Performance plus
+- VM IOPS/throughput limit
+- Host caching
+
 Types:
 
-|              | Performance                  | Bursting | Shareable | For                  | Limit                                                                                                                         |
-| ------------ | ---------------------------- | -------- | --------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| Ultra disk   | customizable                 | N        | Y         |                      |                                                                                                                               |
-| Premium SSD  | customizable                 | Y        | Y         | production workloads | Can only be attached to specific VM sizes (designated by the `s` feature flag in the VM size, eg. `D2s_v3`, `Standard F2s_v2` |
-| Standard SSD | IOPS/throughput tied to size | Y        | Y         |                      |                                                                                                                               |
-| Standard HDD | tied to size                 | N        | N         | dev/test             |                                                                                                                               |
+|              | IOPS, MB/s                   | Bursting                                              | Performance plus | Shareable | For                  | Limit                                                                                                                         |
+| ------------ | ---------------------------- | ----------------------------------------------------- | ---------------- | --------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Ultra disk   | customizable                 | N                                                     | N                | Y         |                      |                                                                                                                               |
+| Premium SSD  | customizable                 | Credit-based (<=512GiB)<br />or On-demand (>=1024GiB) | >=513GiB         | Y         | production workloads | Can only be attached to specific VM sizes (designated by the `s` feature flag in the VM size, eg. `D2s_v3`, `Standard F2s_v2` |
+| Standard SSD | IOPS/throughput tied to size | Y (<=1024GiB)                                         | >=513GiB         | Y         |                      |                                                                                                                               |
+| Standard HDD | tied to size                 | N                                                     | >=513GiB         | N         | dev/test             |                                                                                                                               |
 
 - Local SSD (temporary disk)
   - The temporary disk of each VM, size depending on the size of the VM;
@@ -613,10 +628,111 @@ Types:
 Operations:
 
 - Data disk could be detached/attached without stopping the VM
-- You could increase the disk size
+- You could **increase** the disk size
   - You could increase size of an attached disk, either below 4TiB, or above it
   - To increase the size from < 4TiB to > 4TiB, you need to detach it the disk or stop the VM first, this is because the page blob needs to be copied to another storage account if the size goes over 4TiB
 - To shrink the size, you need to create a new disk and copy the data over
+
+### Host caching
+
+![Host caching](images/azure_vm-host-caching.drawio.svg)
+
+- Called BlobCache, uses a combination of the host RAM and local SSD
+- Available for Premium Storage persistent disks and VM local disks
+- Default caching seeting:
+  - `Read/Write` for OS disks
+  - `ReadOnly` for data disks
+- Suggested cache setting:
+  | Cache     | When to use                                                                                                             |
+  | --------- | ----------------------------------------------------------------------------------------------------------------------- |
+  | None      | write-only / write-heavy, eg. disks for SQL Server log files                                                            |
+  | ReadOnly  | read-only / read-write, eg. disks for SQL Server data files                                                             |
+  | ReadWrite | only if your app properly handles writing cached data to persistent disks <br />(eg. SQL Server can do this on its own) |
+
+Limitations:
+
+- NOT supported for disks >= 4TiB (4096GiB, not 4000GiB)
+- Changing cache settings will **detach and re-attach** the target disk. If it is OS disk, the VM is **restarted**
+- Using `ReadWrite` cache with an application that does not handle persisting the required data can lead to data loss, if the VM crashes.
+
+### VM IOPS/MBps limit
+
+- Each VM size has its own IOPS and throughput limits
+- Each disk has its own IOPS and throughput limits as well
+
+So the disk IO performance could be **capped** by limit on either the VM or disk.
+
+For VMs that are enabled for both premium storage and premium storage caching, there are two different storage bandwith limits.
+
+- ***uncached***, when caching is not enabled, only operation to the disk is counted
+- ***cached***, a separate limit on top of the *uncached* limit, only operation to the cache is counted
+
+| Size            | vCPU | Temp storage (SSD) GiB | Max data disks | Max cached and temp storage throughput: IOPS/MBps (cache size in GiB) | Max burst cached and temp storage throughput: IOPS/MBps2 | Max uncached disk throughput: IOPS/MBps | Max burst uncached disk throughput: IOPS/MBps1 | Max NICs/ Expected network bandwidth (Mbps) |
+| --------------- | ---- | ---------------------- | -------------- | --------------------------------------------------------------------- | -------------------------------------------------------- | --------------------------------------- | ---------------------------------------------- | ------------------------------------------- |
+| Standard_D8s_v3 | 8    | 64                     | 16             | 16000/128 (200)                                                       | 16000/400                                                | 12800/192                               | 16000/400                                      | 4/4000                                      |
+
+* This is **VM level bursting** (not disk bursting), could last up to 30 minutes at a time
+
+Example:
+
+- Standard_D8s_v3
+  - Cached IOPS: 16,000
+  - Uncached IOPS: 12,800
+- P30 OS disk
+  - IOPS: 5,000
+  - Host caching: Read/write
+- Two P30 data disks × 2
+  - IOPS: 5,000
+  - Host caching: Read/write
+- Two P30 data disks × 2
+  - IOPS: 5,000
+  - Host caching: Disabled
+
+The cached and uncached limits (16,000 and 12,800) could be combined to achieve 25,000 IOPS
+
+![Combined IOPS](images/azure_disk-caching-combined-IOPS.jpg)
+
+### Performance troubleshooting
+
+- Check metrics like: "Data Disk Bandwidth Consumed Percentage", "VM uncached IOPS Consumed Percentage"
+- Benchmark tools: https://learn.microsoft.com/en-us/azure/virtual-machines/disks-benchmarks
+- Troubleshooting example: https://learn.microsoft.com/en-us/azure/virtual-machines/disks-metrics#storage-io-metrics-example
+
+### Bursting
+
+- Helps in scenarios like:
+  - VM startup
+  - Traffic spikes
+  - Batch jobs, eg. month-end reconciling job
+- There are disk bursing and VM bursting, they should match each other to achieve best performance
+- Azure provides various bursting metrics, like "Data Disk Used Burst IO Credits Percentage", "VM Uncached Used Burst BPS Credits Percentage", emitted every 5 minutes
+
+#### Disk bursting
+
+- Only for certain sizes of Standard/Premium SSD
+- No bursting for Standard HDD, or Ultra
+
+|                 | P20 and below                    | P30 and up                                 |
+| --------------- | -------------------------------- | ------------------------------------------ |
+| How             | Enabled by default, credit-based | Manual enable per disk                     |
+| Max-Performance | Up to 3,500 IOPS and 170MB/s     | Up to 30,000 IOPS and 1000MB/s             |
+| Duration        | up to 30min at a time (per day?) | No limit                                   |
+| Pricing         | Free                             | Enablement fee and pay per additional IOPS |
+
+#### VM-level bursting
+
+- Enabled by default for most Premium Storage supported VM sizes
+- Always credit-based
+- Could last up to 30 minutes (per day? seems it can burst whenever there is credit in the bucket)
+- Credits are accrued according to the amount of unused IO or MB/s below the provisioned target
+
+![Bursting graph](images/azure_disk-performance-bursting-graph.png)
+
+*Performance drop when burstring credits used up*
+
+<img src="images/azure_disk-bursting-bucket-diagram.jpg" width="600" alt="Bursting bucket" />
+
+*Bursing bucket gets refilled whenever usage is lower than provisioned capacity*
 
 ### Behind the scenes
 
@@ -675,98 +791,6 @@ sudo mkdir /data && sudo mount /dev/sdc1 /data
 #### Windows
 
 Use the Disk Management tool
-
-
-### Host caching
-
-![Host caching](images/azure_vm-host-caching.drawio.svg)
-
-- Called BlobCache, uses a combination of the host RAM and local SSD
-- Available for Premium Storage persistent disks and VM local disks
-- Default caching seeting:
-  - `Read/Write` for OS disks
-  - `ReadOnly` for data disks
-- Suggested cache setting:
-  | Cache     | When to use                                                                                                             |
-  | --------- | ----------------------------------------------------------------------------------------------------------------------- |
-  | None      | write-only / write-heavy, eg. disks for SQL Server log files                                                            |
-  | ReadOnly  | read-only / read-write, eg. disks for SQL Server data files                                                             |
-  | ReadWrite | only if your app properly handles writing cached data to persistent disks <br />(eg. SQL Server can do this on its own) |
-
-Limitations:
-
-- NOT supported for disks >= 4TiB (4096GiB, not 4000GiB)
-- Changing cache settings will **detach and re-attach** the target disk. If it is OS disk, the VM is **restarted**
-- Using `ReadWrite` cache with an application that does not handle persisting the required data can lead to data loss, if the VM crashes.
-
-
-### Disk performance
-
-- Each VM size has its own IOPS and throughput limits
-- Each disk has its own IOPS and throughput limits as well
-
-So the disk IO performance could be **capped** by limit on either the VM or disk.
-
-For VMs that are enabled for both premium storage and premium storage caching, there are two different storage bandwith limits.
-
-- ***uncached***, when caching is not enabled, only operation to the disk is counted
-- ***cached***, a separate limit on top of the *uncached* limit, only operation to the cache is counted
-
-| Size            | vCPU | Temp storage (SSD) GiB | Max data disks | Max cached and temp storage throughput: IOPS/MBps (cache size in GiB) | Max burst cached and temp storage throughput: IOPS/MBps2 | Max uncached disk throughput: IOPS/MBps | Max burst uncached disk throughput: IOPS/MBps1 | Max NICs/ Expected network bandwidth (Mbps) |
-| --------------- | ---- | ---------------------- | -------------- | --------------------------------------------------------------------- | -------------------------------------------------------- | --------------------------------------- | ---------------------------------------------- | ------------------------------------------- |
-| Standard_D8s_v3 | 8    | 64                     | 16             | 16000/128 (200)                                                       | 16000/400                                                | 12800/192                               | 16000/400                                      | 4/4000                                      |
-
-* This is **VM level bursting** (not disk bursting), could last up to 30 minutes at a time
-
-Example:
-
-- Standard_D8s_v3
-  - Cached IOPS: 16,000
-  - Uncached IOPS: 12,800
-- P30 OS disk
-  - IOPS: 5,000
-  - Host caching: Read/write
-- Two P30 data disks × 2
-  - IOPS: 5,000
-  - Host caching: Read/write
-- Two P30 data disks × 2
-  - IOPS: 5,000
-  - Host caching: Disabled
-
-The cached and uncached limits (16,000 and 12,800) could be combined to achieve 25,000 IOPS
-
-![Combined IOPS](images/azure_disk-caching-combined-IOPS.jpg)
-
-### Bursting
-
-- Only for certain sizes of Standard/Premium SSD
-- No bursting for Standard HDD, or Ultra
-- Helps in scenarios like:
-  - VM startup
-  - Traffic spikes
-  - Batch jobs, eg. month-end reconciling job
-- For P20 disks and smaller:
-  - Enabled by default
-  - Credit-based bursting (you accumulate credits when you disk is under-used, spend credits while bursting)
-  - Up to 3500 IOPS and 170MB/s
-  - Up to 30min
-- For P30 disks and larger
-  - Could be enabled per disk
-  - There's monthly enablement fee and a burst transaction fee (pay by additional IOPS)
-  - Up to 30,000IOPS and 1000MB/s
-- **VM-level bursting**
-  - Enabled by default for most Premium Storage supported VM sizes
-  - Always credit-based
-  - Could last up to 30 minutes
-  - Credits are accrued according to how much the provisioned capacity has been underutilized
-
-![Bursting graph](images/azure_disk-performance-bursting-graph.png)
-
-*Performance drop when burstring credits used up*
-
-<img src="images/azure_disk-bursting-bucket-diagram.jpg" width="600" alt="Bursting bucket" />
-
-*Bursing bucket gets refilled when usage is lower than provisioned capacity*
 
 ### Disk encryption
 
