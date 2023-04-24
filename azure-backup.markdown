@@ -15,6 +15,7 @@
   - [Azure VM Backup](#azure-vm-backup)
   - [Azure Site Recovery](#azure-site-recovery)
 - [Images](#images)
+  - [Images vs. Snapshots](#images-vs-snapshots)
 - [On-prem file backup](#on-prem-file-backup)
 - [Region failover](#region-failover)
 
@@ -230,27 +231,29 @@ Limitations:
 
 ## Images
 
-You can create an image from
-  - custom VHD in a storage account
-  - or a generalized(sysprepped), *deallocated* VM
+You can create an image from either a VHD file or a generalized(sysprepped) and *deallocated* VM
 
-If you **capture** an image of a running VM, the image could be:
+Two types of VM images:
 
   - **Generalized**: VMs created from this image require hostname, admin user, and other VM related setup to be completed on first boot
-    - **The VM will be stopped and can't be used anymore !!**
-    - But, seems like I could create a generalized image version just from the OS disk, not by VM "Capture"
+    - CLI:
+      ```sh
+      az vm deallocate -g MyResourceGroup -n MyVm
+      az vm generalize -g MyResourceGroup -n MyVm
+      az vm capture -g MyResourceGroup -n MyVm --vhd-name-prefix MyPrefix
+      ```
+    - After been generalized, the VM CAN'T be used anymore, you need to use the image to create new VMs
+
   - **Specialized**: VMs created from this image are completely configured and do not require parameters such as hostname and admin user/password
 
-When you create an image from a VM
+### Images vs. Snapshots
 
-  - this image contains all managed disks associated with the VM, including *both OS and data disks*
-  - you could create hundreds of VMs from this managed custom image without the need to copy or manage any storage account
+|               | Snapshot                 | Image                     |
+| ------------- | ------------------------ | ------------------------- |
+| Includes      | one disk (OS or data)    | all OS and data disks     |
+| Create new VM | only if OS disk snapshot | yes                       |
+| Type          | full / incremental       | generalized / specialized |
 
-**Images vs. Snapshots**
-
-  - An image includes **all of the disks** attached to a VM
-  - A snapshot applies only to **one disk**
-  - If a VM has only one disk (the OS disk), then you could take either a snapshot or an image of it and create a VM from either
 
 ## On-prem file backup
 
