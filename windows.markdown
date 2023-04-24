@@ -13,6 +13,7 @@
   - [VS Code](#vs-code)
   - [Terraform](#terraform)
 - [Quick recipes](#quick-recipes)
+  - [Create multiple big files for testing](#create-multiple-big-files-for-testing)
   - [Copy files](#copy-files)
 
 ## SSH
@@ -184,6 +185,18 @@ There's an issue that Terraform can't authenticate with Azure, see https://githu
 
 
 ## Quick recipes
+
+### Create multiple big files for testing
+
+```powershell
+# 1GB file of random bytes, better to use random-bytes file for testing
+$out = new-object byte[] 1073741824; (new-object Random).NextBytes($out); [IO.File]::WriteAllBytes('file.bin', $out)
+
+# copy 100 times
+for ($i = 0; $i -lt 100; $i++) {
+  cp file.bin file-$i.bin
+}
+```
 
 ### Copy files
 
