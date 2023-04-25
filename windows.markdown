@@ -12,8 +12,13 @@
     - [Multiple accounts for GitHub on one machine](#multiple-accounts-for-github-on-one-machine)
   - [VS Code](#vs-code)
   - [Terraform](#terraform)
-- [Quick recipes](#quick-recipes)
-  - [Create multiple big files for testing](#create-multiple-big-files-for-testing)
+- [File System](#file-system)
+  - [File length](#file-length)
+    - [Example `fsutil`](#example-fsutil)
+    - [Example `[System.IO.FileStream]::SetLength()`](#example-systemiofilestreamsetlength)
+    - [Generate a file with random bytes](#generate-a-file-with-random-bytes)
+    - [Disk throughput testing](#disk-throughput-testing)
+  - [Monitoring](#monitoring)
   - [Copy files](#copy-files)
 
 ## SSH
@@ -184,24 +189,113 @@ You could use the Windows Git Credential Manager in WSL (https://github.com/GitC
 There's an issue that Terraform can't authenticate with Azure, see https://github.com/microsoft/WSL/issues/8022
 
 
-## Quick recipes
+## File System
 
-### Create multiple big files for testing
+### File length
+
+See https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/fsutil-file#remarks
+
+In **NTFS**, there are two important concepts of file length: the end-of-file (EOF) marker and Valid Data Length (VDL)
+- **EOF**: the `0x00` EOF marker at the end of the file
+- **VDL**: length of valid data on disk
+  - can be queried with `fsutil file [queryvaliddata] [/R] [/D] <filename>`
+  - can be set with `fsutil file [setvaliddata] <filename> <datalength>` (need Administrator permission)
+
+VDL is smaller than EOF. Any reads between VDL and EOF automatically **return 0 without actually reading the disk.**
+
+#### Example `fsutil`
+
+Create a 64GB file
 
 ```powershell
-# 1GB file of random bytes, better to use random-bytes file for testing
-$out = new-object byte[] 1073741824; (new-object Random).NextBytes($out); [IO.File]::WriteAllBytes('file.bin', $out)
+$sizeInGB=64
+fsutil file createNew "${sizeInGB}GB.fsutil.dummyfile" $(${sizeInGB}*1024*1024*1024)
 
-# copy 100 times
-for ($i = 0; $i -lt 100; $i++) {
-  cp file.bin file-$i.bin
-}
+ls | select Name, @{n="GB";e={$_.length/1GB}}
+# Name                  GB
+# ----                  --
+# 64GB.fsutil.dummyfile 64
 ```
+
+This creates the file really quick, but it actually **just write EOF marker, set VDL to 0, not actually filling the file with bytes**, but it's NOT a sparse file
+
+```powershell
+fsutil file queryvaliddata 64GB.fsutil.dummyfile
+# Valid Data Length is 0x0 (0)
+
+fsutil sparse queryflag 64GB.fsutil.dummyfile
+# This file is NOT set as sparse
+```
+
+VDL could be changed
+
+```powershell
+fsutil file setvaliddata .\64GB.fsutil.dummyfile 127
+# Valid data length is changed
+
+fsutil file queryvaliddata 64GB.fsutil.dummyfile
+# Valid Data Length is 0x7f (127)
+```
+
+#### Example `[System.IO.FileStream]::SetLength()`
+
+This has the same effect, just setting the VDL to 0
+
+```powershell
+$sizeInGB=64
+$f = new-object System.IO.FileStream "$(pwd)\${sizeInGB}GB.setLength.dummyfile", Create, ReadWrite
+$f.SetLength("${sizeInGB}GB")
+$f.Close()
+
+fsutil file queryvaliddata .\64GB.setLength.dummyfile
+# Valid Data Length is 0x0 (0)
+```
+
+#### Generate a file with random bytes
+
+```powershell
+$out = new-object byte[] $(1*1024*1024*1024); # this number could not be larger than 2^32
+(new-object Random).NextBytes($out);
+[IO.File]::WriteAllBytes("$(pwd)\1GB.random.dummyfile", $out);
+```
+
+#### Disk throughput testing
+
+If you want to generate a big file for testing disk throughput (eg. copying from one disk to another), if the big file's VDL is 0, it only incur write operations on the target disk, but **NOT any read operations on the source disk !!**
+
+To workaround this, set the VDL manually to the file size:
+
+```powershell
+$sizeInGB=64
+fsutil file createNew "${sizeInGB}GB.fsutil.dummyfile" $(${sizeInGB}*1024*1024*1024)
+
+# manually set VDL to the file size
+fsutil file setvaliddata "${sizeInGB}GB.fsutil.dummyfile" $(${sizeInGB}*1024*1024*1024)
+
+fsutil file queryvaliddata "${sizeInGB}GB.fsutil.dummyfile"
+# Valid Data Length is 0x1000000000 (68719476736)
+```
+
+### Monitoring
+
+Resource Monitor could show you infos about CPU, memory, disk, network
+
+For disks:
+  - Processes reading/writing to disks
+  - Disk MBps
+  - Disk queue depth
+  - Which files are accessed by which processes
+
+![File system monitoring](images/windows_resource-monitor-disk.png)
 
 ### Copy files
 
 ```powershell
+# copies whole source folder to destination
 robocopy F:\ G:\ *.* /J /E /COPYALL /XD "System Volume Information" "$RECYCLE.BIN" /XO
+
+# copy a specific file
+robocopy D:\tempDir\ C:\tempDir\ "test.txt"
 
 # to get help on options
 robocopy /?

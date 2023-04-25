@@ -36,7 +36,7 @@
 - [Output](#output)
 - [Networking](#networking)
 - [Secrets](#secrets)
-- [Tricks](#tricks)
+- [Quick recipes](#quick-recipes)
 
 
 ## More topics
@@ -525,6 +525,9 @@ $pets['cat']
 # list items, you could use its alias `ls`
 Get-ChildItem
 
+# Show size in MB
+ls | select Name, @{n="MB";e={$_.length/1MB}}
+
 # create a directory
 New-Item -ItemType Directory testFolder
 
@@ -617,7 +620,7 @@ Test-NetConnection 192.168.1.3 -Port 22
   - Azure KeyVault
 
 
-## Tricks
+## Quick recipes
 
 - Select items from a list interactively
 
