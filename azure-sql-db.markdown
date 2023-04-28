@@ -224,7 +224,7 @@ Most SQL Server HADR solutions are supported on VMs, as both Azure-only and hybr
 
   <img src="images/azure_sql-server-hybrid-failover-liscense.png" width="400" alt="Always On AG free DR license" />
 
-- Rely on the underlying Windeos Server Failover Clustering (WSFC)
+- Rely on the underlying Windows Server Failover Clustering (WSFC)
 - SQL Server VMs should be in an availability set, or different availability zones
   - VMs in one availability set could be placed in a proximity placement group, minimize latency
   - VMs in different AZs offer better availability, but a greater network latency
