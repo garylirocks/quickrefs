@@ -16,6 +16,10 @@ Ansible
   - [File-level encryption](#file-level-encryption)
   - [Variable-level encryption](#variable-level-encryption)
 - [Configs](#configs)
+- [Work with Azure](#work-with-azure)
+  - [Install az collection](#install-az-collection)
+  - [Azure credentials](#azure-credentials)
+  - [Run](#run)
 
 ## Overview
 
@@ -431,3 +435,69 @@ Ansible configs are in `/etc/ansible/ansible.cfg`
 # control the output format
 stdout_callback = yaml
 ```
+
+## Work with Azure
+
+### Install az collection
+
+```sh
+# Install Ansible az collection for interacting with Azure.
+ansible-galaxy collection install azure.azcollection
+
+# Install Ansible modules for Azure
+sudo pip3 install -r ~/.ansible/collections/ansible_collections/azure/azcollection/requirements-azure.txt
+```
+
+### Azure credentials
+
+Use an service principal, it should have proper permissions on the target subscription, two ways for credentials:
+
+1. Put it in `~/.azure/credentials`
+
+    ```ini
+    [default]
+    subscription_id=<subscription_id>
+    client_id=<service_principal_app_id>
+    secret=<service_principal_password>
+    tenant=<service_principal_tenant_id>
+    ```
+
+2. Environment variables:
+
+    ```sh
+    export AZURE_SUBSCRIPTION_ID=<subscription_id>
+    export AZURE_CLIENT_ID=<service_principal_app_id>
+    export AZURE_SECRET=<service_principal_password>
+    export AZURE_TENANT=<service_principal_tenant_id>
+    ```
+
+### Run
+
+You could use ad-hoc commands or playbooks
+
+1. Ad-hoc command
+
+    ```sh
+    ansible localhost \
+          --module-name azure.azcollection.azure_rm_resourcegroup \
+          --args "name=rg-by-ansible-001 location=australiaeast"
+    ```
+
+2. Playbooks
+
+    ```yml
+    # create-rg.yml
+    - hosts: localhost
+      connection: local
+      collections:
+        - azure.azcollection
+      tasks:
+        - name: Creating resource group
+          azure_rm_resourcegroup:
+            name: "rg-ansible-002"
+            location: "westus"
+    ```
+
+    ```sh
+    ansible-playbook create-rg.yml
+    ```
