@@ -45,6 +45,7 @@
 - WSL targets a developer audience who wants to use Linux tools.
 - Requires fewer resources than a full Linux VM, allows you to access Windows files from within Linux.
 - WSL 2 uses Hyper-V
+- A single Linux kernel is shared by multiple distros
 - These tools could be used with WSL: VS Code, Git, databases, GPU acceleration, Linux GUI apps, mounting an external drive or USB
 
 ### Commands
@@ -122,14 +123,13 @@ To configure default behavior for a distro
 
 - Restart the distro
 
-
 ### Files
 
-- Windows file system is mounted at `/mnt/` in WSL, e.g. `C:` drive is mounted at `/mnt/c/`
-- To access WSL files in Windows:
-  - In File Explorer, visit `\\wsl$\Ubuntu\home\gary`
-  - In WSL, run `explorer.exe .`
-- By default, WSL storage is located at `$env:LOCALAPPDATA\Packages\`
+- Within WSL:
+  - Windows drives are mounted at `/mnt/` in WSL, e.g. `C:` drive is mounted at `/mnt/c/`
+- Within Windows:
+  - Access WSL files like `\\wsl.localhost\Ubuntu\home\gary`
+  - By default, WSL storage is located at `$env:LOCALAPPDATA\Packages\`
 
 ### Git
 
