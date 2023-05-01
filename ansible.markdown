@@ -20,6 +20,9 @@ Ansible
   - [Install az collection](#install-az-collection)
   - [Azure credentials](#azure-credentials)
   - [Run](#run)
+- [Work with Windows hosts](#work-with-windows-hosts)
+  - [Setup Windows remote hosts](#setup-windows-remote-hosts)
+  - [Connect](#connect)
 
 ## Overview
 
@@ -49,7 +52,7 @@ The *inventory* is a file that defines the hosts upon which the tasks in a playb
       ansible_host: 40.87.135.194
   ```
 
-- Dynamic inventory
+- Dynamic inventory, see https://docs.ansible.com/ansible/latest/collections/azure/azcollection/azure_rm_inventory.html
 
   ```yaml
   plugin: azure_rm
@@ -57,9 +60,24 @@ The *inventory* is a file that defines the hosts upon which the tasks in a playb
     - learn-ansible-rg
   auth_source: auto
   keyed_groups:
+    # places each host in a group named 'tag_(tag name)_(tag value)' for each tag on a VM.
     - prefix: tag
       key: tags
+
+  # adds variables to each host found by this inventory plugin
+  hostvar_expressions:
+    my_host_var:
+    # A statically-valued expression has to be both single and double-quoted, or use escaped quotes, since the outer
+    # layer of quotes will be consumed by YAML. Without the second set of quotes, it interprets 'staticvalue' as a
+    # variable instead of a string literal.
+    some_statically_valued_var: "'staticvalue'"
+    # overrides the default ansible_host value with a custom Jinja2 expression, in this case, the first DNS hostname, or
+    # if none are found, the first public IP address.
+    ansible_host: (public_dns_hostnames + public_ipv4_addresses) | first
   ```
+
+  - *the file name needs to end with `azure_rm.(yml|yaml)’`*
+  - Uses Azure CLI for auth by default
 
   Verify that Ansible can discover your inventory
 
@@ -67,10 +85,10 @@ The *inventory* is a file that defines the hosts upon which the tasks in a playb
   ansible-inventory --inventory azure_rm.yml --graph
 
   # @all:
-  # |--@tag_dev:
+  # |--@tag_env_dev:
   # |  |--vm_dev_1
   # |  |--vm_dev_2
-  # |--@tag_prod:
+  # |--@tag_env_prod:
   # |  |--vm_prod_1
   # |  |--vm_prod_2
   # |--@ungrouped:
@@ -384,15 +402,17 @@ ansible-playbook rg.yml --extra-vars "subscription_id=<sub-id> client_id=<client
 
 ### File-level encryption
 
-```sh
-# create an encrypted file
-ansible-vault enc
+You can encrypt any file
 
-# edit an encrypted file
-ansible-vault edit demo1.yml
+```sh
+# encrypt a file
+ansible-vault encrypt demo-playbook.yml
+
+# edit
+ansible-vault edit demo-playbook.yml
 
 # run an encrypted playbook
-ansible-playbook demo1.yml --ask-vault-pass
+ansible-playbook demo-playbook.yml --ask-vault-pass
 ```
 
 ### Variable-level encryption
@@ -501,3 +521,93 @@ You could use ad-hoc commands or playbooks
     ```sh
     ansible-playbook create-rg.yml
     ```
+
+## Work with Windows hosts
+
+### Setup Windows remote hosts
+
+Full details: https://docs.ansible.com/ansible/latest/os_guide/windows_setup.html
+
+Quick setup:
+
+```powershell
+wget https://raw.githubusercontent.com/ansible/ansible/devel/examples/scripts/ConfigureRemotingForAnsible.ps1 -o .\x.ps1
+
+.\x.ps1
+
+# check the listeners are running
+winrm enumerate winrm/config/Listener
+# Listener
+#     Address = *
+#     Transport = HTTP
+#     Port = 5985
+#     Hostname
+#     Enabled = true
+#     URLPrefix = wsman
+#     CertificateThumbprint
+#     ListeningOn = ...
+
+# Listener
+#     Address = *
+#     Transport = HTTPS
+#     Port = 5986
+#     Hostname = vm-demo
+#     Enabled = true
+#     URLPrefix = wsman
+#     CertificateThumbprint = 832A4CA59901EE8DD4060123E2D669F9FB71C578
+#     ListeningOn = ...
+```
+
+### Connect
+
+- Install collection, Python package
+
+  ```sh
+  # install collection
+  ansible-galaxy collection install ansible.windows
+
+  # install pywinrm
+  pip show pywinrm
+  ```
+
+- Set appropriate host variables, like `ansible_connection` etc:
+
+  ```
+  [win]
+  172.16.2.5
+  172.16.2.6
+
+  [win:vars]
+  ansible_user=vagrant
+  ansible_password=<password>
+  ansible_connection=winrm
+  ansible_winrm_server_cert_validation=ignore   # ignore cert validation
+  ```
+
+- Password could be passed in the command line, or you could encrypt the inventory file
+
+  ```sh
+  ansible -i ../inventories/windows-hosts -m win_ping all -e "ansible_password=<pass>"
+
+  # 20.5.202.140 | SUCCESS => {
+  #     "changed": false,
+  #     "ping": "pong"
+  # }
+  ```
+
+- Windows reboot playbook example
+
+  ```yaml
+  ---
+  - name: win_reboot module demo
+    hosts: all
+    become: false
+    gather_facts: false
+    tasks:
+      - name: reboot host(s)
+        ansible.windows.win_reboot:
+          msg: "Reboot by Ansible" # this message will be showing on a popup
+          pre_reboot_delay: 120 # how long to wait before rebooting
+          shutdown_timeout: 3600
+          reboot_timeout: 3600
+  ```
