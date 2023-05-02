@@ -9,6 +9,7 @@
   - [Provisioning](#provisioning)
   - [Use AAD for Linux VM authentication](#use-aad-for-linux-vm-authentication)
   - [Linux Agent](#linux-agent)
+  - [Windows VM Agent](#windows-vm-agent)
   - [Updating](#updating)
   - [CLI Cheatsheet](#cli-cheatsheet)
 - [Disks](#disks)
@@ -451,6 +452,22 @@ sudo apt-get install walinuxagent
 systemctl restart walinuxagent.service
 ```
 
+### Windows VM Agent
+
+- Manages VM interation with Azure fabric controller
+- Provides the ability to **enable and execute VM extensions**, which can
+  - Enable VM post-deployment configuration of VMs, such as installing and configuring software
+  - Enable recovery features such as resetting the admin password of a VM
+- The agent requires:
+  - access to `168.63.129.16`
+  - DHCP enabled inside the guest VM
+- Has two parts
+  - Azure Windows Provisioning Agent (PA) - must be installed to boot a VM
+  - Azure Windows Guest Agent (WinGA) - required by Azure Backup and Azure Security
+- Installed by default for any Marketplace image, `WinGA` could be opted-out with `osProfile.WindowsConfiguration.ProvisionVmAgent` property
+- Could be installed manually
+- `WindowsAzureGuestAgent.exe` is the process in the guest VM
+- It spawns `CollectGuestLogs.exe`, which collects some logs, produces a ZIP file that's transferred to the VM's host. Support professionals could use this ZIP file to investigate issues on the request of the VM owner.
 
 ### Updating
 
@@ -510,21 +527,20 @@ Azure has a solution for updating VMs called Update Management
     --scope $principalId
   ```
 
-- List images/VM sizes
+- List images
 
   ```sh
-  # find vm images by offer, sku, location, publisher
-  az vm image list \
-    --offer ubuntu \
-    --sku lts \
-    --location australiaeast \
-    --publisher Canonical \
-    -otable
+  # find available vm images in a region
+  az vm image list --location australiaeast -otable
 
   # Offer         Publisher    Sku        Urn                                      UrnAlias    Version
   # ------------  -----------  ---------  ---------------------------------------  ----------  ---------
   # UbuntuServer  Canonical    18.04-LTS  Canonical:UbuntuServer:18.04-LTS:latest  UbuntuLTS   latest
+  ```
 
+- List VM sizes
+
+  ```sh
   # list vm sizes, filter by number of cores
   az vm list-sizes \
     --location australiaeast \
