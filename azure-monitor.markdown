@@ -3,6 +3,9 @@
 - [Overview](#overview)
 - [Azure Monitor](#azure-monitor-1)
   - [VMs](#vms)
+- [Log Analytics Agent](#log-analytics-agent)
+  - [Difference between "Agent" and "Extensions"](#difference-between-agent-and-extensions)
+- [Azure Monitor Agent](#azure-monitor-agent)
 - [Defender for Cloud](#defender-for-cloud)
 - [Alerting](#alerting)
 - [Activity Log](#activity-log)
@@ -73,13 +76,66 @@ Azure Monitor is based on a common mornitoring data platform that includes Logs 
 
 For VMs, Azure collects some metrics(host-level) by default, such as CPU usage, OS disk usage, network traffic, boot success, to get a full set of metrics, you need to install certain agents:
 
-- **Azure Monitor Agent**: going to replace Log Analytics Agent and Azure Diagnostics extension over time
+- **Azure Monitor Agent**: see below
 - **Log Analytics Agent**:
-  - works in Azure, other clouds, or on-prem
   - allows for the onboarding of *Azure Monitor VM Insights*, *Microsoft Defender for Cloud*, and *Microsoft Sentinel*
   - works with Azure Automation accounts to onboard Azure Update Management and Azure Automation State Configuration, Change Tracking and Inventory
-- **Azure Diagnostics extension**: mainly metrics (not the same as boot diagnostics, which you usually enable while creating a VM)
+- **Azure Diagnostics extension**: see table below
 - **Dependency agent**: maps dependencies between VMs
+
+## Log Analytics Agent
+
+Comparison between Log Analytics Agent and Diagnostics Extension
+
+|              | Log Analytics Agent (aka. MMA/OMS)                 | Diagnostics Extension                                                |
+| ------------ | -------------------------------------------------- | -------------------------------------------------------------------- |
+| Where        | Azure, other clouds, on-prem                       | Azure VM only                                                        |
+| Send data to | Azure Monitor Logs                                 | Azure Storage, Azure Event Hubs, Azure Monitor Metrics(Windows only) |
+| Required by  | VM insights, Defender for Cloud, retired solutions | n/a                                                                  |
+
+- Log Analytics Agent is more powerful than Diagnostics Extension, they could be used together
+- You configure **what data sources to collect in a workspace**, these configurations are pushed to all connected agents
+  - E.g. When you config Syslog in a workspace, the configs are pushed to `/etc/rsyslog.d/95-omsagent.conf`, which controls what logs will be forwarded to the agent, listening on port 25224
+
+  ![Syslog forwarding](images/azure_monitor-linux-syslog-diagram.png)
+
+
+### Difference between "Agent" and "Extensions"
+
+- VM extensions requires Windows VM Agent (Windows VM Guest Agent) to be running
+- For Log Analytics Agent, if you install it on-prem, you download the **Log Analytics Agent**, if you intall it to an Azure VM, you use **Log Analytics Agent VM extension**, extension version could be different from the agent version, see https://learn.microsoft.com/en-us/azure/virtual-machines/extensions/oms-linux?toc=%2Fazure%2Fazure-monitor%2Ftoc.json#agent-and-vm-extension-versio0
+
+
+## Azure Monitor Agent
+
+Replaces legacy monitoring agents:
+
+- Log Analytics Agent
+- Telegraf agent
+- Diagnostics extension (not consolidated yet)
+
+To collect data:
+
+- Install the agent (Azure, Azure Arc, desktops)
+- Define a data collection rule and associate resources to it
+  - Performance - `Perf` table
+  - Windows event logs (including sysmon events) - `Event` table
+  - Syslog - `Syslog` table
+  - Text/Windows IIS logs - custom tables
+
+AMA supports other services and features
+
+| Servies/features                         | Other extensions installed                                                                  |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------- |
+| VM insights                              | Dependency Agent extension                                                                  |
+| Container insights                       | Containerized Azure Monitor agent                                                           |
+| Defender for Cloud                       | Security Agent ext., SQL Advanced Threat Protection ext., SQL Vulnerability Assessment ext. |
+| Microsoft Sentinel                       | Sentinel DNS ext. for DNS logs                                                              |
+| Change Tracking and Inventory Management | Change Tracking ext.                                                                        |
+| Network Watcher                          | NetworkWatcher ext.                                                                         |
+| SQL Best Practices Assessment            | No additional ext. required                                                                 |
+| AVD insights                             | No additional ext. required                                                                 |
+| Stack HCI insights                       | No additional ext. required                                                                 |
 
 
 ## Defender for Cloud

@@ -48,6 +48,7 @@
     "SIEM",
     "SSIS",
     "SSMS",
+    "sysmon",
     "tfstate",
     "tfvars",
     "toset",
