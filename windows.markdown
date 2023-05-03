@@ -176,6 +176,7 @@ You could use the Windows Git Credential Manager in WSL (https://github.com/GitC
     ```
 
 **Seems in WSL, it won't popup the Git credential manager dialog for you to sign in, you need to do it in Windows (PowerShell, cmd)**
+Git global config file path could be changed by setting `$Env:GIT_CONFIG_GLOBAL`
 
 ### VS Code
 

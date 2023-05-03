@@ -33,7 +33,7 @@
   - [Negate pattern](#negate-pattern)
 - [Hooks](#hooks)
   - [`pre-commit`](#pre-commit)
-- [Merge & Diff](#merge--diff)
+- [Merge \& Diff](#merge--diff)
 - [Submodules](#submodules)
 - [Recipes](#recipes)
   - [Split a subfolder out into a new repository](#split-a-subfolder-out-into-a-new-repository)
@@ -238,6 +238,8 @@ configuration levels:
 - `--global`: `~/.gitconfig`
 - `--local`: `$PROJECT/.git/config`
 - `--file <filename>`
+
+*The global config file location could be customized by env variable `$GIT_CONFIG_GLOBAL`*
 
 ```sh
 # list configs
