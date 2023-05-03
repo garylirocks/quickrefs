@@ -86,9 +86,18 @@
 
 `systemctl` should be used whenever possible
 
-```sh
-systemctl status apache2.service
-```
+- List services
+
+  ```sh
+  systemctl list-unit-files --type=service
+  ```
+
+- Service state
+
+  ```sh
+  systemctl status apache2.service
+  ```
+
 
 ## Journal
 
