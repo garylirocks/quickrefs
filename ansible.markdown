@@ -7,8 +7,12 @@ Ansible
 - [Playbook](#playbook)
 - [Tasks](#tasks)
 - [Variables](#variables)
+  - [Ansible facts](#ansible-facts)
+  - [Magic variables](#magic-variables)
 - [Loops](#loops)
 - [Testing](#testing)
+  - [Test with localhost](#test-with-localhost)
+- [Error handling](#error-handling)
 - [Roles](#roles)
   - [Example](#example)
 - [Collections](#collections)
@@ -276,6 +280,124 @@ You can also pass in a variable in command line
 ansible-playbook demo.yml -e file_state=touch
 ```
 
+### Ansible facts
+
+The `ansible_facts` variable contains info about remote system
+
+```yaml
+- name: Print all available facts
+  ansible.builtin.debug:
+    var: ansible_facts
+```
+
+Some important facts:
+
+```json
+"ansible_facts": {
+  "all_ipv4_addresses": [
+    "172.16.16.16"
+  ],
+  "date_time": {
+    "date": "2023-05-05",
+    ...
+  },
+  "default_ipv4": {
+    "address": "172.16.16.16",
+    ...
+  },
+  "distribution": "Ubuntu",
+  "distribution_file_variety": "Debian",
+  "distribution_major_version": "20",
+  "domain": "gary.com",
+  "env": {
+    "HOME": "/home/gary",
+    ...
+  },
+  "fqdn": "demo.gary.com",
+  "hostname": "demo",
+  "machine": "x86_64",
+  "pkg_mgr": "apt",
+  "python_version": "3.8.2",
+  "system": "Linux",
+  "user_id": "gary",
+  ...
+}
+```
+
+- You can reference an env variable by `{{ ansible_facts['env']['HOME'] }}`
+- Facts are cached (in memory by default), and available to all hosts, you can accessible fact of one remote host in another host like `{{ hostvars['vm1']['ansible_facts']['os_family'] }}`
+- `set_fact` set fact about current host, by default, you can not access it via `ansible_facts`, unless you set `cacheable: yes`
+
+  ```yaml
+  - name: Set a temporary fact
+    set_fact:
+      my_fact: "my value"
+      cacheable: yes
+
+  - debug:
+      var: my_fact
+
+  - debug:
+      var: ansible_facts['my_fact']
+  ```
+
+- The infomation gathering could be disabled by `gather_facts: false`
+
+  ```yaml
+  ---
+  - name: Testing
+    gather_facts: false
+    hosts: all
+  ```
+
+### Magic variables
+
+They contain information about ansible operations.
+
+- `hostvars` contains
+  - all variables about each host, including variables defined in inventory files, variables defined in playbooks
+  - and `ansible_facts` gathered for each host
+
+  ```json
+  "hostvars": {
+    "vm1": {
+      "my_custom_var": "my custom value",
+      "groups_names": ["group1", "group2"],
+      "inventory_file": "/path/to/inventory.ini",
+      "ansible_facts": {
+        ...
+      },
+      "ansible_run_tags": [
+          "all"
+      ],
+      "ansible_skip_tags": [],
+      "ansible_verbosity": 0,
+      "ansible_version": {
+          "full": "2.9.6",
+          "major": 2,
+          "minor": 9,
+          "revision": 6,
+          "string": "2.9.6"
+      },
+      ...
+    }
+    ...
+  }
+  ```
+
+- `groups`
+- `group_names`
+- `inventory_hostname`, the name defined in inventory file, may be different from `ansible_hostname`
+- `ansible_play_hosts` is the list of all hosts still active in the current play.
+- `ansible_play_batch` is a list of hostnames that are in scope for the current 'batch' of the play. The batch size is defined by serial, when not set it is equivalent to the whole play (making it the same as ansible_play_hosts).
+- `inventory_dir`
+- `inventory_file`
+- `playbook_dir`
+- `role_path`
+- `ansible_check_mode` is a boolean, set to True if you run Ansible with --check.
+- `ansible_version`
+
+
 ## Loops
 
 ```yaml
@@ -297,6 +419,48 @@ Using `--check` flag
 ```sh
 ansible-playbook demo.yml --check
 ```
+
+### Test with localhost
+
+It's often easier to test with localhost first
+
+- Create an inventory file, specify `ansible_connection=local`, you may need to specify a password if you use `become` in you playbook
+
+  ```yaml
+  localhost ansible_connection=local ansible_become_password=<password>
+  ```
+
+- Test your playbook with `ansible-playbook -i ./localhost.localonly.ini my_playbook.yml`
+
+
+## Error handling
+
+- By default if a command returns non-zero code, the task fails, but this could be customized
+
+  ```yaml
+  - name: Fail task when both files are identical
+    ansible.builtin.raw: diff foo/file1 bar/file2
+    register: diff_cmd
+    failed_when: (diff_cmd.rc == 0) or (diff_cmd.rc >= 2)
+  ```
+
+- By default a error would stop tasks on the host, but you can change this behavior
+
+  ```yaml
+  - name: Do not count this as a failure
+    ansible.builtin.command: /bin/false
+    ignore_errors: true
+  ```
+
+- Customize `changed`
+
+  ```yaml
+  - name: Report 'changed' when the return code is not equal to 2
+    ansible.builtin.shell: /usr/bin/billybass --mode="take me to the river"
+    register: bass_result
+    changed_when: "bass_result.rc != 2"
+  ```
+
 
 
 ## Roles
