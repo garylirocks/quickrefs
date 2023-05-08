@@ -6,6 +6,7 @@ Ansible
 - [Inventory](#inventory)
 - [Playbook](#playbook)
 - [Tasks](#tasks)
+  - [Blocks](#blocks)
 - [Variables](#variables)
   - [Ansible facts](#ansible-facts)
   - [Magic variables](#magic-variables)
@@ -16,6 +17,7 @@ Ansible
 - [Roles](#roles)
   - [Example](#example)
 - [Collections](#collections)
+- [Importing and including](#importing-and-including)
 - [Secrets](#secrets)
   - [File-level encryption](#file-level-encryption)
   - [Variable-level encryption](#variable-level-encryption)
@@ -235,6 +237,39 @@ tasks:
   - name: Upgrade in Debian
     when: ansible_os_family == "Debian"
     apt: upgrade=dist update_cache=yes
+```
+
+### Blocks
+
+Blocks could be used to apply common directives to a group of tasks, such as `tags`, `when`, `become`, `ignore_errors`
+  - `when` is checked for each task in the block, not at the block level
+
+```yaml
+tasks:
+  - name: Install, configure, and start Apache
+    block:
+      - name: Install httpd and memcached
+        ansible.builtin.yum:
+          name:
+          - httpd
+          - memcached
+          state: present
+
+      - name: Apply the foo config template
+        ansible.builtin.template:
+          src: templates/src.j2
+          dest: /etc/foo.conf
+
+      - name: Start service bar and enable it
+        ansible.builtin.service:
+          name: bar
+          state: started
+          enabled: True
+    when: ansible_facts['distribution'] == 'CentOS'
+    become: true
+    become_user: root
+    ignore_errors: true
+    tags: [tag1, tag2]
 ```
 
 ## Variables
@@ -558,6 +593,38 @@ ansible-playbook rg.yml --extra-vars "subscription_id=<sub-id> client_id=<client
       debug:
         var: rg_info.resourcegroups
 ```
+
+
+## Importing and including
+
+Compare `include_*` and `import_*`:
+
+|                                                             | Include_*                                       | Import_*                                         |
+| ----------------------------------------------------------- | ----------------------------------------------- | ------------------------------------------------ |
+| Type of re-use                                              | Dynamic                                         | Static                                           |
+| When processed                                              | At runtime, when encountered                    | Pre-processed during playbook parsing            |
+| Keywords                                                    | `include_role`, `include_tasks`, `include_vars` | `import_role`, `import_tasks`, `import_playbook` |
+| Context                                                     | task                                            | task or play (`import_playbook`)                 |
+| Tags | Not inherited, you could **filter which tasks to run** by add tags to both the `include_*` task and tasks in the included file | Inherited, applies to all imported tasks |
+| Task options                                                | Apply only to include task itself               | Apply to all child tasks in import               |
+| Calling from loops                                          | Executed once for each loop item                | Cannot be used in a loop                         |
+| Works with `--list-tags`, `--list-tasks`, `--start-at-task` | No                                              | Yes                                              |
+| Notifying handlers                                          | Cannot trigger handlers within includes         | Can trigger individual imported handlers         |
+| Using inventory variables                                   | Can `include_*: {{ inventory_var }}`            | Cannot `import_*: {{ inventory_var }}`           |
+| With variables files                                        | Can include variables files                     | Use `vars_files:` to import variables            |
+
+- Playbooks can be imported (static)
+
+  ```yaml
+  - import_playbook: "/path/to/{{ import_from_extra_var }}"
+  - import_playbook: "{{ import_from_vars }}"
+    vars:
+      import_from_vars: /path/to/one_playbook.yml
+  ```
+
+- The bare `include` keyword is deprecated
+- Avoid using both includes and imports in a single playbook, it can lead to difficult-to-diagnose bugs
+- For importing, if you add
 
 
 ## Secrets
