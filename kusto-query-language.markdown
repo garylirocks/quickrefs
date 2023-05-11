@@ -268,8 +268,8 @@ To create a **saved function**
 
 ```kusto
 StormEvents
-| summarize count() by bin(StartTime, 1d)
-| render timechart
+| summarize count() by category, bin(StartTime, 1d)
+| render timechart with(series = category)
 
 StormEvents
 | summarize count() by bin(StartTime, 7d)
