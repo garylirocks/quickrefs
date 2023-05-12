@@ -466,6 +466,7 @@ It's often easier to test with localhost first
   ```
 
 - Test your playbook with `ansible-playbook -i ./localhost.localonly.ini my_playbook.yml`
+- Use `-K, --ask-become-pass` if it needs root password:  `ansible-playbook -i ./localhost.localonly.ini -K my_playbook.yml`
 
 
 ## Error handling
@@ -599,19 +600,19 @@ ansible-playbook rg.yml --extra-vars "subscription_id=<sub-id> client_id=<client
 
 Compare `include_*` and `import_*`:
 
-|                                                             | Include_*                                       | Import_*                                         |
-| ----------------------------------------------------------- | ----------------------------------------------- | ------------------------------------------------ |
-| Type of re-use                                              | Dynamic                                         | Static                                           |
-| When processed                                              | At runtime, when encountered                    | Pre-processed during playbook parsing            |
-| Keywords                                                    | `include_role`, `include_tasks`, `include_vars` | `import_role`, `import_tasks`, `import_playbook` |
-| Context                                                     | task                                            | task or play (`import_playbook`)                 |
-| Tags | Not inherited, you could **filter which tasks to run** by add tags to both the `include_*` task and tasks in the included file | Inherited, applies to all imported tasks |
-| Task options                                                | Apply only to include task itself               | Apply to all child tasks in import               |
-| Calling from loops                                          | Executed once for each loop item                | Cannot be used in a loop                         |
-| Works with `--list-tags`, `--list-tasks`, `--start-at-task` | No                                              | Yes                                              |
-| Notifying handlers                                          | Cannot trigger handlers within includes         | Can trigger individual imported handlers         |
-| Using inventory variables                                   | Can `include_*: {{ inventory_var }}`            | Cannot `import_*: {{ inventory_var }}`           |
-| With variables files                                        | Can include variables files                     | Use `vars_files:` to import variables            |
+|                                                             | Include_*                                                                                                                      | Import_*                                         |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------ |
+| Type of re-use                                              | Dynamic                                                                                                                        | Static                                           |
+| When processed                                              | At runtime, when encountered                                                                                                   | Pre-processed during playbook parsing            |
+| Keywords                                                    | `include_role`, `include_tasks`, `include_vars`                                                                                | `import_role`, `import_tasks`, `import_playbook` |
+| Context                                                     | task                                                                                                                           | task or play (`import_playbook`)                 |
+| Tags                                                        | Not inherited, you could **filter which tasks to run** by add tags to both the `include_*` task and tasks in the included file | Inherited, applies to all imported tasks         |
+| Task options                                                | Apply only to include task itself                                                                                              | Apply to all child tasks in import               |
+| Calling from loops                                          | Executed once for each loop item                                                                                               | Cannot be used in a loop                         |
+| Works with `--list-tags`, `--list-tasks`, `--start-at-task` | No                                                                                                                             | Yes                                              |
+| Notifying handlers                                          | Cannot trigger handlers within includes                                                                                        | Can trigger individual imported handlers         |
+| Using inventory variables                                   | Can `include_*: {{ inventory_var }}`                                                                                           | Cannot `import_*: {{ inventory_var }}`           |
+| With variables files                                        | Can include variables files                                                                                                    | Use `vars_files:` to import variables            |
 
 - Playbooks can be imported (static)
 
