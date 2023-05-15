@@ -163,6 +163,12 @@ You could use `$x()` in the Devtools to find elements
 $x('//*[@id="logo"]')
 ```
 
+Get attribute value to an array
+
+```sh
+$x('//table//td[1]/a/@href').map(x => x.value)
+```
+
 #### In JS
 
 ```js
