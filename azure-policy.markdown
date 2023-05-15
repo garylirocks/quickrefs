@@ -1,6 +1,7 @@
 # Azure Policy
 
 - [Overview](#overview)
+- [Mode](#mode)
 - [Assignments](#assignments)
 - [Effects](#effects)
 - [Order of evaluation](#order-of-evaluation)
@@ -10,6 +11,7 @@
 - [Best practices](#best-practices)
 - [Built-in policies](#built-in-policies)
 - [Terminology](#terminology)
+- [Regulatory Compliance](#regulatory-compliance)
 - [Gotchas](#gotchas)
 
 
@@ -30,6 +32,16 @@ Three types of objects
 - Policy definition
 - Initiative definition
 - Assignments
+
+
+## Mode
+
+Depending on whether a policy is targeting an Azure Resource Manager property or a Resource Provider property
+
+- Resource Manager modes
+
+    - **All**:
+    - **Indexed**: only evalue
 
 
 ## Assignments
@@ -250,6 +262,44 @@ A `deployIfNotExists` or `modify` policy should define the roles it requires:
 - Control: high-level description, not specific to a technology or implementation, eg. Data Protection
 - Benchmark: security recommendations for a specific technology, eg. Azure Security Benchmark
 - Baseline: implementation of the benchmark on individual Azure service, eg. Azure SQL security baseline
+
+
+## Regulatory Compliance
+
+- Special initiatives for regulatory compliance, eg. PCI-DSS, HIPAA, ISO 27001, NZISM Restricted Regulatory Compliance initiative
+- Has special requirements:
+  - The initiative category must be `Regulatory Compliance`
+  - Field of each grouping in the initiative:
+    - `name` - name of the control
+    - `category` - the compliance domain of the control
+    - `policyMetadata` - a reference to metadata of the control,
+        - The content is defined by Microsoft and read-only
+        - Displayed in the Portal on the overview page of a control
+        - Could be queried with `az policy metadata`
+        - Example:
+            ```json
+            {
+                "properties": {
+                    "metadataId": "NIST SP 800-53 R4 AC-1",
+                    "category": "Access Control",
+                    "title": "Access Control Policy and Procedures",
+                    "owner": "Shared",
+                    "description": "**The organization:** ... ",
+                    "requirements": "**a.** ...",
+                    "additionalContentUrl": "https://nvd.nist.gov/800-53/Rev4/control/AC-1"
+                },
+                "id": "/providers/Microsoft.PolicyInsights/policyMetadata/NIST_SP_800-53_R4_AC-1",
+                "name": "NIST_SP_800-53_R4_AC-1",
+                "type": "Microsoft.PolicyInsights/policyMetadata"
+            }
+            ```
+- A control often contains multiple policies, but usually there is NOT a one-to-one or complete match between a control and one or more Azure Policies.
+- Compliance details page in the Portal shows **compliance info** grouped by control
+- Compliance status could be viewed in Defender for Cloud
+- An initiative could include Microsoft-responsible controls
+  - the policies are of type `static`
+  - the evaluation type is "Microsoft Managed"
+- The initiative could be built-in or custom
 
 
 ## Gotchas
