@@ -6,6 +6,9 @@
 - [Log Analytics Agent](#log-analytics-agent)
   - [Difference between "Agent" and "Extensions"](#difference-between-agent-and-extensions)
 - [Azure Monitor Agent](#azure-monitor-agent)
+  - [AMA supports other services and features](#ama-supports-other-services-and-features)
+- [Data Collection Rules (DCR)](#data-collection-rules-dcr)
+- [Data collection endpoints](#data-collection-endpoints)
 - [Defender for Cloud](#defender-for-cloud)
 - [Alerting](#alerting)
 - [Activity Log](#activity-log)
@@ -87,15 +90,16 @@ For VMs, Azure collects some metrics(host-level) by default, such as CPU usage, 
 
 Comparison between Log Analytics Agent and Diagnostics Extension
 
-|              | Log Analytics Agent (aka. MMA/OMS)                 | Diagnostics Extension                                                |
-| ------------ | -------------------------------------------------- | -------------------------------------------------------------------- |
-| Where        | Azure, other clouds, on-prem                       | Azure VM only                                                        |
-| Send data to | Azure Monitor Logs                                 | Azure Storage, Azure Event Hubs, Azure Monitor Metrics(Windows only) |
-| Required by  | VM insights, Defender for Cloud, retired solutions | n/a                                                                  |
+|                            | Log Analytics Agent (aka. MMA/OMS)                 | Diagnostics Extension                                                |
+| -------------------------- | -------------------------------------------------- | -------------------------------------------------------------------- |
+| Where                      | Azure, other clouds, on-prem                       | Azure VM only                                                        |
+| Send data to               | Azure Monitor Logs                                 | Azure Storage, Azure Event Hubs, Azure Monitor Metrics(Windows only) |
+| How to configure in Portal | Azure Monitor -> Legacy agents management Logs     | Resource -> Diagnostic settings                                      |
+| Required by                | VM insights, Defender for Cloud, retired solutions | n/a                                                                  |
 
 - Log Analytics Agent is more powerful than Diagnostics Extension, they could be used together
 - You configure **what data sources to collect in a workspace**, these configurations are pushed to all connected agents
-  - E.g. When you config Syslog in a workspace, the configs are pushed to `/etc/rsyslog.d/95-omsagent.conf`, which controls what logs will be forwarded to the agent, listening on port 25224
+  - E.g. When you config Syslog in a workspace, the configs are pushed to each connected host by updating `/etc/rsyslog.d/95-omsagent.conf`, this config file controls what syslogs will be forwarded to the agent (listening on port 25224)
 
   ![Syslog forwarding](images/azure_monitor-linux-syslog-diagram.png)
 
@@ -108,7 +112,7 @@ Comparison between Log Analytics Agent and Diagnostics Extension
 
 ## Azure Monitor Agent
 
-Replaces legacy monitoring agents:
+A new ETL-like data collection pipeline, replaces legacy monitoring agents:
 
 - Log Analytics Agent
 - Telegraf agent
@@ -123,7 +127,7 @@ To collect data:
   - Syslog - `Syslog` table
   - Text/Windows IIS logs - custom tables
 
-AMA supports other services and features
+### AMA supports other services and features
 
 | Servies/features                         | Other extensions installed                                                                  |
 | ---------------------------------------- | ------------------------------------------------------------------------------------------- |
@@ -136,6 +140,64 @@ AMA supports other services and features
 | SQL Best Practices Assessment            | No additional ext. required                                                                 |
 | AVD insights                             | No additional ext. required                                                                 |
 | Stack HCI insights                       | No additional ext. required                                                                 |
+
+
+## Data Collection Rules (DCR)
+
+Data structure
+
+- `kind`: Windows or Linux or Custom
+- `dataSources`: Performance / EventLogs / Syslog / CustomLogs
+- `destinations`: Log Analytics
+- `dataFlows`: including `streams` and `destinations`
+
+Multi to multi:
+  - A resource could be associated with multiple rules
+  - A rule could be associated with multiple resources
+
+How to create:
+- Some DCRs will be created and managed by Azure Monitor to collect a specific set of data to **enable insights and visualizations**.
+- You might also create your own DCRs to define the set of data required for other scenarios.
+
+Resiliency:
+  - Zone-redundant: The service is deployed to all three availability zones within the region.
+  - Backed up to the paired-region within the same geography.
+
+Data collection scenarios:
+
+- Using AMA
+  ![Using AMA](images/azure_monitor-data-collection-scenarios-agent.png)
+
+- Using log ingestion API (a REST client sends data to a DCE, and specifying which DCR to use)
+  ![Using API](images/azure_monitor-data-collection-scenarios-api.png)
+
+- Workspace transformation DCR
+  - a special DCR
+  - associated with a workspace and provide default transformation for supported tables
+  - applied to any data sent to the table that doesn't use another DCR
+  - could work with resource logs using a diagnostic setting, Log Analytics agent or Container insights
+  ![Workspace transformation DCR](images/azure_monitor-data-collection-scenarios-workspace-transformation.png)
+
+
+## Data collection endpoints
+
+Required by:
+
+- AMA agent when network isolation is required
+- Log ingestion API
+
+Components:
+
+- Configuration access endpoint: the endpoints for AMA to fetch DCRs, eg. `<unique-dce-identifier>.<regionname>-1.handler.control`
+- Logs ingestion endpoint: `<unique-dce-identifier>.<regionname>-1.ingest`
+- Network access control list
+
+Limitations:
+
+- Only for machines in the same region
+- Only support Log Analytics workspace as a destination
+- Custom metrics collected by AMA aren't controlled by DCEs
+- Can't be configured over private links, seems can be included in a Azure Monitor Private Link Scope (AMPLS) ?
 
 
 ## Defender for Cloud
