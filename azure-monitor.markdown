@@ -335,6 +335,7 @@ Events
 ```
 
 ```
+# The latest heartbeat for each computer, the '*' means all columns are kept
 Heartbeat
 | summarize arg_max(TimeGenerated, *) by ComputerIP
 ```

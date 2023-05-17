@@ -79,6 +79,17 @@ Could be `null`, any other scalar data type, or an array, property bag (aka. map
   | where ColA matches regex @'.*gary.*'
   ```
 
+  - `search` searches a text pattern in multiple tables and columns
+
+  ```kusto
+  // Search a term in all columns of the two tables
+  search in (Customers, SalesTable) "Green"
+
+  // regex match a specified column
+  search col1 matches regex "..."
+  ```
+
+
 ### Datetime
 
   ```kusto
@@ -224,6 +235,14 @@ To create a **saved function**
       Count_Fiction = countif(Type == "fiction"),
       Count_Language = dcount(Language) by PublishYear
   | sort by Count_Total
+  ```
+
+- `arg_max`, `arg_min`, could be used to keep other columns
+
+  ```sql
+  # The latest heartbeat for each computer, the '*' means all columns are kept
+  Heartbeat
+  | summarize arg_max(TimeGenerated, *) by ComputerIP
   ```
 
 - `mv-expand`, expand arrays/property bags
