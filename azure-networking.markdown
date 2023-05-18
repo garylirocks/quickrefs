@@ -215,7 +215,7 @@ az network public-ip create \
   - A vNet gateway
   - A Basic SKU public IP (attached to a NIC in the subnet)
   - A Basic SKU load balancer
-- Can only use Standard SKU Public IPs or public IP prefixes
+- Can only use **Standard SKU** Public IPs or public IP prefixes
 - After NAT is configured
   - All UDP and TCP outbound flows from any VM instance will use NAT for Internet connectivity (**takes precedence over other public IPs on its NIC**)
   - Does not support ICMP
@@ -728,16 +728,17 @@ Compare ExpressRoute to Site-to-Site VPN:
 - Routing in a virtual hub is provided by a router that manages all routing between gateways using BGP.
 - This router provides transit connectivity between virtual networks that connect to a virtual hub.
 - Each virtual hub has its own
-  - Default route table, static routes could be added, taking precedence over dynamic routes
-  - None route table, propagating to this means no routes are required to be propagated from the connection
+  - **Default route table**, static routes could be added, taking precedence over dynamic routes
+  - **None route table**, propagating to this means no routes are required to be propagated from the connection
 - Four types of connections:
   - VPN
   - ExpressRoute
   - P2S configuration
   - Hub virtual network
-- By default, all connections associate and propagate to the Default route table
-- Each connection is associated with one route table, which controls where traffic from this connection will be routed to.
-- Each connection can propagate routes to multiple route tables. VPN, ExpressRoute, and User VPN connections propagate routes to the same set of route tables.
+- For each connection:
+  - By default, it associates and propagates to the Default route table
+  - The associated route table controls where traffic from this connection will be routed to.
+  - Can propagate routes to multiple route tables. VPN, ExpressRoute, and User VPN connections propagate routes to the same set of route tables.
 
 ![Virtual hub route propagation](images/azure_virtual-wan-routes-propagation.png)
 
