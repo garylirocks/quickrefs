@@ -35,6 +35,7 @@ Quick productivity tips, shortcuts, command line snippets.
 - [Search files (grep)](#search-files-grep)
 - [Hash](#hash)
 - [Self-signed SSL certs](#self-signed-ssl-certs)
+- [Openssl usage](#openssl-usage)
 - [DNS tools](#dns-tools)
   - [`systemd-resolve`](#systemd-resolve)
   - [`dig`](#dig)
@@ -640,6 +641,20 @@ openssl x509 -req \
 ```
 
 If you want to create a wildcard certificate, use `*.gary.local` as `$NAME`, and use it when prompted for `CN` (it needs to be a properly-structured domain, something like `*.local` is not working in Chrome)
+
+
+## Openssl usage
+
+- Get certificate info of an HTTPS site
+
+  ```sh
+  openssl s_client \
+          -showcerts \
+          -servername example.com \       # required for SNI
+          -connect example.com:443 </dev/null \
+          | openssl x509 -text            # show human readable output
+  ```
+
 
 ## DNS tools
 
