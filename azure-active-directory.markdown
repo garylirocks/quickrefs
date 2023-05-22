@@ -12,9 +12,10 @@
   - [Hybrid authentication](#hybrid-authentication)
   - [Azure AD DS](#azure-ad-ds)
 - [Devices](#devices)
-  - [Register](#register)
+  - [Registration](#registration)
   - [Join](#join)
   - [Hybrid](#hybrid)
+  - [Debugging](#debugging)
 - [Users](#users)
 - [Groups](#groups)
 - [Workload identities](#workload-identities)
@@ -221,21 +222,45 @@ _On prem AD is optional here_
 
 ## Devices
 
-- Provide access to organizational resources of work-related devices
-- Intended for organizations that do not have on-prem AD
-- Combined with a mobile device management (MDM) solution such as Microsoft Intune, provides additional attributes in Azure AD
+Three ways to add a device identity in Azure AD:
 
-### Register
+- Azure AD registration  (for BYOD)
+- Azure AD join (for work devices)
+- Hybrid Azure AD join (interim step to Azure AD join)
 
-- Registering a device to Azure AD enables you to manage a device's identity, which can be used to enable or disable a device
-- Usually a user's personal device, you login with your personal Microsoft account
+Usage:
+
+- Device-based Conditional Access policies
+- Enable users SSO to cloud-based resources
+- Mobile device management (MDM) solution such as Microsoft Intune, provides additional attributes in Azure AD
+
+### Registration
+
+- Bring your own device (BYOD), such as cell phones and tablets
 - Works on Windows, iOS, Android, Ubuntu etc.
+- You login with your own account
 
 ### Join
 
-- An extension to registering, changes local state to a device
 - Usually a work/school device, you login with your work/school account
-- Only works on Windows 10 (and above) and Azure Windows VMs with certain extensions installed
+- An extension to registering, changes local state to a device
+- Works on Windows 10 (and above)
+- You can still login to an AAD-joined machine using a non-AAD account
+- If you want to RDP an AAD joined machine using an AAD account
+  - you use username in the form like `MyAAD\gary@example.com`
+  - your local machine needs to be AAD joined/registered or hybrid joined
+  - you can't use MFA during RDP login, but you could assign conditional access policy
+- Requirements for Azure Windows VMs:
+  - Windows Server 2019 and later
+  - Windows 10 and later
+  - With `AADLoginForWindows` extensions installed
+  - the user needs either "Virtual Machine User Login" or "Virtual Machine Administrator Login" RBAC role, to login to the VM using AAD authentication
+
+### Hybrid
+
+- The device is joined to AD and registered with Azure AD
+
+### Debugging
 
 ```sh
 # check status
@@ -274,18 +299,6 @@ dsregcmd /status
 #             CertEnrollment : none
 #               PreReqResult : WillNotProvision
 ```
-
-- You can still login to an AAD-joined machine using a non-AAD account
-- If you want to RDP an AAD joined machine using an AAD account
-  - you use username in the form like `MyAAD\gary@example.com`
-  - your local machine needs to be AAD joined/registered or hybrid joined
-  - you can't use MFA during RDP login, but you could assign conditional access policy
-- Windows Servers can not join Azure AD, you need the "AADLoginForWindows" extension, to be able to login via an AAD account
-  - the user needs either "Virtual Machine User Login" or "Virtual Machine Administrator Login" RBAC role
-
-### Hybrid
-
-- The device is joined to AD and registered with Azure AD
 
 
 ## Users
