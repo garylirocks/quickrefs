@@ -20,8 +20,8 @@
 - [Aliases](#aliases)
 - [Modules](#modules)
   - [Import](#import)
-  - [Inspect](#inspect)
   - [Install](#install)
+  - [Find modules and commands](#find-modules-and-commands)
 - [Variables](#variables)
   - [Predefined variables](#predefined-variables)
   - [Types](#types)
@@ -70,17 +70,15 @@
 
 ### Versions
 
-|                     | PowerShell                                   | Windows PowerShell                           |
-| ------------------- | -------------------------------------------- | -------------------------------------------- |
-| OS                  | Windows, Mac, Linux                          | a component of Windows OS                    |
-| Version             | v6, v7                                       | v5                                           |
-| Executable          | `pwsh.exe`                                   | `powershell.exe`                             |
-| `$env:PSModulePath` | including module paths of Windows PowerShell | -                                            |
-| `$PSHOME`           | `C:\Program Files\PowerShell\7`              | `C:\Windows\System32\WindowsPowerShell\v1.0` |
-| Profiles            | `$HOME\Documents\PowerShell`                 | `$HOME\Documents\WindowsPowerShell`          |
-
-
-| Windows PowerShell ISE | No                                           | Yes                                 |
+|                        | PowerShell                                   | Windows PowerShell                           |
+| ---------------------- | -------------------------------------------- | -------------------------------------------- |
+| OS                     | Windows, Mac, Linux                          | a component of Windows OS                    |
+| Version                | v6, v7                                       | v5                                           |
+| Executable             | `pwsh.exe`                                   | `powershell.exe`                             |
+| `$env:PSModulePath`    | including module paths of Windows PowerShell | -                                            |
+| `$PSHOME`              | `C:\Program Files\PowerShell\7`              | `C:\Windows\System32\WindowsPowerShell\v1.0` |
+| Profiles               | `$HOME\Documents\PowerShell`                 | `$HOME\Documents\WindowsPowerShell`          |
+| Windows PowerShell ISE | No                                           | Yes                                          |
 
 Most cmdlets work on either platform.
 
@@ -351,19 +349,6 @@ A modules is a package that contains PowerShell members, such as cmdlets, provid
 - Otherwise, use `Import-Module` cmdlet
 - `$PSModuleAutoloadingPreference` controls the auto loading behavior
 
-### Inspect
-
-```powershell
-# list modules already imported into the session
-Get-Module
-
-# list all installed modules
-Get-Module -ListAvailable
-
-# find commands in a module
-Get-Command -Module Microsoft.PowerShell.Management
-```
-
 ### Install
 
 `PowerShellGet` module contains cmdlets for finding and installing modules/scripts from the "PowerShell Gallery" repository, such as
@@ -397,6 +382,26 @@ Then you could either
   ```powershell
   $env:PSModulePath = "E:\Modules;" + $env:PSModulePath
   ```
+
+### Find modules and commands
+
+```powershell
+# list modules already imported into the session
+Get-Module
+
+# list all modules installed with `Install-Module` (from PowerShellGet)
+# if you are using PowerShell, modules in `WindowsPowerShell` folders won't show up
+Get-InstalledModule
+
+# list all modules in `$env:PSModulePath`
+# they could be imported into current session with `Import-Module`
+# even when you are in PowerShell, modules in `WindowsPowerShell` folders may show up
+# if they are in `$env:PSModulePath`
+Get-Module -ListAvailable
+
+# find commands in a module
+Get-Command -Module Microsoft.PowerShell.Management
+```
 
 
 ## Variables
