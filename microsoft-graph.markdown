@@ -88,17 +88,19 @@ Get-MgUser -Filter "DisplayName eq 'Alex Wilber'"
 Group
 
 ```powershell
-Get-MgGroup | Where-Object {$_.DisplayName -Like 'Ret*'}
-
 # It's better to use "-Filter", it's more efficient
 #   because the filtering happens on the server side
 Get-MgGroup -Filter "startsWith(DisplayName, 'Ret')"
+
+# to filter on local
+Get-MgGroup | Where-Object {$_.DisplayName -Like 'Ret*'}
 ```
 
 Get members of a group
 
 ```powershell
-Get-MgGroupMember -GroupId $groupId | ForEach-Object { @{UserId=$_.Id} } | Get-MgUser -Property "DisplayName,Mail"
+Get-MgGroupMember -GroupId $groupId | ForEach-Object { @{UserId=$_.Id} } `
+                | Get-MgUser -Property "DisplayName,Mail"
 
 # Id DisplayName     Mail                          UserPrincipalName UserType
 # -- -----------     ----                          ----------------- --------
