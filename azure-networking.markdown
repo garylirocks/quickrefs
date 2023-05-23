@@ -1507,31 +1507,9 @@ Although Azure Vault supports both `.pem` and `.pfx` formats for certificates, w
 openssl pkcs12 -export -out server.pfx -inkey server.key -in server.crt -certfile root_or_intermediary_cert.crt
 ```
 
-Common X.509 certificate encoding formats and extensions:
-
-- Base64 (ASCII)
-  - PEM
-    - .pem
-    - .crt
-    - .ca-bundle
-  - PKCS#7
-    - .p7b
-    - .p7s
-- Binary
-  - DER
-    - .der
-    - .cer
-  - PKCS#12
-    - .pfx
-    - .p12
-
-`*.pem`, `*.crt`, `*.ca-bundle`, `*.cer`, `*.p7b`, `*.p7s` files contain one or more X.509 digital certificate files that use base64 (ASCII) encoding.
-
-A `.pfx` file, also known as PKCS #12, is a single archive file that **contains the entire certificate chain plus the matching private key**, it *could be password protected*. Essentially it is everything that a server needs, so often used for import/export.
-
 See:
-- https://www.ssls.com/knowledgebase/what-are-certificate-formats-and-what-is-the-difference-between-them/
 - https://blog.neilsabol.site/post/azure-cdn-custom-https-secret-contains-unsupported-content-type-x-pkcs12/
+
 
 ## DNS
 
