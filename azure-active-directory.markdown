@@ -259,6 +259,8 @@ Usage:
 ### Hybrid
 
 - The device is joined to AD and registered with Azure AD
+- You set a Service Connection Point (SCP) in AAD Connect, then AAD Connect will sync your on-prem device objects to AAD
+- Your AD-joined device also registers itself with Azure AD, the device would get an AAD primary refresh token
 
 ### Debugging
 
