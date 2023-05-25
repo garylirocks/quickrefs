@@ -352,6 +352,10 @@ Two ways to group objects
 ## Enumeration
 
 ```powershell
+"apple", "grape" | % { Write-Output "I like $_" }
+# I like apple
+# I like grape
+
 Get-Process notepad | ForEach-Object { $_.kill() }
 
 # use "%" alias

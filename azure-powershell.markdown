@@ -167,6 +167,10 @@ $scope='<full-resource-id>' // FULL id required
 $principal='xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
 
 # get eligible ones
+# - shows inherited permissions from upper scopes
+# - shows assignment in sub scopes,
+#   - if the scope is a subscription, like `/subscriptions/xxxx`, it shows assignment on children resource groups
+#   - but if the scope is a management group like `/providers/Microsoft.Management/managementGroups/xxx`, it doesn't show assignements in children subscriptions
 Get-AzRoleEligibilitySchedule -Scope $scope -Filter "principalId eq $principal" `
 | Select-Object ScopeDisplayName,ScopeType,PrincipalDisplayName,PrincipalType,RoleDefinitionDisplayName,RoleDefinitionType,EndDateTime,Status `
 | Format-Table
