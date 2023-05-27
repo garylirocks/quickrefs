@@ -871,7 +871,7 @@ looks like there are two ways to accomplish this:
 create ssh keys:
 
     cd ~/.ssh
-    ssh-keygen -t rsa -f gary-new -C "gary@example.com"
+    ssh-keygen -t rsa -b 2048 -f gary-new -C "gary@example.com"
 
 in `.ssh/config`
 
