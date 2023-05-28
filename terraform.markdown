@@ -1223,7 +1223,9 @@ Two primary ways of separating environments:
 
 2. By workspaces:
 
-    - Pros: same config files and different state files
+    - Pros:
+      - Same config files and different variable values, state files
+      - This aligns with the concept of workspaces in Terraform Cloud
     - Cons: must be aware of the workspace you are working in
 
     Create and manage workspaces in a directory
