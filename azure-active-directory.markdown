@@ -20,12 +20,13 @@
 - [Groups](#groups)
 - [Workload identities](#workload-identities)
   - [App registrations vs. Service principals](#app-registrations-vs-service-principals)
-  - [Example](#example)
+  - [Example (for OIDC based apps)](#example-for-oidc-based-apps)
   - [Service Principals](#service-principals)
 - [Application](#application)
   - [API Permissions](#api-permissions)
   - [App roles](#app-roles)
   - [Expose API](#expose-api)
+- [SSO](#sso)
 - [Role-based access control (RBAC)](#role-based-access-control-rbac)
   - [Considerations](#considerations)
   - [Evaluation](#evaluation)
@@ -355,13 +356,13 @@ Note:
 | In the Portal   | App Registrations                                                                                                                                            | Enterprise Applications                                                                                                                          |
 | Microsoft Graph | `application`                                                                                                                                                | `servicePrincipal`                                                                                                                               |
 
-- If you register an application in the portal, an application object as well as a service principal object are automatically created in your home tenant. If you register/create an application using the Microsoft Graph APIs, creating the service principal object is a **separate step**.
-- *In the portal, under "Enterprise applications", if you add an app from the gallery, it creates an app under "App registrations" as well.*
+- If you register an application in the portal, an application object as well as a service principal object are automatically created in your home tenant.
+- If you register/create an application using the Microsoft Graph APIs, creating the service principal object is a **separate step**.
 - By default, all users in your directory have rights to register application objects and discretion over which applications they give access to their organizational data through consent (limited to their own data).
 - When the **first** user sign in to an application and grant consent, that will **create a service principal** in your tenant, any following consent grant info will be stored on the same service principal.
 - When you update the name of an application, the name of the service principal gets updated automatically
 
-### Example
+### Example (for OIDC based apps)
 
 ![Application objects relationship](images/azure_application-objects-relationship.png)
 
@@ -422,7 +423,7 @@ There are three types of service principals:
   - Eliminate the need for developers to manage credentials
   - When a managed identity is enabled, a service principal representing that managed identity is created in your tenant
     - The service principal is listed under **Enterprise applications -> Managed Identities** in Azure Portal
-    - There is NO corresponding app registration in your tenant
+    - There is **NO** corresponding app registration in your tenant
 
   Two types:
 
@@ -466,8 +467,26 @@ There are three types of service principals:
         --secret-permissions get list
     ```
 
+| Type              | App Registrations | Enterprise applications |
+| ----------------- | ----------------- | ----------------------- |
+| Service Principal | Yes               | Yes                     |
+| Managed Identity  | No                | Yes                     |
+
 
 ## Application
+
+Three types of applications:
+
+| Type                     | App Registrations | Enterprise applications | How                                                               |
+| ------------------------ | ----------------- | ----------------------- | ----------------------------------------------------------------- |
+| Gallery (SAML)           | Yes               | Yes                     | Add from the gallery, an app instance added to your tenant        |
+| Gallery (OpenID Connect) | **No**            | Yes                     | Sign-in/sign-up, the app will be added to Enterprise applications |
+| Your own                 | Yes               | Yes                     | Add in App registrations                                          |
+| On-prem                  | Yes               | Yes                     | AAD App Proxy                                                     |
+
+- Pre-integrated applications (can be added from the gallery)
+- Your own applications (register it in App Registrations)
+- On-premises applications (can be published externally via AAD Application Proxy)
 
 ### API Permissions
 
@@ -499,6 +518,33 @@ See: https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-add-a
 
 - The "Expose an API" menu in the Portal allows you to define scopes for an API. This creates only "deletegated permissions". Use "App roles" assignable to application type for "application-only" scopes.
 - You could add another application as an authorized client application to the scopes.
+
+
+## SSO
+
+Options:
+
+- Federation
+  - Methods:
+    - SAML 2.0
+    - WS-Federation
+    - OpenID Connect
+  - The SSO option won't appear for an enterprise application if
+    - The app was registered using App registrations, then OpenID is the default option
+    - The app is hosted in another tenant
+    - You don't have the permissions
+- Password-based (aka. password vaulting)
+  - A user signs in to the application with a username and password the first time it's accessed. After the first sign-on, Azure AD sends the username and password to the application
+  - Useful when several users need to share a single account, such as your organization's social media accounts
+- Linked
+  - When the app is configured with another IdP
+  - Doesn't provide SSO functionality through Azure AD credentials
+  - You can add a link to specific web pages
+- Disabled
+  - When the application isn't ready to be configured for SSO
+  - Users might need to authenticate twice, first to Azure AD, then to the application
+
+![Azure AD SSO options](./images/azure_ad-single-sign-on-options.png)
 
 
 ## Role-based access control (RBAC)
@@ -829,9 +875,12 @@ az ad group list --filter "startswith(displayName, 'gary')"
 
 ### Application and service principal owners
 
-- In the Portal, you could only add a user as app and SP owners
+- A user is automatically added as an application owner when they register an application
+  - Ownership for an enterprise application is assigned by default only when a user with no administrator roles (Global Administrator, Application Administrator etc) creates a new application registration.
+- A good practice is to have at least two owners for an application.
+- In the Portal, you could only add users as app and SP owners
+- Groups can't be owners.
 - To add an SP as owner, use CLI or API, see https://github.com/Azure/azure-cli/issues/9250#issuecomment-603621148.
-- Groups can't be added as owners.
 
 ```sh
 # the target app and SP
