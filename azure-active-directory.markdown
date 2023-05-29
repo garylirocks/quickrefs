@@ -27,6 +27,7 @@
   - [App roles](#app-roles)
   - [Expose API](#expose-api)
 - [SSO](#sso)
+  - [SAML](#saml)
 - [Role-based access control (RBAC)](#role-based-access-control-rbac)
   - [Considerations](#considerations)
   - [Evaluation](#evaluation)
@@ -477,12 +478,12 @@ There are three types of service principals:
 
 Three types of applications:
 
-| Type                     | App Registrations | Enterprise applications | How                                                               |
-| ------------------------ | ----------------- | ----------------------- | ----------------------------------------------------------------- |
-| Gallery (SAML)           | Yes               | Yes                     | Add from the gallery, an app instance added to your tenant        |
-| Gallery (OpenID Connect) | **No**            | Yes                     | Sign-in/sign-up, the app will be added to Enterprise applications |
-| Your own                 | Yes               | Yes                     | Add in App registrations                                          |
-| On-prem                  | Yes               | Yes                     | AAD App Proxy                                                     |
+| Type                             | App Registrations | Enterprise applications | How                                                               |
+| -------------------------------- | ----------------- | ----------------------- | ----------------------------------------------------------------- |
+| Gallery (SAML, Password, Linked) | Yes               | Yes                     | Add from the gallery, an app instance added to your tenant        |
+| Gallery (OpenID Connect)         | **No**            | Yes                     | Sign-in/sign-up, the app will be added to Enterprise applications |
+| Your own                         | Yes               | Yes                     | Add in App registrations                                          |
+| On-prem                          | Yes               | Yes                     | AAD App Proxy                                                     |
 
 - Pre-integrated applications (can be added from the gallery)
 - Your own applications (register it in App Registrations)
@@ -522,7 +523,7 @@ See: https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-add-a
 
 ## SSO
 
-Options:
+Modes:
 
 - Federation
   - Methods:
@@ -534,17 +535,52 @@ Options:
     - The app is hosted in another tenant
     - You don't have the permissions
 - Password-based (aka. password vaulting)
-  - A user signs in to the application with a username and password the first time it's accessed. After the first sign-on, Azure AD sends the username and password to the application
-  - Useful when several users need to share a single account, such as your organization's social media accounts
+  - Scenarios:
+    - The app only has an HTML sign-in page with username/password fields, no SAML and OAuth
+    - Several users need to share a single account, such as your organization's social media accounts (eg. Facebook)
+  - How does it work
+    - User installs a browser extension (in Chrome or Edge) - "My Apps Secure Sign-in"
+    - User launches the app from My Apps or Microsoft 365 portal or the browser extension
+    - User logins to AAD
+    - AAD redirects to the application's login page
+    - The browser extension fill in username, password and log in
+  - The username and password, could be either:
+    - Configured for user/group in AAD "Enterprise applications"
+    - Or typed in by the user when accessing the app for the first time
 - Linked
-  - When the app is configured with another IdP
-  - Doesn't provide SSO functionality through Azure AD credentials
-  - You can add a link to specific web pages
+  - Scenarios:
+    - The app already has another SSO configured, eg. AD FS
+    - Deep links to specific web pages
+    - An app that doesn't require authentication
+  - Seems the main benefit is you get the app showing up in My Apps/Microsoft 365 portal
+  - You just add a link, where the users first land on when accessing the application
 - Disabled
-  - When the application isn't ready to be configured for SSO
-  - Users might need to authenticate twice, first to Azure AD, then to the application
+  - User won't be able to launch the app from My Apps
 
 ![Azure AD SSO options](./images/azure_ad-single-sign-on-options.png)
+
+### SAML
+
+The configuration process varies depending on the application.
+
+*You can use **[Azure AD SAML Toolkit](https://samltoolkit.azurewebsites.net/)** application for testing*
+
+Usual steps:
+
+- Basic configs (the URLs will be updated later, so doesn't matter in this step)
+  - Identifier (Entity ID) - must be unique across all applications in your tenant
+  - Reply URL (Assertion Consumer Service URL) - where the application expects to receive the SAML response (token)
+  - Sign on URL - the sign-in page URL of the app
+
+- Configs in the app
+  - AAD login URL
+  - AAD identifier
+  - AAD logout URL
+  - Signing certificate (downloaded from AAD)
+
+- Update URLs in AAD (get them from the app)
+  - Reply URL (Assertion Consumer Service URL)
+  - Sign on URL
 
 
 ## Role-based access control (RBAC)
