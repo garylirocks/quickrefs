@@ -37,7 +37,7 @@ Different CAs and servers may issue or require X.509 certificates in different f
 Notes:
 
 - A Base64 encoded cert contains the same content, extensions like `.pem`, `.cer` and `.crt` are interchangeable
-- *A `.cer` could be binary or ASCII*
+- *A `.cer` could be in binary or ASCII format*
 
 See: https://comodosslstore.com/resources/a-ssl-certificate-file-extension-explanation-pem-pkcs7-der-and-pkcs12/
 
