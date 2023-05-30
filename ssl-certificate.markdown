@@ -97,7 +97,7 @@ cat secret.dycrypted.txt
   openssl x509 -in example.com.pem -text
 
   # output selected fields only
-  openssl x509 -in example.com.pem -noout -dates -subject -issuer -ext subjectAltName
+  openssl x509 -in example.com.pem -noout -issuer -subject -dates -fingerprint -ext subjectAltName
   ```
 
 - Get certificate info of an HTTPS site
@@ -106,9 +106,10 @@ cat secret.dycrypted.txt
   # the `-servername` option is required for SNI
   openssl s_client \
           -showcerts \
+          -verify_quiet \
           -servername example.com \
           -connect example.com:443 </dev/null \
-          | openssl x509 -noout -dates -subject -issuer -ext subjectAltName
+          | openssl x509 -noout -issuer -subject -dates -fingerprint -ext subjectAltName
   ```
 
 - Generate digest/hash
