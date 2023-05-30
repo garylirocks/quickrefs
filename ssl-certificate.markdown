@@ -2,6 +2,9 @@
 
 - [File format](#file-format)
   - [Multiple certs in one file](#multiple-certs-in-one-file)
+- [Encryption](#encryption)
+  - [With a symmetric key](#with-a-symmetric-key)
+  - [With a pair of public/private keys](#with-a-pair-of-publicprivate-keys)
 - [`openssl` commands](#openssl-commands)
 - [Self-signed SSL certs](#self-signed-ssl-certs)
 
@@ -56,6 +59,34 @@ A file could contain the whole certificate chain, like
 // root certificate
 -----END CERTIFICATE-----
 ```
+
+
+## Encryption
+
+### With a symmetric key
+
+```sh
+# will prompt for the password
+openssl enc -e -aes256 -iter 1000 -in secret.txt -out secret.enc
+openssl enc -d -aes256 -iter 1000 -in secret.enc -out secret.decrypted.txt
+```
+
+### With a pair of public/private keys
+
+```sh
+echo "hello world" > secret.txt
+
+# generate private and public keys
+openssl genrsa -aes256 -out gary_private.pem 2048
+openssl rsa -in gary_private.pem -pubout > gary_public.pem
+
+# encrypt, then decrypt
+openssl rsautl -encrypt -inkey gary_public.pem -pubin -in secret.txt -out secret.enc
+openssl rsautl -decrypt -inkey gary_private.pem -in secret.enc > secret.dycrypted.txt
+
+cat secret.dycrypted.txt
+```
+
 
 ## `openssl` commands
 
