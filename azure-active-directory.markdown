@@ -582,6 +582,21 @@ Usual steps:
   - Reply URL (Assertion Consumer Service URL)
   - Sign on URL
 
+A SAML response XML has fields like:
+
+```XML
+<AttributeStatement>
+  <!-- ... -->
+  <Attribute Name="http://schemas.microsoft.com/identity/claims/displayname">
+    <AttributeValue>Gary Li</AttributeValue>
+  </Attribute>
+  <Attribute Name="http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress">
+    <AttributeValue>gary@xxx.onmicrosoft.com</AttributeValue>
+  </Attribute>
+  <!-- ... -->
+</AttributeStatement>
+```
+
 
 ## Role-based access control (RBAC)
 
