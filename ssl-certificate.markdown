@@ -2,11 +2,15 @@
 
 - [File format](#file-format)
   - [Multiple certs in one file](#multiple-certs-in-one-file)
+  - [Private keys](#private-keys)
+- [Certificates](#certificates)
+  - [Certificate information](#certificate-information)
+  - [Convert `.pfx` to `.pem`](#convert-pfx-to-pem)
+- [Self-signed SSL certs](#self-signed-ssl-certs)
+- [Digest/hash](#digesthash)
 - [Encryption](#encryption)
   - [With a symmetric key](#with-a-symmetric-key)
   - [With a pair of public/private keys](#with-a-pair-of-publicprivate-keys)
-- [`openssl` commands](#openssl-commands)
-- [Self-signed SSL certs](#self-signed-ssl-certs)
 
 ## File format
 
@@ -60,75 +64,60 @@ A file could contain the whole certificate chain, like
 -----END CERTIFICATE-----
 ```
 
+### Private keys
 
-## Encryption
+Encrypted
 
-### With a symmetric key
-
-```sh
-# will prompt for the password
-openssl enc -e -aes256 -iter 1000 -in secret.txt -out secret.enc
-openssl enc -d -aes256 -iter 1000 -in secret.enc -out secret.decrypted.txt
+```
+-----BEGIN ENCRYPTED PRIVATE KEY-----
+// encrypted private key
+-----END ENCRYPTED PRIVATE KEY-----
 ```
 
-### With a pair of public/private keys
+Not encrypted
 
-```sh
-echo "hello world" > secret.txt
-
-# generate private and public keys
-openssl genrsa -aes256 -out gary_private.pem 2048
-openssl rsa -in gary_private.pem -pubout > gary_public.pem
-
-# encrypt, then decrypt
-openssl rsautl -encrypt -inkey gary_public.pem -pubin -in secret.txt -out secret.enc
-openssl rsautl -decrypt -inkey gary_private.pem -in secret.enc > secret.dycrypted.txt
-
-cat secret.dycrypted.txt
+```
+-----BEGIN RSA PRIVATE KEY-----
+// private key
+-----END RSA PRIVATE KEY-----
 ```
 
 
-## `openssl` commands
+## Certificates
 
-- show certificate information
+### Certificate information
 
-  ```sh
-  # if multiple cert in the `.pem` file, only info of the first one is shown
-  openssl x509 -in example.com.pem -text
+```sh
+# if multiple cert in the `.pem` file, only info of the first one is shown
+openssl x509 -in example.com.pem -text
 
-  # output selected fields only
-  openssl x509 -in example.com.pem -noout -issuer -subject -dates -fingerprint -ext subjectAltName
-  ```
+# output selected fields only
+openssl x509 -in example.com.pem -noout -issuer -subject -dates -fingerprint -ext subjectAltName
+```
 
-- Get certificate info of an HTTPS site
+Get certificate info of an HTTPS site
 
-  ```sh
-  # the `-servername` option is required for SNI
-  openssl s_client \
-          -showcerts \
-          -verify_quiet \
-          -servername example.com \
-          -connect example.com:443 </dev/null \
-          | openssl x509 -noout -issuer -subject -dates -fingerprint -ext subjectAltName
-  ```
+```sh
+# the `-servername` option is required for SNI
+openssl s_client \
+        -showcerts \
+        -verify_quiet \
+        -servername example.com \
+        -connect example.com:443 </dev/null \
+        | openssl x509 -noout -issuer -subject -dates -fingerprint -ext subjectAltName
+```
 
-- Generate digest/hash
+### Convert `.pfx` to `.pem`
 
-  ```sh
-  openssl md4 temp.txt
-  MD4(temp.txt)= b5227179...
+```sh
+# will prompt for password if there is one
+# `-nodes` means "Don't encrypt the private key"
+openssl pkcs12 -in cert.pfx -out cert.pem -nodes
 
-  openssl sha512 temp.txt
-  SHA512(temp.txt)= ecacf0e610...
-  ```
+# don't output the private key
+openssl pkcs12 -in cert.pfx -out cert.pem -nodes -nokeys
+```
 
-- Generate random strings
-
-  ```sh
-  # 5 character string (5 bytes, 10 hex chars)
-  openssl rand -hex 5
-  # cf2a039a47
-  ```
 
 ## Self-signed SSL certs
 
@@ -176,3 +165,51 @@ openssl x509 -req \
 ```
 
 If you want to create a wildcard certificate, use `*.gary.local` as `$NAME`, and use it when prompted for `CN` (it needs to be a properly-structured domain, something like `*.local` is not working in Chrome)
+
+
+## Digest/hash
+
+- Generate digest/hash
+
+  ```sh
+  openssl md4 temp.txt
+  MD4(temp.txt)= b5227179...
+
+  openssl sha512 temp.txt
+  SHA512(temp.txt)= ecacf0e610...
+  ```
+
+- Generate random strings
+
+  ```sh
+  # 5 character string (5 bytes, 10 hex chars)
+  openssl rand -hex 5
+  # cf2a039a47
+  ```
+
+
+## Encryption
+
+### With a symmetric key
+
+```sh
+# will prompt for the password
+openssl enc -e -aes256 -iter 1000 -in secret.txt -out secret.enc
+openssl enc -d -aes256 -iter 1000 -in secret.enc -out secret.decrypted.txt
+```
+
+### With a pair of public/private keys
+
+```sh
+echo "hello world" > secret.txt
+
+# generate private and public keys
+openssl genrsa -aes256 -out gary_private.pem 2048
+openssl rsa -in gary_private.pem -pubout > gary_public.pem
+
+# encrypt, then decrypt
+openssl rsautl -encrypt -inkey gary_public.pem -pubin -in secret.txt -out secret.enc
+openssl rsautl -decrypt -inkey gary_private.pem -in secret.enc > secret.dycrypted.txt
+
+cat secret.dycrypted.txt
+```
