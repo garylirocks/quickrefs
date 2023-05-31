@@ -43,7 +43,7 @@
 
 ![Certificate composition](./images/azure_certificate-composition.png)
 
-When a certificate is created, key vault also creates an addressable key and secret with the same name.
+When a certificate is created, key vault also creates an addressable key and secret with the same name (**NOT visible in the Portal**).
 
 For a cert version with this URL `https://kv-gary.vault.azure.net/certificates/cert-gary/123456789`, you would have its
   - key at  `https://kv-gary.vault.azure.net/keys/cert-gary/123456789`
