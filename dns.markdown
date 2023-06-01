@@ -4,6 +4,8 @@
 - [`nslookup`](#nslookup)
 - [`ipconfig`](#ipconfig)
 - [`systemd-resolve`](#systemd-resolve)
+- [Security](#security)
+- [Misc](#misc)
 
 
 ## `dig`
@@ -25,6 +27,33 @@ Reverse lookup (PTR)
 ```sh
 dig -x 8.8.8.8
 # 8.8.8.8.in-addr.arpa.   1621    IN      PTR     dns.google.
+```
+
+Get root server list
+
+```sh
+dig . ns
+
+# ...
+# ;; ANSWER SECTION:
+# .                       49699   IN      NS      g.root-servers.net.
+# .                       49699   IN      NS      k.root-servers.net.
+# .                       49699   IN      NS      d.root-servers.net.
+# ...
+```
+
+If you query a root server for a specific domain name, it returns the authoritative name servers for the TLD
+
+```sh
+dig @a.root-servers.net. google.com
+
+# ...
+# ;; AUTHORITY SECTION:
+# com.                    172800  IN      NS      a.gtld-servers.net.
+# com.                    172800  IN      NS      b.gtld-servers.net.
+# com.                    172800  IN      NS      c.gtld-servers.net.
+# com.                    172800  IN      NS      d.gtld-servers.net.
+# ...
 ```
 
 
@@ -137,3 +166,35 @@ ipconfig /renew
   #           Cache Hits: 23
   #         Cache Misses: 69
   ```
+
+
+## Security
+
+- DNS over HTTPS (DoH)
+- DNS over TLS (DoT)
+
+
+## Misc
+
+Public recursive DNS resovers:
+
+```
+# Google
+8.8.8.8
+8.8.4.4
+```
+
+```
+# Cloudflare
+# open
+1.1.1.1
+1.0.0.1
+
+# block malware
+1.1.1.2
+1.0.0.2
+
+# block malware and adult content
+1.1.1.3
+1.0.0.3
+```
