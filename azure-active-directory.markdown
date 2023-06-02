@@ -919,10 +919,18 @@ The `--filter` parameter in many `az ad` commands uses the OData filter syntax, 
 
 *Seems you could use `startswith`, `endswith`, but not `contains`*
 
-```sh
-# "startswith" needs to be all lowercase
-az ad group list --filter "startswith(displayName, 'gary')"
-```
+- `startswith`
+
+  ```sh
+  # "startswith" needs to be all lowercase
+  az ad group list --filter "startswith(displayName, 'gary')"
+  ```
+
+- `in`
+
+  ```sh
+  --filter 'id in ("xxx-xxx", "xxx-xxx")'
+  ```
 
 ### Application and service principal owners
 
