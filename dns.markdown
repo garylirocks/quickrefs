@@ -5,6 +5,7 @@
 - [`ipconfig`](#ipconfig)
 - [`systemd-resolve`](#systemd-resolve)
 - [Security](#security)
+- [DNSSEC](#dnssec)
 - [Misc](#misc)
 
 
@@ -172,6 +173,36 @@ ipconfig /renew
 
 - DNS over HTTPS (DoH)
 - DNS over TLS (DoT)
+
+## DNSSEC
+
+Why: Security was not imbedded in the original DNS design, a DNS response could be spoofed, a resolver cannot easily verify its authenticity.
+
+DNS record types for DNSSEC:
+
+- **RRSIG (resource record signature)**: the signature for a record set
+- **DNSKEY**: the public key to verify signatures in RRSIG records
+- **DS (delegation signer)**: holds the name of a delegated zone, referencing a DNSKEY record in the sub-delegated zone
+- **NSEC**
+- **NSEC3**
+- **NSEC3PARAM**
+
+How:
+
+- Every DNS zone has a public/private key pair
+  - The *public key* is published in the zone itself for anyone to retrieve
+- Signatures of the DNS zone data is generated
+- DNS queries and responses themselves are not signed
+- Any recursive resolver that looks up data in the zone also retrieves the zone's public key, which it uses to validate the authenticity ot the DNS data.
+- Insures integrity, but not confidentiality or availability
+
+Chain of trust:
+
+- Effectively, the *public key* of each zone is signed by the private key of its parent zone
+- The public key at the beginning of a chain of trust is called a *trust anchor*
+- Most resolvers are configured with just one trust anchor: a set of public keys for the root zone
+- The root zone and all gTLDs are already signed.
+- Domain owners generate their own keys, and upload them to the domain-name registrar, which pushes the keys to the zone operator (e.g. Verisign for .com), who signs and publishes them in DNS
 
 
 ## Misc
