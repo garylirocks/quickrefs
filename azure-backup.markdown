@@ -40,6 +40,7 @@
   - **Vault-standard tier**
     - For all workload
     - An auto-scaling set of storage accounts in a **Microsoft managed tenant**
+  - **Vault-archive tier**
 
 ### Backup Vault
 
