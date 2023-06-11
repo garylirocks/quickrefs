@@ -5,7 +5,6 @@
   - [Deployment](#deployment)
   - [SQL](#sql)
   - [Spark](#spark)
-- [Databricks](#databricks)
 - [HDInsight](#hdinsight)
 - [Apache Spark](#apache-spark)
 - [Stream Analytics](#stream-analytics)
@@ -79,16 +78,6 @@ Group by Category;
   df_counts = df.groupBy(df.Category).count()
   display(df_counts)
   ```
-
-
-## Databricks
-
-- Could be used on multiple clouds
-- Run big data pipelines using both batch and real-time data
-  - Batch data from Data Factory
-  - Real-time data from Event Hub, IoT hub
-- Train machine-learning models
-- Uses Spark
 
 
 ## HDInsight
