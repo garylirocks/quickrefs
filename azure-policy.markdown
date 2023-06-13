@@ -167,7 +167,7 @@ Evaluation times or events:
 - A new assignment created
 - A policy or initiative already assigned to a scope is updated
 - Standard compliance evaluation cycle, once every 24 hours
-- You could trigger an on-demand scan with `az policy state trigger-scan`
+- You could trigger an on-demand scan on a scope with `az policy state trigger-scan -g "rg-gary-playground"`
 
 ## Order of evaluation
 
@@ -312,6 +312,7 @@ A `deployIfNotExists` or `modify` policy should define the roles it requires:
 - For resource groups, use `Microsoft.Resources/subscriptions/resourceGroups` as alias, not `Microsoft.Resources/resourceGroups`
 
 - While the Azure Policy VS Code extension is handy for verifying policy rules locally, it has some shortcomings:
+  - The policy file name needs to end with `.pd.json`
   - Can't verify rules targeting subscriptions or resource groups
   - It doesn't validate some of the limits, sometimes a rule is fine locally, but would be rejected by Azure when you deploy:
     - 100 "value count" iterations per policy
