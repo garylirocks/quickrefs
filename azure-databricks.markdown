@@ -2,8 +2,10 @@
 
 - [Overview](#overview)
 - [VNet injection](#vnet-injection)
-  - [Private link](#private-link)
+- [Private link](#private-link)
+  - [Standard deployment](#standard-deployment)
 - [Secure cluster connectivity](#secure-cluster-connectivity)
+- [Administration](#administration)
 
 
 ## Overview
@@ -15,21 +17,35 @@
 - Train machine-learning models
 - Uses Spark
 
+Networking diagram:
+
+![Networking diagram](images/azure_databricks-arch-diagram.png)
+
+- Control plane in MSFT-managed subscription
+- Data plane in a MSFT-managed VNet in customer subscription
+  - It has MSFT managed NSG associated to subnets
+- A MSFT-managed DBFS(Databricks filesystem) storage account created as well
+
 
 ## VNet injection
 
-// TODO the networking diagram
-
-- The vNet must have two subnets dedicated to `Microsoft.Databricks/workspaces`, subnet can
+- For the workspace VNet, instead of using a MSFT-managed one, you could use your custom VNet
+- The vNet must have two subnets dedicated to `Microsoft.Databricks/workspaces`, subnets
   - a container subnet (private subnet)
   - a host subnet (public subnet)
 - Subnets cannot be shared across workspaces or with other Azure resources
 - Azure Databricks auto-provision and manages some rules in the NSG for these two subnets, you can't delete or update these rules
   - Some rules have *VirtualNetwork* assigned as source and destination, this is because Azure does not have subnet-level service tag. All clusters are protected by a second layer of network policy internally, so cluster A cannot connect to Cluster B in the same/another workspace.
   - If you have Azure resources in another subnet you want to protect, add a Inbound *deny* rule
-- You might need to configure UDRs for these two subnets, to allow the clusters connect to `Azure Databricks`, Extended infrastructure IP, `Azure SQL`, `Azure Storage` and `Azure Event Hub`
+- You might need to configure UDRs for these two subnets, to route via `INTERNET` for following destinations:
+  - `Azure Databricks`
+  - Extended infrastructure IP (for standby Azure Databricks inferastructure to improve the stability of Databricks services)
+  - `Azure SQL` (for Azure Databricks metastore)
+  - `Azure Storage` (for artifact Blob storage and log Blob storage)
+  - `Azure Event Hub` (for logging to Azure Event Hub)
 
-### Private link
+
+## Private link
 
 Requirements:
 - Workspace must be on premium tier
@@ -41,25 +57,25 @@ Connection types:
 - **Front-end Private Link (user to control plane)**
   - Target sub-resource: `databricks_ui_api`
   - Between users and workspace (the control plane)
-  - Connect to ADB web application, REST API, Databricks Connect API
+  - Used for connection to ADB web application, REST API, Databricks Connect API
   - Also used by JDBC/ODBC and PowerBI integrations
 - **Back-end Private Link (data plane to control plane)**
   - Target sub-resource: `databricks_ui_api`
   - From the clusters to the secure cluster connectivity relay endpoint and REST API endpoint
-  - Secure cluster connectivity (SCC / No Public IP / NPIP) must be enabled
+  - **Secure cluster connectivity (SCC / No Public IP / NPIP) must be enabled**
   - *data plane* here refers to the Classic data plane, the compute layer of Azure Databricks, NOT serverless data plane that supports serverless SQL warehouses
 - **Web auth private connections**
   - Target sub-resource: `browser_authentication`
   - The domain name for a region is like: `australiaeast.pl-auth.azuredatabricks.net`
-    - There might be more than one if there are multiple Azure Databricks control plane instance in the same region, like `australiaeast-c2.pl-auth.azuredatabricks.net`
+    - There might be more than one if there are multiple Azure Databricks control plane instances in the same region, like `australiaeast-c2.pl-auth.azuredatabricks.net`
   - Special configuration for SSO login callbacks to the Azure Databricks web application.
   - Allows AAD to redirect users after login to the correct control plane instance
   - Not needed for REST API calls
   - Exactly one PEP needed for all workspaces in the same region which share one private DNS zone
-  - Strongly recommended to create a separate *private web auth workspace* for this
+  - Strongly recommended to create a separate ***private web auth workspace*** for this
     - This workspace exists just for this web auth PEP
     - Don't put any workload in it
-    - Config it for no user login
+    - Don't config it for user login
     - No need for connection from data plane to control plane
     - Don't delete it
 
@@ -72,8 +88,21 @@ Two types of deployment:
 
 - Simplified:
   - A single PEP for both front-end and back-end connections
-  - The transit subnet in the workspace's VNet
+  - The transit subnet in the workspace VNet
   - Can't be front-end only
+
+### Standard deployment
+
+![Standard deployment](images/azure_databricks-private-link-standard-deployment.png)
+
+Objects:
+
+![Standard deployment objects](images/azure_databricks-private-link-standard-deployment-objects.png)
+
+- Create a separate *private web auth workspace* per region for SSO login
+  - This workspace needs its own VNet for VNet injection (though you won't put anything in it), not shown in the diagram
+  - Set a log to this workspace, so it won't be deleted
+- You need two separate private DNS zones for the `databricks_ui_api` endpoint, one for backend, one for frontend
 
 
 ## Secure cluster connectivity
@@ -101,3 +130,12 @@ Scenarios:
   - Use an outbound/egress load balancer, its configuration is managed by Azure Databricks
   - Use an Azure NAT gateway
   - Use UDR, directly to the endpoints or through a firewall
+
+
+## Administration
+
+Two levels:
+
+- Account level
+  - You'll need AAD Global Admin user to login to ADB, and assign the Account admin to a user while setting up
+- Workspace level
