@@ -655,7 +655,7 @@ Operations:
 
 - Called BlobCache, uses a combination of the host RAM and local SSD
 - Available for Premium Storage persistent disks and VM local disks
-- Default caching seeting:
+- Default caching setting:
   - `Read/Write` for OS disks
   - `ReadOnly` for data disks
 - Suggested cache setting:
