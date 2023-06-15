@@ -138,7 +138,7 @@ A vNet can be cloud-only or connected to on-prem network through site-2-site VPN
 #### Delegation
 
 - You could delegate a specific subnet to an Azure PaaS service, such as VNet data gateway (`Microsoft.PowerPlatform/vnetaccesslinks`)
-- The purpose usually is to allow the PaaS service to access resources within the VNet
+- The purpose usually is to allow a PaaS service to access/manage resources for the subnet, such as managing NSGs (`Microsoft.Network/virtualNetworks/subnets/prepareNetworkPolicies/action`)
 - You need `Microsoft.Network/virtualNetworks/subnets/join/action` permission (included in "Network Contributor" role)
 
 
