@@ -6,6 +6,7 @@
   - [Standard deployment](#standard-deployment)
 - [Secure cluster connectivity](#secure-cluster-connectivity)
 - [Administration](#administration)
+- [Data](#data)
 
 
 ## Overview
@@ -24,7 +25,13 @@ Networking diagram:
 - Control plane in MSFT-managed subscription
 - Data plane in a MSFT-managed VNet in customer subscription
   - It has MSFT managed NSG associated to subnets
-- A MSFT-managed DBFS(Databricks filesystem) storage account created as well
+- There's a managed resource group,
+  - It contains:
+    - DBFS(Databricks filesystem) storage account `dbstoragexxxxx`
+    - A user-assigned managed identity `dbmanagedidentity`, this will be assigned to cluster node VMs
+    - Cluster nodes(as VMs) you created in the workspace
+    - The managed VNet if you are not using your own VNet
+  - Databricks adds a Deny Assignment to the RG, so you can't change things, except adding PEP to the DBFS storage account
 
 
 ## VNet injection
@@ -33,6 +40,8 @@ Networking diagram:
 - The vNet must have two subnets dedicated to `Microsoft.Databricks/workspaces`, subnets
   - a container subnet (private subnet)
   - a host subnet (public subnet)
+  - the minimum size of each subnet is `/28`
+  - each cluster node will have tow NICs, one in container subnet, one in host subnet
 - Subnets cannot be shared across workspaces or with other Azure resources
 - Azure Databricks auto-provision and manages some rules in the NSG for these two subnets, you can't delete or update these rules
   - Some rules have *VirtualNetwork* assigned as source and destination, this is because Azure does not have subnet-level service tag. All clusters are protected by a second layer of network policy internally, so cluster A cannot connect to Cluster B in the same/another workspace.
@@ -137,5 +146,31 @@ Scenarios:
 Two levels:
 
 - Account level
-  - You'll need AAD Global Admin user to login to ADB, and assign the Account admin to a user while setting up
+  - At `https://accounts.azuredatabricks.net`
+  - Manages:
+    - Get SCIM user provisioning URL and token
+    - Users and groups
+    - IP access list
 - Workspace level
+  - At `https://adb-xxxxx.xx.azuredatabricks.net`
+  - Manages:
+    - Users and groups in workspace
+    - Workspace settings, eg. Access control, Storage, Cluster, etc
+    - SQL settings
+    - SQL warehouse settings
+
+Initial setup:
+
+1. An AAD Global Admin user login to Azure Portal
+1. Find the Databricks resource, click on "Launch Workspace"
+1. This account will be set up as "Account admin", he can assign the "Account admin" role to another user
+
+
+## Data
+
+Hierarchy:
+
+- Metastore
+- Catalog
+- Schema (databases)
+- Tables/views
