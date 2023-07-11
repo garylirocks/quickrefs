@@ -15,6 +15,9 @@
     - [Always On availability group](#always-on-availability-group)
     - [Failover cluster instance (FCI)](#failover-cluster-instance-fci)
   - [Backup](#backup)
+- [Authentication and authorization](#authentication-and-authorization)
+  - [Authentication](#authentication)
+  - [Authorization](#authorization)
 - [Data security](#data-security)
   - [Transparent data encryption (TDE)](#transparent-data-encryption-tde)
   - [Dynamic data masking](#dynamic-data-masking)
@@ -267,6 +270,36 @@ Most SQL Server HADR solutions are supported on VMs, as both Azure-only and hybr
 - Manual Backup
   - Back up to attached disks or Blob storage
   - Use SSMS or SQL scripts
+
+
+## Authentication and authorization
+
+### Authentication
+
+Logins and users:
+
+- A **login** is an individual account in the `master` database, to which a user account in one or more databasese can be linked. Credential stored with the login in `master`.
+- A **user account** is an individual account in any database that may be, but not have to be, linked to a login. If not linked, credential is stored in the database.
+
+Auth methods:
+
+- SQL auth
+  - User account linked or not linked to a login
+- AAD auth
+
+When you deploy Azure SQL:
+
+- A SQL login created with specified name
+- This login has full admin permissions on all databases as a server-level principal
+- When you sign into a database with this login, it's matched to the `dbo` user account, which
+  - exists in every user database
+  - has all database permissions
+  - is member of the `db_owner` fixed database role
+
+
+### Authorization
+
+Managed using database roles and explicit permissions.
 
 
 ## Data security
