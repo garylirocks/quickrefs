@@ -1574,6 +1574,9 @@ nslookup -type=PTR 10.0.0.4
 # Non-authoritative answer:
 # 4.0.0.10.in-addr.arpa   name = vm-demo-001.internal.cloudapp.net.
 # 4.0.0.10.in-addr.arpa   name = vm-demo-001.example.private.
+
+# change hostname
+hostnamectl set-hostname vm-demo-001.newdomain.com
 ```
 
 - DNS IP is `168.63.129.16`, this is static, same in every vNet
