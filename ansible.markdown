@@ -625,7 +625,17 @@ Compare `include_*` and `import_*`:
 
 - The bare `include` keyword is deprecated
 - Avoid using both includes and imports in a single playbook, it can lead to difficult-to-diagnose bugs
-- For importing, if you add
+- If you use roles at play level, they are treated as static imports, tags are applied to all tasks within the role:
+  ```yaml
+  ---
+  - hosts: webservers
+    roles:
+      - role: my-role
+        vars:
+          app_port: 5000
+        tags: typeA
+      - role: another-role
+  ```
 
 
 ## Secrets
