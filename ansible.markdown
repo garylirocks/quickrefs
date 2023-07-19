@@ -10,10 +10,13 @@ Ansible
 - [Variables](#variables)
   - [Ansible facts](#ansible-facts)
   - [Magic variables](#magic-variables)
+  - [Filters](#filters)
 - [Loops](#loops)
 - [Testing](#testing)
   - [Test with localhost](#test-with-localhost)
 - [Error handling](#error-handling)
+- [Debugging](#debugging)
+  - [`debugger` keyword](#debugger-keyword)
 - [Roles](#roles)
   - [Example](#example)
 - [Collections](#collections)
@@ -433,6 +436,28 @@ They contain information about ansible operations.
 - `ansible_version`
 
 
+### Filters
+
+- `default`
+
+  ```
+  # default to 5
+  {{ some_variable | default(5) }}
+
+  # default value if any field undefined
+  {{ foo.bar.baz | default('DEFAULT') }}
+
+  # default to "admin" if the variable exists, but evaluates to false or an empty string
+  {{ lookup('env', 'MY_USER') | default('admin', true) }}
+
+  # making an variable optional
+  {{ item.mode | default(omit) }}
+
+  # making an variable mandatory, when `DEFAULT_UNDEFINED_VAR_BEHAVIOR` is set to false
+  {{ item.mode | mandatary }}
+  ```
+
+
 ## Loops
 
 ```yaml
@@ -498,6 +523,37 @@ It's often easier to test with localhost first
   ```
 
 
+## Debugging
+
+To enable the debugger:
+
+- use `debugger` keyword (task, block, play or role level)
+- in configuration or environment variable
+- as a strategy
+
+### `debugger` keyword
+
+```yaml
+- name: My play
+  hosts: all
+  tasks:
+    - name: Execute a command
+      debugger: always
+      ansible.builtin.command: "true"
+      when: False
+```
+
+when the debugger is triggered, you print out and update task variables, arguments, then rerun it (see https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_debugger.html#available-debug-commands)
+
+```
+p task.args
+p task_vars
+
+task.args['arg1'] = 'new arg value'
+
+redo
+```
+
 
 ## Roles
 
@@ -515,9 +571,14 @@ ls -AF
 ```
 
 - `defaults/` for default variable values
+  - could be overwritten by group_vars or host_vars
 - `vars/` override default variable values
+  - could not be overwritten by group_vars or host_vars
+  - CAN be overwritten by block/task vars, `-e`
+  - see https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_variables.html#understanding-variable-precedence for full details
 - `tasks/` tasks for this role
 - `templates/` jinja2 template files for the `template` task
+- `handlers/` handlers are only fired when certain tasks report changes, and are run at the end of each play
 
 ### Example
 
