@@ -2,7 +2,8 @@
 
 ## Subscriptions
 
-Subscriptions could be for RHEL OS or other Red Hat products
+- Subscriptions could be for RHEL OS or other Red Hat products
+- A subscription is not tied to a paticular RHEL version, you could upgrade RHEL using the same subscription
 
 To register your OS with Customer Portal Subscription Management service (or on-prem Subscription Asset Manager), run:
 
