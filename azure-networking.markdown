@@ -95,7 +95,7 @@
 
 ![vnet](images/azure_virtual-networks.png)
 
-A vNet can be cloud-only or connected to on-prem network through site-2-site VPN, or ExpressRoute circuit
+A vNet can be cloud-only or connected to on-prem network through site-2-site VPN, or ExpressRoute
 
 - Some resources are connected directly:
   - VM
@@ -104,6 +104,7 @@ A vNet can be cloud-only or connected to on-prem network through site-2-site VPN
   - AKS
 - Use service endpoints to connect to other PaaS services: storage accounts, key vaults, SQL databases, etc
 - Or use private endpoints to connect to PaaS or your own custom services.
+- A vNet spans multiple availability zones, not limited to a single data center
 
 ### Subnets
 
@@ -139,7 +140,7 @@ A vNet can be cloud-only or connected to on-prem network through site-2-site VPN
 
 - You could delegate a specific subnet to an Azure PaaS service, such as VNet data gateway (`Microsoft.PowerPlatform/vnetaccesslinks`)
 - The purpose usually is to allow a PaaS service to access/manage resources for the subnet, such as managing NSGs (`Microsoft.Network/virtualNetworks/subnets/prepareNetworkPolicies/action`)
-- You need `Microsoft.Network/virtualNetworks/subnets/join/action` permission (included in "Network Contributor" role)
+- You need `Microsoft.Network/virtualNetworks/subnets/join/action` permission to delegate a subnet (included in "Network Contributor" role)
 
 
 ### CLI
