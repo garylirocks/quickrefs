@@ -6,6 +6,7 @@
   - [Action definition](#action-definition)
   - [Workflow file](#workflow-file)
   - [Step output](#step-output)
+  - [Environments](#environments)
   - [GitHub Script](#github-script)
 
 ## GitHub Flow
@@ -209,7 +210,7 @@ test:
           path: public
 ```
 
-Multiple environments for a job:
+Multiple compute contexts for a job:
 
 ```yaml
 test:
@@ -250,6 +251,26 @@ Your could output a variable in one step using `::set-output` command in one ste
     tags: ${{secrets.ACR_NAME}}/contoso-website:${{ steps.fetch_version.outputs.TAG }}
     push: true
 ```
+
+### Environments
+
+```yaml
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment:
+        name: dev
+    steps:
+    - name: check out repo
+      uses: actions/checkout@v2
+    - name: azure login
+      uses: azure/login@v1
+      with:
+        creds: ${{secrets.AZURE_CREDENTIALS}}
+```
+
+- Specify the `dev` environment
+- Each environment could have its own `AZURE_CREDENTIALS` secret
 
 ### GitHub Script
 
