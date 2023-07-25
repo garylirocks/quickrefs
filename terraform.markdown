@@ -366,27 +366,60 @@ In a collaborative or CI/CD context, you may want to run and save state files re
 
 ### Terraform Cloud
 
-  Terraform Cloud supports remote run, storing state file, input variables, environment variables, private module registry, policy as code, etc
+Terraform Cloud supports remote run, storing state file, input variables, environment variables, private module registry, policy as code, etc
 
-  1. `terraform login`
+1. Add a `backend` to config
 
-  1. Add a `backend` to config
+    ```terraform
+    terraform {
+      ...
 
-      ```terraform
-      terraform {
-        ...
+      cloud {
+        organization = "garylirocks"
 
-        backend "remote" {
-          organization = "garylirocks"
-
-          workspaces {
-            name = "learning"
-          }
+        workspaces {
+          tags = ["cli", "prod"]
         }
       }
-      ```
+    }
+    ```
 
-  1. By default, `terraform apply` runs remotely in Terraform Cloud, so you need to put credentials Terraform needs as workspace env variables (eg. `ARM_CLIENT_SECRET` for `azurerm`)
+    Deprecated syntax:
+
+    ```terraform
+    terraform {
+      ...
+
+      backend "remote" {
+        organization = "garylirocks"
+
+        workspaces {
+          name = "learning"
+        }
+      }
+    }
+    ```
+
+1. Run `terraform login`, this saves a token to `~/.terraform.d/credentials.tfrc.json`
+
+    ```json
+    {
+      "credentials": {
+        "app.terraform.io": {
+          "token": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        }
+      }
+    }
+    ```
+
+3. Run `plan` or `apply`, this runs remotely in Terraform Cloud, so the workspace should have credentials configured as workspace env variables (eg. `ARM_CLIENT_SECRET` for `azurerm`)
+
+Note:
+
+- When you use `tags` (instead of `name`) to specify workspaces, you could switch between or create new workspaces in Terraform Cloud
+- When running a remote `plan` or `apply`, a copy of your directory is uploaded to Terraform Cloud, you could use `.terraformignore` to exclude paths (`.git/` and `.terraform/` are ignored by default)
+- You should create one workspace for each environment (dev, test, prod)
+- For workspaces configured with VCS-driven workflow, you can trigger `plan` from local CLI, but **not** `apply`
 
 ### Azure blob storage
 
@@ -1226,6 +1259,7 @@ Two primary ways of separating environments:
     - Pros:
       - Same config files and different variable values, state files
       - This aligns with the concept of workspaces in Terraform Cloud
+      - When connected to Terraform Cloud, the command `terraform workspace select|new` works on workspaces in Terraform Cloud
     - Cons: must be aware of the workspace you are working in
 
     Create and manage workspaces in a directory
