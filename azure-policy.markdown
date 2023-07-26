@@ -195,8 +195,9 @@ After create or update requests, **`then.details.evaluationDelay`** determines w
 - Remediation tasks deploy the `deployIfNotExists` template or the `modify` operations of the assigned policy
 - Uses a managed identity(system or user assigned) that is associated with the policy assignment
 - The managed identity needs to be assigned the minimum RBAC roles required
-- When using the Portal, Azure Policy automatically grants the managed identity the listed roles once assignment starts
-- When using an Azure SDK, **the roles must manually be granted to the managed identity**, the location of the managed identity doesn't impact its operation with Azure Policy
+    - When using the Portal, Azure Policy automatically grants the managed identity the listed roles once assignment starts
+    - When using an Azure API, **the roles must manually be granted to the managed identity**, for a initiative assignment, it means all the required roles from each member policy
+    - The location of the managed identity doesn't impact its operation with Azure Policy
 
 A `deployIfNotExists` or `modify` policy should define the roles it requires:
 
