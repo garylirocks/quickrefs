@@ -6,6 +6,7 @@
 - [Certificates](#certificates)
   - [Certificate information](#certificate-information)
   - [Convert `.pfx` to `.pem`](#convert-pfx-to-pem)
+  - [Add a CA certificate to Linux system](#add-a-ca-certificate-to-linux-system)
 - [Self-signed SSL certs](#self-signed-ssl-certs)
 - [Digest/hash](#digesthash)
 - [Encryption](#encryption)
@@ -116,6 +117,13 @@ openssl pkcs12 -in cert.pfx -out cert.pem -nodes
 
 # don't output the private key
 openssl pkcs12 -in cert.pfx -out cert.pem -nodes -nokeys
+```
+
+### Add a CA certificate to Linux system
+
+```sh
+sudo cp new-ca.crt /usr/local/share/ca-certificates/
+sudo update-ca-certificates
 ```
 
 
