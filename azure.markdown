@@ -265,7 +265,7 @@ Three types of Availability Zone support:
   - Create a RBAC assignment on a group
 - All subscriptions and management groups are within a single hierarchy in each directory
 - Each directory is given a root management group, it has the same id as the tenant, it could be used for global RBAC assignments and policies
-- Up to six levels of depth, excluding the tenant root group
+- Up to **six levels of depth**, excluding the tenant root group and subscription level
 
 ```sh
 # list management groups
