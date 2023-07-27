@@ -40,8 +40,23 @@ Depending on whether a policy is targeting an Azure Resource Manager property or
 
 - Resource Manager modes
 
-    - **All**:
-    - **Indexed**: only evalue
+  - **All**: resource groups, subscriptions, and all resource types
+    - For most use cases
+    - Default for PowerShell, Portal
+  - **Indexed**: only evaluate resource types that support tags and location
+    - ie. `Microsoft.Network/routeTables/routes` does not support tags and location, so it's not evaluated in this mode
+    - Should be used for policies enforcing tags or locations, to prevent resources that don't support tags and locations from showing up as non-compliant
+    - But for tags and locations policy on resource groups or subscriptions, you should use `All` mode
+
+- Resource Provider modes
+
+  - `Microsoft.Kubernetes.Data`
+  - `Microsoft.KeyVault.Data`: for managing vaults and certificates, could provide compliance information about components (ie. certificates in this case)
+  - `Microsoft.Network.Data` for managing Azure Virtual Network Manager custom membership policies using Azure Policy
+
+Resource Provider modes
+  - **only support built-in policy definitions**
+  - and exemptions are not supported at the component-level
 
 
 ## Assignments
