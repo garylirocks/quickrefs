@@ -323,8 +323,15 @@ Examples:
 *Azure storage firewall is not supported for cloud shell storage account.*
 
 Files are persisted in two ways:
-  - **Disk image**: for your `$HOME` directory, a 5GB image, at `<fileshare>/.cloudconsole/acc_<user>.img`, changes sync automatically
   - **File share**: mounted at `$HOME/clouddrive`, which maps to the file share
+    - `//stdemo001.file.core.windows.net/garyli`  mounted at `/usr/csuser/clouddrive`
+    - `$HOME/clouddrive` is a symlink to `/usr/csuser/clouddrive`
+  - **Disk image**: for your `$HOME` directory, a 5GB image, at `<fileshare>/.cloudconsole/acc_<user>.img`, changes sync automatically
+
+    ```sh
+    du -sh clouddrive/.cloudconsole/acc_gary.img
+    5.0G
+    ```
 
 You could use `clouddrive` command to unmount current file share or mount a new share
 
