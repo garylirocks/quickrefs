@@ -141,7 +141,13 @@ az provider show \
 Use `az rest` to query REST API.
 
 ```sh
-az rest --method get --url "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-temp-001?api-version=2022-01-01"
+az rest -u "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-temp-001?api-version=2022-01-01"
+```
+
+Delete something
+
+```sh
+az rest -m delete -u "/providers/Microsoft.CostManagement/scheduledActions/mydailycostview?api-version=2023-03-01"
 ```
 
 Seems there are some inconsistencies in the API, usually for a non existent resource, "GET" call returns 404, but the Private DNS Zone Group API returns 200.
