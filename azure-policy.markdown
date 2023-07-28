@@ -4,14 +4,16 @@
 - [Mode](#mode)
 - [Assignments](#assignments)
 - [Effects](#effects)
-- [Order of evaluation](#order-of-evaluation)
+- [Policy assignment evaluation](#policy-assignment-evaluation)
+  - [Time](#time)
+  - [Evaluation Order](#evaluation-order)
 - [Remediation](#remediation)
 - [Conditions](#conditions)
 - [RBAC Permissions](#rbac-permissions)
-- [Best practices](#best-practices)
 - [Built-in policies](#built-in-policies)
 - [Terminology](#terminology)
 - [Regulatory Compliance](#regulatory-compliance)
+- [Best practices](#best-practices)
 - [Gotchas](#gotchas)
 
 
@@ -176,6 +178,10 @@ An assignment could have one of the following effects:
     ```
 
 
+## Policy assignment evaluation
+
+### Time
+
 Evaluation times or events:
 
 - A resource is created or updated
@@ -184,7 +190,7 @@ Evaluation times or events:
 - Standard compliance evaluation cycle, once every 24 hours
 - You could trigger an on-demand scan on a scope with `az policy state trigger-scan -g "rg-gary-playground"`
 
-## Order of evaluation
+### Evaluation Order
 
 When a request to create or update a resource comes in, Azure Policy creates a list of all assignments that apply to the resource.
 
@@ -250,19 +256,11 @@ A `deployIfNotExists` or `modify` policy should define the roles it requires:
 - `User Access Administrator`: needed to grant permissions to the managed identity on `deployIfNotExists` or `modify` assignments
 
 
-## Best practices
-
-- Creating and assigning initiative definitions even for a single policy definition
-- Creating definitions at higher levels, then create the assignment at the next child level
-- Put everything in code
-- Start with an "audit" effect instead of a "deny" effect to track impact of your policy definition
-
-
 ## Built-in policies
 
 - There are often similar built-in policies with different effects:
 
-    - "Network Watcher should be enabled", which has "AuditIfNotExists" effect, this is in the `Azure Security Benchmark` initiative
+    - "Network Watcher should be enabled", which has `AuditIfNotExists` effect, this is in the `Azure Security Benchmark` initiative
     - "Deploy network watcher when virtual networks are created" which has `DeployIfNotExists` effect
 
 - Defender for Cloud (aka Azure Security Center) assigns initiatives automatically to your subscriptions when you enable certain features:
@@ -316,6 +314,16 @@ A `deployIfNotExists` or `modify` policy should define the roles it requires:
   - the policies are of type `static`
   - the evaluation type is "Microsoft Managed"
 - The initiative could be built-in or custom
+
+
+## Best practices
+
+- Create and assign initiative definitions, even for a single policy definition
+- Creating definitions at higher levels, then create the assignment at the next child level
+- Put everything in code
+- Start with an "audit" effect instead of a "deny" effect to track impact of your policy definition
+- Use "Enforcement mode" instead of "Audit" effect for `Deny` and `DeployIfNotExists (DINE)` policies
+  - When "Enforcement mode" is off, the policies effectively audit the resources, you can then turn it on when ready
 
 
 ## Gotchas
