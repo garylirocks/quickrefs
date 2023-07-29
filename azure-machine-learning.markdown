@@ -8,7 +8,12 @@
   - [Roles](#roles)
 - [Data ingestion](#data-ingestion)
 - [Train a model](#train-a-model)
-- [Deploy a predictive service](#deploy-a-predictive-service)
+- [Models](#models)
+- [Compute](#compute)
+  - [CPU vs. GPU](#cpu-vs-gpu)
+  - [General purpose vs. memory optimized](#general-purpose-vs-memory-optimized)
+  - [Spark](#spark)
+- [Model deployment](#model-deployment)
 - [Pipelines](#pipelines)
 - [Azure CLI](#azure-cli)
 
@@ -109,9 +114,48 @@ Different types of jobs:
 - AutoML experiments
 
 
-## Deploy a predictive service
+## Models
 
-Can be deployed to
+Common model types:
+
+- Classification: Predict a categorical value.
+- Regression: Predict a numerical value.
+- Time-series forecasting: Predict future numerical values based on time-series data.
+- Computer vision: Classify images or detect objects in images.
+- Natural language processing (NLP): Extract insights from text.
+
+
+## Compute
+
+### CPU vs. GPU
+
+|                   | CPU   | GPU   |
+| ----------------- | ----- | ----- |
+| Cost              | low   | high  |
+| Tabular data      | small | large |
+| Unstructured data | no    | yes   |
+
+GPU is more powerful, but cost more
+
+### General purpose vs. memory optimized
+
+- General purpose: for testing and development with smaller datasets
+- Memory optimized: higher memory-to-CPU ratio, ideal for larger datasets, or working in notebooks
+
+### Spark
+
+- A Spark cluster consists of a **driver node** and **workder nodes**. Driver nodes distribute the work, and summarize the result.
+- You code needs to be written in a Spark-friendly language, such as Scala, SQL, RSpark, or PySpark
+
+
+## Model deployment
+
+Two types:
+
+- **Real-time**: the compute needs to be running all the time
+- **Batch**: the compute could be started/shutdown as needed
+
+Compute:
 
 - ACI
   - Suitable for testing
