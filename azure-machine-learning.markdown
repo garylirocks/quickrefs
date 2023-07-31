@@ -14,7 +14,10 @@
   - [General purpose vs. memory optimized](#general-purpose-vs-memory-optimized)
   - [Spark](#spark)
 - [Model deployment](#model-deployment)
-- [Pipelines](#pipelines)
+- [Jobs](#jobs)
+  - [Command job](#command-job)
+  - [Pipeline job](#pipeline-job)
+  - [Trigger a job via CLI](#trigger-a-job-via-cli)
 - [Azure CLI](#azure-cli)
 
 
@@ -164,7 +167,29 @@ Compute:
   - Must create an *inference cluster* compute target
 
 
-## Pipelines
+## Jobs
+
+### Command job
+
+```yaml
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+code: src
+command: >-
+  python main.py
+  --diabetes-csv ${{inputs.diabetes}}
+inputs:
+  diabetes:
+    path: azureml:diabetes-data:1
+    mode: ro_mount
+environment: azureml:basic-env-scikit@latest
+compute: azureml:aml-instance
+experiment_name: diabetes-data-example
+description: Train a classification model on diabetes data using a registered dataset as input.
+```
+
+- `azureml:diabetes-data:1`: use version 1 of the `diabetes-data` data asset
+
+### Pipeline job
 
 A sample pipeline in YAML:
 
@@ -216,10 +241,12 @@ A script step specifies:
 - The code, inputs, outputs
 - Which compute target to use
 
-You could trigger a pipeline with
+### Trigger a job via CLI
+
+You could trigger a job with
 
 ```sh
-az ml job create --file pipeline-job.yml
+az ml job create --file job.yml
 ```
 
 
