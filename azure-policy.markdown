@@ -323,7 +323,8 @@ A `deployIfNotExists` or `modify` policy should define the roles it requires:
 - Put everything in code
 - Start with an "audit" effect instead of a "deny" effect to track impact of your policy definition
 - Use "Enforcement mode" instead of "Audit" effect for `Deny` and `DeployIfNotExists (DINE)` policies
-  - When "Enforcement mode" is off, the policies effectively audit the resources, you can then turn it on when ready
+  - When "Enforcement mode" is Disabled, the policies effectively audit the resources, you can then turn it on when ready
+- DINE or Modify policies should only deploy/configure auxiliary or supporting resources, NOT workloads.
 
 
 ## Gotchas
