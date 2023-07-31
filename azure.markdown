@@ -28,7 +28,6 @@
 - [Azure Resource Graph](#azure-resource-graph)
   - [Sample KQL queries](#sample-kql-queries)
 - [Blueprints](#blueprints)
-- [Azure Cloud Adoption Framework](#azure-cloud-adoption-framework)
 - [Billing](#billing)
   - [Tag inheritance](#tag-inheritance)
 - [Business Process Automation](#business-process-automation)
@@ -542,25 +541,6 @@ Notes:
 - Resource deployed by blueprints are **locked**
   - When you un-assign a blueprint, the resource locking is removed, resources and RBAC assignments do not change
   - A subscription owner can't remove the lock, but can un-assign the blueprint if it's assigned at the subscription level
-
-
-## Azure Cloud Adoption Framework
-
-Cloud Adoption Framework consists of tools, documentation, and proven practices. It has five stages:
-
-1. Define your strategy
-    1. Motivation
-    1. Goals
-    1. Financial considerations
-    1. Technical considerations
-2. Make a plan.
-    1. What digital estate to migrate
-    1. Who needs to be involved
-    1. Skills readiness
-    1. A plan that brings together development, operations and business teams
-3. Ready your organization: create a landing zone
-4. Adopt the cloud: migrate and innovate
-5. Govern and manage your cloud environments.
 
 
 ## Billing

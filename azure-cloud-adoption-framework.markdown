@@ -1,12 +1,35 @@
 # Cloud adoption framework
 
+- [Stages](#stages)
 - [Motivations](#motivations)
 - [Financial considerations](#financial-considerations)
 - [Operating models](#operating-models)
-- [Conceptual architecture for Azure landing zones](#conceptual-architecture-for-azure-landing-zones)
+- [Landing zones](#landing-zones)
+- [Conceptual architecture](#conceptual-architecture)
+  - [Policies](#policies)
+  - [Tools and resources](#tools-and-resources)
 - [Deploy with Terraform](#deploy-with-terraform)
   - [ALZ Terraform module](#alz-terraform-module)
   - [CAF Terraform landing zones](#caf-terraform-landing-zones)
+
+
+## Stages
+
+Cloud Adoption Framework consists of tools, documentation, and proven practices. It has five stages:
+
+1. Strategy
+    1. Motivation
+    1. Goals
+    1. Financial considerations
+    1. Technical considerations
+2. Plan
+    1. What digital estate to migrate
+    1. Who needs to be involved
+    1. Skills readiness
+    1. A plan that brings together development, operations and business teams
+3. Ready: create a landing zone
+4. Adopt: migrate and innovate
+5. Govern and manage your cloud environments
 
 
 ## Motivations
@@ -64,11 +87,40 @@ Common IT operating models
   - Should consider transitioning to one of other models
 
 
-## Conceptual architecture for Azure landing zones
+## Landing zones
+
+## Conceptual architecture
 
 ![Reference architecture](images/azure_caf-reference-architecture-for-landing-zones.png)
 
 - Sandboxes management group contains subscriptions for dev/testing with loose or no policies applied. **They should NOT have direct connectivity to the landing zone subscriptions.**
+
+### Policies
+
+The reference landing zone implementation includes DINE and Modify policies, which help the landing zones and resources to be compliant, eg.
+
+- Enable Microsoft Defender for Cloud, configure Defender exports to the central Log Analytics workspace(LAW) in the management subscription
+- Enable Defender for Cloud for different resource types as per requirements
+- Configure Azure Activity logs and diagnostic settings to be sent to the central LAW
+- Deploy the required Azure Monitor agents for VM, VMSS, Arc connected servers, etc, sending logs to central LAW
+
+### Tools and resources
+
+Most of them developed and maintained by Microsoft employees
+
+- [AzAdvertizer](https://www.azadvertizer.net/), up-to-date info on different Azure Governance capabilities
+  - Built-in/ALZ/Community Policies, initiatives
+  - Security & regulatory compliance controls
+  - Azure aliases
+  - Built-in roles
+  - Azure resource provider operations (used in role definition)
+- [AzGovViz](https://github.com/JulianHayward/Azure-MG-Sub-Governance-Reporting), visualize Azure Governance hierarchy
+- [Enterprise-Scale - Reference Implementation](https://github.com/Azure/Enterprise-Scale)
+  - Can be deployed with Portal, ARM, Bicep and Terraform Modules
+  - It has custom policy definitions (the `ALZ` type in AzAdvertizer)
+  - Those policies are assigned to multiple levels [within the hierarchy](https://github.com/Azure/Enterprise-Scale/wiki/ALZ-Policies#what-policy-definitions-are-assigned-within-the-azure-landing-zones-custom--built-in)
+- [Enterprise Policy-as-Code (aka EPAC)](https://github.com/Azure/enterprise-azure-policy-as-code), for deploy Azure policies at scale, using PowerShell scripts, easy to integrate with CI/CD pipelines
+  - It has a script to pull policies from [ALZ repo](https://github.com/Azure/Enterprise-Scale/wiki/ALZ-Policies)
 
 
 ## Deploy with Terraform
