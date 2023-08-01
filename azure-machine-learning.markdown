@@ -18,7 +18,7 @@
   - [Command job](#command-job)
   - [Pipeline job](#pipeline-job)
   - [Trigger a job via CLI](#trigger-a-job-via-cli)
-- [Azure CLI](#azure-cli)
+- [Azure ML CLI](#azure-ml-cli)
 
 
 ## Overview
@@ -50,10 +50,10 @@ When a workspace is created, a few supporting resources are created with it in t
 - **Workspace**: stores all logs, metrics, outputs, models and snapshots of your code
 - **Compute**
   - Four types:
-    - Compute instance: ideal as a dev environment to run Jupyter notebooks
-    - Compute cluster: CPU or GPU compute nodes, ideal for production workloads, automatically scale
-    - Inference cluster: AKS cluster, ideal to deploy models in production
-    - Attached compute: attach other Azure compute resources, like Azure Databricks or Synapse Spark pools
+    - **Compute instance**: ideal as a dev environment to run Jupyter notebooks
+    - **Compute cluster**: CPU or GPU compute nodes, ideal for production workloads, automatically scale
+    - **Inference cluster**: AKS cluster, ideal to deploy models in production
+    - **Attached compute**: attach other Azure compute resources, like Azure Databricks or Synapse Spark pools
   - Most cost-intensive, should only allow admins to create and manage, not data scientists
 - **Datastores**
   - References to other data services, like Azure Storage Account and Azure Data Lake Storage (Gen2)
@@ -81,6 +81,7 @@ When a workspace is created, a few supporting resources are created with it in t
 - **Components**
   - Reusable code snippets, often represents a step in a pipline
   - A component consists of *name*, *version*, code and *environment* needed to run the code
+  - Can be shared across workspaces
 
 ### Roles
 
@@ -187,7 +188,10 @@ experiment_name: diabetes-data-example
 description: Train a classification model on diabetes data using a registered dataset as input.
 ```
 
-- `azureml:diabetes-data:1`: use version 1 of the `diabetes-data` data asset
+`azureml:diabetes-data:1`
+  - `azureml:` is the prefix for an existing registered data asset
+  - `diabetes-data` data asset name
+  - `1` data asset version
 
 ### Pipeline job
 
@@ -250,30 +254,72 @@ az ml job create --file job.yml
 ```
 
 
-## Azure CLI
+## Azure ML CLI
 
-```sh
-# install the extension
-az extension add -n ml -y
+- List workspaces
 
-az ml workspace list -otable
-```
+  ```sh
+  # install the extension
+  az extension add -n ml -y
 
-Create a YAML file for compute parameters:
+  az ml workspace list -otable
+  ```
 
-```yaml
-$schema: https://azuremlschemas.azureedge.net/latest/amlCompute.schema.json
-name: aml-cluster
-type: amlcompute
-size: STANDARD_DS3_v2
-min_instances: 0
-max_instances: 5
-```
+- Create dataset
 
-Then create the compute target:
+  ```sh
+  # upload local data in a folder, create a dataset in the default datastore
+  az ml data create \
+    --name dataset-test \
+    --version 1 \
+    --path ./data \
+    -w mlw-test-001 \
+    -g rg-ml-test
 
-```sh
-az ml compute create --file compute.yml \
-    --resource-group my-resource-group \
-    --workspace-name my-workspace
-```
+  # list dataset
+  az ml data list \
+    -w mlw-test-001 \
+    -g rg-ml-test
+    -otable
+  ```
+
+- Create compute
+
+  - List available compute sizes
+
+    ```sh
+    az ml compute list-sizes \
+      --type ComputeInstance \
+      -w mlw-test-001 \
+      -g rg-ml-test \
+      -otable
+    ```
+
+  - Create compute instance
+
+    ```sh
+    az ml compute create --name ds1_instance \
+      --size Standard_DS1_v2 \
+      --type ComputeInstance \
+      -w mlw-test-001 \
+      -g rg-ml-test
+    ```
+
+  - Create compute cluster with a YAML file
+
+    ```yaml
+    $schema: https://azuremlschemas.azureedge.net/latest/amlCompute.schema.json
+    name: aml-cluster
+    type: amlcompute
+    size: STANDARD_DS3_v2
+    min_instances: 0
+    max_instances: 5
+    ```
+
+    Then create the compute target:
+
+    ```sh
+    az ml compute create --file compute.yml \
+        --resource-group my-resource-group \
+        --workspace-name my-workspace
+    ```
