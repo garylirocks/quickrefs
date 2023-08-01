@@ -246,6 +246,7 @@ def my_decorator(func):
 def my_func(x):
     print(x ** 2)
 
+my_func(2)
 my_func(3)
 ```
 
@@ -254,6 +255,8 @@ Outputs:
 ```
 in my_decorator, decorating my_func
 
+Executing my_func
+4
 Executing my_func
 9
 ```
@@ -289,7 +292,7 @@ The global namespace of a function is the global namespace of the containing blo
 ## 'sys' module
 
 ```
-sys.path        # list of module module importing paths
+sys.path        # list of module importing paths
 sys.argv        # arguments
 sys.stdin
 sys.stdout
@@ -634,6 +637,14 @@ use triple quotes as delimiter when you want to include a quote mark in the stri
         # -*- coding: windows-1252 -*-
 
 ### strings
+
+- F-string (`f''`) to concatenate strings:
+
+  ```python
+  >>> name = 'Gary'
+  >>> f'Hello {name}'
+  'Hello Gary'
+  ````
 
 - use `format()` to format strings
 
