@@ -5,6 +5,8 @@
 - [Actions](#actions)
   - [Action definition](#action-definition)
   - [Workflow file](#workflow-file)
+  - [Secrets and variables](#secrets-and-variables)
+  - [`env` variables](#env-variables)
   - [Step output](#step-output)
   - [Environments](#environments)
   - [GitHub Script](#github-script)
@@ -232,6 +234,41 @@ test:
       env:
         CI: true
 ```
+
+### Secrets and variables
+
+```yaml
+- name: Print a variable
+  run: echo "name: " ${{ vars.name }}
+- name: Use a secret - Azure login
+  uses: azure/login@v1
+  with:
+    creds: ${{ secrets.AZURE_CREDENTIALS }}
+```
+
+### `env` variables
+
+```yaml
+env:
+  workflowVar: Hello ${{ vars.PET }}
+
+jobs:
+  job1:
+    runs-on: ubuntu-latest
+    env:
+      jobVar: A job var
+    steps:
+    - name: Print
+      env:
+        stepVar: A step var
+      run: |
+        echo $workflowVar
+        echo $jobVar
+        echo $stepVar
+```
+
+- Could have `env` on workflow, job and step level
+- Could use variable substitution in `env` values
 
 ### Step output
 
