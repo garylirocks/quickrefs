@@ -311,12 +311,12 @@ To better manage cost, there are different plans which could be configured for e
 
 The data a user has access to is determined by a combination of factors that are listed in the following table.
 
-| Factor                 | Description                                                                                                                                                                                    |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Access mode            | How you access a workspace. Defines the scope of the data available and the access control mode that's applied.                                                                                |
-| Access control mode    | Setting on the workspace that defines whether permissions are applied at the workspace or resource level. Two modes: 1. Use resource or workspace permissions 2. Require workspace permissions |
-| Permissions            | Permissions applied to individual or groups of users for the workspace or resource. Defines what data the user will have access to.                                                            |
-| Table level Azure RBAC | *Optional* granular permissions that apply to *all users* regardless of their access mode or access control mode. Defines which data types a user can access.                                  |
+| Factor                 | Description                                                                                                                                                                                                                                                                  |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Access mode            | How you access a workspace. Defines the scope of the data available and the access control mode that's applied.                                                                                                                                                              |
+| Access control mode    | A workspace settings, two possible modes: 1. Use resource or workspace permissions (`properties.features.enableLogAccessUsingOnlyResourcePermissions = true` ) 2. Require workspace permissions (`properties.features.enableLogAccessUsingOnlyResourcePermissions = false` ) |
+| Permissions            | Permissions applied to individual or groups of users for the workspace or resource. Defines what data the user will have access to.                                                                                                                                          |
+| Table level Azure RBAC | *Optional* granular permissions that apply to *all users* regardless of their access mode or access control mode. Defines which data types a user can access.                                                                                                                |
 
 #### Access modes
 
