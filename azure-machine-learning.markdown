@@ -174,7 +174,7 @@ Compute:
 
 ```yaml
 $schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
-code: src
+code: src # code directory
 command: >-
   python main.py
   --diabetes-csv ${{inputs.diabetes}}
