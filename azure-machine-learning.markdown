@@ -188,10 +188,12 @@ experiment_name: diabetes-data-example
 description: Train a classification model on diabetes data using a registered dataset as input.
 ```
 
-`azureml:diabetes-data:1`
+- `azureml:diabetes-data:1`
   - `azureml:` is the prefix for an existing registered data asset
   - `diabetes-data` data asset name
   - `1` data asset version
+- `code: src`
+  - Local files in `src` folder will be uploaded
 
 ### Pipeline job
 
@@ -252,6 +254,8 @@ You could trigger a job with
 ```sh
 az ml job create --file job.yml
 ```
+
+It uploads your local code
 
 
 ## Azure ML CLI
