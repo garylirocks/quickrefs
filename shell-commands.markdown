@@ -581,18 +581,21 @@ rsync -avp --delete src/ ./dest
 
 ## `envsubst`
 
-Replace variables in strings/files
+Replace variables in standard input
 
 ```sh
-# greeting.txt
-Hello ${name} !
-```
+export fruit1=Apple
+export fruit2=Orange
+export fruit3=Banana
 
-```sh
-export name=Gary
+# all variables are replaced by default
+echo '$fruit1, $fruit2, and ${fruit3}' | envsubst
+Apple, Orange, and Banana
 
-cat greeting.txt | envsubst
-# Hello Gary !
+# only target specified vars
+# $var1 and ${var1} are equivalent format
+echo '$fruit1, $fruit2, and ${fruit3}' | envsubst '${fruit2}, $fruit3'
+$fruit1, Orange, and Banana
 ```
 
 ## `jq`
