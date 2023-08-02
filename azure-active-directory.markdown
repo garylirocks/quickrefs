@@ -1005,9 +1005,9 @@ az ad app list \
 - List
 
   ```sh
-  # show SPs you created in your Default Directory
+  # NOTE: seems you can only use "displayName" field for filtering
   az ad sp list \
-    --filter "PublisherName eq 'Default Directory'" \
+    --filter "startswith(displayName, 'sp_name_')"
     -otable
 
   # list all role assignments for an SP in current subscription
