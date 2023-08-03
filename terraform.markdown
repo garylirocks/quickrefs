@@ -718,8 +718,11 @@ name = "web-sg-${var.resource_tags["project"]}-${var.resource_tags["environment"
 - `lookup` look up a key in a map
 
   ```sh
-  lookup({ gary = 20, henry = 30 }, "gary" )
+  lookup({ gary = 20, henry = 30 }, "gary"  )
   # 20
+
+  # provide a default value
+  lookup(var.fruits, "apple", "Red")
   ```
 
 - `concat`, `merge` combine lists or maps
