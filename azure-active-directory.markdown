@@ -1009,11 +1009,25 @@ az ad app list \
   az ad sp list \
     --filter "startswith(displayName, 'sp_name_')"
     -otable
+  ```
 
-  # list all role assignments for an SP in current subscription
+- List role assignments in a scope
+
+  ```sh
+  # on a current subscription
+  # includes inherited
   az role assignment list \
       --all \
+      --subscription sub-test \
       --assignee <SP name or object id>
+
+  # on a management group
+  # does not include assignments on descendant scopes
+  az role assignment list \
+      --assignee '<sp-object-id>' \
+      --scope "/providers/Microsoft.Management/managementGroups/mg-test" \
+      --include-groups \
+      --include-inherited
   ```
 
 - Use certificate-based authentication
