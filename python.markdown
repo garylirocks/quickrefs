@@ -25,7 +25,9 @@
   - [strings](#strings)
 - [Style tips](#style-tips)
   - [Naming conventions](#naming-conventions)
-- [Uninstall a package](#uninstall-a-package)
+- [Manage packages](#manage-packages)
+- [Install](#install)
+  - [Uninstall](#uninstall)
 
 
 ## Preface
@@ -687,7 +689,24 @@ use triple quotes as delimiter when you want to include a quote mark in the stri
 - constants: `ALL_CAPS`
 
 
-## Uninstall a package
+## Manage packages
+
+`pip` is used to manage packages
+
+## Install
+
+```sh
+# install a single package
+pip3 install numpy
+```
+
+You can also use a `requirements.txt` to install all packages:
+
+```sh
+pip3 install -r requirements.txt
+```
+
+### Uninstall
 
 ```sh
 sudo pip uninstall phpsh
