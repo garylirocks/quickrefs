@@ -2,6 +2,7 @@
 
 - [GitHub Flow](#github-flow)
 - [Apps vs. OAuth Apps](#apps-vs-oauth-apps)
+- [Branch protection](#branch-protection)
 - [Actions](#actions)
   - [Action definition](#action-definition)
   - [Workflow file](#workflow-file)
@@ -42,6 +43,19 @@ One Rule: **Anything in the `main` branch is always deployable**
  - Apps act as themselves, they are mostly bots, helping you automate some tasks, such as requesting more info for an issue if there's no description.
 
  - OAuth Apps act as the user who authorized them.
+
+
+## Branch protection
+
+You could create branch protection rules to protect a branch:
+
+- Require a pull requests
+  - Require approvals
+- Require status checks
+  - You can use **a job in a workflow as a check**
+- Require conversation resolution
+- Require deployments to succeed
+  - Environments must be successfully deployed to
 
 
 ## Actions
@@ -98,7 +112,7 @@ name: A workflow for my Hello World file
 on: push                              # trigger
 jobs:
     build:                            # job id
-      name: Hello world action
+      name: Hello world action        # (optional) give it a readable name
       runs-on: ubuntu-latest          # GitHub-hosted runner
       steps:
           - uses: actions/checkout@v1 # first step: action defined in another repo
