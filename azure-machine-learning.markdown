@@ -7,8 +7,9 @@
   - [Assets](#assets)
   - [Roles](#roles)
 - [Data ingestion](#data-ingestion)
-- [Train a model](#train-a-model)
 - [Models](#models)
+  - [How to train a model](#how-to-train-a-model)
+  - [Create a model](#create-a-model)
 - [Compute](#compute)
   - [CPU vs. GPU](#cpu-vs-gpu)
   - [General purpose vs. memory optimized](#general-purpose-vs-memory-optimized)
@@ -102,22 +103,6 @@ AzureML has specific built-in roles:
 - You could also Azure ML pipelines, but may not as performant
 
 
-## Train a model
-
-Several options to train a model:
-
-- Use the visual designer (building a pipeline using built-in and custom components)
-- Automated ML
-- Run a Jupyter notebook
-- Run a script as a job
-
-Different types of jobs:
-- Command: a single script
-- Sweep: hyperparameter tuning when executing a single script
-- Pipeline
-- AutoML experiments
-
-
 ## Models
 
 Common model types:
@@ -127,6 +112,39 @@ Common model types:
 - Time-series forecasting: Predict future numerical values based on time-series data.
 - Computer vision: Classify images or detect objects in images.
 - Natural language processing (NLP): Extract insights from text.
+
+### How to train a model
+
+Several options to train a model:
+
+- Use the visual designer (building a pipeline using built-in and custom components)
+- Automated ML
+- Run a Jupyter notebook
+- Run a script as a job
+  - Model is stored in the job output
+
+Different types of jobs:
+- Command: a single script
+- Sweep: hyperparameter tuning when executing a single script
+- Pipeline
+- AutoML experiments
+
+### Create a model
+
+Models can be created from
+  - a local file
+  - local directory
+  - datastore
+  - job outputs
+
+```sh
+# create a MLFlow model from job output
+az ml model create --name my-model --version 1 \
+  --path runs:/<job-run-id>/model/ \
+  --type mlflow_model \
+  --resource-group rg-ml-test \
+  --workspace-name mlw-ml-test
+```
 
 
 ## Compute
@@ -166,6 +184,13 @@ Compute:
 - AKS
   - For production
   - Must create an *inference cluster* compute target
+
+```sh
+# create an online endpoint
+az ml online-endpoint create --name my-endpoint \
+  --resource-group rg-ml-test \
+  --workspace-name mlw-ml-test
+```
 
 
 ## Jobs
