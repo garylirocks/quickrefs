@@ -160,7 +160,7 @@ There are two related modules:
 
 #### Azure resources
 
-Get eligible role assignments or active role assignments:
+**Get eligible role assignments or active role assignments**:
 
 ```powershell
 $scope='<full-resource-id>' // FULL id required
@@ -193,7 +193,7 @@ Usable filters:
 - `-Filter "atScope()"` limit to specified scope, including inherited roles from ancestor scopes, excluding subscopes
 - `-Filter "asTarget() and atScope()"` combined
 
-To activate a PIM role:
+**To activate a PIM role:**
 
 <div style="background: #efd9fd; padding: 1em">
   <em>NOTE: </em><br />
