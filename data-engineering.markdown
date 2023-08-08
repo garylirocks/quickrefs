@@ -49,3 +49,6 @@ Data processing
     - optimized for read operations
     - may require some de-normalization of OLTP data (to make queries faster)
     - *fact* tables contain numeric values (eg. sales revenue), related *dimension* tables contain entities by which to measure the facts (eg. product, location)
+
+    ![Fact vs Dimension](images/data_star-and-snowflake-schema.drawio.svg)
+    *Star schema vs. Snowflake schema*
