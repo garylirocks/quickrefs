@@ -1064,7 +1064,7 @@ az network nic show-effective-route-table \
     | Default | Active | 20.38.106.0/23, 10 more | **VirtualNetworkServiceEndpoint** |
     | Default | Active | 20.150.2.0/23, 9 more   | **VirtualNetworkServiceEndpoint** |
 
-- Virtual networks and Azure service resources can be in the same or different subscriptions. Certain Azure Services (not all) such as Azure Storage and Azure Key Vault also support service endpoints across different Active Directory(AD) tenants.
+- Virtual networks and Azure service resources can be in the same or **different subscriptions**. Certain Azure Services (not all) such as Azure Storage and Azure Key Vault also support service endpoints across different Active Directory(AD) tenants.
 
 - Service endpoint doesn't work with in on-prem scenarios, for on-prem clients, you need to
   - either setup ExpressRoute **public peering**
