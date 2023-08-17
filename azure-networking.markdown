@@ -31,6 +31,7 @@
 - [Virtual WAN](#virtual-wan)
   - [Virtual Hub Routing](#virtual-hub-routing)
   - [NVAs in a Virtual Hub](#nvas-in-a-virtual-hub)
+  - [SaaS solutions in a Virtual Hub](#saas-solutions-in-a-virtual-hub)
 - [Routing](#routing)
   - [Default system routes](#default-system-routes)
   - [User-defined routes](#user-defined-routes)
@@ -761,6 +762,18 @@ Deployment process:
 - Once deployed, any additional configuration must be performed via the **NVA partners portal or management application**.
 - You do not need to create S2S/P2S connection resources to connect your branch site to the virtual hub. This is all managed via the NVA.
 - You still need to create Hub-to-vNet connections to connect your virtual WAN hub to your vNets.
+
+### SaaS solutions in a Virtual Hub
+
+Currently you can deploy Palo Alto NGFW in a vHub.
+
+The rules could be managed by either:
+  - Local rule stack
+    - Managed in Azure
+    - Includes IP prefixes, FQDNs, security services, certificates, rules etc
+    - You could configure certificate to inspect egress SSL traffic
+  - Panorama rule stack
+    - Managed in Panorama portal
 
 
 ## Routing
