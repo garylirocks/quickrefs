@@ -2,15 +2,28 @@
 
 - [GitHub Flow](#github-flow)
 - [Apps vs. OAuth Apps](#apps-vs-oauth-apps)
+- [GitHub Enterprise](#github-enterprise)
 - [Branch protection](#branch-protection)
-- [Actions](#actions)
-  - [Action definition](#action-definition)
+- [Rulesets](#rulesets)
+- [Status checks](#status-checks)
+- [Workflows](#workflows)
   - [Workflow file](#workflow-file)
+  - [Action definition](#action-definition)
+  - [Contexts](#contexts)
+  - [Expressions](#expressions)
+    - [Comparisons](#comparisons)
+    - [Functions](#functions)
+    - [Status check functions](#status-check-functions)
+    - [Object filters](#object-filters)
+  - [Conditional](#conditional)
+  - [Artifacts](#artifacts)
+  - [Compute contexts](#compute-contexts)
   - [Secrets and variables](#secrets-and-variables)
   - [`env` variables](#env-variables)
   - [Step output](#step-output)
   - [Environments](#environments)
   - [GitHub Script](#github-script)
+  - [Azure login](#azure-login)
 
 ## GitHub Flow
 
@@ -25,17 +38,15 @@ One Rule: **Anything in the `main` branch is always deployable**
 1. Create a branch from `main`.
 2. Add commits.
 3. Open a pull request.
-
-  - The purpose is to initiate discussion
-  - You can open a pull request at **any point**, not necessarily when you are ready for review, you could use it to share screenshots/ideas, ask for help/advice
-
+    - The purpose is to initiate discussion
+    - You can open a pull request at **any point**, not necessarily when you are ready for review, you could use it to share screenshots/ideas, ask for help/advice
 4. Make changes on your branch as needed, your pull request will update automatically.
 5. Deploy
-  - Once your PR has been reviewed and passed tests, you can deploy it to production, if it causes issues, roll it back by deploying the existing main branch
-  - There are different deployment strategies, for some, it's better to deploy to a specifically provisioned testing environment, for others, it's better to deploy directly to production
+    - Once your PR has been reviewed and passed tests, you can deploy it to production, if it causes issues, roll it back by deploying the existing main branch
+    - There are different deployment strategies, for some, it's better to deploy to a specifically provisioned testing environment, for others, it's better to deploy directly to production
 6. Merge the pull request
-  - Pull requests preserve a record of historical changes to your code
-  - By using some phrases like `Closes #32` in your PR text, issue 32 will be closed automatically when you merge your PR
+    - Pull requests preserve a record of historical changes to your code
+    - By using some phrases like `Closes #32` in your PR text, issue 32 will be closed automatically when you merge your PR
 
 
 ## Apps vs. OAuth Apps
@@ -43,6 +54,18 @@ One Rule: **Anything in the `main` branch is always deployable**
  - Apps act as themselves, they are mostly bots, helping you automate some tasks, such as requesting more info for an issue if there's no description.
 
  - OAuth Apps act as the user who authorized them.
+
+
+## GitHub Enterprise
+
+![GitHub Enterprise](./images/github_enterprise-organization-hierarchy.jpg)
+
+- Enterprise can contain multiple organizations
+- An organization contains teams, repos
+- A repo could be
+  - Public: to the internet
+  - Private: only visible to specified users
+  - Internal: visible to any enterprise user
 
 
 ## Branch protection
@@ -58,47 +81,81 @@ You could create branch protection rules to protect a branch:
   - Environments must be successfully deployed to
 
 
-## Actions
+## Rulesets
+
+Control how people could interact with branches and tags in a repo. Rules could be similar to branch/tag protection rules.
+
+Rulesets advantages over branch/tag protection rules:
+
+- Multiple rulesets can apply at the same time
+  - Rules are aggregated
+  - Also layer with branch/tag protection rules
+- Rulesets can be disabled
+- Anyone with read access to a repo can view active rulesets
+
+With GitHub Enterprise:
+
+- Rulesets at organization level
+- Rules to control metadata, such as commit message and author's email address
+- Use "Evaluate" status to test a ruleset before activating it
+
+
+## Status checks
+
+Two types:
+
+- Statuses
+  - Usually used by external services (CI/CD, security etc.) to mark commits with a state (`pending`, `success`, `error`, `failure`)
+  - A status could have fields `state`, `description`, `target_url`, `context`, an example:
+    ```json
+    {
+      "state": "success",
+      "target_url": "https://example.com/build/status",
+      "description": "The build succeeded!",
+      "context": "continuous-integration/jenkins"
+    }
+    ```
+  - A commit could have multiple statuses, the combined state of a commit would be:
+    - `failure` if any of the contexts report as `error` or `failure`
+    - `pending` if there are no statuses or a context is `pending`
+    - `success` if the latest status for all contexts is `success`
+
+- Checks
+  - Comparing to statuses, checks provide *line annotations*, more *detailed messaging*, and are only available for use with *GitHub Apps*
+  - Checks tab in a pull request only shows checks, not statuses
+  - Checks can be skipped or requested with a commit mesage like
+
+    ```sh
+    $ git commit -m "Update README
+    >
+    >
+    skip-checks: true"
+    ```
+    Or
+    ```sh
+    $ git commit -m "Update README
+    >
+    >
+    request-checks: true"
+    ```
+
+
+## Workflows
 
 ![Workflow components](./images/github_actions-workflow-components.png)
 
-There are two components:
+Three levels:
 
-- actions
+- Workflow
+- Job
+- Action
 
-  Each action has its own purpose, defined with a YAML file.
+  Actions can be defined in the same repo, in another repo, or in a published Docker image.
 
-  Two types:
+  Each action has its own purpose, defined with a YAML file.  There are two types:
 
   - Container actions
   - JavaScript actions
-
-- workflows
-
-  A workflow contains jobs, a job contains steps, each step corresponds to an action. Actions can be defined in the same repository, in another repo, or in a published Docker image.
-
-
-### Action definition
-
-```yaml
-name: "Hello Actions"
-description: "Greet someone"
-author: "octocat@github.com"
-
-inputs:
-    MY_NAME:                  # a variable that needs be set in workflow
-    description: "Who to greet"
-    required: true
-    default: "World"
-
-runs:
-    using: "docker"
-    image: "Dockerfile"       # path to docker image file
-
-branding:                     # metadata for GitHub Marketplace
-    icon: "mic"
-    color: "purple"
-```
 
 ### Workflow file
 
@@ -167,7 +224,206 @@ on:
     types: [rerequested, requested_action]
 ```
 
-Both jobs and steps can have `if` conditions:
+You can skip a `on: push` or `on: pull_request` workflow by adding `[skip ci]` to the commit message.
+
+Or you could end the commit message with two empty lines followed by either:
+
+- `skip-checks:true`
+- `skip-checks: true`
+
+like:
+
+```sh
+$ git commit -m "Update README
+>
+>
+skip-checks: true"
+```
+
+
+### Action definition
+
+```yaml
+name: "Hello Actions"
+description: "Greet someone"
+author: "octocat@github.com"
+
+inputs:
+    MY_NAME:                  # a variable that needs be set in workflow
+      description: "Who to greet"
+      required: true
+      default: "World"
+
+runs:
+    using: "docker"
+    image: "Dockerfile"       # path to docker image file
+
+branding:                     # metadata for GitHub Marketplace
+    icon: "mic"
+    color: "purple"
+```
+
+### Contexts
+
+| Context    | Description                                                                         |
+| ---------- | ----------------------------------------------------------------------------------- |
+| `github`   | About the workflow run                                                              |
+| `env`      | Variables set in a workflow, job or step, similar to `variables` in ADO             |
+| `inputs`   | Inputs of a reusable or manually triggered workflow, similar to `parameters` in ADO |
+| `vars`     | Variables set at org, repo, or environment level                                    |
+| `secrets`  | Secrets set at org, repo, or environment level                                      |
+| `job`      | Current running job                                                                 |
+| `jobs`     | Reusable workflows only, contains outputs of jobs from the reusable workflow        |
+| `steps`    | Info about the steps that have been run in the current job                          |
+| `runner`   | Info about the current runner                                                       |
+| `strategy` | Info about the matrix execution strategy                                            |
+| `matrix`   | Matrix properties defined in the workflow that apply to the current job             |
+| `needs`    | Outputs of all jobs that are defined as a dependency of current job                 |
+
+### Expressions
+
+- Syntax: `${{ <expression> }}`
+
+- In `if` conditional, no need to use `${{ }}` syntax
+
+  ```yaml
+  steps:
+    - uses: actions/hello-world-javascript-action@e76147da8e5c81eaf017dede5645551d4b94427b
+      if: <expression>
+  ```
+
+- Setting an env variable
+
+  ```yaml
+  env:
+    MY_ENV_VAR: ${{ <expression> }}
+  ```
+
+- If-else
+
+  ```yaml
+  env:
+    MY_ENV_VAR: ${{ github.ref == 'refs/heads/main' && 'value_for_main_branch' || 'value_for_other_branches' }}
+  ```
+
+#### Comparisons
+
+- String comparisons are case insensitive
+- If types don't match, values are cast to a number before comparison
+
+#### Functions
+
+- `contains( search, item )`: cast values to a string, case insensitive
+  - Example: `contains(fromJSON('["push", "pull_request"]'), github.event_name)`
+- `startsWith( searchString, searchValue )`
+- `endsWith( searchString, searchValue )`
+- `format( string, replaceValue0, replaceValue1, ..., replaceValueN)`
+  - Example: `format('Hello {0} {1} {2}', 'Mona', 'the', 'Octocat')`
+- `join( array, optionalSeparator )`
+- `hashFiles(path)`, returns a single SHA-256 hash for multiple files
+  - Example: `hashFiles('**/package-lock.json', '**/Gemfile.lock')`
+- `toJSON(value)`
+- `fromJSON(value)`
+  - Convert environment variables from string to other types
+    ```yaml
+    name: print
+    on: push
+    env:
+      continue: true
+      time: 3
+    jobs:
+      job1:
+        runs-on: ubuntu-latest
+        steps:
+          - continue-on-error: ${{ fromJSON(env.continue) }}
+            timeout-minutes: ${{ fromJSON(env.time) }}
+            run: echo ...
+    ```
+  - Returning a JSON object
+    ```yaml
+    name: build
+    on: push
+    jobs:
+      job1:
+        runs-on: ubuntu-latest
+        outputs:
+          matrix: ${{ steps.set-matrix.outputs.matrix }}
+        steps:
+          - id: set-matrix
+            run: echo "matrix={\"include\":[{\"project\":\"foo\",\"config\":\"Debug\"},{\"project\":\"bar\",\"config\":\"Release\"}]}" >> $GITHUB_OUTPUT
+      job2:
+        needs: job1
+        runs-on: ubuntu-latest
+        strategy:
+          matrix: ${{ fromJSON(needs.job1.outputs.matrix) }}
+        steps:
+          - run: build
+    ```
+
+#### Status check functions
+
+- `success()`, none of the previous steps failed or cancelled
+- `always()`
+- `cancelled()`, if the worklow was cancelled
+- `failure()`, any previous step fails, or any ancestor job fails
+
+  ```yaml
+  steps:
+    ...
+    - name: Failing step
+      id: demo
+      run: exit 1
+    - name: The demo step has failed
+      if: failure() && steps.demo.conclusion == 'failure'
+      run: echo "Step demo failed"
+  ```
+  *only checking `.conclusion` is not enough, you need to check `failure()` as well, otherwise `success()` is implied*
+
+#### Object filters
+
+- On an array:
+  ```json
+  [
+    { "name": "apple", "quantity": 1 },
+    { "name": "orange", "quantity": 2 },
+    { "name": "pear", "quantity": 1 }
+  ]
+  ```
+  The filter `fruits.*.name` returns the array `[ "apple", "orange", "pear" ]`
+
+- On an object
+  ```json
+  {
+    "scallions": {
+      "colors": ["green", "white", "red"],
+      "ediblePortions": ["roots", "stalks"],
+    },
+    "beets": {
+      "colors": ["purple", "red", "gold", "white", "pink"],
+      "ediblePortions": ["roots", "stems", "leaves"],
+    },
+    "artichokes": {
+      "colors": ["green", "purple", "red", "black"],
+      "ediblePortions": ["hearts", "stems", "leaves"],
+    },
+  }
+  ```
+
+  The filter `vegetables.*.ediblePortions` could evaluate to (output order not garanteed):
+  ```
+  [
+    ["roots", "stalks"],
+    ["hearts", "stems", "leaves"],
+    ["roots", "stems", "leaves"],
+  ]
+  ```
+
+
+
+### Conditional
+
+- Both jobs and steps can have `if` conditions
+- The conditional is evaluated as expression automatically, DON'T use `${{ }}` syntax
 
 ```yaml
 name: CI
@@ -197,6 +453,8 @@ jobs:
       ...
 ```
 
+### Artifacts
+
 Artifact storage (upload artifacts generated by `build` job and download in `test` job):
   - Jobs run in parallel, unless configured otherwise
   - Use `needs` to configure dependencies
@@ -225,6 +483,8 @@ test:
           name: webpack artifacts
           path: public
 ```
+
+### Compute contexts
 
 Multiple compute contexts for a job:
 
@@ -361,3 +621,5 @@ jobs:
               body: "🎉 You've created this issue comment using GitHub Script!!!"
             })
 ```
+
+### Azure login
