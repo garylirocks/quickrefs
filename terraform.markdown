@@ -290,6 +290,7 @@ terraform output -raw lb_url
 
     - Runs you plan, it's **idempotent**
     - `terraform apply -var "resource_group_name=myNewResourceGroupName"` to override a variable
+    - `tf apply -target 'azurerm_resource_group.rg'` only targets a specific resource
     - `terraform apply -replace="aws_instance.example"` force replace a paticular resource
 
 - `terraform output`
