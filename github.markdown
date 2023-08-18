@@ -10,6 +10,8 @@
   - [Workflow file](#workflow-file)
   - [Action definition](#action-definition)
   - [Contexts](#contexts)
+  - [`env` variables](#env-variables)
+  - [`github` context](#github-context)
   - [Expressions](#expressions)
     - [Comparisons](#comparisons)
     - [Functions](#functions)
@@ -17,7 +19,6 @@
     - [Object filters](#object-filters)
   - [Conditional](#conditional)
   - [Secrets and variables](#secrets-and-variables)
-  - [`env` variables](#env-variables)
   - [Compute contexts](#compute-contexts)
   - [Step output](#step-output)
   - [Environments](#environments)
@@ -288,6 +289,40 @@ branding:                     # metadata for GitHub Marketplace
 | `matrix`   | Matrix properties defined in the workflow that apply to the current job             |
 | `needs`    | Outputs of all jobs that are defined as a dependency of current job                 |
 
+- `github` context is available globally, other contexts are only available for some keys, see https://docs.github.com/en/actions/learn-github-actions/contexts#context-availability
+  - `env` variables are not available in `jobs.<job_id>.with.<with_id>`, so you cannot pass them to a reusable workflow
+
+### `env` variables
+
+```yaml
+env:
+  workflowVar: Hello ${{ vars.PET }}
+
+jobs:
+  job1:
+    runs-on: ubuntu-latest
+    env:
+      jobVar: A job var
+    steps:
+    - name: Print
+      env:
+        stepVar: A step var
+      run: |
+        echo $workflowVar
+        echo $jobVar
+        echo $stepVar
+```
+
+- Could have `env` on workflow, job and step level
+- Could use variable substitution in `env` values
+- Can be used in any key in a workflow step except for `id` and `uses`
+
+### `github` context
+
+- `github.ref_name`: the short form branch or tag name, like `main`, `dev`, `v1.0`, `<pull_request_number>/merge`
+- `github.base_ref`: only available for `pull_request` and `pull_request_target` events, the base branch name, eg. `main`
+
+
 ### Expressions
 
 - Syntax: `${{ <expression> }}`
@@ -471,30 +506,6 @@ jobs:
   with:
     creds: ${{ secrets.AZURE_CREDENTIALS }}
 ```
-
-### `env` variables
-
-```yaml
-env:
-  workflowVar: Hello ${{ vars.PET }}
-
-jobs:
-  job1:
-    runs-on: ubuntu-latest
-    env:
-      jobVar: A job var
-    steps:
-    - name: Print
-      env:
-        stepVar: A step var
-      run: |
-        echo $workflowVar
-        echo $jobVar
-        echo $stepVar
-```
-
-- Could have `env` on workflow, job and step level
-- Could use variable substitution in `env` values
 
 ### Compute contexts
 
