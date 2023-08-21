@@ -425,6 +425,8 @@ There are three types of service principals:
   - When a managed identity is enabled, a service principal representing that managed identity is created in your tenant
     - The service principal is listed under **Enterprise applications -> Managed Identities** in Azure Portal
     - There is **NO** corresponding app registration in your tenant
+  - A managed identity as a resource would reside in a region, but the associated service principal is global, its availability is only dependent on Azure AD
+    - When the region is unavailable, the control plane won't work, the SP still works
 
   Two types:
 
