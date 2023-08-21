@@ -39,7 +39,7 @@
 - [Entra permissions management](#entra-permissions-management)
 - [Identity protection](#identity-protection)
 - [Access reviews](#access-reviews)
-- [Administrative Units](#administrative-units)
+- [Administrative Units (AU)](#administrative-units-au)
 - [Logging and analytics](#logging-and-analytics)
 - [Application Proxy](#application-proxy)
 - [Best practices](#best-practices-2)
@@ -829,7 +829,7 @@ Help ensure that the right people have the right access to the right resources, 
 - Azure AD roles and Azure Resource roles in Privileged Identity Management (PIM)
 
 
-## Administrative Units
+## Administrative Units (AU)
 
 - To restrict administrative scope in organizations that are made up of independent divisions, such as School of Business and School of Engineering in a University
 - You could put users/groups/devices in a unit
@@ -838,7 +838,10 @@ Help ensure that the right people have the right access to the right resources, 
 - A unit is a scope for Azure AD role assignment
   - You only get permissions over direct members in the unit, not users in a group, you need to add them explicitly to the unit
   - Only a subset AAD roles can be assigned
-- You need a P1 license to manage an administrative unit
+- For a **restricted management administrative unit**, only admins with roles assigned at the unit scope can manage objects in it, not global admins.
+  - Could be used to lock down some highly sensitive accounts
+  - If an object is in multiple AUs, admin at any AU could manage it
+- You need a P1 license to manage an AU, users in the AU do not need P1
 
 
 ## Logging and analytics
