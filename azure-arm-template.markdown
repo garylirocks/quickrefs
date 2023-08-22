@@ -9,6 +9,7 @@
   - [Deployment location and name](#deployment-location-and-name)
 - [Resource group scope](#resource-group-scope)
   - [Scopes](#scopes-1)
+- [Template specs](#template-specs)
 
 ## Overview
 
@@ -394,3 +395,39 @@ With nested deployment, you are not limited to the target resource group, you co
     "outputs": {}
   }
   ```
+
+
+## Template specs
+
+A template spec is a stored ARM template in Azure
+  - Its resource type is `Microsoft.Resources/templateSpecs`
+  - You can use RBAC for access control
+  - Anyone with read access can deploy it
+  - If the main template references linked templates, all of them will be packaged together
+  - Supports versioning
+  - A template spec itself could be used in another template
+
+```sh
+# create a template spec
+az ts create \
+  --name my ts-test-001 \
+  --version "1.0a" \
+  --resource-group rg-template-spec \
+  --location "westus2" \
+  --template-file "./mainTemplate.json"
+
+# get the ID of a template spec
+id = $(az ts show --name storageSpec --resource-group templateSpecRG --version "1.0a" --query "id")
+
+# deploy with parameters on command line
+az deployment group create \
+  --resource-group rg-demo \
+  --template-spec $id \
+  --parameters storageAccountType='Standard_GRS'
+
+# deploy with a parameter file
+az deployment group create \
+  --resource-group rg-demo \
+  --template-spec $id \
+  --parameters "./mainTemplate.parameters.json"
+```
