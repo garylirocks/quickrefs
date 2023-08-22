@@ -584,7 +584,11 @@ Azure has a solution for updating VMs called Update Management
     --port 80
   ```
 
-- Agree the terms of a Marketplace image (in the Portal, you will see this at the last step when you create a VM)
+- Accept the legal terms of a Marketplace image
+
+  - In the Portal, you will see the terms at the last step when you create a VM
+  - You can also find the offering is enabled in "Programmatic deployment" blade of the subscription
+  - Could be created with Terraform resource `azurerm_marketplace_agreement`
 
   ```sh
   az vm image terms accept \
@@ -593,7 +597,7 @@ Azure has a solution for updating VMs called Update Management
     --plan rhel-lvm75
   ```
 
-- Action Run Command in a VM
+- Run Command in a VM
 
   ```sh
   az vm run-command invoke \
