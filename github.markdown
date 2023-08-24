@@ -249,8 +249,13 @@ You can skip a `on: push` or `on: pull_request` workflow by
   skip-checks: true"
   ```
 
-
 ### Action definition
+
+Action types:
+
+- Docker container (Linux only)
+- JavaScript
+- Composite Actions (multiple steps in one action)
 
 ```yaml
 name: "Hello Actions"
@@ -272,6 +277,34 @@ branding:                     # metadata for GitHub Marketplace
     color: "purple"
 ```
 
+A composite action
+
+```yaml
+name: 'Hello World'
+description: 'Greet someone'
+inputs:
+  who-to-greet:  # id of input
+    description: 'Who to greet'
+    required: true
+    default: 'World'
+outputs:
+  random-number:
+    description: "Random number"
+    value: ${{ steps.random-number-generator.outputs.random-number }}
+runs:
+  using: "composite"
+  steps:
+    - run: echo Hello ${{ inputs.who-to-greet }}.
+      shell: bash
+    - id: random-number-generator
+      run: echo "random-number=$(echo $RANDOM)" >> $GITHUB_OUTPUT
+      shell: bash
+    - run: echo "${{ github.action_path }}" >> $GITHUB_PATH
+      shell: bash
+    - run: goodbye.sh
+      shell: bash
+```
+
 ### Contexts
 
 | Context    | Description                                                                         |
@@ -290,7 +323,7 @@ branding:                     # metadata for GitHub Marketplace
 | `needs`    | Outputs of all jobs that are defined as a dependency of current job                 |
 
 - `github` context is available globally, other contexts are only available for some keys, see https://docs.github.com/en/actions/learn-github-actions/contexts#context-availability
-  - `env` variables are not available in `jobs.<job_id>.with.<with_id>`, so you cannot pass them to a reusable workflow
+  - `env`, `secrets` contexts are not available in `jobs.<job_id>.with.<with_id>`, so you cannot pass them to a reusable workflow
 
 ### `env` variables
 
@@ -506,6 +539,9 @@ jobs:
   with:
     creds: ${{ secrets.AZURE_CREDENTIALS }}
 ```
+
+- `secrets.GITHUB_TOKEN` is automatically created for each workflow run
+- `${{ secrets.my_secret }}` can not be used in `jobs.<job_id>.with.<with_id>`, can be used in `jobs.<job_id>.secrets.<secret_id>`
 
 ### Compute contexts
 
