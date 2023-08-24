@@ -29,6 +29,7 @@
 - [SSO](#sso)
   - [SAML](#saml)
 - [Role-based access control (RBAC)](#role-based-access-control-rbac)
+  - [Overview](#overview-1)
   - [Considerations](#considerations)
   - [Evaluation](#evaluation)
   - [Azure subscriptions](#azure-subscriptions)
@@ -602,6 +603,8 @@ A SAML response XML has fields like:
 
 ## Role-based access control (RBAC)
 
+### Overview
+
 RBAC allows you to grant access to Azure resources that you control. You do this by creating role assignments, which control how permissions are enforced. There are three elements in a role assignment:
 
 1. Security principal (who)
@@ -682,30 +685,30 @@ RBAC allows you to grant access to Azure resources that you control. You do this
 
 ### Azure RBAC roles vs. Azure AD roles
 
-Different roles in Azure:
+Three different types of roles in Azure:
 
-- Azure AD administrator roles
+- **Azure AD administrator roles**
 
-  To manage Azure AD resources, such as users, groups and domains, find them in **"Roles and administrators" menu under Azure AD**
+  To manage Azure AD resources, such as users, groups and domains, find them in **"Roles and administrators"** menu under Azure AD
 
   - Usually can only be assigned to users/applications, not groups (unless the groups has enabled "AD Role assignment" toggle)
   - The assignment scope is either the whole directory or an "Administrative Unit"
-  - Custom roles can only have permissions for Application registrations and Enterprise applications
+  - **Custom roles** can only have permissions for Application registrations (`microsoft.directory/applications/*`) and Enterprise applications, other permissions are not supported
 
-- RBAC roles
+- **RBAC roles**
 
-  The new Authorization system, find them in the **"Access Control (IAM)" menu under management groups, subscriptions, resource groups or resources**
+  The new Authorization system, find them in the **"Access Control (IAM)" menu** under management groups, subscriptions, resource groups or resources
 
-- Classic subscription administrator roles (Legacy)
+- **Classic subscription administrator roles (Legacy)**
 
   The three administrator roles when Azure was initially released: Account Administrator, Service Administrator and Co-Administrator
 
 
-|                             | Azure RBAC roles                                                                                                  | Azure AD roles                                                                     |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| For                         | Azure resources                                                                                                   | Azure Active Directory                                                             |
-| Scope                       | management group, subscription, resource group, resource                                                          | tenant level                                                                       |
-| How to get role information | Azure portal, Azure CLI (`az role definition list`), Azure PowerShell, Azure Resource Manager templates, REST API | Azure admin portal, Microsoft 365 admin portal, Microsoft Graph AzureAD PowerShell |
+|                             | Azure RBAC roles                                                                                                  | Azure AD roles                                                                      |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| For                         | Azure resources                                                                                                   | Azure Active Directory                                                              |
+| Scope                       | management group, subscription, resource group, resource                                                          | tenant level                                                                        |
+| How to get role information | Azure portal, Azure CLI (`az role definition list`), Azure PowerShell, Azure Resource Manager templates, REST API | Azure admin portal, Microsoft 365 admin center, Microsoft Graph, AzureAD PowerShell |
 
 ![RBAC vs. AAD roles](images/azure_rbac-vs-aad-roles.png)
 
@@ -714,7 +717,9 @@ Different roles in Azure:
   - Assign yourself "**User Access Administrator**" role in Azure at root scope(`/`)
   - View and assign access in any subscription or management group (e.g. assign yourself the **Owner** role of a management group)
   - You should remove this elevated access once you have made the changes needed
-- Each directory is given a single top-level management group called "Tenant Root Group", it has the same id as the tenant, allows for global policies and Azure role assignments to be applied at this directory/tenant level.
+- Each directory is given a single top-level management group called **Tenant Root Group**
+  - has the same id as the tenant
+  - allows for global policies and role assignments
 
 To enable the elevated access:
 
@@ -784,6 +789,7 @@ Best practices:
 ## Privileged Identity Management (PIM)
 
 - P2 feature
+  - If you have a P2 license plan and already use PIM, all role management tasks are performed in the PIM experience
 - Just-in-time elevate role assignment
 - Could be
   - AAD Role
