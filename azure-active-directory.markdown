@@ -17,6 +17,7 @@
   - [Hybrid](#hybrid)
   - [Debugging](#debugging)
 - [Users](#users)
+  - [Emergence accounts (break-glass accounts)](#emergence-accounts-break-glass-accounts)
 - [Groups](#groups)
 - [Workload identities](#workload-identities)
   - [App registrations vs. Service principals](#app-registrations-vs-service-principals)
@@ -47,7 +48,7 @@
 - [Best practices](#best-practices-2)
 - [CLI](#cli)
   - [`--filter` parameter](#--filter-parameter)
-  - [Application and service principal owners](#application-and-service-principal-owners)
+  - [Application registration and service principal(Enterprise app) owners](#application-registration-and-service-principalenterprise-app-owners)
   - [Applications](#applications)
   - [Service principals](#service-principals-1)
 
@@ -142,10 +143,20 @@ Your could invite people from other external identity providers as guest users, 
 
 ### Cross-tenant access settings
 
-Controls trust between tenants, such as
+For any other AAD tenant, you could set
 
-- Trust MFA in a guest's tenant, so they don't need to do MFA again in your tenant
-- Config which tenants can invite users from your tenant
+- Inbound access
+  - B2B collaboration:
+    - What users/groups in the other tenant are allowed to be invited as guests
+    - What applications are allowed
+  - B2B direct connect (whether external users can access your resources without being invited as guests)
+  - Cross-tenant Sync: whether allow other tenant to sync users into this tenant
+  - Trust settings: whether your Conditional Access policies accept claims (MFA, compliant devices, hybrid Azure AD joined devices) from other AAD tenant
+- Outbound access
+  - B2B collaboration
+  - B2B direct connect
+  - Trust: whether your users need to accept the consent prompt the first time they access the other tenant
+- Tenant restrictions // TODO
 
 
 ## B2C
@@ -197,7 +208,7 @@ Azure AD does not replace Active Directory, they can be used together, **Azure A
 
 - Pass-through authentication
 
-  - Passwords only in on-prem AD, not in the cloud (Azure AD)
+  - Only store passwords in on-prem AD, not in the cloud (Azure AD)
   - Only on-prem AD is used to authenticate
   - A light weight agent is used on-prem to communicate with Azure AD
 
@@ -312,14 +323,32 @@ dsregcmd /status
 - User types:
   - Member (could be defined in this AAD, another AAD, or synced from on-prem AD)
   - Guest (accounts from other cloud providers)
+- If a user is assigned a Azure AD role, then the user is called an **administrator**
 - Users with Global Administrator or User Administrator role can create new users
 - When you delete an account, the account remains in suspended state for 30 days
 - Users can also be added to Azure AD through Microsoft 365 Admin Center, Microsoft Intune admin console, and the CLI
-- If a user is assigned a Azure AD role, then he is called an administrator
 - All users are granted a set of default permissions, a user's access consists of:
   - the type of user (member or guest)
   - their role assignments
   - whether they are owner of a object
+
+### Emergence accounts (break-glass accounts)
+
+- Two or more
+- Not associated with any individual user
+- If password is used, it should be strong and **not expire**
+- Use a different strong authentication method than regular accounts
+  - Exclude at least one account from phone-based MFA (use **other types of MFA**)
+  - Exclude one account from any Conditional Access policies
+- Assigned "Global Administrator" role, the assignment should be **permanent** in PIM
+- Should be cloud-only, uses the `*.onmicrosoft.com` domain
+- Not federated or synchronized from on-prem environments
+- Trigger alerts whenever an emergence accounts sign in, use a KQL query like:
+  ```kql
+  SigninLogs
+  | project UserId
+  | where UserId == "f66e7317-2ad4-41e9-8238-3acf413f7448"
+  ```
 
 
 ## Groups
@@ -781,7 +810,7 @@ A custom role definition is like:
 }
 ```
 
-- You could specify the assignable scopes: either management group, subscription or resource group
+- You could specify the assignable scopes: either management group, subscription or resource group, CAN'T be a resource
 - **The definition is actually tenant-scoped, the role name must be unique within a tenant**
 
 
@@ -836,7 +865,7 @@ Allow or deny user access based on user risk and sign-in risk
   - Anonymous IP
   - Atypical travel: sign-ins originating from distant locations
   - Malware linked IP
-  - Password spray: brute force attach, using same password against multiple users
+  - Password spray: brute force attack, using same password against multiple users
 
 
 ## Access reviews
@@ -859,7 +888,8 @@ Help ensure that the right people have the right access to the right resources, 
   - Support dynamic membership rules
   - No nesting
 - A unit is a scope for Azure AD role assignment
-  - You only get permissions over direct members in the unit, not users in a group, you need to add them explicitly to the unit
+  - You only get permissions over direct members in the unit, not users in a group, you need to **add them explicitly** to the unit
+  - For groups in a unit, you can change group name or membership
 - Only a subset AAD roles can be assigned:
   - User administrator
   - Groups administrator
@@ -943,22 +973,6 @@ Authentication
 - Use regular administrator roles wherever possible;
 - Create a list of banned passwords (such as company name);
 - Configure conditional access policies to require users to pass multiple authentication challenges;
-- **Emergence accounts**
-  - Two or more
-  - Not associated with any individual user
-  - If password is used, it should be strong and not expire
-  - Use a different strong authentication method than regular accounts
-    - Exclude at least one account from phone-based MFA
-    - Exclude one account from any Conditional Access policies
-  - Assigned "Global Administrator" role, the assignment should be permanent in PIM
-  - Should be cloud-only, uses the `*.onmicrosoft.com` domain
-  - Not federated or synchronized from on-prem environments
-  - Trigger alerts whenever an emergence accounts sign in, use a KQL query like:
-    ```kql
-    SigninLogs
-    | project UserId
-    | where UserId == "f66e7317-2ad4-41e9-8238-3acf413f7448"
-    ```
 
 
 ## CLI
@@ -982,14 +996,15 @@ The `--filter` parameter in many `az ad` commands uses the OData filter syntax, 
   --filter 'id in ("xxx-xxx", "xxx-xxx")'
   ```
 
-### Application and service principal owners
+### Application registration and service principal(Enterprise app) owners
 
 - A user is automatically added as an application owner when they register an application
   - Ownership for an enterprise application is assigned by default only when a user with no administrator roles (Global Administrator, Application Administrator etc) creates a new application registration.
 - A good practice is to have at least two owners for an application.
-- In the Portal, you could only add users as app and SP owners
+- In the Portal, you could only add users as app registration and SP owners
 - Groups can't be owners.
-- To add an SP as owner, use CLI or API, see https://github.com/Azure/azure-cli/issues/9250#issuecomment-603621148.
+- An SP can be owner of an app registration, but not another SP.
+- To add an SP as owner of an app registration, you could use CLI or API, see https://github.com/Azure/azure-cli/issues/9250#issuecomment-603621148.
 
 ```sh
 # the target app and SP
