@@ -34,6 +34,7 @@
   - [Evaluation](#evaluation)
   - [Azure subscriptions](#azure-subscriptions)
   - [Azure RBAC roles vs. Azure AD roles](#azure-rbac-roles-vs-azure-ad-roles)
+  - [Common Azure AD roles](#common-azure-ad-roles)
   - [Custom Azure RBAC roles](#custom-azure-rbac-roles)
 - [Conditional access](#conditional-access)
 - [Privileged Identity Management (PIM)](#privileged-identity-management-pim)
@@ -314,6 +315,11 @@ dsregcmd /status
 - Users with Global Administrator or User Administrator role can create new users
 - When you delete an account, the account remains in suspended state for 30 days
 - Users can also be added to Azure AD through Microsoft 365 Admin Center, Microsoft Intune admin console, and the CLI
+- If a user is assigned a Azure AD role, then he is called an administrator
+- All users are granted a set of default permissions, a user's access consists of:
+  - the type of user (member or guest)
+  - their role assignments
+  - whether they are owner of a object
 
 
 ## Groups
@@ -738,6 +744,16 @@ To enable the elevated access:
       az role assignment delete --role "User Access Administrator" --scope "/"
       ```
 
+### Common Azure AD roles
+
+- **Application Administrator**: everything app related, can NOT manage conditional access
+- **Cloud Application Administrator**: similar to above, but no Application Proxy settings
+- **Application Developer**
+  - Allow Application registration, consent to allow an app to access data
+  - By default, every user can create app registrations, this can be disabled in "User Settings"
+- **Enterprise Application Owner**: managed owned enterprise apps, SSO, user and group assignments
+- **Application Registration Owner**: managed owned app regs
+
 ### Custom Azure RBAC roles
 
 A custom role definition is like:
@@ -838,12 +854,19 @@ Help ensure that the right people have the right access to the right resources, 
 ## Administrative Units (AU)
 
 - To restrict administrative scope in organizations that are made up of independent divisions, such as School of Business and School of Engineering in a University
-- You could put users/groups/devices in a unit
-- Support dynamic membership rules
-- Doesn't support nesting
+- Membership
+  - You could put users/groups/devices to a unit
+  - Support dynamic membership rules
+  - No nesting
 - A unit is a scope for Azure AD role assignment
   - You only get permissions over direct members in the unit, not users in a group, you need to add them explicitly to the unit
-  - Only a subset AAD roles can be assigned
+- Only a subset AAD roles can be assigned:
+  - User administrator
+  - Groups administrator
+  - Password administrator
+  - Authentication administrator
+  - Helpdesk administrator
+  - License administrator
 - For a **restricted management administrative unit**, only admins with roles assigned at the unit scope can manage objects in it, not global admins.
   - Could be used to lock down some highly sensitive accounts
   - If an object is in multiple AUs, admin at any AU could manage it
@@ -920,6 +943,22 @@ Authentication
 - Use regular administrator roles wherever possible;
 - Create a list of banned passwords (such as company name);
 - Configure conditional access policies to require users to pass multiple authentication challenges;
+- **Emergence accounts**
+  - Two or more
+  - Not associated with any individual user
+  - If password is used, it should be strong and not expire
+  - Use a different strong authentication method than regular accounts
+    - Exclude at least one account from phone-based MFA
+    - Exclude one account from any Conditional Access policies
+  - Assigned "Global Administrator" role, the assignment should be permanent in PIM
+  - Should be cloud-only, uses the `*.onmicrosoft.com` domain
+  - Not federated or synchronized from on-prem environments
+  - Trigger alerts whenever an emergence accounts sign in, use a KQL query like:
+    ```kql
+    SigninLogs
+    | project UserId
+    | where UserId == "f66e7317-2ad4-41e9-8238-3acf413f7448"
+    ```
 
 
 ## CLI
