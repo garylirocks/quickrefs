@@ -11,6 +11,7 @@
   - [Action definition](#action-definition)
   - [Contexts](#contexts)
   - [`env` variables](#env-variables)
+  - [`vars` and `secrets`](#vars-and-secrets)
   - [`github` context](#github-context)
   - [Expressions](#expressions)
     - [Comparisons](#comparisons)
@@ -18,10 +19,17 @@
     - [Status check functions](#status-check-functions)
     - [Object filters](#object-filters)
   - [Conditional](#conditional)
-  - [Secrets and variables](#secrets-and-variables)
   - [Compute contexts](#compute-contexts)
-  - [Step output](#step-output)
   - [Environments](#environments)
+  - [Workflow commands](#workflow-commands)
+    - [Set environment variables](#set-environment-variables)
+    - [Set output](#set-output)
+    - [Add a system path](#add-a-system-path)
+    - [Add a job summary](#add-a-job-summary)
+    - [Set messages](#set-messages)
+    - [Mask a value](#mask-a-value)
+    - [Stop and resume workflow commands processing](#stop-and-resume-workflow-commands-processing)
+- [Common workflow tasks](#common-workflow-tasks)
   - [Artifacts](#artifacts)
   - [GitHub Script](#github-script)
   - [Azure login](#azure-login)
@@ -323,7 +331,6 @@ runs:
 | `needs`    | Outputs of all jobs that are defined as a dependency of current job                 |
 
 - `github` context is available globally, other contexts are only available for some keys, see https://docs.github.com/en/actions/learn-github-actions/contexts#context-availability
-  - `env`, `secrets` contexts are not available in `jobs.<job_id>.with.<with_id>`, so you cannot pass them to a reusable workflow
 
 ### `env` variables
 
@@ -349,6 +356,19 @@ jobs:
 - Could have `env` on workflow, job and step level
 - Could use variable substitution in `env` values
 - Can be used in any key in a workflow step except for `id` and `uses`
+
+### `vars` and `secrets`
+
+```yaml
+- name: Print a variable
+  run: echo "name: " ${{ vars.name }}
+- name: Use a secret - Azure login
+  uses: azure/login@v1
+  with:
+    creds: ${{ secrets.AZURE_CREDENTIALS }}
+```
+
+- `secrets.GITHUB_TOKEN` is automatically created for each workflow run
 
 ### `github` context
 
@@ -449,11 +469,23 @@ jobs:
     - name: Failing step
       id: demo
       run: exit 1
+
     - name: The demo step has failed
+      id: step2
+      if: failure()
+      run: echo "The demo step has failed"
+
+    - name: Check conditions only
+      id: step3
+      if: steps.demo.conclusion == 'failure'
+      run: echo "Check conditions only"
+
+    - name: Check conditions and status
+      id: step4
       if: failure() && steps.demo.conclusion == 'failure'
-      run: echo "Step demo failed"
+      run: echo "Check conditions and status"
   ```
-  *only checking `.conclusion` is not enough, you need to check `failure()` as well, otherwise `success()` is implied*
+  - `step3` is skipped, `step4` will run, because *only checking `.conclusion` is not enough, you need to check `failure()` as well, otherwise `success()` is implied*
 
 #### Object filters
 
@@ -529,20 +561,6 @@ jobs:
       ...
 ```
 
-### Secrets and variables
-
-```yaml
-- name: Print a variable
-  run: echo "name: " ${{ vars.name }}
-- name: Use a secret - Azure login
-  uses: azure/login@v1
-  with:
-    creds: ${{ secrets.AZURE_CREDENTIALS }}
-```
-
-- `secrets.GITHUB_TOKEN` is automatically created for each workflow run
-- `${{ secrets.my_secret }}` can not be used in `jobs.<job_id>.with.<with_id>`, can be used in `jobs.<job_id>.secrets.<secret_id>`
-
 ### Compute contexts
 
 Multiple compute contexts for a job:
@@ -568,25 +586,6 @@ test:
         CI: true
 ```
 
-### Step output
-
-Your could output a variable in one step using `::set-output` command in one step and use it later
-
-```yaml
-- name: Fetch latest version
-  id: fetch_version
-  run: echo ::set-output name=TAG::${GITHUB_REF#refs/tags/}
-
-...
-
-- name: Build and push production images
-  uses: docker/build-push-action@v2
-  with:
-    context: .
-    tags: ${{secrets.ACR_NAME}}/contoso-website:${{ steps.fetch_version.outputs.TAG }}
-    push: true
-```
-
 ### Environments
 
 ```yaml
@@ -606,6 +605,140 @@ jobs:
 
 - Specify the `dev` environment
 - Each environment could have its own `AZURE_CREDENTIALS` secret
+
+### Workflow commands
+
+Workflow commands allow actions to communicate with the runner machine to set environment variables, output values, add debug messages, etc
+
+There are two ways:
+
+- Write to a file
+- Use the `echo` command in a specific format
+  - `echo "::workflow-command parameter1={data},parameter2={data}::{command value}"`
+
+#### Set environment variables
+
+- Output a line to the `$GITHUB_ENV` file `echo "{env_var}={value}" >> "$GITHUB_ENV"`
+- Then you can use it in following steps: `$env_var`
+
+```yaml
+steps:
+  - name: Set the value
+    id: step_one
+    run: |
+      echo "action_state=yellow" >> "$GITHUB_ENV"
+  - name: Use the value
+    id: step_two
+    run: |
+      printf '%s\n' "$action_state" # This will output 'yellow'
+```
+
+#### Set output
+
+```yaml
+steps:
+  - name: Set output
+    id: step1
+    run: echo "MY_COLOR=green" >> "$GITHUB_OUTPUT"
+
+  - name: Use output of previous step
+    env:
+      MY_COLOR: ${{ steps.step1.outputs.MY_COLOR }}
+    run: echo "The selected color is $MY_COLOR"
+```
+
+#### Add a system path
+
+`echo "$HOME/.local/bin" >> $GITHUB_PATH`
+
+#### Add a job summary
+
+- Allow you to add info to the job summary page, so you don't need to go to the logs page
+- You add to `$GITHUB_STEP_SUMMARY` in each step, they summaries for all step in a job will be grouped together
+- Supports [GitHub flavored Markdown](https://github.github.com/gfm/)
+
+```yaml
+steps:
+  - id: step1
+    run: |
+      echo "## step1" >> $GITHUB_STEP_SUMMARY
+      echo "Fruit produced" >> $GITHUB_STEP_SUMMARY
+      echo "" >> $GITHUB_STEP_SUMMARY # this is a blank line
+      echo "- Apple" >> $GITHUB_STEP_SUMMARY
+      echo "- Banana" >> $GITHUB_STEP_SUMMARY
+
+  - id: step2
+    run: |
+      echo "## step2" >> $GITHUB_STEP_SUMMARY
+      echo "Well done :rocket:" >> $GITHUB_STEP_SUMMARY
+```
+
+#### Set messages
+
+- The messages show up in a "Annotations" pane in the summary page, similar to job summary pane
+- The grouped log lines only show in logs page
+
+```yaml
+steps:
+  # set messages
+  - name: Set debug/notice/warning/error messages
+    run: |
+        echo "::debug::Set the Octocat variable"
+        echo "::notice file=app.js,line=1,col=5,endColumn=7::Missing semicolon"
+        echo "::warning file=app.js,line=1,col=5,endColumn=7::Missing semicolon"
+        echo "::error file=app.js,line=1,col=5,endColumn=7::Missing semicolon"
+
+  # group log lines
+  - name: Group log lines
+    run: |
+        echo "::group::My title"
+        echo "Inside group"
+        echo "::endgroup::"
+```
+
+#### Mask a value
+
+The value will be masked in all following steps
+
+```yaml
+jobs:
+  generate-a-secret-output:
+    runs-on: ubuntu-latest
+    steps:
+      - id: sets-a-secret
+        name: Generate, mask, and output a secret
+        run: |
+          the_secret=$((RANDOM))
+          echo "::add-mask::$the_secret"
+          echo "secret-number=$the_secret" >> "$GITHUB_OUTPUT"
+
+      - name: Use that secret output (protected by a mask)
+        run: |
+          echo "the secret number is ${{ steps.sets-a-secret.outputs.secret-number }}"
+```
+
+#### Stop and resume workflow commands processing
+
+- Stop with `stop-commands::<marker>`
+- Then resume with `::<marker>::`
+
+```yaml
+jobs:
+  workflow-command-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Disable workflow commands
+        run: |
+          echo '::warning:: This is a warning message, to demonstrate that commands are being processed.'
+          stopMarker=$(uuidgen)
+          echo "::stop-commands::$stopMarker"
+          echo '::warning:: This will NOT be rendered as a warning, because stop-commands has been invoked.'
+          echo "::$stopMarker::"
+          echo '::warning:: This is a warning again, because stop-commands has been turned off.'
+```
+
+
+## Common workflow tasks
 
 ### Artifacts
 
@@ -640,7 +773,7 @@ test:
 
 ### GitHub Script
 
-It is a special action (`actions/github-script`) that allows using octokit/rest.js directly in a workflow file.
+It is a special action (`actions/github-script`) that allows using `octokit/rest.js` directly in a workflow file.
 
 - `octokit`: official collection of GitHub API clients
 - `rest.js`: included in octokit, JavaScript client for GitHub rest API
@@ -694,12 +827,13 @@ What reusable workflows can be accessed by your workflow:
 
 ### Limitations
 
-- Can be nested up to four levels, including the top caller
-- A maximum of 20 reusable workflows, including nested ones
+- Can be nested up to **four levels**, including the top caller
+- A maximum of **20** reusable workflows, including nested ones
 - `env` variables in caller workflow level are NOT propagated to the called
 - `env` variables in called workflow level are NOT propagated to the caller
-- Use `vars` context to reuse variables in multiple workflows
-- Reuse workflows can only be called directly within a job, not a step, so you cannot use `GITHUB_ENV` to pass values to job steps in the caller workflow
+- Reuse workflows can only be called directly within a job, not a step, so you cannot use `GITHUB_ENV` to pass values to or from it
+- **`env`, `secrets` contexts can NOT be used** in `jobs.<job_id>.with.<with_id>`, so you cannot pass them to a reusable workflow as inputs
+- **`vars` context CAN be used** in a called workflow directly without passing anything from the caller workflow
 
 ### Example
 
