@@ -12,9 +12,10 @@
   - [Hybrid authentication](#hybrid-authentication)
   - [Azure AD DS](#azure-ad-ds)
 - [Devices](#devices)
-  - [Registration](#registration)
-  - [Join](#join)
+  - [AAD registered devices](#aad-registered-devices)
+  - [AAD joined](#aad-joined)
   - [Hybrid](#hybrid)
+    - [Device writeback](#device-writeback)
   - [Debugging](#debugging)
 - [Users](#users)
   - [Emergence accounts (break-glass accounts)](#emergence-accounts-break-glass-accounts)
@@ -40,6 +41,9 @@
 - [Conditional access](#conditional-access)
 - [Privileged Identity Management (PIM)](#privileged-identity-management-pim)
 - [Entra permissions management](#entra-permissions-management)
+- [License management](#license-management)
+- [Custom security attribute](#custom-security-attribute)
+- [SCIM](#scim)
 - [Identity protection](#identity-protection)
 - [Access reviews](#access-reviews)
 - [Administrative Units (AU)](#administrative-units-au)
@@ -249,23 +253,44 @@ Usage:
 - Enable users SSO to cloud-based resources
 - Mobile device management (MDM) solution such as Microsoft Intune, provides additional attributes in Azure AD
 
-### Registration
+### AAD registered devices
 
-- Bring your own device (BYOD), such as cell phones and tablets
-- Works on Windows, iOS, Android, Ubuntu etc.
-- You login with your own account
+- Scenarios:
+  - Bring your own device (BYOD), eg. home PC, laptop
+  - Mobile devices such as cell phones and tablets
+- OS: Windows, iOS, Android, Ubuntu etc.
+- Sign in with: end-user local credentials, password, Windows Hello, PIN Biometrics
+- Device management: eg. Microsoft Intune, which could enforce:
+  - storage to be encrypted
+  - password complexity
+  - security software being updated
+- Capabilities:
+  - SSO to cloud resources, using an AAD account attached to the device
+  - Conditional Access policies can be applied to the device identity
 
-### Join
+### AAD joined
 
+- Primarily intended for organizations without on-prem AD
 - Usually a work/school device, you login with your work/school account
-- An extension to registering, changes local state to a device
-- Works on Windows 10 (and above)
+- OS: Works on Windows 10 & 11 (and above)
+- Capabilities:
+  - SSO to both cloud and on-prem resources
+  - Conditional Access
+  - Self-service password reset
+  - Windows Hello PIN reset
+- Device management: MDM, eg. Microsoft Intune
+  - Storage encryption, software being updated, etc
+  - Make org applications available to devices using Configuration Manager
+- How to join:
+  - Out of Box Experience (OOBE)
+  - bulk enrollment
+  - Windows Autopilot
 - You can still login to an AAD-joined machine using a non-AAD account
 - If you want to RDP an AAD joined machine using an AAD account
   - you use username in the form like `MyAAD\gary@example.com`
   - your local machine needs to be AAD joined/registered or hybrid joined
   - you can't use MFA during RDP login, but you could assign conditional access policy
-- Requirements for Azure Windows VMs:
+- To AAD join an Azure Windows VMs:
   - Windows Server 2019 and later
   - Windows 10 and later
   - With `AADLoginForWindows` extensions installed
@@ -273,9 +298,24 @@ Usage:
 
 ### Hybrid
 
-- The device is joined to AD and registered with Azure AD
+- The device is AD joined and AAD registered
+- OS: Windows 7 and above, Windows Server 2008/R2 and above
+- Sing in with: Password or Windows Hello for Business
+- Management:
+  - Group Policy
+  - Configuration Manager standalone
+  - or co-management with Microsoft Intune
+- Capabilities: same as AAD joined devices
 - You set a Service Connection Point (SCP) in AAD Connect, then AAD Connect will sync your on-prem device objects to AAD
 - Your AD-joined device also registers itself with Azure AD, the device would get an AAD primary refresh token
+
+#### Device writeback
+
+- Keep a track of devices AAD registered devices in AD
+- You'll have a copy of the device objects in the container "Registered Devices"
+  - ADFS issues "is managed" claim based on whether the device object is in the "Registered Devices" container,
+- Window Hello For Business (WHFB) requires device writeback to function in Hybrid and Federated scenarios
+
 
 ### Debugging
 
@@ -850,6 +890,45 @@ Best practices:
 - Works across clouds (Azure, AWS, GCP)
 - Can analyze permissions used and optionally right size
 - Separate license based on resources scanned
+
+
+## License management
+
+A license could be assigned to a user, or a group.
+
+Group-based licensing allows you assign licenses to groups, all users in the group will get the licenses
+
+- Can be any security group (cloud-only or synced from AD)
+- When a user joins/leaves a group, the license is added/removed automatically for the user
+- If a user got the same license multiple times via multiple groups, the license is only consumed once
+- A *product license* could have multiple **service plans**, some of the plans could be disabled (eg. disable Yammer service in Microsoft 365)
+- Available only through Azure portal
+- There might be errors due to various reasons, like:
+  - Not enough licenses left
+  - Service plans have conflicts
+  - Service not available at a user's usage location (defaults to the directory's location)
+- You could force group/user license process tor resolve errors
+
+
+## Custom security attribute
+
+- Business-specific attributes (key-value pairs, like tags) that you can define and assign to Azure AD objects. Could be used to:
+  - store information
+  - query and filter AAD objects
+  - enforce access control
+- Only users with *Attribute Definition Administrator* role can create custom security attributes
+- Can be added to Azure resources as well ?
+
+
+## SCIM
+
+SCIM (System for Cross-domain Identity Management) can sync identities from Azure AD and another system
+
+![SCIM overview](images/azure_ad-scim.png)
+
+Scenarios:
+- Use HCM to manage employee lifecycle, the user's provile synced to AAD automatically
+- Provision users and groups in another application
 
 
 ## Identity protection
