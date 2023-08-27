@@ -127,9 +127,17 @@ Features:
 
 ## B2B
 
-- For collaborating with business partners from external organizations like suppliers, partners and vendors
-- Users appear as guests
-- Guest user won't have credentials saved in your tenant, they will login via another AAD, an email code, SMS code, Google/Facebook account, etc
+- Allow users from other organizations to use apps and resources in your tenant
+- External users can be invited as **guests** (with "#EXT#" extension in their user principal name) or **members**
+- Who can invite:
+  - By default, all users (including guests) can invite guests, if this is turned off, you can assign "Guest Inviter" role explicitly to users
+  - You can create either a allow list or a deny list to control what external domains are allowed
+- How guest user sign in:
+  - Guest user won't have credentials saved in your tenant, they will login via another AAD, an email code, SMS code, Google/Facebook account, etc
+  - By default these IdPs are configured: Azure AD, Microsoft Account, Email one-time passcode
+  - If you invite an Gmail account, by default the user would sign-in with one-time passcode, after you add Google as an IdP (you need Client ID and Client Secret), then the user sign in with Google's sign-in experience
+  - You can customize the Terms of Use the invited user needs to agree
+  - The user is usually redirected to My Apps portal
 
 <img src="images/azure_ad-external-identities.png" width="600" alt="Guest users" />
 
@@ -139,7 +147,10 @@ Your could invite people from other external identity providers as guest users, 
 
 ### Best practices
 
-- **Designate an application owner to manage guest users**. Application owners are in the best position to decide who should be given access to a particular application.
+- **Designate an application owner to manage guest users**. Application owners are in the best position to decide who should be given access to a particular application. Typical setup:
+  - Enable self-service group management
+  - Create a group and make the user an owner
+  - Configure the app for self-service and assign the group to the app
 - Use **conditional access** policies to grant or deny access
 - Enable MFA, this happens **in your tenant**
 - **Integrate with identity providers**, you can setup federation
@@ -362,7 +373,7 @@ dsregcmd /status
 
 - User types:
   - Member (could be defined in this AAD, another AAD, or synced from on-prem AD)
-  - Guest (accounts from other cloud providers)
+  - Guest (accounts from other cloud providers, with "#EXT#" in the name)
 - If a user is assigned a Azure AD role, then the user is called an **administrator**
 - Users with Global Administrator or User Administrator role can create new users
 - When you delete an account, the account remains in suspended state for 30 days
