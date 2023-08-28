@@ -3,8 +3,9 @@
 - [Overview](#overview)
 - [SKUs/Licenses](#skuslicenses)
 - [B2B](#b2b)
-  - [Best practices](#best-practices)
+  - [Identity providers](#identity-providers)
   - [Cross-tenant access settings](#cross-tenant-access-settings)
+  - [Best practices](#best-practices)
 - [B2C](#b2c)
   - [Best practices](#best-practices-1)
 - [Azure AD vs. AD DS vs. Azure AD DS](#azure-ad-vs-ad-ds-vs-azure-ad-ds)
@@ -137,7 +138,8 @@ Features:
   - By default these IdPs are configured: Azure AD, Microsoft Account, Email one-time passcode
   - If you invite an Gmail account, by default the user would sign-in with one-time passcode, after you add Google as an IdP (you need Client ID and Client Secret), then the user sign in with Google's sign-in experience
   - You can customize the Terms of Use the invited user needs to agree
-  - The user is usually redirected to My Apps portal
+  - The user is usually redirected to My Apps portal (`https://myapps.microsoft.com/?tenantid=<tenant-id>`)
+- Guests can be granted any AAD roles, just like members
 
 <img src="images/azure_ad-external-identities.png" width="600" alt="Guest users" />
 
@@ -145,16 +147,16 @@ Your could invite people from other external identity providers as guest users, 
 
 <img src="images/azure_ad-b2b.svg" width="600" alt="B2B process" />
 
-### Best practices
+### Identity providers
 
-- **Designate an application owner to manage guest users**. Application owners are in the best position to decide who should be given access to a particular application. Typical setup:
-  - Enable self-service group management
-  - Create a group and make the user an owner
-  - Configure the app for self-service and assign the group to the app
-- Use **conditional access** policies to grant or deny access
-- Enable MFA, this happens **in your tenant**
-- **Integrate with identity providers**, you can setup federation
-- **Create as self-service sign-up user flow**, you could customize the experience
+- Google
+  - *for Gmail account only, use federation for G Suite domains*
+- Facebook
+  - only for signing up through apps using self-service sign-up user flows
+- Any other third party IdP which supports SAML 2.0 or WS-Fed protocol.
+  - The target domain must not be DNS-verified on Azure AD
+  - Some attributes/claims are required in SAML response/token from IdP
+  - The WS-Fed providers tested: AD FS, Shibboleth
 
 ### Cross-tenant access settings
 
@@ -172,6 +174,25 @@ For any other AAD tenant, you could set
   - B2B direct connect
   - Trust: whether your users need to accept the consent prompt the first time they access the other tenant
 - Tenant restrictions // TODO
+
+Notes:
+
+B2B direct connect feature
+  - is blocked by default
+  - need to be enabled on both sides
+  - currently works with Microsoft Teams shared channels
+    - user A creates a shared channel in tenant A, invites user B from tenant B
+    - user B can access the channel from tenant B Teams instance
+
+### Best practices
+
+- **Designate an application owner to manage guest users**. Application owners are in the best position to decide who should be given access to a particular application. Typical setup:
+  - Enable self-service group management
+  - Create a group and make the user an owner
+  - Configure the app for self-service and assign the group to the app
+- Use **conditional access** policies to grant or deny access
+- Enable MFA, this happens **in your tenant**
+- **Create a self-service sign-up user flow**, you could customize the experience
 
 
 ## B2C
