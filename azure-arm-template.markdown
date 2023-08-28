@@ -5,6 +5,7 @@
 - [CLI](#cli)
 - [Nested template](#nested-template)
 - [Linked template](#linked-template)
+- [Use KV secret in deployment](#use-kv-secret-in-deployment)
 - [Scopes](#scopes)
   - [Deployment location and name](#deployment-location-and-name)
 - [Resource group scope](#resource-group-scope)
@@ -266,6 +267,78 @@ It's like the a nested template, but instead of nested directly within the main 
   ```
   "uri": "[concat(parameters('_artifactsLocation'), '/path/to/my-template.json', parameters('_artifactsLocationSasToken'))]"
   ```
+
+## Use KV secret in deployment
+
+If your deployment needs secret value, you should put it in a KV, then reference it in your template file.
+
+Prerequisites:
+
+- Make sure the KV grants access to ARM deployment: `az keyvault update  --name kv-demo-001 --enabled-for-template-deployment true`
+- The user/SP who deploys the template must have the `Microsoft.KeyVault/vaults/deploy/action` permission over the KV (Owner and Contributor have this permission)
+
+Example template (set the parameter type to `securestring`):
+
+```json
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "sqlServerName": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]"
+    },
+    "adminLogin": {
+      "type": "string"
+    },
+    "adminPassword": {
+      "type": "securestring"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Sql/servers",
+      "apiVersion": "2021-11-01",
+      "name": "[parameters('sqlServerName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "administratorLogin": "[parameters('adminLogin')]",
+        "administratorLoginPassword": "[parameters('adminPassword')]",
+        "version": "12.0"
+      }
+    }
+  ]
+}
+```
+
+Example parameter file (use `reference` instead of `value`):
+
+```json
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminLogin": {
+      "value": "exampleadmin"
+    },
+    "adminPassword": {
+      "reference": {
+        "keyVault": {
+          "id": "/subscriptions/<subscription-id>/resourceGroups/<rg-name>/providers/Microsoft.KeyVault/vaults/<vault-name>"
+        },
+        "secretName": "ExamplePassword"
+      }
+    },
+    "sqlServerName": {
+      "value": "<your-server-name>"
+    }
+  }
+}
+```
+
 
 ## Scopes
 
