@@ -343,11 +343,10 @@ Usage:
 
 #### Device writeback
 
-- Keep a track of devices AAD registered devices in AD
+- Keep track of AAD registered devices in AD
 - You'll have a copy of the device objects in the container "Registered Devices"
-  - ADFS issues "is managed" claim based on whether the device object is in the "Registered Devices" container,
+  - ADFS issues "is managed" claim based on whether the device object is in the "Registered Devices" container
 - Window Hello For Business (WHFB) requires device writeback to function in Hybrid and Federated scenarios
-
 
 ### Debugging
 
