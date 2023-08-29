@@ -230,33 +230,59 @@ Azure AD does not replace Active Directory, they can be used together, **Azure A
 - An AAD instance can only sync from one AAD Connect
 - But one AD can be linked to multiple AAD Connect, so sync to multiple AAD instances
   - eg. sync one AD to both Azure commercial cloud and Azure US Gov cloud
+- AAD Connect can sync to only a verified domain(eg. `contoso.com`, not just `contoso`) in Azure AD
+- You're able to specify the attribute in AD that should be used as UPN to sign in to Azure after the users are synced to AAD.
 - Use **Azure AD Connect Cloud Sync** to run the syncing in cloud instead of on-prem
 
 ### Hybrid authentication
 
-- Password hash synchronization (recommended)
+Cloud authentication (both works with seamless SSO):
+
+- **Password hash synchronization** (recommended)
+
+  ![Password hash synchronization](images/azure_ad-password-hash.png)
 
   - Most basic and least-effort solution in hybrid scenario
-  - On-prem AD stores user password as a hash
-  - AD Connect retrieves the hash and hashes that hash, sends the second hash to Azure AD
   - Allows on-prem user to auth against Azure AD for cloud applications
-  - Allows AAD to check if the password is leaked
+  - On-prem AD stores user password as a hash, AD Connect retrieves the hash and hashes that hash, sends the second hash to Azure AD
+  - Password hash is synced every 2 minutes
+  - Hight availability: you should deploy a second Azure AD Connect server in standby mode
+  - On-prem account state changes are NOT synced to AAD immediately, you might want to trigger a new synchronization cycle after bulk update on-prem.
+  - Even if you are using another auth method, this should be enabled as a back-up for
+    - High availability and disaster recovery
+    - On-prem outage survival
+    - Identity protection: check if the password is leaked
 
-- Pass-through authentication
+- **Pass-through authentication**
 
-  - Only store passwords in on-prem AD, not in the cloud (Azure AD)
+  ![Pass through synchronization](images/azure_ad-pass-through-auth.png)
+
+  - Only store passwords in on-prem AD, not in the AAD
   - Only on-prem AD is used to authenticate
-  - A light weight agent is used on-prem to communicate with Azure AD
+  - One or more light weight agents installed on-prem, need access to Internet and on-prem AD domain controllers
+    - One agent running on the AAD Connect server
+    - Deploy two extra agents for high availability
+  - Why choose this: To enforce on-prem user account states, password policies and sign in hours at the time of sign-in
 
-- Federated authentication
+**Federated authentication**:
 
-  - Allows an external, third-party system to authenticate users, including biometrics, smart-cards, etc
-  - Does not authenticate against on-prem AD
-  - You authenticate against a third party federation service, which gives you a SAML token, you then exchange this SAML token for AAD tokens (refresh & access tokens)
+![Federated synchronization](images/azure_ad-federated-auth.png)
 
-- Password writeback
+AAD hands off authentication process to a separate trusted authentication system, such as on-prem AD FS, to validate the user's password.
 
-  - Changes made in Azure AD are written back to on-prem AD
+- The authentication system could provide other authentication requirements: smartcards, third-party MFA, etc
+- Does not authenticate against on-prem AD
+- You authenticate against a third party federation service, which gives you a SAML token, you then exchange this SAML token for AAD tokens (refresh & access tokens)
+- Why choose this:
+  - Features not supported by AAD: smartcards or certificates
+  - On-prem MFA servers or third-party multifactor providers requiring a federated IdP
+  - Sign in that requires `DOMAIN\username` instead of UPN like `user@domain.com`
+- High availability: federated systems typically require a load-balanced array of servers, known as a farm.
+- More complex to operate and troubleshoot compared to cloud authentication
+
+Related concepts:
+
+- **Password writeback**: changes made in Azure AD are written back to on-prem AD
 
 ### Azure AD DS
 
