@@ -178,14 +178,104 @@ To collect data:
 
 Data structure
 
-- `kind`: Windows or Linux or Custom
+```json
+"properties": {
+  "dataSources": {
+    "performanceCounters": [
+      {
+        "streams": [
+          "Microsoft-Perf"
+        ],
+        "samplingFrequencyInSeconds": 60,
+        "counterSpecifiers": [
+          "\\Processor Information(_Total)\\% Processor Time",
+          "\\..."
+        ],
+        "name": "perfCounterDataSource60"
+      }
+    ],
+    "windowsEventLogs": [
+      {
+        "streams": [
+          "Microsoft-Event"
+        ],
+        "xPathQueries": [
+          "Application!*[System[(Level=1 or Level=2 or Level=3 or Level=4 or Level=0)]]",
+          "..."
+        ],
+        "name": "eventLogsDataSource"
+      }
+    ],
+    "syslog": [
+      {
+        "streams": [
+          "Microsoft-Syslog"
+        ],
+        "facilityNames": [
+          "auth",
+          "authpriv",
+          "cron",
+          "..."
+        ],
+        "logLevels": [
+          "Info",
+          "Notice",
+          "Warning",
+          "Error",
+          "Critical",
+          "Alert",
+          "Emergency"
+        ],
+        "name": "sysLogsDataSource--1469397783"
+      }
+    ]
+  },
+  "destinations": {
+    "logAnalytics": [
+      {
+        "workspaceResourceId": "xxxxxxxx",
+        "name": "la-1234"
+      }
+    ]
+  },
+  "dataFlows": [
+    {
+      "streams": [
+        "Microsoft-Perf"
+      ],
+      "destinations": [
+        "la-1234"
+      ]
+    },
+    {
+      "streams": [
+        "Microsoft-Event"
+      ],
+      "destinations": [
+        "la-1234"
+      ]
+    },
+    {
+      "streams": [
+        "Microsoft-Syslog"
+      ],
+      "destinations": [
+        "la-1234"
+      ]
+    }
+  ]
+}
+```
+
 - `dataSources`: Performance / EventLogs / Syslog / CustomLogs
-- `destinations`: Log Analytics
-- `dataFlows`: including `streams` and `destinations`
+- `destinations`: only Log Analytics workspace is supported
+- `dataFlows`: mapping between `streams` and `destinations`, one stream could be sent to multiple destinations
+
+Platform type: Windows / Linux / All
 
 Multi to multi:
-  - A resource could be associated with multiple rules
-  - A rule could be associated with multiple resources
+- A resource could be associated with multiple DCR rules
+- A DCR could be associated with multiple resources
 
 How to create:
 - Some DCRs will be created and managed by Azure Monitor to collect a specific set of data to **enable insights and visualizations**.
