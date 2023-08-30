@@ -11,6 +11,7 @@
 - [Azure AD vs. AD DS vs. Azure AD DS](#azure-ad-vs-ad-ds-vs-azure-ad-ds)
   - [Azure AD Connect](#azure-ad-connect)
   - [Hybrid authentication](#hybrid-authentication)
+  - [AAD Connect Health service](#aad-connect-health-service)
   - [Azure AD DS](#azure-ad-ds)
 - [Devices](#devices)
   - [AAD registered devices](#aad-registered-devices)
@@ -40,6 +41,10 @@
   - [Common Azure AD roles](#common-azure-ad-roles)
   - [Custom Azure RBAC roles](#custom-azure-rbac-roles)
 - [Conditional access](#conditional-access)
+- [Authentication methods](#authentication-methods)
+  - [Methods](#methods)
+  - [Management](#management)
+  - [Monitoring](#monitoring)
 - [Privileged Identity Management (PIM)](#privileged-identity-management-pim)
 - [Entra permissions management](#entra-permissions-management)
 - [License management](#license-management)
@@ -296,6 +301,18 @@ Related concepts:
     - During setup, AAD gets an computer account in AD
     - AAD will receive Kerberos tickets
 - **Password writeback**: changes made in Azure AD are written back to on-prem AD
+- **Device writeback**: sync AAD registered device to on-prem AD. Used to enable device-based conditional access for ADFS
+
+### AAD Connect Health service
+
+- AAD premium license required to configure this
+- Can be used with:
+  - AAD Connect Sync, installed automatically with the Sync agent
+  - ADFS servers, manual installation
+  - AD DS servers, manual installation
+- Can send email notifications
+- Supports RBAC roles: Owner, Contributor, Reader
+- AAD Global Administrator always have full access to all the operations.
 
 ### Azure AD DS
 
@@ -938,7 +955,39 @@ Best practices:
 - **Require manged devices**
 - **Require approved client applications**
 - **Block legacy authentication protocols**
-- You can opt for **Passwordless MFA** or **Phishing-resistant MFA**
+
+
+## Authentication methods
+
+### Methods
+
+- SSPR only
+  - Security questions
+  - Email address
+- Passwordless
+  - **Windows Hello for Business**
+    - Uses PIN or biometics recognition
+    - PC with a built-in Trusted Platform Module (TPM)
+    - Tied to the device
+    - Typical scenarios: dedicated work PC
+  - **FIDO2** security keys
+    - FIDO stands for Fast IDentity Online, it's on open standard
+    - Keys are typically USB devices, but could also use Bluetooth or NFC
+    - Phishing resistant
+    - You buy the key from a third party vendor
+    - Typical scenarios: shared devices in a factory, plant, retail, etc
+  - Microsoft Authenticator app
+    - PIN and biometrics recognition on phone
+- App password: for certain non-browser apps which don't support AAD MFA, you could use app specific password
+
+### Management
+
+- You can set policies to control which methods are available to which users
+
+### Monitoring
+
+- Registration and usage activities
+- View which methods are available to each user
 
 
 ## Privileged Identity Management (PIM)
