@@ -836,7 +836,7 @@ name = "web-sg-${var.resource_tags["project"]}-${var.resource_tags["environment"
 
 ### Data source blocks
 
-- Info from cloud provider APIs
+- Info about current client, subscription
 
   ```terraform
   # get config of the AzureRM default provider
@@ -845,8 +845,24 @@ name = "web-sg-${var.resource_tags["project"]}-${var.resource_tags["environment"
   }
 
   # you can get client_id, tenant_id, subscription_id, object_id
+  # CAUTION: the "subscription_id" is just a GUID, not the full ID
   output "account_id" {
     value = data.azurerm_client_config.current.client_id
+  }
+  ```
+
+  ```terraform
+  data "azurerm_subscription" "current" {
+  }
+
+  output "sub_id" {
+    # CAUTION: this is the full ID, like "/subscriptions/<GUID>"
+    value = data.azurerm_subscription.current.id
+  }
+
+  output "sub_guid" {
+    # CAUTION: this is only the GUID
+    value = data.azurerm_subscription.current.subscription_id
   }
   ```
 
