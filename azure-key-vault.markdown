@@ -105,7 +105,7 @@ Vault uses AAD to authenticate users and apps:
 
 2. Managed identities for Azure resources
 
-    When you enable managed identity on your web app, Azure activates a **separate token-granting REST service** (the endpoint url is like: `http://169.254.169.254/metadata/identity/oauth2/token?api-version=...`) specifically for use by your app, your app request tokens from this service instead of directly from AAD. Your app needs a secret to access this service, but that **secret is injected into your app's environment variables** by App Service when it starts up. You don't need to manage or store the secret value, and nothing outside of your app can access this secret or the managed identity token service endpoint.
+    When you enable managed identity on your web app, Azure activates a **separate token-granting REST service (IMDS service)** (the endpoint url is like: `http://169.254.169.254/metadata/identity/oauth2/token?api-version=...`) specifically for use by your app, your app request tokens from this service instead of directly from AAD. Your app needs a secret to access this service, but that **secret is injected into your app's environment variables** by App Service when it starts up. You don't need to manage or store the secret value, and nothing outside of your app can access this secret or the managed identity token service endpoint.
 
     - this registers your app in AAD for you, and will delete the registration if you delete the app or disable its managed identity;
     - managed identities are free, and you can enable/disable it on an app at any time;

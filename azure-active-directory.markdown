@@ -585,11 +585,15 @@ There are three types of service principals:
 
   - For Azure resources only
   - Eliminate the need for developers to manage credentials
-  - When a managed identity is enabled, a service principal representing that managed identity is created in your tenant
+  - When a managed identity is enabled, a **service principal** representing that managed identity is created in your tenant
     - The service principal is listed under **Enterprise applications -> Managed Identities** in Azure Portal
     - There is **NO** corresponding app registration in your tenant
   - A managed identity as a resource would reside in a region, but the associated service principal is global, its availability is only dependent on Azure AD
     - When the region is unavailable, the control plane won't work, the SP still works
+  - Which MI is used:
+    - If system assigned managed identity(SAMI) is enabled and no identity is specified in the request, Azure Instance Metadata Service (IMDS) defaults to the SAMI.
+    - If SAMI isn't enabled, and only one user assigned managed identity(UAMI) exists, IMDS defaults to that UAMI.
+    - If SAMI isn't enabled, and multiple UAMIs exist, then you are required to specify a managed identity in the request.
 
   Two types:
 
