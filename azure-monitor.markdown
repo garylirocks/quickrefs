@@ -8,6 +8,8 @@
 - [Log Analytics Agent](#log-analytics-agent)
   - [Difference between "Agent" and "Extensions"](#difference-between-agent-and-extensions)
 - [Azure Monitor Agent](#azure-monitor-agent)
+  - [To collect data](#to-collect-data)
+  - [Authentication](#authentication)
   - [AMA supports other services and features](#ama-supports-other-services-and-features)
 - [Data Collection Rules (DCR)](#data-collection-rules-dcr)
 - [Data collection endpoints](#data-collection-endpoints)
@@ -150,14 +152,39 @@ A new ETL-like data collection pipeline, replaces legacy monitoring agents:
 - Telegraf agent
 - Diagnostics extension (not consolidated yet)
 
-To collect data:
+### To collect data
 
-- Install the agent (Azure, Azure Arc, desktops)
-- Define a data collection rule and associate resources to it
-  - Performance - `Perf` table
-  - Windows event logs (including sysmon events) - `Event` table
-  - Syslog - `Syslog` table
-  - Text/Windows IIS logs - custom tables
+- Install the agent
+  - Can be installed to VM, VMSS, Arc-enabled servers
+  - In the Portal, it's installed automatically when you create a DCR and associate it to a VM
+  - Could be installed using Azure policy (for large-scale deployment)
+  - Installing, upgrading, or uninstalling doesn't require restart
+- Associate VM with data collection rules (DCR), otherwise AMA by itself doesn't do anything
+
+### Authentication
+
+- If you use a user-assigned managed identity, config with the MI resource ID (`mi_res_id`) or the object/client ID `<guid-object-or-client-id>`
+
+  ```json
+  {
+    "publisher": "Microsoft.Azure.Monitor",
+    "type": "AzureMonitorWindowsAgent",
+    "typeHandlerVersion": "1.2",
+    "autoUpgradeMinorVersion": true,
+    "enableAutomaticUpgrade": true,
+    "settings": {
+      "authentication": {
+        "managedIdentity": {
+          "identifier-name": "mi_res_id" or "object_id" or "client_id",
+          "identifier-value": "<resource-id-of-uai>" or "<guid-object-or-client-id>"
+        }
+      }
+    }
+  }
+  ```
+
+- For Azure Arc-enabled servers, only system-assigned managed identity is supported, and it's **enabled automatically** as soon as you install the Azure Arc agent
+- Seems no need to assign any roles to the managed identity ?
 
 ### AMA supports other services and features
 
@@ -175,6 +202,14 @@ To collect data:
 
 
 ## Data Collection Rules (DCR)
+
+Platform type: Windows / Linux / All
+
+Tables where data sent to:
+- Performance - `Perf` table
+- Windows event logs (including sysmon events) - `Event` table
+- Syslog - `Syslog` table
+- Text/Windows IIS logs - custom tables
 
 Data structure
 
@@ -270,8 +305,6 @@ Data structure
 - `dataSources`: Performance / EventLogs / Syslog / CustomLogs
 - `destinations`: only Log Analytics workspace is supported
 - `dataFlows`: mapping between `streams` and `destinations`, one stream could be sent to multiple destinations
-
-Platform type: Windows / Linux / All
 
 Multi to multi:
 - A resource could be associated with multiple DCR rules
