@@ -8,7 +8,7 @@
 - [Log Analytics Agent](#log-analytics-agent)
   - [Difference between "Agent" and "Extensions"](#difference-between-agent-and-extensions)
 - [Azure Monitor Agent](#azure-monitor-agent)
-  - [To collect data](#to-collect-data)
+  - [Installation](#installation)
   - [Authentication](#authentication)
   - [AMA supports other services and features](#ama-supports-other-services-and-features)
 - [Data Collection Rules (DCR)](#data-collection-rules-dcr)
@@ -152,14 +152,29 @@ A new ETL-like data collection pipeline, replaces legacy monitoring agents:
 - Telegraf agent
 - Diagnostics extension (not consolidated yet)
 
-### To collect data
+### Installation
 
-- Install the agent
-  - Can be installed to VM, VMSS, Arc-enabled servers
-  - In the Portal, it's installed automatically when you create a DCR and associate it to a VM
-  - Could be installed using Azure policy (for large-scale deployment)
-  - Installing, upgrading, or uninstalling doesn't require restart
-- Associate VM with data collection rules (DCR), otherwise AMA by itself doesn't do anything
+- In the Portal, AMA extension is installed automatically when you create a DCR and associate it to a VM (could be VM, VMSS, Arc-enabled servers)
+  - This also enable system-assigned managed identity for the VM automatically
+  - If you want to use a user-assigned managed identity, see below
+- Could be installed with CLI or Azure policy(for large scale deployment), this involves 3 steps:
+  - Enable managed identity
+    - Enable system-assigned managed identity for the VM
+    - or add user-assigned managed identity to the VM (recommended for large scale deployment)
+  - Install AMA agent (specify the UAMI for authentication if needed)
+
+    ```sh
+    az vm extension set \
+        --name AzureMonitorLinuxAgent \
+        --publisher Microsoft.Azure.Monitor \
+        --ids <vm-resource-id> \
+        --enable-auto-upgrade true \
+        --settings '{"authentication":{"managedIdentity":{"identifier-name":"mi_res_id","identifier-value":"/subscriptions/<my-subscription-id>/resourceGroups/<my-resource-group>/providers/Microsoft.ManagedIdentity/userAssignedIdentities/<my-user-assigned-identity>"}}}'
+    ```
+
+  - Associate a DCR or DCE to the VM
+- Installing, upgrading, or uninstalling doesn't require restart
+- Manual install needed for Windows 10 and 11 devices
 
 ### Authentication
 
@@ -168,7 +183,7 @@ A new ETL-like data collection pipeline, replaces legacy monitoring agents:
   ```json
   {
     "publisher": "Microsoft.Azure.Monitor",
-    "type": "AzureMonitorWindowsAgent",
+    "type": "AzureMonitorLinuxAgent",
     "typeHandlerVersion": "1.2",
     "autoUpgradeMinorVersion": true,
     "enableAutomaticUpgrade": true,
@@ -183,8 +198,8 @@ A new ETL-like data collection pipeline, replaces legacy monitoring agents:
   }
   ```
 
-- For Azure Arc-enabled servers, only system-assigned managed identity is supported, and it's **enabled automatically** as soon as you install the Azure Arc agent
-- Seems no need to assign any roles to the managed identity ?
+- For Azure **Arc-enabled** servers, only system-assigned managed identity is supported, and it's **enabled automatically** as soon as you install the Azure Arc agent
+- The managed-identity (SAMI or UAMI) **DOES NOT NEED any role** assigned to it
 
 ### AMA supports other services and features
 
@@ -303,8 +318,10 @@ Data structure
 ```
 
 - `dataSources`: Performance / EventLogs / Syslog / CustomLogs
+  - One type of data source could only be configured once, eg. only one "Syslog" entry is allowed in a DCR
+  - One type of data source could be sent to multiple destinations
 - `destinations`: only Log Analytics workspace is supported
-- `dataFlows`: mapping between `streams` and `destinations`, one stream could be sent to multiple destinations
+- `dataFlows`: mapping between `streams` and `destinations`
 
 Multi to multi:
 - A resource could be associated with multiple DCR rules
