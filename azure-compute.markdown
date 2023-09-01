@@ -7,7 +7,7 @@
   - [VMSS - Virtual Machine Scale Sets](#vmss---virtual-machine-scale-sets)
   - [Azure Batch](#azure-batch)
   - [Provisioning](#provisioning)
-  - [Use AAD for Linux VM authentication](#use-aad-for-linux-vm-authentication)
+  - [Use AAD for VM authentication](#use-aad-for-vm-authentication)
   - [Linux Agent](#linux-agent)
   - [Windows VM Agent](#windows-vm-agent)
   - [Updating](#updating)
@@ -348,7 +348,9 @@ Large-scale job scheduling for HPC (High Performance Compute) workload
   }
   ```
 
-### Use AAD for Linux VM authentication
+### Use AAD for VM authentication
+
+*Works on both Windows and Linux*
 
 1. Insure System assigned managed identity is enabled:
 
