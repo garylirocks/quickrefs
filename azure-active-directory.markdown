@@ -976,14 +976,11 @@ Best practices:
 
 ### Methods
 
-- SSPR only
-  - Security questions
-  - Email address
 - Passwordless
   - **Windows Hello for Business**
-    - Uses PIN or biometics recognition
+    - Uses PIN or biometics recognition (face, fingerpint)
     - PC with a built-in Trusted Platform Module (TPM)
-    - Tied to the device
+    - Tied to a device
     - Typical scenarios: dedicated work PC
   - **FIDO2** security keys
     - FIDO stands for Fast IDentity Online, it's on open standard
@@ -993,7 +990,11 @@ Best practices:
     - Typical scenarios: shared devices in a factory, plant, retail, etc
   - Microsoft Authenticator app
     - PIN and biometrics recognition on phone
+    - The App could be used for passwordless sign-in, MFA and SSPR
 - App password: for certain non-browser apps which don't support AAD MFA, you could use app specific password
+- SSPR only
+  - Security questions
+  - Email address
 
 ### Management
 
