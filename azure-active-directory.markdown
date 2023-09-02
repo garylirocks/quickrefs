@@ -41,6 +41,8 @@
   - [Common Azure AD roles](#common-azure-ad-roles)
   - [Custom Azure RBAC roles](#custom-azure-rbac-roles)
 - [Conditional access](#conditional-access)
+  - [Session controls](#session-controls)
+  - [App protection policies (APP) on devices](#app-protection-policies-app-on-devices)
   - [Security defaults](#security-defaults)
 - [Authentication methods](#authentication-methods)
   - [Methods](#methods)
@@ -988,11 +990,42 @@ Best practices:
 
 - **More granular MFA experience**: eg. only trigger MFA from an unexpected location (Free license user only have a default MFA option, can't customize conditions)
 - **Test with report-only mode**: evaluate access policy effect before enabling them
+  - You can also emulate a user sign-in under certain conditions with the "**What if**" tool
 - **Block geographic areas**: you could define named locations, and block sign-in from them
 - **Require manged devices**
 - **Require approved client applications**
 - **Block legacy authentication protocols**
 - For a block policy, exclude at least one **emergency account**
+
+### Session controls
+
+- Implemented via *Conditional Access App Control policies in Microsoft Defender for Cloud Apps*
+- You can:
+  - Prevent data exfiltration: download, copy, print sensitive documents
+  - Protect on download
+  - Prevent upload of unlabeled files
+  - Monitor user sessions
+  - Block custom actions: like sending sensitive content in Teams or Slack
+- Continuous access evaluation (CAE)
+  ![Continuous access evaluation](images/azure_ad-continuous-access-evaluation.png)
+  - By default, an access token is valid for 1 hour, it can't be revoked
+  - With CAE, in some cases(eg. user disabled, password change, location change, etc), IdP sends a revocation event to resource provider, which checks revocation for the user when verifying an access token
+
+### App protection policies (APP) on devices
+
+Rules that ensure an organization's data remains safe or contained in a managed app.
+
+Can be configured for apps that run on devices that are:
+
+- Enrolled in Microsoft Intune
+- Enrolled in a third-party MDM solution
+- Not enrolled in any MDM solution (for BYOD scenarios)
+
+Benefits:
+- Protect company data at the app level
+- Don't apply when using the app in a personal context
+- MDM is not required, but beneficial
+
 
 ### Security defaults
 
