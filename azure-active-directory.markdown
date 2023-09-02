@@ -41,6 +41,7 @@
   - [Common Azure AD roles](#common-azure-ad-roles)
   - [Custom Azure RBAC roles](#custom-azure-rbac-roles)
 - [Conditional access](#conditional-access)
+  - [Security defaults](#security-defaults)
 - [Authentication methods](#authentication-methods)
   - [Methods](#methods)
   - [Management](#management)
@@ -958,9 +959,30 @@ A custom role definition is like:
 
 ## Conditional access
 
-![Conditional access](images/azure_ad-conditions-access.png)
+Only available for P1/P2 license
 
-P1 feature
+![Conditional access](images/azure_ad-conditional-access.png)
+
+Microsoft uses a *variety of access token formats* depending on the configuration of the API that accepts the token, here is how access tokens are issued:
+
+![Access token issuance](images/azure_ad-access-token-issuance.png)
+*Block policy has higher precedence*
+
+Common policies:
+
+- Require MFA for admin users
+  - Excluding service accounts and service principals, they can't do MFA
+- Respond to risky users and risky sign-ins
+  - You could also define the policy in Identity Protection, such as requiring a password change
+- Block unknown locations
+- Require compliant devices (with info from Intune), compliance requirement could be
+  - A PIN to unlock
+  - Device encryption
+  - Minimum OS version
+  - Not jailbroken or rooted
+- Require approved client applications
+- Require trusted location/compliant device/hybrid joined device to register MFA or SSPR
+- Enforce a user to consent to the terms of use
 
 Best practices:
 
@@ -970,6 +992,18 @@ Best practices:
 - **Require manged devices**
 - **Require approved client applications**
 - **Block legacy authentication protocols**
+- For a block policy, exclude at least one **emergency account**
+
+### Security defaults
+
+A tenant-wide setting, provides secure default settings until organizations are ready to manage their own identity story. You'll need to disable "Security defaults" if you want to define your own Conditional Access policy.
+
+- Requiring all users to register MFA, and perform MFA when necessary
+- Admins must perform MFA for every sign-in
+- Block legacy auth:
+  - Clients that don't use modern authentication (such as OAuth 2.0), like Office 2010 client, which does not support MFA
+  - Mail protocols such as IMAP, SMTP, or POP3
+- Protect privileged activities like access to the Azure portal
 
 
 ## Authentication methods

@@ -23,7 +23,7 @@ Could be accessed via REST endpoints or various SDKs.
 
 ## REST
 
-You could get an access token and call the REST endpoints directly
+You could get an access token and call the REST endpoints directly, *Microsoft uses a variety of access token formats depending on the configuration of the API that accepts the token*
 
 ```powershell
 Connect-AzAccount
