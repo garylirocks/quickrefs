@@ -54,6 +54,8 @@
 - [Custom security attribute](#custom-security-attribute)
 - [SCIM](#scim)
 - [Identity protection](#identity-protection)
+  - [Policies](#policies)
+  - [Investigate and remediate](#investigate-and-remediate)
 - [Access reviews](#access-reviews)
 - [Administrative Units (AU)](#administrative-units-au)
 - [Logging and analytics](#logging-and-analytics)
@@ -975,7 +977,6 @@ Common policies:
 - Require MFA for admin users
   - Excluding service accounts and service principals, they can't do MFA
 - Respond to risky users and risky sign-ins
-  - You could also define the policy in Identity Protection, such as requiring a password change
 - Block unknown locations
 - Require compliant devices (with info from Intune), compliance requirement could be
   - A PIN to unlock
@@ -996,6 +997,7 @@ Best practices:
 - **Require approved client applications**
 - **Block legacy authentication protocols**
 - For a block policy, exclude at least one **emergency account**
+- You could also use sign-in risk (form Identity Protection) as a condition
 
 ### Session controls
 
@@ -1155,6 +1157,22 @@ Allow or deny user access based on user risk and sign-in risk
   - Atypical travel: sign-ins originating from distant locations
   - Malware linked IP
   - Password spray: brute force attack, using same password against multiple users
+
+### Policies
+
+- Sign-in risk policy
+- User risk policy
+- MFA registration policy
+  - Enforce MFA registration for users/groups
+
+Note:
+- Microsoft suggests migrating both sign-in risk and user risk policies to Conditional Access for more conditions and controls
+- Break-glass accounts should be excluded
+
+### Investigate and remediate
+
+- Admin should get all risk detection closed, so the affected users are no longer at risk
+- To allow self-remediate, the user need to be previously registered for both MFA and SSPR
 
 
 ## Access reviews
