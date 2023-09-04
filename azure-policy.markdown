@@ -14,6 +14,9 @@
 - [Terminology](#terminology)
 - [Regulatory Compliance](#regulatory-compliance)
 - [Best practices](#best-practices)
+  - [Custom policies](#custom-policies)
+  - [Exemptions](#exemptions)
+  - [Operations](#operations)
 - [Gotchas](#gotchas)
 
 
@@ -215,10 +218,12 @@ After create or update requests, **`then.details.evaluationDelay`** determines w
 - **But during standard evaluation cycle, existing resources are only marked as non-compliant, you need to create remediation tasks manually to remediate them**
 - Remediation tasks deploy the `deployIfNotExists` template or the `modify` operations of the assigned policy
 - Uses a managed identity(system or user assigned) that is associated with the policy assignment
-- The managed identity needs to be assigned the minimum RBAC roles required
-    - When using the Portal, Azure Policy automatically grants the managed identity the listed roles once assignment starts
-    - When using an Azure API, **the roles must manually be granted to the managed identity**, for a initiative assignment, it means all the required roles from each member policy
-    - The location of the managed identity doesn't impact its operation with Azure Policy
+  - The managed identity needs to be assigned the minimum RBAC roles required
+  - When using the Portal, Azure Policy automatically creates a system-assigned MI, and grants it the required roles
+  - When using an Azure API, **the roles must manually be granted to the managed identity**, for a initiative assignment, it means all the required roles from each member policy
+  - The location of the managed identity doesn't impact its operation with Azure Policy
+  - Use system-assigned managed identity if you can, it can only be used by the policy assignment, eliminates malicious usage
+  - Use user-assigned MI to reduce the number of role assignments
 
 A `deployIfNotExists` or `modify` policy should define the roles it requires:
 
@@ -269,6 +274,10 @@ A `deployIfNotExists` or `modify` policy should define the roles it requires:
     | ------------------------------------------------------ | ------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
     | When on-boarding Defender for Cloud for a subscription | Azure Security Benchmark                                                        | ASC Default (subscription: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)        |
     | When Databases plan is enabled ?                       | Configure Azure Defender to be enabled on SQL Servers and SQL Managed Instances | ASC DataProtection (subscription: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx) |
+
+- Defender for Cloud depends on the "Azure Security Benchmark" assignment on each subscription.
+  - Policies in "ASC Default (subscription: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)" are set to "Audit", "auditIfNotExists" or "Disabled"
+  - Some effects should be set to "Deny", it is best to create a new assignment at a MG to change the effects centrally, once done you should remove the auto-created assignment to avoid overlaps.
 
 
 ## Terminology
@@ -329,6 +338,43 @@ A `deployIfNotExists` or `modify` policy should define the roles it requires:
   - It will NOT generate any policy compliance entries in the resource's activity log
   - Remediation task can still be triggered.
 - DINE or Modify policies should only deploy/configure auxiliary or supporting resources, NOT workloads.
+- Reassign the Azure Security Benchmark at a MG level, see [Built-in policies](#built-in-policies)
+- Limit the number of initiatives (less than 5 ?)
+- `Modify` and `Append` can interfere with desired state deployment tools (eg. Terraform), use `ignore_changes` in Terraform
+
+### Custom policies
+
+- **Avoid** custom policies if you can !
+- The name should be a GUID or a unique name within your company
+- Use `displayName` and `description`
+- `metadata.version` should use semantic versioning
+- `metadata.category` should be one of the categories in the built-in Policies and Policy Sets
+- Do not include system generated properties:
+  - `properties.policyType`
+  - `properties.metadata`
+    - `createdOn`
+    - `createdBy`
+    - `updatedOn`
+    - `updatedBy`
+- `effect` should always be a parameter, see https://techcommunity.microsoft.com/t5/core-infrastructure-and-security/azure-policy-recommended-practices/ba-p/3798024
+- `Append`, `Modify` and `DeployIfNotExists` only works if the required parameters are known at the time of assignment.
+- For custom initiatives,
+  - all the policy-level parameters should be surfaced, you'll need to prefix the parameter names with the policy name, eg. `effect` -> `policy1_effect`
+  - use a short form of the policy `displayName` as `policyDefinitionReferenceId`
+
+### Exemptions
+
+- Two types:
+  - Mitigated: often for permanent exemptions
+  - Waiver: temporary
+- Add a link the work item in the metadata to track why an exemption was granted
+- Exemptions are not deleted along with the assignment, you need to delete it explicitly
+- `notScopes` applies to all policies in an initiative, while an exemption only targets one policy
+
+### Operations
+
+- Operational tasks (eg. Remediation tasks, generating documentation) **must be scripted**, then run the scripts when needed
+- **DO NOT use CI/CD tools (including Terraform) to execute the operational tasks**, CI/CD is intended to deploy resources, not to operatate them
 
 
 ## Gotchas
