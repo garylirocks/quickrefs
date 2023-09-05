@@ -1,5 +1,6 @@
 # Windows
 
+- [Shortcuts](#shortcuts)
 - [SSH](#ssh)
 - [Git](#git)
   - [Git Credential Manager](#git-credential-manager)
@@ -20,6 +21,20 @@
     - [Disk throughput testing](#disk-throughput-testing)
   - [Monitoring](#monitoring)
   - [Copy files](#copy-files)
+
+## Shortcuts
+
+- `Win`: start menu
+- `Win + V`: clickboard history
+- `Win + M`: minimize all windows
+- `Win + D`: show/hide desktop
+- `Win + X`: quick link menu
+- `Win + Tab`: task view, switch between virtual desktops
+- `Win + Ctrl + < or >`: switch between virtual desktops
+- `Win + ?`: Shortcut guide (when enabled in PowerToys)
+
+- `Alt + F4`: close current window
+
 
 ## SSH
 
