@@ -24,14 +24,16 @@
 - [Groups](#groups)
 - [Workload identities](#workload-identities)
   - [App registrations vs. Service principals](#app-registrations-vs-service-principals)
-  - [Example (for OIDC based apps)](#example-for-oidc-based-apps)
-  - [Service Principals](#service-principals)
+  - [Service principals](#service-principals)
+  - [Service principals (application)](#service-principals-application)
+  - [Managed identities](#managed-identities)
 - [Application](#application)
   - [API Permissions](#api-permissions)
   - [App roles](#app-roles)
   - [Expose API](#expose-api)
 - [SSO](#sso)
   - [SAML](#saml)
+- [Azure subscriptions](#azure-subscriptions)
 - [Conditional access](#conditional-access)
   - [Session controls](#session-controls)
   - [App protection policies (APP) on devices](#app-protection-policies-app-on-devices)
@@ -523,7 +525,7 @@ Note:
 - When the **first** user sign in to an application and grant consent, that will **create a service principal** in your tenant, any following consent grant info will be stored on the same service principal.
 - When you update the name of an application, the name of the service principal gets updated automatically
 
-### Example (for OIDC based apps)
+Example (for OIDC based apps)
 
 ![Application objects relationship](images/azure_application-objects-relationship.png)
 
@@ -531,119 +533,124 @@ Note:
 - The service principals reference the application object
 - Service principals are granted RBAC roles in each tenant
 
+### Service principals
 
-### Service Principals
-
-There are three types of service principals:
+In general, there are three types of service principals:
 
 - **Legacy**
 - **Application**
+- **Managed Identity**
 
-  - You should create a different service principal for each of your application
-  - For history reason, it's possible to create service principals without first creating an application object. The Microsoft Graph API requires an application object before creating a service principal.
-  - Seems there is no easy way to find what AAD roles have been assigned to an SP, see [Terraform note](./terraform.markdown) for details on how to assign AAD roles/permissions to an SP
-  - See [below](#service-principals-1) for CLI examples
+### Service principals (application)
 
-  A service principal object looks like this:
+- You should create a different service principal for each of your applications
+- For history reason, it's possible to create service principals without first creating an application object. The Microsoft Graph API requires an application object before creating a service principal.
+- Seems there is no easy way to find what AAD roles have been assigned to an SP, see [Terraform note](./terraform.markdown) for details on how to assign AAD roles/permissions to an SP
+- See [below](#service-principals-1) for CLI examples
+
+A service principal object looks like this:
+
+```sh
+[
+  {
+    "appDisplayName": "MY-SP",
+    "appId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+    "objectId": "oooooooo-oooo-oooo-oooo-oooooooooooo",
+    "objectType": "ServicePrincipal",
+    "odata.type": "Microsoft.DirectoryServices.ServicePrincipal",
+    "servicePrincipalNames": [
+      "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    ],
+    "servicePrincipalType": "Application",
+    ...
+  }
+]
+```
+
+Login to a service principal:
+
+```sh
+# use a password
+az login --service-principal --username appID --tenant tenantID --password PASSWORD
+
+# use a cert
+# the cert must be a PEM or DER file, in ASCII format
+# when using a PEM file, CERTIFICATE must be appended to the PRIVATE KEY section
+az login --service-principal --username appID --tenant tenantID --password /path/to/cert
+```
+
+- Use `appId` for login, NOT `objectId`
+- To login, the service principal **requires** RBAC role assignment, otherwise it can't login.
+
+### Managed identities
+
+- For Azure resources only
+- Eliminate the need for developers to manage credentials
+- When a managed identity is enabled, a **service principal** representing that managed identity is created in your tenant
+  - The service principal is listed under **Enterprise applications -> Managed Identities** in Azure Portal
+  - There is **NO** corresponding app registration in your tenant
+- A user-assigned managed identity as a resource would reside in a region, but the associated service principal **is global**, its availability is only dependent on Azure AD
+  - When the region is unavailable, the control plane won't work, the SP still works
+- Which MI is used:
+  - If system assigned managed identity(SAMI) is enabled and no identity is specified in the request, Azure Instance Metadata Service (IMDS) defaults to the SAMI.
+  - If SAMI isn't enabled, and only one user assigned managed identity(UAMI) exists, IMDS defaults to that UAMI.
+  - If SAMI isn't enabled, and multiple UAMIs exist, then you are required to specify a managed identity in the request.
+
+Two types:
+
+- System-assigned
+
+  A resource can have only one system-assigned managed identity, if the resource is deleted, so is the managed identity
 
   ```sh
-  [
-    {
-      "appDisplayName": "MY-SP",
-      "appId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
-      "objectId": "oooooooo-oooo-oooo-oooo-oooooooooooo",
-      "objectType": "ServicePrincipal",
-      "odata.type": "Microsoft.DirectoryServices.ServicePrincipal",
-      "servicePrincipalNames": [
-        "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
-      ],
-      "servicePrincipalType": "Application",
-      ...
-    }
-  ]
+  # assign a system-assigned managed identity to a VM
+  az vm identity assign \
+      --name <vm name> \
+      --resource-group <resource group>
   ```
 
-  Login to a service principal:
+- User-assigned
 
-    ```sh
-    # use a password
-    az login --service-principal --username appID --tenant tenantID --password PASSWORD
+  A user-assigned managed identity is independent of any resources, so if your app is running on multiple VMs, it can use the same identity.
 
-    # use a cert
-    # the cert must be a PEM or DER file, in ASCII format
-    # when using a PEM file, CERTIFICATE must be appended to the PRIVATE KEY section
-    az login --service-principal --username appID --tenant tenantID --password /path/to/cert
-    ```
+  A resource can have multiple user-assigned managed identities.
 
-    - Use **`appId`** (the same in `servicePrincipalNames`) as the username for CLI login `az login --service-principal -u <appId> -p <pass> --tenant <tenantId>`
-    - To login, the service principal **requires** RBAC role assignment, otherwise it can't login.
+  ```sh
+  az identity create \
+      --name <identity name> \
+      --resource-group <resource group>
 
-- **Managed identities**
+  # view identities, including system-assigned
+  az identity list \
+      --resource-group <resource group>
 
-  - For Azure resources only
-  - Eliminate the need for developers to manage credentials
+  # assign identities to a function app
+  az functionapp identity assign \
+      --name <function app name> \
+      --resource-group <resource group> \
+      --identities <id1 id2 ...>
 
-    ```sh
-    # login to Azure in a VM with managed identity
-    # this uses system-assigned MI by default
-    az login --identity
+  # grant key vault permissions to an identity
+  #  ! this is policy based keyvault access, not RBAC based
+  az keyvault set-policy \
+      --name <key vault name> \
+      --object-id <principal id> \
+      --secret-permissions get list
+  ```
 
-    # if you want to use a specific user-assigned MI
-    # specify it with `--username`
-    az login --identity --username <client_id|object_id|resource_id>
-    ```
+To login to Azure using a managed identity:
 
-  - When a managed identity is enabled, a **service principal** representing that managed identity is created in your tenant
-    - The service principal is listed under **Enterprise applications -> Managed Identities** in Azure Portal
-    - There is **NO** corresponding app registration in your tenant
-  - A managed identity as a resource would reside in a region, but the associated service principal **is global**, its availability is only dependent on Azure AD
-    - When the region is unavailable, the control plane won't work, the SP still works
-  - Which MI is used:
-    - If system assigned managed identity(SAMI) is enabled and no identity is specified in the request, Azure Instance Metadata Service (IMDS) defaults to the SAMI.
-    - If SAMI isn't enabled, and only one user assigned managed identity(UAMI) exists, IMDS defaults to that UAMI.
-    - If SAMI isn't enabled, and multiple UAMIs exist, then you are required to specify a managed identity in the request.
+```sh
+# login to Azure in a VM with managed identity
+# this uses system-assigned MI by default
+az login --identity
 
-  Two types:
+# if you want to use a specific user-assigned MI
+# specify it with `--username`
+az login --identity --username <client_id|object_id|resource_id>
+```
 
-  - System-assigned
-
-    A resource can have only one system-assigned managed identity, if the resource is deleted, so is the managed identity
-
-    ```sh
-    # assign a system-assigned managed identity to a VM
-    az vm identity assign \
-        --name <vm name> \
-        --resource-group <resource group>
-    ```
-
-  - User-assigned
-
-    A user-assigned managed identity is independent of any resources, so if your app is running on multiple VMs, it can use the same identity.
-
-    A resource can have multiple user-assigned managed identities.
-
-    ```sh
-    az identity create \
-        --name <identity name> \
-        --resource-group <resource group>
-
-    # view identities, including system-assigned
-    az identity list \
-        --resource-group <resource group>
-
-    # assign identities to a function app
-    az functionapp identity assign \
-        --name <function app name> \
-        --resource-group <resource group> \
-        --identities <id1 id2 ...>
-
-    # grant key vault permissions to an identity
-    #  ! this is policy based keyvault access, not RBAC based
-    az keyvault set-policy \
-        --name <key vault name> \
-        --object-id <principal id> \
-        --secret-permissions get list
-    ```
+Compare Service principal (application) to managed identity:
 
 | Type              | App Registrations | Enterprise applications |
 | ----------------- | ----------------- | ----------------------- |
@@ -773,6 +780,13 @@ A SAML response XML has fields like:
   <!-- ... -->
 </AttributeStatement>
 ```
+
+
+## Azure subscriptions
+
+- Each Azure subscription is associated with a single Azure AD directory (tenant);
+- Users, groups and applications in that directory can manage resources in the subscription;
+- Subscriptions use Azure AD for SSO;
 
 
 ## Conditional access

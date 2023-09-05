@@ -1,12 +1,12 @@
 # Azure Role Based Access Control
 
 - [Overview](#overview)
-- [Considerations](#considerations)
 - [Evaluation](#evaluation)
-- [Azure subscriptions](#azure-subscriptions)
+- [Considerations](#considerations)
+  - [Custom roles](#custom-roles)
 - [Azure RBAC roles vs. Azure AD roles](#azure-rbac-roles-vs-azure-ad-roles)
-- [Common Azure AD roles](#common-azure-ad-roles)
-- [Custom Azure RBAC roles](#custom-azure-rbac-roles)
+  - [Common Azure AD roles](#common-azure-ad-roles)
+  - [Custom Azure RBAC roles](#custom-azure-rbac-roles)
 - [CLI](#cli)
 
 
@@ -70,13 +70,6 @@ RBAC allows you to grant access to Azure resources that you control. You do this
         --scope $vm
     ```
 
-## Considerations
-
-- Better to assign roles to groups rather than individual users to minimize role assignments
-- Use custom roles to control permissions more precisely
-- RBAC is an additive model
-- Azure policies always apply, no matter who created/updated a resource
-
 
 ## Evaluation
 
@@ -84,11 +77,60 @@ RBAC allows you to grant access to Azure resources that you control. You do this
 
 *Deny assignments take priority !!*
 
-## Azure subscriptions
 
-- Each Azure subscription is associated with a single Azure AD directory (tenant);
-- Users, groups and applications in that directory can manage resources in the subscription;
-- Subscriptions use Azure AD for SSO;
+## Considerations
+
+- Better to assign roles to groups rather than individual users to minimize role assignments
+- Use custom roles to control permissions more precisely
+- RBAC is an additive model
+- Azure policies always apply, no matter who created/updated a resource
+- Limits:
+  - Up to 2000 role assignments in each subscription, including role assignments at the subscription, resource group, and resource scopes
+  - up to 500 role assignments in each management group.
+
+### Custom roles
+
+*Custom roles can't be assigned at resource level*
+
+| Scope level      | Built-in role | Custom role |
+| ---------------- | ------------- | ----------- |
+| Management group | Yes           | Yes         |
+| Subscription     | Yes           | Yes         |
+| Resource group   | Yes           | Yes         |
+| Resource         | Yes           | **No**      |
+
+Example:
+
+```json
+{
+  "properties": {
+    "roleName": "Billing Reader Plus",
+    "description": "Read billing data and download invoices",
+    "assignableScopes": [
+      "/subscriptions/your-subscription-number"
+    ],
+    "permissions": [
+      {
+        "actions": [
+          "Microsoft.Authorization/*/read",
+          "Microsoft.Billing/*/read",
+          "Microsoft.Commerce/*/read",
+          "Microsoft.Consumption/*/read",
+          "Microsoft.Management/managementGroups/read",
+          "Microsoft.CostManagement/*/read",
+          "Microsoft.Support/*"
+        ],
+        "notActions": [],
+        "dataActions": [],
+        "notDataActions": []
+      }
+    ]
+  }
+}
+```
+
+*The `assignableScopes` are just the scopes where this custom role could be assigned to, not where it is stored, all custom roles are stored in AAD.*
+
 
 ## Azure RBAC roles vs. Azure AD roles
 
@@ -145,7 +187,7 @@ To enable the elevated access:
       az role assignment delete --role "User Access Administrator" --scope "/"
       ```
 
-## Common Azure AD roles
+### Common Azure AD roles
 
 - **Application Administrator**: everything app related, can NOT manage conditional access
 - **Cloud Application Administrator**: similar to above, but no Application Proxy settings
@@ -155,7 +197,7 @@ To enable the elevated access:
 - **Enterprise Application Owner**: managed owned enterprise apps, SSO, user and group assignments
 - **Application Registration Owner**: managed owned app regs
 
-## Custom Azure RBAC roles
+### Custom Azure RBAC roles
 
 A custom role definition is like:
 
