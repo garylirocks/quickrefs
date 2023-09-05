@@ -81,10 +81,12 @@ Control plane permissions are always controlled by RBAC
 
 For data plane, there are two models:
 
-- **Vault access policy**: for each individual vault, assign secret/key/cert permissions for users/groups/apps
+- **Vault access policy**:
+  - assign secret/key/cert permissions for users/groups/apps
+  - need to be configured for each individual key vault
 - **RBAC**:
-  - access can be inherited
-  - and can be more granular: set permissions on specific keys, secrets or certificates
+  - access can be inherited, so you can assign at a higher level
+  - can be granular as well: you could set permissions on specific keys, secrets or certificates
 
 Three advanced access policy options:
 
