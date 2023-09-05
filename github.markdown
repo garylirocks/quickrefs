@@ -368,7 +368,9 @@ jobs:
     creds: ${{ secrets.AZURE_CREDENTIALS }}
 ```
 
-- `secrets.GITHUB_TOKEN` is automatically created for each workflow run
+- `secrets.GITHUB_TOKEN` is automatically created for each workflow run, the default access level could be `permissive` or `restrictive`, see https://docs.github.com/en/enterprise-cloud@latest/actions/security-guides/automatic-token-authentication#permissions-for-the-github_token
+  - You can use `permissions:` key to customize the permissions for entire workflow or individual jobs, this overwrites the default permissions
+  - You can see the permissions in "Set up job" section in the workflow run log
 
 ### `github` context
 
