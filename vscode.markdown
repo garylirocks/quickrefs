@@ -151,12 +151,10 @@ see [vscode-chrome-debug](https://github.com/Microsoft/vscode-chrome-debug) for 
     {
       "type": "node",
       "request": "attach",
-      "name": "Mocha Tests - in docker",
+      "name": "Node debug: Attach to Process",
       "port": 9229,
       "timeout": 120000,
-      "protocol": "inspector",
       "localRoot": "${workspaceFolder}",
-      "remoteRoot": "/app",
       "restart": true,
       "sourceMaps": false,
       "internalConsoleOptions": "neverOpen"

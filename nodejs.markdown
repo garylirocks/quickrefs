@@ -984,8 +984,6 @@ For any given error, you might:
 start a program with the `--inspect` flag
 
 ```bash
-node --inspect demo.js
-
 # break at the first line
 node --inspect-brk demo.js
 ```
@@ -1007,7 +1005,7 @@ don't bind the node inspector to a public IP address, instead connect to it thro
 on remote machine, start the Node process:
 
 ```bash
-node --inspect server.js
+node --inspect-brk server.js
 ```
 
 on local, start port forwarding
