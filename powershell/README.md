@@ -36,6 +36,8 @@
 - [Output](#output)
 - [Networking](#networking)
 - [Secrets](#secrets)
+- [Command line](#command-line)
+  - [History](#history)
 - [Quick recipes](#quick-recipes)
 
 
@@ -623,6 +625,20 @@ Test-NetConnection 192.168.1.3 -Port 22
   - LastPass
   - CredMan
   - Azure KeyVault
+
+
+## Command line
+
+### History
+
+Two types if command history:
+
+- In a session
+  - Each session has its own history
+  - Work with `Get-History`, `Clear-History`
+- `PSCommandLine` history
+  - Works across sessions that have the module loaded
+  - Saved at `(Get-PSReadLineOption).HistorySavePath`
 
 
 ## Quick recipes
