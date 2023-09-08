@@ -388,6 +388,26 @@ A `deployIfNotExists` or `modify` policy should define the roles it requires:
 
 - While the Azure Policy VS Code extension is handy for verifying policy rules locally, it has some shortcomings:
   - The policy file name needs to end with `.pd.json`
+  - The policy definition JSON format is a bit different from what you get from the Portal, move things out of `properties`, the format needs to be like:
+    ```json
+    {
+      "displayName": "My policy name",
+      "policyType": "Custom",
+      "parameters": {
+        //...
+      },
+      "policyRule": {
+        "if": {
+          //...
+        },
+        "then": {
+          //...
+        }
+      },
+      "id": "...",
+      "name": "my_policy_name"
+    }
+    ```
   - Can't verify rules targeting subscriptions or resource groups
   - It doesn't validate some of the limits, sometimes a rule is fine locally, but would be rejected by Azure when you deploy:
     - 100 "value count" iterations per policy
