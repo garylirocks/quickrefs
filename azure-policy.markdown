@@ -2,6 +2,8 @@
 
 - [Overview](#overview)
 - [Mode](#mode)
+- [Aliases](#aliases)
+  - [Array aliases](#array-aliases)
 - [Assignments](#assignments)
 - [Effects](#effects)
 - [Policy assignment evaluation](#policy-assignment-evaluation)
@@ -62,6 +64,92 @@ Depending on whether a policy is targeting an Azure Resource Manager property or
 Resource Provider modes
   - **only support built-in policy definitions**
   - and exemptions are not supported at the component-level
+
+
+## Aliases
+
+### Array aliases
+
+Two types
+
+- `Microsoft.Test/resourceType/stringArray`, the array as a whole
+- `Microsoft.Test/resourceType/stringArray[*]`, each element
+
+Examples:
+
+```json
+// check existence
+{
+  "field": "Microsoft.Test/resourceType/stringArray",
+  "exists": "true"
+}
+
+// check array length
+{
+  "value": "[length(field('Microsoft.Test/resourceType/stringArray'))]",
+  "greater": 0
+}
+
+// only true if all elements are equal to "value"
+// BUT, if the array is empty, then it's always true, use count expression instead
+{
+  "field": "Microsoft.Test/resourceType/stringArray[*]",
+  "equals": "value"
+}
+
+// check `property` of each element in `objectArray`
+{
+  "field": "Microsoft.Test/resourceType/objectArray[*].property",
+  "equals": "value"
+}
+
+// count expression
+{
+  "count": {
+    "field": "Microsoft.Test/resourceType/stringArray[*]"
+  },
+  "equals": 3
+}
+
+// in `where`, `[*]` only refere to one element in each interation
+{
+  "count": {
+    "field": "Microsoft.Test/resourceType/stringArray[*]",
+    "where": {
+      "field": "Microsoft.Test/resourceType/stringArray[*]",
+      "equals": "a"
+    }
+  },
+  "equals": 1
+}
+```
+
+For a resource like this
+
+```json
+{
+  "tags": {
+    "env": "prod"
+  },
+  "properties":
+  {
+    "stringArray": [ "a", "b", "c" ],
+    "objectArray": [
+      {
+        "property": "value1",
+        "nestedArray": [ 1, 2 ]
+      },
+      {
+        "property": "value2",
+        "nestedArray": [ 3, 4 ]
+      }
+    ]
+  }
+}
+```
+
+- `[field('Microsoft.Test/resourceType/objectArray[*].nestedArray')]` is `[[ 1, 2 ], [ 3, 4 ]]`
+- `[field('Microsoft.Test/resourceType/objectArray[*].nestedArray[*]')]` is`[1, 2, 3, 4]`
 
 
 ## Assignments
