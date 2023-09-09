@@ -5,7 +5,6 @@
 - [Considerations](#considerations)
   - [Custom roles](#custom-roles)
 - [Azure RBAC roles vs. Azure AD roles](#azure-rbac-roles-vs-azure-ad-roles)
-  - [Common Azure AD roles](#common-azure-ad-roles)
   - [Custom Azure RBAC roles](#custom-azure-rbac-roles)
 - [CLI](#cli)
 
@@ -136,14 +135,7 @@ Example:
 
 Three different types of roles in Azure:
 
-- **Azure AD administrator roles**
-
-  To manage Azure AD resources, such as users, groups and domains, find them in **"Roles and administrators"** menu under Azure AD
-
-  - Usually can only be assigned to users/applications, not groups (unless the groups has enabled "AD Role assignment" toggle)
-  - The assignment scope is either the whole directory or an "Administrative Unit"
-  - **Custom roles** can only have permissions for Application registrations (`microsoft.directory/applications/*`) and Enterprise applications, other permissions are not supported
-
+- **Azure AD roles**
 - **RBAC roles**
 
   The new Authorization system, find them in the **"Access Control (IAM)" menu** under management groups, subscriptions, resource groups or resources
@@ -186,16 +178,6 @@ To enable the elevated access:
       # remove the elevated access
       az role assignment delete --role "User Access Administrator" --scope "/"
       ```
-
-### Common Azure AD roles
-
-- **Application Administrator**: everything app related, can NOT manage conditional access
-- **Cloud Application Administrator**: similar to above, but no Application Proxy settings
-- **Application Developer**
-  - Allow Application registration, consent to allow an app to access data
-  - By default, every user can create app registrations, this can be disabled in "User Settings"
-- **Enterprise Application Owner**: managed owned enterprise apps, SSO, user and group assignments
-- **Application Registration Owner**: managed owned app regs
 
 ### Custom Azure RBAC roles
 

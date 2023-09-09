@@ -28,6 +28,7 @@
   - [Service principals (application)](#service-principals-application)
   - [Managed identities](#managed-identities)
 - [Application](#application)
+  - [Application management](#application-management)
   - [API Permissions](#api-permissions)
   - [App roles](#app-roles)
   - [Expose API](#expose-api)
@@ -42,6 +43,7 @@
   - [Methods](#methods)
   - [Management](#management)
   - [Monitoring](#monitoring)
+- [AAD roles](#aad-roles)
 - [Privileged Identity Management (PIM)](#privileged-identity-management-pim)
 - [Entra permissions management](#entra-permissions-management)
 - [License management](#license-management)
@@ -673,9 +675,34 @@ Three types of applications:
 - Your own applications (register it in App Registrations)
 - On-premises applications (can be published externally via AAD Application Proxy)
 
+### Application management
+
+Delegate application creation and management permissions by using one of the following methods:
+
+- **Restrict who can create applications**
+  - Set these tenant-wide settings to "No":
+    - "User settings" -> "Users can register applications"
+    - "Enterprise applications" -> "User settings" -> "Users can add gallery apps to My Apps"
+    - "Enterprise applications" -> "Consent and Permissions" -> "Users can consent to applications accessing company data on their behalf"
+  - Then assign "Application Developer" role to users who need to create application registrations, (*when a user creates a new application registration, they're automatically added as the first owner, this allows the user to manage all aspects of the app reg*)
+- **Assign application owners**
+  - You can assign the owners to both application registrations and enterprise applications
+  - User and service principals can be owners of application registrations, only users can be owners of enterprise applications. Groups cannot be owners.
+  - If adding a gallery app creates both an application registration and an enterprise application, the user who added the app is automatically assigned as the owner of both.
+- **Use built-in roles**
+  - Application Administrator
+    - all aspects of application registration, enterprise applications, and application proxy
+    - consents to delegated permissions and application permissions, excluding Microsoft Graph
+  - Cloud Application Administrator
+    - can not manage application proxy
+  - *When a user with these either of these roles creates a new application registration, they're not automatically added as the owner*
+- **Create and assign a custom role**
+  - A custom role can be assigned at tenant scope or at the scope of a single AAD object (eg. a single application registration)
+
+
 ### API Permissions
 
-Microsoft identity platform implements the OAuth 2.0 authorization protocol. Web-hosted resources can define a set of permissions that you use to implement functionality in smaller chunks, eg. Microsoft Graph has defined permissions like `User.ReadWrite.All`, `Mail.Read`
+AAD implements the OAuth 2.0. Web-hosted resources can define a set of permissions that you use to implement functionality in smaller chunks, eg. Microsoft Graph has defined permissions like `User.ReadWrite.All`, `Mail.Read`
 
 Two types of permissions:
 
@@ -911,6 +938,14 @@ A tenant-wide setting, provides secure default settings until organizations are 
 - View which methods are available to each user
 
 
+## AAD roles
+
+- For managing AAD objects, NOT the same as Azure roles, see [Azure RBAC](./azure-rbac.markdown)
+- Usually can only be assigned to users/applications, not groups (unless the groups has enabled "AD Role assignment" toggle)
+- Built-in roles can only be assigned to either the whole directory or an "Administrative Unit"
+- You can create custom roles, which can be assigned to a single AAD object, eg. a user, group, device, application, service principal.
+
+
 ## Privileged Identity Management (PIM)
 
 - P2 feature
@@ -1144,10 +1179,10 @@ The `--filter` parameter in many `az ad` commands uses the OData filter syntax, 
 - A user is automatically added as an application owner when they register an application
   - Ownership for an enterprise application is assigned by default only when a user with no administrator roles (Global Administrator, Application Administrator etc) creates a new application registration.
 - A good practice is to have at least two owners for an application.
-- In the Portal, you could only add users as app registration and SP owners
+- In the Portal, you could only add users as app registration and enterprise app owners
 - Groups can't be owners.
-- An SP can be owner of an app registration, but not another SP.
-- To add an SP as owner of an app registration, you could use CLI or API, see https://github.com/Azure/azure-cli/issues/9250#issuecomment-603621148.
+- An service principal can be owner of an app registration, but not another SP (enterprise app).
+- To add an service principal as owner of an app registration, you could use CLI or API, see https://github.com/Azure/azure-cli/issues/9250#issuecomment-603621148.
 
 ```sh
 # the target app and SP
