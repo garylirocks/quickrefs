@@ -29,6 +29,7 @@
   - [Managed identities](#managed-identities)
 - [Application](#application)
   - [Application management](#application-management)
+  - [My Apps portal](#my-apps-portal)
   - [API Permissions](#api-permissions)
   - [App roles](#app-roles)
   - [Expose API](#expose-api)
@@ -699,6 +700,17 @@ Delegate application creation and management permissions by using one of the fol
 - **Create and assign a custom role**
   - A custom role can be assigned at tenant scope or at the scope of a single AAD object (eg. a single application registration)
 
+### My Apps portal
+
+For users to access their applications.
+
+- URL `https://myapplications.microsoft.com`
+- There are user settings controlling what apps are visible here
+
+App collections:
+
+- You can create tenant-wide App Collections in Azure portal, which can only be managed in Azure portal
+- A user can create and manage personal app collections as well
 
 ### API Permissions
 
@@ -998,10 +1010,24 @@ Group-based licensing allows you assign licenses to groups, all users in the gro
 ## SCIM
 
 SCIM (System for Cross-domain Identity Management) can sync identities from Azure AD and another system
+  - it provides a common user schema for provisioning
+  - uses REST API
+  - defines two endpoints `/users` and `/groups`
 
 ![SCIM overview](images/azure_ad-scim.png)
 
+AAD SCIM Functions:
+
+- Automate Provisioning/deprovisioning: create/remove accounts in the right system
+- Synchronize data between systems
+- Provision groups: create groups in the application
+- Monitor and audit
+- Deploy in brownfield scenarios
+- Customizable attribute mappings
+- Alerts for critical events
+
 Scenarios:
+
 - Use HCM to manage employee lifecycle, the user's provile synced to AAD automatically
 - Provision users and groups in another application
 
@@ -1142,6 +1168,7 @@ Kerberos auth flow
 ![AAD application proxy kerberos auth](images/azure_ad-app-proxy-kerberos-auth.png)
 
 - The on-prem app is using Integrated Windows Authentication (IWA), which requires a Kerberos token
+- In this case, the Proxy connector will impersonate to get the Kerberos token and present it to the on-prem app
 - *The yellow is an AAD token, the red an Kerberos token*
 
 
