@@ -33,6 +33,7 @@
   - [API Permissions](#api-permissions)
   - [App roles](#app-roles)
   - [Expose API](#expose-api)
+    - [Example:](#example)
 - [SSO](#sso)
   - [SAML](#saml)
 - [Azure subscriptions](#azure-subscriptions)
@@ -512,17 +513,20 @@ Note:
 
 ### App registrations vs. Service principals
 
-|                 | App registrations                                                                                                                                            | Service principals                                                                                                                               |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Where           | home tenant                                                                                                                                                  | in every tenant where the application is used                                                                                                    |
-| What            | a template or blueprint to create one or more service principal objects, has some *static properties* that are applied to all the created service principals | an instance of the application object in a single tenant                                                                                         |
-| How to create   | Create an App in the Portal, an admin adds an App from the app gallery, MS Graph API / PowerShell, etc                                                       | when an application is given permission to access resources in a tenant (upon registration or consent)                                           |
-| Defines         | <ul><li>how tokens are issued</li> <li>the resources the application needs to access</li> <li>actions the application can take</li></ul>                     | <ul><li>what the app can actually do in a specific tenant</li><li>who can access the app</li><li>and what resources the app can access</li></ul> |
-| ID              | App/Client ID (globally unique)                                                                                                                              | Object ID                                                                                                                                        |
-| In the Portal   | App Registrations                                                                                                                                            | Enterprise Applications                                                                                                                          |
-| Microsoft Graph | `application`                                                                                                                                                | `servicePrincipal`                                                                                                                               |
+There are two representations of applications in Azure AD: application objects and service principals.
+
+|                 | App registrations                                                                                                                                            | Service principals                                                                                                                                                                                                   |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Where           | home tenant                                                                                                                                                  | in every tenant where the application is used                                                                                                                                                                        |
+| What            | a template or blueprint to create one or more service principal objects, has some *static properties* that are applied to all the created service principals | an instance of the application object in a single tenant                                                                                                                                                             |
+| How to create   | Create an App in the Portal, an admin adds an App from the app gallery, MS Graph API / PowerShell, etc                                                       | when an application is given permission to access resources in a tenant (upon registration or consent)                                                                                                               |
+| Defines         | <ul><li>how tokens are issued</li> <li>the resources the application needs to access</li> <li>actions the application can take</li></ul>                     | <ul><li>local user/admin permissions granted</li><li>local user/group app role assignments</li><li>attribute mappings for user provisioning</li><li>directory specific app roles, name or logo</li><li>etc</li></ul> |
+| ID              | App/Client ID (globally unique)                                                                                                                              | Object ID                                                                                                                                                                                                            |
+| In the Portal   | App Registrations                                                                                                                                            | Enterprise Applications                                                                                                                                                                                              |
+| Microsoft Graph | `application`                                                                                                                                                | `servicePrincipal`                                                                                                                                                                                                   |
 
 - If you register an application in the portal, an application object as well as a service principal object are automatically created in your home tenant.
+  - Legacy service principals are closer to an AD service account, they could be created without an application object
 - If you register/create an application using the Microsoft Graph APIs, creating the service principal object is a **separate step**.
 - By default, all users in your directory have rights to register application objects and discretion over which applications they give access to their organizational data through consent (limited to their own data).
 - When the **first** user sign in to an application and grant consent, that will **create a service principal** in your tenant, any following consent grant info will be stored on the same service principal.
@@ -535,6 +539,14 @@ Example (for OIDC based apps)
 - The application object only exists in its own tenant
 - The service principals reference the application object
 - Service principals are granted RBAC roles in each tenant
+
+Microsoft maintains two directories internally to publish applications:
+
+![Microsoft directories for applications](images/azure_ad-application-vs-service-principal.png)
+
+- Microsoft services directory - for Microsoft Apps
+- App gallery directory - for pre-integrated third party apps
+
 
 ### Service principals
 
@@ -716,11 +728,39 @@ App collections:
 
 AAD implements the OAuth 2.0. Web-hosted resources can define a set of permissions that you use to implement functionality in smaller chunks, eg. Microsoft Graph has defined permissions like `User.ReadWrite.All`, `Mail.Read`
 
+Permissions of all Microsoft IdP integrated API apps in your tenant can be requested here, it could be a Microsoft API, or your own app that exposes API scopes, each app would have a unique Application ID URI, for example:
+
+- Microsoft Graph: `https://graph.microsoft.com`
+- Microsoft 365 Mail API: `https://outlook.office.com`
+- Azure Key Vault: `https://vault.azure.net`
+- My Demo API: `api://dev.guisheng.li/demo/api1`
+
 Two types of permissions:
 
-- **Application permissions**: used by apps that run without a signed-in user
 - **Deletegated permissions**: used by apps that have a signed-in user present, the user is simply allowing the app to act on their behalf using their permissions
-  - The effective permissions are the **intersection** of the delegated permissions granted to the app and the privileges of the currently signed-in user
+  - Some delegated permissions can be sonsented to by non-administrative users, but some higher-privileged permissions require administrator consent.
+  - The *effective permissions* are the **intersection** of the delegated permissions granted to the app (via consent) and the privileges of the currently signed-in user
+    - An app can never have more privileges than the signed-in user, if the app has been granted `User.ReadWrite.All`, but the user doesn't have proper admin role, then the app can only update the profile of the signed-in user, not other users
+- **Application permissions**: used by apps that run without a signed-in user, such as background services or daemons
+  - Only administrators can consent to application permissions
+  - The *effective permissions* are exactly the permissions granted to the app
+
+Supported OpenID Connect scopes:
+
+- `Openid`:
+  - Shows up as "sign you in" permission for work and school accounts on the consent prompt
+  - Shows up as "View your profile and connect to apps and services using your Microsoft account" permission for personal account
+  - Returns an user ID in the `sub` claim
+  - Gives the app access to the UserInfo endpoint
+  - Required for signing in the user with OIDC
+- `email`: returns the user's primary email address in the `email` claim (not exist if the user doesn't have an email address)
+- `profile`: given name, surname, preferred username, object ID, etc
+- `offline_access`:
+  - Shows up as "Maintain access to data you have given it access to" permission
+  - Your app must explicitly requests this to receive a **refresh token**, which is long-lived, otherwise your app only get a short-lived access token
+  - When using a Single Page Application (SPA), refresh token is always provided
+
+*At this time, the `offline_access` and `user.read` permissions are automatically included in the initial consent to an application. These permissions are generally required for proper app functionality; `offline_access` gives the app access to refresh tokens, critical for native and web apps, while `user.read` gives access to the `sub` claim, allowing the client or app to correctly identify the user over time and access rudimentary user information.*
 
 Best practices:
 
@@ -740,8 +780,99 @@ See: https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-add-a
 
 ### Expose API
 
-- The "Expose an API" menu in the Portal allows you to define scopes for an API. This creates only "deletegated permissions". Use "App roles" assignable to application type for "application-only" scopes.
-- You could add another application as an authorized client application to the scopes.
+- The "Expose an API" menu in the Portal allows you to define scopes for an API application.
+  - This creates only "deletegated permissions".
+  - For application-on scopes, use "App roles" and define app roles assignable to applications.
+- You could add another application as an authorized client application to the scopes, then user won't be prompted to consent when login to the client application.
+- Application ID URI need to be globally unique, usually has the form `api://<app-id>`, eg. `api://dev.guisheng.li/demo/api1`
+- When a client app requests the scope in its OAuth request, and the user consents (or pre-approved), AAD sends back an access token which contains the required scopes
+
+#### Example:
+
+Two app registrations:
+
+- Demo API: defines the scopes (a service provider in this scenario)
+- Demo client app: will call the API, defines the scopes it needs
+
+![Expose an API UI](images/azure_ad-app-expose-an-api.png)
+
+Demo API manifest excerpt:
+
+```json
+"displayName": "Demo API",
+"id": "c487a3af-67fb-40ab-b2af-9001be29c117",
+"identifierUris": [
+  "api://dev.guisheng.li/demo/api1"
+]
+"api": {
+  "acceptMappedClaims": null,
+  "knownClientApplications": [],
+  "oauth2PermissionScopes": [
+    {
+      "adminConsentDescription": "Allow the application to have write access to all employee data.",
+      "adminConsentDisplayName": "Write access to employee records",
+      "id": "98040718-37cc-4dbe-9ae4-4dd2b5ef4888",
+      "isEnabled": true,
+      "type": "Admin",
+      "userConsentDescription": null,
+      "userConsentDisplayName": null,
+      "value": "Employees.Write.All"
+    },
+    {
+      "adminConsentDescription": "Allow the application to have read-only access to all employee data.",
+      "adminConsentDisplayName": "Read-only access to employee records",
+      "id": "f34526c1-6970-4d78-8d3e-89a7abcedc54",
+      "isEnabled": true,
+      "type": "User",
+      "userConsentDescription": "Allow the application to have read-only access to your employee data.",
+      "userConsentDisplayName": "Read-only access to your employee records",
+      "value": "Employees.Read.All"
+    }
+  ],
+  "preAuthorizedApplications": [
+    {
+      "appId": "6741fadc-82c4-499a-9615-bd7b371d97f0",
+      "delegatedPermissionIds": [
+        "98040718-37cc-4dbe-9ae4-4dd2b5ef4888",
+        "f34526c1-6970-4d78-8d3e-89a7abcedc54"
+      ]
+    }
+  ],
+  "requestedAccessTokenVersion": null
+}
+//...
+```
+
+Then the Demo client app defines it's required permissions:
+
+![Client app required permissions](images/azure_ad-app-expose-an-api-client-app.png)
+
+Demo client app manifest excerpt:
+
+```json
+//...
+"requiredResourceAccess": [
+  {
+    "resourceAccess": [
+      {
+        "id": "f34526c1-6970-4d78-8d3e-89a7abcedc54",       // the `Employees.Read.All` scope
+        "type": "Scope"
+      }
+    ],
+    "resourceAppId": "fd1903c1-667d-4cab-8967-5d83ca330f3c" // the API app
+  },
+  {
+    "resourceAccess": [
+      {
+        "id": "e1fe6dd8-ba31-4d61-89e7-88639da4683d",       // the `User.Read` scope
+        "type": "Scope"
+      }
+    ],
+    "resourceAppId": "00000003-0000-0000-c000-000000000000" // Microsoft Graph
+  }
+]
+//...
+```
 
 
 ## SSO
