@@ -37,6 +37,10 @@ Common parameters and shorthand syntax:
 ```sh
 az login
 
+# login to tenants without subscriptions (eg. Microsoft 365 Developer Program account),
+# could be useful to run tenant level commands, like "az ad"
+az login --allow-no-subscriptions
+
 # list subscriptions
 az account list -otable
 
