@@ -48,13 +48,15 @@
   - [Monitoring](#monitoring)
 - [AAD roles](#aad-roles)
 - [Privileged Identity Management (PIM)](#privileged-identity-management-pim)
-- [Entra permissions management](#entra-permissions-management)
 - [License management](#license-management)
 - [Custom security attribute](#custom-security-attribute)
 - [SCIM](#scim)
 - [Identity protection](#identity-protection)
   - [Policies](#policies)
   - [Investigate and remediate](#investigate-and-remediate)
+- [Entitlement management](#entitlement-management)
+  - [Concepts](#concepts)
+  - [Scenarios](#scenarios)
 - [Access reviews](#access-reviews)
 - [Administrative Units (AU)](#administrative-units-au)
 - [Logging and analytics](#logging-and-analytics)
@@ -1128,15 +1130,6 @@ A tenant-wide setting, provides secure default settings until organizations are 
 - Most common use case: create "Eligible Assignment" of roles/memberships to some users/groups, who need to active them when needed
 
 
-## Entra permissions management
-
-- Ad-hoc, on-demand elevation
-- At very granular permission level
-- Works across clouds (Azure, AWS, GCP)
-- Can analyze permissions used and optionally right size
-- Separate license based on resources scanned
-
-
 ## License management
 
 A license could be assigned to a user, or a group.
@@ -1220,6 +1213,38 @@ Note:
 
 - Admin should get all risk detection closed, so the affected users are no longer at risk
 - To allow self-remediate, the user need to be previously registered for both MFA and SSPR
+
+
+## Entitlement management
+
+### Concepts
+
+![Entitlement management overview](images/azure_ad-entitlement-management-overview.png)
+
+- **Catalog**:
+  - Defines what resources are included
+  - A container of access packages
+- **Resource**:
+  - Membership of Azure AD security groups, *this implies access to other roles/permissions granted to the groups*:
+    - Azure roles
+    - AAD roles
+    - Microsoft 365 licenses
+  - Membership of Microsoft 365 Groups and Teams
+  - Assignment to AAD enterprise applications
+  - Membership of SharePoint Online sites
+- **Access package**:
+  - A bundle of all the resources with the access a user needs to work on a project or in a role
+  - An package could have include a subset of resources in a catalog
+- **Policy**:
+  - A set of rules that defines how users get access, who can approve, and how long users have access through an assignment
+  - An access package could have two policies: one for employees, and another for external users
+
+### Scenarios
+
+- Employees need time-limited access for a particular task
+- Access requires approval of a manager
+- Department wish to manage their own access policies without IT involvement
+- Multiple organizations need to collaborate on a project, multiple user from one org need access to another org's resources
 
 
 ## Access reviews
