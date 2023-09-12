@@ -31,6 +31,7 @@
   - [Application management](#application-management)
   - [My Apps portal](#my-apps-portal)
   - [API Permissions](#api-permissions)
+  - [Consent](#consent)
   - [App roles](#app-roles)
   - [Expose API](#expose-api)
     - [Example:](#example)
@@ -765,6 +766,32 @@ Supported OpenID Connect scopes:
 Best practices:
 
 - Restricting user consent to allow users to consent only for app from verified publishers, and only for permissions you select.
+
+### Consent
+
+Some high-privilege permissions are admin-restricted, only an admin can consent, like:
+
+- User.Read.All
+- Groups.Read.All
+- Directory.ReadWrite.All
+
+The requested permissions in "App registration" should be all the permissions this app could possibly require, should be a **superset** of the permissions that it will request dynamically/incrementally.
+
+Admins could grant **tenant-wide admin consent**:
+
+- In the Portal, you could do it in either
+  - "Enterprise applications" -> "Permissions"
+  - or "App registrations" -> "API permissions", if the app has an app registration
+- It opens a popup, with the admin consent endpoint URL like: `https://login.microsoftonline.com/{tenant-id}/adminconsent?client_id={client-id}`
+- Whether a permission is "Admin consent required" could be different in different organizations.
+- An admin could consent to both delegated permissions and application permissions
+
+How admins consent to an app:
+
+- When an admin logs in to the app for the first time (in the `/authorize` endpoint), them would be asked if they would consent on behalf of the entire tenant
+- In the Portal, click button in either "Enterprise applications" -> "Permissions" or "App registrations" -> "API permissions"
+- Use the admin consent endpoint
+  - During sign-up or the first sign-in, you can redirect the user to the admin consent endpoint, `https://login.microsoftonline.com/\{tenant\}/v2.0/adminconsent?client_id={client-id}&state=12345&redirect_uri=http://localhost/myapp/permissions&scope=https://graph.microsoft.com/calendars.read https://graph.microsoft.com/mail.send`
 
 ### App roles
 
