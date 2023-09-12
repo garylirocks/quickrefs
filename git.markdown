@@ -14,7 +14,7 @@
 - [Command Aliases](#command-aliases)
 - [History](#history)
 - [Tags](#tags)
-  - [sharing tags](#sharing-tags)
+  - [Sharing tags](#sharing-tags)
 - [Undoing changes](#undoing-changes)
 - [Branches](#branches)
   - [set a local branch to track a remote branch](#set-a-local-branch-to-track-a-remote-branch)
@@ -299,52 +299,58 @@ add aliases to `~/.gitconfig`, these really helps to make your git life much mor
 
 ## History
 
-go back to a history version:
+Go back to a history version:
 
-    $ git checkout <hash>
+```sh
+git switch -d <hash>
+
+# legacy command
+git checkout <hash>
+```
 
 when you go to a history version, you are in 'detached HEAD' state, if you want to save the changes you made in this state, create a new branch:
 
-    $ git checkout -b <branch_name>
+```sh
+git switch -c <branch_name>
+
+# legacy command
+git checkout -b <branch_name>
+```
 
 ## Tags
 
-list tags
+```sh
+# list tags
+git tag
+# v1
+# v1-beta
 
-    $ git tag
-    v1
-    v1-beta
+# checkout to a tag
+# or use legacy command `git checkout v1`
+git switch -d v1
+# HEAD is now at 9b28e32... add a comment line
 
-    # checkout to a tag
-    $ git checkout v1
-    HEAD is now at 9b28e32... add a comment line
+# add a tag
+git tag v2
 
-    # add a tag
-    $ git tag v2
+git tag
+# v1
+# v1-beta
+# v2
 
-    $ git tag
-    v1
-    v1-beta
-    v2
+# tags showed in log
+git l
+* 9b28e32 2013-06-01 | add a comment line (HEAD, v2, v1, master)
+* c5be8c4 2013-06-01 | add a default value (v1-beta)
+* 6a5a3a2 2013-06-01 | Using ARGV
+* 7ec63cb 2013-06-01 | First commit
 
-    # tags showed in log
-    $ git l
-    * 9b28e32 2013-06-01 | add a comment line (HEAD, v2, v1, master)
-    * c5be8c4 2013-06-01 | add a default value (v1-beta)
-    * 6a5a3a2 2013-06-01 | Using ARGV
-    * 7ec63cb 2013-06-01 | First commit
+# delete a tag
+git tag -d v2
+# Deleted tag 'v2' (was 9b28e32)
+```
 
-    # delete a tag
-    $ git tag -d v2
-    Deleted tag 'v2' (was 9b28e32)
-
-    $ git l
-    * 9b28e32 2013-06-01 | add a comment line (HEAD, v1, master)
-    * c5be8c4 2013-06-01 | add a default value (v1-beta)
-    * 6a5a3a2 2013-06-01 | Using ARGV
-    * 7ec63cb 2013-06-01 | First commit
-
-### sharing tags
+### Sharing tags
 
 by default, `git push` doesn't transfer tags to remote server, you need do that explicitly:
 
@@ -410,25 +416,19 @@ _DO NOT USE RESET ON A SHARED BRANCH_
 
 ## Branches
 
-create a branch, and switch to that branch, `git checkout -b <new_branch_name>`:
+Create a branch, and switch to that branch,
 
-    $ git checkout -b greet
-    Switched to a new branch 'greet'
+```sh
+git switch -c greet
 
-switch branches, `git checkout <branch>`:
+# legacy
+git checkout -b greet
+Switched to a new branch 'greet'
+```
 
-    $ git b
-    * greet
-      master
+To switch branches, `git switch <branch>`:
 
-    $ git checkout master
-    Switched to branch 'master'
-
-    $ git b
-      greet
-    * master
-
-show all branches(local and remote) use `git branch -a`:
+Show all branches(local and remote) use `git branch -a`:
 
     $ git branch -a
     * master
@@ -521,7 +521,7 @@ or, use `git pull`, which fetch remote commits and merge them locally in one ste
 
 remote origin has a 'greet' branch, but you do not have it locally, you can checkout the remote branch:
 
-    $ git checkout greet    # a local branch 'greet' will now track 'origin/greet'
+    $ git switch greet    # a local branch 'greet' will now track 'origin/greet'
 
 or, you can add a local 'greet' branch to track the remote one:
 
@@ -636,7 +636,13 @@ other notations:
 
 ## checkout
 
-    $ git checkout <commit> -- <path>       # checkout a file from a commit to working directory
+```sh
+# checkout a file from a commit to working directory
+git restore -s <tree> -- <path>
+
+# legacy
+git checkout <commit> -- <path>
+```
 
 ## rebase
 
