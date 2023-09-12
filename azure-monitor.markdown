@@ -14,7 +14,9 @@
 - [Data Collection Rules (DCR)](#data-collection-rules-dcr)
 - [Data collection endpoints](#data-collection-endpoints)
 - [Defender for Cloud](#defender-for-cloud)
-- [Alerting](#alerting)
+- [Alerts](#alerts)
+  - [Signals](#signals)
+  - [Notes](#notes)
 - [Log Analytics Workspace](#log-analytics-workspace)
   - [Design considerations](#design-considerations)
   - [Storage](#storage)
@@ -383,11 +385,33 @@ Limitations:
 - Collects data from resources such as VMs by using the Log Analytics Agent, and puts it into a workspace
   - Log Analytics Agent can be provisioned automatically
 
-## Alerting
 
-- Metric alerts
-- Log alerts
-- Activity Log alerts (resource creation, deletion, etc)
+## Alerts
+
+### Signals
+
+Signal types:
+
+- Metric
+- **Log search**
+  - Condition: result of a log query
+- **Activity log**
+  - Scope: all or selected resource types, at subscription or resource group level
+  - Condition: create/update/delete a resource, other actions (eg. approve private endpoint connection)
+- **Resource health**
+  - Scope: all or selected resource types, at subscription or resource group level
+  - Condition: resource status change (eg. from available to unavailable), and whether it's platform or user initiated
+- **Service health**
+  - Scope: Can be created only on one subscription. If you need to alert on more subscriptions, create a separate alert rule for each subscription. You'll only be notified on health events impacting the services used in your subscription.
+  - Condition: service types, regions and event types (service issue, planned maintenance, etc).
+- Advisor
+- Smart detector
+
+### Notes
+
+- An alert rule can only be applied at **subscription level or below**, NOT at management group level
+- An alert rule resource could only be in the **same subscription** as the resource it monitors
+- A rule's **action group** could be in another subscription
 
 
 ## Log Analytics Workspace
