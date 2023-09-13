@@ -58,6 +58,7 @@
   - [Concepts](#concepts)
   - [Scenarios](#scenarios)
 - [Access reviews](#access-reviews)
+  - [Licenses](#licenses)
 - [Administrative Units (AU)](#administrative-units-au)
 - [Logging and analytics](#logging-and-analytics)
 - [Application Proxy](#application-proxy)
@@ -1255,14 +1256,33 @@ Note:
 
 ## Access reviews
 
-P2 feature
-
 Help ensure that the right people have the right access to the right resources, you could set up a schedule to review:
 
 - Access to applications
 - Group memberships
-- Access packages that group resources (groups, apps, and sites) into a single package
-- Azure AD roles and Azure Resource roles in Privileged Identity Management (PIM)
+- Access packages
+- PIM role assignments (both AAD an Azure roles)
+
+Who can do the review is depending on the resource type, for example, group membership can be reviewed by:
+
+- Administrators
+- Group owners
+  - Best reviewers in most cases
+- Selected users, delegated review capability when the review is created
+  - Groups synced from on-prem AD can not have owners in AAD, you should specify reviewers while creating the review
+  - Reviewers will need to take action in on-prem AD
+- Members of the group, attesting for themselves
+
+### Licenses
+
+Access review is a AAD Premium P2 feature.
+
+These users requires P2 licenses:
+
+- Users who are assigned as reviewers
+- Users who perform self-review
+- Users as group owners who perform an access review
+- Users as application owners who perform an access review
 
 
 ## Administrative Units (AU)
