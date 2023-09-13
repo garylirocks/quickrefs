@@ -285,17 +285,17 @@ Example template (set the parameter type to `securestring`):
   "contentVersion": "1.0.0.0",
   "parameters": {
     "sqlServerName": {
-      "type": "string"
+      "type": "String"
     },
     "location": {
-      "type": "string",
+      "type": "String",
       "defaultValue": "[resourceGroup().location]"
     },
     "adminLogin": {
-      "type": "string"
+      "type": "String"
     },
     "adminPassword": {
-      "type": "securestring"
+      "type": "SecureString"
     }
   },
   "resources": [
