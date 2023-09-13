@@ -5,6 +5,7 @@
 - [Certificate](#certificate)
   - [Certificate composition](#certificate-composition)
 - [Security](#security)
+- [Recover](#recover)
 - [Vault authentication](#vault-authentication)
 - [Replication](#replication)
 - [Best practices](#best-practices)
@@ -94,6 +95,15 @@ Three advanced access policy options:
 - **Azure Resource Manager for template deployment**: enables Azure Resource Manager to get secrets when this key vault is referenced in a template deployment
 - **Azure Disk Encryption for volume encryption**
 
+
+## Recover
+
+After a vault is deleted, and before it's being purged (90 days by default), you can recover it.
+
+- All the keys, secrets and certificates are recovered
+- RBAC role assignments can't be recovered, you need to redo them
+
+
 ## Vault authentication
 
 Vault uses AAD to authenticate users and apps:
@@ -126,6 +136,8 @@ To replicate/move it to other regions, you could back up then restore it
 - Backup can only be restored to a KV in the
   - same subscription
   - and in the same **geography/security boundary** (eg. backup from Australia East, restore at Australia Central, not US East)
+
+
 
 
 ## Best practices
