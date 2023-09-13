@@ -57,6 +57,7 @@
 - [Entitlement management](#entitlement-management)
   - [Concepts](#concepts)
   - [Scenarios](#scenarios)
+  - [Features](#features)
 - [Access reviews](#access-reviews)
   - [Licenses](#licenses)
 - [Administrative Units (AU)](#administrative-units-au)
@@ -1245,6 +1246,8 @@ Note:
 - **Policy**:
   - A set of rules that defines how users get access, who can approve, and how long users have access through an assignment
   - An access package could have two policies: one for employees, and another for external users
+- **Custom extension**
+  - A Logic App that could be triggered for events like "Request is approved", "Assignment is granted", etc
 
 ### Scenarios
 
@@ -1253,25 +1256,34 @@ Note:
 - Department wish to manage their own access policies without IT involvement
 - Multiple organizations need to collaborate on a project, multiple user from one org need access to another org's resources
 
+### Features
+
+- You can define an access review along with an access package
+- Requester could submit a custom start or end data for their access
+- Users can use `https://myaccess.microsoft.com` portal to request/approve both access packages and access reviews
+
 
 ## Access reviews
 
-Help ensure that the right people have the right access to the right resources, you could set up a schedule to review:
+Help ensure that the right people have the right access to the right resources
 
-- Access to applications
-- Group memberships
-- Access packages
-- PIM role assignments (both AAD an Azure roles)
+- You could set up a schedule to review:
 
-Who can do the review is depending on the resource type, for example, group membership can be reviewed by:
+  - Group memberships
+  - Access to applications
+  - Access packages (created with Access Packages)
+  - PIM role assignments (both AAD an Azure roles) (created with PIM assignments)
 
-- Administrators
-- Group owners
-  - Best reviewers in most cases
-- Selected users, delegated review capability when the review is created
-  - Groups synced from on-prem AD can not have owners in AAD, you should specify reviewers while creating the review
-  - Reviewers will need to take action in on-prem AD
-- Members of the group, attesting for themselves
+- You can create reviews for **Guest Users Only** or **Everyone**
+- Who can do the review is depending on the resource type, for example, group membership can be reviewed by:
+
+  - Administrators
+  - Group owners
+    - Best reviewers in most cases
+  - Selected users, delegated review capability when the review is created
+    - Groups synced from on-prem AD can not have owners in AAD, you should specify reviewers while creating the review
+    - Reviewers will need to take action in on-prem AD
+  - Members of the group, attesting for themselves
 
 ### Licenses
 
