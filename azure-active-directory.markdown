@@ -609,8 +609,6 @@ az login --service-principal --username appID --tenant tenantID --password /path
 - When a managed identity is enabled, a **service principal** representing that managed identity is created in your tenant
   - The service principal is listed under **Enterprise applications -> Managed Identities** in Azure Portal
   - There is **NO** corresponding app registration in your tenant
-- A user-assigned managed identity as a resource would reside in a region, but the associated service principal **is global**, its availability is only dependent on Azure AD
-  - When the region is unavailable, the control plane won't work, the SP still works
 - Which MI is used:
   - If system assigned managed identity(SAMI) is enabled and no identity is specified in the request, Azure Instance Metadata Service (IMDS) defaults to the SAMI.
   - If SAMI isn't enabled, and only one user assigned managed identity(UAMI) exists, IMDS defaults to that UAMI.
@@ -629,9 +627,12 @@ Two types:
       --resource-group <resource group>
   ```
 
-- User-assigned
+- User-assigned (UAMI)
 
-  A user-assigned managed identity is independent of any resources, so if your app is running on multiple VMs, it can use the same identity.
+  - A UAMI is independent of any resources, so if your app is running on multiple VMs, it can use the same identity. This helps when you have hundreds of VMs, using a UAMI instead of SAMI reduces identity churn in AAD.
+  - If you delete a UAMI, resources using the identity can not get a new token when its current token expires, but the identity assignment on the resource is NOT automatically removed
+  - A UAMI as a resource would reside in a region, but the associated service principal **is global**, its availability is only dependent on Azure AD
+    - When the region is unavailable, the control plane won't work, but the SP still works
 
   A resource can have multiple user-assigned managed identities.
 
