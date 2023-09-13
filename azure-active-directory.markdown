@@ -1222,16 +1222,22 @@ Note:
 ![Entitlement management overview](images/azure_ad-entitlement-management-overview.png)
 
 - **Catalog**:
-  - Defines what resources are included
-  - A container of access packages
+  - A container of resources and access packages
+  - Apart from Global Administrator, and Identity Governance Administrator, you can designate other users/groups as Catalog creators.
+    - Whoever creates it becomes the first catalog owner
+    - The owner can add other roles and admins to the catalog
+      - Catalog owner
+      - Catalog reader
+      - Access package manager
+      - Access package assignment manager
 - **Resource**:
-  - Membership of Azure AD security groups, *this implies access to other roles/permissions granted to the groups*:
+  - Membership of cloud-created security groups, *this implies access to other roles/permissions granted to the groups*:
     - Azure roles
     - AAD roles
     - Microsoft 365 licenses
-  - Membership of Microsoft 365 Groups and Teams
+  - Membership of cloud-created Microsoft 365 Groups and Teams
   - Assignment to AAD enterprise applications
-  - Membership of SharePoint Online sites
+  - Membership of SharePoint Online sites/site collections
 - **Access package**:
   - A bundle of all the resources with the access a user needs to work on a project or in a role
   - An package could have include a subset of resources in a catalog
