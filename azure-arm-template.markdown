@@ -30,13 +30,13 @@
   // values you provide when run a template
   "parameters": {
     "adminUsername": {
-      "type": "string",
+      "type": "String",
       "metadata": {
         "description": "Username for the Virtual Machine."
       }
     },
     "adminPassword": {
-      "type": "securestring",
+      "type": "SecureString",
       "metadata": {
         "description": "Password for the Virtual Machine."
       }
@@ -104,8 +104,8 @@ Note:
 - Expressions need to be enclosed in brackets `[variables('var1')]`
 - `reference()`, `parameters()` and `variables()` etc are functions
 - Parameters can be of type
-  - string
-  - secureString
+  - String
+  - SecureString
   - integers
   - boolean
   - object
@@ -329,7 +329,8 @@ Example parameter file (use `reference` instead of `value`):
         "keyVault": {
           "id": "/subscriptions/<subscription-id>/resourceGroups/<rg-name>/providers/Microsoft.KeyVault/vaults/<vault-name>"
         },
-        "secretName": "ExamplePassword"
+        "secretName": "ExamplePassword",
+        "secretVersion": "00000000000000000000000000000000"
       }
     },
     "sqlServerName": {
@@ -338,6 +339,8 @@ Example parameter file (use `reference` instead of `value`):
   }
 }
 ```
+
+`secretVersion` field is optional, if you don't specify it, everytime you deploy this template with CLI, the latest version of the secret would be used
 
 
 ## Scopes

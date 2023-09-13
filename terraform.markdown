@@ -56,6 +56,7 @@
 - [Troubleshooting](#troubleshooting)
 - [Azure](#azure)
   - [`AzAPI` provider](#azapi-provider)
+  - [ARM template deployment](#arm-template-deployment)
 - [Gotchas](#gotchas)
 
 ## Overview
@@ -1663,6 +1664,24 @@ resource "azapi_resource" "qs101-lab" {
   })
 }
 ```
+
+### ARM template deployment
+
+There is one resource for each scope level:
+
+| Resource                                       | Deployment mode             | Delete deployed resources with the deployment resource ?     |
+| ---------------------------------------------- | --------------------------- | ------------------------------------------------------------ |
+| `azurerm_resource_group_template_deployment`   | `Complete` or `Incremental` | Yes, unless `delete_nested_items_during_deletion` is `false` |
+| `azurerm_subscription_template_deployment`     | always `Incremental`        | No                                                           |
+| `azurerm_management_group_template_deployment` | always `Incremental`        | No                                                           |
+| `azurerm_tenant_template_deployment`           | always `Incremental`        | No                                                           |
+
+A few things to note:
+
+- If you delete the deployment resource, rerun will re-create the deployment resource, and the end resources if needed.
+- If you delete the end resources, but not the deployment resource itself, Terraform will not detect any changes during rerun, so the end resources won't be re-created.
+- If a parameter references a KV secret, without the `secretVersion` field, if you only update the secrets, Terraform will not detect any changes during rerun, so it won't pick up the latest secret
+  - If another parameter changes, Terraform will update the deployment object, which will pick up the latest secret
 
 
 ## Gotchas
