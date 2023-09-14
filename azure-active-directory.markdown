@@ -1130,6 +1130,8 @@ A tenant-wide setting, provides secure default settings until organizations are 
   - AAD Role
   - RBAC Role
   - A privileged group membership
+    - You could assign either members or owners the group
+    - Useful to mssign multiple roles to the group, then a user just need one activation (for the group membership), instead of activating multiple roles one by one
 - Most common use case: create "Eligible Assignment" of roles/memberships to some users/groups, who need to active them when needed
 
 
