@@ -5,6 +5,7 @@
 - [Aliases](#aliases)
   - [Array aliases](#array-aliases)
 - [Assignments](#assignments)
+  - [Concepts](#concepts)
 - [Effects](#effects)
 - [Policy assignment evaluation](#policy-assignment-evaluation)
   - [Time](#time)
@@ -165,6 +166,16 @@ An assignment could have
 
 - **Excluded scopes**: a property of the assignment, apply to all policies in a set
 - **Exemptions**: a separate resource associated with an assignment, you could specify the scope, expiration date and which policies to exempt
+
+### Concepts
+
+- Resource selectors
+
+  - Can be added to an assignment
+  - One selector could have rules based on locations and resource types.
+  - When multiple selectors are added, resources matching any selector will be evaluated
+  - This helps gradual rollout of the policy
+
 
 ## Effects
 
