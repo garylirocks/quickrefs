@@ -89,10 +89,11 @@ RBAC allows you to grant access to Azure resources that you control. You do this
 
 ### Custom roles
 
-*Custom roles can't be assigned at resource level*
+*Custom roles can't be assigned at tenant or resource level*
 
 | Scope level      | Built-in role | Custom role |
 | ---------------- | ------------- | ----------- |
+| Tenant           | Yes           | **No**      |
 | Management group | Yes           | Yes         |
 | Subscription     | Yes           | Yes         |
 | Resource group   | Yes           | Yes         |
