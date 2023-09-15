@@ -474,10 +474,11 @@ dsregcmd /status
 - If password is used, it should be strong and **not expire**
 - Use a different strong authentication method than regular accounts
   - Exclude at least one account from phone-based MFA (use **other types of MFA**)
-  - Exclude one account from any Conditional Access policies
-- Assigned "Global Administrator" role, the assignment should be **permanent** in PIM
+  - Exclude at least one account from all Conditional Access policies
+- "Global Administrator" role assigned **permanently** in PIM
 - Should be **cloud-only**, uses the `*.onmicrosoft.com` domain
 - Not federated or synchronized from on-prem environments
+  - Azure AD prevents the last Global Administrator account from being deleted, but it doesn't prevent the account from being deleted or disabled on-premises
 - Trigger alerts whenever an emergence accounts sign in, use a KQL query like:
   ```kql
   SigninLogs
@@ -1325,15 +1326,19 @@ These users requires P2 licenses:
 
 ## Logging and analytics
 
-There are many different categories of logs:
+AAD reporting components:
 
-- Sign-in logs (for human interactive sign-ins)
-- Audit logs
-- NonInteractiveUserSignInLogs
-- ServicePrincipalSignInLogs
-- ManagedIdentitySignInLogs
-- RiskyUsers
-- ...
+- Activity
+  - Sign-in logs (for human interactive sign-ins)
+  - Other sign-in logs
+    - NonInteractiveUserSignInLogs
+    - ServicePrincipalSignInLogs
+    - ManagedIdentitySignInLogs
+  - Audit logs
+  - Provisioning logs: eg, creating a group in ServiceNow or a user imported from Workday
+- Security
+  - Risky sing-ins
+  - Users flagged for risk
 
 You could download and analyze them manually, or you could send the logs to a Log Analytics Workspace, then use Azure Monitor to query the logs, create alerts, dashboards, etc
 
