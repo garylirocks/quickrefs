@@ -27,7 +27,7 @@ send and receive `0` and `1`
 
 how to group `0` and `1`
 
-`Ethernet` Protocal:
+`Ethernet` protocol:
 
 group `0` and `1` in `Frame`, every `Frame` has `Head` and `Data`
 
@@ -42,7 +42,7 @@ Head contains sender and receiver's addresses: `MAC`
 
 `MAC` is 6 bytes, every network card has a unique `MAC` address, the first 3 bytes are manufacturer identifier
 
-sender must know reciever's `MAC` address to send data -> `ARP` protocal
+sender must know reciever's `MAC` address to send data -> `ARP` protocol
 
 ![ethernet-broadcasting](./images/network_ethernet-broadcasting.png)
 
@@ -50,7 +50,7 @@ sender must know reciever's `MAC` address to send data -> `ARP` protocal
 
 when a sender want to send data, it broadcasts it to every one in the same network, each one who received the data compares the MAC address to its own to determine whether it is the specified receiver, so in the above image, when 1 sends message to 2, others (3, 4, 5) will receive the message too
 
-_Note: a modern switcher may cache each host's MAC address, so it only needs to send the data to that host, do not need to do broadcasting_
+_Note: a modern switch may cache each host's MAC address, so it only needs to send the data to that host, do not need to do broadcasting_
 
 _this only works in a subnet, you can not put all the computers in the world in a single subnet, so this leads to Network Layer_
 
@@ -78,7 +78,7 @@ put IP packet inside an ethernet frame, it looks like this
 
 because an Ethernet frame data's max length is 1500 bytes, so IP packet may need to split to several Ethernet frames before sending
 
-**ARP protocal**
+**ARP protocol**
 
 when sending data, IP data is contained in Ethernet frame, so we must know the destination's IP address and MAC address before sending
 
@@ -124,7 +124,7 @@ TCP is reliable, the receiver need to send `ack` back to sender, so sender can c
 
 ## Application Layer
 
-protocals to specify format for different applications: HTTP, FTP, Email, ...
+protocols to specify format for different applications: HTTP, FTP, Email, ...
 
 ## top down - from user's point of view
 
@@ -135,4 +135,4 @@ when you start using a new computer, somtimes you need to manually set up the fo
 - gateway IP address: to communicate with other subnets
 - DNS: to get other computer's IP address
 
-sometimes you can get this setup automatically by **DHCP** protocal
+sometimes you can get this setup automatically by **DHCP** protocol

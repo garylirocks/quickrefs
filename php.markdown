@@ -145,7 +145,7 @@ ref: `http://www.openlogic.com/wazi/bid/209956/mod_php-vs-FastCGI-vs-PHP-FPM-for
 
 - FastCGI
 
-  a generic protocal for interfacing interactive programs with a web server,
+  a generic protocol for interfacing interactive programs with a web server,
   Apache can use FastCGI in the form of `mod_fcgid`
 
   Pros:
