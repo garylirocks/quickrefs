@@ -11,6 +11,8 @@
   - [UDP](#udp)
   - [TCP](#tcp)
 - [Application Layer](#application-layer)
+- [Network devices](#network-devices)
+  - [Hub vs. Switch vs. Router](#hub-vs-switch-vs-router)
 - [Top down - from user's point of view](#top-down---from-users-point-of-view)
 - [Refs](#refs)
 
@@ -137,6 +139,24 @@ TCP is reliable, the receiver need to send `ack` back to sender, so sender can c
 ## Application Layer
 
 Protocols to specify format for different applications: HTTP, FTP, Email, ...
+
+
+## Network devices
+
+### Hub vs. Switch vs. Router
+
+|                                    | Hub                                                 | Switch                                                                                                            | Router                                                |
+| ---------------------------------- | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| Layer                              | Physical layer                                      | Data link layer                                                                                                   | Network layer                                         |
+| Used in(LAN, MAN, WAN)             | LAN                                                 | LAN                                                                                                               | LAN, MAN, WAN                                         |
+| Data Transmission form             | electrical signal or bits                           | frame & packet                                                                                                    | packet                                                |
+| Function                           | A received frame is broadcasted to every other port | Keeps a record of MAC addresses each port connects to, so it only sends the frame to the port for the destination | Route packets between networks                        |
+| Port                               | 4/12 ports                                          | multi-port, usually between 4 and 48                                                                              | 2/4/5/8 ports                                         |
+| Transmission type                  | Frame flooding, unicast, multicast or broadcast     | First broadcast, then unicast and/or multicast depends on the need                                                | At Initial Level Broadcast then unicast and multicast |
+| Device type                        | Non-intelligent device                              | Intelligent device                                                                                                | Intelligent device                                    |
+| Transmission mode                  | Half duplex                                         | Half/Full duplex                                                                                                  | Full duplex                                           |
+| Speed                              | 10Mbps                                              | 10/100Mbps, 1Gbps                                                                                                 | 1-100Mbps(wireless); 100Mbps-1Gbps(wired)             |
+| Address used for data transmission | MAC address                                         | MAC address                                                                                                       | IP address                                            |
 
 
 ## Top down - from user's point of view
