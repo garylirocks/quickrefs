@@ -145,6 +145,8 @@ Protocols to specify format for different applications: HTTP, FTP, Email, ...
 
 ### Hub vs. Switch vs. Router
 
+![Hub vs. Switch vs. Router](images/network_hub-vs-switch-vs-router.jpg)
+
 |                                    | Hub                                                 | Switch                                                                                                            | Router                                                |
 | ---------------------------------- | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
 | Layer                              | Physical layer                                      | Data link layer                                                                                                   | Network layer                                         |
