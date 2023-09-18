@@ -13,6 +13,7 @@ Quick productivity tips, shortcuts, command line snippets.
 - [Find module version](#find-module-version)
 - [Disable a service from autostart](#disable-a-service-from-autostart)
 - [Display IP address in shell prompt](#display-ip-address-in-shell-prompt)
+- [Get my public IP](#get-my-public-ip)
 - [Mount/Unmount device](#mountunmount-device)
   - [`cifs`](#cifs)
 - [Relabel usb hard drive](#relabel-usb-hard-drive)
@@ -182,6 +183,10 @@ add following line to `~/.bashrc`
 MYIP=`ifconfig eth0 | sed -nr 's/^ *inet addr:([0-9.]+) .*$/\1/p'`
 export PS1="\u@$MYIP:\w\$ "
 ```
+
+## Get my public IP
+
+`curl ifconfig.co`
 
 ## Mount/Unmount device
 
