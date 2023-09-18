@@ -27,6 +27,7 @@
   - [Management tools](#management-tools)
 - [Azure Resource Graph](#azure-resource-graph)
   - [Sample KQL queries](#sample-kql-queries)
+  - [`az graph query`](#az-graph-query)
 - [Blueprints](#blueprints)
 - [Billing](#billing)
   - [Tag inheritance](#tag-inheritance)
@@ -519,6 +520,32 @@ Tables:
   | project id, name, PublicAccess, c_subnets, c_IPs, PEPCount, subnetIDs, IPs, kind, location, resourceGroup
   | sort by PublicAccess, array_length(subnetIDs)
   ```
+
+### `az graph query`
+
+```sh
+# get VM name and tags
+az graph query \
+  --graph-query "where type =~ "Microsoft.Compute" | project name, tags" \
+  --subscriptions "11111111-1111-1111-1111-111111111111 22222222-2222-2222-2222-222222222222" \
+  --first 1000 \
+  --query "data" \
+  -otsv
+
+# use a saved query
+queryId="/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/rg-gary-001/providers/microsoft.resourcegraph/queries/my-share-query-001"
+subId="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+
+az graph query \
+  --graph-query "{{${queryId}}} | project id, name, type" \
+  --subscriptions "${subId}" \
+  --query "data" \
+  -otsv
+```
+
+- No need to specify the `resources` table, which is always used
+- Use `--first` to specify how many records to return
+- Optionally specify the subscriptions, otherwise all available ones are queried
 
 
 ## Blueprints
