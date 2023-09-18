@@ -75,6 +75,7 @@
   - [Web Application Firewall (WAF)](#web-application-firewall-waf)
 - [Virtual WAN](#virtual-wan)
   - [Virtual Hub Routing](#virtual-hub-routing)
+    - [Routing scenarios](#routing-scenarios)
   - [NVAs in a Virtual Hub](#nvas-in-a-virtual-hub)
   - [SaaS solutions in a Virtual Hub](#saas-solutions-in-a-virtual-hub)
 - [DDoS Protection](#ddos-protection)
@@ -1749,26 +1750,65 @@ In a large network deployment, you could have multiple firewall instances in hub
 - Each secured virtual hub
   - Has associated security and routing policies configured by Azure Firewall Manager
   - At each hub, you could filter traffic between virtual networks(V2V), virtual netwoks and branch offices(B2V) and traffic to the Internet (B2I/V2I)
-  - Provides automated routing, there's no need to configure your own UDRs
+  - Provides automated routing, there's **no need to configure your own UDRs**
 
 ### Virtual Hub Routing
 
 - Routing in a virtual hub is provided by a router that manages all routing between gateways using BGP.
 - This router provides transit connectivity between virtual networks that connect to a virtual hub.
+- Four types of connections:
+  - S2S VPN
+  - P2S VPN
+  - ExpressRoute
+  - vNet
 - Each virtual hub has its own
   - **Default route table**, static routes could be added, taking precedence over dynamic routes
   - **None route table**, propagating to this means no routes are required to be propagated from the connection
-- Four types of connections:
-  - VPN
-  - ExpressRoute
-  - P2S configuration
-  - Hub virtual network
 - For each connection:
   - By default, it associates and propagates to the Default route table
-  - The associated route table controls where traffic from this connection will be routed to.
-  - Can propagate routes to multiple route tables. VPN, ExpressRoute, and User VPN connections propagate routes to the same set of route tables.
+  - Can only associate to one route table, which controls where traffic from this connection will be routed to.
+  - Can propagate routes to multiple route tables.
+  - All branch connections (P2S VPN, S2S VPN, and ExpressRoute) are configured as a whole, they always associate and propagate to the same set of route tables.
+- You can create your own custom route tables
+  - All connectios can associate/propagate to a custom route table
+  - Branches can only associate to the Default route table ?? // TODO
+
 
 ![Virtual hub route propagation](images/azure_virtual-wan-routes-propagation.png)
+
+#### Routing scenarios
+
+- Isolating vNets ([Video link](https://youtu.be/2g-_empU0GU?si=WZ0nU3iGwOnKL7Ya&t=895)):
+
+  ![vWAN isolating vNets](images/azure_networking-vwan-routing-isolating-vnets.png)
+
+  - All connections propagate to the default route table
+  - Branches associate to the default route table, so it can reach to any spoke
+  - Branches propagate to custom rout table, vNets associate with it, so vNets can reach branches, but not among themselves
+
+- To Internet via Azure Firewall:
+
+  ![vWAN Internet via Azure Firewall](images/azure_networking-vwan-routing-internet-via-azure-firewall.png)
+
+  - Public traffic (outbound to Internet) goes through Azure Firewall
+    - You can configure this in Firewall Manager, which adds a static route to the Default route table
+  - Private traffic go direct
+
+- vNet to branch via NVA in a vNet ([Video link](https://youtu.be/2g-_empU0GU?si=jvFQRMECpU7yAi3i&t=845)):
+
+  ![vWAN custom route table](images/azure_networking-vwan-routing-custom-route-table.png)
+
+  - Both vNet1 and vNet2 propagate and associate to the custom route table
+  - Traffic from vNet1 and vNet2 to branches need to go through an NVA in vNet3
+  - You add a static route in the custom route table to route traffic to the NVA in vNet3, use `vNet3 Connection` as the next hop type, and NVA IP `10.3.0.5` as the next hop
+
+- Indirect vNets via NVA:
+
+  ![vWAN indirect vNets via NVA](images/azure_networking-vwan-routing-indirect-vnets.png)
+
+  - Add UDRs for the indirect vNets, pointing to the NVA IP
+  - Add static routes for indirect vNets to the Default route table, NVA IP as the next hop
+  - Now indirect vNets can reach each other, eg. VNet2a <-> VNet4b
 
 ### NVAs in a Virtual Hub
 
@@ -1788,6 +1828,7 @@ Deployment process:
 - Once deployed, any additional configuration must be performed via the **NVA partners portal or management application**.
 - You do not need to create S2S/P2S connection resources to connect your branch site to the virtual hub. This is all managed via the NVA.
 - You still need to create Hub-to-vNet connections to connect your virtual WAN hub to your vNets.
+- No need to create UDRs, the NVA will handle all routing between the virtual hub and your branch sites.
 
 ### SaaS solutions in a Virtual Hub
 
