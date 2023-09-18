@@ -1695,18 +1695,22 @@ In a large network deployment, you could have multiple firewall instances in hub
 - Hierarchical policies:
   - Central IT author global policies
   - DevOps team could author local firewall rules for better agility
-- Integrated with third-party security-as-a-service: (only for secured virtual hubs)
-- Centralized route management (only for secured virtual hubs)
-  - easily route traffic to your secured hub for filtering and logging without the need to manually setup UDR on spoke vNets
+- For secured vHubs only:
+  - Third-party security-as-a-service integration, they use Firewall Manager's API to set up security policies (currently supports zScaler, iBoss, Check Point)
+  - Centralized route management: easily route traffic to your secured hub for filtering and logging without the need to manually setup UDR on spoke vNets
 
 ### Firewall policy
+
+- Created by the Firewall Manager
+- Not only security policies, can have **routing policies as well**.
+  - User-defined routes aren't needed to route traffic through the firewall.
 
 - Contains:
   - NAT, network, application rule collections
   - Threat Intelligence settings
 - Is global resource
   - Works across regions and subscriptions
-  - can be used by multiple Azure Firewall instances
+  - Can be used by multiple Azure Firewall instances
 - Could be inherited:
   - allows DevOps to create local firewall policies on top of organization mandated base policy
 
