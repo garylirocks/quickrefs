@@ -75,6 +75,7 @@
   - [Web Application Firewall (WAF)](#web-application-firewall-waf)
 - [Virtual WAN](#virtual-wan)
   - [Virtual Hub Routing](#virtual-hub-routing)
+    - [Custom route tables](#custom-route-tables)
     - [Routing scenarios](#routing-scenarios)
   - [NVAs in a Virtual Hub](#nvas-in-a-virtual-hub)
   - [SaaS solutions in a Virtual Hub](#saas-solutions-in-a-virtual-hub)
@@ -1668,7 +1669,7 @@ More detailed:
 
 By default, all traffic is blocked, you can configure:
 
-- **NAT rules**:
+- **DNAT rules**:
   - translate firewall public IP and port to a private IP and port, could be helpful in publishing SSH, RDP, or non-HTTP/S applications to the Internet
   - **must be accompanied by a matching network rule**
 - **Network rules**:
@@ -1702,18 +1703,20 @@ In a large network deployment, you could have multiple firewall instances in hub
 
 ### Firewall policy
 
-- Created by the Firewall Manager
+- Created in Firewall Manager
 - Not only security policies, can have **routing policies as well**.
   - User-defined routes aren't needed to route traffic through the firewall.
-
-- Contains:
-  - NAT, network, application rule collections
-  - Threat Intelligence settings
+- Policy organization: Rule Collection Group -> Rule Collection, each collection contains rules of one of the types:
+  - DNAT rules
+  - Network rules
+  - Application rules
+- Other settings:
+  - Threat Intelligence
 - Is global resource
   - Works across regions and subscriptions
   - Can be used by multiple Azure Firewall instances
 - Could be inherited:
-  - allows DevOps to create local firewall policies on top of organization mandated base policy
+  - Allows DevOps to create local firewall policies on top of organization mandated base policy
 
 ![Firewall policies](images/azure_firewall-manager-policies.png)
 
@@ -1754,8 +1757,9 @@ In a large network deployment, you could have multiple firewall instances in hub
 
 ### Virtual Hub Routing
 
-- Routing in a virtual hub is provided by a router that manages all routing between gateways using BGP.
-- This router provides transit connectivity between virtual networks that connect to a virtual hub.
+- A virtual hub has a router that manages all routing between gateways using BGP.
+  - This router provides transit connectivity between virtual networks that connect to a virtual hub.
+  - Ths router shows up as "Virtual network gateway" with a random public IP in effective routes of a connected VM.
 - Four types of connections:
   - S2S VPN
   - P2S VPN
@@ -1769,12 +1773,18 @@ In a large network deployment, you could have multiple firewall instances in hub
   - Can only associate to one route table, which controls where traffic from this connection will be routed to.
   - Can propagate routes to multiple route tables.
   - All branch connections (P2S VPN, S2S VPN, and ExpressRoute) are configured as a whole, they always associate and propagate to the same set of route tables.
-- You can create your own custom route tables
-  - All connectios can associate/propagate to a custom route table
-  - Branches can only associate to the Default route table ?? // TODO
-
 
 ![Virtual hub route propagation](images/azure_virtual-wan-routes-propagation.png)
+
+#### Custom route tables
+
+You can create your own custom route tables
+
+- You can add static routes to the custom route table, which will take precedence over propagated routes with same prefix
+  - You control whether a vNet connection picks up those static routes via the "Propagate default route" option on the connection
+- All connections can associate/propagate to a custom route table
+- Custom route tables can have labels, which are used to group route tables, a vNet connection can propagate to labels, as well as individual route tables
+- Branches can only associate to the Default route table ?? // TODO
 
 #### Routing scenarios
 
@@ -1784,7 +1794,7 @@ In a large network deployment, you could have multiple firewall instances in hub
 
   - All connections propagate to the default route table
   - Branches associate to the default route table, so it can reach to any spoke
-  - Branches propagate to custom rout table, vNets associate with it, so vNets can reach branches, but not among themselves
+  - Branches propagate to custom route table, vNets associate with it, so vNets can reach branches, but not among themselves
 
 - To Internet via Azure Firewall:
 
@@ -1798,9 +1808,12 @@ In a large network deployment, you could have multiple firewall instances in hub
 
   ![vWAN custom route table](images/azure_networking-vwan-routing-custom-route-table.png)
 
+  - Requirement: Traffic from vNet1 and vNet2 to branches need to go through an NVA in vNet3
   - Both vNet1 and vNet2 propagate and associate to the custom route table
-  - Traffic from vNet1 and vNet2 to branches need to go through an NVA in vNet3
-  - You add a static route in the custom route table to route traffic to the NVA in vNet3, use `vNet3 Connection` as the next hop type, and NVA IP `10.3.0.5` as the next hop
+  - You add a static route in the custom route table to route traffic via the NVA in vNet3
+    - Branch IP ranges as the destination
+    - `vNet3 Connection` as the next hop type
+    - NVA IP `10.3.0.5` as the next hop
 
 - Indirect vNets via NVA:
 
