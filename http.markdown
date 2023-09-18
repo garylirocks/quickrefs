@@ -188,8 +188,8 @@ ssl_certificate_key file;
 - A client indicates which hostname it is attempting to connect to at the start of the handshaking process.
 - This allows a server to present multiple certificates on the same IP address and TCP port number and hence allows multiple secure (HTTPS) websites (or any other service over TLS) to be served by the same IP address without requiring all those sites to use the same certificate.
 - It is the conceptual equivalent to HTTP/1.1 name-based virtual hosting, but for HTTPS.
-- This also allows a proxy to forward client traffic to the right server during TLS/SSL handshake. The desired hostname is not encrypted in the original SNI extension, so an eavesdropper can see which site is being requested.
-
+- This also allows a proxy to forward client traffic to the right server during TLS/SSL handshake.
+- The desired hostname is **NOT encrypted** in the original SNI extension, so an eavesdropper can see which site is being requested. And firewalls uses this to enforce FQDN based rules.
 
 Details:
 
