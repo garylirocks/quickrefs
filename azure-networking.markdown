@@ -76,6 +76,7 @@
 - [Virtual WAN](#virtual-wan)
   - [Virtual Hub Routing](#virtual-hub-routing)
     - [Custom route tables](#custom-route-tables)
+    - [Routing Intent](#routing-intent)
     - [Routing scenarios](#routing-scenarios)
   - [NVAs in a Virtual Hub](#nvas-in-a-virtual-hub)
   - [SaaS solutions in a Virtual Hub](#saas-solutions-in-a-virtual-hub)
@@ -1774,6 +1775,7 @@ In a large network deployment, you could have multiple firewall instances in hub
   - A connection could have static routes, and an option determines whether to propagate the default routes (eg. route traffic to a subnet via an NVA)
   - Can propagate routes to multiple route tables.
   - All branch connections (P2S VPN, S2S VPN, and ExpressRoute) are configured as a whole, they always associate and propagate to the same set of route tables.
+  - Enabling routing intent disables routing configs on connections
 
 ![Virtual hub route propagation](images/azure_virtual-wan-routes-propagation.png)
 
@@ -1788,6 +1790,21 @@ You can create your own custom route tables
   - associate ONLY to the Default route table
   - propagate to any route tables
 - Custom route tables can have labels, which are used to group route tables, a vNet connection can propagate to labels, as well as individual route tables
+
+#### Routing Intent
+
+- Can be enabled in either of the following places:
+  - Azure Firewall Manager -> vHub -> Security configuration -> Inter-hub (only works for Azure Firewall)
+  - vHub -> Routing Intent (works for third-party firewalls as well)
+- This summaries routes in the route tables to just following 4 prefixes, and next hop is the firewall:
+  - 192.168.0.0/16
+  - 172.16.0.0/12
+  - 10.0.0.0/8
+  - 0.0.0.0/0
+- NICs on attached vNets get the RFC1918 summaries as well
+- Branches still gets individual prefixes for each spoke
+- You can view effective routes on the firewall, which shows the individual prefixes of the spokes
+- Enabling routing intent disables routing config on connections, you don't need to config association/propagation, static routes, etc.
 
 #### Routing scenarios
 
