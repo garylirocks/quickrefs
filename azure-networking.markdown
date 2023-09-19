@@ -448,7 +448,7 @@ Different types:
   - ExpressRoute and VPN could co-exist in a subnet, this configuration requires a larger subnet
 - These VMs contain routing tables and specific services, they are created automatically, you can't configure them directly
 - VPN gateways can be deployed to multiple AZs for high availability
-
+- A VPN Gateway will have a public IP, and two private IPs (one is for BGP) ??
 
 VPN types:
 
@@ -1771,6 +1771,7 @@ In a large network deployment, you could have multiple firewall instances in hub
 - For each connection:
   - By default, it associates and propagates to the Default route table
   - Can only associate to one route table, which controls where traffic from this connection will be routed to.
+  - A connection could have static routes, and an option determines whether to propagate the default routes (eg. route traffic to a subnet via an NVA)
   - Can propagate routes to multiple route tables.
   - All branch connections (P2S VPN, S2S VPN, and ExpressRoute) are configured as a whole, they always associate and propagate to the same set of route tables.
 
@@ -1782,9 +1783,11 @@ You can create your own custom route tables
 
 - You can add static routes to the custom route table, which will take precedence over propagated routes with same prefix
   - You control whether a vNet connection picks up those static routes via the "Propagate default route" option on the connection
-- All connections can associate/propagate to a custom route table
+- vNet connections can associate/propagate to any route tables
+- Branches can
+  - associate ONLY to the Default route table
+  - propagate to any route tables
 - Custom route tables can have labels, which are used to group route tables, a vNet connection can propagate to labels, as well as individual route tables
-- Branches can only associate to the Default route table ?? // TODO
 
 #### Routing scenarios
 
@@ -1815,13 +1818,18 @@ You can create your own custom route tables
     - `vNet3 Connection` as the next hop type
     - NVA IP `10.3.0.5` as the next hop
 
-- Indirect vNets via NVA:
+- Tiered vNets via NVA or Azure Firewall:
 
-  ![vWAN indirect vNets via NVA](images/azure_networking-vwan-routing-indirect-vnets.png)
+  ![vWAN tiered vNets via NVA](images/azure_networking-vwan-routing-indirect-vnets.png)
 
   - Add UDRs for the indirect vNets, pointing to the NVA IP
   - Add static routes for indirect vNets to the Default route table, NVA IP as the next hop
   - Now indirect vNets can reach each other, eg. VNet2a <-> VNet4b
+
+
+  ![vWAN tiered vNets via Azure Firewall](images/azure_networking-vwan-routing-indirect-vnets-with-azure-firewall.png)
+
+  *The NVA could be Azure Firewall, this was a workaround for inter-hub traffic filtering issue before the Routing Intent feature was introduced, see [Video link](https://youtu.be/YZ0EQDut6_8?si=VFc5N_qhlwNtd1Yq&t=273)*
 
 ### NVAs in a Virtual Hub
 
