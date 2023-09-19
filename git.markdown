@@ -548,17 +548,21 @@ or, you can add a local 'greet' branch to track the remote one:
     $ cd git-demo
     $ git remote add origin ../git-demo-remote/
 
+
 ## Revision Selection
 
-you can reference a single revision by commit hash, branch name, or reflog shortname
+You can reference a single revision by commit hash, branch name, or reflog shortname
 
-`git reflog` shows where your HEAD have been, you can select a revision by `HEAD@{n}` or `master@{n}`
+`git reflog` shows where your `HEAD` has been, you can select a revision by `HEAD@{n}` or `master@{n}`
 
-    $ git reflog
-    f7c958f HEAD@{0}: commit: various modifications
-    f9ddb8b HEAD@{1}: commit: add vimperator and super_user_tips refs
-    2c04075 HEAD@{2}: commit: add sth to svn ref
-    ...
+```sh
+git reflog
+
+# f7c958f HEAD@{0}: commit: various modifications
+# f9ddb8b HEAD@{1}: commit: add vimperator and super_user_tips refs
+# 2c04075 HEAD@{2}: commit: add sth to svn ref
+# ...
+```
 
 - `@{<n>}`
 
@@ -594,37 +598,46 @@ you can reference a single revision by commit hash, branch name, or reflog short
 * `HEAD~` the first parent of HEAD, equivalent to `HEAD^`
 * `HEAD~2` the first parent of first parent of HEAD, can also be written as `HEAD^^`
 
-select a ref by time:
+Select a ref by time:
 
-    $ git show master@{yesterday}
-    $ git show master@{3.month}
+```sh
+git show master@{yesterday}
+git show master@{3.month}
+```
 
 `master@{3.month}`, `master@{3.months}`, `master@{3 months ago}` are the equivalent, _these reflogs are local, you maynot use them for commits older than a few months_
 
 - `HEAD` the commit on which you based the changes in the working tree
-- `MERGE_HEAD` the commit which you are merging into your branch when you run git merge
-- `CHERRY_PICK_HEAD` the commit which you are cherry-picking when you run git cherry-pick
+- `MERGE_HEAD` the commit which you are merging into your branch when you run `git merge`
+- `CHERRY_PICK_HEAD` the commit which you are cherry-picking when you run `git cherry-pick`
 
 ### Commit Ranges
 
 some commands traversing commit history, such as `git log`, if you specify a signle revision for these commands, they will traversing from that single commit to all of its ancestors.
 
-get commits reachable from r2, but not reachable from r1, use these, they are equivalent:
+Get commits reachable from r2, but not reachable from r1, use these, they are equivalent:
 
-    $ git log ^r1 r2
-    $ git log r1..r2
+```sh
+git log ^r1 r2
+git log r1..r2
 
-    $ git log origin..HEAD # what did i do since forked from origin
-    $ git log HEAD..origin # what did origin do since I forked from it
+git log origin..HEAD # what did i do since forked from origin
+git log HEAD..origin # what did origin do since I forked from it
+```
 
-triple dot notation:
+Triple dot notation:
 
-    $ git log r1...r2   # commits reachable from either r1 or r2 but not from both
+```sh
+git log r1...r2   # commits reachable from either r1 or r2 but not from both
+```
 
-other notations:
+Other notations:
 
-    r1^@    # any commits reachable from r1, but not r1 itself
-    r1^!    # just r1, exclude all of its parents
+```sh
+r1^@    # any commits reachable from r1, but not r1 itself
+r1^!    # just r1, exclude all of its parents
+```
+
 
 ## diff
 
