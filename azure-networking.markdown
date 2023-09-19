@@ -76,6 +76,7 @@
 - [Virtual WAN](#virtual-wan)
   - [Virtual Hub Routing](#virtual-hub-routing)
     - [Custom route tables](#custom-route-tables)
+    - [Route maps](#route-maps)
     - [Routing Intent](#routing-intent)
     - [Routing scenarios](#routing-scenarios)
   - [NVAs in a Virtual Hub](#nvas-in-a-virtual-hub)
@@ -1791,6 +1792,22 @@ You can create your own custom route tables
   - propagate to any route tables
 - Custom route tables can have labels, which are used to group route tables, a vNet connection can propagate to labels, as well as individual route tables
 
+#### Route maps
+
+Function:
+
+- Route aggregation, eg. summarize `172.16.0.0/24` and `172.16.1.0/24` to one route `172.16.0.0/16`
+- Route filtering, drop some routes
+- Modify BGP attributes such as AS-PATH and Communities
+
+Structure:
+- A Route-map is an ordered sequence of one or more rules
+- A rule comprises of three parts: match conditions, actions, connections applied to
+
+Apply to:
+- Any branch or VNet connections
+- Inbound, outbound or both directions
+
 #### Routing Intent
 
 - Can be enabled in either of the following places:
@@ -1839,14 +1856,13 @@ You can create your own custom route tables
 
   ![vWAN tiered vNets via NVA](images/azure_networking-vwan-routing-indirect-vnets.png)
 
-  - Add UDRs for the indirect vNets, pointing to the NVA IP
-  - Add static routes for indirect vNets to the Default route table, NVA IP as the next hop
-  - Now indirect vNets can reach each other, eg. VNet2a <-> VNet4b
-
-
   ![vWAN tiered vNets via Azure Firewall](images/azure_networking-vwan-routing-indirect-vnets-with-azure-firewall.png)
 
   *The NVA could be Azure Firewall, this was a workaround for inter-hub traffic filtering issue before the Routing Intent feature was introduced, see [Video link](https://youtu.be/YZ0EQDut6_8?si=VFc5N_qhlwNtd1Yq&t=273)*
+
+  - Add UDRs for the indirect vNets, pointing to the NVA IP
+  - Add static routes for indirect vNets to the Default route table, NVA IP as the next hop
+  - Now indirect vNets can reach each other, eg. VNet2a <-> VNet4b
 
 ### NVAs in a Virtual Hub
 
