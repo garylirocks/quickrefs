@@ -629,7 +629,12 @@ jq -r '.name.first' example.json
 
 # array element
 jq -r '.fruits[1]' example.json
-banana
+# banana
+
+# get object keys
+jq ".name | keys[]" example.json
+# "first"
+# "last"
 ```
 
 Format JSON text:
