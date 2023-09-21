@@ -78,6 +78,7 @@
     - [Custom route tables](#custom-route-tables)
     - [Route maps](#route-maps)
     - [Routing Intent](#routing-intent)
+    - [BGP peers](#bgp-peers)
     - [Routing scenarios](#routing-scenarios)
   - [NVAs in a Virtual Hub](#nvas-in-a-virtual-hub)
   - [SaaS solutions in a Virtual Hub](#saas-solutions-in-a-virtual-hub)
@@ -1708,7 +1709,7 @@ In a large network deployment, you could have multiple firewall instances in hub
 - Created in Firewall Manager
 - Not only security policies, can have **routing policies as well**.
   - User-defined routes aren't needed to route traffic through the firewall.
-- Policy organization: Rule Collection Group -> Rule Collection, each collection contains rules of one of the types:
+- Policy organization: Firewall Policy resource -> Rule Collection Group -> Rule Collection -> rule, each collection contains rules of a single type:
   - DNAT rules
   - Network rules
   - Application rules
@@ -1822,6 +1823,16 @@ Apply to:
 - Branches still gets individual prefixes for each spoke
 - You can view effective routes on the firewall, which shows the individual prefixes of the spokes
 - Enabling routing intent disables routing config on connections, you don't need to config association/propagation, static routes, etc.
+
+#### BGP peers
+
+- A vHub hosts BGP Endpoint service, it could peer to an NVA in a connected vNet, this allows your vHub to get all the routes from the NVA
+- You need to configure:
+  - ASN
+  - Private IP address of the NVA
+  - VNet connection
+- If your NVA is already supported in a vHub, this is not necessary
+- Usecase: your NVA is not supported to by deployed in the vHub yet, then you can deploy it to a connected VNet, and peer it to the vHub
 
 #### Routing scenarios
 
