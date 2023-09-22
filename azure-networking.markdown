@@ -812,8 +812,8 @@ Usually used to advertise on-prem routes to Azure when you're connected through 
   - You can optionally use BGP
   - You could create UDR with a next hop type of *Virtual network gateway* (VPN gateway)
 
-On a route table, you could define whether virtual network gateway route propagation should happen,
-- If it's "Disabled", the on-prem routes won't be propagated to NICs in the subnet.
+On a route table, you could define whether **virtual network gateway route propagation** should happen,
+- If it's "Disabled", the on-prem routes (advertised via ER or VPN gateways) won't be propagated to NICs in the subnet.
 - This shouldn't be disabled on the "GatewaySubnet".
 
 ![BGP](images/azure_bgp.svg)
@@ -1823,6 +1823,7 @@ Apply to:
 - Branches still gets individual prefixes for each spoke
 - You can view effective routes on the firewall, which shows the individual prefixes of the spokes
 - Enabling routing intent disables routing config on connections, you don't need to config association/propagation, static routes, etc.
+  - If the "Propagate default route" option is disabled on a VNet connection, then the `0.0.0.0/0` routing intent will not propagate to this connection
 
 #### BGP peers
 
