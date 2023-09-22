@@ -1,7 +1,10 @@
 # VS Code
 
+- [Profile](#profile)
 - [Shortcuts](#shortcuts)
-- [VSCodeVim plugin](#vscodevim-plugin)
+- [Settings](#settings)
+- [Extensions](#extensions)
+- [VSCodeVim extension](#vscodevim-extension)
   - [Visual block mode](#visual-block-mode)
   - [Column selection mode](#column-selection-mode)
   - [Selection](#selection)
@@ -17,11 +20,45 @@
   - [Sample debugging settings for React / Mocha](#sample-debugging-settings-for-react--mocha)
 - [Mac trivias](#mac-trivias)
 
+
+## Profile
+
+- There is a "Default" profile
+- You could create other profiles, each profile could optionally have its own:
+  - Settings
+  - Extensions
+  - Keyboard Shortcuts
+  - User Snippets
+  - User Tasks
+
+
 ## Shortcuts
 
 - `Ctrl + Shift + L`: multi word cursors/selections, allows you to change multi occurrences of a word simultaneously
 
-## VSCodeVim plugin
+
+## Settings
+
+- Settings could be in "User" scope or "Workspace" scope
+- For "Workspace" scope, settings are stored in `.vscode/settings.json` in the workspace root, this file could be committed to Git, allows the settings to be shared by all team members
+
+
+## Extensions
+
+You can have a list of recommended extensions in `.vscode\extensions.json`, VSCode will prompt you to install them when you open the workspace.
+
+```json
+{
+    "recommendations": [
+        "hashicorp.terraform",
+        "ms-vscode-remote.remote-wsl",
+        "vscodevim.vim"
+    ]
+}
+```
+
+
+## VSCodeVim extension
 
 ### Visual block mode
 
