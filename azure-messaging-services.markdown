@@ -11,6 +11,7 @@
   - [Topics](#topics)
   - [Subscriptions](#subscriptions)
   - [Event handlers](#event-handlers)
+  - [Event delivery](#event-delivery)
 - [Event Hub](#event-hub)
 
 
@@ -163,7 +164,6 @@ Example:
 }
 ```
 
-
 ### Topics
 
 A topic is an endpoint where the source sends events. The publisher creates topic, and decides whether an event source needs one or more topics.
@@ -199,6 +199,13 @@ Event Grid retires an event using different mechanisms:
 
 - Supported Azure service: until the Storage Queue successfully process the message push to the queue
 - HTTP webhook: until the handler returns a status code of `200 - OK`
+
+### Event delivery
+
+- Event Grid provides durable delivery, it tries to deliver each event at least once for each matching subscription immediately.
+- If a subscriber's endpoint doesn't acknowledge receipt of an event or if there's a failure, Event Grid retries delivery based on a fixed retry schedule and retry policy.
+- By default, Event Grid delivers one event at a time to the subscriber, the palyload is an array with a single event.
+- Delivery order is not guaranteed, subscribers may receive them out of order.
 
 
 ## Event Hub
