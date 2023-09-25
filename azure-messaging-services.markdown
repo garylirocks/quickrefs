@@ -7,6 +7,10 @@
   - [Topic](#topic)
 - [Storage Queues](#storage-queues)
 - [Event Grid](#event-grid)
+  - [Events](#events)
+  - [Topics](#topics)
+  - [Subscriptions](#subscriptions)
+  - [Event handlers](#event-handlers)
 - [Event Hub](#event-hub)
 
 
@@ -83,6 +87,118 @@ All filters evaluate message properties, not message body.
 
 - Designed to react to status changes
 - Lets you integrate third-party tools to react to events without having to continually poll for event status
+
+Sources:
+
+- Built-in support for events coming form Azure services, like blob storage and resource groups.
+- Support for your own events, using custom topics.
+
+### Events
+
+Transmission:
+
+- Event sources send events in an array, which can have several event objects.
+- Event Grid sends events to subscribers in an array that has a single event.
+
+Size limits:
+
+- An event array from sources can be up to 1MB.
+- A single event's size up to 64KB is covered by GA SLA.
+  - Up to 1MB is in preview
+  - Over 64KB are charged in 64-KB increments
+
+Event schema:
+
+- Azure Event Grid supports two types of event schemas: Event Grid event schema and Cloud event schema.
+- Events consist of a set of four required string properties. The properties are common to all events from any publisher.
+- Schema of `data` is specific to each publisher.
+- `subject` is a path like structure,
+  - eg. A blob added event could have a `subject` field like `/blobServices/default/containers/<container-name>/blobs/<file>`
+  - A subscription could filter based on subject pattern
+
+```json
+[
+  {
+    "topic": string,
+    "subject": string,
+    "id": string,
+    "eventType": string,
+    "eventTime": string,
+    "data":{
+      object-unique-to-each-publisher
+    },
+    "dataVersion": string,
+    "metadataVersion": string
+  }
+]
+```
+
+**CloudEvents** is an open specification for describing event data. Can be used for both input and output of events.
+
+Example:
+
+```json
+{
+  "specversion": "1.0",
+  "type": "Microsoft.Storage.BlobCreated",
+  "source": "/subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.Storage/storageAccounts/{storage-account}",
+  "id": "9aeb0fdf-c01e-0131-0922-9eb54906e209",
+  "time": "2019-11-18T15:13:39.4589254Z",
+  "subject": "blobServices/default/containers/{storage-container}/blobs/{new-file}",
+  "dataschema": "#",
+  "data": {
+    "api": "PutBlockList",
+    "clientRequestId": "4c5dd7fb-2c48-4a27-bb30-5361b5de920a",
+    "requestId": "9aeb0fdf-c01e-0131-0922-9eb549000000",
+    "eTag": "0x8D76C39E4407333",
+    "contentType": "image/png",
+    "contentLength": 30699,
+    "blobType": "BlockBlob",
+    "url": "https://gridtesting.blob.core.windows.net/testcontainer/{new-file}",
+    "sequencer": "000000000000000000000000000099240000000000c41c18",
+    "storageDiagnostics": {
+      "batchId": "681fe319-3006-00a8-0022-9e7cde000000"
+    }
+  }
+}
+```
+
+
+### Topics
+
+A topic is an endpoint where the source sends events. The publisher creates topic, and decides whether an event source needs one or more topics.
+
+Two types of topics in Event Grid:
+
+- System topics
+  - Built-in topics provided by Azure services
+  - You don't see them in your subscription
+  - As long as you have access a resource, you can subscribe to its events
+- Custom topics
+  - Application and third-party topics
+  - You can only see them When you create or are assigned access to a custom topic
+
+### Subscriptions
+
+- You provide a endpoint for handling the event.
+- You can filter the events, by event type or subject pattern.
+- You can set an expiration for the subscriptions if you only need it for a limited time.
+
+### Event handlers
+
+A handler could be a supported Azure service or a custom HTTP webhook.
+
+Supported Azure services:
+- Azure Function
+- Logic App
+- Event hubs, Storage Queues
+- Azure Function
+- etc.
+
+Event Grid retires an event using different mechanisms:
+
+- Supported Azure service: until the Storage Queue successfully process the message push to the queue
+- HTTP webhook: until the handler returns a status code of `200 - OK`
 
 
 ## Event Hub
