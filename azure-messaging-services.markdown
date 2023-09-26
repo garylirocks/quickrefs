@@ -11,7 +11,9 @@
   - [Topics](#topics)
   - [Subscriptions](#subscriptions)
   - [Event handlers](#event-handlers)
+    - [Webbook validation](#webbook-validation)
   - [Event delivery](#event-delivery)
+  - [RBAC](#rbac)
 - [Event Hub](#event-hub)
 
 
@@ -85,6 +87,8 @@ All filters evaluate message properties, not message body.
 
 
 ## Event Grid
+
+![Event Grid sources and handlers](images/azure_event-grid-sources-handlers.png)
 
 - Designed to react to status changes
 - Lets you integrate third-party tools to react to events without having to continually poll for event status
@@ -180,9 +184,48 @@ Two types of topics in Event Grid:
 
 ### Subscriptions
 
-- You provide a endpoint for handling the event.
-- You can filter the events, by event type or subject pattern.
+- You provide an endpoint for handling the event.
 - You can set an expiration for the subscriptions if you only need it for a limited time.
+- You can filter the events
+  - By event type
+
+    ```json
+    "filter": {
+      "includedEventTypes": [
+        "Microsoft.Resources.ResourceWriteFailure",
+        "Microsoft.Resources.ResourceWriteSuccess"
+      ]
+    }
+    ```
+
+  - By subject
+
+    ```json
+    "filter": {
+      "subjectBeginsWith": "/blobServices/default/containers/mycontainer/log",
+      "subjectEndsWith": ".jpg"
+    }
+    ```
+
+  - Advanced filtering
+
+    ```json
+    "filter": {
+      "advancedFilters": [
+        {
+          "operatorType": "NumberGreaterThanOrEquals",
+          "key": "Data.Key1",
+          "value": 5
+        },
+        {
+          "operatorType": "StringContains",
+          "key": "Subject",
+          "values": ["container1", "container2"]
+        }
+      ]
+    }
+    ```
+
 
 ### Event handlers
 
@@ -195,17 +238,77 @@ Supported Azure services:
 - Azure Function
 - etc.
 
-Event Grid retires an event using different mechanisms:
+#### Webbook validation
 
-- Supported Azure service: until the Storage Queue successfully process the message push to the queue
-- HTTP webhook: until the handler returns a status code of `200 - OK`
+You need to prove you own the webhook endpoint.
+
+- For these Azure Services, the validation is done automatically:
+  - Azure Functions with Event Grid trigger
+  - Logic Apps wth Event Grid Connector
+  - Azure Automation via webhook
+
+- For custom HTTP webhook, when setting up a subscription, a validatation event is sent to your endpoint, the data field contains a `validationCode` property, two ways to validate the endpoint:
+  - Synchronous handshake: the endpoint returns the `validationCode` in response
+  - Asynchronous handshake:
+    - For API version `2018-05-01-preview` or later, data field contains a `validationUrl` property
+    - Send a `GET` request to the URL (using a REST client or a browser) within 5 minutes
 
 ### Event delivery
 
 - Event Grid provides durable delivery, it tries to deliver each event at least once for each matching subscription immediately.
-- If a subscriber's endpoint doesn't acknowledge receipt of an event or if there's a failure, Event Grid retries delivery based on a fixed retry schedule and retry policy.
-- By default, Event Grid delivers one event at a time to the subscriber, the palyload is an array with a single event.
-- Delivery order is not guaranteed, subscribers may receive them out of order.
+- By default, Event Grid delivers one event at a time to the subscriber, the palyload is an array with **a single event**.
+- Delivery **order is not guaranteed**, subscribers may receive them out of order.
+
+What counts as a **successful delivery**:
+- Azure service handlers: processed successfully (eg. Storage Queue successfully process the message push to the queue)
+- HTTP webhook: until the handler returns a status code of `200 - OK`
+
+When an **delivery fails**, Event Grid will either:
+
+- retry the delivery (based on error codes)
+- dead-letter the event (need to be configured for an endpoint)
+- drop the event
+
+**Retry policy** for an subscription:
+
+- Max number of attempts (1-30)
+- Event time-to-live (1-1440 minutes)
+
+**Output batching**, to improve performance, could be configured per subscripton:
+
+- Max events per batch (1-5000)
+- Preferred batch size in kilobytes
+
+**Delayed delivery**: If an endpoint seems not healthy, Event Grid will delay new deliveries and retries to that endpoint
+
+**Dead-lettering**
+- Must be turned on per subscription
+- You need to specify a storage account container to store the undelivered events
+- When `400 Bad Request` or `413 Request Entity Too Large` is received, the event is scheduled for dead-lettering immediately
+- If dead-lettering fails, the event is dropped
+
+**Custom HTTP headers**
+- You can set up to 10 custom HTTP headers
+- Works with the following handlers:
+  - Webhooks
+  - Azure Service Bus topics and queues
+  - Azure Event Hubs
+  - Relay Hybrid Connections
+
+### RBAC
+
+Built-in roles:
+
+- Event Grid Subscription Reader: read subscriptions
+- Event Grid Subscription Contributor: manage subscriptons
+- Event Grid Data Sender: send events to Event Grid topics
+- Event Grid Contributor: create an manage Event Grid resources
+
+To create a subscription, you need permissions:
+- `Microsoft.EventGrid/EventSubscriptions/Write` on the topic:
+  - System topics, the Azure resource `/subscriptions/{subscription-id}/resourceGroups/{resource-group-name}/providers/{resource-provider}/{resource-type}/{resource-name}`
+  - Custom topics, the Event Grid topic `/subscriptions/{subscription-id}/resourceGroups/{resource-group-name}/providers/Microsoft.EventGrid/topics/{topic-name}`
+- If the event handler is an Azure service, you need **write access** to it
 
 
 ## Event Hub
