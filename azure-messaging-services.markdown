@@ -15,6 +15,9 @@
   - [Event delivery](#event-delivery)
   - [RBAC](#rbac)
 - [Event Hub](#event-hub)
+  - [Concepts](#concepts)
+  - [Event Hubs Capture](#event-hubs-capture)
+  - [Scaling](#scaling)
 
 
 ## Overview
@@ -317,3 +320,39 @@ Often used for a specific type of high-flow stream of communications used for an
 
 - It's one of the options in "Diagnostic settings" for resource logs/metrics
 - Event Hub can work with Event Grid, could be either event source or handler
+
+![Event Hubs stream processing](images/azure_event-hubs-stream-processing.png)
+
+### Concepts
+
+- Client: could be event producer or consumer
+- Producer: source of telemetry data, logs, etc
+- Consumer: are often robust and high-scale platform infrastructure parts with built-in analytics capabilities, like Azure Stream Analytics, Apache Spark
+- Partition: a unit of parallelism, each partition is an ordered sequence of events that is held in an Event Hub.
+  - Each consumer only reads a specific partition
+  - The number of partitions is specified when an Event Hub is created, and can't be changed
+- Consumer group
+  - It's recommended that there's only one active consumer in a group for a partition
+  - Each active consumer receives all of the events from its partition
+- Event receivers
+  - Event Hubs delivers events through a session as they become available
+  - All Event Hubs consumers connect via AMQP 1.0 session
+  - All Kafka consumers connect via Kafka protocol 1.0 or later
+
+### Event Hubs Capture
+
+![Event hubs capture](images/azure_event-hubs-capture.png)
+
+- Capture data in Azure Blob storage or Azure Data Lake Storage, for later batch processing
+- Captured data is in Apache Avro format
+  - Compact, fast, binary, rich data structures with inline schema
+  - Widely used in Hadoop ecosystem, Stream Analytics, and Azure Data Factory
+- You specify a size and time internal, the first trigger encountered will start a capture operation
+- Event Hubs writes empty files when there's no data (offering a predictable pattern for downstream batch processors).
+
+### Scaling
+
+Traffic is controlled by throughput units
+
+- A single unit allows 1MB/s or 1000 events per second of ingress and twice that amount of egress
+- Event Hubs Capture doesn't count against egress quotas
