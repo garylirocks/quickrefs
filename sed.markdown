@@ -1,5 +1,23 @@
 # sed cheatsheet
 
+- [Preface](#preface)
+- [Using sed](#using-sed)
+  - [Sample input file](#sample-input-file)
+  - [Specify multiple instructions on the command line](#specify-multiple-instructions-on-the-command-line)
+  - [Using a script file](#using-a-script-file)
+  - [Suppress automatic display of input lines](#suppress-automatic-display-of-input-lines)
+- [Substitution](#substitution)
+  - [Replace a substring with command output](#replace-a-substring-with-command-output)
+- [Pattern space](#pattern-space)
+- [i/a - insert/append](#ia---insertappend)
+- [n - next](#n---next)
+- [N - Next](#n---next-1)
+- [d - delete](#d---delete)
+- [D - Delete](#d---delete-1)
+- [P - Print](#p---print)
+- [Misc](#misc)
+
+
 ## Preface
 
 Some useful tips of sed
@@ -82,6 +100,7 @@ n       # only replace the nth occurence of the pattern in the pattern space
 g       # replace globally in the pattern space
 p       # print contents of the pattern space
 w file  # write contents of the pattern space to file
+e       # execute the replacement as a shell command
 ```
 
 Flags can be used in combination, such as `gp`, global and print
@@ -96,12 +115,24 @@ Meta characters in `replacement` section
 
 Example
 
-```
-$ sed -nr 's/Oak/\n\n/p' list
-Orville Thomas, 11345
+```sh
+sed -nr 's/Oak/\n\n/p' list
+# Orville Thomas, 11345
 
-Bridge Road, Tulsa OK
+# Bridge Road, Tulsa OK
 ```
+
+### Replace a substring with command output
+
+With the `e` flag, the replacement is interpreted by Shell, so you can pass a capture group to a command, and use the command output as the replacement
+
+```sh
+# Convert UTC datetime to local datetime
+
+echo 'Time is 2023-09-01T00:00:00.00Z' | sed -E 's/(Time is )(.*)/printf "%s%s" "\1" "$(date -d \2)"/e'
+# Time is Fri Sep  1 12:00:00 NZST 2023
+```
+
 
 ## Pattern space
 
@@ -168,7 +199,10 @@ Print the first line of the pattern space
 
 ## Misc
 
-- Address requires `/` as delimeter, while patterns can use any character as delimeter;
+- Address requires `/` as delimeter, while patterns can use any character as delimeter:
+
+  `sed '/linemarker/ s#Gary#Kat#'`
+
 - Command groups in one line, use ';' to separate commands:
 
   ```sh
