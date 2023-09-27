@@ -54,6 +54,8 @@ az logout --username gary@foo.com
 az account show --query 'tenantId' -otsv
 ```
 
+After login, tokens (AccessToken, IdToken, RefreshToken) are saved in `~/.azure/msal_token_cache.json`
+
 ## Configurations
 
 ```sh
