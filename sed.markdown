@@ -129,8 +129,8 @@ With the `e` flag, the replacement is interpreted by Shell, so you can pass a ca
 ```sh
 # Convert UTC datetime to local datetime
 
-echo 'Time is 2023-09-01T00:00:00.00Z' | sed -E 's/(Time is )(.*)/printf "%s%s" "\1" "$(date -d \2)"/e'
-# Time is Fri Sep  1 12:00:00 NZST 2023
+echo 'Time is 2023-09-01T00:00:00.00Z' | sed -E 's/(Time is )(.*)/printf "%s%s" "\1" "$(date +%Y-%m-%dT%H:%M:%SZ%z -d \2)"/e'
+# Time is 2023-09-01T12:00:00Z+1200
 ```
 
 
