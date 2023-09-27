@@ -48,6 +48,9 @@
   - [Monitoring](#monitoring)
 - [AAD roles](#aad-roles)
 - [Privileged Identity Management (PIM)](#privileged-identity-management-pim)
+  - [API](#api)
+    - [Just-Enough-Access](#just-enough-access)
+    - [Relationship between PIM entities and role assignment entities](#relationship-between-pim-entities-and-role-assignment-entities)
 - [License management](#license-management)
 - [Custom security attribute](#custom-security-attribute)
 - [SCIM](#scim)
@@ -1134,6 +1137,48 @@ A tenant-wide setting, provides secure default settings until organizations are 
     - You could assign either members or owners the group
     - Useful to mssign multiple roles to the group, then a user just need one activation (for the group membership), instead of activating multiple roles one by one
 - Most common use case: create "Eligible Assignment" of roles/memberships to some users/groups, who need to active them when needed
+
+### API
+
+See https://learn.microsoft.com/en-us/rest/api/authorization/privileged-role-assignment-rest-sample
+
+- Entra roles - using Microsoft graph endpoint (`graph.windows.net`)
+- Entra groups - using Microsoft graph endpoint (`graph.windows.net`)
+- Azure resources - using ARM endpoint (`management.azure.com`)
+
+Objects:
+
+- `*AssignmentSchedule` and `*EligibilitySchedule` objects show current assignments and assignments that will become active in the future.
+- `*AssignmentScheduleInstance` and `*EligibilityScheduleInstance` objects show current assignments only.
+
+To activate an eligible assignment, you call `Create*AssignmentScheduleRequest`
+- The `*EligibilityScheduleInstance` continues to exist
+- New `*AssignmentSchedule` and a `*AssignmentScheduleInstance` object will be created for that activated duration.
+
+A PUT request to `roleAssignmentScheduleRequests` is used for the following operations, the `RequestType` in the payload is different:
+
+| Operation                      | `RequestType`    |
+| ------------------------------ | ---------------- |
+| Grant active assignment        | "AdminAssign"    |
+| Remove active assignment       | "AdminRemove"    |
+| Activate eligible assignment   | "SelfActivate"   |
+| Deactivate eligible assignment | "SelfDeactivate" |
+
+#### Just-Enough-Access
+
+If a user has an eligible role assignment at a resource (parent), they can choose to **activate the role at a child level scope** of the parent resource instead of the entire parent scope.
+
+For example, if a user has "Contributor" eligible role at a subscription, they can activate the role at a child resource group level of the subscription.
+
+#### Relationship between PIM entities and role assignment entities
+
+The only link between the PIM entity and the role assignment entity for persistent (active) assignment for either Microsoft Entra roles or Azure roles is the `*AssignmentScheduleInstance`. There is a one-to-one mapping between the two entities. That mapping means `roleAssignment` and `*AssignmentScheduleInstance` would both include:
+
+- Persistent (active) assignments made outside of PIM
+- Persistent (active) assignments with a schedule made inside PIM
+- Activated eligible assignments
+
+PIM-specific properties (such as end time) will be available only through `*AssignmentScheduleInstance` object.
 
 
 ## License management
