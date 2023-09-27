@@ -1124,6 +1124,16 @@ A tenant-wide setting, provides secure default settings until organizations are 
 - Built-in roles can only be assigned to either the whole directory or an "Administrative Unit"
 - You can create custom roles, which can be assigned to a single AAD object, eg. a user, group, device, application, service principal.
 
+```sh
+# list AAD roles
+az rest -u "https://graph.microsoft.com/v1.0/roleManagement/directory/roleDefinitions" --query "value[].{Name: displayName, ID: id}" -otable
+
+# filter and select
+az rest -u "https://graph.microsoft.com/v1.0/roleManagement/directory/roleDefinitions?\$filter=DisplayName eq 'Global Reader'&\$select=id" \
+  --query "value[0].id" \
+  -otsv
+```
+
 
 ## Privileged Identity Management (PIM)
 
