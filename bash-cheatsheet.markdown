@@ -31,7 +31,7 @@
 - [`[` vs `[[`](#-vs-)
 - [Arithmetic](#arithmetic)
 - [Array](#array)
-- [Dictionary](#dictionary)
+- [Associative array/Dictionary/Map](#associative-arraydictionarymap)
 - [Looping](#looping)
 - [`case` statements](#case-statements)
 - [Functions](#functions)
@@ -775,7 +775,7 @@ for (( i=0; i<${#arr[@]}; i++ )); do
 done
 ```
 
-## Dictionary
+## Associative array/Dictionary/Map
 
 Bash 4+
 
