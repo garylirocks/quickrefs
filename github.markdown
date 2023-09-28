@@ -39,6 +39,8 @@
   - [Example](#example)
   - [Calling a reusable workflow](#calling-a-reusable-workflow)
   - [Use workflow output](#use-workflow-output)
+- [GitHub CLI](#github-cli)
+  - [Pull request](#pull-request)
 
 ## GitHub Flow
 
@@ -967,4 +969,23 @@ jobs:
     needs: job1
     steps:
       - run: echo ${{ needs.job1.outputs.firstword }} ${{ needs.job1.outputs.secondword }}
+```
+
+## GitHub CLI
+
+```sh
+# list org
+gh org list
+
+# list repos owned by me
+gh repo list
+
+# list repo owned by an org
+gh repo list my-org
+```
+
+### Pull request
+
+```sh
+gh pr create --base main --title "Update script"
 ```
