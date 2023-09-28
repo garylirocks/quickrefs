@@ -261,6 +261,7 @@ quite useful configs:
     commit.template     # a path to a file containing commit message template
     core.excludesfile   # can be set to a global .gitignore file
     color.ui            # turn on all the default terminal coloring
+    pull.rebase         # set it to 'true', `git pull` will rebase instead of merging your local commit to remote branch
 
 whitespace, line-endings:
 
