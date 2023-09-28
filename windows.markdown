@@ -45,10 +45,10 @@
 
 ### Git Credential Manager
 
-- Useful when you use HTTP protocols
+- Useful when you use HTTPS protocol
 - Uses Windows Credential Store to control sensitive infomation
 - Is a secure Git credential helper, provides multi-factor authentication support for Azure DevOps, GitHub and Bitbucket
-- Is included with Git for Windows, simple select it as the credential helper during installation
+- Is included with Git for Windows, select it as the credential helper during installation
 
 ## Windows Terminal
 
