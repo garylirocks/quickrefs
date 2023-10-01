@@ -41,6 +41,9 @@
   - [Use workflow output](#use-workflow-output)
 - [GitHub CLI](#github-cli)
   - [Pull request](#pull-request)
+  - [Workflow](#workflow)
+    - [Clean up a deleted workflow](#clean-up-a-deleted-workflow)
+  - [Output format](#output-format)
 
 ## GitHub Flow
 
@@ -988,4 +991,53 @@ gh repo list my-org
 
 ```sh
 gh pr create --base main --title "Update script"
+```
+
+### Workflow
+
+```sh
+# list or view workflows
+gh workflow list
+gh workflow view "My test workflow"
+
+# list runs, can be filtered by workflow, branch, status, user
+gh run list \
+  --workflow "Custom test" \
+  --branch "gh-workflow-merge" \
+  --status "success" \
+  --user "Gary-Li"
+
+# delete a run
+gh run delete 6241025875
+```
+
+#### Clean up a deleted workflow
+
+After you delete a workflow definition file, if there are old runs of this workflow, the workflow still shows up in the web UI.
+
+There's no API to delete all runs of a workflow, you need to delete them one by one.
+
+```sh
+gh run list \
+  --workflow "Custom test" \
+  --branch "gh-workflow-merge" \
+  --status "success" \
+  --user "Gary-Li" \
+  --json "databaseId" \
+  --jq '.[].databaseId' \
+  | xargs -n 1 -t gh run delete
+```
+
+### Output format
+
+- Default output format is plain-text
+- Use `--json "field1,field2` flag to convert output to JSON
+  - You need to pass in a comma separated list of field names
+  - Omit the filed names to get all available field names
+- The JSON output could be furthered filtered with `--jq` or `--template` (Go template syntax)
+
+```sh
+gh run list --workflow "Custom test" \
+  --json "databaseId,displayTitle,name,conclusion" \
+  --jq '.[] | select(.conclusion | contains("success"))'
 ```
