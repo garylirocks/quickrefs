@@ -977,6 +977,14 @@ jobs:
 ## GitHub CLI
 
 ```sh
+gh auth login
+```
+
+- Configs and credentials are saved in `~/.config/gh/`
+- If you need to support multiple accounts, use `gh-profile` extension here `https://github.com/gabe565/gh-profile`
+
+
+```sh
 # list org
 gh org list
 
