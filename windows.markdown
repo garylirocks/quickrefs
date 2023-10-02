@@ -94,7 +94,8 @@ Export / Import
 wsl --export Ubuntu my-wsl-ubuntu.tar
 
 # import a distribution from a file
-wsl --import UbuntuNew 'C:\' my-wsl-ubuntu.tar
+# The installation location is 'WSL' here, which needs to be a relative path, an absolute path doesn't work
+wsl --import 'Ubuntu-distro' 'WSL' 'C:\Users\gary\wsl-ubuntu.tar'
 
 # run a specified distro
 wsl -d UbuntuNew
