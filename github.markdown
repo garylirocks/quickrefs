@@ -40,6 +40,8 @@
   - [Calling a reusable workflow](#calling-a-reusable-workflow)
   - [Use workflow output](#use-workflow-output)
 - [GitHub CLI](#github-cli)
+  - [Repos](#repos)
+  - [Organizations](#organizations)
   - [Pull request](#pull-request)
   - [Workflow](#workflow)
     - [Clean up a deleted workflow](#clean-up-a-deleted-workflow)
@@ -105,7 +107,7 @@ You could create branch protection rules to protect a branch:
 
 Control how people could interact with branches and tags in a repo. Rules could be similar to branch/tag protection rules.
 
-Rulesets advantages over branch/tag protection rules:
+**Rulesets advantages** over branch/tag protection rules:
 
 - Multiple rulesets can apply at the same time
   - Rules are aggregated
@@ -983,15 +985,25 @@ gh auth login
 - Configs and credentials are saved in `~/.config/gh/`
 - If you need to support multiple accounts, use `gh-profile` extension here `https://github.com/gabe565/gh-profile`
 
+### Repos
+
+```sh
+# list repos owned by me
+gh repo list
+
+# clone a repo
+gh repo clone garylirocks/windows-setup
+```
+
+### Organizations
+
+An Enterprise account could have multiple organizations, a reo could be owned by an individual or an organization.
 
 ```sh
 # list org
 gh org list
 
-# list repos owned by me
-gh repo list
-
-# list repo owned by an org
+# list repos owned by an organization
 gh repo list my-org
 ```
 
