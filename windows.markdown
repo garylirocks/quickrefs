@@ -157,7 +157,7 @@ sudo apt-get install git
 
 You could use the Windows Git Credential Manager in WSL (https://github.com/GitCredentialManager/git-credential-manager/blob/main/docs/wsl.md):
 
-- Git inside of a WSL can launch the GCM Windows application transparently to acquire credentials
+- Git inside of a WSL can launch the GCM Windows application transparently to acquire credentials (seems not work, need to do it in Windows)
 - Windows stores the credentials, which could be shared by Windows applications and WSL
 - Config your WSL Git like this:
 
