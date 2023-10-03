@@ -243,15 +243,15 @@ configuration levels:
 *The global config file location could be customized by env variable `$GIT_CONFIG_GLOBAL`*
 
 ```sh
-# list configs
-$ git config --global -l
+# list configs in all scopes with file name
+git config -l --show-origin
 
 # get config
-$ git config --global user.name
-Gary Li
+git config --global user.name
+# Gary Li
 
 # set config
-$ git config --global core.safecrlf true
+git config --global core.safecrlf true
 ```
 
 quite useful configs:

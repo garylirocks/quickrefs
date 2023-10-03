@@ -169,7 +169,8 @@ You could use the Windows Git Credential Manager in WSL (https://github.com/GitC
   git config --global credential.helper "/mnt/c/Program\ Files/Git/mingw64/libexec/git-core/git-credential-wincred.exe"
 
   # By default the credential manager saves one credential per hostname
-  # If your want the credential manager to save a credential for each url path, set `useHttpPath` to `true`, this allows you to have one credential per repo, meaning you can use different accounts
+  # If your want the credential manager to save a credential for each url path, set `useHttpPath` to `true`
+  # this allows you to have one credential per repo, meaning you can use different accounts
   git config --global credential.https://dev.azure.com.useHttpPath true
   ```
 
