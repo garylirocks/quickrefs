@@ -14,6 +14,11 @@
 
 There are various CLI tools which could be used to query, transform JSON data.
 
+| Tool | Used by    |
+| ---- | ---------- |
+| `jp` | AZ CLI     |
+| `jq` | GitHub CLI |
+
 
 ## `jq`
 
