@@ -25,7 +25,6 @@
 - [`pushd`, `popd`, `dirs`](#pushd-popd-dirs)
 - [`rsync`](#rsync)
 - [`envsubst`](#envsubst)
-- [`jq`](#jq)
 - [System](#system)
 - [Networking](#networking)
   - [`netstat`](#netstat)
@@ -596,57 +595,6 @@ Apple, Orange, and Banana
 # $var1 and ${var1} are equivalent format
 echo '$fruit1, $fruit2, and ${fruit3}' | envsubst '${fruit2}, $fruit3'
 $fruit1, Orange, and Banana
-```
-
-## `jq`
-
-Command line JSON processor
-
-Use an example JSON file `example.json`
-
-```json
-{
-  "name": {
-    "first": "Gary",
-    "last": "Li"
-  },
-  "fruits": [
-    "apple",
-    "banana",
-    "kiwifruit"
-  ]
-}
-```
-
-```sh
-# default, output as JSON
-jq '.name.first' example.json
-# "Gary"
-
-# output raw text
-jq -r '.name.first' example.json
-# Gary
-
-# array element
-jq -r '.fruits[1]' example.json
-# banana
-
-# get object keys
-jq ".name | keys[]" example.json
-# "first"
-# "last"
-```
-
-Format JSON text:
-
-```sh
-echo '{"name": {"first": "Gary", "last": "Li"}}' | jq .
-# {
-#   "name": {
-#     "first": "Gary",
-#     "last": "Li"
-#   }
-# }
 ```
 
 ## System
