@@ -238,6 +238,7 @@ configuration levels:
 - `--global`: `~/.gitconfig`
 - `--local`: `$PROJECT/.git/config`
 - `--file <filename>`
+- `--show-origin` show the origin file path of a config
 
 *The global config file location could be customized by env variable `$GIT_CONFIG_GLOBAL`*
 
