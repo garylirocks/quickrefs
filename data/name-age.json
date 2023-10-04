@@ -1,0 +1,32 @@
+[
+  {
+    "full_name": "John Doe",
+    "gender": "M",
+    "age": 30,
+    "country": "United States"
+  },
+  {
+    "full_name": "Jane Smith",
+    "gender": "F",
+    "age": 25,
+    "country": "Canada"
+  },
+  {
+    "full_name": "Michael Johnson",
+    "gender": "M",
+    "age": 35,
+    "country": "United Kingdom"
+  },
+  {
+    "full_name": "Emily Brown",
+    "gender": "F",
+    "age": 28,
+    "country": "Australia"
+  },
+  {
+    "full_name": "David Lee",
+    "gender": "M",
+    "age": 32,
+    "country": "India"
+  }
+]

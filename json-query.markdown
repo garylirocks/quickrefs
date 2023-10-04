@@ -3,7 +3,8 @@
 - [Overview](#overview)
 - [`jq`](#jq)
   - [Simple queries](#simple-queries)
-  - [Format JSON](#format-json)
+  - [Format (pretty print)](#format-pretty-print)
+  - [Filtering](#filtering)
 - [`jp` - JMESPath](#jp---jmespath)
   - [Query an object/directory:](#query-an-objectdirectory)
   - [Array operations](#array-operations)
@@ -26,42 +27,46 @@ Command line JSON processor
 
 ### Simple queries
 
-Use an example JSON file `example.json`
-
-```json
-{
-  "name": {
-    "first": "Gary",
-    "last": "Li"
-  },
-  "fruits": [
-    "apple",
-    "banana",
-    "kiwifruit"
-  ]
-}
-```
+Use an example JSON file [name-age.json](./data/name-age.json)
 
 ```sh
-# default, output as JSON
-jq '.name.first' example.json
-# "Gary"
+# first element
+jq '.[0]' ./data/name-age.json
 
-# output raw text
-jq -r '.name.first' example.json
-# Gary
+# last element
+jq '.[-1]' ./data/name-age.json
 
-# array element
-jq -r '.fruits[1]' example.json
-# banana
+# index range
+jq '.[1:3]' ./data/name-age.json
+
+# single field of an object
+jq '.[1].full_name' ./data/name-age.json
+
+# multiple fields of an object
+jq '.[1] | .full_name, .age' ./data/name-age.json
+
+# a subset of items and fields
+jq '.[1:3] | .[] | { Name:.full_name, Age:.age }' ./data/name-age.json
+# {
+#   "Name": "Jane Smith",
+#   "Age": 25
+# }
+# {
+#   "Name": "Michael Johnson",
+#   "Age": 35
+# }
 
 # get object keys
-jq ".name | keys[]" example.json
-# "first"
-# "last"
+jq '.[1] | keys[]' ./data/name-age.json
+# "age"
+# "country"
+# "full_name"
+# "gender"
 ```
 
-### Format JSON
+### Format (pretty print)
+
+`.` copies input to output, and format it
 
 ```sh
 echo '{"name": {"first": "Gary", "last": "Li"}}' | jq .
@@ -71,6 +76,13 @@ echo '{"name": {"first": "Gary", "last": "Li"}}' | jq .
 #     "last": "Li"
 #   }
 # }
+```
+
+### Filtering
+
+```sh
+# filter by fields
+jq '.[] | select(.age < 30 and .country == "Australia")' ./data/name-age.json
 ```
 
 
