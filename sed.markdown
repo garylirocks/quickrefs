@@ -124,13 +124,22 @@ sed -nr 's/Oak/\n\n/p' list
 
 ### Replace a substring with command output
 
-With the `e` flag, the replacement is interpreted by Shell, so you can pass a capture group to a command, and use the command output as the replacement
+With the `e` flag, the replacement result is interpreted by Shell, so you could use a Shell command to process capture groups
+
+Example:
 
 ```sh
-# Convert UTC datetime to local datetime
+echo 'hi dog cat' | sed -E 's/hi/printf "%s and %s"/e'
+# dog and cat
+```
 
-echo 'Time is 2023-09-01T00:00:00.00Z' | sed -E 's/(Time is )(.*)/printf "%s%s" "\1" "$(date +%Y-%m-%dT%H:%M:%SZ%z -d \2)"/e'
-# Time is 2023-09-01T12:00:00Z+1200
+The replacement result is `printf "%s and %s" dog cat`, which is then interpreted by Shell
+
+It's better to use captue groups to do this more explicitly:
+
+```sh
+echo 'hi dog cat' | sed -E 's/hi (.*) (.*)/printf "%s - %s" \2 \1/e'
+# cat - dog
 ```
 
 
