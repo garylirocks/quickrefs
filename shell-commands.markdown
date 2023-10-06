@@ -3,6 +3,7 @@
 - [Preface](#preface)
 - [`cd`](#cd)
 - [`echo`](#echo)
+  - [Print colored text](#print-colored-text)
 - [`sort`](#sort)
 - [`paste`](#paste)
 - [`cut`](#cut)
@@ -54,17 +55,44 @@ usually if `cd` is followed by a relative path, it's relative to current working
     $ pwd
     /etc/apache2
 
+
 ## `echo`
 
-useful options, `-e` to enable escaping, `-n` to suppress default-added-newline at the end
+Useful options:
+  - `-e` to enable escaping
+  - `-n` to suppress default-added-newline at the end
 
-    $ echo "hello\nworld"
-    hello\nworld
-    $ echo -e "hello\nworld"
-    hello
-    world
-    $ echo -n "hello\nworld"
-    hello\nworld$
+```sh
+echo "hello\nworld"
+# hello\nworld
+
+echo -e "hello\nworld"
+# hello
+# world
+
+echo -n "hello\nworld"
+hello\nworld$
+```
+
+### Print colored text
+
+You can use ANSI escape sequence to print text with colors, background colors, in bold, with underline, etc
+
+- The escape character's ANSI code is 027, `\u001b` in hexadecimal, `\033` in octal, `\e` in bash
+- Start escape sequence with `\e[`, end with `\e[0m`
+- Multiple sequences can be combined together, separated by `;`
+
+```sh
+# `31m` for red text
+echo -e "\e[31m This is red \e[0m"
+
+# combined styles
+# `1` - bold
+# `34` - blue text
+# `47m` - white background
+echo -e "\e[1;34;47m Bold, blue text on white background \e[0m"
+```
+
 
 ## `sort`
 

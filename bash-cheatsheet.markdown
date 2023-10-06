@@ -38,6 +38,7 @@
 - [Variable scope](#variable-scope)
 - [Input / output](#input--output)
   - [How to redirect output to a protected (root-only) file](#how-to-redirect-output-to-a-protected-root-only-file)
+- [String escaping](#string-escaping)
 - [Here documents](#here-documents)
   - [`<<<` for here strings](#-for-here-strings)
 - [Builtins](#builtins)
@@ -979,6 +980,40 @@ sudo ls /root > out
 
 sudo ls /root | sudo tee out
 ```
+
+
+## String escaping
+
+- Double quotes in double quotes
+
+  ```sh
+  echo "He says \"I am good\""
+  # He says "I am good"
+  ```
+
+- Single quote within single quotes
+
+  - Replace single quote with `'\''`, so the single quote is actually not enclosed by a pair of single quotes, because there's no white space, three parts are joined together and treated as one
+
+    ```sh
+    echo 'It'\''s great'
+    # It's great
+    ```
+
+  - Use hex code
+
+    ```sh
+    # Use Hex code
+    echo -e 'It\x27s great'
+    # It's great
+    ```
+
+- Use `$'string'` to enable ANSI C escape sequences
+
+  ```sh
+  echo $'It\'s great'
+  # It's great
+  ```
 
 
 ## Here documents
