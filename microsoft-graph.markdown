@@ -3,6 +3,7 @@
 - [Overview](#overview)
 - [Web experience](#web-experience)
 - [REST](#rest)
+  - [CLI](#cli)
 - [PowerShell SDK](#powershell-sdk)
   - [Find Command](#find-command)
   - [Send an email](#send-an-email)
@@ -25,6 +26,7 @@ Could be accessed via REST endpoints or various SDKs.
 
 You could get an access token and call the REST endpoints directly, *Microsoft uses a variety of access token formats depending on the configuration of the API that accepts the token*
 
+
 ```powershell
 Connect-AzAccount
 
@@ -45,6 +47,37 @@ The `$` sign needs to be escaped with a **backstick** if you use parameters like
 ```powershell
 Invoke-RestMethod -Uri "https://graph.microsoft.com/v1.0/users?`$filter=displayName eq 'Alex Wilber'" -Headers $headers
 ```
+
+### CLI
+
+You need to specify the scope as `ms-graph` to get a correct access toke:
+
+```sh
+az account get-access-token --resource-type ms-graph
+az rest -u "https://graph.microsoft.com/v1.0/users\?\$filter=displayName eq 'Alex Wilber'"
+```
+
+But seems like you can't add more permissions to AZ CLI service principal, tried the following, but failed:
+
+```sh
+# Azure CLI global app ID
+azCliAppId="04b07795-8ddb-461a-bbee-02f9e1bf7b46"
+# Microsoft Graph app ID
+msGraphAppId="00000003-0000-0000-c000-000000000000"
+
+# register a service principal in your tenant for Azure CLI
+az ad sp create --id $azCliAppId
+
+# grant delegated permission to AZ CLI
+az ad app permission grant \
+  --id $azCliAppId \
+  --api $msGraphAppId \
+  --scope "RoleEligibilitySchedule.Read.Directory"
+
+az account get-access-token --scope "https://graph.microsoft.com/RoleEligibilitySchedule.Read.Directory" --query accessToken
+# AADSTS65002: Consent between first party application '04b07795-8ddb-461a-bbee-02f9e1bf7b46' and first party resource '00000003-0000-0000-c000-000000000000' must be configured via preauthorization - applications owned and operated by Microsoft must get approval from the API owner before requesting tokens for that API.
+```
+
 
 ## PowerShell SDK
 

@@ -49,8 +49,10 @@
 - [AAD roles](#aad-roles)
 - [Privileged Identity Management (PIM)](#privileged-identity-management-pim)
   - [API](#api)
+    - [Activate Azure roles](#activate-azure-roles)
     - [Just-Enough-Access](#just-enough-access)
     - [Relationship between PIM entities and role assignment entities](#relationship-between-pim-entities-and-role-assignment-entities)
+    - [Activate Entra roles](#activate-entra-roles)
 - [License management](#license-management)
 - [Custom security attribute](#custom-security-attribute)
 - [SCIM](#scim)
@@ -1141,25 +1143,32 @@ az rest -u "https://graph.microsoft.com/v1.0/roleManagement/directory/roleDefini
   - If you have a P2 license plan and already use PIM, all role management tasks are performed in the PIM experience
 - Just-in-time elevate role assignment
 - Could be
-  - AAD Role
-  - RBAC Role
-  - A privileged group membership
+  - Entra Role
+  - Azure RBAC Role
+  - Entra privileged group membership
     - You could assign either members or owners the group
     - Useful to mssign multiple roles to the group, then a user just need one activation (for the group membership), instead of activating multiple roles one by one
 - Most common use case: create "Eligible Assignment" of roles/memberships to some users/groups, who need to active them when needed
+- Both active and eligible assignments could be time-bound or permanent
 
 ### API
 
-See https://learn.microsoft.com/en-us/rest/api/authorization/privileged-role-assignment-rest-sample
+See [API concepts in Privileged Identity management](https://learn.microsoft.com/en-us/azure/active-directory/privileged-identity-management/pim-apis)
 
-- Entra roles - using Microsoft graph endpoint (`graph.windows.net`)
-- Entra groups - using Microsoft graph endpoint (`graph.windows.net`)
+Endpoints:
+
+- Entra roles - using Microsoft Graph endpoint (`graph.windows.net`)
+- Entra groups - using Microsoft Graph endpoint (`graph.windows.net`)
 - Azure resources - using ARM endpoint (`management.azure.com`)
 
 Objects:
 
 - `*AssignmentSchedule` and `*EligibilitySchedule` objects show current assignments and assignments that will become active in the future.
 - `*AssignmentScheduleInstance` and `*EligibilityScheduleInstance` objects show current assignments only.
+
+#### Activate Azure roles
+
+See [Manage active access to Azure resources through Azure Privileged Identity Management (PIM) using REST API - Azure](https://learn.microsoft.com/en-us/rest/api/authorization/privileged-role-assignment-rest-sample)
 
 To activate an eligible assignment, you call `Create*AssignmentScheduleRequest`
 - The `*EligibilityScheduleInstance` continues to exist
@@ -1178,7 +1187,7 @@ A PUT request to `roleAssignmentScheduleRequests` is used for the following oper
 
 If a user has an eligible role assignment at a resource (parent), they can choose to **activate the role at a child level scope** of the parent resource instead of the entire parent scope.
 
-For example, if a user has "Contributor" eligible role at a subscription, they can activate the role at a child resource group level of the subscription.
+For example, if a user has "Contributor" eligible role at a subscription, they can activate the role at a resource group in the subscription.
 
 #### Relationship between PIM entities and role assignment entities
 
@@ -1189,6 +1198,8 @@ The only link between the PIM entity and the role assignment entity for persiste
 - Activated eligible assignments
 
 PIM-specific properties (such as end time) will be available only through `*AssignmentScheduleInstance` object.
+
+#### Activate Entra roles
 
 
 ## License management

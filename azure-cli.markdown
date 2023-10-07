@@ -7,6 +7,7 @@
 - [Storage](#storage)
 - [Providers](#providers)
 - [REST API](#rest-api)
+  - [AccessToken for other scopes](#accesstoken-for-other-scopes)
 - [Preview features](#preview-features)
 - [Azure Cloud Shell](#azure-cloud-shell)
   - [File persistence](#file-persistence)
@@ -159,6 +160,28 @@ Seems there are some inconsistencies in the API, usually for a non existent reso
 
 ```sh
 az rest --method get --url "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-temp-001/providers/Microsoft.Network/privateEndpoints/pe-vault-temp-001/privateDnsZoneGroups/nonExistGroup?api-version=2022-01-01" --debug
+```
+
+### AccessToken for other scopes
+
+By default AZ CLI gets token in the ARM scope, this can be changed, see https://techcommunity.microsoft.com/t5/healthcare-and-life-sciences/just-give-me-an-access-token/ba-p/3292215
+
+
+```sh
+$azCliAppId = "04b07795-8ddb-461a-bbee-02f9e1bf7b46" #global appId for az CLI
+$apiAppId = "your-app-id-here" #appId of your custom API
+$requestScope = "api://your-app-id-here/.default" #scope exposed by your custom API app registration
+
+## First time only
+az login
+az ad sp create --id $azCliAppId
+az ad app permission grant `
+  --id $azCliAppId `
+  --api $apiAppId `
+  --scope "your-scope-name" #example: "access_as_user" or "user_impersonation"
+
+## Get new token
+az account get-access-token --scope $requestScope --query accessToken
 ```
 
 
