@@ -7,6 +7,7 @@
 - [PowerShell SDK](#powershell-sdk)
   - [Find Command](#find-command)
   - [Send an email](#send-an-email)
+  - [Entra roles in PIM](#entra-roles-in-pim)
 - [Other PowerShell modules](#other-powershell-modules)
 
 
@@ -92,6 +93,14 @@ Get-Module Microsoft.Graph -ListAvailable
 # ModuleType Version    PreRelease Name                                PSEdition ExportedCommands
 # ---------- -------    ---------- ----                                --------- ----------------
 # Manifest   1.18.0                Microsoft.Graph                     Core,Desk
+```
+
+You might end up with multiple versions of the module installed, to uninstall sub-modules of a specific version:
+
+```pwsh
+Get-Module Microsoft.graph* -ListAvailable `
+  | ? { $_.version -eq '1.18.0' } `
+  | % { Uninstall-Module $_.name -RequiredVersion 1.18.0 }
 ```
 
 Connect
@@ -196,6 +205,15 @@ $message = @{
 Connect-MgGraph -Scopes "Mail.Send"
 Send-MgUserMail -UserId "gary@24g85s.onmicrosoft.com" -Message $message
 ```
+
+### Entra roles in PIM
+
+```powershell
+Connect-MgGraph -Scopes "RoleManagement.ReadWrite.Directory"
+
+Get-MgRoleManagementDirectoryRoleEligibilitySchedule -Filter "principalId eq '<principal-id>'"
+```
+
 
 
 ## Other PowerShell modules
