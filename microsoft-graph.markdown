@@ -211,7 +211,12 @@ Send-MgUserMail -UserId "gary@24g85s.onmicrosoft.com" -Message $message
 ```powershell
 Connect-MgGraph -Scopes "RoleManagement.ReadWrite.Directory"
 
-Get-MgRoleManagementDirectoryRoleEligibilitySchedule -Filter "principalId eq '<principal-id>'"
+$myPrincipalId=(Get-MgUser -Filter "DisplayName eq 'Gary Li'").Id
+
+# show eligible assignments
+$assignments=Get-MgRoleManagementDirectoryRoleEligibilitySchedule -Filter "principalId eq '$myPrincipalId'"
+
+$assignments | select DirectoryScopeId, MemberType, @{name="Role"; expr={(Get-MgDirectoryRole -Filter "RoleTemplateId eq '$_.RoleDefinitionId'").DisplayName}}
 ```
 
 
