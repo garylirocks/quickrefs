@@ -34,6 +34,7 @@
 - `Win + ?`: Shortcut guide (when enabled in PowerToys)
 
 - `Alt + F4`: close current window
+- `Shift + F10`: right-click menu (aka. context menu)
 
 
 ## SSH
