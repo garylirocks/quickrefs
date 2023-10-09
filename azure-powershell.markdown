@@ -8,9 +8,7 @@
   - [Creating](#creating)
   - [Management](#management)
 - [Azure AD](#azure-ad)
-  - [PIM](#pim)
-    - [Azure roles](#azure-roles)
-    - [AAD roles](#aad-roles)
+  - [PIM for AAD roles](#pim-for-aad-roles)
 
 
 ## On Linux/Mac
@@ -150,101 +148,14 @@ Connect-AzureAD -Credential $AzureAdCred
 Connect-AzureAD
 ```
 
-### PIM
+### PIM for AAD roles
 
-Depending on the type of the role, you need to use different modules:
+You can use either `AzureADPreview` or  `Microsoft.Graph` module
 
-- Azure roles:
-  - `Az.Resources`: connects to `https://management.azure.com`
-
-- AAD roles
-  - `AzureADPreview`: there are two sets of cmdlets:
-    - `*-AzureAD*` connects to Azure AD graph endpoint `https://graph.windows.net`
-    - `*-AzureADMS*` connects to Microsoft Graph endpoint `https://graph.microsoft.com`
-  - `Microsoft.Graph`: see the [Microsoft Graph note](./microsoft-graph.markdown)
-
-#### Azure roles
-
-**Get eligible assignments or active assignments**:
-
-```powershell
-$scope='<full-resource-id>' // FULL id required
-$principal='xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
-
-# get eligible ones
-# - shows inherited permissions from upper scopes
-# - shows assignment in sub scopes,
-#   - if the scope is a subscription, like `/subscriptions/xxxx`, it shows assignment on children resource groups
-#   - but if the scope is a management group like `/providers/Microsoft.Management/managementGroups/xxx`, it doesn't show assignements in children subscriptions
-Get-AzRoleEligibilitySchedule -Scope $scope -Filter "principalId eq $principal" `
-| Select-Object ScopeDisplayName,ScopeType,PrincipalDisplayName,PrincipalType,RoleDefinitionDisplayName,RoleDefinitionType,EndDateTime,Status `
-| Format-Table
-
-# Get active role assignments and who it's been eligible to (could be current user or a containing group):
-Get-AzRoleAssignmentSchedule -Scope $scope -Filter "principalId eq $principal" `
-| Select-Object ScopeDisplayName,ScopeType,PrincipalDisplayName,RoleDefinitionDisplayName,RoleDefinitionType,EndDateTime,AssignmentType,@{
-    n='PIMRoleAssignedTo';
-    e={(Get-AzRoleEligibilitySchedule -Scope $_.ScopeId -Name ($_.LinkedRoleEligibilityScheduleId -Split '/' | Select -Last 1)).PrincipalDisplayName}
-}`
-| Format-Table
-```
-
-Usable filters:
-
-- `-Filter "principalId eq $principal"`
-  - works for active assignments
-  - **DOES NOT** work for a user if the eligible role assignments are on a group, not directly on the user
-- `-Filter "asTarget()"` limit to current user/service principal, works even if the eligible assignment is via a group
-- `-Filter "atScope()"` limit to specified scope, including inherited roles from ancestor scopes, excluding subscopes
-- `-Filter "asTarget() and atScope()"` combined
-
-**To self-activate an eligible assignment**
-
-<div style="background: #efd9fd; padding: 1em">
-  <em>NOTE: </em><br />
-    <ol>
-      <li>You can specify ticket system/ticket number</li>
-      <li>Scope could be
-        <ul>
-          <li>management group ("/providers/Microsoft.Management/managementGroups/mg-foo")</li>
-          <li>subscription ("/subscriptions/xxxx-xxxx-xxxx-xxxx")</li>
-          <li>resource group ("/subscriptions/xxxx-xxxx-xxxx-xxxx/resourceGroups/rg-foo")</li>
-        </ul>
-      </li>
-      <li>Seems there is no easy way to "Deactivate" an assignment via script</li>
-    </ol>
-</div>
-
-```powershell
-$durationInHours = 1
-$roleName = "Contributor"
-$justification = "Discovery"
-$ticketNumber = 'FOO-123'
-
-$guid = (New-Guid).guid
-$uid = (Get-AzADUser -UserPrincipalName (Get-AzContext).Account).Id
-$startTime = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
-$roleId = (Get-AzRoleDefinition -Name $roleName).Id
-$subscriptionId = ((Get-AzContext).Subscription).Id
-
-$scope = "/subscriptions/${subscriptionId}"
-$fullRoleDefId = "$scope/providers/Microsoft.Authorization/roleDefinitions/${roleId}"
-
-New-AzRoleAssignmentScheduleRequest `
-  -RequestType SelfActivate `
-  -PrincipalId $uid `
-  -Name $guid `
-  -Scope $scope `
-  -RoleDefinitionId $fullRoleDefId `
-  -ScheduleInfoStartDateTime $startTime `
-  -ExpirationDuration "PT${durationInHours}H" `
-  -ExpirationType AfterDuration `
-  -Justification $justification `
-  -TicketNumber $ticketNumber `
-  -TicketSystem JIRA
-```
-
-#### AAD roles
+- `AzureADPreview`: only works in Windows PowerShell, *NOT PowerShell Core*, there are two sets of cmdlets:
+  - `*-AzureAD*` connects to Azure AD graph endpoint `https://graph.windows.net`
+  - `*-AzureADMS*` connects to Microsoft Graph endpoint `https://graph.microsoft.com`
+- `Microsoft.Graph`: see the [Microsoft Graph note](./microsoft-graph.markdown)
 
 <div style="background: #efd9fd; padding: 1em">
   <em>NOTE: </em><br />
@@ -259,7 +170,7 @@ New-AzRoleAssignmentScheduleRequest `
 - Prepare
 
   ```powershell
-  # need this module, seems not working in PowerShell Core
+  # need this module
   Install-Module AzureADPreview
 
   # !! This does not work in PowerShell Core (v7)

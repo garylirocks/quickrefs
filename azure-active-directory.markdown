@@ -1204,7 +1204,7 @@ PIM-specific properties (such as end time) will be available only through `*Assi
 
 #### Activate Entra roles
 
-See the [Microsoft Graph note](./microsoft-graph.markdown)
+See notes in [Microsoft Graph](./microsoft-graph.markdown) and [Azure PowerShell](./azure-powershell.markdown)
 
 
 ## License management
