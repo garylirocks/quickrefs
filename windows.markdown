@@ -195,8 +195,14 @@ You could use the Windows Git Credential Manager in WSL (https://github.com/GitC
     git config --local credential.https://github.com.useHttpPath true
     ```
 
-**Seems in WSL, it won't popup the Git credential manager dialog for you to sign in, you need to do it in Windows (PowerShell, cmd)**
-Git global config file path could be changed by setting `$Env:GIT_CONFIG_GLOBAL`
+Notes:
+
+- In Windows, Git global config file path could be changed by setting `$Env:GIT_CONFIG_GLOBAL` in your PowerShell profile
+- **Seems in WSL, it won't popup the Git credential manager dialog for you to sign in, you need to do it in Windows (PowerShell, cmd)**
+- If something goes wrong
+  - Go to Credential Manager, clear all GitHub credentials
+  - Try `git pull` in a repo that uses the default account, it will ask you to sign in
+  - Then `git pull` in a repo with the alternative account, you login in again (use a different browser, so you login to a different GitHub account)
 
 ### VS Code
 
