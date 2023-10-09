@@ -29,6 +29,7 @@
     - [Set messages](#set-messages)
     - [Mask a value](#mask-a-value)
     - [Stop and resume workflow commands processing](#stop-and-resume-workflow-commands-processing)
+  - [Default values](#default-values)
 - [Common workflow tasks](#common-workflow-tasks)
   - [Artifacts](#artifacts)
   - [GitHub Script](#github-script)
@@ -745,6 +746,37 @@ jobs:
           echo "::$stopMarker::"
           echo '::warning:: This is a warning again, because stop-commands has been turned off.'
 ```
+
+### Default values
+
+You can set default `shell` and `working-directory` for all run steps. This could be at either workflow or job level.
+
+- Workflow level
+
+  *Cannot use contexts or expressions in this keyword*
+
+  ```yaml
+  defaults:
+    run:
+      shell: bash
+      working-directory: ./scripts
+  ```
+
+- Job level
+
+  - Overwrites workflow level defaults
+  - Can reference several contexts. See [Contexts](https://docs.github.com/en/actions/learn-github-actions/contexts#context-availability)
+
+
+  ```yaml
+  jobs:
+    job1:
+      runs-on: ubuntu-latest
+      defaults:
+        run:
+          shell: bash
+          working-directory: ./scripts
+  ```
 
 
 ## Common workflow tasks
