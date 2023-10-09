@@ -37,6 +37,7 @@
 - [Networking](#networking)
 - [Secrets](#secrets)
 - [Command line](#command-line)
+  - [Shortcut](#shortcut)
   - [History](#history)
 - [Quick recipes](#quick-recipes)
 
@@ -628,6 +629,22 @@ Test-NetConnection 192.168.1.3 -Port 22
 
 
 ## Command line
+
+### Shortcut
+
+It's handled by the `PSReadLine` module.
+
+
+```powershell
+# List current shortcuts
+Get-PSReadLineKeyHandler
+
+# Set a custom shortcut, you can specify which ViMode it applies to
+Set-PSReadLineKeyHandler `
+  -Chord 'ctrl+w' `
+  -Function BackwardDeleteWord `
+  -ViMode Insert
+```
 
 ### History
 
