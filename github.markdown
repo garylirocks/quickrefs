@@ -339,6 +339,29 @@ runs:
 | `needs`    | Outputs of all jobs that are defined as a dependency of current job                 |
 
 - `github` context is available globally, other contexts are only available for some keys, see https://docs.github.com/en/actions/learn-github-actions/contexts#context-availability
+- `steps` context
+  - Contains info about steps in current job that have an `id` specified and have already run
+  - Properties:
+    - `steps.<step_id>.outputs`: output defined for the step
+    - `steps.<step_id>.outcome`: could be `success`, `failure`, `cancelled`, `skipped`
+    - `steps.<step_id>.conclusion`: same as `outcome`, but *if `continue-on-error` is enabled while `outcome` is `failure`, `conclusion` will be `success`*
+  - Example:
+    ```json
+    {
+      "step1": {
+        "outputs": {},
+        "outcome": "success",
+        "conclusion": "success"
+      },
+      "step2": {
+        "outputs": {
+          "random_number": "1"
+        },
+        "outcome": "success",
+        "conclusion": "success"
+      }
+    }
+    ```
 
 ### `env` variables
 
@@ -430,7 +453,7 @@ jobs:
   - Example: `hashFiles('**/package-lock.json', '**/Gemfile.lock')`
 - `toJSON(value)`
 - `fromJSON(value)`
-  - Convert environment variables from string to other types
+  - Convert environment variables (always string) from string to other types
     ```yaml
     name: print
     on: push
