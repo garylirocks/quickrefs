@@ -215,6 +215,7 @@ az network public-ip create \
 
 - Allows you to share public IPs among multiple internal resources
 - You associated it to a subnet (a subnet can only have one NAT gateway)
+- A zonal service, you need to choose an availability zone to deploy it
 - An NAT gateway can be associated to multiple subnets (must be in the same vNet)
 - Subnets with following resources are not compatible:
   - IPv6 address space
@@ -224,17 +225,21 @@ az network public-ip create \
   - A Basic SKU load balancer
 - Can only use **Standard SKU** Public IPs or public IP prefixes
 - After NAT is configured
+  - NAT **takes precedence** over other outbound scenarios and replaces the default Internet destination of a subnet
   - All UDP and TCP outbound flows from any VM instance will use NAT for Internet connectivity (**takes precedence over other public IPs on its NIC**)
   - Does not support ICMP
   - No further configuration is necessary, and you don't need to create any UDR
-  - NAT **takes precedence** over other outbound scenarios and replaces the default Internet destination of a subnet
 - Allows flows from vNet to the Internet, return traffic is only allowed in response to an active flow
+- Each public IP gives you ~64,000 SNAT ports
+  - This is an option to help scale SNAT ports for Azure Firewall (which has only 2496 SNAT ports per public IP)
+  - Only works for Azure Firewall in a hub vnet of a hub-spoke topology, doesn't work for the secured hub scenario.
+  - See: https://learn.microsoft.com/en-us/azure/firewall/integrate-with-nat-gateway
 - You could configure the TCP idle timeout, default is 4 minutes
 - Compatible with Standard SKU load balancer, Standard SKU public IP/prefix (those could still accept inbound connections)
 
   ![NAT compatibility](images/azure_networking-nat-flow-direction-inbound-outbound.png)
 
-  *Traffic coming in from a load balancer will return to it, not to the NAT*
+  *Traffic coming in from a load balancer will return vai it, not via the NAT Gateway*
 
 ## Network security group (NSG)
 
