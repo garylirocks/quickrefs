@@ -183,13 +183,13 @@ You could use the Windows Git Credential Manager in WSL (https://github.com/GitC
 
 #### Multiple accounts for GitHub on one machine
 
-1. Set `useHttpPath` to `false` globally, this will be the default
+1. Set `useHttpPath` to `false` globally, this will be the default, you only need to authenticate once for all repos with this account
 
     ```sh
     git config --global credential.https://github.com.useHttpPath false
     ```
 
-2. In a repo where you want to use another account, set the value to `true`, this will make the credential manager save another credential for this repo
+2. In a repo where you want to use another account, set the value to `true`, this will make the credential manager save another credential for this repo, you will need to authenticate for each repo
 
     ```sh
     git config --local credential.https://github.com.useHttpPath true
