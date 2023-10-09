@@ -23,6 +23,8 @@ Could be accessed via REST endpoints or various SDKs.
 
 - Microsoft Graph Explorer: https://developer.microsoft.com/en-us/graph/graph-explorer
 - Managing Apps permissions: https://myapps.microsoft.com/
+  - You can view permissions granted by yourself or tenant admin
+  - You can revoke permissions granted by yourself
 
 
 ## REST
@@ -214,16 +216,23 @@ Send-MgUserMail -UserId "gary@24g85s.onmicrosoft.com" -Message $message
 
 Connect, you need to specify the correct scope, since the Microsoft Graph API is protected, this would require admin or user consent granted to the client app (Microsoft Graph PowerShell)
 
+See this page for all related permissions: https://learn.microsoft.com/en-us/graph/permissions-reference#role-management-permissions, be mindful about `*.All` and `*.Directory` permissions
+
+- `RoleManagement.Read.All` this is for all supported RBAC providers (Cloud PC, device management/Intune, AAD directory, AAD entitlement management, Exchange Online), see [here](https://learn.microsoft.com/en-us/graph/api/resources/rolemanagement?view=graph-rest-beta&preserve-view=true)
+- `RoleManagement.Read.Directory`: just for AAD role management
+
+Login and get my principal ID
+
 ```powershell
-Connect-MgGraph -Scopes "RoleManagement.ReadWrite.Directory"
+Connect-MgGraph -Scopes "RoleAssignmentSchedule.ReadWrite.Directory"
+
+$myUpn=(Get-MgContext).Account
+$myPrincipalId=(Get-MgUser -Filter "UserPrincipalName eq '$myUpn'").Id
 ```
 
 Self activate an eligible assignment
 
 ```powershell
-$myUpn=(Get-MgContext).Account
-$myPrincipalId=(Get-MgUser -Filter "UserPrincipalName eq '$myUpn'").Id
-
 $params = @{
   "PrincipalId" = $myPrincipalId
   "RoleDefinitionId" = (Get-MgDirectoryRole -Filter "DisplayName eq 'Application Administrator'").RoleTemplateId
@@ -247,9 +256,6 @@ New-MgRoleManagementDirectoryRoleAssignmentScheduleRequest `
 List active assignments
 
 ```powershell
-$myUpn=(Get-MgContext).Account
-$myPrincipalId=(Get-MgUser -Filter "UserPrincipalName eq '$myUpn'").Id
-
 # show active assignments
 Get-MgRoleManagementDirectoryRoleAssignmentSchedule -Filter "principalId eq '$myPrincipalId'" `
   | Select DirectoryScopeId,
