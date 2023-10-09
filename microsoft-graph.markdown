@@ -4,11 +4,13 @@
 - [Web experience](#web-experience)
 - [REST](#rest)
   - [CLI](#cli)
-- [PowerShell SDK](#powershell-sdk)
+- [PowerShell module](#powershell-module)
+  - [Install](#install)
   - [Find Command](#find-command)
+  - [Common operations](#common-operations)
   - [Send an email](#send-an-email)
   - [Entra roles in PIM](#entra-roles-in-pim)
-- [Other PowerShell modules](#other-powershell-modules)
+- [Misc](#misc)
 
 
 ## Overview
@@ -80,9 +82,9 @@ az account get-access-token --scope "https://graph.microsoft.com/RoleEligibility
 ```
 
 
-## PowerShell SDK
+## PowerShell module
 
-Install
+### Install
 
 ```sh
 Install-Module Microsoft.Graph
@@ -102,6 +104,25 @@ Get-Module Microsoft.graph* -ListAvailable `
   | ? { $_.version -eq '1.18.0' } `
   | % { Uninstall-Module $_.name -RequiredVersion 1.18.0 }
 ```
+
+### Find Command
+
+Find "Get" command related to "principal"
+
+```powershell
+Get-Command -Module Microsoft.Graph.* -Noun *principal* -Verb Get
+
+# CommandType     Name                                               Version    Source
+# -----------     ----                                               -------    ------
+# Function        Get-MgServicePrincipal                             1.18.0     Microsoft.Graph.Applications
+# Function        Get-MgServicePrincipalAppRoleAssignedTo            1.18.0     Microsoft.Graph.Applications
+# Function        Get-MgServicePrincipalAppRoleAssignment            1.18.0     Microsoft.Graph.Applications
+# Function        Get-MgServicePrincipalById                         1.18.0     Microsoft.Graph.Applications
+# Function        Get-MgServicePrincipalClaimMappingPolicy           1.18.0     Microsoft.Graph.Applications
+# ...
+```
+
+### Common operations
 
 Connect
 
@@ -168,23 +189,6 @@ Get-MgOrganization | Select-Object -expand AssignedPlans
 # ...
 ```
 
-### Find Command
-
-Find "Get" command related to "principal"
-
-```powershell
-Get-Command -Module Microsoft.Graph.* -Noun *principal* -Verb Get
-
-# CommandType     Name                                               Version    Source
-# -----------     ----                                               -------    ------
-# Function        Get-MgServicePrincipal                             1.18.0     Microsoft.Graph.Applications
-# Function        Get-MgServicePrincipalAppRoleAssignedTo            1.18.0     Microsoft.Graph.Applications
-# Function        Get-MgServicePrincipalAppRoleAssignment            1.18.0     Microsoft.Graph.Applications
-# Function        Get-MgServicePrincipalById                         1.18.0     Microsoft.Graph.Applications
-# Function        Get-MgServicePrincipalClaimMappingPolicy           1.18.0     Microsoft.Graph.Applications
-# ...
-```
-
 ### Send an email
 
 ```powershell
@@ -208,46 +212,57 @@ Send-MgUserMail -UserId "gary@24g85s.onmicrosoft.com" -Message $message
 
 ### Entra roles in PIM
 
+Connect, you need to specify the correct scope, since the Microsoft Graph API is protected, this would require admin or user consent granted to the client app (Microsoft Graph PowerShell)
+
 ```powershell
 Connect-MgGraph -Scopes "RoleManagement.ReadWrite.Directory"
-
-$myPrincipalId=(Get-MgUser -Filter "DisplayName eq 'Gary Li'").Id
-
-# show eligible assignments
-$assignments=Get-MgRoleManagementDirectoryRoleEligibilitySchedule -Filter "principalId eq '$myPrincipalId'"
-
-$assignments | select DirectoryScopeId, MemberType, @{name="Role"; expr={(Get-MgDirectoryRole -Filter "RoleTemplateId eq '$_.RoleDefinitionId'").DisplayName}}
 ```
 
-
-
-## Other PowerShell modules
-
-Apart from the PowerShell SDK, there are other modules that work with AAD:
-
-Commands in the `Az.Resources` module:
+Self activate an eligible assignment
 
 ```powershell
-Get-Command -Module Az.Resources -Noun AzAD*
+$myUpn=(Get-MgContext).Account
+$myPrincipalId=(Get-MgUser -Filter "UserPrincipalName eq '$myUpn'").Id
 
-# CommandType     Name                                               Version    Source
-# -----------     ----                                               -------    ------
-# ...
-# Alias           Set-AzADServicePrincipal                           5.6.0      Az.Resources
-# Alias           Set-AzADUser                                       5.6.0      Az.Resources
-# Function        Get-AzADGroup                                      5.6.0      Az.Resources
-# ...
+$params = @{
+  "PrincipalId" = $myPrincipalId
+  "RoleDefinitionId" = (Get-MgDirectoryRole -Filter "DisplayName eq 'Application Administrator'").RoleTemplateId
+  "Justification" = "Activate assignment"
+  "DirectoryScopeId" = "/"
+  "Action" = "SelfActivate"
+  "ScheduleInfo" = @{
+    "StartDateTime" = Get-Date
+    "Expiration" = @{
+      "Type" = "AfterDuration"
+      "Duration" = "PT1H"
+    }
+  }
+}
+
+New-MgRoleManagementDirectoryRoleAssignmentScheduleRequest `
+  -BodyParameter $params |
+  Format-List Id, Status, Action, AppScopeId, DirectoryScopeId, RoleDefinitionID, IsValidationOnly, Justification, PrincipalId, CompletedDateTime, CreatedDateTime, TargetScheduleID
 ```
 
-Other `AzureAD*` modules
+List active assignments
 
 ```powershell
-Find-Module AzureAD*
+$myUpn=(Get-MgContext).Account
+$myPrincipalId=(Get-MgUser -Filter "UserPrincipalName eq '$myUpn'").Id
 
-# Version              Name                                Repository           Description
-# -------              ----                                ----------           -----------
-# 2.0.2.140            AzureAD                             PSGallery            Azure Active Directory V2 General Availability Module.…
-# 2.0.2.149            AzureADPreview                      PSGallery            Azure Active Directory V2 Preview Module. …
-# 2.1.1.0              AzureADHybridAuthenticationManagem… PSGallery            The Azure AD Hybrid Authentication Management module enables hybrid identity organizations (th…
-# ...
+# show active assignments
+Get-MgRoleManagementDirectoryRoleAssignmentSchedule -Filter "principalId eq '$myPrincipalId'" `
+  | Select DirectoryScopeId,
+            AssignmentType,
+            @{
+              name='Role';
+              expression={
+                (Get-MgDirectoryRole -Filter "RoleTemplateId eq '$($_.RoleDefinitionId)'").DisplayName
+              }
+            }
 ```
+
+
+## Misc
+
+- `*-AzureADMS*` commands in the `AzureADPreview` module connects to `https://graph.microsoft.com` as well, but the module does not work in PowerShell Core (v7)

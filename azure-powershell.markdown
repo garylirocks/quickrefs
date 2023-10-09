@@ -9,7 +9,7 @@
   - [Management](#management)
 - [Azure AD](#azure-ad)
   - [PIM](#pim)
-    - [Azure resources](#azure-resources)
+    - [Azure roles](#azure-roles)
     - [AAD roles](#aad-roles)
 
 
@@ -152,15 +152,20 @@ Connect-AzureAD
 
 ### PIM
 
-There are two related modules:
-  - `Az.Resources`: for Azure Resource Manager roles, connects to `https://management.azure.com`
-  - `AzureADPreview`: for Azure AD roles, cmdlets with different conventions:
-    - `-AzureAD` connects to Azure AD graph endpoint `https://graph.windows.net`
-    - `-AzureADMS` connects to Microsoft Graph endpoint `https://graph.microsoft.com`
+Depending on the type of the role, you need to use different modules:
 
-#### Azure resources
+- Azure roles:
+  - `Az.Resources`: connects to `https://management.azure.com`
 
-**Get eligible role assignments or active role assignments**:
+- AAD roles
+  - `AzureADPreview`: there are two sets of cmdlets:
+    - `*-AzureAD*` connects to Azure AD graph endpoint `https://graph.windows.net`
+    - `*-AzureADMS*` connects to Microsoft Graph endpoint `https://graph.microsoft.com`
+  - `Microsoft.Graph`: see the [Microsoft Graph note](./microsoft-graph.markdown)
+
+#### Azure roles
+
+**Get eligible assignments or active assignments**:
 
 ```powershell
 $scope='<full-resource-id>' // FULL id required
@@ -193,7 +198,7 @@ Usable filters:
 - `-Filter "atScope()"` limit to specified scope, including inherited roles from ancestor scopes, excluding subscopes
 - `-Filter "asTarget() and atScope()"` combined
 
-**To activate a PIM role:**
+**To self-activate an eligible assignment**
 
 <div style="background: #efd9fd; padding: 1em">
   <em>NOTE: </em><br />
@@ -254,7 +259,7 @@ New-AzRoleAssignmentScheduleRequest `
 - Prepare
 
   ```powershell
-  # need this module
+  # need this module, seems not working in PowerShell Core
   Install-Module AzureADPreview
 
   # !! This does not work in PowerShell Core (v7)

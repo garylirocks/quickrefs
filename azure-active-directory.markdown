@@ -1140,16 +1140,19 @@ az rest -u "https://graph.microsoft.com/v1.0/roleManagement/directory/roleDefini
 ## Privileged Identity Management (PIM)
 
 - P2 feature
-  - If you have a P2 license plan and already use PIM, all role management tasks are performed in the PIM experience
-- Just-in-time elevate role assignment
-- Could be
+  - If you have a P2 license plan and already use PIM, **all role management tasks are performed in the PIM experience**
+- Two types of role assignments:
+  - Eligible role assignments
+  - Active role assignments
+- Both active and eligible assignments could be time-bound or permanent
+- Roles:
   - Entra Role
+    - Assignment scope could be `/` (tenant-wide) or `AppScopeId` (limit scope to an application only)
   - Azure RBAC Role
   - Entra privileged group membership
     - You could assign either members or owners the group
     - Useful to mssign multiple roles to the group, then a user just need one activation (for the group membership), instead of activating multiple roles one by one
 - Most common use case: create "Eligible Assignment" of roles/memberships to some users/groups, who need to active them when needed
-- Both active and eligible assignments could be time-bound or permanent
 
 ### API
 
@@ -1200,6 +1203,8 @@ The only link between the PIM entity and the role assignment entity for persiste
 PIM-specific properties (such as end time) will be available only through `*AssignmentScheduleInstance` object.
 
 #### Activate Entra roles
+
+See the [Microsoft Graph note](./microsoft-graph.markdown)
 
 
 ## License management
