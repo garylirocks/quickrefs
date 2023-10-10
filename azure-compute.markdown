@@ -4,12 +4,11 @@
   - [Considerations](#considerations)
   - [Series](#series)
   - [Availability options](#availability-options)
-  - [VMSS - Virtual Machine Scale Sets](#vmss---virtual-machine-scale-sets)
-  - [Azure Batch](#azure-batch)
   - [Provisioning](#provisioning)
   - [Use AAD for VM authentication](#use-aad-for-vm-authentication)
   - [Linux Agent](#linux-agent)
   - [Windows VM Agent](#windows-vm-agent)
+  - [How to connect to Internet](#how-to-connect-to-internet)
   - [Updating](#updating)
   - [CLI Cheatsheet](#cli-cheatsheet)
 - [Disks](#disks)
@@ -27,6 +26,8 @@
     - [Windows](#windows)
   - [Disk encryption](#disk-encryption)
     - [ADE](#ade)
+- [VMSS - Virtual Machine Scale Sets](#vmss---virtual-machine-scale-sets)
+- [Azure Batch](#azure-batch)
 - [Azure Compute Gallery](#azure-compute-gallery)
 - [Docker Container Registry](#docker-container-registry)
   - [Tasks feature](#tasks-feature)
@@ -163,18 +164,6 @@ See naming convention here: https://learn.microsoft.com/en-us/azure/virtual-mach
 
   ![Availability Zones](images/azure-availability-zones.png)
 
-
-### VMSS - Virtual Machine Scale Sets
-
-- All instances are created from the same base OS image and configuration.
-- Support Load Balancer for layer-4 traffic distribution, and Application Gateway for layer-7 traffic distribution and SSL termination.
-- Number of instances can automatically increase or decrease in response to demand or a defined schedule.
-- You could use your own custom VM images.
-- It has instance repair feature which replaces a VM if it health check fails.
-
-### Azure Batch
-
-Large-scale job scheduling for HPC (High Performance Compute) workload
 
 ### Provisioning
 
@@ -470,6 +459,26 @@ systemctl restart walinuxagent.service
 - Could be installed manually
 - `WindowsAzureGuestAgent.exe` is the process in the guest VM
 - It spawns `CollectGuestLogs.exe`, which collects some logs, produces a ZIP file that's transferred to the VM's host. Support professionals could use this ZIP file to investigate issues on the request of the VM owner.
+
+### How to connect to Internet
+
+There are a few ways how a VM can connect to the Internet:
+
+- An explicit **public IP** assigned to its NIC
+- Via a **public standard load balancer** (it's recommended to use separate public IPs for inbound and outbound connections)
+- A **NAT gateway** linked to the VM's subnet
+  - It's designed for egress traffic
+  - Each NAT GW can have max 16 public IPs (separate or contiguous as a IP prefix), ~64,000 SNAT ports/IP
+  - Only handles egress traffic, ingress traffic still come through the VM's public IP or public load balancer
+  - Cons: not zone-redundant, you need one for each zone
+- **Azure Firewall**
+  - Max 250 public IPs, 2496 ports/IP
+  - You can link a NAT GW to th Azure Firewall subnet to help scale SNAT ports
+- **NVA**
+  - Use UDR on the VM's subnet to route traffic to the NVA
+- Implicit pubic IP
+  - Going to be retired
+
 
 ### Updating
 
@@ -887,6 +896,20 @@ Limitations:
 - When enabling encryption on new VMs, you could use an ARM template to ensure data is encrypted at the point of deployment
 - ADE is required for VMs backed up to the Recovery Vault
 - **SSE with CMK improves on ADE** by enabling you to use any OS types and images for your VMs
+
+
+## VMSS - Virtual Machine Scale Sets
+
+- All instances are created from the same base OS image and configuration.
+- Support Load Balancer for layer-4 traffic distribution, and Application Gateway for layer-7 traffic distribution and SSL termination.
+- Number of instances can automatically increase or decrease in response to demand or a defined schedule.
+- You could use your own custom VM images.
+- It has instance repair feature which replaces a VM if it health check fails.
+
+
+## Azure Batch
+
+Large-scale job scheduling for HPC (High Performance Compute) workload
 
 
 ## Azure Compute Gallery

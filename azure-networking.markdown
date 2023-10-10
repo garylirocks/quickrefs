@@ -231,7 +231,8 @@ az network public-ip create \
   - No further configuration is necessary, and you don't need to create any UDR
 - Allows flows from vNet to the Internet, return traffic is only allowed in response to an active flow
 - Each public IP gives you ~64,000 SNAT ports
-  - This is an option to help scale SNAT ports for Azure Firewall (which has only 2496 SNAT ports per public IP)
+  - This is an option to help scale SNAT ports for Azure Firewall (which has max. 250 IPs, and 2496 SNAT ports per IP)
+  - You can link a NAT gateway to the Azure Firewall subnet
   - Only works for Azure Firewall in a hub vnet of a hub-spoke topology, doesn't work for the secured hub scenario.
   - See: https://learn.microsoft.com/en-us/azure/firewall/integrate-with-nat-gateway
 - You could configure the TCP idle timeout, default is 4 minutes
