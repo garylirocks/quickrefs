@@ -8,9 +8,11 @@
 - [Use KV secret in deployment](#use-kv-secret-in-deployment)
 - [Scopes](#scopes)
   - [Deployment location and name](#deployment-location-and-name)
-- [Resource group scope](#resource-group-scope)
-  - [Scopes](#scopes-1)
+  - [Scope of nested deployments](#scope-of-nested-deployments)
 - [Template specs](#template-specs)
+- [Deployment stacks](#deployment-stacks)
+  - [Why](#why)
+  - [Overview](#overview-1)
 
 ## Overview
 
@@ -373,11 +375,9 @@ az deployment sub create \
 - You can optionally provide a deployment name, otherwise the template file name would be used.
 - Deployment name needs to be **unique** across locations, if you have deployment named "azuredeploy" in `eastus`, you can't use the same deployment name in `westus`.
 
-## Resource group scope
+### Scope of nested deployments
 
-### Scopes
-
-With nested deployment, you are not limited to the target resource group, you could actually deploy to other resource groups, subscriptions or the tenant.
+If your deployment is targeting a resource group, with nested deployment, you are not limited to the target resource group, you could actually deploy to other resource groups, subscriptions or the tenant.
 
 - The target resource group
 
@@ -507,3 +507,30 @@ az deployment group create \
   --template-spec $id \
   --parameters "./mainTemplate.parameters.json"
 ```
+
+
+## Deployment stacks
+
+### Why
+
+Challenges with simple ARM deployment:
+
+- Lifecycle tracking:
+  - If a deployment is always for a full resource group, which is a unit of resource lifecycle, then it's easy to track
+  - But in reality, a deployment could create resources across multiple management groups, hard to track and clean up
+  - There's no link between a deployment object to the resource, if you delete a deployment object, the resources are untouched
+- Lack of denying assignmens:
+  - Unable to lock some core resources in a deployment
+
+Blueprints is going to be deprecated, and replaced by **deployment stacks**.
+
+### Overview
+
+- A deployment stack is a collection of **managed** resources
+- Resources in a stack should share a common lifecycle, they could be across multiple management groups, subscriptions, resource groups
+- If you remove a resource from a deployment, the resource will be either deleted or become unmanaged
+- You can keep using the same ARM/Bicep files, just need to change the command
+
+  |     | Deployment      | Deployment Stack |
+  | --- | --------------- | ---------------- |
+  | CLI | `az deployment` | `az stack`       |

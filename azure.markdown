@@ -28,7 +28,7 @@
 - [Azure Resource Graph](#azure-resource-graph)
   - [Sample KQL queries](#sample-kql-queries)
   - [`az graph query`](#az-graph-query)
-- [Blueprints](#blueprints)
+- [Blueprints (To be deprecated)](#blueprints-to-be-deprecated)
 - [Billing](#billing)
   - [Tag inheritance](#tag-inheritance)
 - [Business Process Automation](#business-process-automation)
@@ -537,7 +537,7 @@ az graph query \
 - Optionally specify the subscriptions, otherwise all available ones are queried
 
 
-## Blueprints
+## Blueprints (To be deprecated)
 
 Contains some artifacts that could be deployed to existing or new subscriptions:
 
