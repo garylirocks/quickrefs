@@ -13,6 +13,9 @@
 - [Deployment stacks](#deployment-stacks)
   - [Why](#why)
   - [Overview](#overview-1)
+  - [Deny assignments](#deny-assignments)
+  - [Cleanup options](#cleanup-options)
+  - [Best practices](#best-practices)
 
 ## Overview
 
@@ -513,12 +516,12 @@ az deployment group create \
 
 ### Why
 
-Challenges with simple ARM deployment:
+Challenges with simple ARM/Bicep deployment:
 
 - Lifecycle tracking:
   - If a deployment is always for a full resource group, which is a unit of resource lifecycle, then it's easy to track
-  - But in reality, a deployment could create resources across multiple management groups, hard to track and clean up
-  - There's no link between a deployment object to the resource, if you delete a deployment object, the resources are untouched
+  - But in reality, a deployment could create resources across multiple RGs, subscriptions or even management groups, it's hard to track and clean up
+  - There's no link between a deployment object and the deployed resources, if you delete a deployment object, the resources are untouched
 - Lack of denying assignmens:
   - Unable to lock some core resources in a deployment
 
@@ -527,10 +530,35 @@ Blueprints is going to be deprecated, and replaced by **deployment stacks**.
 ### Overview
 
 - A deployment stack is a collection of **managed** resources
-- Resources in a stack should share a common lifecycle, they could be across multiple management groups, subscriptions, resource groups
-- If you remove a resource from a deployment, the resource will be either deleted or become unmanaged
+- Resources in a stack should share a common lifecycle, they could be across multiple resource groups, subscriptions, management groups
+- If you remove a resource from a deployment, the resource will be either deleted or become detached/unmanaged
 - You can keep using the same ARM/Bicep files, just need to change the command
 
-  |     | Deployment      | Deployment Stack |
-  | --- | --------------- | ---------------- |
-  | CLI | `az deployment` | `az stack`       |
+  |                | Deployment                     | Deployment Stack     |
+  | -------------- | ------------------------------ | -------------------- |
+  | CLI            | `az deployment`                | `az stack`           |
+  | Possible scope | "group \| sub \| mg \| tenant" | "group \| sub \| mg" |
+
+### Deny assignments
+
+You could create deny assignments on the deployed resources, and setting exclusions:
+
+- `--deny-settings-mode`: whether deny assignments should be created, allowed values: `denyDelete`, `denyWriteAndDelete`, `none`
+- `--deny-settings-excluded-actions`: List of role-based management operations that are excluded from the denySettings. Up to 200 actions are permitted.
+- `--deny-settings-excluded-principals`: List of AAD principal IDs excluded from the denySettings, up to 5 principals are permitted
+- `--deny-settings-apply-to-child-scopes`: whether the deny assignments should apply to any new child scopes, such as a new extension installed in a VM
+
+*The excluded actions* apply to all principals, not just *exclude principals*.
+
+### Cleanup options
+
+What happens if you delete a resource from the template file ?
+
+- By default, the resource would still exists, but become "unmanaged"
+- `--delete-resources`: delete resources
+- `--delete-resource-groups`: delete resource groups
+- `--delete-all`: delete all resources and resource groups
+
+### Best practices
+
+- Deploy stack at **one level above**: if you want to lock resources in a subscription, you should deploy the stack at the management group level, then even the subscription owner can't change/delete the stack itself or the locked resources
