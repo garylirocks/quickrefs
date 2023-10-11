@@ -166,7 +166,8 @@ You could use the Git Credential Manager (installed in Windows) in WSL (https://
 
   ```sh
   # set as git credential helper
-  # the exact location of git-credential-manager.exe might be different on your system
+  # the exact location of "git-credential-manager.exe" might be different on your system
+  # !! don't use "git-credential-wincred.exe", which has issues with WSL
   git config --global credential.helper "/mnt/c/Program\ Files/Git/mingw64/bin/git-credential-manager.exe"
 
   # For Azure DevOps
