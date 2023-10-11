@@ -11,6 +11,11 @@
   - [a GUI to visualize log](#a-gui-to-visualize-log)
   - [show log for a specific commit](#show-log-for-a-specific-commit)
 - [Configs](#configs)
+- [Credentials](#credentials)
+  - [Requesting credentials](#requesting-credentials)
+  - [Username](#username)
+  - [Credential contexts](#credential-contexts)
+  - [Credential helpers](#credential-helpers)
 - [Command Aliases](#command-aliases)
 - [History](#history)
 - [Tags](#tags)
@@ -285,6 +290,85 @@ whitespace, line-endings:
 set customized color to output:
 
     $ git config --global color.diff.meta "blue black bold"
+
+
+## Credentials
+
+### Requesting credentials
+
+You usually need to use your user name and password to push to a remote. Some remotes accept a personal access token or OAuth token as a password.
+
+Git tries these strategies in order to request credentials:
+
+- `GIT_ASKPASS` env variable, could be a program
+- `core.askPass` config
+- `SSH_ASKPASS` config
+- Prompt on the terminal
+
+### Username
+
+Usename could be saved as a config with:
+
+```sh
+git config credential.https://example.com.username my-username
+```
+
+This becomes settings like:
+
+```
+[credential "https://example.com"]
+  username = my-username
+```
+
+### Credential contexts
+
+```ini
+# this matches everything
+[credential "*"]
+	username = bob
+
+# specify just the hostname
+[credential "https://example.com"]
+  username    = john
+  helper      = "..."
+  useHttpPath = true
+
+# Or, you specify the full path
+[credential "https://example.com/foo/bar.git"]
+  username = alice
+```
+
+You could use `useHttpPath` to specify whether the path component should be passed to a credential helper.
+
+For example, you should set it to `true` for Azure DevOps, as its url is like `https://dev.azure.com/organization_1`, organization name is part of the path.
+
+```
+git config --global credential.https://dev.azure.com.useHttpPath true
+```
+
+### Credential helpers
+
+For passwords or tokens, you need a credential helper to save or cache them. There are several ways:
+
+- (Git builtin) Cache it in memory
+
+  ```sh
+  git config credential.helper 'cache [--timeout=<seconds>]'
+  ```
+
+- (Git builtin) Save in an unencrypted file
+
+  ```sh
+  git config credential.helper 'store [--file=<path>]'
+  ```
+
+  - If path not specified explicitly, it will save to `~/.git-credentials` or `$XDG_CONFIG_HOME/git/credentials`
+  - Each credential saved in a line like `https://user:pass@example.com`
+  - The file is not encrypted !!
+
+- Other ones, see [here](https://git-scm.com/doc/credential-helpers).
+
+
 
 ## Command Aliases
 
