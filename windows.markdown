@@ -10,6 +10,7 @@
   - [Configuration](#configuration)
   - [Files](#files)
   - [Git](#git-1)
+    - [Credential management](#credential-management)
     - [Multiple accounts for GitHub on one machine](#multiple-accounts-for-github-on-one-machine)
   - [VS Code](#vs-code)
   - [Terraform](#terraform)
@@ -46,10 +47,9 @@
 
 ### Git Credential Manager
 
-- Useful when you use HTTPS protocol
-- Uses Windows Credential Store to control sensitive infomation
 - Is a secure Git credential helper, provides multi-factor authentication support for Azure DevOps, GitHub and Bitbucket
 - Is included with Git for Windows, select it as the credential helper during installation
+- Uses Windows Credential Store to store credentials
 
 ## Windows Terminal
 
@@ -156,7 +156,9 @@ Git comes installed with most WSL distros, you may need to install the latest ve
 sudo apt-get install git
 ```
 
-You could use the Windows Git Credential Manager in WSL (https://github.com/GitCredentialManager/git-credential-manager/blob/main/docs/wsl.md):
+#### Credential management
+
+You could use the Git Credential Manager (installed in Windows) in WSL (https://github.com/GitCredentialManager/git-credential-manager/blob/main/docs/wsl.md):
 
 - Git inside of a WSL can launch the GCM Windows application transparently to acquire credentials (seems not work, need to do it in Windows)
 - Windows stores the credentials, which could be shared by Windows applications and WSL
@@ -164,18 +166,17 @@ You could use the Windows Git Credential Manager in WSL (https://github.com/GitC
 
   ```sh
   # set as git credential helper
-  git config --global credential.helper "/mnt/c/Program\ Files/Git/mingw64/libexec/git-core/git-credential-manager-core.exe"
+  # the exact location of git-credential-manager.exe might be different on your system
+  git config --global credential.helper "/mnt/c/Program\ Files/Git/mingw64/bin/git-credential-manager.exe"
 
-  # or use "git-credential-wincred.exe" if "git-credential-manager-core.exe" does not exist
-  git config --global credential.helper "/mnt/c/Program\ Files/Git/mingw64/libexec/git-core/git-credential-wincred.exe"
-
+  # For Azure DevOps
   # By default the credential manager saves one credential per hostname
   # If your want the credential manager to save a credential for each url path, set `useHttpPath` to `true`
   # this allows you to have one credential per repo, meaning you can use different accounts
   git config --global credential.https://dev.azure.com.useHttpPath true
   ```
 
-- Make Windows GCM use WSL Git config, run this in *Administrator* Command Prompt (*seems not working sometimes ?*):
+- (Optional) To make GCM (in Windows) uses WSL Git config, run this in *Administrator* Command Prompt (*seems not working sometimes ?*, you could copy your WSL Git config to Windows manually):
 
   ```sh
   SETX WSLENV %WSLENV%:GIT_EXEC_PATH/wp
