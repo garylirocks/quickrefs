@@ -847,9 +847,11 @@ See here for details: https://stackoverflow.com/questions/5533050/gitignore-excl
 
 ## Hooks
 
-git hooks are scripts stored in the `.git/hooks/` directory, they are fired when paticular events happen, if they exists with non-zero status code, the event may be stopped.
+Git hooks are scripts stored in the `.git/hooks/` directory, they are fired when paticular events happen, if they exists with non-zero status code, the event may be stopped.
 
-there are two types: client-side hooks and server-side hooks
+*When you run `git init`, files in `~/.git/templates/hooks/` will be copied to `.git/hooks/` folder in your repo*
+
+There are two types: client-side hooks and server-side hooks
 
 - client-side:
 
