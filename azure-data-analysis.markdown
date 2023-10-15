@@ -1,6 +1,7 @@
 # Azure data analysis
 
 - [Overview](#overview)
+  - [Data analytics types](#data-analytics-types)
 - [Azure Synapse Analytics](#azure-synapse-analytics)
   - [Deployment](#deployment)
   - [SQL](#sql)
@@ -22,6 +23,18 @@
 ## Overview
 
 //TODO
+
+### Data analytics types
+
+- Descriptive
+  - What happened ?
+  - KPI (key performance indicator)
+- Diagnostic
+  - Identify and explain anomalies
+- Predictive
+  - What will happen in the future ?
+- Prescriptive
+- Cognitive
 
 
 ## Azure Synapse Analytics

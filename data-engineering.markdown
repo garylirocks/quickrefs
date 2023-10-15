@@ -1,5 +1,10 @@
 # Data engineering
 
+
+- [Overview](#overview)
+- [Data team roles](#data-team-roles)
+
+
 ## Overview
 
 Data formats
@@ -52,3 +57,31 @@ Data processing
 
     ![Fact vs Dimension](images/data_star-and-snowflake-schema.drawio.svg)
     *Star schema vs. Snowflake schema*
+
+
+## Data team roles
+
+- Data Analyst
+  - Data exploration
+  - Identify trends
+  - Design and build analytical models
+  - Reports and visualizations
+
+- Database admin (DBA)
+  - Design, implement, maintain databases
+  - Ensure availability, performance, security, optimization of databases
+  - Backup and recovery plans
+
+- Data engineer
+  - Manage and secure data flow
+  - Get, ingeest, transform, validate, and clean up data
+  - Integrate multiple data services and application services
+
+- Data scientist
+  - Descriptive to predictive analytics
+  - Machine learning models
+  - Deep learning, customized algorithms
+
+- Data architect
+  - Plan and execute an overall data management strategy
+  - Must have both strong deep technical knowledge and strong soft sills
