@@ -1585,7 +1585,7 @@ az ad app list \
 
   ```sh
   # on a current subscription
-  # includes inherited
+  # including inherited and assignment at descendant scopes
   az role assignment list \
       --all \
       --subscription sub-test \
