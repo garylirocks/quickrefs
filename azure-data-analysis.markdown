@@ -11,6 +11,9 @@
 - [Stream Analytics](#stream-analytics)
 - [Azure Data Explorer](#azure-data-explorer)
 - [Microsoft Purview](#microsoft-purview)
+  - [Authentication](#authentication)
+  - [Data classification](#data-classification)
+  - [RBAC Roles](#rbac-roles)
 - [Power BI](#power-bi)
 - [On-prem data gateways](#on-prem-data-gateways)
   - [Auth](#auth)
@@ -165,7 +168,41 @@ Real-time stream processing engine
 
 A solution for enterprise-wide data governance and discoverability.
 
-Create a map of your data and track data lineage across multiple data sources and systems.
+- Automated data discovery
+- Sensitive data classification
+- End-to-end data lineage
+
+You can register data sources in Purview. Purview will scan all the data sources, colleting data schema, sensitivity, etc. And a copy of the metadata for data sources is added to Purview.
+
+### Authentication
+
+Options for Purview authentication to data sources:
+
+- Purview managed identity
+- Account key (using Azure Key Vault)
+- SQL authentication (using Azure Key Vault)
+- Service principal (using Azure Key Vault)
+
+### Data classification
+
+Category types:
+
+- **Government**: Attributes such as government identity cards, driver license numbers, and passport numbers.
+- **Financial**: Attributes such as bank account numbers or credit card numbers.
+- **Personal**: Personal information such as a person's age, date of birth, email address, and phone number.
+- **Security**: Attributes like passwords that can be stored.
+- **Miscellaneous**: Attributes not included in the other categories.
+
+Microsoft Purview classifies data by Bloom Filter and RegEx.
+
+- **Bloom Filter** classifications include attributes for city, country/region, place, and person information.
+- **RegEx** classifications cover attributes that include categories like bank information, passport numbers, and country/region-specific identification numbers.
+
+### RBAC Roles
+
+- **Purview Data Reader role**:  Read all in Microsoft Purview except for scan bindings.
+- **Purview Data Curator role**: Can edit information about assets, classification definitions, and glossary terms. Can also apply classifications and glossary terms to assets.
+- **Purview Data Source Administrator role**: Doesn't have access to the Microsoft Purview governance portal. Can manage all aspects of scanning data into Microsoft Purview. Doesn't have read or write access to content in Microsoft Purview beyond those tasks related to scanning.
 
 
 ## Power BI
