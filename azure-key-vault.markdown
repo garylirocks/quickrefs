@@ -4,7 +4,8 @@
 - [Secrets](#secrets)
 - [Certificate](#certificate)
   - [Certificate composition](#certificate-composition)
-- [Security](#security)
+- [Permission models](#permission-models)
+  - [Read a secret](#read-a-secret)
 - [Recover](#recover)
 - [Vault authentication](#vault-authentication)
 - [Replication](#replication)
@@ -76,16 +77,17 @@ openssl pkcs12 -in cert.pfx -passin pass: -out cert.pem -nodes
 ```
 
 
-## Security
+## Permission models
 
 Control plane permissions are always controlled by RBAC
 
 For data plane, there are two models:
 
-- **Vault access policy**:
+- **Vault access policy** (legacy):
   - assign secret/key/cert permissions for users/groups/apps
   - need to be configured for each individual key vault
-- **RBAC**:
+  - *if a user has "Contributor" role over the vault, he can assign himself any access policy, this could be a security risk*
+- **RBAC** (recommended):
   - access can be inherited, so you can assign at a higher level
   - can be granular as well: you could set permissions on specific keys, secrets or certificates
 
@@ -94,6 +96,17 @@ Three advanced access policy options:
 - **Azure VM for deployment**: enables `Microsoft.Compute` resource provider to retrieve secrets when this key vault is referenced in resource creation, for example, when creating a VM
 - **Azure Resource Manager for template deployment**: enables Azure Resource Manager to get secrets when this key vault is referenced in a template deployment
 - **Azure Disk Encryption for volume encryption**
+
+### Read a secret
+
+To allow a service principal to retrieve value of a secret from key vault, you need to configure the access based on the permission model of the key vault:
+
+- RBAC
+  - "Key Vault Secrets User" role on the secret
+  - "Key Vault Reader" role on the vault (only required by Terraform data block `azurerm_key_vault_secret`, not by AZ CLI)
+- Vault access policy
+  - "Get" on secrets
+  - "Key Vault Reader" role on the vault (only required by Terraform data block `azurerm_key_vault_secret`, not by AZ CLI)
 
 
 ## Recover
