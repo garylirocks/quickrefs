@@ -47,6 +47,7 @@
     "pywinrm",
     "rerequested",
     "SIEM",
+    "SPIFFE",
     "SSIS",
     "SSMS",
     "sysmon",

@@ -27,6 +27,8 @@
   - [Service principals](#service-principals)
   - [Service principals (application)](#service-principals-application)
   - [Managed identities](#managed-identities)
+  - [Workload identity federation](#workload-identity-federation)
+    - [How it works](#how-it-works)
 - [Application](#application)
   - [Application management](#application-management)
   - [My Apps portal](#my-apps-portal)
@@ -683,6 +685,25 @@ Compare Service principal (application) to managed identity:
 | ----------------- | ----------------- | ----------------------- |
 | Service Principal | Yes               | Yes                     |
 | Managed Identity  | No                | Yes                     |
+
+### Workload identity federation
+
+- Intended for workloads running ourside of Azure, supported scenarios:
+  - GitHub Actions
+  - Kubernetes clusters (AKS, EKS, GKE, on-prem)
+  - Google Cloud, AWS workloads
+  - External IdP
+  - SPIFFE
+- Like managed identities, you don't need to manage secrets
+- Supported for both
+  - user-assigned managed identity
+  - app registration
+
+#### How it works
+
+It creates a trust relationship between external IdP and a UAMI or app reg in Microsoft Entra.
+
+![Workload identity federation](images/azure_workload-identity-federatjion-workflow.svg)
 
 
 ## Application
