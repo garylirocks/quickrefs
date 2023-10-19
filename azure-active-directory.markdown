@@ -29,6 +29,7 @@
   - [Managed identities](#managed-identities)
   - [Workload identity federation](#workload-identity-federation)
     - [How it works](#how-it-works)
+    - [CLI](#cli)
 - [Application](#application)
   - [Application management](#application-management)
   - [My Apps portal](#my-apps-portal)
@@ -71,7 +72,7 @@
 - [Logging and analytics](#logging-and-analytics)
 - [Application Proxy](#application-proxy)
 - [Best practices](#best-practices-2)
-- [CLI](#cli)
+- [CLI](#cli-1)
   - [`--filter` parameter](#--filter-parameter)
   - [Application registration and service principal(Enterprise app) owners](#application-registration-and-service-principalenterprise-app-owners)
   - [Applications](#applications)
@@ -704,6 +705,57 @@ Compare Service principal (application) to managed identity:
 It creates a trust relationship between external IdP and a UAMI or app reg in Microsoft Entra.
 
 ![Workload identity federation](images/azure_workload-identity-federatjion-workflow.svg)
+
+#### CLI
+
+```sh
+# for GitHub Actions workflow
+az ad app federated-credential create --id <APPLICATION-OBJECT-ID> --parameters credential.json
+```
+
+`credential.json` contains the following content
+
+```json
+{
+    "name": "<CREDENTIAL-NAME>",
+    "issuer": "https://token.actions.githubusercontent.com",
+    "subject": "repo:my-org/my-repo:environment:Production",
+    "description": "Testing",
+    "audiences": [
+        "api://AzureADTokenExchange"
+    ]
+}
+```
+
+Subject format could be:
+
+- `repo:my-org/my-repo:environment:<env-name>`: tied to an env
+- `repo:my-org/my-repo:ref:refs/heads/my-branch`: tied to a branch
+- `repo:my-org/my-repo:ref:refs/tags/my-tag`: tied to a tag
+- `repo:my-org/my-repo:ref:pull_request`: for pull requests
+
+Then in your GitHub workflow, use the `azure/login` action, providing the `client-id`, `tenant-id` and `subscription-id`, it will try to use OIDC to login by default.
+
+```yaml
+jobs:
+  az-login-testing:
+    runs-on: ubuntu-latest
+    # specify the environment here if your workflow identity federation subject is like
+    # `repo:my-org/my-repo:environment:prod`
+    environment: prod
+    steps:
+    - name: 'Az CLI login'
+      uses: azure/login@v1
+      with:
+          client-id: ${{ vars.AZURE_CLIENT_ID_WITH_WORKLOAD_IDENTITY_FEDERATION }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+    - name: 'Run Azure CLI commands'
+      run: |
+          az account show
+          az group list
+```
 
 
 ## Application
