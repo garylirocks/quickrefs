@@ -1,7 +1,6 @@
 # Python cheatsheet
 
 - [Preface](#preface)
-- [List](#list)
 - [Tuples](#tuples)
 - [Set](#set)
 - [Strings vs. Bytes](#strings-vs-bytes)
@@ -35,46 +34,6 @@
 Source:
 
 - [The Quick Python Book, Second Edition][quick_python_book]
-
-## List
-
-copy a list:
-
-    y = x[:]
-
-append items to list:
-
-    >>> x = [1, 2]
-    >>> x + [3, 4]
-    [1, 2, 3, 4]
-
-multiply a list:
-
-    >>> a = [1, 3]
-    >>> a * 2
-    [1, 3, 1, 3]
-
-by default, nested list are copied by reference, use `copy.deepcopy()` to make a deep copy:
-
-    >>> original = [[0], 1]
-    >>> shallow = original[:]
-    >>> import copy
-    >>> deep = copy.deepcopy(original)
-    >>> original
-    [[0], 1]
-    >>> shallow
-    [[0], 1]
-    >>> deep
-    [[0], 1]
-
-    >>> shallow[0][0] = 'zero'
-    >>> shallow
-    [['zero'], 1]
-    >>> original    # the original is modified, too
-    [['zero'], 1]
-    >>> deep        # deep copy is not affected
-    [[0], 1]
-
 
 ## Tuples
 
