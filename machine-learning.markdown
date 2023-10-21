@@ -54,3 +54,8 @@ The algorithm is as follows:
     $$\frac{\partial}{\partial{b}}J(w,b) = \frac{1}{m} \sum_{i=1}^m {\left( f_{w,b} (x^{(i)}) - y^{(i)} \right)}$$
 
 3. Repeat until convergence, ie, the value of $J$ is not changing much
+
+
+## References
+
+[Machine Learning | Coursera](https://www.coursera.org/specializations/machine-learning-introductIon)
