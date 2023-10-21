@@ -10,7 +10,7 @@ $f_{w,b}(x) = w * x + b$
 
 the cost function is defined as:
 
-$$J(w,b) = \frac{1}{2m} * \sum_{i=1}^m {\left( f_{w,b} (x^{(i)}) - y^{(i)} \right)}^2 $$
+$$J(w,b) = \frac{1}{2m} \sum_{i=1}^m {\left( f_{w,b} (x^{(i)}) - y^{(i)} \right)}^2 $$
 
 - $x^{(i)}$ the $i$th input, NOT the $i$th power of $x$
 - $y^{(i)}$ the $i$th output
@@ -44,6 +44,13 @@ The algorithm is as follows:
     $$w = w - \alpha\frac{\partial}{\partial{w}}J(w, b)$$
     $$b = b - \alpha\frac{\partial}{\partial{b}}J(w, b)$$
 
-    - $\alpha$ is the learning rate, which is a small positive number, such as 0.01
-    - $\frac{\partial}{\partial{w}}J(w, b)$ is the derivative, ie. a small change of $J(w, b)$ divided by a small change of $w$
+    - $\alpha$ is the learning rate, which is a small positive number, such as 0.01, if it's too small, it will take a long time to converge, if it's too large, it may overshoot (not converge)
+    ![Convergence vs. overshoot](./images/ml_gradient-descent.png)
+
+    - $\frac{\partial}{\partial{w}}J(w, b)$ is the partial derivative with respect to $w$, ie. a small change of $J(w, b)$ divided by a small change of $w$
+
+    $$\frac{\partial}{\partial{w}}J(w,b) = \frac{1}{m} \sum_{i=1}^m {\left( f_{w,b} (x^{(i)}) - y^{(i)} \right)}x^{{i}}$$
+
+    $$\frac{\partial}{\partial{b}}J(w,b) = \frac{1}{m} \sum_{i=1}^m {\left( f_{w,b} (x^{(i)}) - y^{(i)} \right)}$$
+
 3. Repeat until convergence, ie, the value of $J$ is not changing much
