@@ -1,5 +1,13 @@
 # Machine Learning
 
+- [Linear regression](#linear-regression)
+  - [Cost function](#cost-function)
+  - [Gradient descent](#gradient-descent)
+- [Multiple linear regression](#multiple-linear-regression)
+  - [The model](#the-model)
+- [References](#references)
+
+
 ## Linear regression
 
 ### Cost function
@@ -44,7 +52,7 @@ The algorithm is as follows:
     $$w = w - \alpha\frac{\partial}{\partial{w}}J(w, b)$$
     $$b = b - \alpha\frac{\partial}{\partial{b}}J(w, b)$$
 
-    - $\alpha$ is the learning rate, which is a small positive number, such as 0.01, if it's too small, it will take a long time to converge, if it's too large, it may overshoot (not converge)
+    - $\alpha$ is the **learning rate**, which is a small positive number, such as 0.01, if it's too small, it will take a long time to converge, if it's too large, it may overshoot (not converge)
     ![Convergence vs. overshoot](./images/ml_gradient-descent.png)
 
     - $\frac{\partial}{\partial{w}}J(w, b)$ is the partial derivative with respect to $w$, ie. a small change of $J(w, b)$ divided by a small change of $w$
@@ -54,6 +62,39 @@ The algorithm is as follows:
     $$\frac{\partial}{\partial{b}}J(w,b) = \frac{1}{m} \sum_{i=1}^m {\left( f_{w,b} (x^{(i)}) - y^{(i)} \right)}$$
 
 3. Repeat until convergence, ie, the value of $J$ is not changing much
+
+
+## Multiple linear regression
+
+![Multiple features](images/ml_multiple-features.png)
+
+Notations:
+
+- $x_j$ : $j^{th}$ feature
+- $n$ : number of features
+- $\vec{x}^{(i)}$ : features of $i^{th}$ training example
+- $\vec{x}_j^{(i)}$ : value of feature $j$ in $i^{th}$ training example
+
+### The model
+
+$$f_{w,b}(\vec{x}) = w_1x_1 + w_2x_2 + \dots + w_nx_n + b$$
+
+or in vector form:
+
+$$f_{\vec{w},b}(\vec{x}) = \vec{w} \cdot \vec{x} + b$$
+
+where
+
+- $\vec{w} = \begin{bmatrix}w_1 \\ w_2 \\ \vdots \\ w_n\end{bmatrix}$, $\vec{x} = \begin{bmatrix}x_1 \\ x_2 \\ \vdots \\ x_n\end{bmatrix}$
+
+- $\cdot$ means **dot product** in linear algebra
+
+In code with NumPy:
+
+```python
+f = np.dot(w, x) + b
+```
+
 
 
 ## References
