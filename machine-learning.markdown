@@ -5,6 +5,9 @@
   - [Gradient descent](#gradient-descent)
 - [Multiple linear regression](#multiple-linear-regression)
   - [The model](#the-model)
+  - [Gradient descent for multiple variables](#gradient-descent-for-multiple-variables)
+  - [Feature scaling](#feature-scaling)
+- [Feature engineering](#feature-engineering)
 - [References](#references)
 
 
@@ -68,6 +71,22 @@ The algorithm is as follows:
 
 ![Multiple features](images/ml_multiple-features.png)
 
+| General Notation        | Description                                                                          | Python (if applicable) |
+| ----------------------- | ------------------------------------------------------------------------------------ | ---------------------- |
+| 𝑎                       | scalar, non bold                                                                     |
+| 𝐚                       | vector, bold                                                                         |
+| 𝐀                       | matrix, bold capital                                                                 |
+| 𝐗                       | training example matrix                                                              | `X_train`              |
+| 𝐲                       | training example targets                                                             | `y_train`              |
+| 𝐱(𝑖), 𝑦(𝑖)              | 𝑖𝑡ℎ Training Example                                                                 | `X[i]`, `y[i]`         |
+| m                       | number of training examples                                                          | `m`                    |
+| n                       | number of features in each example                                                   | `n`                    |
+| 𝐰                       | parameter: weight                                                                    | `w`                    |
+| 𝑏                       | parameter: bias                                                                      | `b`                    |
+| 𝑓𝐰,𝑏(𝐱(𝑖))              | The result of the model evaluation at 𝐱(𝐢) parameterized by 𝐰,𝑏: 𝑓𝐰,𝑏(𝐱(𝑖))=𝐰⋅𝐱(𝑖)+𝑏 | `f_wb`                 |
+| $\frac{∂𝐽_(𝐰,𝑏)}{∂𝑤_𝑗}$ | the gradient or partial derivative of cost with respect to a parameter $w_j$         | `dj_dw[j]`             |
+| $\frac{∂𝐽_(𝐰,𝑏)}{∂𝑤_b}$ | the gradient or partial derivative of cost with respect to a parameter $b$           | `dj_db`                |
+
 Notations:
 
 - $x_j$ : $j^{th}$ feature
@@ -83,18 +102,53 @@ or in vector form:
 
 $$f_{\vec{w},b}(\vec{x}) = \vec{w} \cdot \vec{x} + b$$
 
+or in NumPy
+
+```python
+f = np.dot(w, x) + b
+```
+
 where
 
 - $\vec{w} = \begin{bmatrix}w_1 \\ w_2 \\ \vdots \\ w_n\end{bmatrix}$, $\vec{x} = \begin{bmatrix}x_1 \\ x_2 \\ \vdots \\ x_n\end{bmatrix}$
 
 - $\cdot$ means **dot product** in linear algebra
 
-In code with NumPy:
+### Gradient descent for multiple variables
 
-```python
-f = np.dot(w, x) + b
-```
+![Gradient descent for multiple variables](images/ml_gradient-descent-multipe-variables.png)
 
+### Feature scaling
+
+This is to make the features have similar scale (usually -1 to 1), so that the gradient descent will converge faster.
+
+After normalization, `0.1` is a good start for the learning rate $\alpha$.
+
+Three techniques:
+
+- Feature scaling
+
+  $$x_i = \frac{x_i - min}{max - min}$$
+
+- Mean normalization
+
+  $$x_i = \frac{x_i - \mu_i}{max - min}$$
+
+- Z-score normalization
+
+  $$x_i = \frac{x_i - \mu_i}{\sigma_i}$$
+
+  - $\mu_i$ : mean of feature $i$
+  - $\sigma_i$ : standard deviation of feature $i$
+  - The scaled feature will have a mean of 0 and standard deviation of 1
+
+
+## Feature engineering
+
+![Feature engineering](images/ml_concept-feature-engineering.png)
+
+- Creating new features from existing features.
+- You should do feature scaling after feature engineering.
 
 
 ## References
