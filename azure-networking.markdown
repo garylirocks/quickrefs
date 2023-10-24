@@ -1201,7 +1201,7 @@ Components:
   - Handle TLS/SSL certificates for HTTPS
   - Two types:
     - Basic: doesn't care host names, **each port can only have one basic listener**
-    - Multi-site: you specify one or more host names, AGW matches incoming requests using **HTTP 1.1 `host` header**, each port could have multiple multi-site listeners
+    - Multi-site: you specify one or more host names, AGW matches incoming requests using **HTTP 1.1 `host` header**, each IP/port pair could have multiple multi-site listeners, and they are processed according to priority of associated routing rule ?
   - For v2 SKU, multi-site listeners are processed before basic listeners
   - A listener can have **only one** associated rule
   - You could redirect from one listener to another (eg. HTTP to HTTPS)
