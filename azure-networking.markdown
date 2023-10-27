@@ -1695,6 +1695,10 @@ By default, all traffic is blocked, you can configure:
 
 Network rules are processed before application rules
 
+Premium SKU only:
+- TLS inspection
+- IDPS: Intrusion Detection and Prevention System
+
 ### Azure Firewall Manager
 
 ![Firewall manager overview](images/azure_firewall-manager.png)
