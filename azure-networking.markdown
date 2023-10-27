@@ -70,6 +70,7 @@
   - [Your own DNS server](#your-own-dns-server)
   - [CLI](#cli-4)
 - [Azure Firewall](#azure-firewall)
+  - [Asymmetric routing](#asymmetric-routing)
   - [Azure Firewall Manager](#azure-firewall-manager)
   - [Firewall policy](#firewall-policy)
   - [Web Application Firewall (WAF)](#web-application-firewall-waf)
@@ -80,6 +81,7 @@
 - [Network design considerations](#network-design-considerations)
 - [Networking architecutres](#networking-architecutres)
 - [Hub-spoke architecture](#hub-spoke-architecture)
+- [Firewall and Application Gateway integration patterns](#firewall-and-application-gateway-integration-patterns)
 
 ## Overview
 
@@ -1252,7 +1254,7 @@ See: https://docs.microsoft.com/en-us/azure/application-gateway/configuration-in
 An Application Gateway needs its own dedicated subnet:
 
 - An AGW can have multiple instances, each has one private IP from the subnet
-- Another private IP address needed if a private frontend IP is configured
+- Private front-end IP is taken from the subnet as well, eg. subnet range is `10.0.0.0/24`, `10.0.0.4` is the front-end IP, `10.0.0.5`, `10.0.0.6` are IPs of instances
 - A subnet can host multiple AGWs
 - You need to size this subnet appropriately based on the number of instances
   - V2 SKU can have max. 125 instances, /24 is recommended for the subnet
@@ -1267,6 +1269,11 @@ Suggested NSG for the subnet (See: https://aidanfinn.com/?p=21474):
 | VirtualNetwork        | VirtualNetwork | *                                          | *        | Inbound   | Allow | AllowVirtualNetwork                                                                |
 | Any                   | Internet       | *                                          | *        | Outbound  | Allow | A default outbound rule, required (eg. connection back to clients), don't override |
 | Any                   | Any            | *                                          | *        | Inbound   | Deny  | Deny everything else, overridding default rules                                    |
+
+**V2 limitations**:
+
+- Even all clients are on-prem or in Azure, conneting only to the private front-end IP of the AGW, it still needs a public IP for control plane management, `GatewayManager` always connects to this public IP, see: https://learn.microsoft.com/en-us/azure/application-gateway/application-gateway-private-deployment, and the default route to `0.0.0.0/0` can only go to `Internet` for this to work
+
 
 ### CLI
 
@@ -1680,7 +1687,7 @@ By default, all traffic is blocked, you can configure:
   - Translate firewall public IP/port to a private IP/port, could be helpful in publishing SSH, RDP, or non-HTTP/S applications to the Internet
   - **must be accompanied by a matching network rule**
   - Limitations:
-    - Doesn't work for private IP destinations (ie. spoke to spoke)
+    - Doesn't work for private IP destinations (ie. spoke to spoke, on-prem to spoke)
     - In addition to DNAT, inbound connections via public IP are always SNATed to one of the firewall private IPs. (For HTTP/s traffic, Azure Front Door or Application Gateway in front of the firewall could preserve the original client IP in `X-Forwarded-For` header)
 - **Network rules**:
   - Apply to **non-HTTP/S traffic** that flow through the firewall, including traffic from one subnet to another
@@ -1704,6 +1711,15 @@ DNS proxy:
 Premium SKU only:
 - TLS inspection
 - IDPS: Intrusion Detection and Prevention System
+
+### Asymmetric routing
+
+![Azure Firewall asymmetric routing](images/azure_networking-firewall-asymmetric_routing.png)
+
+- Under the hood, Azure Firewall has a public ALB and a internal ALB
+- You want traffic from spoke to a shared service in the CommonServices subnet in hub to be filtered by Firewall
+- The UDR rule in red could cause asymmetric routing, inbound traffic goes via instance `.7`, but return traffic goes via instance `.6`
+- The UDR rule in spoke should not include the Firewall subnet, set the prefix to `192.168.1.0/24`, instead of the whole hub address space
 
 ### Azure Firewall Manager
 
@@ -1930,3 +1946,38 @@ A combination of network monitoring and diagnostic tools.
 
 - Shared services in hub vnet: ExpressRoute Gateway, Management, DMZ, AD DS, etc
 - Hub and each spoke could be in different subscriptions
+
+
+## Firewall and Application Gateway integration patterns
+
+See: https://learn.microsoft.com/en-us/azure/architecture/example-scenario/gateway/firewall-application-gateway
+
+- In parallel
+
+  ![Firewall and AGW parallel - ingress](images/azure_networking-firewall-agw-parallel-ingress.png)
+
+  *HTTP/S traffic ingress via AGW*
+
+  ![Firewall and AGW parallel - egress](images/azure_networking-firewall-agw-parallel-egress.png)
+
+  *Traffic egress via Firewall*
+
+  ![Firewall and AGW parallel - on-prem ingress](images/azure_networking-agw-firewall-onprem-clients.png)
+
+  *Traffic ingress from on-prem*
+
+  - For Non-HTTP(S) traffic, `GatewaySubnet` needs UDR to route it to the Firewall
+
+- AGW before firewall
+
+  ![AGW before firewall](images/azure_networking-agw-before-firewall.png)
+
+  - Original client IP can be preserved in the `X-Forwarded-For` header added by AGW
+  - Traffic can be encrypted end-to-end, Firewall can still inspect the en
+
+- Firewall before AGW
+
+  ![Firewall before AGW](images/azure_networking-firewall-before-agw.png)
+
+  - Limited benefits, don't recommend
+  - Application can't get original client IP, since Azure Firewall does DNAT and SNAT, unless you have Azure Front Door before the Firewall, which adds the `X-Forwarded-For` header
