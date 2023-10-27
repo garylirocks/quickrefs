@@ -1,12 +1,14 @@
 # Azure Networking - Private Link
 
 - [Private Endpoint Overview](#private-endpoint-overview)
-- [Limitations](#limitations)
+- [Networking](#networking)
   - [Routing](#routing)
   - [NSG](#nsg)
   - [UDR](#udr)
 - [Network architecture design with Azure Firewall](#network-architecture-design-with-azure-firewall)
 - [DNS resolution](#dns-resolution)
+  - [Overview](#overview)
+  - [Scenarios](#scenarios)
   - [DNS integration at scale](#dns-integration-at-scale)
   - [Pitfall - Resolve PaaS endpoint in other tenants](#pitfall---resolve-paas-endpoint-in-other-tenants)
   - [Subresources and DNS zone group](#subresources-and-dns-zone-group)
@@ -37,14 +39,16 @@ Notes
 - Private endpoints **DO NOT** restrict public network access to services, except **Azure App Service** and **Azure Functions**, they become inaccessible publicly when they are associated with a private endpoint. Other PaaS services may have additional access control. (*such as the `publicNetworkAccess` property, this property is not always visible in the Portal*)
 - The connected private link resource could be in a different region
 - To allow automatic approval for private endpoints, you need this permission on the private-link resource: `Microsoft.<Provider>/<resource_type>/privateEndpointConnectionsApproval/action`
+- It's considered best practice to expose private endpoints on a small, **dedicated subnet** within the consuming virtual network. One reason is that you can apply `PrivateEndpointNetworkPolicies` on the subnet for added traffic control and security.
 
-## Limitations
+
+## Networking
 
 See: https://docs.microsoft.com/en-us/azure/private-link/private-endpoint-overview#limitations
 
-Private endpoint is a **special** network interface, works differently to VM NICs
-
 ### Routing
+
+Private endpoint is a **special** network interface, works differently to VM NICs
 
 ![Private link routing](./images/azure_private-link-routing.drawio.svg)
 
@@ -120,6 +124,8 @@ See: https://docs.microsoft.com/en-us/azure/private-link/inspect-traffic-with-az
 
 ## DNS resolution
 
+### Overview
+
 Microsoft documentation: https://docs.microsoft.com/en-us/azure/private-link/private-endpoint-dns#azure-services-dns-zone-configuration
 
 **There are many pitfalls/challenges regarding private endpoint DNS resolution (and network routing), see:**
@@ -170,7 +176,7 @@ my-webapp         10.0.0.4
 my-webapp.scm     10.0.0.4
 ```
 
-A few scenarios for DNS resolution:
+### Scenarios
 
 - Single vNet without custom DNS server
 
@@ -193,6 +199,10 @@ A few scenarios for DNS resolution:
   The key here is to setup **different AD DNS Application Partitions**, one for Azure, one for on-prem
 
   ![DC integrated DNS](images/azure_private-link-ad-scenario.png)
+
+- In Azure Virtual WAN
+
+  See [Virtual WAN note](./azure-networking-virtual-wan.markdown)
 
 ### DNS integration at scale
 
