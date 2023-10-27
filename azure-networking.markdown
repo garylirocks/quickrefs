@@ -1677,8 +1677,11 @@ More detailed:
 By default, all traffic is blocked, you can configure:
 
 - **DNAT rules**:
-  - Translate firewall public IP and port to a private IP and port, could be helpful in publishing SSH, RDP, or non-HTTP/S applications to the Internet
+  - Translate firewall public IP/port to a private IP/port, could be helpful in publishing SSH, RDP, or non-HTTP/S applications to the Internet
   - **must be accompanied by a matching network rule**
+  - Limitations:
+    - Doesn't work for private IP destinations (ie. spoke to spoke)
+    - In addition to DNAT, inbound connections via public IP are always SNATed to one of the firewall private IPs. (For HTTP/s traffic, Azure Front Door or Application Gateway in front of the firewall could preserve the original client IP in `X-Forwarded-For` header)
 - **Network rules**:
   - Apply to **non-HTTP/S traffic** that flow through the firewall, including traffic from one subnet to another
   - Inbound/outbound filtering rules by source, destination, port and protocol(TCP, UDP, ICMP or any), it can distinguish legitimate packets for different type of connections
