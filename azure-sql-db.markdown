@@ -4,17 +4,21 @@
 - [SQL Database](#sql-database)
   - [Concepts](#concepts)
   - [Purchasing models](#purchasing-models)
-  - [Service tiers](#service-tiers)
+  - [High availability](#high-availability)
   - [Scaling](#scaling)
-  - [Business continuity (BCDR)](#business-continuity-bcdr)
   - [Networking](#networking)
 - [SQL Managed Instance](#sql-managed-instance)
-- [Backup for SQL, SQL MI](#backup-for-sql-sql-mi)
+  - [High availability](#high-availability-1)
+- [Shared between SQL, SQL MI](#shared-between-sql-sql-mi)
+  - [Disaster recovery](#disaster-recovery)
+    - [Notes](#notes)
+    - [Failover groups](#failover-groups)
+  - [Backup](#backup)
 - [SQL Server on Azure VM](#sql-server-on-azure-vm)
   - [HADR](#hadr)
     - [Always On availability group](#always-on-availability-group)
     - [Failover cluster instance (FCI)](#failover-cluster-instance-fci)
-  - [Backup](#backup)
+  - [Backup](#backup-1)
 - [Authentication and authorization](#authentication-and-authorization)
   - [Authentication](#authentication)
   - [Authorization](#authorization)
@@ -30,14 +34,13 @@ Deployment options:
 
 ![Deployment options](./images/azure_sql-db-deployment-options.png)
 
-Elastic pool: multiple databases in a single logical SQL server, and all the DBs share the server's resources
-
 |                   | SQL Databases                  | SQL Managed Instance               | SQL Server on VM |
 | ----------------- | ------------------------------ | ---------------------------------- | ---------------- |
 | Type              | PaaS                           | PaaS                               | IaaS             |
 | Why choose        | Modern cloud solution          | Instance-scoped features           | OS level access  |
 | Purchasing models | DTU, vCore                     | vCore                              | -                |
 | HA                | geo-replication, auto-failover | automated backup, no auto-failover | no auto-failover |
+
 
 ## SQL Database
 
@@ -61,22 +64,37 @@ Elastic pool: multiple databases in a single logical SQL server, and all the DBs
 - DTU: a bundled measure of compute, storage and I/O resources
 - vCore: select compute and storage resources independently, allows you to use Azure Hybrid Benefit for SQL Server
 
-| Purchasing Model | DTU                      | vCore                                         |
-| ---------------- | ------------------------ | --------------------------------------------- |
-| Service tiers    | Basic, Standard, Premium | General Purpose, Bisness Critical, Hyperscale |
+| Service tier            | Basic (DTU) | Standard (DTU) | Premium (DTU) | General Purpose (vCore) | Business Critical (vCore) | Hyperscale (vCore) |
+| ----------------------- | ----------- | -------------- | ------------- | ----------------------- | ------------------------- | ------------------ |
+| Local redundant support | Yes         | Yes            | Yes           | Yes                     | Yes                       | Yes                |
+| Zone redundant support  | No          | No             | Yes           | Yes                     | Yes                       | Yes                |
 
-### Service tiers
+### High availability
 
-- General Purpose
+All the options below have **RPO == 0**, **RTO < 60 seconds**
+
+- Basic, Standard and General Purpose
 
   ![General purpose architecture](./images/azure_sql-general-purpose.png)
+
+  *Local redundant*
+
+  ![General purpose zone-redundant](./images/azure_sql-general-purpose-zone-redundant.png)
+
+  *Zone-redundant (not available for Basic and Standard tiers)*
 
   - tempdb in locally attached SSD
   - data and log files are in Azure Premium Storage
 
-- Business Critical
+- Premium and Business Critical
 
   ![Business critical architecture](./images/azure_sql-business-critical.png)
+
+  *Local redundant*
+
+  ![Business critical zone-redundant](images/azure_sql-business-critical-zone-redundant.png)
+
+  *Zone-redundant*
 
   - Data and log files are stored on direct-attached SSD
   - It deploys an Always On availability group (AG) behind the scenes
@@ -113,39 +131,6 @@ Read Scale-out in a business critical service tier:
 - Data-changes are propagated asynchronously
 - Read scale-out with one of the secondary replicas supports **session-level consistency**, if the read-only session reconnects, it might be redirected to another replica
 
-### Business continuity (BCDR)
-
-You can add databases to a failover group, they'll be replicated automatically to a server in a paired region.
-
-A failover group has its own listener endpoints like:
-
-- Read/write: `fog-demo.database.windows.net`
-- Read-only:  `fog-demo.secondary.database.windows.net`
-
-
-The DNS resolution chain is like:
-
-```
-fog-demo.database.windows.net.     30 IN CNAME sql-demo-eus.database.windows.net.
-# if private endpoint is enabled
-sql-demo-eus.database.windows.net. 30 IN CNAME sql-demo-eus.privatelink.database.windows.net.
-...
-```
-
-After failover, it would be like:
-
-```
-fog-demo.database.windows.net.     30 IN CNAME sql-demo-wus.database.windows.net.
-# if private endpoint is enabled
-sql-demo-wus.database.windows.net. 30 IN CNAME sql-demo-wus.privatelink.database.windows.net.
-...
-```
-
-Notes:
-
-- You should use these failover listener endpoints in connection string for your application, so you don't need to manually update the connection string when failover happens, the connection is always routed to whichever instance which is currently primary.
-- Removing a failover group for a single or pooled database does not stop replication, and it does not delete the replicated database.
-
 ### Networking
 
 There is a networking setting called "**Allow Azure services and resources to access this server**",
@@ -155,7 +140,6 @@ There is a networking setting called "**Allow Azure services and resources to ac
   - when turned **OFF**, you need to either
     - Allow the client subnet (to connect via ServiceEndpoint)
     - Allow public IP (to connect via Internet)
-
 
 ## SQL Managed Instance
 
@@ -171,8 +155,82 @@ There is a networking setting called "**Allow Azure services and resources to ac
   - Distributes transcations
   - Machine Learning Services
 
+### High availability
 
-## Backup for SQL, SQL MI
+Has General Purpose and Business Critical service tiers, and high availability options are similar to the options of Azure SQL Databases, see details here https://learn.microsoft.com/en-us/azure/azure-sql/managed-instance/high-availability-sla
+
+
+## Shared between SQL, SQL MI
+
+### Disaster recovery
+
+Comparison between HA and DR:
+
+|         | HA          | DR           |
+| ------- | ----------- | ------------ |
+| Region  | Same region | Cross region |
+| Latency | < 2ms       | 10 ~ 100 ms  |
+| Sync    | Sync        | Async        |
+
+DR options:
+
+- Geo replicas
+  - Using log shipping to replicate data
+  - Set at DB level
+  - Each DB can have 4 replicas
+  - SQL DB only, not for SQL MI
+- Automatic failover group
+  - Is an abstraction over geo replicas
+  - A SQL server can have multiple failover groups
+  - A failover group can include multiple databases
+  - A databases can only be in one group
+  - For SQL MI, all databases will be in one failover group
+
+#### Notes
+
+- DR needs to be sized as production, so it can hold all the data
+- With Planned failover, there is no data loss
+- With Unplanned failover
+  - RPO is 1~2 seconds (*if you want absolute no data loss, consider CosmosDB, it has strong consistency - data stored in multiple regions, but your application needs to accept latency*)
+  - RTO is <60 seconds
+- You should
+  - Have a script to failover everything in sequence, instead of doing stuff manually
+  - The script should be tested regularly, so you have the confidence it works
+
+#### Failover groups
+
+You can add databases to a failover group, they'll be replicated automatically to a server in a paired region.
+
+A failover group has two listener endpoints:
+
+- Read/write: `fog-demo.database.windows.net`
+- Read-only:  `fog-demo.secondary.database.windows.net`
+
+The DNS resolution chain is like:
+
+```
+fog-demo.database.windows.net.     30 IN CNAME sql-demo-eus.database.windows.net.
+# if private endpoint is enabled
+sql-demo-eus.database.windows.net. 30 IN CNAME sql-demo-eus.privatelink.database.windows.net.
+...
+```
+
+After failover, the primary region changes:
+
+```
+fog-demo.database.windows.net.     30 IN CNAME sql-demo-wus.database.windows.net.
+# if private endpoint is enabled
+sql-demo-wus.database.windows.net. 30 IN CNAME sql-demo-wus.privatelink.database.windows.net.
+...
+```
+
+Notes:
+
+- You should use these failover listener endpoints in connection string for your application, so you don't need to manually update the connection string when failover happens, the connection is always routed to whichever instance which is currently primary.
+- The listener FQDN's ttl is 30 seconds, when failover happens, it allows the FQDN resolves to the new primary region
+- Removing a failover group for a single or pooled database does not stop replication, and it does not delete the replicated database.
+
+### Backup
 
 SQL, SQL MI:
 
