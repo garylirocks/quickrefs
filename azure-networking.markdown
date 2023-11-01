@@ -51,6 +51,8 @@
   - [SKUs](#skus)
   - [Distribution modes](#distribution-modes)
 - [Application Gateway](#application-gateway)
+  - [Overview](#overview-1)
+  - [Components](#components)
   - [How does routing works](#how-does-routing-works)
   - [AGW subnet and NSG](#agw-subnet-and-nsg)
   - [CLI](#cli-3)
@@ -63,7 +65,7 @@
   - [Standard rules engine notes](#standard-rules-engine-notes)
   - [Custom domain HTTPS](#custom-domain-https)
 - [DNS](#dns)
-  - [Overview](#overview-1)
+  - [Overview](#overview-2)
   - [DNS resolution within virtual networks](#dns-resolution-within-virtual-networks)
   - [Azure-provided name resolution](#azure-provided-name-resolution)
   - [Private DNS zones](#private-dns-zones)
@@ -1161,6 +1163,8 @@ Example multi-tier architecture with load balancers
 
 ## Application Gateway
 
+### Overview
+
 Features:
 
 - Is a load balancer for web apps, supports HTTP, HTTPS, HTTP/2 and WebSocket protocols
@@ -1179,9 +1183,9 @@ Benefits over a simple LB:
 - URL rule-based routes: based on hostname and paths, helpful when setting up a CDN
 - Rewrite HTTP headers: such as scrubing server names
 
-![Application Gateway](images/azure_application-gateway.png)
+### Components
 
-Components:
+![Application Gateway](images/azure_application-gateway.png)
 
 ![Application Gateway components](images/azure_application-gateway-components.png)
 
@@ -1243,9 +1247,13 @@ AGW inserts six additional headers to all requests before it forwards the reques
 - `x-original-url`
 - `x-appgw-trace-id`
 
-On using cert in a Key vault:
+Notes:
 
-If using Private Endpoints to access Key Vault, you **must link** the `privatelink.vaultcore.azure.net` private DNS zone, containing the corresponding record to the referenced Key Vault, to the virtual network containing Application Gateway. Custom DNS servers may continue to be used on the virtual network instead of the Azure DNS provided resolvers, however the private dns zone will need to remain linked to the virtual network as well.
+- AGW doesn't support port numbers in HTTP Host headers. As a result, the connection between AGW and the web server only supports TCP port 443, not non-standard ports.
+
+- On using cert in a Key vault:
+
+  If using Private Endpoints to access Key Vault, you **must link** the `privatelink.vaultcore.azure.net` private DNS zone, containing the corresponding record to the referenced Key Vault, to the virtual network containing Application Gateway. Custom DNS servers may continue to be used on the virtual network instead of the Azure DNS provided resolvers, however the private dns zone will need to remain linked to the virtual network as well.
 
 ### AGW subnet and NSG
 
