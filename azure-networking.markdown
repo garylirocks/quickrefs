@@ -75,7 +75,9 @@
   - [Asymmetric routing](#asymmetric-routing)
   - [Azure Firewall Manager](#azure-firewall-manager)
   - [Firewall policy](#firewall-policy)
-  - [Web Application Firewall (WAF)](#web-application-firewall-waf)
+- [Web Application Firewall (WAF)](#web-application-firewall-waf)
+  - [WAF Config vs. WAF Policy](#waf-config-vs-waf-policy)
+  - [WAF policy on AGW](#waf-policy-on-agw)
 - [DDoS Protection](#ddos-protection)
 - [Azure Virtual Network Manager](#azure-virtual-network-manager)
 - [Network Watcher](#network-watcher)
@@ -1735,8 +1737,7 @@ Premium SKU only:
 
 In a large network deployment, you could have multiple firewall instances in hub vNets and secured virtual hubs, Azure Firewall Manager helps to manage rules across all the instances.
 
-- Centrally deploy and configure multiple multiple Azure Firewall instances
-- Can span different Azure regions and subscriptions
+- A central view of security services (Azure Firewall, WAF, DDoS etc) in **multiple regions and subscriptions**
 - Hierarchical policies:
   - Central IT author global policies
   - DevOps team could author local firewall rules for better agility
@@ -1763,10 +1764,14 @@ In a large network deployment, you could have multiple firewall instances in hub
 
 ![Firewall policies](images/azure_firewall-manager-policies.png)
 
-### Web Application Firewall (WAF)
 
-- Centralized, inbound protection for your web applications agains common exploits and vulnerabilities
-- Provided by Application Gateway, Front Door and CDN services
+## Web Application Firewall (WAF)
+
+- Centralized, inbound protection for your web applications agains common exploits and vulnerabilities, like SQL injection, XSRF, etc
+- Can be deployed with **Application Gateway**, **Front Door** and **CDN** services, have different resource types:
+  - `Microsoft.Network/applicationGatewayWebApplicationFirewallPolicies`
+  - `Microsoft.Network/frontdoorWebApplicationFirewallPolicies`
+
 - Two modes: Detection and prevention
 - Two types of custom rules: match rules and rate-limit rules
 - Azure-managed Default Rule Set:
@@ -1779,6 +1784,25 @@ In a large network deployment, you could have multiple firewall instances in hub
   - Session fixation
   - SQL injection protection
   - Protocol attackers
+
+### WAF Config vs. WAF Policy
+
+- WAF Config:
+  - Not independent resources, `properties.webApplicationFirewallConfiguration` of an AGW
+  - Can be upgraded to a WAF policy
+- WAF Policy:
+  - Independent resource
+  - Can be associated to services in Firewall Manager
+  - One policy can be associated to multiple instances of a service
+  - Resource types for different services:
+    - AGW: `Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies`
+    - Front Door: `Microsoft.Network/FrontDoorWebApplicationFirewallPolicies`
+    - CDN: `Microsoft.Cdn/cdnWebApplicationFirewallPolicies`
+
+### WAF policy on AGW
+
+- Can only be associated to AGW of **WAF_v2** SKU
+- A WAF policy can be associated to AGW, a listener or a routing path
 
 
 ## DDoS Protection
