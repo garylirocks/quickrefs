@@ -76,8 +76,10 @@
   - [Azure Firewall Manager](#azure-firewall-manager)
   - [Firewall policy](#firewall-policy)
 - [Web Application Firewall (WAF)](#web-application-firewall-waf)
-  - [WAF Config vs. WAF Policy](#waf-config-vs-waf-policy)
+  - [WAF Config (legacy)](#waf-config-legacy)
   - [WAF policy on AGW](#waf-policy-on-agw)
+    - [Custom rules](#custom-rules)
+    - [Managed rules](#managed-rules)
 - [DDoS Protection](#ddos-protection)
 - [Azure Virtual Network Manager](#azure-virtual-network-manager)
 - [Network Watcher](#network-watcher)
@@ -1768,13 +1770,50 @@ In a large network deployment, you could have multiple firewall instances in hub
 ## Web Application Firewall (WAF)
 
 - Centralized, inbound protection for your web applications agains common exploits and vulnerabilities, like SQL injection, XSRF, etc
+- Can also protect against L& DDos attaches, such as HTTP Floods
+- Unlike WAF Config, a WAF policy resource can be shared across multiple instances of a service
 - Can be deployed with **Application Gateway**, **Front Door** and **CDN** services, have different resource types:
-  - `Microsoft.Network/applicationGatewayWebApplicationFirewallPolicies`
-  - `Microsoft.Network/frontdoorWebApplicationFirewallPolicies`
-
+  - AGW: `Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies`
+  - Front Door: `Microsoft.Network/FrontDoorWebApplicationFirewallPolicies`
+  - CDN: `Microsoft.Cdn/cdnWebApplicationFirewallPolicies`
 - Two modes: Detection and prevention
-- Two types of custom rules: match rules and rate-limit rules
-- Azure-managed Default Rule Set:
+- Can be managed Firewall Manager
+
+### WAF Config (legacy)
+
+- Not independent resources, `properties.webApplicationFirewallConfiguration` of an AGW
+- Should be upgraded to a WAF policy
+- When transition from WAF Config to WAF Policy, then the policy needs to be an exact copy of your config
+  - Or you can enable "Force" mode (`force_firewall_policy_association`), which will allow you to associate any WAF Policy, even if it doesn't match exactly
+
+### WAF policy on AGW
+
+- Can only be associated to AGW of **WAF_v2** SKU
+- A policy includes managed rules, custom rules, exclusions, file upload limit, etc
+- A WAF policy can be associated to
+  - AGW (global)
+  - a listener (per-site)
+  - a path-based rule (per-URI)
+- A AGW can have only one WAF policy associated
+- A WAF policy must be in the **same region and subscription** as the associated AGW
+- You can config **log scrubbing rules** to mask sensitive data in WAF logs
+
+#### Custom rules
+
+- Processed before managed rules
+- Two types:
+  - Match
+    - Conditions: IP address, Geo location, Request (method, URI, headers, cookies, body, query string, post args)
+  - Rate limit:
+    - All the MatchRule conditions can be used, so you can create rate limit rule just for a paticular URI, header, etc
+    - Can be grouped by client address and geo location
+    - Action can only be "Block" or "Log" (*"Allow" is not necessary*)
+    - Using a sliding windows algorithm, traffic exceeding the limit is dropped in each window
+- Once a rule is matched, the action will be applied, lower priorities rules will not be processed
+
+#### Managed rules
+
+- Default is OWASP CRS ruleset, protects against
   - Cross-site scripting
   - Java attacks
   - Local file inclusion
@@ -1784,25 +1823,10 @@ In a large network deployment, you could have multiple firewall instances in hub
   - Session fixation
   - SQL injection protection
   - Protocol attackers
-
-### WAF Config vs. WAF Policy
-
-- WAF Config:
-  - Not independent resources, `properties.webApplicationFirewallConfiguration` of an AGW
-  - Can be upgraded to a WAF policy
-- WAF Policy:
-  - Independent resource
-  - Can be associated to services in Firewall Manager
-  - One policy can be associated to multiple instances of a service
-  - Resource types for different services:
-    - AGW: `Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies`
-    - Front Door: `Microsoft.Network/FrontDoorWebApplicationFirewallPolicies`
-    - CDN: `Microsoft.Cdn/cdnWebApplicationFirewallPolicies`
-
-### WAF policy on AGW
-
-- Can only be associated to AGW of **WAF_v2** SKU
-- A WAF policy can be associated to AGW, a listener or a routing path
+- OWASP 3.x uses Anomaly Scoring mode, each rule has a severity level and a corresponding anomaly score, when the total score is 5 or greater, the request is either blocked (in Prevention mode) or logged (in Detection mode)
+- You can optionally enable bot protection rule set
+  - Three bot categories: "Bad", "Good", "Unknown"
+- Some managed rules can cause false positives and block real traffic, you can fix this by disable selected rule or rule groups.
 
 
 ## DDoS Protection
