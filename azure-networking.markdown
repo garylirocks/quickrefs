@@ -1789,7 +1789,7 @@ In a large network deployment, you could have multiple firewall instances in hub
 ### WAF policy on AGW
 
 - Can only be associated to AGW of **WAF_v2** SKU
-- A policy includes managed rules, custom rules, exclusions, file upload limit, etc
+- A policy includes settings for managed rules, custom rules, exclusions, file upload limit, etc
 - A WAF policy can be associated to
   - AGW (global)
   - a listener (per-site)
@@ -1813,7 +1813,9 @@ In a large network deployment, you could have multiple firewall instances in hub
 
 #### Managed rules
 
-- Default is OWASP CRS ruleset, protects against
+- Hierarchy: Rule set -> rule group -> rule
+- Two rule sets: OWASP_3.2, Microsoft_BotManagerRuleSet_1.0
+- OWASP rule set protects against
   - Cross-site scripting
   - Java attacks
   - Local file inclusion
@@ -1823,10 +1825,13 @@ In a large network deployment, you could have multiple firewall instances in hub
   - Session fixation
   - SQL injection protection
   - Protocol attackers
-- OWASP 3.x uses Anomaly Scoring mode, each rule has a severity level and a corresponding anomaly score, when the total score is 5 or greater, the request is either blocked (in Prevention mode) or logged (in Detection mode)
+- OWASP 3.x uses **Anomaly Scoring mode**, each rule has a severity level and a corresponding anomaly score, when the total score is 5 or greater, the request is either blocked (in Prevention mode) or logged (in Detection mode)
 - You can optionally enable bot protection rule set
   - Three bot categories: "Bad", "Good", "Unknown"
-- Some managed rules can cause false positives and block real traffic, you can fix this by disable selected rule or rule groups.
+- Some managed rules can cause false positives and block real traffic, you can customize them by
+  - Disable selected rule or rule groups
+  - Change action to "Log"
+  - Add exclusions based on request variables, exclusion could be applied globally or to a rule set, rule group or rule
 
 
 ## DDoS Protection
