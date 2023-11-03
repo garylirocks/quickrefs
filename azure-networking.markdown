@@ -1784,7 +1784,7 @@ In a large network deployment, you could have multiple firewall instances in hub
 - Not independent resources, `properties.webApplicationFirewallConfiguration` of an AGW
 - Should be upgraded to a WAF policy
 - When transition from WAF Config to WAF Policy, then the policy needs to be an exact copy of your config
-  - Or you can enable "Force" mode (`force_firewall_policy_association`), which will allow you to associate any WAF Policy, even if it doesn't match exactly
+  - Or you can enable "Force" mode (`properties.force_firewall_policy_association`), which will allow you to associate any WAF Policy, even if it doesn't match exactly
 
 ### WAF policy on AGW
 
