@@ -486,6 +486,7 @@ A `deployIfNotExists` or `modify` policy should define the roles it requires:
 - For resource groups, use `Microsoft.Resources/subscriptions/resourceGroups` as alias, not `Microsoft.Resources/resourceGroups`
 
 - While the Azure Policy VS Code extension is handy for verifying policy rules locally, it has some shortcomings:
+  - Sometimes it doesn't work in WSL, restart the computer and try again
   - The policy file name needs to end with `.pd.json`
   - The policy definition JSON format is a bit different from what you get from the Portal, move things out of `properties`, the format needs to be like:
     ```json
