@@ -8,6 +8,7 @@
   - [Gradient descent for multiple variables](#gradient-descent-for-multiple-variables)
   - [Feature scaling](#feature-scaling)
 - [Feature engineering](#feature-engineering)
+- [Logistic regression](#logistic-regression)
 - [References](#references)
 
 
@@ -149,6 +150,25 @@ Three techniques:
 
 - Creating new features from existing features.
 - You should do feature scaling after feature engineering.
+
+
+## Logistic regression
+
+![Logistic regression model](images/ml_concept-logistic-regression.png)
+
+The model uses sigmoid function (aka logistic function), which takes the the linear regression model's output as input, then outputs a value between 0 and 1, it's like transforming a straight line to an "S" shaped curve.
+
+Can also view it this way, given input $\vec{x}$ and parameters $\vec{w}$, $b$, the probability that $y$ equals 1:
+
+$$f_{\vec{w},b}(\vec{x}) = P(y=1|\vec{x};\vec{w},b)$$
+
+When $z$ or $\vec{w} \cdot \vec{x} + b = 0$, $g(z)$ is 0.5, the probability for either positive or negative result is 0.5, this is called the **decision boundary**.
+
+NOTE: $w$ and $b$ won't be the same if you run linear regression and logistic regression on the same data set
+
+![Logistic regression non linear decision boundary](images/ml_logistic-regression-decision-boundary-non-linear.png)
+
+*With high order polynomial function, the decision boundary does not need to be linear*
 
 
 ## References
