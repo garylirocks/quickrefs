@@ -9,6 +9,10 @@
   - [Feature scaling](#feature-scaling)
 - [Feature engineering](#feature-engineering)
 - [Logistic regression](#logistic-regression)
+  - [Cost function](#cost-function-1)
+  - [Gradient descent](#gradient-descent-1)
+- [Overfitting](#overfitting)
+  - [Regularization](#regularization)
 - [References](#references)
 
 
@@ -158,6 +162,8 @@ Three techniques:
 
 The model uses sigmoid function (aka logistic function), which takes the the linear regression model's output as input, then outputs a value between 0 and 1, it's like transforming a straight line to an "S" shaped curve.
 
+$$f_{\vec{w},b}(\vec{x}) = g(\vec{w} \cdot \vec{x} + b) = \frac{1}{1 + e^{-(\vec{w} \cdot \vec{x} + b)}}$$
+
 Can also view it this way, given input $\vec{x}$ and parameters $\vec{w}$, $b$, the probability that $y$ equals 1:
 
 $$f_{\vec{w},b}(\vec{x}) = P(y=1|\vec{x};\vec{w},b)$$
@@ -169,6 +175,88 @@ NOTE: $w$ and $b$ won't be the same if you run linear regression and logistic re
 ![Logistic regression non linear decision boundary](images/ml_logistic-regression-decision-boundary-non-linear.png)
 
 *With high order polynomial function, the decision boundary does not need to be linear*
+
+### Cost function
+
+The squared error function is not suitable in classification scenarios, the resulting cost function do not produce a convex curve.
+
+We use the logistic loss function
+
+*Loss means the difference from prediction to target for a paticular example*
+
+$$
+L(f_{\vec{w},𝑏}(\vec{X}^{(i)}), y^{(i)}) =
+\begin{cases}
+    −\log{\left( f_{\vec{w},𝑏}(\vec{X}^{(i)}) \right)} & \text{if } y^{(i)} = 1 \\
+    −\log{\left( 1 - f_{\vec{w},𝑏}(\vec{X}^{(i)}) \right)} & \text{if } y^{(i)} = 0
+\end{cases}
+$$
+
+To simplify it, we can combine the two cases to just one formula:
+
+$$L(f_{\vec{w},𝑏}(\vec{X}^{(i)}), y^{(i)}) =  −y^{(i)}\log f_{\vec{w},𝑏}(\vec{X}^{(i)}) - (1−y^{(i)}) \log (1 - f_{\vec{w},𝑏}(\vec{X}^{(i)})) $$
+
+The cost function is
+
+*Cost means the average loss for the total dataset*
+
+$$
+J(\vec{w},b) = \frac{1}{m} \sum_{i=1}^m { \left[ L(f_{\vec{w},𝑏}(\vec{X}^{(i)}), y^{(i)}) \right] } \\
+= - \frac{1}{m} \sum_{i=1}^m { \left[ y^{(i)}\log f_{\vec{w},𝑏}(\vec{X}^{(i)}) + (1−y^{(i)}) \log (1 - f_{\vec{w},𝑏}(\vec{X}^{(i)})) \right] } \\
+$$
+
+The closer the predicted value is to the actual value (0 or 1), the less the loss:
+
+![Logistic regression loss function 1](images/ml_logistic-loss-function-1.png)
+![Logistic regression loss function 2](images/ml_logistic-loss-function-2.png)
+![Logistic regression cost function](images/ml_logistic-cost-function.png)
+
+### Gradient descent
+
+$$
+\begin{align*}
+&\text{repeat until convergence:} \; \lbrace \\
+&  \; \; \;w_j = w_j -  \alpha \frac{\partial J(\mathbf{w},b)}{\partial w_j} \tag{1}  \; & \text{for j := 0..n-1} \\
+&  \; \; \;  \; \;b = b -  \alpha \frac{\partial J(\mathbf{w},b)}{\partial b} \\
+&\rbrace
+\end{align*}
+$$
+
+Where each iteration simultaneously updates $w_j$ for all $j$, where
+
+$$
+\begin{align*}
+\frac{\partial J(\mathbf{w},b)}{\partial w_j}  &= \frac{1}{m} \sum\limits_{i = 0}^{m-1} (f_{\mathbf{w},b}(\mathbf{x}^{(i)}) - y^{(i)})x_{j}^{(i)} \tag{2} \\
+\frac{\partial J(\mathbf{w},b)}{\partial b}  &= \frac{1}{m} \sum\limits_{i = 0}^{m-1} (f_{\mathbf{w},b}(\mathbf{x}^{(i)}) - y^{(i)}) \tag{3}
+\end{align*}
+$$
+
+
+## Overfitting
+
+If you use a high order polynomial model, a model may fit the training data perfectly, the cost is zero. But the model would not generalize well, meaning it does not work well with new data.
+
+Overfitting is also called **high variance**.
+
+![Overfitting](images/ml_overfitting.png)
+
+Three ways to address overfitting:
+
+- Collect more data
+- Select features
+- Regularization: Reduce size of parameters
+
+### Regularization
+
+The equation for the cost function regularized linear regression is:
+
+$$J(\mathbf{w},b) = \frac{1}{2m} \sum\limits_{i = 0}^{m-1} (f_{\mathbf{w},b}(\mathbf{x}^{(i)}) - y^{(i)})^2  + \frac{\lambda}{2m}  \sum_{j=0}^{n-1} w_j^2 \tag{1}$$
+
+Comparing to the normal linear regression, the difference is the regularization term,  <span style="color:blue">$\frac{\lambda}{2m}  \sum_{j=0}^{n-1} w_j^2$ </span>
+
+Including this term encourages gradient descent to minimize the size of the parameters.
+
+*Note, in this example, the parameter $b$ is not regularized. This is standard practice.*
 
 
 ## References
