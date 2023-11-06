@@ -1800,7 +1800,7 @@ In a large network deployment, you could have multiple firewall instances in hub
 
 #### Custom rules
 
-- Processed before managed rules
+- Processed before managed rules, **if a custom rule allows a request, NO managed rules will be processed**
 - Two types:
   - Match
     - Conditions: IP address, Geo location, Request (method, URI, headers, cookies, body, query string, post args)
@@ -1814,24 +1814,27 @@ In a large network deployment, you could have multiple firewall instances in hub
 #### Managed rules
 
 - Hierarchy: Rule set -> rule group -> rule
-- Two rule sets: OWASP_3.2, Microsoft_BotManagerRuleSet_1.0
-- OWASP rule set protects against
-  - Cross-site scripting
-  - Java attacks
-  - Local file inclusion
-  - PHP injection attacks
-  - Remote command execution
-  - Remote file inclusion
-  - Session fixation
-  - SQL injection protection
-  - Protocol attackers
-- OWASP 3.x uses **Anomaly Scoring mode**, each rule has a severity level and a corresponding anomaly score, when the total score is 5 or greater, the request is either blocked (in Prevention mode) or logged (in Detection mode)
+- Rulesets:
+  - OWASP CRS 3.x
+    - Cross-site scripting
+    - Java attacks
+    - Local file inclusion
+    - PHP injection attacks
+    - Remote command execution
+    - Remote file inclusion
+    - Session fixation
+    - SQL injection protection
+    - Protocol attackers
+  - DRS (Default Rule Set) 2.x: based on CRS, with additional Microsoft Threat Intelligence Collection rules
+  - BotProtection Rule Set
+- OWASP 3.x and DRS use **Anomaly Scoring mode**, each rule has a severity level and a corresponding anomaly score, when the total score is 5 or greater, the request is either blocked (in Prevention mode) or logged (in Detection mode)
 - You can optionally enable bot protection rule set
   - Three bot categories: "Bad", "Good", "Unknown"
 - Some managed rules can cause false positives and block real traffic, you can customize them by
   - Disable selected rule or rule groups
   - Change action to "Log"
   - Add exclusions based on request variables, exclusion could be applied globally or to a rule set, rule group or rule
+- To trigger blocking by managed rules, you can use `curl -I "http://<IP-address>/?1=1"`, this triggers both IP as hostname and SQL injection rules
 
 
 ## DDoS Protection
