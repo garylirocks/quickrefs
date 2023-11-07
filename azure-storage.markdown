@@ -86,17 +86,26 @@ Azure Storage is also used by IaaS VMs, and PaaS services:
 
 - Subscription
 - Location
-- Secure transer required: whether HTTPS is enforced
+- Secure transer required
+  - Whether HTTPS is enforced
+  - Azure file share over SMB without encryption fails
+  - Custom domain names doesn't support HTTPS, this option does not apply when using custom domains
+  - Doesn't support for custom domain names
 - Virtual networks: only allow inbound access request from the specified network(s)
-- Account kind
-  - **General-purpose v2**: all services and Data Lake Storage
-    - Standard or Premium performance tier
-  - **BlobStorage**: block and append blobs, only standard tier
-  - **Premium block blobs**: for low-latency, high-rate, small transactions
-  - **Premium file shares**: supports NFS
-  - **Premium page blobs**: high performance, VM disks
+- Tiers and kinds
+  - **Standard** tier
+    - **StorageV2**
+      - Suitable for most scenarios
+      - Includes all services and Data Lake Storage
+      - Has Standard or Premium performance tier
+    - **BlobStorage**
+      - Block and append blobs, only standard performance tier
+  - **Premium** tier
+    - **BlockBlobStorage**: for low-latency, high-rate, small transactions
+    - **PageBlobStorage**: high performance, VM disks
+    - **FileStorage**: supports NFS
 
-  *Premium accounts use SSD, but do not support GRS, GZRS*
+  *Premium tier use SSD, but do not support GRS, GZRS redundancy*
 
 - Default access tier (*Standard accounts only, Does not apply to Premium accounts*)
   - Hot or cool
@@ -793,12 +802,42 @@ Some RBAC roles allow a user to change ACLs:
 
 ## Files
 
-Network files shares
+Overview
 
-- Support SMB protocol, or NFS protocol for *Premium* tier
+- A *FileStorage* storage account can have both SMB and NFS shares, but a share can only be accessed with one protocol
 - Multiple VMs can share the same files with both read and write access
 - Can be used to replace your on-prem NAS devices or file servers
 - Up to 1TB for a single file, 100TB in a storage account, 2000 concurrent connections per shared file
+
+Protocols:
+
+- SMB:
+  - Supports:
+    - Kerberos auth, ACLs, and encryption-in-transit
+    - Data plane REST API (view file in the Portal)
+    - Share level RBAC
+    - Azure Backup / share snapshots
+- NFS
+  - *Premium* tier, *FileStorage* type storage account only
+  - Features:
+    - POSIX-compliant
+    - Hard link / symbolic link
+    - Permissions for NFS file shares are enforced by the client OS rather than the Azure Files service
+  - Scenarios:
+    - Storage for Linux/Unix applications
+    - POSIX-compliant file shares, cae sensitivity, or Unix style permissions |
+  - NO support for
+    - Kerberos auth
+    - ACLs
+    - Encryption-in-transit (must disable **Secure transfer required**)
+    - Data plane REST API (view file in the Portal)
+    - Share level RBAC
+    - Azure Backup / share snapshots
+    - Azure File Sync
+    - GRS or GZRS
+    - Soft delete
+    - AzCopy / Azure Storage Explorer
+    - Windows
 
 Common scenarios:
 
