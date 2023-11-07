@@ -15,6 +15,7 @@
 - [Data collection endpoints](#data-collection-endpoints)
 - [Defender for Cloud](#defender-for-cloud)
 - [Alerts](#alerts)
+  - [Overview](#overview-1)
   - [Signals](#signals)
   - [Notes](#notes)
 - [Log Analytics Workspace](#log-analytics-workspace)
@@ -388,6 +389,43 @@ Limitations:
 
 ## Alerts
 
+### Overview
+
+Make sure you understand the differences between:
+
+- **Action groups**:
+  - Configure notifications (Email, SMS, etc) and actions (runbook, webhook, etc)
+  - Resource type: `Microsoft.Insights/actionGroups`
+- **Alert rule**: the configuration of an alert
+  - Generate new alerts based on conditions
+  - Resource type differs depending on signal type:
+    - Metric alerts: `Microsoft.Insights/metricAlerts`
+    - Log query alerts: `microsoft.insights/scheduledqueryrules`
+- **Alert processing rule**:
+  - Previously know as 'action rule', resource type is still `Microsoft.AlertsManagement/actionRules`
+  - Rule type:
+    - **Suppression**:
+      - Suppress alerts during planned maintenance (or outside of business hours), so you don't need to disable and enable your alert rules manually before and after the maintenance window
+      - Only the action groups are suppressed, the alerts are still generated, and can be accessed in the Portal, via API, etc
+      - Has higher priority, overrides "Apply action groups" rules
+    - **Apply action groups**
+      - Always use an action group for high severity alerts, saves you the trouble to config in multiple alert rules
+      - Add action groups to alerts not fired by an alert rule: Azure Backup alert, VM Insights guest health alerts, Azure Stack Edge/Hub
+  - Scope:
+    - Can be at different levels: single resource, RG, subscription
+    - A rule can have multiple scopes: two subs, one RG, etc
+    - The rule applies to alerts fired on resources within that scope
+  - Filtering:
+    - Alert rule ID/name
+    - Alert context
+    - Alert description
+    - Alert severity
+    - Monitor condition: 'Fired' or 'Resolved'
+    - Resource, resource group, resource type
+    - Monitor service, could be "Platform", "Log Analytics", "Resource health", "Activity Log", etc
+  - Have a one-time or recurring window
+  - Doesn't work with **Azure Service Health** alerts
+
 ### Signals
 
 Signal types:
@@ -402,10 +440,10 @@ Signal types:
   - Scope: all or selected resource types, at subscription or resource group level
   - Condition: resource status change (eg. from available to unavailable), and whether it's platform or user initiated
 - **Service health**
-  - Scope: Can be created only on one subscription. If you need to alert on more subscriptions, create a separate alert rule for each subscription. You'll only be notified on health events impacting the services used in your subscription.
+  - Scope: Can be created only at subscription level. If you need to alert on more subscriptions, create a separate alert rule for each subscription. You'll only be notified on health events impacting the services used in your subscription.
   - Condition: service types, regions and event types (service issue, planned maintenance, etc).
 - Advisor
-- Smart detector
+- Smart detector: Application Insights
 
 ### Notes
 

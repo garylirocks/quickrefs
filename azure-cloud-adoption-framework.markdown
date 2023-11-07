@@ -7,6 +7,7 @@
 - [Landing zones](#landing-zones)
 - [Conceptual architecture](#conceptual-architecture)
   - [Policies](#policies)
+  - [Monitoring basline](#monitoring-basline)
   - [Tools and resources](#tools-and-resources)
 - [Deploy with Terraform](#deploy-with-terraform)
   - [ALZ Terraform module](#alz-terraform-module)
@@ -103,6 +104,11 @@ The reference landing zone implementation includes DINE and Modify policies, whi
 - Enable Defender for Cloud for different resource types as per requirements
 - Configure Azure Activity logs and diagnostic settings to be sent to the central LAW
 - Deploy the required Azure Monitor agents for VM, VMSS, Arc connected servers, etc, sending logs to central LAW
+
+### Monitoring basline
+
+- Each subscription should have at least one action group, which should include an email notification channel
+- You can use Azure Policy to create alert rules/alert processing rules/action groups at scale when the resources are deployed, see: https://azure.github.io/azure-monitor-baseline-alerts/welcome/
 
 ### Tools and resources
 
