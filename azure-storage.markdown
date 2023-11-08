@@ -103,7 +103,7 @@ Azure Storage is also used by IaaS VMs, and PaaS services:
   - **Premium** tier
     - **BlockBlobStorage**: for low-latency, high-rate, small transactions
     - **PageBlobStorage**: high performance, VM disks
-    - **FileStorage**: supports NFS
+    - **FileStorage**: supports NFS, use provisional billing model
 
   *Premium tier use SSD, but do not support GRS, GZRS redundancy*
 
@@ -812,6 +812,7 @@ Overview
 Protocols:
 
 - SMB:
+  - Supports SMB v3.0, SMB v2.1
   - Supports:
     - Kerberos auth, ACLs, and encryption-in-transit
     - Data plane REST API (view file in the Portal)
@@ -819,6 +820,7 @@ Protocols:
     - Azure Backup / share snapshots
 - NFS
   - *Premium* tier, *FileStorage* type storage account only
+  - Supports NFS v4.1
   - Features:
     - POSIX-compliant
     - Hard link / symbolic link
@@ -848,9 +850,10 @@ Common scenarios:
 Tiers:
 
 - Premium: backed by SSD, supports NFS protocol
-- Transaction optimized
-- Hot
-- Cool
+- Standard:
+  - Transaction optimized
+  - Hot
+  - Cool
 
 Compare to Blobs and Disks
 

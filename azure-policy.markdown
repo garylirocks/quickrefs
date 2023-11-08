@@ -195,8 +195,7 @@ An assignment could have one of the following effects:
 - **Disabled**
 - **AuditIfNotExists**
   - Runs after Resource Provider has handled a create/update resource request and has returned a success status code.
-  - The audit occurs if there are no related resources(defined by `then.details`) or if the related resources don't satisfy `then.details.ExistenceCondition`.
-  - The resource defined in **if** condition is marked as non-compliant.
+  - The audit occurs if there are no related resources(defined by `then.details`) or if none of the related resources satisfy `then.details.ExistenceCondition`. The resource defined in **if** condition is marked as non-compliant.
   - Example (audit if no Antimalware extension on a VM):
     ```json
     {
