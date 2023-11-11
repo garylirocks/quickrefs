@@ -13,6 +13,7 @@
   - [Gradient descent](#gradient-descent-1)
 - [Overfitting](#overfitting)
   - [Regularization](#regularization)
+- [Neural networks](#neural-networks)
 - [References](#references)
 
 
@@ -257,6 +258,15 @@ Comparing to the normal linear regression, the difference is the regularization 
 Including this term encourages gradient descent to minimize the size of the parameters.
 
 *Note, in this example, the parameter $b$ is not regularized. This is standard practice.*
+
+
+## Neural networks
+
+![Neural network layers](images/ml_neural-network-layers.png)
+
+![Neural network notations](images/ml_neural-network-layers-notations.png)
+
+Each layer contains multiple neurons(AKA units, activation functions), each of them is a logistic regression model.
 
 
 ## References
