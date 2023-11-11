@@ -268,6 +268,10 @@ Including this term encourages gradient descent to minimize the size of the para
 
 Each layer contains multiple neurons(AKA units, activation functions), each of them is a logistic regression model.
 
+Build a neural network in TensorFlow:
+
+![Use TensorFlow to build a neural network](images/ml_neural-network-tensorflow.png)
+
 
 ## References
 
