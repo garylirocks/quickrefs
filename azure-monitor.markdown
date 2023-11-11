@@ -68,10 +68,10 @@ Azure Monitor is based on a common mornitoring data platform that includes Logs 
 | Log Analytics workspace        | time-series database             |
 
 - What can be collected:
-  - **Metrics**: usually displayed in the overview page of resources
+  - **Metrics**: usually displayed in the overview page of resources, stored for 30 days by default
   - **Platform logs**
     - Azure AD logs
-    - Activity logs
+    - Activity logs (90 days by default)
     - Resource logs (aka. Diagnostic Logs)
   - **Application logs**
 - Usually for a resource:
@@ -136,6 +136,7 @@ Comparison between Log Analytics Agent and Diagnostics Extension
 
 - Log Analytics Agent is more powerful than Diagnostics Extension, they could be used together
 - You configure **what data sources to collect in a workspace**, these configurations are pushed to all connected agents
+  - You can't configure collection of **security events** from the workspace by using the Log Analytics agent. You must use Microsoft Defender for Cloud or Microsoft Sentinel to collect security events. The Azure Monitor agent can also be used to collect security events.
   - E.g. When you config Syslog in a workspace, the configs are pushed to each connected host by updating `/etc/rsyslog.d/95-omsagent.conf`, this config file controls what syslogs will be forwarded to the agent (listening on port 25224)
 
   ![Syslog forwarding](images/azure_monitor-linux-syslog-diagram.png)
@@ -377,14 +378,48 @@ Limitations:
 
 ## Defender for Cloud
 
-- Formerly called Azure Security Center
+- Formerly called "Azure Security Center"
 - Free features are automatically enabled for your subscriptions when you visit "Defender for Cloud" in the Portal
-- You could turn on "Enhanced security features" (Defender plan by resource type)
+- Collects data from compute resources, such as VMs, VMSS, IaaS containers, and non-Azure computers, data is collected using:
+  - Azure Monitor Agent (AMA)
+  - Microsoft Defender for Endpoint (MDE)
+  - Log Analytics Agent
+  - Azure Policy Add-on for Kubernetes
+- Two types of Defender plans
+  - Cloud Security Posture Management (CSPM)
+    - Foundational CSPM - Free, enabled by default
+    - Defender CSPM - charged per resource (Servers, DBs, Storage accounts)
+  - Cloud Workload Protection (CWP)
+    - Servers
+    - App Service
+    - Database
+    - Storage
+    - Containers
+    - Key Vault
+    - Resource Manager (charged per subscription)
+    - API Management service
 - Some plans could be enabled at either subscription level or resource level
   - Defender for Storage account
   - Defender for SQL
-- Collects data from resources such as VMs by using the Log Analytics Agent, and puts it into a workspace
-  - Log Analytics Agent can be provisioned automatically
+- Some Defender plans require "monitoring components" to collect data from your workloads
+  - Defender for Servers
+    - Azure Arc agent (For multicloud and on-premises servers)
+    - Microsoft Defender for Endpoint
+    - Vulnerability assessment
+    - Azure Monitor Agent or Log Analytics agent
+  - Defender for SQL servers on machines
+    - Azure Arc agent (For multicloud and on-premises servers)
+    - Azure Monitor Agent or Log Analytics agent
+    - Automatic SQL server discovery and registration
+  - Defender for Containers
+    - Azure Arc agent (For multicloud and on-premises servers)
+    - Defender profile, Azure Policy Extension, Kubernetes audit log data
+- When you enable an extension, it will be installed on any new or existing resource, by assigning a security policy. eg. After enable "Guest Configuration agent", policies like "ASC provisioning Guest Configuration agent for Linux" will be assigned
+  - Policy assignment will be removed once you disable the config
+- Just-In-Time (JIT) VM access
+  - A feature of Defender for Servers
+  - The VM must have an NSG attached
+  - When a request is approved, a rule is added to the NSG for a specified time
 
 
 ## Alerts
@@ -459,10 +494,11 @@ Signal types:
 - Azure Monitor stores log data in a Log Analytics workspace
 - A Log Analytics workspace is the **equivalent of a database** inside Azure Data Explorer, data is organized into tables
 - Data collected can be retained for a maximum of two years
-- These services all use Log Analytics workspaces to store and query logs:
+- Not only Azure Monitor, some other services use Log Analytics workspaces to store and query logs as well:
   - Microsoft Defender for Cloud
   - Microsoft Sentinel
   - Azure Monitor Application Insights
+- Cost is based on data ingestion and data retention
 
 ### Design considerations
 
@@ -495,18 +531,22 @@ Scale and ingestion volume:
 
 To better manage cost, there are different plans which could be configured for each table:
 
+![Workplace data plan](images/azure_workspace-plan-overview.png)
+
 - Analytics
   - Support all queries
 
 - Basic
   - Cheaper
   - Can only search within the table, no joins
-  - Search jobs bring the logs to analytics log tables
+  - "Search jobs" bring the logs to analytics log tables
   - Fixed interactive period of 8 days
 
 - Archive
   - After the interactive periods, both "Analytics" and "Basic" logs are archived
-  - To query archived logs, you need to bring it back to Analytics log tables, by either "Search jobs" or "Restore"
+  - To query archived logs, you need to bring it back to Analytics log tables, by either
+    - "Search jobs": data matching paticular criteria
+    - or "Restore": data from a paticular time range
   - Up to 7 years
 
 ### Access Control

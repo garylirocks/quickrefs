@@ -1900,7 +1900,9 @@ A combination of network monitoring and diagnostic tools.
   - **Topology**: graphical display of a vnet, its subnets, associated NICs, NSGs, route tables, etc
     ![Network topology](images/azure_network-watcher-topology.png)
   - **Connection Monitor**: monitor connectivity and latency between a VM and another network resource
-    - You need to install monitoring agents in the VMs
+    - Azure VM: need to install Network Watcher extension
+    - On-prem machines: Log Analytics agent
+    - Connection monitor resource must be in the same region as the source endpoint
   - **Network Performance Monitor**: going to be replaced by *Connection Monitor*
 
 - Diagnostic tools
