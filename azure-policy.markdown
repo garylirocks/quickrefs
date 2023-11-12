@@ -462,12 +462,13 @@ A `deployIfNotExists` or `modify` policy should define the roles it requires:
 
 ### Exemptions
 
-- Two types:
+- Two categories:
   - Mitigated: often for permanent exemptions
   - Waiver: temporary
-- Add a link the work item in the metadata to track why an exemption was granted
+- `notScopes` in an assignment applies to all policies in the initiative, while an exemption could target a subset of policies in the initiative
+- The full ID of a exemption is like `/subscriptions/<sub-id>/resourceGroups/<rg-name>/providers/<resourcetype-name>/<resource-name>/providers/Microsoft.Authorization/policyExemptions/<exemption-name>`, so it's a subresource of the resource being exempted, the **exempted resource must be existing before you create the exemption**
 - Exemptions are not deleted along with the assignment, you need to delete it explicitly
-- `notScopes` applies to all policies in an initiative, while an exemption only targets one policy
+- You can add a link to the work item in the metadata to track why an exemption was granted
 
 ### Operations
 
