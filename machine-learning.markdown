@@ -272,6 +272,23 @@ Build a neural network in TensorFlow:
 
 ![Use TensorFlow to build a neural network](images/ml_neural-network-tensorflow.png)
 
+```python
+A = np.array([[200, 17],
+              [120, 5],
+              [425, 20],
+              [212, 18]])
+# with known weights for layer1
+W1 = np.array([[1, -3, 5],
+               [-2, 4, -6]])
+B1 = np.array([[-1, 1, 2]])
+
+# with matrix multiplication, the first layer computation is like
+def dense(A, W, b):
+  z = np.matmul(A, W) + b
+  a_out = g(z)
+  return a_out
+```
+
 
 ## References
 
