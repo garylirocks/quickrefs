@@ -316,7 +316,10 @@ terraform output -raw lb_url
 ## Authenticate Terraform to Azure
 
 - When using Terraform interactively on command line, Terraform uses Azure CLI to authenticate
-- In a non-interactive context, create a service principal for Terraform
+- In a non-interactive context, create a service principal for Terraform, there are several ways for the authentication:
+  - Client secret
+  - Client certificate
+  - OpenID Connect
 
 ### `azurerm` provider
 
@@ -380,7 +383,10 @@ Terraform Cloud supports remote run, storing state file, input variables, enviro
         organization = "garylirocks"
 
         workspaces {
-          tags = ["cli", "prod"]
+          // use name for a single workspace
+          name = "my-workspace"
+          // or tags for multiple workspaces
+          // tags = ["cli", "prod"]
         }
       }
     }
@@ -418,6 +424,9 @@ Terraform Cloud supports remote run, storing state file, input variables, enviro
 
 Note:
 
+- You could configure dynamic credentials (OIDC auth), so you don't need to use a secret or certificate for the service principal, see https://developer.hashicorp.com/terraform/cloud-docs/workspaces/dynamic-provider-credentials/azure-configuration
+  - You'll need one federated credential for "plan", another for "apply"
+  - In some cases, you may want one service principal for "plan", another for "apply"
 - When you use `tags` (instead of `name`) to specify workspaces, you could switch between or create new workspaces in Terraform Cloud
 - When running a remote `plan` or `apply`, a copy of your directory is uploaded to Terraform Cloud, you could use `.terraformignore` to exclude paths (`.git/` and `.terraform/` are ignored by default)
 - You should create one workspace for each environment (dev, test, prod)
