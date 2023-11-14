@@ -6,7 +6,7 @@
   - [Custom roles](#custom-roles)
 - [Azure RBAC roles vs. Azure AD roles](#azure-rbac-roles-vs-azure-ad-roles)
   - [Custom Azure RBAC roles](#custom-azure-rbac-roles)
-- [PIM for Azure roles](#pim-for-azure-roles)
+- [PIM for Azure resource roles](#pim-for-azure-resource-roles)
   - [Get eligible assignments or active assignments](#get-eligible-assignments-or-active-assignments)
   - [Self-activate an eligible assignment](#self-activate-an-eligible-assignment)
 - [CLI](#cli)
@@ -214,9 +214,10 @@ A custom role definition is like:
 - **The definition is actually tenant-scoped, the role name must be unique within a tenant**
 
 
-## PIM for Azure roles
+## PIM for Azure resource roles
 
-This uses `Az.Resources` module, which connects to `https://management.azure.com`
+- This uses `Az.Resources` module, which connects to `https://management.azure.com`
+- If you use a service principal to assign PIM roles for Azure resources, the SP needs to have the "User Access Administrator" or "Owner" role over the Azure scope.
 
 ### Get eligible assignments or active assignments
 

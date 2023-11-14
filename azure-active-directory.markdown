@@ -56,6 +56,7 @@
     - [Just-Enough-Access](#just-enough-access)
     - [Relationship between PIM entities and role assignment entities](#relationship-between-pim-entities-and-role-assignment-entities)
     - [Activate Entra roles](#activate-entra-roles)
+    - [PIM policies (role settings)](#pim-policies-role-settings)
 - [License management](#license-management)
 - [Custom security attribute](#custom-security-attribute)
 - [SCIM](#scim)
@@ -1214,6 +1215,7 @@ az rest -u "https://graph.microsoft.com/v1.0/roleManagement/directory/roleDefini
 
 - P2 feature
   - If you have a P2 license plan and already use PIM, **all role management tasks are performed in the PIM experience**
+- When you enable PIM, an enterprise app named "MS-PIM" is added to your tenant automatically
 - Two types of role assignments:
   - Eligible role assignments
   - Active role assignments
@@ -1221,7 +1223,7 @@ az rest -u "https://graph.microsoft.com/v1.0/roleManagement/directory/roleDefini
 - Roles:
   - Entra Role
     - Assignment scope could be `/` (tenant-wide) or `AppScopeId` (limit scope to an application only)
-  - Azure RBAC Role
+  - Azure resource Role
   - Entra privileged group membership
     - You could assign either members or owners the group
     - Useful to mssign multiple roles to the group, then a user just need one activation (for the group membership), instead of activating multiple roles one by one
@@ -1278,6 +1280,15 @@ PIM-specific properties (such as end time) will be available only through `*Assi
 #### Activate Entra roles
 
 See notes in [Microsoft Graph](./microsoft-graph.markdown) and [Azure PowerShell](./azure-powershell.markdown)
+
+#### PIM policies (role settings)
+
+To manage the PIM policies, use `*roleManagementPolicy` and `*roleManagementPolicyAssignment` entities:
+
+- The `*roleManagementPolicy` resource includes rules that constitute PIM policy: approval requirements, maximum activation duration, notification settings, etc.
+- The `*roleManagementPolicyAssignment` object attaches the policy to a specific role.
+- For PIM for Microsoft Entra roles, PIM for Groups: `unifiedroleManagementPolicy`, `unifiedroleManagementPolicyAssignment`
+- For PIM for Azure resources: API endpoint is like `https://management.azure.com/{scope}/providers/Microsoft.Authorization/roleManagementPolicies/{roleManagementPolicyName}`
 
 
 ## License management

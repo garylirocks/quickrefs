@@ -214,7 +214,7 @@ Send-MgUserMail -UserId "gary@24g85s.onmicrosoft.com" -Message $message
 
 ### Entra roles in PIM
 
-Connect, you need to specify the correct scope, since the Microsoft Graph API is protected, this would require admin or user consent granted to the client app (Microsoft Graph PowerShell)
+You need to specify the correct scope when `Connect-MgGraph`, since the Microsoft Graph API is protected, this would require admin or user consent granted to the client app (Microsoft Graph PowerShell)
 
 See this page for all related permissions: https://learn.microsoft.com/en-us/graph/permissions-reference#role-management-permissions, be mindful about `*.All` and `*.Directory` permissions
 
