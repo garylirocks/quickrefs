@@ -813,6 +813,7 @@ name = "web-sg-${var.resource_tags["project"]}-${var.resource_tags["environment"
 
     dynamic "access_policy" {
       for_each = var.access_policies
+      // iterator = iter
 
       content {
         tenant_id               = var.tenant_id
