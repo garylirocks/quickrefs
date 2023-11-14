@@ -7,6 +7,7 @@
 - [Permission models](#permission-models)
   - [Read a secret](#read-a-secret)
 - [Recover](#recover)
+- [Networking](#networking)
 - [Vault authentication](#vault-authentication)
 - [Replication](#replication)
 - [Best practices](#best-practices)
@@ -115,6 +116,19 @@ After a vault is deleted, and before it's being purged (90 days by default), you
 
 - All the keys, secrets and certificates are recovered
 - RBAC role assignments can't be recovered, you need to redo them
+
+
+## Networking
+
+Like storage accounts, you have options like:
+
+- Allow public access from all networks
+- Allow public access from specific virtual networks and IP addresses
+- Disable public access
+
+And there's an option for exception: "Allow trusted Microsoft services to bypass this firewall", see https://learn.microsoft.com/en-us/azure/key-vault/general/overview-vnet-service-endpoints#trusted-services
+
+**Exception still apply** even if you choose "Disable public access"
 
 
 ## Vault authentication

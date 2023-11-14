@@ -185,37 +185,35 @@ The settings in the Portal actually corresponds to two properties, could be a bi
 
 *`publicNetworkAccess=Disabled` takes precedence, disables access from any IP or virtual network rule, means you could only access this storage account from*
   - private endpoints
+  - specified resource instances
   - or from Trusted Azure Services (seems Exceptions still apply, though the setting is hidden from the Portal)
+
+You can also have **Grant access for Azure resource instances**, see: https://docs.microsoft.com/en-us/azure/storage/common/storage-network-security
+
+You specify which resource instances could access based on its managed identity, could be specific instances, or all from current resource group, subscription, or tenant.
+
+```sh
+az storage account network-rule add \
+  -g rg-demo \
+  --account-name stdemo001 \
+  --resource-id /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Synapse/workspaces/testworkspace \
+  --tenant-id xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+```
 
 #### Exceptions
 
-See: https://docs.microsoft.com/en-us/azure/storage/common/storage-network-security
+"Allow Azure services on the **trusted services list** to access this storage account", this allows:
 
-There are two ways to manage network ACL exceptions:
+- Resources of some services that are registered *in the same subscription* can access this storage account for selected operations, like writing log or running backups.
+- Trusted access based on a managed identity. (**All instances** are allowed, as long as their managed identity has proper permissions)
 
-1. "Allow Azure services on the **trusted services list** to access this storage account", this allows:
+```sh
+az storage account update \
+--resource-group rg-demo \
+--name stdemo001 \
+--bypass AzureServices
+```
 
-   - Trusted access for select operations to resources that are registered in your subscription.
-   - Trusted access to resources based on a managed identity. (**All instances** are allowed, as long as their managed identity has proper permissions)
-
-   ```sh
-   az storage account update \
-    --resource-group rg-demo \
-    --name stdemo001 \
-    --bypass AzureServices
-   ```
-
-1. (**Recommended**) Grant access from Azure resource instances
-
-    You specify which resource instance could access based on its managed identity
-
-    ```sh
-    az storage account network-rule add \
-      -g rg-demo \
-      --account-name stdemo001 \
-      --resource-id /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Synapse/workspaces/testworkspace \
-      --tenant-id xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-    ```
 
 #### Microsoft Defender for Cloud
 
