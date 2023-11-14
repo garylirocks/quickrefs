@@ -8,9 +8,10 @@
   - [`outputs.tf`](#outputstf)
   - [`terraform.tfstate`](#terraformtfstate)
 - [Commands](#commands)
-- [Authenticate Terraform to Azure](#authenticate-terraform-to-azure)
+- [Authenticate to Azure providers](#authenticate-to-azure-providers)
   - [`azurerm` provider](#azurerm-provider)
   - [`azuread` provider](#azuread-provider)
+  - [Add permissions to a service principal](#add-permissions-to-a-service-principal)
 - [State file](#state-file)
 - [Remote runs and state](#remote-runs-and-state)
   - [Terraform Cloud](#terraform-cloud)
@@ -313,13 +314,19 @@ terraform output -raw lb_url
 - `terraform providers` show providers for this config
 
 
-## Authenticate Terraform to Azure
+## Authenticate to Azure providers
 
+- This section is covers authentication to a provider, for authentication to remote runner or state storage, see [Remote run and state](#remote-runs-and-state) section
 - When using Terraform interactively on command line, Terraform uses Azure CLI to authenticate
-- In a non-interactive context, create a service principal for Terraform, there are several ways for the authentication:
-  - Client secret
-  - Client certificate
+- In a non-interactive context, use a service principal or managed identity, there are several ways for the authentication:
+  - Client secret/certificate
   - OpenID Connect
+    - This is recommended, you don't need to create and renew a secret or certificate
+    - See here on how to use with GitHub actions: https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/service_principal_oidc
+    - See here on how to use with Terraform Cloud: https://developer.hashicorp.com/terraform/cloud-docs/workspaces/dynamic-provider-credentials/azure-configuration
+      - You'll need one federated credential for "plan", another for "apply"
+      - In some cases, you may want one service principal for "plan", another for "apply"
+
 
 ### `azurerm` provider
 
@@ -342,13 +349,17 @@ export ARM_CLIENT_SECRET="MyCl1eNtSeCr3t"
 export ARM_TENANT_ID="10000000-2000-3000-4000-500000000000"
 ```
 
+### Add permissions to a service principal
+
 To grant this service principal permissions to read/write AAD objects, see https://registry.terraform.io/providers/hashicorp/azuread/latest/docs/guides/service_principal_configuration. There are two methods:
 
 1. Add API permissions to the application, then add consent to the service principal
+    - This is more granular, **recommended** for service principals
 2. Assign AAD roles to the service principal
     - Go to AAD's "Roles and administrators" blade, find the role, click on it
     - Add an assignment to the service principal
     - **Roles listed in the service principal's "Roles and administrators" blade are NOT roles assigned to this service principal!**
+    - This is recommended for **user principals**
 
 
 ## State file
@@ -358,7 +369,7 @@ Why state file is required:
 - Ensures a one-to-one mapping from resource instances to remote objects
 - Tracks metadata such as resource dependencies
   - Terraform could use your configuration to determine dependencies when creating objects
-  - However, when you remote resources from your configuration, Terraform could only rely on the state file to determine how to destroy the resources in correct order
+  - However, after you removed some resources from your configuration, Terraform could only rely on the state file to determine how to destroy the resources in correct order
 - Performance: Terraform stores a cache of the attribute values for all resources in the state
   - When running `terrafrom plan`, Terraform must know the current state of resources to effectively determine the changes it needs
   - The default behavior: for every plan and apply, Terraform query providers and sync the latest attributes for all resources in your state file
@@ -367,7 +378,7 @@ Why state file is required:
 
 ## Remote runs and state
 
-In a collaborative or CI/CD context, you may want to run and save state files remotely
+In a collaborative or CI/CD context, you may want to run Terraform plan/apply or store state files remotely
 
 ### Terraform Cloud
 
@@ -420,17 +431,14 @@ Terraform Cloud supports remote run, storing state file, input variables, enviro
     }
     ```
 
-3. Run `plan` or `apply`, this runs remotely in Terraform Cloud, so the workspace should have credentials configured as workspace env variables (eg. `ARM_CLIENT_SECRET` for `azurerm`)
+3. Run `plan` or `apply`, this runs remotely in Terraform Cloud (or locally, if configure so), so the workspace should have credentials configured as workspace env variables (eg. `ARM_CLIENT_ID` for `azurerm`)
 
 Note:
 
-- You could configure dynamic credentials (OIDC auth), so you don't need to use a secret or certificate for the service principal, see https://developer.hashicorp.com/terraform/cloud-docs/workspaces/dynamic-provider-credentials/azure-configuration
-  - You'll need one federated credential for "plan", another for "apply"
-  - In some cases, you may want one service principal for "plan", another for "apply"
-- When you use `tags` (instead of `name`) to specify workspaces, you could switch between or create new workspaces in Terraform Cloud
-- When running a remote `plan` or `apply`, a copy of your directory is uploaded to Terraform Cloud, you could use `.terraformignore` to exclude paths (`.git/` and `.terraform/` are ignored by default)
+- When you use `tags` (instead of `name`) to specify workspaces, you could list (`tf workspace list`) or select a workspace (`tf workspace select dev`)
 - You should create one workspace for each environment (dev, test, prod)
 - For workspaces configured with VCS-driven workflow, you can trigger `plan` from local CLI, but **not** `apply`
+- When running a remote `plan` or `apply`, a copy of your directory is uploaded to Terraform Cloud, you could use `.terraformignore` to exclude paths (`.git/` and `.terraform/` are ignored by default)
 
 ### Azure blob storage
 
@@ -457,24 +465,25 @@ Note:
       # sas_key            = 'xxxx'
       ```
 
-  1. `access_key` or `sas_key` is used for authentication, they could be put in the config file, or an environment variable
+  1. Authentication:
 
-      1. access key
+     1. You can use `access_key` or `sas_key`, they could be put in the config file, or as an environment variable
+        1. access key
 
-          ```sh
-          ARM_ACCESS_KEY=$(az storage account keys list \
-                        --resource-group $RESOURCE_GROUP_NAME \
-                        --account-name $STORAGE_ACCOUNT_NAME \
-                        --query '[0].value' \
-                        -o tsv)
-          export ARM_ACCESS_KEY
-          ```
+            ```sh
+            ARM_ACCESS_KEY=$(az storage account keys list \
+                          --resource-group $RESOURCE_GROUP_NAME \
+                          --account-name $STORAGE_ACCOUNT_NAME \
+                          --query '[0].value' \
+                          -o tsv)
+            export ARM_ACCESS_KEY
+            ```
+        1. SAS key
 
-      1. SAS key
-
-          ```sh
-          export ARM_SAS_TOKEN
-          ```
+            ```sh
+            export ARM_SAS_TOKEN
+            ```
+     1. Or if you are logged in to AZ CLI, then it's used
 
   1. Init with the backend config file `terraform init -backend-config="backend.tfvars"`
   1. When you run `terraform apply`, the state file will be created or updated
