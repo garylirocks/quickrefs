@@ -1738,3 +1738,27 @@ A few things to note:
     }
   }
   ```
+
+- `azuread_group`
+
+  ```terraform
+  data "azuread_client_config" "current" {}
+
+  resource "azuread_group" "example" {
+    display_name     = "MyGroup"
+    owners           = [
+      data.azuread_client_config.current.object_id
+      /* more owners */
+    ]
+    security_enabled = true
+
+    members = [
+      azuread_user.example.object_id,
+      /* more users */
+    ]
+  }
+  ```
+
+  - If you don't specify `owners` field, then the current principal will be added as the sole owner, the principal only needs `Group.Create` permission to create/delete the group
+  - If current principal is one of the `owners`, same as above
+  - If you specify `owners` field, and current principal is not in it, then current principal needs `Group.ReadWrite.All` permission
