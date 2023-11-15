@@ -1,6 +1,7 @@
 # Logic Apps
 
 - [Types and host environments](#types-and-host-environments)
+- [Networking](#networking)
 - [Triggers](#triggers)
 - [ARM template](#arm-template)
 - [Workflow definition](#workflow-definition)
@@ -10,12 +11,29 @@
 
 ## Types and host environments
 
-| Type                          | Note                                                                                                                                                |
-| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Consumption (multi-tenant)    | <ul><li>Only one workflow</li><li>Shared infrastructure</li></ul>                                                                                   |
-| Consumption (ISE)             | <ul><li>Only one workflow</li><li>Enterprise scale for large workloads</li><li>Can connect to vnet</li></ul>                                        |
-| Standard (single-tenant)      | <ul><li>Can have multiple stateful and stateless workflows</li><li>Support vnet and private endpoints</li></ul>                                     |
-| Standard (ASEv3 Windows plan) | <ul><li>An app can have multiple workflows</li><li>Fully isolated</li><li>Pay only for the ASE</li><li>Support vnet and private endpoints</li></ul> |
+| Type                               | Note                                                                                                                                                |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Consumption (multi-tenant)         | <ul><li>Only one workflow</li><li>Shared infrastructure</li></ul>                                                                                   |
+| Consumption (ISE) - **deprecated** | <ul><li>Only one workflow</li><li>Enterprise scale for large workloads</li><li>Can connect to vnet</li></ul>                                        |
+| Standard (single-tenant)           | <ul><li>Can have multiple stateful and stateless workflows</li><li>Support vnet and private endpoints</li></ul>                                     |
+| Standard (ASEv3 Windows plan)      | <ul><li>An app can have multiple workflows</li><li>Fully isolated</li><li>Pay only for the ASE</li><li>Support vnet and private endpoints</li></ul> |
+
+Logic Apps Standard
+- runs on top of App Service
+- support local development, execution, debugging
+- improved support for source control and automated deployment
+- multiple workflows can be deployed in a single logic app
+- fully separates infrastructure from code logic
+
+
+## Networking
+
+A logic app has three sets of IP addresses:
+
+- **Access endpoint IP addresses**: public IP of the logic app
+- **Connector outgoing IP addresses**: when an outgoing connection is made via a API connector
+- **Runtime outgoing IP addresses**: when an outgoing connection is made without a connector, such as an HTTP action
+
 
 ## Triggers
 

@@ -127,8 +127,8 @@ Like storage accounts, you have options like:
 - Disable public access
 
 And there's an option for exception: "Allow trusted Microsoft services to bypass this firewall", see https://learn.microsoft.com/en-us/azure/key-vault/general/overview-vnet-service-endpoints#trusted-services
-
-**Exception still apply** even if you choose "Disable public access"
+- This exception does not apply to logic apps
+- **Exception still applies** even if you choose "Disable public access"
 
 
 ## Vault authentication
