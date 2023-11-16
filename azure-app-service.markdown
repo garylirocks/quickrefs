@@ -42,11 +42,13 @@ A plan's **size** (aka **sku**, **pricing tier**) determines
 | Production | Premium              | <=30      | More slots, backups                           |
 | Isolated   | Isolated             | <=100     | Isolated network, Internal Load Balancing     |
 
-- **Shared compute** (Free, Shared and Basic): VM shared with other customers
-- **Dedicated compute** (Standard, Premium): only apps in the same plan can share the same compute resources
-- **Isolated**: network isolation on top of compute isolation, using App Service Environment(ASE)
+- **Shared compute** (Free, Shared): VM shared with other customers
+- **Dedicated compute** (Basic, Standard, Premium): run on dedicated Azure VMs
+- **Isolated**: dedicated VMs in dedicated vNets
 
 Plans are the unit of billing. How much you pay for a plan is determined by the plan size(sku) and bandwidth usage, not the number of apps in the plan.
+
+Azure Functions could be run in an App Service Plan as well.
 
 You can start from an cheaper plan and scale up later.
 

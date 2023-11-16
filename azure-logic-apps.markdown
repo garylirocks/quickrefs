@@ -19,7 +19,9 @@
 | Standard (ASEv3 Windows plan)      | <ul><li>An app can have multiple workflows</li><li>Fully isolated</li><li>Pay only for the ASE</li><li>Support vnet and private endpoints</li></ul> |
 
 Logic Apps Standard
-- runs on top of App Service
+- runs on top of App Service plans
+   - Dedicate pricing plans for Logic Apps Standad: WS1, WS2, WS3
+- needs a storage account for: workflow state, run history, and artifacts
 - support local development, execution, debugging
 - improved support for source control and automated deployment
 - multiple workflows can be deployed in a single logic app
@@ -38,6 +40,12 @@ A logic app has three sets of IP addresses:
 ## Triggers
 
 ![Trigger types](images/azure_logic-app-trigger-types.png)
+
+Trigger runtime:
+
+- In-App (Built-in): connectors and triggers that run directly within the Azure Logic Apps runtime
+- Shared (Azure): stateful workflows only, connectors and triggers that are Microsoft-managed, hosted, and run in multi-tenant Azure
+
 
 ## ARM template
 
