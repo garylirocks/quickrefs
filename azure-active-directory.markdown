@@ -489,7 +489,7 @@ dsregcmd /status
 - Not federated or synchronized from on-prem environments
   - Azure AD prevents the last Global Administrator account from being deleted, but it doesn't prevent the account from being deleted or disabled on-premises
 - Trigger alerts whenever an emergence accounts sign in, use a KQL query like:
-  ```kql
+  ```kusto
   SigninLogs
   | project UserId
   | where UserId == "f66e7317-2ad4-41e9-8238-3acf413f7448"
@@ -1667,22 +1667,7 @@ az ad app list \
 
 - List role assignments in a scope
 
-  ```sh
-  # on a current subscription
-  # including inherited and assignment at descendant scopes
-  az role assignment list \
-      --all \
-      --subscription sub-test \
-      --assignee <SP name or object id>
-
-  # on a management group
-  # does not include assignments on descendant scopes
-  az role assignment list \
-      --assignee '<sp-object-id>' \
-      --scope "/providers/Microsoft.Management/managementGroups/mg-test" \
-      --include-groups \
-      --include-inherited
-  ```
+  See [azure-rbac note](./azure-rbac.markdown#cli)
 
 - Use certificate-based authentication
 

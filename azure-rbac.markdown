@@ -300,3 +300,74 @@ New-AzRoleAssignmentScheduleRequest `
 
 
 ## CLI
+
+- List role assignments in a scope
+
+  ```sh
+  # on a subscription
+  # `--all` only works with `--subscription`
+  # to include assignments above (management groups) and below (RG, resource)
+  az role assignment list \
+      --assignee <SP name or object id> \
+      --subscription sub-test \
+      --all \
+      -otable
+
+  # on a management group
+  # does NOT include assignments on descendant scopes
+  # with `--include-inherited`, show inherited assignments if no assignment at current scope
+  az role assignment list \
+      --assignee '<sp-object-id>' \
+      --scope "/providers/Microsoft.Management/managementGroups/mg-test" \
+      --include-groups \
+      --include-inherited \
+      -otable
+  ```
+
+  Much easier to use Resource Graph to query assignments for a principal at all scopes all at once:
+
+  ```kusto
+  // *********** CAUTION ***********
+  // Set authorization scope to "At, above and below"
+  authorizationresources
+  | where type == "microsoft.authorization/roleassignments"
+  | where properties.principalId in (
+      "<prinicpal-obj-id-1>",
+      "<prinicpal-obj-id-2>"
+      )
+  | project resourceGroup,
+              subscriptionId,
+              roleId = tostring(properties.roleDefinitionId),
+              principalId = tostring(properties.principalId),
+              scope = tostring(properties.scope)
+  | extend principalName = case(
+      principalId == "<prinicpal-obj-id-1>", "<principal-name-1>",
+      principalId == "<prinicpal-obj-id-2>", "<principal-name-2>"
+      "Unknown")
+  | extend scopeLevel = case(
+      scope startswith "/providers", "MG",
+      array_length(split(scope, "/")) == 3, "Subscription",
+      array_length(split(scope, "/")) == 5, "Resource Group",
+      array_length(split(scope, "/")) == 9, "Resource",
+      "to-do"
+  )
+  | join kind = leftouter ( // get MG, subscription name
+      resourcecontainers
+      | where type in ("microsoft.management/managementgroups", "microsoft.resources/subscriptions")
+      | project id, mgName = tostring(properties.displayName), subName = name
+  ) on $left.scope == $right.id
+  | join kind = leftouter ( // get role name
+      authorizationresources
+      | where type == "microsoft.authorization/roledefinitions"
+      | project id, roleName = tostring(properties.roleName), type = tostring(properties.type)
+  ) on $left.roleId == $right.id
+  | extend scopeName = case(
+      scopeLevel == "MG", mgName,
+      scopeLevel == "Subscription", subName,
+      scopeLevel == "Resource Group", resourceGroup,
+      scopeLevel == "Resource", split(scope, "/")[8],
+      "todo"
+  )
+  | project principalName, type, roleName, scopeLevel, scopeName
+  | order by principalName asc, scopeLevel asc
+  ```
