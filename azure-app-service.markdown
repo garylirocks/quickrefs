@@ -77,7 +77,8 @@ You can start from an cheaper plan and scale up later.
 - Features:
   - Require a Standard, Premium, PremiumV2, PremiumV3, or Elastic Premium pricing plan.
   - Support TCP and UDP.
-  - Work with Azure App Service apps and function apps.
+  - Work with Azure App Service apps and function apps, and Logic Apps Standard.
+
 - Azure networking features:
   - NSG outbound rules apply on your integration subnet, inbound rules do not, because vNet integration do not provide inbound access to your app.
   - UDRs apply to outbound calls, **do not** affect replies to inbound app requests

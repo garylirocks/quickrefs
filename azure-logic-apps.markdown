@@ -19,13 +19,19 @@
 | Standard (ASEv3 Windows plan)      | <ul><li>An app can have multiple workflows</li><li>Fully isolated</li><li>Pay only for the ASE</li><li>Support vnet and private endpoints</li></ul> |
 
 Logic Apps Standard
-- runs on top of App Service plans
-   - Dedicate pricing plans for Logic Apps Standad: WS1, WS2, WS3
-- needs a storage account for: workflow state, run history, and artifacts
-- support local development, execution, debugging
-- improved support for source control and automated deployment
-- multiple workflows can be deployed in a single logic app
-- fully separates infrastructure from code logic
+- Powered by Azure Functions and needs an App Service plans
+   - Pricing plans specific to Logic Apps Standad: WS1, WS2, WS3
+   - Only Windows-based plan is supported
+   - Has a domain name like `logic-app-001.azurewebsites.net`
+- Multiple workflows (stateful or stateless) can be created in a single logic app
+  - Stateful and stateless have different in-app triggers and actions
+- Needs a storage account for
+   - Stateful workflows use this storageaccount:
+     - using queues for scheduling
+     - storing workflow states in tables and blobs
+- Support local development, execution, debugging
+- Improved support for source control and automated deployment
+- Fully separates infrastructure from code logic
 
 
 ## Networking
