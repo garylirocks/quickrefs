@@ -1,6 +1,7 @@
 # SQL Server
 
 - [Run with Docker](#run-with-docker)
+- [Concepts](#concepts)
 - [Create and query data](#create-and-query-data)
   - [Temporary tables](#temporary-tables)
 - [Datatypes](#datatypes)
@@ -27,6 +28,15 @@ docker exec -it sql1 "bash"
 
 /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P "myPassword"
 ```
+
+
+## Concepts
+
+- "dbo"
+
+  "dbo" stands for "database owner" and is the default schema. When you create a table without explicitly specifying a schema, SQL Server assumes the "dbo" schema by default.
+
+
 ## Create and query data
 
 ```sql

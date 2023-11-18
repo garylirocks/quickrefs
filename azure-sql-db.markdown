@@ -21,6 +21,7 @@
   - [Backup](#backup-1)
 - [Authentication and authorization](#authentication-and-authorization)
   - [Authentication](#authentication)
+    - [Use a managed identity to access Azure SQL](#use-a-managed-identity-to-access-azure-sql)
   - [Authorization](#authorization)
 - [Data security](#data-security)
   - [Transparent data encryption (TDE)](#transparent-data-encryption-tde)
@@ -353,6 +354,33 @@ When you deploy Azure SQL:
   - exists in every user database
   - has all database permissions
   - is member of the `db_owner` fixed database role
+
+#### Use a managed identity to access Azure SQL
+
+You need to login to the database with an Entra admin account, then create a container user in the database for the managed identity:
+
+```sql
+USE MyDatabase;
+CREATE USER "<identity-name>" FROM EXTERNAL PROVIDER;
+ALTER ROLE db_datareader ADD MEMBER "<identity-name>";
+```
+
+Help queries:
+
+```sql
+-- List users
+USE MyDatabase;
+SELECT * FROM sys.database_principals;
+
+-- Query users and roles
+SELECT dp.name, dp.type_desc, dprole.name
+FROM
+    sys.database_role_members drm
+JOIN
+    sys.database_principals dp ON drm.member_principal_id = dp.principal_id
+JOIN
+    sys.database_principals dprole ON drm.role_principal_id = dprole.principal_id
+```
 
 
 ### Authorization
