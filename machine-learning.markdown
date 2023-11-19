@@ -14,6 +14,10 @@
 - [Overfitting](#overfitting)
   - [Regularization](#regularization)
 - [Neural networks](#neural-networks)
+  - [Activation functions](#activation-functions)
+  - [ReLU](#relu)
+  - [Multiclass classification](#multiclass-classification)
+  - [Convolutional layer](#convolutional-layer)
 - [References](#references)
 
 
@@ -288,6 +292,85 @@ def dense(A, W, b):
   a_out = g(z)
   return a_out
 ```
+
+### Activation functions
+
+Neural network needs activation functions, if you just use linear regression in every layer, the effect is no different than using linear regression directly.
+
+Common activation functions:
+
+- Linear activation function (aka no activation function) $g(z) = z$
+- Sigmoid $g(z) = \frac{1}{1 + e^{-(z)}}$
+- ReLU (Rectified Linear Unit) $g(z) = max(0, z)$
+
+![Activation functions](images/ml_neural-network-activation-functions.png)
+
+Choosing activation function:
+
+- Output layer:
+  - Binary classification: Sigmoid
+  - Prediction could be positive or negative: Linear
+  - Prediction can only be positive: ReLu
+- Hidden layers:
+  - **ReLU** is the most common choice today
+  - Sigmoid used to be popular, but it's slower to compute and learn
+
+### ReLU
+
+When multiple ReLU functions are composed together, each could contribute a section to the output, making the output non-linear, that's why it's helpful.
+
+![ReLU composing](images/ml_neural-network-relu.png)
+
+### Multiclass classification
+
+![Multiclass classification](images/ml_neural-network-multiclass-softmax.png)
+
+Using the Softmax as the output activation function:
+- Number of units is the same as number of classes
+- $a_j$ is the probability that prediction is $j$, because we are using the exponential, a small change in $z_1$ leads to a much bigger change in $a_1$
+- Comparing to other activation functions, a unit is not independent, it's depending on other units
+
+Implementation with TensorFlow
+
+```python
+model = Sequential(
+  [
+    Dense(25, activation = 'relu'),
+    Dense(15, activation = 'relu'),
+    Dense(4, activation = 'linear')   #<-- use linear here
+  ]
+)
+model.compile(
+  loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),  #<-- This informs the loss function that the softmax operation should be included in the loss calculation. This allows for an optimized implementation.
+  optimizer=tf.keras.optimizers.Adam(0.001),
+)
+
+model.fit(
+  X_train,y_train,
+  epochs=10
+)
+
+prediction = model.predict(X_test)  # prediction, value not contained in 0 to 1
+prediction_p = tf.nn.softmax(prediction) # apply Softmax, value ranges from 0 to 1
+```
+
+- You can use `softmax` as the output layer, but it is more numerically stable if we pass `linear` output to the loss function during training.
+- `Adam` stands for "Adaptive Moment" estimation
+  - You specify an initial learning rate $\alpha$
+  - It makes $\alpha$ bigger or smaller to make convergence faster
+  - It uses different $\alpha$ values for each parameter
+
+### Convolutional layer
+
+![Convolutional layer](images/ml_neural-network-convolutional-layer.png)
+
+We usually use `Dense` layer type, which means each neuron/unit in a layer is using all values of the input
+
+There are other layer types, such as "convolutional", where each unit only looks at part of the values.
+
+- Each neuron can look at different number of values, eg. one neuron takes 5 input values, another takes 4
+- A value can be used by multiple neurons
+- This layer type may perform better in some cases
 
 
 ## References
