@@ -25,7 +25,7 @@
   - There can be only **ONE** hub per Azure region
   - Minimum address space is /24
   - Azure automatically creates subnets in the vNet for different gateways/services (ExpressRoute/VPN gateways, Firewall, routing, etc).
-- Each secured virtual hub
+- Each **secured virtual hub**
   - Has associated security and routing policies configured by Azure Firewall Manager
   - At each hub, you could filter traffic between virtual networks(V2V), virtual netwoks and branch offices(B2V) and traffic to the Internet (B2I/V2I)
   - Provides automated routing, there's **no need to configure your own UDRs**
@@ -35,6 +35,12 @@
 
 - A virtual hub has a router that manages all routing between gateways using BGP.
   - This router provides transit connectivity between virtual networks that connect to a virtual hub.
+  - In a spoke vnet, a VM's effective routes:
+
+    | Prefix     | Next Hop Type |
+    | ---------- | ------------- |
+    | vHub range | VNet Peering  |
+
   - Ths router shows up as "Virtual network gateway" with a random public IP in effective routes of a connected VM.
 - Four types of connections:
   - S2S VPN
@@ -47,10 +53,11 @@
 - For each connection:
   - By default, it associates and propagates to the Default route table
   - Can only associate to one route table, which controls where traffic from this connection will be routed to.
-  - A connection could have static routes, and an option determines whether to propagate the default routes (eg. route traffic to a subnet via an NVA)
   - Can propagate routes to multiple route tables.
+  - A connection could have **static routes**, and whether they should be propagated
+  - An option determines whether **default routes (`0.0.0.0/0`)** learnt by the vHub (by a Firewall in the hub) should be propagated to this connection
   - All branch connections (P2S VPN, S2S VPN, and ExpressRoute) are configured as a whole, they always associate and propagate to the same set of route tables.
-  - Enabling routing intent disables routing configs on connections
+  - Enabling routing intent (when a Firewall is deployed in the hub) disables routing configs on connections
 
 ![Virtual hub route propagation](images/azure_virtual-wan-routes-propagation.png)
 
@@ -85,8 +92,11 @@ Apply to:
 ### Routing Intent
 
 - Can be enabled in either of the following places:
-  - Azure Firewall Manager -> vHub -> Security configuration -> Inter-hub (only works for Azure Firewall)
+  - Azure Firewall Manager -> vHub -> Security configuration (only works if Azure Firewall is deployed in vHub)
   - vHub -> Routing Intent (works for third-party firewalls as well)
+- Enabling routing intent **disables routing config on connections**, you don't need to config association/propagation, static routes, etc.
+  - For private traffic, it's always applied to all the VNets and branches
+  - For public traffic, it could be applied selectively, if the "Propagate default route" option is disabled on a VNet connection, then the `0.0.0.0/0` routing intent will not propagate to this connection
 - This summaries routes in the route tables to just following 4 prefixes, and next hop is the firewall:
   - 192.168.0.0/16
   - 172.16.0.0/12
@@ -95,18 +105,16 @@ Apply to:
 - NICs on attached vNets get the RFC1918 summaries as well
 - Branches still gets individual prefixes for each spoke
 - You can view effective routes on the firewall, which shows the individual prefixes of the spokes
-- Enabling routing intent disables routing config on connections, you don't need to config association/propagation, static routes, etc.
-  - If the "Propagate default route" option is disabled on a VNet connection, then the `0.0.0.0/0` routing intent will not propagate to this connection
 
 ### BGP peers
 
+- Usecase: your NVA is not supported to be deployed in the vHub yet, then you can deploy it to a connected VNet, and add the NVA as a BGP peer
+- If your NVA is already supported in a vHub, this is not necessary
 - A vHub hosts BGP Endpoint service, it could peer to an NVA in a connected vNet, this allows your vHub to get all the routes from the NVA
 - You need to configure:
   - ASN
   - Private IP address of the NVA
   - VNet connection
-- If your NVA is already supported in a vHub, this is not necessary
-- Usecase: your NVA is not supported to by deployed in the vHub yet, then you can deploy it to a connected VNet, and peer it to the vHub
 
 ### Routing scenarios
 
@@ -218,5 +226,5 @@ Solution:
 - Both workload vNet and DNS extension vNets are using Azure Firewall as DNS server
 - Azure Firewall forwards DNS queries to the private IP of the inbound endpoint of the DNS Private Resolver (*this is configured in Azure Firewall policy*)
 - Private DNS zones are linked to the extension vNet
-- Following the single responsibility principle, the DNS extension vNetshould ONLY contain the resources required for DNS resolution
+- Following the single responsibility principle, the DNS extension vNet should ONLY contain the resources required for DNS resolution
 - You should have **one extension vNet per region**
