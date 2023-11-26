@@ -12,12 +12,16 @@
   - [Cost function](#cost-function-1)
   - [Gradient descent](#gradient-descent-1)
 - [Overfitting](#overfitting)
+  - [Learning curve](#learning-curve)
   - [Regularization](#regularization)
 - [Neural networks](#neural-networks)
   - [Activation functions](#activation-functions)
   - [ReLU](#relu)
   - [Multiclass classification](#multiclass-classification)
   - [Convolutional layer](#convolutional-layer)
+  - [Bias and variance](#bias-and-variance)
+- [Model validation](#model-validation)
+  - [Technics](#technics)
 - [References](#references)
 
 
@@ -241,19 +245,39 @@ $$
 
 If you use a high order polynomial model, a model may fit the training data perfectly, the cost is zero. But the model would not generalize well, meaning it does not work well with new data.
 
-Overfitting is also called **high variance**.
+- **Underfitting**
+  - also called **high bias**
+  - training set error $J_{train}$ is large
+- **Overfitting**
+  - also called **high variance**
+  - usually happens with a high order polynomial model
+  - cross validation error $J_{cv}$ is much larger than $J_{train}$
 
 ![Overfitting](images/ml_overfitting.png)
+
+Ways to fix underfitting (high bias):
+
+- Try getting additional features
+- Try adding polynomial features ($x_1^2$, $x_2^2$, $x_1x_2$, etc)
+- Try decreasing $\lambda$
 
 Three ways to address overfitting:
 
 - Collect more data
-- Select features
-- Regularization: Reduce size of parameters
+- Try smaller set of features
+- Regularization: increasing $\lambda$, reduce size of parameters
+
+### Learning curve
+
+![Learning curve](images/ml_learning_curve.png)
+
+How does the training and cross validation errors change in relation to the sample size
+- More samples usually can reduce CV errors
+- The training error (bias) may plateau and won't improve with increasing sample size
 
 ### Regularization
 
-The equation for the cost function regularized linear regression is:
+The equation for the cost function of regularized linear regression is:
 
 $$J(\mathbf{w},b) = \frac{1}{2m} \sum\limits_{i = 0}^{m-1} (f_{\mathbf{w},b}(\mathbf{x}^{(i)}) - y^{(i)})^2  + \frac{\lambda}{2m}  \sum_{j=0}^{n-1} w_j^2 \tag{1}$$
 
@@ -371,6 +395,37 @@ There are other layer types, such as "convolutional", where each unit only looks
 - Each neuron can look at different number of values, eg. one neuron takes 5 input values, another takes 4
 - A value can be used by multiple neurons
 - This layer type may perform better in some cases
+
+### Bias and variance
+
+- High bias: increase the network size
+  - A large NN can usually fit well to the traning data
+- High variance: get more data
+
+
+## Model validation
+
+It is common to split your data into three parts:
+
+- **training set** - used to train the model
+- **cross validation set** (also called validation, development, or dev set) - used to evaluate the different model configurations you are choosing from. For example, you can use this to make a decision on what polynomial features to add to your dataset
+- **test set** - used to give a fair estimate of your chosen model's performance against new examples. This **should not** be used to make decisions while you are still developing the models
+
+Generally you choose the model with the least error on cross validation set
+
+### Technics
+
+- **Error analysis**: manually examine a sample of the training examples that the model misclassified in order to identify common traits and trends
+- **Data augmentation**: take an existing training example and modify it (for example, by rotating an image slightly) to create a new example with the same label
+  ![Data augmenttation](images/ml_data-augmentation.png)
+- Transfer learning:
+  - Two problems of same input type(eg. images, audio, text), you have a large dataset for problem1, a small one for problem2
+  - **Pretaining**: train a model for problem1
+  - **Fine tuning**: use the parameters as initial parameters for problem2
+  - For the model for problem2, you can
+    - train parameters of all layers
+    - or only train output layer parameters, keep other parmaters untouched
+  - You often can download parameters of large models and use it for your data
 
 
 ## References
