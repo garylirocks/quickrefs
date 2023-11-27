@@ -402,14 +402,21 @@ There are other layer types, such as "convolutional", where each unit only looks
   - A large NN can usually fit well to the traning data
 - High variance: get more data
 
+![Bias and variance](images/ml_bias-and-variance.png)
+
+- $J_{cv}$ is usually larger than $J_{train}$
+- With polynomial regression models, when you increase the degree
+  - $J_{train}$ usually goes down
+  - $J_{cv}$ usually goes down, then up
+
 
 ## Model validation
 
 It is common to split your data into three parts:
 
 - **training set** - used to train the model
-- **cross validation set** (also called validation, development, or dev set) - used to evaluate the different model configurations you are choosing from. For example, you can use this to make a decision on what polynomial features to add to your dataset
-- **test set** - used to give a fair estimate of your chosen model's performance against new examples. This **should not** be used to make decisions while you are still developing the models
+- **cross validation set** (also called validation, development, or dev set) - used to tune other model parameters like degree of polynomial, regularization or the architecture of a neural network
+- **test set** - used to give a fair estimate of your chosen model's performance on new examples. This **should not** be used to make decisions while you are still developing the models
 
 Generally you choose the model with the least error on cross validation set
 
