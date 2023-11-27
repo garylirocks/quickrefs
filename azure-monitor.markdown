@@ -29,6 +29,7 @@
   - [Azure Application Insights](#azure-application-insights)
   - [VM Insights](#vm-insights)
 - [Azure Data Explorer](#azure-data-explorer)
+- [Role and permissions](#role-and-permissions)
 
 ## Overview
 
@@ -662,3 +663,21 @@ Provide
 Example design:
 
 ![Data Explorer](images/azure_data-explorer.png)
+
+
+## Role and permissions
+
+To add diagnostic settings and send logs to a workspace, the minimum permissions required are (see https://learn.microsoft.com/en-us/azure/azure-monitor/logs/manage-access?tabs=portal#custom-role-examples):
+
+- On workspace
+  - `Microsoft.OperationalInsights/workspaces/read`
+  - `Microsoft.OperationalInsights/workspaces/sharedKeys/action`
+- On resource
+  - `Microsoft.Insights/logs/*/read`
+  - `Microsoft.Insights/diagnosticSettings/write`
+
+
+`Microsoft.OperationalInsights/workspaces/sharedKeys/action` is included in both "Log Analytics Contributor" and "Monitoring Contributor", the differences are
+
+- "Log Analytics Contributor": can install VM extensions
+- "Monitoring Contributor": can manage action groups, DCR, metric alerts, scheduled query alerts, alert action rules, Private link scopes, etc
