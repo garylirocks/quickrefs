@@ -68,13 +68,18 @@ Azure Monitor is based on a common mornitoring data platform that includes Logs 
 | identify root causes           | performance, alerting            |
 | Log Analytics workspace        | time-series database             |
 
-- What can be collected:
-  - **Metrics**: usually displayed in the overview page of resources, stored for 30 days by default
-  - **Platform logs**
-    - Azure AD logs
-    - Activity logs (90 days by default)
-    - Resource logs (aka. Diagnostic Logs)
-  - **Application logs**
+- **Metrics**:
+  - **Resource and custom metrics** are stored in one time-series database
+    - Usually displayed in the overview page of resources
+    - Stored for **93 days**, in the Monitor Explorer, the maximum time windows is 30 days, but you can **pan the chart** to view data older than 30 days
+  - **Prometheus metrics** can be collected from AKS clusters
+    - Stored in Azure Monitor workspace
+    - Can be analyzed with PromQL and Grafana dashboards
+- **Platform logs**
+  - Azure AD logs
+  - Activity logs (90 days by default)
+  - Resource logs (aka. Diagnostic Logs)
+- **Application logs**
 - Usually for a resource:
   - *Metrics* and the *Activity logs* are collected and stored automatically, but can be routed to other locations by using a *diagnostic setting*.
   - *Resource Logs* are not collected and stored until you create a *diagnostic setting* and route them to one or more locations.
