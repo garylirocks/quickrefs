@@ -49,7 +49,6 @@
   - [Output format](#output-format)
 - [Codespaces](#codespaces)
   - [Features](#features)
-  - [Customization](#customization)
 
 
 ## GitHub Flow
@@ -1125,8 +1124,16 @@ gh run list --workflow "Custom test" \
 ## Codespaces
 
 - Hosted by GitHub in a Docker container, running on a VM
-- Based on Ubuntu image by default
-- Includes some popular languages and tools
+- The VM
+  - The VM is dedicated to you
+  - Code is cloned to `/workspaces` directory in the VM and them mounted into the dev container
+- The Container
+  - Based on `devcontainer.json`, or a default image based on Ubuntu is used
+  - If no `devcontainer.json` exists, you will be using a default image
+  - Includes some popular languages and tools
+  - You can use a public **dotfiles** repository to
+    - set shell aliases and preferences
+    - install tools
 - Can connect to it from your browser, VS Code, or GitHub CLI
 
 ![Codespace overview](images/github_codespace-overview.png)
@@ -1135,12 +1142,4 @@ gh run list --workflow "Custom test" \
 
 - Publish your app from a codespace, could be accessied with a url like `https://<codespace-name>-<port>.app.github.dev/`
 - Quickstart templates for popular frameworks (React, Jupyter, etc)
-
-### Customization
-
-- Your codespaces could be customized by dev container configurations in your repo
-- If no dev container configurations exist, you will be using a default image
-- You can use a public **dotfiles** repository to
-  - set shell aliases and preferences
-  - install tools
 - Use "Settings Sync" to sync your settings
