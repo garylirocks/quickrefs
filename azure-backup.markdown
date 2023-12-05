@@ -28,7 +28,7 @@
 
 - Resource type `Microsoft.RecoveryServices/vaults`
 - Used to back up these workloads: Azure VMs, SQL in Azure VMs, Azure Files, SAP HANA in Azure VMs, on-prem workloads via MARS, MABS, System Center DPM
-  - For Azure Files, backup is kept in the source storage account, won't be copied to the vault storage
+  - For Azure Files, backup is kept in the source storage account, won't be copied to the vault storage, and a lock will be put on the storage account, so it won't be deleted accidentally
 - Storage redundancy setting (does not apply to the operational tier): LRS, GRS
   - Upgrades to RA-GRS if cross-region restore feature enabled
 - Unlimited data transfer: Azure Backup doesn't limit or charge inbound or outbound data transfers.
