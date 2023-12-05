@@ -14,6 +14,7 @@
     - [Multiple accounts for GitHub on one machine](#multiple-accounts-for-github-on-one-machine)
   - [VS Code](#vs-code)
   - [Terraform](#terraform)
+- [Docker Desktop](#docker-desktop)
 - [File System](#file-system)
   - [File length](#file-length)
     - [Example `fsutil`](#example-fsutil)
@@ -216,6 +217,12 @@ Notes:
 ### Terraform
 
 There's an issue that Terraform can't authenticate with Azure, see https://github.com/microsoft/WSL/issues/8022
+
+
+## Docker Desktop
+
+- It can use WSL 2 (instead of Hyper-V) as backend
+  - This allows `docker` commands in WSL to interact with it
 
 
 ## File System

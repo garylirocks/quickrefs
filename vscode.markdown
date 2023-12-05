@@ -15,6 +15,9 @@
   - [ESLint](#eslint)
     - [`extends` vs `plugins`](#extends-vs-plugins)
   - [Run Prettier and ESLint together](#run-prettier-and-eslint-together)
+- [Dev Containers](#dev-containers)
+  - [Config file](#config-file)
+  - [Files](#files)
 - [Debugging](#debugging)
   - [Trouble shooting](#trouble-shooting)
   - [Sample debugging settings for React / Mocha](#sample-debugging-settings-for-react--mocha)
@@ -156,6 +159,25 @@ ESLint's rules regarding code style may conflict with Prettier, to make them wor
     }
   }
   ```
+
+
+## Dev Containers
+
+![Dev Containers](images/vscode_dev-containers-architecture.png)
+
+### Config file
+
+- Location: `.devcontainer/devcontainer.json`
+- When you open a folder in container, and no config files exist, VS Code allows you to choose a devcontainer template, you can choose image, version, additional features
+  - The result is written into `.devcontainer/devcontainer.json`
+  - The templates come from [`devcontainers/templates`](https://github.com/devcontainers/templates) repository
+
+### Files
+
+- `/workspaces` - the code
+- `/vscode/vscode-server/`
+
+
 
 ## Debugging
 
