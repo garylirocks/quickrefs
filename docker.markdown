@@ -20,9 +20,9 @@
 - [Data Storage](#data-storage)
   - [Volumes](#volumes)
     - [Data Sharing](#data-sharing)
-    - [Backup, restore, or migrate data volumes](#backup-restore-or-migrate-data-volumes)
-    - [Remove volumes](#remove-volumes)
+    - [Use volumes](#use-volumes)
     - [`-v`, `--mount` and volume driver](#-v---mount-and-volume-driver)
+    - [Backup, restore, or migrate data volumes](#backup-restore-or-migrate-data-volumes)
   - [Bind mounts](#bind-mounts)
     - [Commands](#commands-1)
   - [`tmpfs`](#tmpfs)
@@ -443,31 +443,13 @@ If you want to configure multiple replicas of the same service to access the sam
 - Add logic to your application to store data in cloud (e.g. AWS S3);
 - Create volumes with a driver that supports writing files to an external storage system like NFS or AWS S3 (in this way, you can abstract the storage system away from the application logic);
 
-#### Backup, restore, or migrate data volumes
-
-You can use `--volumes-from` to create a container that mounts volumes from another container;
-
-- Backup `dbstore:/dbdata` to current directory
-
-  ```sh
-  docker run --rm --volumes-from dbstore -v $(pwd):/backup ubuntu tar cvf /backup/backup.tar /dbdata
-  ```
-
-- Restore `backup.tar` in current directory to a new container `dbstore2`
+#### Use volumes
 
 ```sh
-# create dbstore2 and a new volume with it
-docker run -v /dbdata --name dbstore2 ubuntu /bin/bash
-
-# restore the backup file to the volume
-docker run --rm --volumes-from dbstore2 -v $(pwd):/backup ubuntu bash -c "cd /dbdata && tar xvf /backup/backup.tar --strip 1"
-```
-
-#### Remove volumes
-
-```sh
-# use `--rm` to let Docker remove the anonymous volume /foo when the container is removed
-# the named `awesome` volume is NOT removed
+# `awesome` is a named volume is NOT removed
+# `/foo` is an anonymous volume
+# use `--rm` to let Docker remove the anonymous volume when the container is removed
+#   named volumes are not removed
 docker run --rm -v /foo -v awesome:/bar busybox top
 
 # remove all unused volumes
@@ -500,6 +482,29 @@ docker run -d \
   --mount src=sshvolume,target=/app,volume-opt=sshcmd=test@node2:/home/test,volume-opt=password=testpassword \
   nginx:latest
 ```
+
+#### Backup, restore, or migrate data volumes
+
+You can use `--volumes-from` to create a container that mounts volumes from another container;
+
+- Volume from `dbstore` is mounted at `/dbdata`, current folder is mounted to `/backup`, use `tar` to pack `/dbdata` to `/backup/backup.tar`
+
+  ```sh
+  docker run --rm --volumes-from dbstore -v $(pwd):/backup ubuntu tar cvf /backup/backup.tar /dbdata
+  ```
+
+- Restore `backup.tar` in current directory to a new container `dbstore2`
+
+  ```sh
+  # create dbstore2 and a new volume with it
+  docker run -v /dbdata --name dbstore2 ubuntu /bin/bash
+
+  # restore the backup file to the volume
+  docker run --rm --volumes-from dbstore2 \
+                  -v $(pwd):/backup \
+                  ubuntu \
+                  bash -c "cd /dbdata && tar xvf /backup/backup.tar --strip 1"
+  ```
 
 ### Bind mounts
 
