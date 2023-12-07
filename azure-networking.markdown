@@ -374,7 +374,8 @@ Peering on each side has these settings:
   - **This is not done via the "VirtualNetwork" service tag, if "Block", traffic will be blocked, even NSG rules allow it**
 - **Virtual network gateway or Route Server**
   - A vNet only allows **one gateway**, you choose whether to use gateway in this vNet or the remote vNet
-  - Under the hood, the chosen gateway IP would be used as next hop in system defined routes for related address prefixes
+  - Under the hood, the chosen gateway's IP would be used as next hop IP in system defined routes for related address prefixes
+  - It also controls which gateway would advertise (via BGP) this vNet's address range to on-prem
 
 ### CLI
 
