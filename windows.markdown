@@ -223,6 +223,7 @@ There's an issue that Terraform can't authenticate with Azure, see https://githu
 
 - It can use WSL 2 (instead of Hyper-V) as backend
   - This allows `docker` commands in WSL to interact with it
+  - It installs two distros in WSL: `docker-desktop`, `docker-desktop-data`
 
 
 ## File System
