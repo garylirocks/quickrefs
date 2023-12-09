@@ -3,6 +3,8 @@
 - [Overview](#overview)
 - [Web experience](#web-experience)
 - [REST](#rest)
+  - [Query paramters](#query-paramters)
+  - [PowerShell `Invoke-RestMethod`](#powershell-invoke-restmethod)
   - [CLI](#cli)
 - [PowerShell module](#powershell-module)
   - [Install](#install)
@@ -28,6 +30,52 @@ Could be accessed via REST endpoints or various SDKs.
 
 
 ## REST
+
+Endpoint is `https://graph.microsoft.com/v1.0`
+
+### Query paramters
+
+- Use OData query parameters to help customize the response, NOT all parameters are supported for each entity type, you need check the docs:
+  - `$count`
+  - `$expand`
+  - `$filter`
+  - `$orderby`
+  - `$search`
+  - `$select`
+  - `$skip`
+  - `$top`
+
+- Some parameter operations are only supported if you request has header `ConsistencyLevel = eventual`
+
+- NOT all properties are returned by default, you could use `$select` to specify the required properties explicitly
+
+  ```
+  # "department" and "city" are not returned by default
+  ~/users?$select=id,displayName,department,city
+  ```
+
+- `$filter` on primitive properties
+
+  ```
+  # value in a list
+  ~/users?$filter=city in ('San Diego', 'Cairo')
+  ```
+
+- `$filter` on collection properties
+
+  ```
+  # syntax
+  $filter=collection/any(property:property/subProperty eq 'value-to-match')
+
+  # filter groups based on type, `i` is the iterator symbol, could be any letter
+  ~/groups?$filter=groupTypes/any(i:i eq 'Unified')
+
+  # filter on length of a collection property
+  ~/users?$filter=assignedLicenses/$count eq 0
+  ```
+
+
+### PowerShell `Invoke-RestMethod`
 
 You could get an access token and call the REST endpoints directly, *Microsoft uses a variety of access token formats depending on the configuration of the API that accepts the token*
 
