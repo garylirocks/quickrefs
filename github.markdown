@@ -900,6 +900,7 @@ What reusable workflows can be accessed by your workflow:
 - `env` variables in called workflow level are NOT propagated to the caller
 - Reuse workflows can only be called directly within a job, not a step, so you cannot use `GITHUB_ENV` to pass values to or from it
 - **`env`, `secrets` contexts can NOT be used** in `jobs.<job_id>.with.<with_id>`, so you cannot pass them to a reusable workflow as inputs
+- **`secrets` contexts can be passed** via `jobs.<job_id>.secrets.<with_id>` to the called workflow
 - **`vars` context CAN be used** in a called workflow directly without passing anything from the caller workflow
 
 ### Example
