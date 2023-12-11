@@ -75,6 +75,7 @@
 - [Best practices](#best-practices-2)
 - [CLI](#cli-1)
   - [`--filter` parameter](#--filter-parameter)
+  - [Group owners](#group-owners)
   - [Application registration and service principal(Enterprise app) owners](#application-registration-and-service-principalenterprise-app-owners)
   - [Applications](#applications)
   - [Service principals](#service-principals-1)
@@ -1569,7 +1570,7 @@ Kerberos auth flow
 
 ### `--filter` parameter
 
-The `--filter` parameter in many `az ad` commands uses the OData filter syntax, check available expressions here: https://learn.microsoft.com/en-us/graph/filter-query-parameter
+The `--filter` parameter in many `az ad` commands seems to be following the old Azure AD Graph API (not the newer Microsoft Graph API) ? check available filters here https://learn.microsoft.com/en-us/previous-versions/azure/ad/graph/howto/azure-ad-graph-api-supported-queries-filters-and-paging-options
 
 *Seems you could use `startswith`, `endswith`, but not `contains`*
 
@@ -1585,6 +1586,33 @@ The `--filter` parameter in many `az ad` commands uses the OData filter syntax, 
   ```sh
   --filter 'id in ("xxx-xxx", "xxx-xxx")'
   ```
+
+### Group owners
+
+Create a script to get group owners:
+
+```sh
+# get-group-owner.sh
+readarray rows < $1
+
+for row in "${rows[@]}";do
+    row_array=(${row})
+    gid=${row_array[0]}
+    echo ${row_array[@]}
+    az ad group owner list -g $gid --query "[].displayName" -otsv
+done
+```
+
+Then get a list of group ids and find the owners:
+
+```sh
+az ad group list \
+  --filter "startsWith(displayName, 'mygroup-')" \
+  --query '[].{id:id, name:displayName}' \
+  -otsv > my-groups.txt
+
+bash get-group-owner.sh my-groups.txt
+```
 
 ### Application registration and service principal(Enterprise app) owners
 
