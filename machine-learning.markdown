@@ -22,6 +22,11 @@
   - [Bias and variance](#bias-and-variance)
 - [Model validation](#model-validation)
   - [Technics](#technics)
+- [Decision tree](#decision-tree)
+  - [Entropy function](#entropy-function)
+  - [Regression tree](#regression-tree)
+  - [Tree ensembles](#tree-ensembles)
+  - [XGBoost](#xgboost)
 - [References](#references)
 
 
@@ -433,6 +438,56 @@ Generally you choose the model with the least error on cross validation set
     - train parameters of all layers
     - or only train output layer parameters, keep other parmaters untouched
   - You often can download parameters of large models and use it for your data
+
+
+## Decision tree
+
+Two decisions to make
+
+- Which feature to use in each node
+  - Use entropy function to measure the impurity of children nodes
+- When to stop splitting
+  - Reached 100% purity
+  - Reached max depth of the tree
+  - Reached min number of samples
+  - Information gain from additional splits is below threshold
+
+### Entropy function
+
+Used to measure impurity
+
+![Entropy function](./images/ml_decision-tree-entropy.png)
+
+- max impurity (1) when it's a 50/50 split
+- max purity (0) when it's a 100/0 split
+
+![Information gain](images/ml_decision-tree-information-gain.png)
+
+We choose a feature to maximize information gain (entropy reduction), which is the entropy value at current node minus weighted entropy on children nodes
+
+$$\text{Information Gain} = H(p_1^\text{node})- \left(w^{\text{left}}H\left(p_1^\text{left}\right) + w^{\text{right}}H\left(p_1^\text{right}\right)\right),$$
+
+and $H$ is the entropy, defined as
+
+$$H(p_1) = -p_1 \text{log}_2(p_1) - (1- p_1) \text{log}_2(1- p_1)$$
+
+### Regression tree
+
+![Information gain for regression tree](images/ml_decision-tree-regression.png)
+
+If the target is a continuous value instead of a class, we calculate information gain based on **variance reduction**, instead of entropy reduction, this kind of tree is called **regression tree**
+
+### Tree ensembles
+
+A single decision tree is not so robust, a minor change in the sample may change the final tree a lot.
+
+To make it work better, we use these two ways:
+- Instead of a single tree, we build multiple trees (aka Tree ensemble). If you have $m$ examples in the training set, for each tree, you sample the training set $m$ times (with replacement), so the new set size is still $m$ (some of them might be duplicates because of sampling with replacement).
+- **Random forest**, if the dataset has $n$ features, we randomly choose $k$ feature for each tree, usually $k = \sqrt{n}$
+
+### XGBoost
+
+Instead of sampling each of the $m$ samples equally, it gives higher weight to mis-classified samples in previous trees.
 
 
 ## References
