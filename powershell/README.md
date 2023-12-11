@@ -621,6 +621,15 @@ Test-NetConnection 192.168.1.3 -Port 22
   Set-ADUser -Identity $user -Department "Marketing" -Credential $cred
   ```
 
+  To do this without prompting user:
+
+  ```powershell
+  $User = "Domain01\User01"
+  $PWord = ConvertTo-SecureString -String "P@sSwOrd" -AsPlainText -Force
+  $Credential = New-Object -TypeName System.Management.Automation.PSCredential `
+                -ArgumentList $User, $PWord
+  ```
+
 - Use `Microsoft.PowerShell.SecretManagement` module, which works with
   - KeePass
   - LastPass

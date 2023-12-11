@@ -1424,15 +1424,16 @@ Note:
 
 ## Access reviews
 
-Help ensure that the right people have the right access to the right resources
-
-- You could set up a schedule to review:
-
-  - Group memberships
-  - Access to applications
-  - Access packages (created with Access Packages)
-  - PIM role assignments (both AAD an Azure roles) (created with PIM assignments)
-
+- A feature of Microsoft Entra ID Governance
+- One-time or recurring for attestation of a principal's right to access Entra resources
+- The principals are
+  - Users
+  - or applications (service principals)
+- The Entra resources include:
+  - Group
+  - Applications
+  - Access packages
+  - Privileged roles
 - You can create reviews for **Guest Users Only** or **Everyone**
 - Who can do the review is depending on the resource type, for example, group membership can be reviewed by:
 

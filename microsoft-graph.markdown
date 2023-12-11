@@ -1,17 +1,19 @@
 # Microsoft Graph API
 
 - [Overview](#overview)
-- [Web experience](#web-experience)
 - [REST](#rest)
+  - [Web experience](#web-experience)
   - [Query paramters](#query-paramters)
   - [PowerShell `Invoke-RestMethod`](#powershell-invoke-restmethod)
   - [CLI](#cli)
 - [PowerShell module](#powershell-module)
   - [Install](#install)
   - [Find Command](#find-command)
+  - [Authentication](#authentication)
   - [Common operations](#common-operations)
   - [Send an email](#send-an-email)
   - [Entra roles in PIM](#entra-roles-in-pim)
+- [Permission notes](#permission-notes)
 - [Misc](#misc)
 
 
@@ -21,17 +23,23 @@ A unified REST API for all Microsoft Cloud services, including Azure AD, Office,
 
 Could be accessed via REST endpoints or various SDKs.
 
-## Web experience
+
+## REST
+
+Endpoint base URL is `https://graph.microsoft.com/v1.0`
+
+Some entities (such as `/groups`) work with
+  - Delegated (work or school account) permissions
+  - Application permissions
+
+But does **NOT support delegated (personal account)** permission, so it doesn't work in Graph Explorer for personal account
+
+### Web experience
 
 - Microsoft Graph Explorer: https://developer.microsoft.com/en-us/graph/graph-explorer
 - Managing Apps permissions: https://myapps.microsoft.com/
   - You can view permissions granted by yourself or tenant admin
   - You can revoke permissions granted by yourself
-
-
-## REST
-
-Endpoint is `https://graph.microsoft.com/v1.0`
 
 ### Query paramters
 
@@ -47,7 +55,7 @@ Endpoint is `https://graph.microsoft.com/v1.0`
 
 - Some parameter operations are only supported if you request has header `ConsistencyLevel = eventual`
 
-- NOT all properties are returned by default, you could use `$select` to specify the required properties explicitly
+- `$select`: NOT all properties are returned by default, you could use `$select` to specify the required properties explicitly
 
   ```
   # "department" and "city" are not returned by default
@@ -72,6 +80,15 @@ Endpoint is `https://graph.microsoft.com/v1.0`
 
   # filter on length of a collection property
   ~/users?$filter=assignedLicenses/$count eq 0
+  ```
+
+- `$expand` a complex property
+
+  ```
+  # use `$expand` to get the owners of groups
+  # you can sue `($select)` to limit the fields returned for the property
+  # `$filter` is not supported on the expanded property
+  ~/groups?$select=id,displayName,owners,assignedLicenses,foobar&$expand=owners($select=displayName)
   ```
 
 
@@ -172,12 +189,14 @@ Get-Command -Module Microsoft.Graph.* -Noun *principal* -Verb Get
 # ...
 ```
 
-### Common operations
+### Authentication
 
-Connect
+Always use `Connect-MgGraph` to authenticate first
+  - it works with user, app, and managed identity
+  - could authenticate with interactive login, certificate, password. See https://learn.microsoft.com/en-us/powershell/module/microsoft.graph.authentication/connect-mggraph?view=graph-powershell-1.0
 
 ```powershell
-# login with specified scopes
+# interactive login with user, you could customize scopes
 Connect-MgGraph -Scopes "User.Read.All","Group.Read.All"
 
 # show current context scopes
@@ -190,6 +209,42 @@ Connect-MgGraph -Scopes "User.Read.All","Group.Read.All"
 # User.Read.All
 # email
 ```
+
+Login with an service principal, you can NOT customize scopes in this case, all the granted permissions to the app are included
+
+  - Use secret
+
+    ```powershell
+    $TenantId = "<tenant-id>"
+    $User = "<username>"
+    $PWord = ConvertTo-SecureString -String "<pass>" -AsPlainText -Force
+
+    $Credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $User, $PWord
+    Connect-MgGraph -TenantId $TenantId -ClientSecretCredential $Credential
+
+    (Get-MgContext).Scopes
+    ```
+
+  - Use access token (if you already logged in to the service principal with `Connect-AzAccount`)
+
+    ```powershell
+    $TenantId = "<tenant-id>"
+    $User = "<username>"
+    $PWord = ConvertTo-SecureString -String "<pass>" -AsPlainText -Force
+
+    $Credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $User, $PWord
+    Connect-AzAccount -ServicePrincipal -Tenant $TenantId -Credential $Credential
+
+    # get the access token, need to be converted to secure format
+    $accessToken = (Get-AzAccessToken -ResourceUrl "https://graph.microsoft.com").Token
+    $accessTokenSecure = ConvertTo-SecureString -String "$accessToken" -AsPlainText -Force
+
+    # login with the access token
+    Connect-MgGraph -AccessToken $accessTokenSecure
+    (Get-MgContext).scopes
+    ```
+
+### Common operations
 
 User
 
@@ -316,6 +371,11 @@ Get-MgRoleManagementDirectoryRoleAssignmentSchedule -Filter "principalId eq '$my
             }
 ```
 
+
+## Permission notes
+
+- `AccessReview.ReadWrite.Membership` supposed to be able to create access reviews for group memberships, but seems not work (at least for an SP), `AccessReview.ReadWrite.All` works
+- `Group.Create` permission allows an SP to create a group, and adds itself as an owner, then the SP can manage this group, but not other groups, this means the SP does not need the broader `Group.ReadWrite.All` permission
 
 ## Misc
 

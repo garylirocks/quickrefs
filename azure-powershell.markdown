@@ -34,6 +34,19 @@ The first step is always login
 Connect-AzAccount
 ```
 
+You can also login using a service principal (with password/certificate/federated workload credential) , managed identity
+
+For example, to login using service principal and secret:
+
+```powershell
+$TenantId = "<tenant-id>"
+$User = "<username>"
+$PWord = ConvertTo-SecureString -String "<pass>" -AsPlainText -Force
+
+$Credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $User, $PWord
+Connect-AzAccount -ServicePrincipal -Tenant $TenantId -Credential $Credential
+```
+
 
 ## Account
 
