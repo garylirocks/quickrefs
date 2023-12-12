@@ -9,6 +9,7 @@
 - [PIM for Azure resource roles](#pim-for-azure-resource-roles)
   - [Get eligible assignments or active assignments](#get-eligible-assignments-or-active-assignments)
   - [Self-activate an eligible assignment](#self-activate-an-eligible-assignment)
+  - [Azure resource role settings (PIM policies)](#azure-resource-role-settings-pim-policies)
 - [CLI](#cli)
 
 
@@ -297,6 +298,80 @@ New-AzRoleAssignmentScheduleRequest `
   -TicketNumber $ticketNumber `
   -TicketSystem JIRA
 ```
+
+### Azure resource role settings (PIM policies)
+
+- Also called PIM policies
+- Is defined **per role** and **per resource**
+  - All assignments for the same role on the same resource get the same role settings
+- **Not inherited**, eg. role settings on subscriptions are not inherited at resource group or resource level
+- Resource type `/providers/Microsoft.Authorization/roleManagementPolicies`, its structure is like:
+
+  ```json
+  {
+    "name": "xxxxx",
+    "id": "xxxxx",
+    "type": "Microsoft.Authorization/roleManagementPolicies"
+    "properties": {
+      "scope": "<scope-id>",
+      "isOrganizationDefault": false,
+      "lastModifiedDateTime": "<date-time>",
+      "lastModifiedBy": {
+        "displayName": "<principal-name>"
+      },
+      "policyProperties": {
+        "scope": {
+          "id": "<scope-id>",
+          "displayName": "<scope-name>",
+          "type": "subscription"
+        }
+      },
+      "rules": [
+        //...
+      ],
+      "effectiveRules": [
+        //...
+      ]
+    }
+  }
+  ```
+
+- Role settings assignment has resource type `/providers/Microsoft.Authorization/roleManagementPolicyAssignments`, its structure is like
+
+  ```json
+  {
+    "name": "xxxxx",
+    "id": "xxxxx",
+    "type": "Microsoft.Authorization/RoleManagementPolicyAssignment"
+    "properties": {
+      "scope": "<scope-id>",
+      "roleDefinitionId": "<role-def-id>",
+      "policyId": "<role-management-policy-id>",
+      "policyAssignmentProperties": {
+        "scope": {
+          "id": "<scope-id>",
+          "displayName": "<scope-name>",
+          "type": "subscription"
+        },
+        "roleDefinition": {
+          "id": "<role-def-id>",
+          "displayName": "<role-def-name>",
+          "type": "BuiltInRole"
+        },
+        "policy": {
+          "id": "<role-management-policy-id>",
+          "lastModifiedBy": {
+            "displayName": "<principal-name>"
+          },
+          "lastModifiedDateTime": "<date-time>"
+        }
+      },
+      "effectiveRules": [
+        //...
+      ],
+    }
+  }
+  ```
 
 
 ## CLI
