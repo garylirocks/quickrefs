@@ -521,6 +521,10 @@ Note:
   - Other group types such as **distribution lists** and **mail-enabled security groups** are managed only in Exchange admin center or Microsoft 365 admin center.
 
 - There is a flag determining whether a group can be assigned "Azure AD Roles"
+- Group owners
+  - Owner can be user or SP, not group
+  - When an SP creates a group, it will be added as the owner automatically
+  - If a group has only one user owner, this user owner can't be removed, even the group has an SP owner
 
 
 ## Workload identities
