@@ -286,7 +286,12 @@ terraform output -raw lb_url
 - `terraform plan`
 
     - Produces an execution plan for you to review
-    - `terraform plan -refresh-only` outputs a plan showing what has been changed to the resources, you need to apply the plan to update the state file. If you want those changes, you SHOULD update your config.
+    - `terraform plan -refresh-only` outputs a plan showing what has been changed to the remote resources, you need to apply the plan to bring the changes to the state file.
+
+      ```sh
+      terraform plan -refresh-only -output "refresh.plan"
+      terraform apply "refresh.plan"
+      ```
 
 - `terraform apply`
 
