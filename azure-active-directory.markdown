@@ -1423,7 +1423,7 @@ Note:
 ### Features
 
 - You can define an access review along with an access package
-- Requester could submit a custom start or end data for their access
+- Requester could submit a custom start or end date for their access
 - Users can use `https://myaccess.microsoft.com` portal to request/approve both access packages and access reviews
 
 
