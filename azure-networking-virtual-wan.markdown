@@ -35,13 +35,14 @@
 
 - A virtual hub has a router that manages all routing between gateways using BGP.
   - This router provides transit connectivity between virtual networks that connect to a virtual hub.
-  - In a spoke vnet, a VM's effective routes:
+  - In a spoke vnet, a VM's effective routes are like:
 
-    | Prefix     | Next Hop Type |
-    | ---------- | ------------- |
-    | vHub range | VNet Peering  |
+    | Prefix        | Next Hop Type           | Next Hop IP                                 |
+    | ------------- | ----------------------- | ------------------------------------------- |
+    | vHub range    | VNet Peering            | --                                          |
+    | spoke-b range | Virtual network gateway | random public IP (representing vHub router) |
+    | onPrem range  | Virtual network gateway | a private IP (representing ER gateway)      |
 
-  - Ths router shows up as "Virtual network gateway" with a random public IP in effective routes of a connected VM.
 - Four types of connections:
   - S2S VPN
   - P2S VPN
@@ -60,6 +61,15 @@
   - Enabling routing intent (when a Firewall is deployed in the hub) disables routing configs on connections
 
 ![Virtual hub route propagation](images/azure_virtual-wan-routes-propagation.png)
+
+- Routing preference, which determines if a range has been learnt from multiple origins, which one is preferred
+  - ExpressRoute (default value)
+  - VPN
+  - AS Path (shortest AS Path first)
+
+  ![Routing preference](images/azure_vwan-vhub-routing-preference.png)
+
+  *In the above diagram, you want to set the preference on both vHubs to be **AS Path**, so the traffic would go from vHub to vHub, not be routed via the ER circuit, see https://youtu.be/D3-3BfWXzSo?si=541uRyNZ-ddwspPM*
 
 ### Custom route tables
 
@@ -97,12 +107,23 @@ Apply to:
 - Enabling routing intent **disables routing config on connections**, you don't need to config association/propagation, static routes, etc.
   - For private traffic, it's always applied to all the VNets and branches
   - For public traffic, it could be applied selectively, if the "Propagate default route" option is disabled on a VNet connection, then the `0.0.0.0/0` routing intent will not propagate to this connection
-- This summaries routes in the route tables to just following 4 prefixes, and next hop is the firewall:
+- Under the hood, routing intent makes all vNet connection propagate to None route table, and associates to Default route table
+- It summaries routes in the route tables to just these 4 prefixes, and next hop is the firewall:
   - 192.168.0.0/16
   - 172.16.0.0/12
   - 10.0.0.0/8
   - 0.0.0.0/0
-- NICs on attached vNets get the RFC1918 summaries as well
+- NICs on attached vNets get the RFC1918 summaries as well, with effective routes like:
+
+  | Prefix         | Next Hop Type           | Next Hop IP                                                           |
+  | -------------- | ----------------------- | --------------------------------------------------------------------- |
+  | vHub range     | VNet Peering            | --                                                                    |
+  | 192.168.0.0/16 | Virtual network gateway | private IP of Firewall                                                |
+  | 172.16.0.0/12  | Virtual network gateway | private IP of Firewall                                                |
+  | 10.0.0.0/8     | Virtual network gateway | private IP of Firewall                                                |
+  | 0.0.0.0/0      | Virtual network gateway | private IP of Firewall (if routing intent enabled for public traffic) |
+  | 0.0.0.0/0      | Internet                | N/A (if routing intent not enabled for public traffic)                |
+
 - Branches still gets individual prefixes for each spoke
 - You can view effective routes on the firewall, which shows the individual prefixes of the spokes
 
