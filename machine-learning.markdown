@@ -27,6 +27,7 @@
   - [Regression tree](#regression-tree)
   - [Tree ensembles](#tree-ensembles)
   - [XGBoost](#xgboost)
+- [Skewed dataset](#skewed-dataset)
 - [References](#references)
 
 
@@ -488,6 +489,29 @@ To make it work better, we use these two ways:
 ### XGBoost
 
 Instead of sampling each of the $m$ samples equally, it gives higher weight to mis-classified samples in previous trees.
+
+
+## Skewed dataset
+
+For skewed dataset, eg. for rare diseases, there's only a very small number of positive examples, the usual accuracy metric is not so useful.
+
+We usually use **precision** and **recall** to measure the effectiveness of the model:
+
+![Precision and recall](images/ml_precision-recall.png)
+
+You often need to make a tradeoff between precision and recall
+
+![Tradeoff between precision and recall](images/ml_precision-recall-tradeoff.png)
+
+You usually need to make the decision yourself on the threshold.
+
+Alternatively, you could use the $F_1$ score:
+
+![F1 score](images/ml_f1-score.png)
+
+  $$F_1 = \frac{1}{\frac{1}{2}(\frac{1}{P} + \frac{1}{R})} = \frac{2\cdot P \cdot R}{P + R}$$
+
+$F_1$ score is also called *Harmonic mean*, which emphasizes the smaller value
 
 
 ## References
