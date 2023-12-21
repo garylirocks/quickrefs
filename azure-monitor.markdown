@@ -47,7 +47,8 @@ Monitoring services in logical groups:
     - Helps you plan for scheduled maintenance
   - Azure Monitor (metrics and diagnostics)
   - Advisor
-    - Potential performance, cost, high availability or security issues
+    - Cost, Operational, Performance, Reliability, or Security issues
+    - Updates twice a day
 
 - Log Analytics
 
@@ -650,9 +651,18 @@ Provided insights:
 
 ### VM Insights
 
+When you enable VM insights, it
+
+- Installs Azure Monitor Agent and Dependency Agent on your VM.
+- Creates a data collection rule (DCR) that collects and sends a predefined set of client performance data to a Log Analytics workspace.
+  - Because the DCR sends performance counters to Azure Monitor Logs, you DON'T use Metrics Explorer to view them
+  - Instead, view the metrics with prebuilt VM insights workbooks
+  - You need create your own DCR to collect logs or other performance counters
+- Presents the data in curated workbooks.
+
 Provide
 
-- Detailed performance metrics
+- Detailed performance metrics (view them in workbooks)
 - A topology view showing dependencies like processes running, ports open, connection details, etc
 - VMs, VMSS, VMs connected with Azure Arc, on-prem VMs
 - Can monitor VMs **across multiple subscriptions** and resource groups
