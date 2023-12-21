@@ -127,8 +127,15 @@ Like storage accounts, you have options like:
 - Disable public access
 
 And there's an option for exception: "Allow trusted Microsoft services to bypass this firewall", see https://learn.microsoft.com/en-us/azure/key-vault/general/overview-vnet-service-endpoints#trusted-services
-- This exception does not apply to logic apps
+- The trusted services
+  - Include Office 365 Exchange Online, Office 365 SharePoint Online, Azure compute, Azure Resource Manager, and Azure Backup
+  - **NOT** include Logic Apps, Azure DevOps, etc
+  - Still need to present a valid Microsoft Entra token, and must have permissions (configured as access policies) to perform the requested operation
 - **Exception still applies** even if you choose "Disable public access"
+
+Notes:
+
+- *This only applies to the data plane, so you might be able to see a key vault in the Portal, but can NOT list the secrets in it*
 
 
 ## Vault authentication
