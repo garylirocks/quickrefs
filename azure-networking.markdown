@@ -14,7 +14,7 @@
 - [Network security group (NSG)](#network-security-group-nsg)
   - [Service Tag](#service-tag)
     - [`VirtualNetwork` tag](#virtualnetwork-tag)
-  - [App Security Group](#app-security-group)
+  - [Application Security Group (ASG)](#application-security-group-asg)
   - [Azure platform considerations](#azure-platform-considerations)
   - [Virtual IP of the host node](#virtual-ip-of-the-host-node)
     - [`168.63.129.16`](#1686312916)
@@ -112,6 +112,8 @@ A vNet can be cloud-only or connected to on-prem network through site-2-site VPN
 - A vNet spans multiple availability zones, not limited to a single data center
 
 ### Subnets
+
+Virtual networks and subnets **span all availability zones in a region**. You don't need to divide them by availability zones to accommodate zonal resources. For example, if you configure a zonal VM, you don't have to take into consideration the virtual network when selecting the availability zone for the VM.
 
 #### IP addressing
 
@@ -245,6 +247,7 @@ az network public-ip create \
 
 - Filters inbound and outbound traffic
 - Can be associated to a **network interface** (per host rules), a **subnet** , or both
+  - To avoid complexity, it's recommend that you associate an NSG to a subnet, or a network interface, but not both
 - Each subnet or NIC can have zero or one NSG
 - An NSG is an independent resource, doesn't belong to a vNet, it can be associated **multiple times** to subnets in the same or different vNets (must be in the same region)
 - Default rules cannot be modified but *can* be overridden
@@ -302,14 +305,31 @@ See details:
 - https://github.com/MicrosoftDocs/azure-docs/issues/22178
 - https://journeyofthegeek.com/2022/06/22/virtualnetwork-service-tag-and-network-security-groups/
 
-
-### App Security Group
+### Application Security Group (ASG)
 
 You could add VM NICs to an **App Security Group** (like a custom service tag), which could be used in an NSG rule to make management easier, you just add/remove VMs to/from the ASG, no need to manually add/remove IPs to the NSG rules
 
-![App Security Group](images/azure_app-security-group-asg-nsg.svg)
+Notes:
 
-*Private endpoint could be added to an ASG as well*
+- A NIC can be added to multiple ASGs
+- All NICs in an ASG must be in the same vNet
+- In an NSG rule, if both source and destination are ASGs, then the NICs in both must be come from a single vNet
+- **Private endpoint** NIC could be added to an ASG as well
+
+Example:
+
+![App Security Group](images/azure_app-security-group-asg-nsg.png)
+
+| Priority | Source   | Source ports | Destination | Destination ports | Protocol | Access |
+| -------- | -------- | ------------ | ----------- | ----------------- | -------- | ------ |
+| 100      | Internet | *            | AsgWeb      | 80                | TCP      | Allow  |
+| 110      | AsgLogic | *            | AsgDb       | 1433              | TCP      | Allow  |
+| 120      | *        | *            | AsgDb       | 1433              | Any      | Deny   |
+
+- *Both subnet1 and subnet2 are associated with the same NSG*
+- *Since inter-subnet traffic is allowed by default, so you need the last rule to block other traffic to AsgDb*
+
+
 
 ### Azure platform considerations
 
