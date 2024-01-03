@@ -1175,7 +1175,7 @@ A tenant-wide setting, provides secure default settings until organizations are 
       - IdP uses public key to verify and authenticate the user
       - Both biometrics and PIN are not shared with the server
   - **FIDO2** security keys
-    - FIDO stands for Fast IDentity Online, it's on open standard
+    - FIDO stands for Fast IDentity Online, it's an open standard
     - Keys are typically USB devices, but could also use Bluetooth or NFC
     - Phishing resistant
     - You buy the key from a third party vendor
