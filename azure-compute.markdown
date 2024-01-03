@@ -27,6 +27,7 @@
   - [Disk encryption](#disk-encryption)
     - [ADE](#ade)
 - [VMSS - Virtual Machine Scale Sets](#vmss---virtual-machine-scale-sets)
+- [Run Commands](#run-commands)
 - [Azure Batch](#azure-batch)
 - [Azure Compute Gallery](#azure-compute-gallery)
 - [Docker Container Registry](#docker-container-registry)
@@ -905,6 +906,26 @@ Limitations:
 - Number of instances can automatically increase or decrease in response to demand or a defined schedule.
 - You could use your own custom VM images.
 - It has instance repair feature which replaces a VM if it health check fails.
+
+
+## Run Commands
+
+Two types of commands,
+
+- Action RunCommand
+  - The original run command
+  - It's a POST action
+  - Suitable for one-off actions
+  - Run as system account / root
+- Managed RunCommand
+  - This is the updated run command
+  - It's a resource type
+  - Run as specified user
+  - Multiple scripts could be run in parallel or sequenced
+  - Output could be uploaded to an append blob
+  - Supports long running (hours/days) scripts
+  - Passing secrets (parameters, passwords) in a secure manner
+  - Scripts can be published to a gallery
 
 
 ## Azure Batch
