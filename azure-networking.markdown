@@ -1716,26 +1716,39 @@ More detailed:
 
 By default, all traffic is blocked, you can configure:
 
-- **DNAT rules**:
+- **NAT rules**:
   - Translate firewall public IP/port to a private IP/port, could be helpful in publishing SSH, RDP, or non-HTTP/S applications to the Internet
-  - **must be accompanied by a matching network rule**
+  - DNAT rules are applied first. If a match is found, an **implicit corresponding network rule to allow the translated traffic is added**. You can override this behavior by explicitly adding a network rule collection with deny rules that match the translated traffic. No application rules are applied for these connections.
   - Limitations:
     - Doesn't work for private IP destinations (ie. spoke to spoke, on-prem to spoke)
-    - In addition to DNAT, inbound connections via public IP are always SNATed to one of the firewall private IPs. (For HTTP/s traffic, Azure Front Door or Application Gateway in front of the firewall could preserve the original client IP in `X-Forwarded-For` header)
+  - In addition to DNAT, inbound connections via public IP are always SNATed to one of the firewall private IPs. (For HTTP/s traffic, Azure Front Door or Application Gateway in front of the firewall could preserve the original client IP in `X-Forwarded-For` header)
 - **Network rules**:
   - Apply to **non-HTTP/S traffic** that flow through the firewall, including traffic from one subnet to another
   - Inbound/outbound filtering rules by source, destination, port and protocol(TCP, UDP, ICMP or any), it can distinguish legitimate packets for different type of connections
+  - **Service tags** are supported as destinations
   - Also support **FQDN-based limits** to more precisely control egress traffic that application rules don't handle, this feature requires that DNS proxy is enabled. A common use is limiting Network Time Protocol (NTP) traffic to known endpoints, such as `time.windows.com`
 - **Application rules**:
   - Does not apply to inbound traffic
   - Only allow a list of specified FQDNs for outbound HTTP/S or Azure SQL traffic to a specified list of FQDN including wild card. Does not require TLS termination.
     - For HTTP, matches the **"Host" header**
     - For HTTPS, matches according to **Server Name Indication**
-  - Could use FQDN tags: Windows Update, Azure Backup, App Service Environment
+  - Could use **FQDN tags** (not service tags), which are comprised of a list of FQDNs
+    - Windows Update
+    - Azure Backup
+    - App Service Environment
+    - etc
+  - Azure Firewall includes a built-in rule collection for infrastructure FQDNs that are allowed by default.
+    - Compute access to storage Platform Image Repository (PIR)
+    - Managed disks status storage access
+    - Azure Diagnostics and Logging (MDS)
+
 - **Threat Intelligence**
   - Alert/deny traffic from known malicious IP and domains
 
-Network rules are processed before application rules
+Rule matching:
+- Network rules are processed before application rules
+- Rules are terminating, if a match is found in network rules, application rules are not processed
+- If no rules match, the traffic is denied
 
 DNS proxy:
 - Azure Firewall could be used as a DNS proxy, this enables FQDN-based network rules
