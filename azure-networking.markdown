@@ -257,6 +257,8 @@ az network public-ip create \
 
 - To access a VM, traffic must be allowed on both subnet and NIC NSG rules
 - For inbound traffic, subnet NSG rules are evaluated first, then NIC NSG rules, the other way around for outbound traffic
+- If no NSG is attached to a subnet or NIC, the traffic is allowed
+- Intra-subnet traffic is affected by subnet-attached NSG as well !
 
 ### Service Tag
 
@@ -314,6 +316,7 @@ Notes:
 - A NIC can be added to multiple ASGs
 - All NICs in an ASG must be in the same vNet
 - In an NSG rule, if both source and destination are ASGs, then the NICs in both must be come from a single vNet
+- NSG source/destination can have only one ASG, not multiple ones
 - **Private endpoint** NIC could be added to an ASG as well
 
 Example:
@@ -1042,9 +1045,15 @@ az network nic show-effective-route-table \
 
 - Virtual networks and Azure service resources can be in the same or **different subscriptions**. Certain Azure Services (not all) such as Azure Storage and Azure Key Vault also support service endpoints across different Active Directory(AD) tenants.
 
+- Inspect/filter traffic using an NVA:
+  - Only enable service endpoints in the NVA subnet
+  - Use UDR to route relevant traffic to NVA in other subnets
+
 - Service endpoint doesn't work with in on-prem scenarios, for on-prem clients, you need to
   - either setup ExpressRoute **public peering**
   - or add on-prem **NAT IPs** to the service's IP firewall
+
+- **VM Disk traffic** for managed and unmanaged disks isn't affected by service endpoints routing changes for Azure Storage.
 
 ### Create
 
