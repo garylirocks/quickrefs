@@ -28,6 +28,7 @@
     - [ADE](#ade)
 - [VMSS - Virtual Machine Scale Sets](#vmss---virtual-machine-scale-sets)
 - [Run Commands](#run-commands)
+- [Azure Bastion](#azure-bastion)
 - [Azure Batch](#azure-batch)
 - [Azure Compute Gallery](#azure-compute-gallery)
 - [Docker Container Registry](#docker-container-registry)
@@ -836,6 +837,9 @@ Types of encryption:
   - Your temp disk and OS/data disk caches are stored on the host
   - Does not use your VM's CPU and no impact on your VM's performance
   - Your must enable this feature for your subscription first: `Register-AzProviderFeature -FeatureName "EncryptionAtHost" -ProviderNamespace "Microsoft.Compute"`
+- Confidential disk encryption:
+  - Encryption keys bound to the VM's TPM
+  - Only available for the OS disk
 
 Comparison:
 
@@ -889,14 +893,19 @@ az deployment group create \
 
 Limitations:
 
-- The encryption key must be in a key vault in the **same region**, so it won't work if you move the disk to another region ?
-- Basic size VMs do not support ADE
+- The encryption key must be in a key vault in the **same region** and subscription
+- Not available on Basic, A-series VMs
 - On some Linux distros, only data disks can be encrypted
 - On Windows, only NTFS format disks can be encrypted
 - When adding a new disk to an encrypted VM, it's NOT encrypted automatically, it needs to be properly partitioned, formatted, and mounted before encryption
 - When enabling encryption on new VMs, you could use an ARM template to ensure data is encrypted at the point of deployment
 - ADE is required for VMs backed up to the Recovery Vault
 - **SSE with CMK improves on ADE** by enabling you to use any OS types and images for your VMs
+
+Networking requirements:
+- To get a token to connect to your key vault, the Windows VM must be able to connect to a Microsoft Entra endpoint, `login.microsoftonline.com`
+- To write the encryption keys to your key vault, the Windows VM must be able to connect to the key vault endpoint.
+- The Windows VM must be able to connect to an Azure storage endpoint that hosts the Azure extension repository and an Azure storage account that hosts the VHD files.
 
 
 ## VMSS - Virtual Machine Scale Sets
@@ -926,6 +935,15 @@ Two types of commands,
   - Supports long running (hours/days) scripts
   - Passing secrets (parameters, passwords) in a secure manner
   - Scripts can be published to a gallery
+
+
+## Azure Bastion
+
+![Bastion architecture](images/azure_bastion-architecture.png)
+
+- You access VMs via Azure Portal
+- A bastion can connect to VM in the same or peered vNets
+- No need to configure NSGs on `AzureBastionSubnet`
 
 
 ## Azure Batch
