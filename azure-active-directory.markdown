@@ -829,7 +829,7 @@ Permissions of all Microsoft IdP integrated API apps in your tenant can be reque
 Two types of permissions:
 
 - **Deletegated permissions**: used by apps that have a signed-in user present, the user is simply allowing the app to act on their behalf using their permissions
-  - Some delegated permissions can be sonsented to by non-administrative users, but some higher-privileged permissions require administrator consent.
+  - Some delegated permissions can be consented to by non-administrative users, but some higher-privileged permissions require administrator consent.
   - The *effective permissions* are the **intersection** of the delegated permissions granted to the app (via consent) and the privileges of the currently signed-in user
     - An app can never have more privileges than the signed-in user, if the app has been granted `User.ReadWrite.All`, but the user doesn't have proper admin role, then the app can only update the profile of the signed-in user, not other users
 - **Application permissions**: used by apps that run without a signed-in user, such as background services or daemons
@@ -855,7 +855,11 @@ Supported OpenID Connect scopes:
 
 Best practices:
 
-- Restricting user consent to allow users to consent only for app from verified publishers, and only for permissions you select.
+- There are settings for
+  - "User consent for applications"
+  - "Group owner consent for apps accessing data"
+  - "Admin consent request" - whether user can request admin consent to apps they are unable to consent to
+- Restricting user consent to "Allow user consent for apps from verified publishers, for selected permissions (Recommended)"
 
 ### Consent
 
@@ -878,7 +882,7 @@ Admins could grant **tenant-wide admin consent**:
 
 How admins consent to an app:
 
-- When an admin logs in to the app for the first time (in the `/authorize` endpoint), them would be asked if they would consent on behalf of the entire tenant
+- When an admin logs in to the app for the first time (in the `/authorize` endpoint), they would be asked if they would consent on behalf of the entire tenant
 - In the Portal, click button in either "Enterprise applications" -> "Permissions" or "App registrations" -> "API permissions"
 - Use the admin consent endpoint
   - During sign-up or the first sign-in, you can redirect the user to the admin consent endpoint, `https://login.microsoftonline.com/\{tenant\}/v2.0/adminconsent?client_id={client-id}&state=12345&redirect_uri=http://localhost/myapp/permissions&scope=https://graph.microsoft.com/calendars.read https://graph.microsoft.com/mail.send`
@@ -899,7 +903,7 @@ See: https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-add-a
 
 - The "Expose an API" menu in the Portal allows you to define scopes for an API application.
   - This creates only "deletegated permissions".
-  - For application-on scopes, use "App roles" and define app roles assignable to applications.
+  - For application-only scopes, use "App roles" and define app roles assignable to applications.
 - You could add another application as an authorized client application to the scopes, then user won't be prompted to consent when login to the client application.
 - Application ID URI need to be globally unique, usually has the form `api://<app-id>`, eg. `api://dev.guisheng.li/demo/api1`
 - When a client app requests the scope in its OAuth request, and the user consents (or pre-approved), AAD sends back an access token which contains the required scopes

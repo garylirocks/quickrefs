@@ -194,6 +194,7 @@ Get-Command -Module Microsoft.Graph.* -Noun *principal* -Verb Get
 Always use `Connect-MgGraph` to authenticate first
   - it works with user, app, and managed identity
   - could authenticate with interactive login, certificate, password. See https://learn.microsoft.com/en-us/powershell/module/microsoft.graph.authentication/connect-mggraph?view=graph-powershell-1.0
+  - Any scopes you specify in `-Scopes` will require consent (either by user or an admin). If the app has permission `User.ReadWrite.All`, you can use it in `-Scopes` without consenting again, but if you use sub scopes like `User.Read.All`, you still need to grant consent explicitly for the sub scope.
 
 ```powershell
 # interactive login with user, you could customize scopes
