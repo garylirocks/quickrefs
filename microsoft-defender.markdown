@@ -29,21 +29,23 @@
     - Defender CSPM - charged per resource (Servers, DBs, Storage accounts)
 
   - **Cloud Workload Protection (CWP)** - Identify unique workload security requirements, there are defender plans for
-    - Servers
-    - Containers
-    - Storage
-    - SQL DB
-    - Cosmos DB
-    - Open source DBs (resource level only)
-    - Key Vault
-    - App Service
-    - DNS
-    - Resource Manager (charged per subscription)
-    - DevOps
-- Some plans could be enabled at either subscription level or individual resource level
-  - Defender for Storage account
-  - Defender for SQL
-- The Microsoft Defender plans available at the **workspace level** are Microsoft Defender for Servers and Microsoft Defender for SQL servers on machines.
+
+    | Plan              | Level               |
+    | ----------------- | ------------------- |
+    | Servers           | sub or workspace    |
+    | SQL server on VMs | sub or workspace    |
+    | Containers        | sub                 |
+    | Storage           | sub or resource     |
+    | SQL DB            | sub or resource     |
+    | Cosmos DB         | sub                 |
+    | Open source DBs   | resource level only |
+    | Key Vault         | sub                 |
+    | App Service       | sub                 |
+    | DNS               | sub                 |
+    | Resource Manager  | charged per sub     |
+    | DevOps            | sub                 |
+
+    - When you enable Microsoft Defender for Servers on an Azure subscription (or a connected AWS account), all of the connected machines are protected by Defender for Servers. You can enable Microsoft Defender for Servers at the Log Analytics workspace level, but only servers reporting to that workspace will be protected and billed and those servers won't receive some benefits, such as Microsoft Defender for Endpoint, vulnerability assessment, and just-in-time VM access.
 
 ### Policies and Initiatives
 
