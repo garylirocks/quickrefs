@@ -2,14 +2,16 @@
 
 - [Overview](#overview)
 - [Defender for Cloud](#defender-for-cloud)
-  - [Policies and Initiatives](#policies-and-initiatives)
   - [Roles](#roles)
   - [Multicloud](#multicloud)
-  - [Extensions for Compute resources](#extensions-for-compute-resources)
+  - [Policies and Initiatives](#policies-and-initiatives)
   - [Microsoft cloud security benchmark (MCSB)](#microsoft-cloud-security-benchmark-mcsb)
   - [Recommendattions](#recommendattions)
-  - [Just-In-Time (JIT) VM access](#just-in-time-jit-vm-access)
+  - [Agentless scanning](#agentless-scanning)
   - [Cloud Security Explorer](#cloud-security-explorer)
+  - [Extensions for Compute resources](#extensions-for-compute-resources)
+  - [Just-In-Time (JIT) VM access](#just-in-time-jit-vm-access)
+- [Defender for Containers](#defender-for-containers)
 - [Defender for Cloud Apps](#defender-for-cloud-apps)
 - [Defender for Identity](#defender-for-identity)
 
@@ -47,14 +49,7 @@
 
     - When you enable Microsoft Defender for Servers on an Azure subscription (or a connected AWS account), all of the connected machines are protected by Defender for Servers. You can enable Microsoft Defender for Servers at the Log Analytics workspace level, but only servers reporting to that workspace will be protected and billed and those servers won't receive some benefits, such as Microsoft Defender for Endpoint, vulnerability assessment, and just-in-time VM access.
 
-### Policies and Initiatives
-
-Defender for Cloud mainly uses '**Audit**' policies that check specific conditions and configurations and then report on compliance.
-
-- When you enable Defender for Cloud, the initiative named "**Microsoft cloud security benchmark**" is automatically assigned to all Defender for Cloud registered subscriptions
-  - You can enable or disable individual policies by editing parameters
-- You can add regulatory compliance standards as initiatives, such as CIS, NIST etc
-- You can add your own custom initiatives
+- You can enabled Defender for Cloud on a subscription automatically by using an Azure policy: `Enable Microsoft Defender for Cloud on your subscription`, which checks whether the VM plan is either set to "Free" or "Standard", see [Defender for Cloud on all subscriptions](https://learn.microsoft.com/en-us/azure/defender-for-cloud/onboard-management-group)
 
 ### Roles
 
@@ -73,29 +68,14 @@ Can protect AWS and GCP resources
 - Microsoft Defender for Servers
   - Can cover EC2 instances
 
-### Extensions for Compute resources
+### Policies and Initiatives
 
-- Collects data from compute resources, such as VMs, VMSS, IaaS containers, and non-Azure computers, data is collected using:
-  - Azure Monitor Agent (AMA)
-  - Microsoft Defender for Endpoint (MDE)
-  - Log Analytics Agent
-  - Azure Policy Add-on for Kubernetes
-- Some Defender plans require "monitoring components" to collect data from your workloads
-  - Defender for Servers
-    - Azure Arc agent (For multicloud and on-premises servers)
-    - Microsoft Defender for Endpoint
-    - Vulnerability assessment
-    - Azure Monitor Agent or Log Analytics agent
-  - Defender for SQL servers on machines
-    - Azure Arc agent (For multicloud and on-premises servers)
-    - Azure Monitor Agent or Log Analytics agent
-    - Automatic SQL server discovery and registration
-  - Defender for Containers
-    - Azure Arc agent (For multicloud and on-premises servers)
-    - Defender profile, Azure Policy Extension, Kubernetes audit log data
-- When you enable an extension, it will be installed on any new or existing resource, by assigning a security policy.
-  - eg. After enable "Guest Configuration agent", policies like "ASC provisioning Guest Configuration agent for Linux" will be assigned
-  - Policy assignment will be removed once you disable the config
+Defender for Cloud mainly uses '**Audit**' policies that check specific conditions and configurations and then report on compliance.
+
+- When you enable Defender for Cloud, the initiative named "**Microsoft cloud security benchmark**" is automatically assigned to all Defender for Cloud registered subscriptions
+  - You can enable or disable individual policies by editing parameters
+- You can add regulatory compliance standards as initiatives, such as CIS, NIST etc
+- You can add your own custom initiatives
 
 ### Microsoft cloud security benchmark (MCSB)
 
@@ -127,6 +107,40 @@ For a recommendation, you can:
 
 And you can create **Governance rule** to assign owners (by email or resource tag) and time frames to recommendations automatically
 
+### Agentless scanning
+
+This scans VM disks, so it needs the built-in role “VM scanner operator”, which has permissions like `Microsoft.Compute/disks/read`, `Microsoft.Compute/virtualMachines/read`
+
+### Cloud Security Explorer
+
+Allows you to build queries interactively to hunt for risks, like SQL servers WHICH contain sensitive data AND is exposed to the Internet
+
+
+### Extensions for Compute resources
+
+- Collects data from compute resources, such as VMs, VMSS, IaaS containers, and non-Azure computers, data is collected using:
+  - Azure Monitor Agent (AMA)
+  - Microsoft Defender for Endpoint (MDE)
+  - Log Analytics Agent
+  - Azure Policy Add-on for Kubernetes
+- Some Defender plans require "monitoring components" to collect data from your workloads
+  - Defender for Servers
+    - Azure Arc agent (For multicloud and on-premises servers)
+    - Microsoft Defender for Endpoint
+    - Vulnerability assessment
+    - Azure Monitor Agent or Log Analytics agent
+  - Defender for SQL servers on machines
+    - Azure Arc agent (For multicloud and on-premises servers)
+    - Azure Monitor Agent or Log Analytics agent
+    - Automatic SQL server discovery and registration
+  - Defender for Containers
+    - Azure Arc agent (For multicloud and on-premises servers)
+    - Defender profile, Azure Policy Extension, Kubernetes audit log data
+- When you enable an extension, it will be installed on any new or existing resource, by assigning a security policy.
+  - eg. After enable "Guest Configuration agent", policies like "ASC provisioning Guest Configuration agent for Linux" will be assigned
+  - Policy assignment will be removed once you disable the config
+
+
 ### Just-In-Time (JIT) VM access
 
 - A feature of Defender for Servers
@@ -148,9 +162,16 @@ The logic that Defender for Cloud applies when deciding how to categorize VMs
 
 ![Just-in-time VM status - AWS EC2](images/azure_just-in-time-vm-access-aws-ec2.png)
 
-### Cloud Security Explorer
 
-Allows you to build queries interactively to hunt for risks, like SQL servers WHICH contain sensitive data AND is exposed to the Internet
+## Defender for Containers
+
+- Only supports AKS clusters that use VMSS
+- A Defender agent is deployed on each node as a DaemonSet
+  - The agent is registered with a Log Analytics Workspace (LAW), a default LAW is created when you install the agent
+  - The default LAW will be called `DefaultWorkspace-<sub-id>-<RegionShortCode>` in a RG named `DefaultResourceGroup-<RegionShortCode>`
+  - You can also specify a custom LAW
+- Pulls images from the registry and runs it in an isolated sandbox with Qualys scanner or with Microsoft Defender Vulnerability Management (MDVM) scanner
+- Only scan images in ACR, AWS ECR, NOT Docker Hub, Microsoft Artifact Registry/Microsoft Container Registry and ARO built-in registry yet
 
 
 ## Defender for Cloud Apps
