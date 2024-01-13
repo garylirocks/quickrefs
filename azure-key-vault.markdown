@@ -4,6 +4,7 @@
 - [Secrets](#secrets)
 - [Certificate](#certificate)
   - [Certificate composition](#certificate-composition)
+  - [Certificate Policy](#certificate-policy)
 - [Permission models](#permission-models)
   - [Read a secret](#read-a-secret)
 - [Recover](#recover)
@@ -52,9 +53,11 @@ For a cert version with this URL `https://kv-gary.vault.azure.net/certificates/c
   - key at  `https://kv-gary.vault.azure.net/keys/cert-gary/123456789`
   - secret at  `https://kv-gary.vault.azure.net/secrets/cert-gary/123456789`
 
-If the private key is exportable, you could retrieve the cert with the private key from the addressable secret.
+Operatons on the secret and key:
 
-The addresssable key's operations are mapped from the *keyusage* field of the policy used to create the cert.
+- If the private key is exportable, you could retrieve the cert with the private key from the addressable secret.
+- The addresssable key's operations are mapped from the *keyusage* field of the policy used to create the cert.
+- When the certificate expires, its addressable key and secret become inoperable.
 
 ```sh
 # download the public potion of the certificate
@@ -76,6 +79,19 @@ az keyvault secret download \
 # convert .pfx to .pem, which would include both private key and certificate
 openssl pkcs12 -in cert.pfx -passin pass: -out cert.pem -nodes
 ```
+
+### Certificate Policy
+
+Each certificate has a policy, including:
+
+- X509 certificate properties: subject name, alternative names etc
+- Key properties: key type, length, exportable etc
+- Secret properties: content type of addressable secret
+- **Lifetime Actions**: Contains lifetime actions for the Key Vault certificate. Each lifetime action contains:
+  - Trigger, which specifies via days before expiry or lifetime span percentage.
+  - Action, which specifies the action type: *emailContacts*, or *autoRenew*.
+- Issuer: Contains the parameters about the certificate issuer to use to issue x509 certificates.
+- Policy attributes: Contains attributes associated with the policy.
 
 
 ## Permission models
@@ -140,21 +156,29 @@ Notes:
 
 ## Vault authentication
 
-Vault uses AAD to authenticate users and apps:
+Applications can access Key Vault in two ways:
 
-1. Register your app as a service principle in AAD
+- **User plus application access**. The application accesses Key Vault on behalf of a signed-in user. For example, Azure PowerShell and the Azure portal. User access is granted in two ways. They can either
+  - access Key Vault from **any application**,
+  - or they must use a **specific application** (referred to as compound identity).
+- **Application-only access**. The application runs as a daemon service or background job. The application identity is granted access to the key vault.
 
-    - you register your app as a service principle, and assign vault permissions to it;
-    - the app uses its password or certificate to get an AAD authentication token;
-    - then the app can access Vault secrets using the token;
-    - there is a *bootstrapping problem*, all your secrets are securely saved in the Vault, but you still need to keep a secret outside of the vault to access them;
+For application-only access, you could use a service principal or a managed identity:
 
-2. Managed identities for Azure resources
+1. **Service principle**
 
-    When you enable managed identity on your web app, Azure activates a **separate token-granting REST service (IMDS service)** (the endpoint url is like: `http://169.254.169.254/metadata/identity/oauth2/token?api-version=...`) specifically for use by your app, your app request tokens from this service instead of directly from AAD. Your app needs a secret to access this service, but that **secret is injected into your app's environment variables** by App Service when it starts up. You don't need to manage or store the secret value, and nothing outside of your app can access this secret or the managed identity token service endpoint.
+    - You register your app as a service principle, and assign vault permissions to it;
+    - The app uses its password or certificate to get an AAD authentication token;
+    - Then the app can access Vault secrets using the token;
+    - There is a *bootstrapping problem*, all your secrets are securely saved in the Vault, but you still need to keep a secret outside of the vault to access them;
 
-    - this registers your app in AAD for you, and will delete the registration if you delete the app or disable its managed identity;
-    - managed identities are free, and you can enable/disable it on an app at any time;
+2. **Managed identities** for Azure resources
+
+    - When you enable managed identity on your web app, Azure activates a **separate token-granting REST service (IMDS service)** (the endpoint url is like: `http://169.254.169.254/metadata/identity/oauth2/token?api-version=...`) specifically for use by your app, your app request tokens from this service instead of directly from AAD.
+    - Your app needs a secret to access this service, but that **secret is injected into your app's environment variables** by App Service when it starts up.
+    - You don't need to manage or store the secret value, and nothing outside of your app can access this secret or the managed identity token service endpoint.
+    - This registers your app in AAD for you, and will delete the registration if you delete the app or disable its managed identity;
+    - Managed identities are free, and you can enable/disable it on an app at any time;
 
 
 ## Replication
@@ -172,12 +196,11 @@ To replicate/move it to other regions, you could back up then restore it
   - and in the same **geography/security boundary** (eg. backup from Australia East, restore at Australia Central, not US East)
 
 
-
-
 ## Best practices
 
 - It's recommended to set up a **separate vault for each environment of each of your applications**, so if someone gained access to one of your vaults, the impact is limited;
 - Don't read secrets from the vault everytime, you should cache secret values locally or load them into memory at startup time;
+- Key Vault is not intended as storage for user passwords.
 
 
 ## CLI
