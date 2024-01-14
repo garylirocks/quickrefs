@@ -7,10 +7,12 @@
   - [Policies and Initiatives](#policies-and-initiatives)
   - [Microsoft cloud security benchmark (MCSB)](#microsoft-cloud-security-benchmark-mcsb)
   - [Recommendattions](#recommendattions)
-  - [Agentless scanning](#agentless-scanning)
   - [Cloud Security Explorer](#cloud-security-explorer)
+  - [Data storage](#data-storage)
+    - [Continuous export](#continuous-export)
   - [Extensions for Compute resources](#extensions-for-compute-resources)
   - [Just-In-Time (JIT) VM access](#just-in-time-jit-vm-access)
+  - [Agentless scanning](#agentless-scanning)
 - [Defender for Containers](#defender-for-containers)
 - [Defender for Cloud Apps](#defender-for-cloud-apps)
 - [Defender for Identity](#defender-for-identity)
@@ -74,14 +76,15 @@ Defender for Cloud mainly uses '**Audit**' policies that check specific conditio
 
 - When you enable Defender for Cloud, the initiative named "**Microsoft cloud security benchmark**" is automatically assigned to all Defender for Cloud registered subscriptions
   - You can enable or disable individual policies by editing parameters
-- You can add regulatory compliance standards as initiatives, such as CIS, NIST etc
-- You can add your own custom initiatives
+- You can toggle which standards to enable for each subscription (such as CIS, NIST, PCI-DSS, SOC 2 etc)
+  - Each standard includes a group os recommendations
+- You can add your own custom standards
 
 ### Microsoft cloud security benchmark (MCSB)
 
 *Formerly known as Azure Security Benchmark (ASB)*
 
-It provides prescriptive best practices and recommendations to help secure your multicloud environment.
+MCSB is a comprehensive cloud agnostic set of security principles designed to recommend the most up-to-date technical guidelines for Azure along with other clouds such as AWS and GCP.
 
 Has input from a set of holistic Microsoft and industry security guidance that includes:
 
@@ -107,28 +110,34 @@ For a recommendation, you can:
 
 And you can create **Governance rule** to assign owners (by email or resource tag) and time frames to recommendations automatically
 
-### Agentless scanning
-
-This scans VM disks, so it needs the built-in role “VM scanner operator”, which has permissions like `Microsoft.Compute/disks/read`, `Microsoft.Compute/virtualMachines/read`
-
 ### Cloud Security Explorer
 
 Allows you to build queries interactively to hunt for risks, like SQL servers WHICH contain sensitive data AND is exposed to the Internet
 
+### Data storage
+
+#### Continuous export
+
+- Configured per subscription
+- Can be enabled at-scale via a DINE policy
+- Can export to Event Hub or Log Analytics Workspace
+- Workbooks (like "Secure Score Over Time") need data in LAW to work
+- Frequency: real-time updates and weekly snapshots
+- Data:
+  - Security recommendations
+  - Secure score
+  - Security alerts
+  - Regulatory compliance
 
 ### Extensions for Compute resources
 
-- Collects data from compute resources, such as VMs, VMSS, IaaS containers, and non-Azure computers, data is collected using:
-  - Azure Monitor Agent (AMA)
-  - Microsoft Defender for Endpoint (MDE)
-  - Log Analytics Agent
-  - Azure Policy Add-on for Kubernetes
-- Some Defender plans require "monitoring components" to collect data from your workloads
+- Some Defender plans (mostly for IaaS resources, eg. VMs, VMSS, IaaS containers, and non-Azure computers) require "monitoring components" to collect data from your workloads
   - Defender for Servers
     - Azure Arc agent (For multicloud and on-premises servers)
-    - Microsoft Defender for Endpoint
+    - Microsoft Defender for Endpoint (MDE)
     - Vulnerability assessment
-    - Azure Monitor Agent or Log Analytics agent
+    - Azure Monitor Agent (AMA)
+    - Log Analytics agent (deprecating, also known as "MMA")
   - Defender for SQL servers on machines
     - Azure Arc agent (For multicloud and on-premises servers)
     - Azure Monitor Agent or Log Analytics agent
@@ -136,9 +145,20 @@ Allows you to build queries interactively to hunt for risks, like SQL servers WH
   - Defender for Containers
     - Azure Arc agent (For multicloud and on-premises servers)
     - Defender profile, Azure Policy Extension, Kubernetes audit log data
-- When you enable an extension, it will be installed on any new or existing resource, by assigning a security policy.
+- When you enable a defender plan extension, relevant agent/extension will be installed on any new or existing resource, by assigning a security policy.
   - eg. After enable "Guest Configuration agent", policies like "ASC provisioning Guest Configuration agent for Linux" will be assigned
   - Policy assignment will be removed once you disable the config
+- **The Log Analytics Agent**
+  - Could be installed directly (Direct Agent) or as a VM extension
+  - The agent enables the **process creation event 4688**. New processes created on the VM get recorded by the EventLog and monitored by Defender for Cloud's detection services. The agent also collects the 4688 events created on the VM and stores them in search.
+  - Defender for Cloud configures a local AppLocker policy in Audit mode to allow all applications. This policy causes AppLocker to generate events, which are then collected and used by Defender for Cloud.
+- **Workspace**
+  - Defender for Cloud creates a default LAW when you enabled data collection
+  - You can provide a custom workspace (see https://learn.microsoft.com/en-us/azure/defender-for-cloud/faq-data-collection-agents#how-can-i-use-my-existing-log-analytics-workspace-)
+    - If the custom workspace doesn't have the "Security" or "SecurityCenterFree" solutions enabled, you need to apply a solution. To apply, select the custom workspace and apply a pricing tier via the Environment settings > Defender plans page.
+  - If a VM already has the Log Analytics agent installed as an Azure extension, Defender for Cloud uses the existing connected workspace. A Defender for Cloud solution is installed on the workspace if not present already, and the solution is applied only to the relevant VMs via solution targeting.
+    - **No Defender plans are enabled** – Defender for Cloud installs the "**SecurityCenterFree**" solution on the workspace and you aren't billed for it.
+    - **Enable all Microsoft Defender plans** – Defender for Cloud installs the "**Security**" solution on the workspace.
 
 
 ### Just-In-Time (JIT) VM access
@@ -161,6 +181,12 @@ The logic that Defender for Cloud applies when deciding how to categorize VMs
 *For AWS EC2 VMs:*
 
 ![Just-in-time VM status - AWS EC2](images/azure_just-in-time-vm-access-aws-ec2.png)
+
+### Agentless scanning
+
+- Included in Defender Cloud Security Posture Management (CSPM) and Defender for Servers P2 plans.
+- This scans VM disks, so it needs the built-in role "VM scanner operator", which has permissions like `Microsoft.Compute/disks/read`, `Microsoft.Compute/virtualMachines/read`
+- Raw data, PIIs or sensitive business data isn't collected, and only metadata results are sent to Defender for Cloud.
 
 
 ## Defender for Containers
