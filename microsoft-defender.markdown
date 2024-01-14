@@ -10,7 +10,7 @@
   - [Cloud Security Explorer](#cloud-security-explorer)
   - [Data storage](#data-storage)
     - [Continuous export](#continuous-export)
-  - [Extensions for Compute resources](#extensions-for-compute-resources)
+  - [Agents for Compute resources](#agents-for-compute-resources)
   - [Just-In-Time (JIT) VM access](#just-in-time-jit-vm-access)
   - [Agentless scanning](#agentless-scanning)
 - [Defender for Containers](#defender-for-containers)
@@ -129,7 +129,7 @@ Allows you to build queries interactively to hunt for risks, like SQL servers WH
   - Security alerts
   - Regulatory compliance
 
-### Extensions for Compute resources
+### Agents for Compute resources
 
 - Some Defender plans (mostly for IaaS resources, eg. VMs, VMSS, IaaS containers, and non-Azure computers) require "monitoring components" to collect data from your workloads
   - Defender for Servers
@@ -144,7 +144,7 @@ Allows you to build queries interactively to hunt for risks, like SQL servers WH
     - Automatic SQL server discovery and registration
   - Defender for Containers
     - Azure Arc agent (For multicloud and on-premises servers)
-    - Defender profile, Azure Policy Extension, Kubernetes audit log data
+    - Defender agent, Azure Policy for Kubernetes, Kubernetes audit log data
 - When you enable a defender plan extension, relevant agent/extension will be installed on any new or existing resource, by assigning a security policy.
   - eg. After enable "Guest Configuration agent", policies like "ASC provisioning Guest Configuration agent for Linux" will be assigned
   - Policy assignment will be removed once you disable the config
