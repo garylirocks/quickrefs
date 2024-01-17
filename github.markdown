@@ -671,6 +671,8 @@ steps:
 
 #### Set output
 
+Outputs could be used in following steps of same job, or following jobs (unlike env variables, which can only be used in the same job)
+
 ```yaml
 steps:
   - name: Set output
