@@ -199,7 +199,7 @@ jobs:
       runs-on: ubuntu-latest          # GitHub-hosted runner
       steps:
           - uses: actions/checkout@v1 # first step: action defined in another repo
-          - uses: ./action-a          # another step: action defined in same repo
+          - uses: ./.github/actions/action-a  # action defined in same repo
             with:
                 MY_NAME: "Mona"       # input required by the action
 ```
@@ -278,6 +278,7 @@ Action types:
 - Composite Actions (multiple steps in one action)
 
 ```yaml
+# action.yml
 name: "Hello Actions"
 description: "Greet someone"
 author: "octocat@github.com"
@@ -300,6 +301,7 @@ branding:                     # metadata for GitHub Marketplace
 A composite action
 
 ```yaml
+# action.yml
 name: 'Hello World'
 description: 'Greet someone'
 inputs:
