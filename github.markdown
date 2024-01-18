@@ -234,6 +234,7 @@ on:
     - cron:  '0 3 * * SUN'
 
 # or by manual or REST API
+# NOTE: you can only trigger this manually in the browser if the workflow file is in the default branch
 on:
   workflow_dispatch:
     inputs:
