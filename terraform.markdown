@@ -322,7 +322,7 @@ terraform output -raw lb_url
 ## Authenticate to Azure providers
 
 - This section is covers authentication to a provider, for authentication to remote runner or state storage, see [Remote run and state](#remote-runs-and-state) section
-- When using Terraform interactively on command line, Terraform uses Azure CLI to authenticate
+- When using Terraform interactively on command line, Terraform uses Azure CLI to authenticate, this ONLY works with user account (no need to set `ARM_*` env variables), NOT service principals (need to set `ARM_*` env variables)
 - In a non-interactive context, use a service principal or managed identity, there are several ways for the authentication:
   - Client secret/certificate
   - OpenID Connect
