@@ -10,21 +10,31 @@
 - [Recover](#recover)
 - [Networking](#networking)
 - [Vault authentication](#vault-authentication)
-- [Replication](#replication)
+- [Replication and Backup](#replication-and-backup)
 - [Best practices](#best-practices)
 - [CLI](#cli)
 
 
 ## Keys
 
-  - Such as asymmetric master key of Microsoft Azure RMS, SQL Server TDE (Transparent Data Encryption), CLE.
-    - The one saved in a key vault is usually a key-protecting key, it just encrypts another key (which encypts the data in storage account or SQL Server).
-  - Once generated or imported to a key vault, your app **NEVER** has direct access to the private keys, public keys could be retrieved
-  - A key pair could be used for operations like: encryption/decryption, signing/verifying, wrapkey/unwrapkey
-  - Can be single instanced or be versioned (primary and secondary keys)
-  - There are hardware-protected and software-protected keys.
-  - You can configure a key rotation policy, which would rotate your keys automatically before expiration.
-    - Some clients (such as Azure Storage) support querying for the latest version of a key, so you don't need to do anything on the client side.
+- Represented as JSON Web Key (JWK)
+- Can store both symmetric and asymmetric keys
+- Two types:
+  - Soft keys: processed in software, but encrypted at rest by a system key in a HSM (Hardware Security Module)
+  - Hard keys: processed in HSM
+- Once generated or imported to a key vault, your app **NEVER** has direct access to the private keys, public keys could be retrieved
+- A key pair could be used for operations like:
+  - signing/verifying
+  - key encryption/wrapping: protect another key, typically a symmetric **content encryption key (CEK)**
+    - When the key in vault in symmetric, key wrapping is used
+    - When the key in vault in asymmetric, key encryption is used
+  - encryption/decryption
+- Can be single instanced or be versioned (primary and secondary keys)
+- You can configure a key rotation policy, which would rotate your keys automatically before expiration.
+  - Some clients (such as Azure Storage) support querying for the latest version of a key, so you don't need to do anything on the client side.
+- Scenarios: asymmetric master key of Microsoft Azure RMS, SQL Server TDE (Transparent Data Encryption), CLE.
+  - The one saved in a key vault is usually a key-protecting key, it just encrypts another key (which encypts the data in storage account or SQL Server).
+
 
 ## Secrets
 
@@ -181,16 +191,18 @@ For application-only access, you could use a service principal or a managed iden
     - Managed identities are free, and you can enable/disable it on an app at any time;
 
 
-## Replication
+## Replication and Backup
 
 Key Vault contents are natively replicated
   - within the region (allow failover to another datacenter)
-  - and to the paired region (allow failover in case of a region-wide failure)
+  - and to the paired region (could be failed over to the paired region automatically)
 
-To replicate/move it to other regions, you could back up then restore it
+Backup is not usually necessary, if you need to replicate/move a vault to other regions, you could back up then restore
 
 - Backup/restore operation is at individual secret/key/cert level
-- The backup is encrypted
+  - you can't backup the whole vault as a whole
+  - backup includes all previous versions of the object
+- The backup is encrypted, can't be decrypted outside of Azure
 - Backup can only be restored to a KV in the
   - same subscription
   - and in the same **geography/security boundary** (eg. backup from Australia East, restore at Australia Central, not US East)
