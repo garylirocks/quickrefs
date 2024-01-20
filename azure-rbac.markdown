@@ -4,8 +4,10 @@
 - [Evaluation](#evaluation)
 - [Considerations](#considerations)
   - [Custom roles](#custom-roles)
+- [Attribute-based access control (ABAC)](#attribute-based-access-control-abac)
+  - [Example scenarios](#example-scenarios)
+  - [Conditions in role definition](#conditions-in-role-definition)
 - [Azure RBAC roles vs. Azure AD roles](#azure-rbac-roles-vs-azure-ad-roles)
-  - [Custom Azure RBAC roles](#custom-azure-rbac-roles)
 - [PIM for Azure resource roles](#pim-for-azure-resource-roles)
   - [Get eligible assignments or active assignments](#get-eligible-assignments-or-active-assignments)
   - [Self-activate an eligible assignment](#self-activate-an-eligible-assignment)
@@ -95,34 +97,26 @@ RBAC allows you to grant access to Azure resources that you control. You do this
 
 *Custom roles can't be assigned at tenant or resource level*
 
-| Scope level      | Built-in role | Custom role |
-| ---------------- | ------------- | ----------- |
-| Tenant           | Yes           | **No**      |
-| Management group | Yes           | Yes         |
-| Subscription     | Yes           | Yes         |
-| Resource group   | Yes           | Yes         |
-| Resource         | Yes           | **No**      |
+| Scope level                                          | Built-in role | Custom role |
+| ---------------------------------------------------- | ------------- | ----------- |
+| MG (including Root MG), Subscription, Resource group | Yes           | Yes         |
+| Resource                                             | Yes           | **No**      |
 
 Example:
 
 ```json
 {
   "properties": {
-    "roleName": "Billing Reader Plus",
-    "description": "Read billing data and download invoices",
+    "roleName": "My Custom Role",
+    "description": "My custom role for ...",
     "assignableScopes": [
-      "/subscriptions/your-subscription-number"
+      "/providers/Microsoft.Management/managementGroups/mg-Gary"
     ],
     "permissions": [
       {
         "actions": [
-          "Microsoft.Authorization/*/read",
-          "Microsoft.Billing/*/read",
-          "Microsoft.Commerce/*/read",
-          "Microsoft.Consumption/*/read",
-          "Microsoft.Management/managementGroups/read",
-          "Microsoft.CostManagement/*/read",
-          "Microsoft.Support/*"
+          "*/read",
+          // ...
         ],
         "notActions": [],
         "dataActions": [],
@@ -133,7 +127,133 @@ Example:
 }
 ```
 
-*The `assignableScopes` are just the scopes where this custom role could be assigned to, not where it is stored, all custom roles are stored in AAD.*
+- The `assignableScopes` are just the scopes where this custom role could be assigned to, not where it is stored. **The definition is actually tenant-scoped, the role name must be unique within a tenant**.
+- You could specify the assignable scopes: either management group, subscription or resource group, CAN'T be a resource
+
+
+## Attribute-based access control (ABAC)
+
+- Add conditions based on attributes in the context of specific actions.
+- A condition filters down permissions granted as a part of the role definition and role assignment.
+
+Currently, conditions can only be added to built-in or custom role assignments that have **blob storage** or **queue storage** **data actions**. Such as assignment of "Storage Blob Data Contributor".
+
+There are several types of attributes you could use:
+
+- `@Resource`
+  - Resource attributes: Storage Account name, Blob Container name, tags
+- `@Principal`
+  - Custom security attributes assigned to users or service principals
+- `@Request`
+  - Access request attribute, eg. prefix of blobs to be listed
+- `@Environment`:
+  - `isPrivateLink`
+  - `Microsoft.Network/privateEndpoints`, restrict access over a specific PEP
+  - `Microsoft.Network/virtualNetworks/subnets`
+  - `UtcNow`
+
+See [full list here](https://learn.microsoft.com/en-us/azure/role-based-access-control/conditions-overview#where-can-conditions-be-added)
+
+### Example scenarios
+
+- Read access to blobs
+  - with the tag `Project=Apollo`
+  - and a path of `logs/2024`
+- Read access to blobs
+  - with the tag `Project=Apollo`
+  - and the user has a matching attribute `Project=Apollo`
+- Read access to blobs during a specific date/time range
+- Write access to blobs only over a private link or from a specific subnet
+- New blobs must include the tag `Project=Apollo`
+- Read, write, or delete blobs in containers named `blobs-example-container`
+
+Example code:
+
+```json
+(
+  (
+    !(ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read'} AND NOT SubOperationMatches{'Blob.List'})
+  )
+ OR
+  (
+    @Resource[Microsoft.Storage/storageAccounts/blobServices/containers/blobs/tags:Project<$key_case_sensitive$>] ForAnyOfAnyValues:StringEquals @Principal[Microsoft.Directory/CustomSecurityAttributes/Id:Engineering_Project]
+  )
+)
+```
+
+Operation allowed when:
+
+- Not a blob read operation
+- Or suboperation is `Blob.List`
+- Or blob's `Project` key value matches any values in the user's custom security attribute `Engineering_Project`
+
+### Conditions in role definition
+
+Some builtin roles have condition in role definition.
+
+For example: "Key Vault Data Access Administrator" role allows role assignment, but only for the specified roles, not any role.
+
+```json
+{
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/8b54135c-b56d-4d72-a534-26097cfdc8d8",
+  "properties": {
+    "roleName": "Key Vault Data Access Administrator",
+    "description": "Manage access to Azure Key Vault by adding or removing role assignments for the Key Vault Administrator, Key Vault Certificates Officer, Key Vault Crypto Officer, Key Vault Crypto Service Encryption User, Key Vault Crypto User, Key Vault Reader, Key Vault Secrets Officer, or Key Vault Secrets User roles. Includes an ABAC condition to constrain role assignments.",
+    "assignableScopes": [
+      "/"
+    ],
+    "permissions": [
+      {
+        "actions": [
+          "Microsoft.Authorization/*/read",
+          "Microsoft.Authorization/roleAssignments/delete",
+          "Microsoft.Authorization/roleAssignments/write",
+          "Microsoft.KeyVault/vaults/*/read",
+          "Microsoft.Management/managementGroups/read",
+          "Microsoft.Resources/deployments/*",
+          "Microsoft.Resources/subscriptions/read",
+          "Microsoft.Resources/subscriptions/resourceGroups/read",
+          "Microsoft.Support/*"
+        ],
+        "notActions": [],
+        "dataActions": [],
+        "notDataActions": [],
+        "conditionVersion": "2.0",
+        "condition": "
+          (
+            (
+              !(ActionMatches{'Microsoft.Authorization/roleAssignments/write'})
+            )
+            OR
+            (
+              @Request[Microsoft.Authorization/roleAssignments:RoleDefinitionId]
+              ForAnyOfAnyValues:GuidEquals{
+                00482a5a-887f-4fb3-b363-3b7fe8e74483,
+                a4417e6f-fecd-4de8-b567-7b0420556985,
+                ...
+              }
+            )
+          )
+          AND
+          (
+            (
+              !(ActionMatches{'Microsoft.Authorization/roleAssignments/delete'})
+            )
+            OR
+            (
+              @Resource[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals{
+                00482a5a-887f-4fb3-b363-3b7fe8e74483,
+                a4417e6f-fecd-4de8-b567-7b0420556985,
+                ...
+              }
+            )
+          )
+        "
+      }
+    ]
+  }
+}
+```
 
 
 ## Azure RBAC roles vs. Azure AD roles
@@ -160,8 +280,8 @@ Three different types of roles in Azure:
 
 - Azure AD roles and Azure RBAC roles are independent from one another, AD role assignment does not grant access to Azure resources and vice versa
 - As an **Azure AD Global Administrator**, you might not have access to all subscriptions and management groups, but you could elevate your access:
-  - Assign yourself "**User Access Administrator**" role in Azure at root scope(`/`)
-  - View and assign access in any subscription or management group (e.g. assign yourself the **Owner** role of a management group)
+  - This will give yourself the "**User Access Administrator**" role in Azure at root scope(`/`, this seems to be a level higher than root MG, but effectively equal to it)
+  - View and assign access in any management group or subscription (e.g. assign yourself the **Owner** role of the root MG)
   - You should remove this elevated access once you have made the changes needed
 - Each directory is given a single top-level management group called **Tenant Root Group**
   - has the same id as the tenant
@@ -183,36 +303,6 @@ To enable the elevated access:
       # remove the elevated access
       az role assignment delete --role "User Access Administrator" --scope "/"
       ```
-
-### Custom Azure RBAC roles
-
-A custom role definition is like:
-
-```json
-{
-  "properties": {
-    "roleName": "My Custom Role",
-    "description": "My custom role for ...",
-    "assignableScopes": [
-      "/providers/Microsoft.Management/managementGroups/mg-Gary"
-    ],
-    "permissions": [
-      {
-        "actions": [
-          "*/read",
-          // ...
-        ],
-        "notActions": [],
-        "dataActions": [],
-        "notDataActions": []
-      }
-    ]
-  }
-}
-```
-
-- You could specify the assignable scopes: either management group, subscription or resource group, CAN'T be a resource
-- **The definition is actually tenant-scoped, the role name must be unique within a tenant**
 
 
 ## PIM for Azure resource roles

@@ -1324,8 +1324,8 @@ Group-based licensing allows you assign licenses to groups, all users in the gro
   - store information
   - query and filter AAD objects
   - enforce access control
+  - as conditions in RBAC role assignment
 - Only users with *Attribute Definition Administrator* role can create custom security attributes
-- Can be added to Azure resources as well ?
 
 
 ## SCIM
