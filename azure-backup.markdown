@@ -284,6 +284,6 @@ There are a few things to consider based on resource types:
   - If keys/secrets need to be shared, you may need to use your own scripts or the backup/restore function to replicate the keys/secrets
 - Relational DBs: SQL, MySQL, PostgreSQL
   - Usually have a failover group setup, data in primary region is asynchronously replicated to other regions
-  - Usaully have a active-passive setup, you only write to the pirmary region and read from any region
+  - Usually have a active-passive setup, you only write to the primary region and read from any region
   - CMK is at the DB server level, it should be different in each region
 - CosmosDB
