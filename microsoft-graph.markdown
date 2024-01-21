@@ -194,10 +194,11 @@ Get-Command -Module Microsoft.Graph.* -Noun *principal* -Verb Get
 Always use `Connect-MgGraph` to authenticate first
   - it works with user, app, and managed identity
   - could authenticate with interactive login, certificate, password. See https://learn.microsoft.com/en-us/powershell/module/microsoft.graph.authentication/connect-mggraph?view=graph-powershell-1.0
-  - Any scopes you specify in `-Scopes` will require consent (either by user or an admin). If the app has permission `User.ReadWrite.All`, you can use it in `-Scopes` without consenting again, but if you use sub scopes like `User.Read.All`, you still need to grant consent explicitly for the sub scope.
+  - After login, the scopes given to this session would be a combination of the scopes you consented to and all the admin-consented scopes
+  - If you need any new scopes, you can use the `-Scopes` parameter (without the parameter, all the already consented scopes are returned)
 
 ```powershell
-# interactive login with user, you could customize scopes
+# interactive login with user, requesting new scopes
 Connect-MgGraph -Scopes "User.Read.All","Group.Read.All"
 
 # show current context scopes
@@ -211,7 +212,7 @@ Connect-MgGraph -Scopes "User.Read.All","Group.Read.All"
 # email
 ```
 
-Login with an service principal, you can NOT customize scopes in this case, all the granted permissions to the app are included
+Login with a service principal, all the granted permissions to the app are included
 
   - Use secret
 
@@ -328,7 +329,7 @@ See this page for all related permissions: https://learn.microsoft.com/en-us/gra
 Login and get my principal ID
 
 ```powershell
-Connect-MgGraph -Scopes "RoleAssignmentSchedule.ReadWrite.Directory"
+Connect-MgGraph -Scopes "RoleAssignmentSchedule.ReadWrite.Directory,RoleManagement.Read.Directory"
 
 $myUpn=(Get-MgContext).Account
 $myPrincipalId=(Get-MgUser -Filter "UserPrincipalName eq '$myUpn'").Id
