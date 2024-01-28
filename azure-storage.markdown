@@ -4,18 +4,19 @@
   - [Services](#services)
   - [Usages](#usages)
   - [Account level settings](#account-level-settings)
-  - [Access](#access)
   - [Security](#security)
-    - [Features](#features)
-    - [Network access](#network-access)
+    - [Encryption](#encryption)
+    - [Other security features](#other-security-features)
+  - [Endpoints](#endpoints)
+  - [Networking](#networking)
     - [Exceptions](#exceptions)
-    - [Microsoft Defender for Cloud](#microsoft-defender-for-cloud)
   - [Authorization Options](#authorization-options)
     - [Public read access for containers and blobs](#public-read-access-for-containers-and-blobs)
     - [RBAC](#rbac)
     - [Access keys](#access-keys)
     - [Shared access signature (SAS)](#shared-access-signature-sas)
   - [CLI and curl commands with different auth methods](#cli-and-curl-commands-with-different-auth-methods)
+  - [Microsoft Defender for Cloud](#microsoft-defender-for-cloud)
   - [CLI](#cli)
 - [Blobs](#blobs)
   - [Blob types](#blob-types)
@@ -48,6 +49,7 @@
   - [File Sync](#file-sync)
     - [Components](#components)
 - [NetApp Files](#netapp-files)
+- [Elastic SAN](#elastic-san)
 - [Tables](#tables)
 - [Troubleshooting](#troubleshooting)
 
@@ -90,7 +92,6 @@ Azure Storage is also used by IaaS VMs, and PaaS services:
   - Whether HTTPS is enforced
   - Azure file share over SMB without encryption fails
   - Custom domain names doesn't support HTTPS, this option does not apply when using custom domains
-  - Doesn't support for custom domain names
 - Virtual networks: only allow inbound access request from the specified network(s)
 - Tiers and kinds
   - **Standard** tier
@@ -124,37 +125,30 @@ Azure Storage is also used by IaaS VMs, and PaaS services:
   - GZRS: ZRS in both regions
   - RA-GRS, RA-GZRS: you could read from secondary region any time
 
-### Access
-
-Default service endpoints:
-
-- Container service: `//mystorageaccount.blob.core.windows.net`
-- Table service: `//mystorageaccount.table.core.windows.net`
-- Queue service: `//mystorageaccount.queue.core.windows.net`
-- File service: `//mystorageaccount.file.core.windows.net`
-
-Note:
-- Account names must be globally unique
-- You could configure a custom domain
-
 ### Security
 
-#### Features
+#### Encryption
 
 - Encryption at rest
 
-  - All data is automatically encrypted by Storage Service Encryption (SSE) with a 256-bit AES cipher. This can't be disabled.
+  - All data (including metadata) is automatically encrypted by Storage Service Encryption (SSE) with a 256-bit AES cipher. This can't be disabled.
   - This applies to all services (blobs, files, tables, queues, etc) in the account
   - You could use either
     - Microsoft managed keys
+      - Works for all services
     - Customer managed keys (CMK)
-      - you specify a key in a key vault (the key vault must have soft-delete and purge protection enabled)
-      - the storage account needs a user-assigned or system-assigned identity to access the key
-      - a CMK could be scoped to the whole account or only a specified service
+      - Only works for Blob and File services
+      - You specify a key in a key vault (the key vault must have soft-delete and purge protection enabled)
+      - The storage account needs a user-assigned or system-assigned identity to access the key
+      - A CMK could be scoped to the whole account or only a specified service
+    - Customer-provided key
+      - For Blob storage operations. A client making a read or write request against Blob storage can include an encryption key on the request for granular control over how blob data is encrypted and decrypted.
 
 - Encryption at tansit
 
   You can enforce HTTPS on an account. This flag will also enforce secure transfer over SMB by requiring SMB 3.0 for all file share mounts.
+
+#### Other security features
 
 - CORS support
 
@@ -168,7 +162,20 @@ Note:
 
   Using the built-in Storage Analytics service, which logs every operation in real time.
 
-#### Network access
+### Endpoints
+
+Default service endpoints:
+
+- Container service: `//mystorageaccount.blob.core.windows.net`
+- Table service: `//mystorageaccount.table.core.windows.net`
+- Queue service: `//mystorageaccount.queue.core.windows.net`
+- File service: `//mystorageaccount.file.core.windows.net`
+
+Note:
+- Account names must be globally unique
+- You could configure a custom domain
+
+### Networking
 
 By default, connections from clients on any network are accepted.
 
@@ -213,13 +220,6 @@ az storage account update \
 --name stdemo001 \
 --bypass AzureServices
 ```
-
-
-#### Microsoft Defender for Cloud
-
-- Could be enabled either on an individual account or at the subscription level
-- Detects anomalies in account activity
-- Only for Blob currently
 
 ### Authorization Options
 
@@ -285,10 +285,10 @@ There are three types:
 
 - **User delegation SAS**
   - Secured with Azure AD credentials and also permissions specified for the SAS
-  - For Blob only: could be at container or blob level
+  - For Blob service only: could be at container or blob level
   - Recommended over signing with an access key
 
-NOTE: *Account SAS and Service SAS are signed by account key, so if you disable account key, they won't work*
+NOTE: *Account SAS and Service SAS are signed by account access key, so if you disable account key, they won't work*
 
 There are two forms:
 
@@ -416,6 +416,12 @@ Examples:
   curl 'https://sttest001.blob.core.windows.net/mycontainer/test.txt?<sas-token>'
   ```
 
+### Microsoft Defender for Cloud
+
+- Could be enabled either on an individual account or at the subscription level
+- Detects anomalies in account activity
+- Only for Blob currently
+
 ### CLI
 
 ```sh
@@ -525,6 +531,9 @@ Immutability policies can be scoped to a blob version or to a container.
   - A blob version supports one version-level immutability policy and one legal hold. A policy on a blob version can override a default policy specified on the account or container.
 - Container-level scope:
   - When support for version-level immutability has not been enabled for a storage account or a container, then any immutability policies are scoped to the container. Policies apply to all objects within the container.
+  - A container can have both a legal hold and a time-based retention policy at the same time
+
+A blob's storage tier could still be changed (eg. from hot to cool) with an applied immutability policy.
 
 ### CLI
 
@@ -882,12 +891,15 @@ findmnt -t cifs
   - Works for all OS: Windows, Mac, Linux
   - Use the primary key of the storage account as password
 
-- Identity-based access (Windows only)
-  - First, enable an Active Directory source, options:
-    - On-prem AD (incl. AD servers hosted in Azure)
-    - Azure AD DS
-    - Azure AD (Kerberos auth from Azure AD-joined clients, user accounts must be hybrid identities)
-  - Then grant permissions at share-level to users/groups
+- Identity-based access (Windows only, SMB shares only)
+  - From AD DS or Microsoft Entra Domain Services domain-joined VMs
+  - Share-level permissions can be performed on Microsoft Entra users/groups via RBAC model (eg. Storage File Data SMB Share Reader)
+    - With RBAC, the credentials you use for file access should be available or synced to Microsoft Entra ID
+  - At directory/file level, Azure Files supports preserving, inheriting, and enforcing Windows DACLs just like any Windows file servers. Windows ACLs can be preserved when back up a file share to Azure Files.
+
+![Identity based authentication data flow](images/azure_file-share-authentication.png)
+
+*The Domain Services at step 1 could be either on-prem AD DS or Entra DS*
 
 ### Snapshots
 
@@ -921,6 +933,35 @@ To protect against unintended changes, accidental deletions, or for backup/audit
   - Latency sensitive workloads, eg. SAP HAHA
   - IOPS intensive high performance compute
   - Simultaneous multi-protocol access
+
+
+## Elastic SAN
+
+- A block storage solution, can be attached to any compute workload via network (iSCSI protocol)
+- Useful when you want to pool your storage, so no need to over-provision for each workload
+- Redundancy: LRS or ZRS
+- A SAN can have both base and capacity units:
+  - Base units (0 - 400): each unit comes with 1TiB capacity, 5000 IOPS, 200 MBps throughput
+  - Capacity units (0 - 600): 1TiB capacity per unit
+- Networking
+  - Public endpoint, connect via service endpoint in vNets
+  - Private endpoint
+- Volume Group:
+  - A boundary of networking and encryption (PMK or CMK) options
+- Volume
+  - Each has its own size, IOPS and throughput
+  - IOPS and throughput can be set as the same as the maximum limit of the SAN, but they will be throttled if the sum exceeds the limit at a paticular time
+  - You run a script in a VM to connect to a volume
+  - A volume can have a max of 128 sessions
+  - A client can have a max of 32 sessions to a volume
+- Snapshots
+  - At volume level
+  - The first one is a full snapshot, the followings ones are delta
+- Scenarios
+  - On-prem migration
+  - High performance
+  - AVS (Azure VMWare Solution)
+  - Azure Container Storage
 
 
 ## Tables
