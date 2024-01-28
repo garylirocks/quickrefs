@@ -2,6 +2,7 @@
 
 - [Overview](#overview)
 - [Azure Monitor](#azure-monitor-1)
+  - [Azure metrics](#azure-metrics)
   - [Activity Log](#activity-log)
   - [Resource logs (Diagnostic logs)](#resource-logs-diagnostic-logs)
   - [VMs](#vms)
@@ -68,13 +69,7 @@ Azure Monitor is based on a common mornitoring data platform that includes Logs 
 | identify root causes           | performance, alerting            |
 | Log Analytics workspace        | time-series database             |
 
-- **Metrics**:
-  - **Resource and custom metrics** are stored in one time-series database
-    - Usually displayed in the overview page of resources
-    - Stored for **93 days**, in the Monitor Explorer, the maximum time windows is 30 days, but you can **pan the chart** to view data older than 30 days
-  - **Prometheus metrics** can be collected from AKS clusters
-    - Stored in Azure Monitor workspace
-    - Can be analyzed with PromQL and Grafana dashboards
+- **Metrics**
 - **Platform logs**
   - Azure AD logs
   - Activity logs (90 days by default)
@@ -84,6 +79,25 @@ Azure Monitor is based on a common mornitoring data platform that includes Logs 
   - *Metrics* and the *Activity logs* are collected and stored automatically, but can be routed to other locations by using a *diagnostic setting*.
   - *Resource Logs* are not collected and stored until you create a *diagnostic setting* and route them to one or more locations.
 - Use *Data Collector API* to send data from your custom code
+
+### Azure metrics
+
+![Metric types](images/azure_metrics-types.png)
+
+- **Resource and custom metrics** are stored in one **time-series database**
+  - Usually displayed in the overview page of resources
+  - Stored for **93 days**, in the Monitor Explorer, the maximum time windows is 30 days, but you can **pan the chart** to view data older than 30 days
+  - Not in a log analytics workspace by default, but you can use diagnostic settings to send metrics to it
+  - Platform metrics are usually collected at a one-minute frequency
+  - No cost for Platform metrics, has cost for custom metrics
+  - Custom metrics could be from:
+    - Application Insights: server respons time, browser exceptions etc
+    - VM agents: Windows diagnostic extension, Telegraf agent for Linux
+    - API
+- **Prometheus metrics** can be collected from AKS clusters
+  - Stored in Azure Monitor workspace
+  - Can be analyzed with PromQL and Grafana dashboards
+  - Can set up Prometheus alert rules
 
 ### Activity Log
 
@@ -133,12 +147,12 @@ For VMs, Azure collects some metrics(host-level) by default, such as CPU usage, 
 
 Comparison between Log Analytics Agent and Diagnostics Extension
 
-|                            | Log Analytics Agent (aka. MMA/OMS)                 | Diagnostics Extension                                                |
-| -------------------------- | -------------------------------------------------- | -------------------------------------------------------------------- |
-| Where                      | Azure, other clouds, on-prem                       | Azure VM only                                                        |
-| Send data to               | Azure Monitor Logs                                 | Azure Storage, Azure Event Hubs, Azure Monitor Metrics(Windows only) |
-| How to configure in Portal | Azure Monitor -> Legacy agents management Logs     | Resource -> Diagnostic settings                                      |
-| Required by                | VM insights, Defender for Cloud, retired solutions | n/a                                                                  |
+|                            | Log Analytics Agent (aka. MMA/OMS)                                                                         | Diagnostics Extension                                                |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Where                      | Azure, other clouds, on-prem                                                                               | Azure VM only                                                        |
+| Send data to               | Azure Monitor Logs                                                                                         | Azure Storage, Azure Event Hubs, Azure Monitor Metrics(Windows only) |
+| How to configure in Portal | Azure Monitor -> Legacy agents management Logs                                                             | Resource -> Diagnostic settings                                      |
+| Required by                | VM insights, Defender for Cloud, Azure Automation, Change Tracking, Update Management, solutions (retired) | n/a                                                                  |
 
 - Log Analytics Agent is more powerful than Diagnostics Extension, they could be used together
 - You configure **what data sources to collect in a workspace**, these configurations are pushed to all connected agents
