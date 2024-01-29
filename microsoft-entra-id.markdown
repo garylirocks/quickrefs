@@ -1,4 +1,4 @@
-# Azure AD
+# Microsoft Entra ID (formerly Entra)
 
 - [Overview](#overview)
 - [SKUs/Licenses](#skuslicenses)
@@ -8,15 +8,15 @@
   - [Best practices](#best-practices)
 - [B2C](#b2c)
   - [Best practices](#best-practices-1)
-- [Azure AD vs. AD DS vs. Azure AD DS](#azure-ad-vs-ad-ds-vs-azure-ad-ds)
-  - [Azure AD Connect](#azure-ad-connect)
+- [AD DS vs. Entra ID vs. Entra DS](#ad-ds-vs-entra-id-vs-entra-ds)
+  - [Entra DS](#entra-ds)
+  - [Entra Connect](#entra-connect)
   - [Hybrid authentication](#hybrid-authentication)
-  - [AAD Connect Health service](#aad-connect-health-service)
-  - [Azure AD DS](#azure-ad-ds)
+  - [Entra Connect Health service](#entra-connect-health-service)
 - [Devices](#devices)
-  - [AAD registered devices](#aad-registered-devices)
-  - [AAD joined](#aad-joined)
-  - [Hybrid](#hybrid)
+  - [Entra registered](#entra-registered)
+  - [Entra joined](#entra-joined)
+  - [Hybrid joined](#hybrid-joined)
     - [Device writeback](#device-writeback)
   - [Debugging](#debugging)
 - [Users](#users)
@@ -49,7 +49,7 @@
   - [Methods](#methods)
   - [Management](#management)
   - [Monitoring](#monitoring)
-- [AAD roles](#aad-roles)
+- [Entra roles](#entra-roles)
 - [Privileged Identity Management (PIM)](#privileged-identity-management-pim)
   - [API](#api)
     - [Activate Azure roles](#activate-azure-roles)
@@ -85,13 +85,13 @@
 
 Microsoft's identity and access management solution.
 
-- Azure, Microsoft 365, and Dynamics 365 all use Azure AD, a tenant in these services is automatically an Azure AD tenant.
+- Azure, Microsoft 365, and Dynamics 365 all use Entra, a tenant in these services is automatically an Entra tenant.
 - Could be managed in either Azure Portal or Entra admin portal
   - Some aspects could be managed in Office admin portal
 - Default domain names are like `*.onmicrosoft.com`, you could bring your own domain name
 - "Entra" is the new name for all of Microsoft's identity management service
 
-Objects in AAD
+Objects in Entra
 
 - Users
 - Groups
@@ -129,7 +129,7 @@ Licenses are per user, so one user can have P1, another have P2
     - Refers to resetting password when not signed in (forgotten or expired password), NOT changing password after signed in (everyone can do this)
     - You could config what authentication tests need to be passed
     - Can be set as 'none', 'selected' or 'all', administrator accounts can always do this no matter what is configured
-  - custom Azure AD roles (not Azure RBAC roles)
+  - custom Entra roles (not Azure RBAC roles)
   - allow hybrid users access both on-prem and cloud resources
   - dynamic groups
   - self-service group management
@@ -141,7 +141,7 @@ Licenses are per user, so one user can have P1, another have P2
   - Privileged Identity Management: just-in-time (JIT) privileged access control
 
 - Pay-as-you-go
-  - Azure AD B2C: manage identity and access for consumer users
+  - Entra B2C: manage identity and access for consumer users
 
 Features:
 
@@ -157,12 +157,12 @@ Features:
   - By default, all users (including guests) can invite guests, if this is turned off, you can assign "Guest Inviter" role explicitly to users
   - You can create either a allow list or a deny list to control what external domains are allowed
 - How guest user sign in:
-  - Guest user won't have credentials saved in your tenant, they will login via another AAD, an email code, SMS code, Google/Facebook account, etc
-  - By default these IdPs are configured: Azure AD, Microsoft Account, Email one-time passcode
+  - Guest user won't have credentials saved in your tenant, they will login via another Entra, an email code, SMS code, Google/Facebook account, etc
+  - By default these IdPs are configured: Entra, Microsoft Account, Email one-time passcode
   - If you invite an Gmail account, by default the user would sign-in with one-time passcode, after you add Google as an IdP (you need Client ID and Client Secret), then the user sign in with Google's sign-in experience
   - You can customize the Terms of Use the invited user needs to agree
   - The user is usually redirected to My Apps portal (`https://myapps.microsoft.com/?tenantid=<tenant-id>`)
-- Guests can be granted any AAD roles, just like members
+- Guests can be granted any Entra roles, just like members
 
 <img src="images/azure_ad-external-identities.png" width="600" alt="Guest users" />
 
@@ -177,13 +177,13 @@ Your could invite people from other external identity providers as guest users, 
 - Facebook
   - only for signing up through apps using self-service sign-up user flows
 - Any other third party IdP which supports SAML 2.0 or WS-Fed protocol.
-  - The target domain must not be DNS-verified on Azure AD
+  - The target domain must not be DNS-verified on Entra
   - Some attributes/claims are required in SAML response/token from IdP
   - The WS-Fed providers tested: AD FS, Shibboleth
 
 ### Cross-tenant access settings
 
-For any other AAD tenant, you could set
+For any other Entra tenant, you could set
 
 - Inbound access
   - B2B collaboration:
@@ -191,7 +191,7 @@ For any other AAD tenant, you could set
     - What applications are allowed
   - B2B direct connect (whether external users can access your resources without being invited as guests)
   - Cross-tenant Sync: whether allow other tenant to sync users into this tenant
-  - Trust settings: whether your Conditional Access policies accept claims (MFA, compliant devices, hybrid Azure AD joined devices) from other AAD tenant
+  - Trust settings: whether your Conditional Access policies accept claims (MFA, compliant devices, hybrid Entra joined devices) from other Entra tenant
 - Outbound access
   - B2B collaboration
   - B2B direct connect
@@ -230,12 +230,12 @@ B2C tenant is for your application's customers, it's different from your organiz
 
 - Configure user flows
 - Customize user interface
-- Integrate with external user stores: you could save up to 100 custom attributes per user in AAD B2C. You could also use AAD B2C for authentication, but delegate to an external CRM or customer loyalty database for customer data.
+- Integrate with external user stores: you could save up to 100 custom attributes per user in Entra B2C. You could also use Entra B2C for authentication, but delegate to an external CRM or customer loyalty database for customer data.
 
 
-## Azure AD vs. AD DS vs. Azure AD DS
+## AD DS vs. Entra ID vs. Entra DS
 
-|            | AD DS                                                                      | Azure AD                                                       | Azure AD DS                                |
+|            | AD DS                                                                      | Entra ID                                                       | Entra DS                                   |
 | ---------- | -------------------------------------------------------------------------- | -------------------------------------------------------------- | ------------------------------------------ |
 | Purpose    | Introduced in Windows 2000, for on-premises identity and access management | Microsoft 365, Azure Portal, SaaS applications                 | A subset of AD DS features, lift-and-shift |
 | Deployment | Windows Server (On-prem or IaaS VMs)                                       | Cloud based                                                    | Cloud                                      |
@@ -243,20 +243,37 @@ B2C tenant is for your application's customers, it's different from your organiz
 | Protocols  | Kerberos authentication                                                    | SAML, WS-Federation, OpenID Connect for authN, OAuth for authZ | same as AD DS                              |
 | Structure  | Organization Units (OUs) , Group Policy Objects (GPOs)                     | flat users and groups, no OU hierarchy                         | same as AD DS                              |
 
-### Azure AD Connect
+### Entra DS
 
-Azure AD does not replace Active Directory, they can be used together, **Azure AD Connect** is a software you download and run on your on-prem host, it can synchronize identities between on-prem AD and Azure AD:
+<img src="images/azure_aadds-sync.png" width="800" alt="AADDS Syncing" />
 
-![Azure AD Connect](images/azure_azure-ad-connect.png)
+_On prem AD is optional here_
+
+- Intended to lift and shift your legacy applications from your on-prem to a managed domain.
+- Supports
+  - Domain join
+  - Group policy
+  - LDAP
+  - Kerberos and NTLM authentication
+- You define the domain name, two Windows Server DCs are then deployed into your selected Azure region as a replica set.
+- Replica sets can be added to any peered virtual network in other regions.
+- You don't need to deploy, manage and patch Domain Controllers (DCs).
+- A one-way sync is configured from Entra to the managed domain, so you could login to a Windows VM using your Entra credentials.
+
+### Entra Connect
+
+Entra does not replace Active Directory, they can be used together, **Entra Connect** is a software you download and run on your on-prem host, it can synchronize identities between on-prem AD and Entra:
+
+![Entra Connect](images/azure_azure-ad-connect.png)
 
 - AD is the source of truth (most of the time)
-- An AAD instance can only sync from one AAD Connect
-- But one AD can be linked to multiple AAD Connect, so sync to multiple AAD instances
+- An Entra instance can only sync from one Entra Connect
+- But one AD can be linked to multiple Entra Connect, so sync to multiple Entra instances
   - eg. sync one AD to both Azure commercial cloud and Azure US Gov cloud
-- AAD Connect can sync to only a verified domain(eg. `contoso.com`, not just `contoso`) in Azure AD
-- You're able to specify the attribute in AD that should be used as UPN to sign in to AAD
+- Entra Connect can sync to only a verified domain(eg. `contoso.com`, not just `contoso`) in Entra
+- You're able to specify the attribute in AD that should be used as UPN to sign in to Entra
 - You can filter what objects are synced based on domain or OU in AD
-- Alternatively, you could use **Azure AD Connect Cloud Sync** to run the syncing in cloud instead of on-prem
+- Alternatively, you could use **Entra Connect Cloud Sync** to run the syncing in cloud instead of on-prem
   - You still need to download and install a lightweight provisioning agent on-prem
   - All the management is done in Azure Portal
 
@@ -269,12 +286,12 @@ Cloud authentication (both works with seamless SSO):
   ![Password hash synchronization](images/azure_ad-password-hash.png)
 
   - Most basic and least-effort solution in hybrid scenario
-  - Allows on-prem user to auth against Azure AD for cloud applications
-  - On-prem AD stores user password as a hash, AD Connect retrieves the hash and hashes that hash, sends the second hash to Azure AD
+  - Allows on-prem user to auth against Entra for cloud applications
+  - On-prem AD stores user password as a hash, AD Connect retrieves the hash and hashes that hash, sends the second hash to Entra
     - Password hash is synced every 2 minutes, more frequent than other AD objects
     - You can set up a selective password hash sync
-  - Hight availability: you should deploy a second Azure AD Connect server in standby mode
-  - On-prem account state changes are NOT synced to AAD immediately, you might want to trigger a new synchronization cycle after bulk update on-prem.
+  - Hight availability: you should deploy a second Entra Connect server in standby mode
+  - On-prem account state changes are NOT synced to Entra immediately, you might want to trigger a new synchronization cycle after bulk update on-prem.
   - Even if you are using another auth method, you should still **enable "Password synchronization" feature**, this helps as a back-up for
     - High availability and disaster recovery
     - On-prem outage survival
@@ -284,11 +301,11 @@ Cloud authentication (both works with seamless SSO):
 
   ![Pass through synchronization](images/azure_ad-pass-through-auth.png)
 
-  - Passwords only stored in on-prem AD, not in the AAD
+  - Passwords only stored in on-prem AD, not in the Entra
   - Only on-prem AD is used to authenticate
   - It's a tenant-level feature, turning it on affects the sign-in for users across all the managed domains in your tenant.
   - High availability:
-    - One agent is running on the AAD Connect server
+    - One agent is running on the Entra Connect server
     - You should deploy two extra agents on other servers
   - The agents need access to Internet and on-prem AD domain controllers
   - Why choose this: To enforce on-prem user account states, password policies and sign in hours at the time of sign-in
@@ -297,13 +314,13 @@ Cloud authentication (both works with seamless SSO):
 
 ![Federated synchronization](images/azure_ad-federated-auth.png)
 
-AAD hands off authentication process to a separate trusted authentication system, such as on-prem AD FS, to validate the user's password.
+Entra hands off authentication process to a separate trusted authentication system, such as on-prem AD FS, to validate the user's password.
 
 - The authentication system could provide other authentication requirements: smartcards, third-party MFA, etc
 - Does not authenticate against on-prem AD
-- You authenticate against a third party federation service, which gives you a SAML token, you then exchange this SAML token for AAD tokens (refresh & access tokens)
+- You authenticate against a third party federation service, which gives you a SAML token, you then exchange this SAML token for Entra tokens (refresh & access tokens)
 - Why choose this:
-  - Features not supported by AAD: smartcards or certificates
+  - Features not supported by Entra: smartcards or certificates
   - On-prem MFA servers or third-party multifactor providers requiring a federated IdP
   - Sign in that requires SAMAccountName(`DOMAIN\username`) instead of UPN(`user@domain.com`)
 - High availability: federated systems typically require a load-balanced array of servers, known as a farm.
@@ -313,57 +330,45 @@ Related concepts:
 
 - **Seamless SSO**: automatically signs in users from their network-connected corporate desktops, so they can access cloud apps without sign-in again.
   - Works with password hash sync and pass-through authentication
-  - The computer is AD-joined, no need to be AAD-joined
+  - The computer is AD-joined, no need to be Entra-joined
   - Works on Windows 7 and above, Mac
   - How it works:
-    - During setup, AAD gets an computer account in AD
-    - AAD will receive Kerberos tickets
-- **Password writeback**: changes made in Azure AD are written back to on-prem AD, eg. password updated by SSPR
-- **Device writeback**: sync AAD registered device to on-prem AD. Used to enable device-based conditional access for ADFS
+    - During setup, Entra gets an computer account in AD
+    - Entra will receive Kerberos tickets
+- **Password writeback**: changes made in Entra are written back to on-prem AD, eg. password updated by SSPR
+- **Device writeback**: sync Entra registered device to on-prem AD. Used to enable device-based conditional access for ADFS
 
-### AAD Connect Health service
+### Entra Connect Health service
 
-- AAD premium license required to configure this
+- Entra premium license required to configure this
 - Can be used with:
-  - AAD Connect Sync, installed automatically with the Sync agent
+  - Entra Connect Sync, installed automatically with the Sync agent
   - ADFS servers, manual installation
   - AD DS servers, manual installation
 - Can send email notifications
 - Supports RBAC roles: Owner, Contributor, Reader
-- AAD Global Administrator always have full access to all the operations.
-
-### Azure AD DS
-
-<img src="images/azure_aadds-sync.png" width="800" alt="AADDS Syncing" />
-
-_On prem AD is optional here_
-
-- Intended to lift and shift your legacy applications from your on-prem to a managed domain.
-- You define the domain name, two Windows Server DCs are then deployed into your selected Azure region as a replica set.
-- Replica sets can be added to any peered virtual network in other regions.
-- You don't need to deploy, manage and patch Domain Controllers (DCs).
-- A one-way sync is configured from Azure AD to the managed domain, so you could login to a Windows VM using your Azure AD credentials.
+- Entra Global Administrator always have full access to all the operations.
 
 
 ## Devices
 
-Three ways to add a device identity in Azure AD:
+Three ways to add a device to a domain:
 
-- Azure AD registration  (for BYOD)
-- Azure AD join (for work devices)
-- Hybrid Azure AD join (interim step to Azure AD join)
+- Entra registration  (for BYOD)
+- Entra join (for work devices)
+- Entra hybrid join (interim step to Entra join)
 
 Usage:
 
 - Device-based Conditional Access policies
 - Enable users SSO to cloud-based resources
-- Mobile device management (MDM) solution such as Microsoft Intune, provides additional attributes in Azure AD
+- Mobile device management (MDM) solution such as Microsoft Intune, provides additional attributes in Entra
 
-### AAD registered devices
+### Entra registered
 
 - Scenarios:
   - Bring your own device (BYOD), eg. home PC, laptop
-  - Mobile devices such as cell phones and tablets
+  - Mobile devices such as phones and tablets
 - OS: Windows, iOS, Android, Ubuntu etc.
 - Sign in with: end-user local credentials, password, Windows Hello, PIN Biometrics
 - Device management: eg. Microsoft Intune, which could enforce:
@@ -371,10 +376,10 @@ Usage:
   - password complexity
   - security software being updated
 - Capabilities:
-  - SSO to cloud resources, using an AAD account attached to the device
+  - SSO to cloud resources, using an Entra account attached to the device
   - Conditional Access policies can be applied to the device identity
 
-### AAD joined
+### Entra joined
 
 - Primarily intended for organizations without on-prem AD
 - Usually a work/school device, you login with your work/school account
@@ -391,33 +396,33 @@ Usage:
   - Out of Box Experience (OOBE)
   - bulk enrollment
   - Windows Autopilot
-- You can still login to an AAD-joined machine using a non-AAD account
-- If you want to RDP an AAD joined machine using an AAD account
+- You can still login to an Entra joined machine using a non Entra account
+- If you want to RDP an Entra joined machine using an Entra account
   - you use username in the form like `MyAAD\gary@example.com`
-  - your local machine needs to be AAD joined/registered or hybrid joined
+  - your local machine needs to be Entra joined/registered or hybrid joined
   - you can't use MFA during RDP login, but you could assign conditional access policy
-- To AAD join an Azure Windows VMs:
+- To Entra join an Azure Windows VMs:
   - Windows Server 2019 and later
   - Windows 10 and later
   - With `AADLoginForWindows` extensions installed
-  - the user needs either "Virtual Machine User Login" or "Virtual Machine Administrator Login" RBAC role, to login to the VM using AAD authentication
+  - the user needs either "Virtual Machine User Login" or "Virtual Machine Administrator Login" RBAC role, to login to the VM using Entra authentication
 
-### Hybrid
+### Hybrid joined
 
-- The device is AD joined and AAD registered
+- The device is AD joined and Entra registered
 - OS: Windows 7 and above, Windows Server 2008/R2 and above
 - Sing in with: Password or Windows Hello for Business
 - Management:
   - Group Policy
   - Configuration Manager standalone
   - or co-management with Microsoft Intune
-- Capabilities: same as AAD joined devices
-- You set a Service Connection Point (SCP) in AAD Connect, then AAD Connect will sync your on-prem device objects to AAD
-- Your AD-joined device also registers itself with Azure AD, the device would get an AAD primary refresh token
+- Capabilities: same as Entra joined devices
+- You set a Service Connection Point (SCP) in Entra Connect, then Entra Connect will sync your on-prem device objects to Entra
+- Your AD-joined device also registers itself with Entra, the device would get an Entra primary refresh token
 
 #### Device writeback
 
-- Keep track of AAD registered devices in AD
+- Keep track of Entra registered devices in AD
 - You'll have a copy of the device objects in the container "Registered Devices"
   - ADFS issues "is managed" claim based on whether the device object is in the "Registered Devices" container
 - Window Hello For Business (WHFB) requires device writeback to function in Hybrid and Federated scenarios
@@ -466,12 +471,12 @@ dsregcmd /status
 ## Users
 
 - User types:
-  - Member (could be defined in this AAD, another AAD, or synced from on-prem AD)
+  - Member (could be defined in this Entra, another Entra, or synced from on-prem AD)
   - Guest (accounts from other cloud providers, with "#EXT#" in the name)
-- If a user is assigned a Azure AD role, then the user is called an **administrator**
+- If a user is assigned a Entra role, then the user is called an **administrator**
 - Users with Global Administrator or User Administrator role can create new users
 - When you delete an account, the account remains in suspended state for 30 days
-- Users can also be added to Azure AD through Microsoft 365 Admin Center, Microsoft Intune admin console, and the CLI
+- Users can also be added to Entra through Microsoft 365 Admin Center, Microsoft Intune admin console, and the CLI
 - All users are granted a set of default permissions, a user's access consists of:
   - the type of user (member or guest)
   - their role assignments
@@ -488,7 +493,7 @@ dsregcmd /status
 - "Global Administrator" role assigned **permanently** in PIM
 - Should be **cloud-only**, uses the `*.onmicrosoft.com` domain
 - Not federated or synchronized from on-prem environments
-  - Azure AD prevents the last Global Administrator account from being deleted, but it doesn't prevent the account from being deleted or disabled on-premises
+  - Entra prevents the last Global Administrator account from being deleted, but it doesn't prevent the account from being deleted or disabled on-premises
 - Trigger alerts whenever an emergence accounts sign in, use a KQL query like:
   ```kusto
   SigninLogs
@@ -506,8 +511,7 @@ dsregcmd /status
   - Microsoft 365
     - Members can only be users
     - For sharing/collaboration over M365 apps: giving members access to shared mailbox, calendar, files, teams(not channels) in MS Teams, etc
-  - Distribution: seems for Exchange
-
+  - Distribution: for Exchange
 - Membership types
   - Assigned: assigned manually
   - Dynamic User: based on users' attributes
@@ -520,7 +524,7 @@ Note:
   - Groups **synced from on-premises Active Directory** can be managed only in on-premises Active Directory.
   - Other group types such as **distribution lists** and **mail-enabled security groups** are managed only in Exchange admin center or Microsoft 365 admin center.
 
-- There is a flag determining whether a group can be assigned "Azure AD Roles"
+- There is a flag determining whether a group can be assigned "Entra Roles"
 - Group owners
   - Owner can be user or SP, not group
   - When an SP creates a group, it will be added as the owner automatically
@@ -533,7 +537,7 @@ Note:
 
 ### App registrations vs. Service principals
 
-There are two representations of applications in Azure AD: application objects and service principals.
+There are two representations of applications in Entra: application objects and service principals.
 
 |                 | App registrations                                                                                                                                            | Service principals                                                                                                                                                                                                   |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -580,7 +584,7 @@ In general, there are three types of service principals:
 
 - You should create a different service principal for each of your applications
 - For history reason, it's possible to create service principals without first creating an application object. The Microsoft Graph API requires an application object before creating a service principal.
-- Seems there is no easy way to find what AAD roles have been assigned to an SP, see [Terraform note](./terraform.markdown) for details on how to assign AAD roles/permissions to an SP
+- Seems there is no easy way to find what Entra roles have been assigned to an SP, see [Terraform note](./terraform.markdown) for details on how to assign Entra roles/permissions to an SP
 - See [below](#service-principals-1) for CLI examples
 
 A service principal object looks like this:
@@ -644,9 +648,9 @@ Two types:
 
 - User-assigned (UAMI)
 
-  - A UAMI is independent of any resources, so if your app is running on multiple VMs, it can use the same identity. This helps when you have hundreds of VMs, using a UAMI instead of SAMI reduces identity churn in AAD.
+  - A UAMI is independent of any resources, so if your app is running on multiple VMs, it can use the same identity. This helps when you have hundreds of VMs, using a UAMI instead of SAMI reduces identity churn in Entra.
   - If you delete a UAMI, resources using the identity can not get a new token when its current token expires, but the identity assignment on the resource is NOT automatically removed
-  - A UAMI as a resource would reside in a region, but the associated service principal **is global**, its availability is only dependent on Azure AD
+  - A UAMI as a resource would reside in a region, but the associated service principal **is global**, its availability is only dependent on Entra
     - When the region is unavailable, the control plane won't work, but the SP still works
 
   A resource can have multiple user-assigned managed identities.
@@ -773,11 +777,11 @@ Three types of applications:
 | Gallery (SAML, Password, Linked) | Yes               | Yes                     | Add from the gallery, an app instance added to your tenant        |
 | Gallery (OpenID Connect)         | **No**            | Yes                     | Sign-in/sign-up, the app will be added to Enterprise applications |
 | Your own                         | Yes               | Yes                     | Add in App registrations                                          |
-| On-prem                          | Yes               | Yes                     | AAD App Proxy                                                     |
+| On-prem                          | Yes               | Yes                     | Entra App Proxy                                                   |
 
 - Pre-integrated applications (can be added from the gallery)
 - Your own applications (register it in App Registrations)
-- On-premises applications (can be published externally via AAD Application Proxy)
+- On-premises applications (can be published externally via Entra Application Proxy)
 
 ### Application management
 
@@ -801,7 +805,7 @@ Delegate application creation and management permissions by using one of the fol
     - can not manage application proxy
   - *When a user with these either of these roles creates a new application registration, they're not automatically added as the owner*
 - **Create and assign a custom role**
-  - A custom role can be assigned at tenant scope or at the scope of a single AAD object (eg. a single application registration)
+  - A custom role can be assigned at tenant scope or at the scope of a single Entra object (eg. a single application registration)
 
 ### My Apps portal
 
@@ -817,7 +821,7 @@ App collections:
 
 ### API Permissions
 
-AAD implements the OAuth 2.0. Web-hosted resources can define a set of permissions that you use to implement functionality in smaller chunks, eg. Microsoft Graph has defined permissions like `User.ReadWrite.All`, `Mail.Read`
+Entra implements the OAuth 2.0. Web-hosted resources can define a set of permissions that you use to implement functionality in smaller chunks, eg. Microsoft Graph has defined permissions like `User.ReadWrite.All`, `Mail.Read`
 
 Permissions of all Microsoft IdP integrated API apps in your tenant can be requested here, it could be a Microsoft API, or your own app that exposes API scopes, each app would have a unique Application ID URI, for example:
 
@@ -895,7 +899,7 @@ This allows you to adopt RBAC for authorization in your application code.
   ![App roles](./images/azure_ad-app-roles.png)
 2. Add users/groups/applications to a role in "Enterprise Application" -> "User and Groups"
   ![App role assignment](images/azure_ad-app-role-assignment.png)
-3. Now, when user login to your app, AAD adds `roles` claim to tokens it issues.
+3. Now, when user login to your app, Entra adds `roles` claim to tokens it issues.
 
 See: https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-add-app-roles-in-azure-ad-apps
 
@@ -906,7 +910,7 @@ See: https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-add-a
   - For application-only scopes, use "App roles" and define app roles assignable to applications.
 - You could add another application as an authorized client application to the scopes, then user won't be prompted to consent when login to the client application.
 - Application ID URI need to be globally unique, usually has the form `api://<app-id>`, eg. `api://dev.guisheng.li/demo/api1`
-- When a client app requests the scope in its OAuth request, and the user consents (or pre-approved), AAD sends back an access token which contains the required scopes
+- When a client app requests the scope in its OAuth request, and the user consents (or pre-approved), Entra sends back an access token which contains the required scopes
 
 #### Example:
 
@@ -1016,11 +1020,11 @@ Modes:
   - How does it work
     - User installs a browser extension (in Chrome or Edge) - "My Apps Secure Sign-in"
     - User launches the app from My Apps or Microsoft 365 portal or the browser extension
-    - User logins to AAD
-    - AAD redirects to the application's login page
+    - User logins to Entra
+    - Entra redirects to the application's login page
     - The browser extension fill in username, password and log in
   - The username and password, could be either:
-    - Configured for user/group in AAD "Enterprise applications"
+    - Configured for user/group in Entra "Enterprise applications"
     - Or typed in by the user when accessing the app for the first time
 - Linked
   - Scenarios:
@@ -1032,13 +1036,13 @@ Modes:
 - Disabled
   - User won't be able to launch the app from My Apps
 
-![Azure AD SSO options](./images/azure_ad-single-sign-on-options.png)
+![Entra SSO options](./images/azure_ad-single-sign-on-options.png)
 
 ### SAML
 
 The configuration process varies depending on the application.
 
-*You can use **[Azure AD SAML Toolkit](https://samltoolkit.azurewebsites.net/)** application for testing*
+*You can use **[Entra SAML Toolkit](https://samltoolkit.azurewebsites.net/)** application for testing*
 
 Usual steps:
 
@@ -1048,12 +1052,12 @@ Usual steps:
   - Sign on URL - the sign-in page URL of the app
 
 - Configs in the app
-  - AAD login URL
-  - AAD identifier
-  - AAD logout URL
-  - Signing certificate (downloaded from AAD)
+  - Entra login URL
+  - Entra identifier
+  - Entra logout URL
+  - Signing certificate (downloaded from Entra)
 
-- Update URLs in AAD (get them from the app)
+- Update URLs in Entra (get them from the app)
   - Reply URL (Assertion Consumer Service URL)
   - Sign on URL
 
@@ -1075,9 +1079,9 @@ A SAML response XML has fields like:
 
 ## Azure subscriptions
 
-- Each Azure subscription is associated with a single Azure AD directory (tenant);
+- Each Azure subscription is associated with a single Entra directory (tenant);
 - Users, groups and applications in that directory can manage resources in the subscription;
-- Subscriptions use Azure AD for SSO;
+- Subscriptions use Entra for SSO;
 
 
 ## Conditional access
@@ -1187,7 +1191,7 @@ A tenant-wide setting, provides secure default settings until organizations are 
   - Microsoft Authenticator app
     - PIN and biometrics recognition on phone
     - The App could be used for passwordless sign-in, MFA and SSPR
-- App password: for certain non-browser apps which don't support AAD MFA, you could use app specific password
+- App password: for certain non-browser apps which don't support Entra MFA, you could use app specific password
 - SSPR only
   - Security questions
   - Email address
@@ -1202,15 +1206,21 @@ A tenant-wide setting, provides secure default settings until organizations are 
 - View which methods are available to each user
 
 
-## AAD roles
+## Entra roles
 
-- For managing AAD objects, NOT the same as Azure roles, see [Azure RBAC](./azure-rbac.markdown)
+![Role categories](images/entra_role-categories.png)
+
+- Three broad categories:
+  - Entra ID specific roles: eg. User/Groups/Application Administrator
+  - Service-specific roles: eg. Exchange/Intune Administrator
+  - Cross-service roles: eg. Global Admin, Security Admin
+- NOT the same as Azure roles, see [Azure RBAC](./azure-rbac.markdown)
 - Usually can only be assigned to users/applications, not groups (unless the groups has enabled "AD Role assignment" toggle)
-- Built-in roles can only be assigned to either the whole directory or an "Administrative Unit"
-- You can create custom roles, which can be assigned to a single AAD object, eg. a user, group, device, application, service principal.
+- Built-in roles can only be assigned at the scope of wither the whole directory or an "Administrative Unit"
+- You can create custom roles, which can be assigned to a single Entra object, eg. a user, group, device, application, service principal.
 
 ```sh
-# list AAD roles
+# list Entra roles
 az rest -u "https://graph.microsoft.com/v1.0/roleManagement/directory/roleDefinitions" --query "value[].{Name: displayName, ID: id}" -otable
 
 # filter and select
@@ -1320,9 +1330,9 @@ Group-based licensing allows you assign licenses to groups, all users in the gro
 
 ## Custom security attribute
 
-- Business-specific attributes (key-value pairs, like tags) that you can define and assign to Azure AD objects. Could be used to:
+- Business-specific attributes (key-value pairs, like tags) that you can define and assign to Entra objects. Could be used to:
   - store information
-  - query and filter AAD objects
+  - query and filter Entra objects
   - enforce access control
   - as conditions in RBAC role assignment
 - Only users with *Attribute Definition Administrator* role can create custom security attributes
@@ -1330,14 +1340,14 @@ Group-based licensing allows you assign licenses to groups, all users in the gro
 
 ## SCIM
 
-SCIM (System for Cross-domain Identity Management) can sync identities from Azure AD and another system
+SCIM (System for Cross-domain Identity Management) can sync identities from Entra and another system
   - it provides a common user schema for provisioning
   - uses REST API
   - defines two endpoints `/users` and `/groups`
 
 ![SCIM overview](images/azure_ad-scim.png)
 
-AAD SCIM Functions:
+Entra SCIM Functions:
 
 - Automate Provisioning/deprovisioning: create/remove accounts in the right system
 - Synchronize data between systems
@@ -1349,7 +1359,7 @@ AAD SCIM Functions:
 
 Scenarios:
 
-- Use HCM to manage employee lifecycle, the user's provile synced to AAD automatically
+- Use HCM to manage employee lifecycle, the user's provile synced to Entra automatically
 - Provision users and groups in another application
 
 
@@ -1403,10 +1413,10 @@ Note:
 - **Resource**:
   - Membership of cloud-created security groups, *this implies access to other roles/permissions granted to the groups*:
     - Azure roles
-    - AAD roles
+    - Entra roles
     - Microsoft 365 licenses
   - Membership of cloud-created Microsoft 365 Groups and Teams
-  - Assignment to AAD enterprise applications
+  - Assignment to Entra enterprise applications
   - Membership of SharePoint Online sites/site collections
 - **Access package**:
   - A bundle of all the resources with the access a user needs to work on a project or in a role
@@ -1450,13 +1460,13 @@ Note:
   - Group owners
     - Best reviewers in most cases
   - Selected users, delegated review capability when the review is created
-    - Groups synced from on-prem AD can not have owners in AAD, you should specify reviewers while creating the review
+    - Groups synced from on-prem AD can not have owners in Entra, you should specify reviewers while creating the review
     - Reviewers will need to take action in on-prem AD
   - Members of the group, attesting for themselves
 
 ### Licenses
 
-Access review is a AAD Premium P2 feature.
+Access review is a Entra Premium P2 feature.
 
 These users requires P2 licenses:
 
@@ -1468,15 +1478,15 @@ These users requires P2 licenses:
 
 ## Administrative Units (AU)
 
-- To restrict administrative scope in organizations that are made up of independent divisions, such as School of Business and School of Engineering in a University
+- To restrict administrative scope in organizations that are made up of independent divisions, eg. School of Business, School of Engineering in a University
 - Membership
   - You could put users/groups/devices to a unit
   - Support dynamic membership rules
   - No nesting
-- A unit is a scope for Azure AD role assignment
+- A unit is a scope for Entra role assignment
   - You only get permissions over direct members in the unit, not users in a group, you need to **add them explicitly** to the unit
   - For groups in a unit, you can change group name or membership
-- Only a subset AAD roles can be assigned:
+- Only a subset Entra roles can be assigned:
   - User administrator
   - Groups administrator
   - Password administrator
@@ -1491,7 +1501,7 @@ These users requires P2 licenses:
 
 ## Logging and analytics
 
-AAD reporting components:
+Entra reporting components:
 
 - Activity
   - Sign-in logs (for human interactive sign-ins)
@@ -1539,7 +1549,7 @@ Allow remote users to access on-prem applications, benefits:
 
 It's intended to be a replace for the legacy **VPN and reverse proxy solution** for remote users, not for users on the corporate network.
 
-![AAD application proxy architecture](images/azure_ad-application-proxy-architecture.png)
+![Entra application proxy architecture](images/azure_ad-application-proxy-architecture.png)
 
 - It publishes a public URL for your app
 - Application Proxy Service runs in the cloud
@@ -1555,15 +1565,15 @@ High availability
 
 Authentication
 
-![AAD application proxy authentication](images/azure_ad-application-proxy-authentication-flow.png)
+![Entra application proxy authentication](images/azure_ad-application-proxy-authentication-flow.png)
 
 Kerberos auth flow
 
-![AAD application proxy kerberos auth](images/azure_ad-app-proxy-kerberos-auth.png)
+![Entra application proxy kerberos auth](images/azure_ad-app-proxy-kerberos-auth.png)
 
 - The on-prem app is using Integrated Windows Authentication (IWA), which requires a Kerberos token
 - In this case, the Proxy connector will impersonate to get the Kerberos token and present it to the on-prem app
-- *The yellow is an AAD token, the red an Kerberos token*
+- *The yellow is an Entra token, the red an Kerberos token*
 
 
 ## Best practices
@@ -1578,7 +1588,7 @@ Kerberos auth flow
 
 ### `--filter` parameter
 
-The `--filter` parameter in many `az ad` commands seems to be following the old Azure AD Graph API (not the newer Microsoft Graph API) ? check available filters here https://learn.microsoft.com/en-us/previous-versions/azure/ad/graph/howto/azure-ad-graph-api-supported-queries-filters-and-paging-options
+The `--filter` parameter in many `az ad` commands seems to be following the old Entra Graph API (not the newer Microsoft Graph API) ? check available filters here https://learn.microsoft.com/en-us/previous-versions/azure/ad/graph/howto/azure-ad-graph-api-supported-queries-filters-and-paging-options
 
 *Seems you could use `startswith`, `endswith`, but not `contains`*
 
