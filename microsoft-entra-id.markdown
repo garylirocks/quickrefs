@@ -42,6 +42,7 @@
   - [SAML](#saml)
 - [Azure subscriptions](#azure-subscriptions)
 - [Conditional access](#conditional-access)
+  - [MFA](#mfa)
   - [Session controls](#session-controls)
   - [App protection policies (APP) on devices](#app-protection-policies-app-on-devices)
   - [Security defaults](#security-defaults)
@@ -1121,6 +1122,14 @@ Best practices:
 - **Block legacy authentication protocols**
 - For a block policy, exclude at least one **emergency account**
 - You could also use sign-in risk (form Identity Protection) as a condition
+
+### MFA
+
+A users status could be:
+
+- Disabled
+- Enabled: enrolled for MFA
+- Enforced: the user completed the registration process
 
 ### Session controls
 
