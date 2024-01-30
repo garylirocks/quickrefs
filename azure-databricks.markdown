@@ -110,7 +110,7 @@ Objects:
 
 - Create a separate *private web auth workspace* per region for SSO login
   - This workspace needs its own VNet for VNet injection (though you won't put anything in it), not shown in the diagram
-  - Set a log to this workspace, so it won't be deleted
+  - Set a lock on this workspace, so it won't be deleted
 - You need two separate private DNS zones for the `databricks_ui_api` endpoint, one for backend, one for frontend
 
 
