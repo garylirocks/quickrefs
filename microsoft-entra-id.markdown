@@ -153,7 +153,9 @@ Features:
 ## B2B
 
 - Allow users from other organizations to use apps and resources in your tenant
-- External users can be invited as **guests** (with "#EXT#" extension in their user principal name) or **members**
+- External users can be invited as
+  - **guests** (with "**#EXT#**" extension in their user principal name)
+  - or **members**
 - Who can invite:
   - By default, all users (including guests) can invite guests, if this is turned off, you can assign "Guest Inviter" role explicitly to users
   - You can create either a allow list or a deny list to control what external domains are allowed
