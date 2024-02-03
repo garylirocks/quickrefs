@@ -808,7 +808,7 @@ Delegate application creation and management permissions by using one of the fol
     - can not manage application proxy
   - *When a user with these either of these roles creates a new application registration, they're not automatically added as the owner*
 - **Create and assign a custom role**
-  - A custom role can be assigned at tenant scope or at the scope of a single Entra object (eg. a single application registration)
+  - A custom role can be assigned at tenant scope or at the scope of a single Entra object (eg. a user/group/device/application)
 
 ### My Apps portal
 
@@ -842,6 +842,7 @@ Two types of permissions:
 - **Application permissions**: used by apps that run without a signed-in user, such as background services or daemons
   - Only administrators can consent to application permissions
   - The *effective permissions* are exactly the permissions granted to the app
+  - An app can also by assigned an Entra RBAC role
 
 Supported OpenID Connect scopes:
 
@@ -1228,7 +1229,7 @@ A tenant-wide setting, provides secure default settings until organizations are 
 - NOT the same as Azure roles, see [Azure RBAC](./azure-rbac.markdown)
 - Usually can only be assigned to users/applications, not groups (unless the groups has enabled "AD Role assignment" toggle)
 - Built-in roles can only be assigned at the scope of wither the whole directory or an "Administrative Unit"
-- You can create custom roles, which can be assigned to a single Entra object, eg. a user, group, device, application, service principal.
+- You can create custom roles, which can be assigned to a single Entra object, eg. a user/group/device/application
 
 ```sh
 # list Entra roles
