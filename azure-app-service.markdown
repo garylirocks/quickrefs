@@ -4,6 +4,10 @@
   - [App Service plans](#app-service-plans)
     - [SKUs](#skus)
   - [vNet integration](#vnet-integration)
+    - [Networking](#networking)
+    - [Routing](#routing)
+    - [Permissions](#permissions)
+    - [How](#how)
   - [Deployment](#deployment)
   - [App settings and connection strings](#app-settings-and-connection-strings)
   - [Deployment slots](#deployment-slots)
@@ -33,14 +37,14 @@ A plan's **size** (aka **sku**, **pricing tier**) determines
 
 #### SKUs
 
-| Usage      | Tier                 | Instances | New Features                                  |
-| ---------- | -------------------- | --------- | --------------------------------------------- |
-| Dev/Test   | Free                 | 1         |                                               |
-| Dev/Test   | Shared(Windows only) | 1         | Custom domains                                |
-| Dev/Test   | Basic                | <=3       | Custom domains/SSL                            |
-| Production | Standard             | <=10      | Staging slots, Daily backups, Traffic Manager |
-| Production | Premium              | <=30      | More slots, backups                           |
-| Isolated   | Isolated             | <=100     | Isolated network, Internal Load Balancing     |
+| Usage      | Tier                 | Instances | New Features                                   |
+| ---------- | -------------------- | --------- | ---------------------------------------------- |
+| Dev/Test   | Free                 | 1         |                                                |
+| Dev/Test   | Shared(Windows only) | 1         | Custom domains                                 |
+| Dev/Test   | Basic                | <=3       | Custom domains/SSL                             |
+| Production | Standard             | <=10      | Staging slots, Daily backups, Traffic Manager  |
+| Production | Premium              | <=30      | More slots, backups                            |
+| Isolated   | Isolated             | <=100     | ASE, Isolated network, Internal Load Balancing |
 
 - **Shared compute** (Free, Shared): VM shared with other customers
 - **Dedicated compute** (Basic, Standard, Premium): run on dedicated Azure VMs
@@ -50,46 +54,92 @@ Plans are the unit of billing. How much you pay for a plan is determined by the 
 
 Azure Functions could be run in an App Service Plan as well.
 
-You can start from an cheaper plan and scale up later.
+You can start from an cheaper tier and scale up later.
 
 ### vNet integration
 
 - Allows your app to make outbound calls to resources in or through a vNet
-- **DOESN'T** grant inbound private access to your apps from the vNet
-- This is for **Standard and Premium** plans
-  - Doesn't support Free, Shared and Basic plans
-  - Isolated plan apps are deployed into App Service Environment, which has all compute instances in your vNet already
-- Behaves differently depending on whether the vNet is in the same or other regions:
-  - Same region
-    - You must have a dedicated subnet in the target vNet
-    - Allow access to resources in:
-      - target vNet
-      - peered vNets
-      - ExpressRoute connected networks
-      - Across Service Endpoints
-  - Other regions
-    - You need a vNet gateway (point-to-site) provisioned in the target vNet
-    - Provides access to resources in
-      - target vNet
-      - peered vNets
-      - VPN connected networks
-    - No access to resources across ExpressRoute or Service Endpoints
+- **DOESN'T** grant inbound private access to your apps from the vNet, use **Private site access**
+- This is for **Basic, Standard and Premium** tiers
+  - Doesn't support Free, Shared tiers
+  - Isolated tier apps are deployed into App Service Environment (ASE), which has all compute instances in your vNet already
 - Features:
-  - Require a Standard, Premium, PremiumV2, PremiumV3, or Elastic Premium pricing plan.
   - Support TCP and UDP.
   - Work with Azure App Service apps and function apps, and Logic Apps Standard.
+  - No support for mounting a drive
+- vNet integration is at the App Service plan level
+  - Each app has its own settings about what should be routed via the integration
+- Windows plans can have two vNet integrations, Linux plans only have one.
+  - An integration can be shared by multiple apps in the same plan
+  - An app can only have a single vNet integration at a given time
 
-- Azure networking features:
-  - NSG outbound rules apply on your integration subnet, inbound rules do not, because vNet integration do not provide inbound access to your app.
-  - UDRs apply to outbound calls, **do not** affect replies to inbound app requests
-  - By default, your app only routes RFC1918 traffic into your vNet, if you add application setting `WEBSITE_VNET_ROUTE_ALL=1` into your app, all outbound traffic is routed to the vNet
-    - You could add a NAT gateway to the integration subnet for connection to the Internet
-  - Outbound traffic is still sent from addresses listed in your app properties
-  - After integration, your app uses the same DNS servers configured for your vNet. To work with private DNS zones, you need these app settings:
-    - `WEBSITE_DNS_SERVER=168.63.129.16`
-    - `WEBSITE_VNET_ROUTE_ALL=1`
+#### Networking
 
-- It's different to **Private site access**, which refers to making an app accessible only from a private network
+- Allow access to resources in:
+  - Integration vNet
+  - Peered vNets
+  - On-prem via ExpressRoute or S2S VPN
+  - Across Service Endpoints
+- The integration subnet will be delegated to `Microsoft.Web/serverFarms`
+- **Subnet size** considerations:
+  - Each instance in your app plan needs a private IP in the subnet
+  - If you use Windows Containers, you need one extra IP per app per instance
+  - When you scale up/down in size (in/out in instances), the required address space is doubled for a short period of time
+  - Minimum size is `/28`
+- The private IP of an instance is exposed via environment variable `WEBSITE_PRIVATE_IP`
+- No matter whether or not you route Internet traffic via the vNet, the destination determines the source address:
+  - destination in integration vNet or peered vNet, the source address is the private IP
+  - otherwise, source address is listed in your app properties
+- After integration, your app uses the same DNS servers configured for your vNet, so it could be using Azure provided or custom DNS
+- Limitations:
+  - The integration vNet
+    - Must be in the **same region** as the app
+    - No IPv6 address space
+  - The integration subnet
+    - Can't have service endpoint policies enabled
+    - Can only be used by one App Service Plan
+  - You must "Disconnect" the integration first before you can update/delete the subnet/vnet
+
+#### Routing
+
+- Three types of routing:
+  - **Application routing** defines what traffic is routed from your app and into the virtual network.
+  - **Configuration routing** affects operations that happen before or during startup of your app. Examples are container image pull and app settings with Key Vault reference.
+  - **Network routing** the routing appied at the subnet via NSG and UDR
+
+- **Application routing**:
+  - By default, your app only routes RFC1918 and service endpoints traffic into your vNet, if outbound internet traffic routing is enabled (`WEBSITE_VNET_ROUTE_ALL=1`), all outbound traffic is routed to the vNet
+  - You could add a NAT gateway to the integration subnet for connection to the Internet
+- **Configuration routing** (via public route by default, can be configured for individual components)
+  - Content share: often used by Functions app (often via port 443 or 445)
+  - Container image pull
+  - Backup/restore:
+    - Custom backup to your own storage account
+    - Database backup isn't supported over vNet integration
+  - App settings using Key Vault references
+    - Attempted if the KV blocks public access and the app is using vNet integration
+    - Configure SSL/TLS certificate from private KV is not supported
+  - App Service logs to private storage account is not supported, recommendation is using Diagnostic Logging and allowing trusted services for the storage account
+- **Network routing**
+  - NSG and route tables only apply to traffic routed through the integration subnet
+  - NSG
+    - inbound rules do not have any effect
+    - outbound rules always in effect regardless of any route tables
+  - Route tables apply to outbound calls, **do not** apply to replies to inbound app requests
+  - Apart from endpoints your app needs to reach, some derived endpoints need to be considered:
+    - CRL check endpoints
+    - Identity/auth endpoints (eg. Microsoft Entra ID)
+  - Service endpoints and private endpoints are supported
+
+#### Permissions
+
+- Need these permissions on the subnet: `Microsoft.Network/virtualNetworks/read`, `Microsoft.Network/virtualNetworks/subnets/read`, `Microsoft.Network/virtualNetworks/subnets/join/action`
+
+#### How
+
+- vNet integration works by mounting virtual interfaces to the worker roles with addresses in the delegated subnet. Customers don't have direct access to the virtual interfaces.
+- Because the from address is in your vNet, it can access most things in or through your vNet like a VM in your virtual network would.
+
 
 ### Deployment
 
