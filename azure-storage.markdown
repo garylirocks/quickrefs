@@ -15,6 +15,7 @@
     - [RBAC](#rbac)
     - [Access keys](#access-keys)
     - [Shared access signature (SAS)](#shared-access-signature-sas)
+  - [View data in Azure Portal](#view-data-in-azure-portal)
   - [CLI and curl commands with different auth methods](#cli-and-curl-commands-with-different-auth-methods)
   - [Microsoft Defender for Cloud](#microsoft-defender-for-cloud)
   - [CLI](#cli)
@@ -23,10 +24,11 @@
   - [Access tiers](#access-tiers)
   - [Organization](#organization)
   - [Life cycle management rules](#life-cycle-management-rules)
+  - [Soft delete](#soft-delete)
   - [Versioning vs. snapshot](#versioning-vs-snapshot)
+  - [Immutable storage for Azure Blobs](#immutable-storage-for-azure-blobs)
   - [Operational backup](#operational-backup)
   - [Object replication](#object-replication)
-  - [Immutable storage for Azure Blobs](#immutable-storage-for-azure-blobs)
   - [CLI](#cli-1)
   - [AzCopy](#azcopy)
   - [.NET Storage Client library](#net-storage-client-library)
@@ -143,6 +145,14 @@ Azure Storage is also used by IaaS VMs, and PaaS services:
       - A CMK could be scoped to the whole account or only a specified service
     - Customer-provided key
       - For Blob storage operations. A client making a read or write request against Blob storage can include an encryption key on the request for granular control over how blob data is encrypted and decrypted.
+  - Double encryption
+    - This is encryption at infrastructure level
+    - Always use Microsoft managed keys
+    - SSE should be sufficient in most cases, use this only when necessary for compliance
+    - Could be for the entire storage account or a custom **encryption scope**
+      - Account level infrastructure encryption can only be enabled when creating the account
+      - If account level infrastructure encryption is not enabled, when you create an encryption scope, you can still enable infrastructure encryption for the scope
+      - *When you upload a blob, you can either use default scope or specify a custom encryption scope*
 
 - Encryption at tansit
 
@@ -160,7 +170,7 @@ Azure Storage is also used by IaaS VMs, and PaaS services:
 
 - Auditing access
 
-  Using the built-in Storage Analytics service, which logs every operation in real time.
+  Using the built-in "Storage Analytics" service, which logs every operation in real time.
 
 ### Endpoints
 
@@ -262,6 +272,9 @@ Two types:
   2. Regenerate primary key using Azure portal or CLI.
   3. Update connection string in your code to reference the new primary key.
   4. Regenerate the secondary access key.
+- You could set rotation reminder in the portal
+  - Shows a notification banner in the Portal when any key expires
+  - You can also use a built-in Azure policy to audit key expiration
 
 #### Shared access signature (SAS)
 
@@ -328,6 +341,18 @@ Two typical designs for using Azure Storage to store user data:
   - SAS provider: only generates a SAS and pass it to the client
 
     ![SAS provider](images/azure_storage-design-lightweight.png)
+
+### View data in Azure Portal
+
+When you try to view data (blob, files) in the Portal,
+
+1. If you have a role with the `Microsoft.Storage/storageAccounts/listkeys/action` permission, then the portal uses access key for accessing data
+    - When there is a "ReadOnly" lock on the account, the `listkeys` action, which is a POST action, would NOT be allowed, the user must use Entra credentials
+2. Otherwise, the portal attempts to use Entra credentials
+
+Note:
+
+The setting "*Default to Microsoft Entra authorization in the Azure portal*" allows you to make Microsoft Entra authorization the default option, a user can still overrides it ans use access key authorization.
 
 ### CLI and curl commands with different auth methods
 
@@ -494,24 +519,17 @@ For block blobs, there are three access tiers: "hot", "cool" and "archive", from
 - Or delete blobs at the end of their life cycle
 - Apply rules to containers or a subset of blobs
 
+### Soft delete
+
+- Container soft delete: only container-level operations can be restored. Can't restore deleted blobs in the container.
+- Blob soft delete: only work on blob-level operations
+  - Works for previous versions as well
+
 ### Versioning vs. snapshot
 
 - When blob versioning is enabled: A blob version is created automatically on a write or delete operation
 - A blob snapshot is created manually, not necessary if versioning is enabled
-
-### Operational backup
-
-You can turn on this feature, you need a backup policy in a Backup vault, this enables soft delete for blobs, and blob versioning automatically
-
-### Object replication
-
-You could add replication rules to replicate blobs to another storage account.
-
-- The destination could be in another region, subscription, even another tenant (`AllowCrossTenantReplication` property controls whether this is allowed).
-- Only one replication policy may be created for each source account/destination account pair.
-- Each policy can have multiple rules
-- Blob content, versions, properties and metadata are all copied from source container to the destination container. Snapshots are not replicated.
-- Blob versioning needs to be enabled on both accounts.
+- Versioning is not supported for ADLS Gen 2, snapshot is supported (in preview)
 
 ### Immutable storage for Azure Blobs
 
@@ -534,6 +552,20 @@ Immutability policies can be scoped to a blob version or to a container.
   - A container can have both a legal hold and a time-based retention policy at the same time
 
 A blob's storage tier could still be changed (eg. from hot to cool) with an applied immutability policy.
+
+### Operational backup
+
+You can turn on this feature, you need a backup policy in a Backup vault, this enables soft delete for blobs, and blob versioning automatically
+
+### Object replication
+
+You could add replication rules to replicate blobs to another storage account.
+
+- The destination could be in another region, subscription, even another tenant (`AllowCrossTenantReplication` property controls whether this is allowed).
+- Only one replication policy may be created for each source account/destination account pair.
+- Each policy can have multiple rules
+- Blob content, versions, properties and metadata are all copied from source container to the destination container. Snapshots are not replicated.
+- Blob versioning needs to be enabled on both accounts.
 
 ### CLI
 
@@ -695,9 +727,11 @@ Build on top of blob storage. Support big data analytics.
   - Rename a folder
   - Set ACL permissions on a folder
   - Genearate a SAS token on a folder
-- You can upgrade a storage account to ADLS Gen2 (can't revert back), some features need to be disabled:
+- You can upgrade a storage account to ADLS Gen2 (can't revert back), some features aren't supported:
   - Page blob
   - Container soft delete
+  - Blob versioning
+  - Blob-version level immutability policy
   - Point-in-time restore
   - Blob tagging
   - ...
@@ -823,6 +857,7 @@ Protocols:
   - Supports:
     - Kerberos auth, ACLs, and encryption-in-transit
     - Data plane REST API (view file in the Portal)
+      - REST API supports SAS token, SMB protocol does not
     - Share level RBAC
     - Azure Backup / share snapshots
 - NFS
@@ -834,7 +869,7 @@ Protocols:
     - Permissions for NFS file shares are enforced by the client OS rather than the Azure Files service
   - Scenarios:
     - Storage for Linux/Unix applications
-    - POSIX-compliant file shares, cae sensitivity, or Unix style permissions |
+    - POSIX-compliant file shares, case sensitivity, or Unix style permissions
   - NO support for
     - Kerberos auth
     - ACLs
