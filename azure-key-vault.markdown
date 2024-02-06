@@ -1,6 +1,7 @@
 # Azure Key Vault
 
 - [Keys](#keys)
+  - [Bring your own key (BYOK)](#bring-your-own-key-byok)
 - [Secrets](#secrets)
 - [Certificate](#certificate)
   - [Certificate composition](#certificate-composition)
@@ -34,6 +35,15 @@
   - Some clients (such as Azure Storage) support querying for the latest version of a key, so you don't need to do anything on the client side.
 - Scenarios: asymmetric master key of Microsoft Azure RMS, SQL Server TDE (Transparent Data Encryption), CLE.
   - The one saved in a key vault is usually a key-protecting key, it just encrypts another key (which encypts the data in storage account or SQL Server).
+
+### Bring your own key (BYOK)
+
+This refers to importing a key from an on-prem HSM to an Azure key vault, steps:
+
+1. Generate a Key Exchange Key (KEK) in Azure key vault
+2. Download the public key of the KEK
+3. Use HSM vendor provided BYOK tool - import the KEK public key, export the target key (protected by the KEK, usually as a `.byok` blob)
+4. Import the protected target key to Azure key vault
 
 
 ## Secrets

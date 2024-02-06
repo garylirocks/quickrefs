@@ -6,6 +6,7 @@
     "azcollection",
     "azcopy",
     "azurerm",
+    "BYOK",
     "cdktf",
     "centralus",
     "CIFS",
