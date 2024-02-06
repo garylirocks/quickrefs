@@ -1,6 +1,8 @@
 # Azure Key Vault
 
 - [Keys](#keys)
+  - [HSM](#hsm)
+    - [Azure Dedicated HSM](#azure-dedicated-hsm)
   - [Bring your own key (BYOK)](#bring-your-own-key-byok)
 - [Secrets](#secrets)
 - [Certificate](#certificate)
@@ -27,14 +29,35 @@
 - A key pair could be used for operations like:
   - signing/verifying
   - key encryption/wrapping: protect another key, typically a symmetric **content encryption key (CEK)**
-    - When the key in vault in symmetric, key wrapping is used
-    - When the key in vault in asymmetric, key encryption is used
+    - When the key in vault is symmetric, key wrapping is used
+    - When the key in vault is asymmetric, key encryption is used
   - encryption/decryption
 - Can be single instanced or be versioned (primary and secondary keys)
 - You can configure a key rotation policy, which would rotate your keys automatically before expiration.
   - Some clients (such as Azure Storage) support querying for the latest version of a key, so you don't need to do anything on the client side.
 - Scenarios: asymmetric master key of Microsoft Azure RMS, SQL Server TDE (Transparent Data Encryption), CLE.
   - The one saved in a key vault is usually a key-protecting key, it just encrypts another key (which encypts the data in storage account or SQL Server).
+
+### HSM
+
+Two offerings:
+
+- Azure Dedicated HSM (not a fit for most customers)
+- Azure Key Vault Managed HSM
+
+#### Azure Dedicated HSM
+
+- FIPS 140-2 Level 3 validated
+- Can be provisioned:
+  - As a pair for high availability
+  - Across regions
+- Uses Thales Luna 7 HSM model A790 appliances
+- Configured and manged via Thales customer support portal
+- Only the customer has administrative or application-level access to the device
+  - After the customer accesses the device for the first time, and changes the password
+  - Microsoft does maintain monitor-level access (not an admin role) for telemetry via serial port connection. This access covers hardware monitors such as temperature, power supply health, and fan health.
+- Not a fit for most customers, need >= 5M USD annual Azure spending to qualify
+- NOT integrated with Azure services which support CMK encryption, eg. Azure Storage, Azure SQL
 
 ### Bring your own key (BYOK)
 
