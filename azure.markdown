@@ -29,8 +29,6 @@
   - [Sample KQL queries](#sample-kql-queries)
   - [`az graph query`](#az-graph-query)
 - [Blueprints (To be deprecated)](#blueprints-to-be-deprecated)
-- [Billing](#billing)
-  - [Tag inheritance](#tag-inheritance)
 - [Business Process Automation](#business-process-automation)
 
 ## Overview
@@ -539,6 +537,8 @@ az graph query \
 
 ## Blueprints (To be deprecated)
 
+*This is going to be deprecated, Microsoft suggests migrating to Template Specs and Deployment Stacks*
+
 Contains some artifacts that could be deployed to existing or new subscriptions:
 
 - Role assignments
@@ -557,26 +557,6 @@ Notes:
 - Resource deployed by blueprints are **locked**
   - When you un-assign a blueprint, the resource locking is removed, resources and RBAC assignments do not change
   - A subscription owner can't remove the lock, but can un-assign the blueprint if it's assigned at the subscription level
-
-
-## Billing
-
-### Tag inheritance
-
-- Tags are inherited to resource usage records, NOT resources
-
-  ![Tag inheritance](./images/azure_tags-inheritance.svg)
-
-- Works for these billing account types:
-  - Enterprise Agreement (EA)
-  - Microsoft Customer Agreement (MCA)
-  - Microsoft Partner Agreement (MPA) with Azure plan subscriptions
-
-- If the same tag is on both subscription and resource group levels, the subscription one takes precedence.
-
-- When enabled, the resource usage records are updated for the current month.
-
-- If a resource that doesn't emit usage at a subscription scope, they will not have the subscription tags applied.
 
 
 ## Business Process Automation

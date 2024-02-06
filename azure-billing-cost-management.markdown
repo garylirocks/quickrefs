@@ -9,6 +9,7 @@
 - [Cost management](#cost-management)
   - [Cost views](#cost-views)
   - [Tags in cost and usage data](#tags-in-cost-and-usage-data)
+  - [Tag inheritance](#tag-inheritance)
 - [Alerts](#alerts)
 - [Cost allocation](#cost-allocation)
 
@@ -144,6 +145,23 @@ Gotchas:
 - Tags must be applied directly ro resources
   - Or you could enable tag inheritance (instead of using Azure Policy)
 - Some resources does not support tags
+
+### Tag inheritance
+
+- Tags are inherited to resource usage records, NOT resources
+
+  ![Tag inheritance](./images/azure_tags-inheritance.svg)
+
+- Works for these billing account types:
+  - Enterprise Agreement (EA)
+  - Microsoft Customer Agreement (MCA)
+  - Microsoft Partner Agreement (MPA) with Azure plan subscriptions
+
+- If the same tag is on both subscription and resource group levels, the subscription one takes precedence.
+
+- When enabled, the resource usage records are updated for the current month.
+
+- If a resource that doesn't emit usage at a subscription scope, they will not have the subscription tags applied.
 
 
 ## Alerts
