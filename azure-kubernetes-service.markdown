@@ -131,6 +131,7 @@ AGIC is a Kubernetes application, it monitors the cluster to update Application 
 - When you enabled Container Insights
   - You can specify a workspace, otherwise a `DefaultAzureMonitorWorkspace-<mapped_region>` will be created (if not exists already) in `DefaultRG-<cluster_region>`
   - A DCR is created with the name (`MSCI-<cluster-region>-<cluster-name>`), which defines what data should be collected (options: Standard, Cost-optimized, Syslog, Custom, None)
+- The Log Analytics workspace could be in another subscription in the same tenant, but usually needs to be in the **same region** (except a few regions)
 - For Prometheus metrics collection, these resources are cerated:
   - DCR `MSPROM-<aksclusterregion>-<clustername>`
   - DCE `MSPROM-<aksclusterregion>-<clustername>`
