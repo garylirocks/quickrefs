@@ -5,6 +5,8 @@
 - [Networking](#networking)
   - [kubenet](#kubenet)
 - [Application Gateway Ingress Controller](#application-gateway-ingress-controller)
+- [Monitoring](#monitoring)
+  - [Agent](#agent)
 - [Settings](#settings)
 
 ## Overview
@@ -106,6 +108,32 @@ AKS clusters can use kubenet (basic networking) or Azure CNI (advanced networkin
 ## Application Gateway Ingress Controller
 
 AGIC is a Kubernetes application, it monitors the cluster to update Application Gateway whenever a new service is selected to be exposed to the outside world.
+
+
+## Monitoring
+
+![Data collected](images/azure_aks-monitoring-data-collection.png)
+
+- **Managed Prometheus**
+  - Collect cluster metrics
+  - View them in Grafana dashboards
+  - Could be enabled with `az aks create/update --enable-azure-monitor-metrics ...`
+- **Container insights**
+  - Collect logs from AKS and Arc-enabled Kubernetes clusters
+  - Analyze with prebuild workbooks
+  - Don't collect Kubernetes audit logs (use Diagnostic settings)
+  - You can enable it with CLI `az aks enable-addons -a monitoring ...`
+
+### Agent
+
+- Both Managed Prometheus and Container insights rely on a containerized Azure Monitor agent for Linux
+- This agent is deployed and registered with the specified workspace during deployment
+- When you enabled Container Insights
+  - You can specify a workspace, otherwise a `DefaultAzureMonitorWorkspace-<mapped_region>` will be created (if not exists already) in `DefaultRG-<cluster_region>`
+  - A DCR is created with the name (`MSCI-<cluster-region>-<cluster-name>`), which defines what data should be collected (options: Standard, Cost-optimized, Syslog, Custom, None)
+- For Prometheus metrics collection, these resources are cerated:
+  - DCR `MSPROM-<aksclusterregion>-<clustername>`
+  - DCE `MSPROM-<aksclusterregion>-<clustername>`
 
 
 ## Settings

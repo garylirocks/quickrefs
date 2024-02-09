@@ -384,8 +384,8 @@ Required by:
 
 Components:
 
-- Configuration access endpoint: the endpoints for AMA to fetch DCRs, eg. `<unique-dce-identifier>.<regionname>-1.handler.control`
-- Logs ingestion endpoint: `<unique-dce-identifier>.<regionname>-1.ingest`
+- Configuration access endpoint: the endpoints for AMA to fetch DCRs, eg. `<unique-dce-identifier>.<regionname>-1.handler.control.monitor.azure.com`
+- Logs ingestion endpoint: `<unique-dce-identifier>.<regionname>-1.ingest.monitor.azure.com`
 - Network access control list
 
 Limitations:
@@ -393,7 +393,7 @@ Limitations:
 - Only for machines in the same region
 - Only support Log Analytics workspace as a destination
 - Custom metrics collected by AMA aren't controlled by DCEs
-- Can't be configured over private links, seems can be included in a Azure Monitor Private Link Scope (AMPLS) ?
+- Can be accessed over a Private Link using the Azure Monitor Private Link Scope (AMPLS) it is added to.
 
 
 ## Alerts
@@ -467,7 +467,6 @@ Signal types:
 
 - Azure Monitor stores log data in a Log Analytics workspace
 - A Log Analytics workspace is the **equivalent of a database** inside Azure Data Explorer, data is organized into tables
-- Data collected can be retained for a maximum of two years
 - Not only Azure Monitor, some other services use Log Analytics workspaces to store and query logs as well:
   - Microsoft Defender for Cloud
   - Microsoft Sentinel
@@ -489,11 +488,15 @@ Common workspace deployment models:
   - Difficult to cross-correlate logs
 - **Hybrid** not recommended, hard to maintain
 
-You many need multiple workspaces because:
+You should create workspaces as less as possible for easier management, **reasons for multiple workspaces**:
 
-- Store log data in specific regions for data sovereignty or compliance
-- Put workspace in the same region as resources to avoid outbound data transfer charges
-- Multiple departments or business groups
+- **Regulation**: specific regions for data sovereignty or compliance
+- **Environment separation**: eg. shorter retention period for non-prod workspaces
+- **Geography**:
+  - Put workspace in the same region as workloads, so outages in one region won't affect another region
+  - There are small charges for outbound data transfer, usually not an issue
+
+*Usually no need to split because of scale or multiple teams (unless they are completely self-managed without central IT team)*
 
 Scale and ingestion volume:
 
@@ -535,6 +538,8 @@ The data a user has access to is determined by a combination of factors that are
 | Table level Azure RBAC | *Optional* granular permissions that apply to *all users* regardless of their access mode or access control mode. Defines which data types a user can access.                                                                                                                |
 
 #### Access modes
+
+![Access modes](images/azure_monitor-log-analytics-rbac-model.png)
 
 | Issue                | Workspace-context                                                                                                                                                   | Resource-context                                                                                                                                                              |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -624,8 +629,8 @@ When you enable VM insights, it
 - Creates a data collection rule (DCR) that collects and sends a predefined set of client performance data to a Log Analytics workspace.
   - Because the DCR sends performance counters to Azure Monitor Logs, you DON'T use Metrics Explorer to view them
   - Instead, view the metrics with prebuilt VM insights workbooks
-  - You need create your own DCR to collect logs or other performance counters
-- Presents the data in curated workbooks.
+  - You need to create your own DCR to collect logs or other performance counters
+- Present data in curated workbooks.
 
 Provide
 
