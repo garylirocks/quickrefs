@@ -480,6 +480,7 @@ There are a few ways how a VM can connect to the Internet:
   - Use UDR on the VM's subnet to route traffic to the NVA
 - Implicit pubic IP
   - Going to be retired
+  - Could be disabled now by setting `defaultOutboundAccess = false` while creating a subnet
 
 
 ### Updating
