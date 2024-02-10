@@ -1,11 +1,12 @@
 # Azure Networking
 
-- [Overview](#overview)
 - [Virtual networks](#virtual-networks)
+  - [Overview](#overview)
   - [Subnets](#subnets)
     - [IP addressing](#ip-addressing)
     - [Design](#design)
     - [Delegation](#delegation)
+  - [NIC](#nic)
   - [CLI](#cli)
 - [IP](#ip)
   - [IP prefixes](#ip-prefixes)
@@ -71,19 +72,17 @@
 - [Hub-spoke architecture](#hub-spoke-architecture)
 - [Firewall and Application Gateway integration patterns](#firewall-and-application-gateway-integration-patterns)
 
-## Overview
+
+## Virtual networks
+
+### Overview
+
+![vnet](images/azure_virtual-networks.png)
 
 - Logically isolated network
 - Scoped to a single region
 - Can be segmented into one or more *subnets*
 - Can use VPN or ExpressRoute to connect to on-premises networks
-
-## Virtual networks
-
-![vnet](images/azure_virtual-networks.png)
-
-A vNet can be cloud-only or connected to on-prem network through site-2-site VPN, or ExpressRoute
-
 - Some resources are connected directly:
   - VM
   - VMSS
@@ -122,7 +121,7 @@ Virtual networks and subnets **span all availability zones in a region**. You do
 - Routing:
   - By default, network traffic between subnets in a vNet is allowed, you can override this default routing
   - You could also route inter-subnet traffic through a network virtual appliance(NVA)
-- You could enable **service endpoints** in subnets, this allows some public-facing Azure services(e.g. Azure storage account or Azure SQL database) to be accessible from these subnets and deny access from internet
+- You could enable **service endpoints** in subnets, this allows some Azure PaaS services(eg. Azure storage account or Azure SQL database) to be accessible from these subnets and deny access from internet
 - A subnet can have zero or one NSG, and an NSG could be associated to multiple subnets
 
 #### Delegation
@@ -131,6 +130,12 @@ Virtual networks and subnets **span all availability zones in a region**. You do
 - The purpose usually is to allow a PaaS service to access/manage resources for the subnet, such as managing NSGs (`Microsoft.Network/virtualNetworks/subnets/prepareNetworkPolicies/action`)
 - You need `Microsoft.Network/virtualNetworks/subnets/join/action` permission to delegate a subnet (included in "Network Contributor" role)
 
+### NIC
+
+- Each VM can have multiple NICs
+- A NIC can have multiple IP configurations
+- Each IP configuration has a private IP, and optionally a public IP
+- Private IPs can be in different subnets, but must be in the **same vNet**
 
 ### CLI
 
