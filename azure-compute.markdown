@@ -269,73 +269,26 @@ See naming convention here: https://learn.microsoft.com/en-us/azure/virtual-mach
 
 - Terraform
 
-  - Infrastructure as code
-  - Supports Azure, AWS, GCP
-  - Use Hashicorp Configuration Language (HCL), also supports JSON
-  - Managed separate from Azure, you might not be able to provision some types of resources
+  - Use `custom_data` or `user_data` field to pass in scripts/configuration file/other data
+    - `custom_data` will be processed by cloud-init in Linux
+    - `user_data` will be accessible throughout the lifetime of the VM
+  - Install "CustomScript" extension, which allows you run command after provisioning
 
   ```
-  # Configure the Microsoft Azure as a provider
-  provider "azurerm" {
-      subscription_id = "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-      client_id       = "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-      client_secret   = "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-      tenant_id       = "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-  }
+  resource "azurerm_virtual_machine_extension" "custom-script" {
+    for_each             = local.vnets
+    name                 = "nginx"
+    virtual_machine_id   = azurerm_linux_virtual_machine.demo[each.key].id
+    publisher            = "Microsoft.Azure.Extensions"
+    type                 = "CustomScript"
+    type_handler_version = "2.0"
 
-  # Create a resource group
-  resource "azurerm_resource_group" "myterraformgroup" {
-      name     = "myResourceGroup"
-      location = "eastus"
-
-      tags = {
-          environment = "Terraform Demo"
+    # start nginx
+    settings = <<SETTINGS
+      {
+        "commandToExecute": "sudo apt install nginx; sudo systemctl start nginx"
       }
-  }
-
-  # Create the virtual machine
-  resource "azurerm_virtual_machine" "myterraformvirtual machine" {
-      name                  = "myvirtual machine"
-      location              = "eastus"
-      resource_group_name   = "${azurerm_resource_group.myterraformgroup.name}"
-      network_interface_ids = ["${azurerm_network_interface.myterraformnic.id}"]
-      virtual machine_size               = "Standard_DS1_v2"
-
-      storage_os_disk {
-          name              = "myOsDisk"
-          caching           = "ReadWrite"
-          create_option     = "FromImage"
-          managed_disk_type = "Premium_LRS"
-      }
-
-      storage_image_reference {
-          publisher = "Canonical"
-          offer     = "UbuntuServer"
-          sku       = "16.04.0-LTS"
-          version   = "latest"
-      }
-
-      os_profile {
-          computer_name  = "myvirtual machine"
-          admin_username = "azureuser"
-      }
-
-      os_profile_linux_config {
-          disable_password_authentication = true
-          ssh_keys {
-              path     = "/home/azureuser/.ssh/authorized_keys"
-              key_data = "ssh-rsa AAAAB3Nz{snip}hwhaa6h"
-          }
-      }
-
-      boot_diagnostics {
-          enabled     = "true"
-          storage_uri = "${azurerm_storage_account.mystorageaccount.primary_blob_endpoint}"
-      }
-
-      tags = {
-          environment = "Terraform Demo"
-      }
+  SETTINGS
   }
   ```
 
@@ -466,8 +419,13 @@ systemctl restart walinuxagent.service
 
 There are a few ways how a VM can connect to the Internet:
 
+![VM outbound options](images/azure_vm-outbound-options.png)
+
 - An explicit **public IP** assigned to its NIC
-- Via a **public standard load balancer** (it's recommended to use separate public IPs for inbound and outbound connections)
+- Via a **public standard load balancer**
+  - Load balancer should be standard SKU
+  - Use an outbound rule (SNAT)
+  - It's recommended to use separate public IPs for inbound and outbound connections
 - A **NAT gateway** linked to the VM's subnet
   - It's designed for egress traffic
   - Each NAT GW can have max 16 public IPs (separate or contiguous as a IP prefix), ~64,000 SNAT ports/IP

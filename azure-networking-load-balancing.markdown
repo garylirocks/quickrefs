@@ -83,20 +83,21 @@ Example multi-tier architecture with load balancers
 - A LB can have multiple backend pools
   - But all backend pools can only contain resources from **a single vNet**
 - Two configuration types:
-  - NIC: VM or VMSS NICs in a vNet
+  - NIC: VM or VMSS NICs in a vNet (only this type showing up in the Portal, VM -> Networking -> Load balancing)
   - IP address: any resource IPs in a vNet
 - A single IP could be in multiple pools
 
 ### Rules
 
-There are several different types of rules
+There are several different types of rules:
 
-| Rule type           | Target                                         | Note                                                                                                           | Scenario                   |
-| ------------------- | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | -------------------------- |
-| Load balancing rule | Backend pool                                   | Must have health probe, only healthy resources receive traffic                                                 | Load balancing web traffic |
-| Inbound NAT rule    | A single VM or a Backend pool (could be empty) | Frontend port could be a range, each port maps to one IP (same backend port) in the backend pool automatically | Target a specific machine  |
+| Rule type               | Target                                         | Note                                                                                                           | Scenario                                  |
+| ----------------------- | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| **Load balancing rule** | Backend pool                                   | Must have health probe, only healthy resources receive traffic                                                 | Load balancing web traffic                |
+| **Inbound NAT rule**    | A single VM or a Backend pool (could be empty) | Frontend port could be a range, each port maps to one IP (same backend port) in the backend pool automatically | Target a specific machine                 |
+| **Outbound rule**       | SNAT for outbound connection                   | You need to specify how many SNAT ports per backend instance                                                   | Outbound connection for backend instances |
 
-**The frontend, protocol(TCP/UDP) and port combination of each load balancing rule and inbound NAT rule on a load balancer must be unique.**
+**Uniqueness**: A load balancing rule and an inbound NAT rule can't use the same frontend, protocol(TCP/UDP) and port combination
 
 ### Distribution modes
 
