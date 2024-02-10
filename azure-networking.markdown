@@ -133,9 +133,10 @@ Virtual networks and subnets **span all availability zones in a region**. You do
 ### NIC
 
 - Each VM can have multiple NICs
-- A NIC can have multiple IP configurations
+- A NIC can have multiple IP configurations, one primary, multiple secondaries
 - Each IP configuration has a private IP, and optionally a public IP
 - Private IPs can be in different subnets, but must be in the **same vNet**
+- You usually need to either stop or restart the attached VM to make NIC changes effective
 
 ### CLI
 

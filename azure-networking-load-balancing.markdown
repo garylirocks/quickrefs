@@ -3,6 +3,8 @@
 - [Load balancing](#load-balancing)
 - [Azure Load Balancer](#azure-load-balancer)
   - [SKUs](#skus)
+  - [Backend pools](#backend-pools)
+  - [Rules](#rules)
   - [Distribution modes](#distribution-modes)
 - [Application Gateway](#application-gateway)
   - [Overview](#overview)
@@ -46,11 +48,12 @@ Global vs. regional:
 
 - Can be used with incoming internet traffic, internal traffic, port forwarding for specific traffic, or outbound connectivity for VMs
 - Public load balancers
-  - can only have public IPs
-  - **not in a vNet**
-  - provide outbound connections for VMs via NAT
+  - Can only have public frontend IPs (or IP prefixes)
+  - **No need to config vNet while creating**
+  - All backend pools must be in **a single vNet**
+  - Could provide outbound connections for VMs via NAT
 - Internal load balancers
-  - could have frontend IPs from **multiple subnets** in a vNet, but CAN'T be in multiple vNets
+  - Could have frontend IPs from **multiple subnets** in a single vNet (CAN'T be in multiple vNets)
 
 Example multi-tier architecture with load balancers
 
@@ -75,6 +78,25 @@ Example multi-tier architecture with load balancers
   - Zonal (Need zonal frontend IPs)
     ![Zonal](images/azure_load-balancer-zonal.png)
 
+### Backend pools
+
+- A LB can have multiple backend pools
+  - But all backend pools can only contain resources from **a single vNet**
+- Two configuration types:
+  - NIC: VM or VMSS NICs in a vNet
+  - IP address: any resource IPs in a vNet
+- A single IP could be in multiple pools
+
+### Rules
+
+There are several different types of rules
+
+| Rule type           | Target                                         | Note                                                                                                           | Scenario                   |
+| ------------------- | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| Load balancing rule | Backend pool                                   | Must have health probe, only healthy resources receive traffic                                                 | Load balancing web traffic |
+| Inbound NAT rule    | A single VM or a Backend pool (could be empty) | Frontend port could be a range, each port maps to one IP (same backend port) in the backend pool automatically | Target a specific machine  |
+
+**The frontend, protocol(TCP/UDP) and port combination of each load balancing rule and inbound NAT rule on a load balancer must be unique.**
 
 ### Distribution modes
 
