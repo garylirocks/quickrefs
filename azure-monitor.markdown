@@ -19,7 +19,11 @@
   - [Signals](#signals)
   - [Notes](#notes)
 - [Log Analytics Workspace](#log-analytics-workspace)
+  - [Cost](#cost)
   - [Design considerations](#design-considerations)
+    - [Criteria](#criteria)
+    - [Common workspace deployment models](#common-workspace-deployment-models)
+    - [Scale and ingestion volume](#scale-and-ingestion-volume)
   - [Storage](#storage)
   - [Access Control](#access-control)
     - [Access modes](#access-modes)
@@ -473,9 +477,46 @@ Signal types:
   - Azure Monitor Application Insights
 - Cost is based on data ingestion and data retention
 
+### Cost
+
+If Microsoft Sentinel is enabled in a LAW:
+- All data collected is subject to Sentinel charges, in addition to Log Analytics charges
+
+Commitment tiers
+- Works for a single workspace, so you might consider combine multiple workspaces to one to reduce costs
+- If you daily ingest is > 100GB, you should use a dedicated cluster, then commitment tier could apply to multiple workspaces
+
 ### Design considerations
 
-Common workspace deployment models:
+#### Criteria
+
+- **Operational and security data**
+  - Should you combine operational data from Azure Monitor in the same workspace as security data from Microsoft Sentinel ?
+  - Cost implications:
+    - When Microsoft Sentinel is enabled in a workspace, all data in that workspace is subject to **Microsoft Sentinel pricing** even if it's operational data collected by Azure Monitor, this usually ends up with higher cost
+    - But if combining operational and security data helps you reach a commitment tier, then it will reduce cost
+  - If you use both Microsoft Sentinel and Defender for Cloud, you should use same workspace for them to keep security data in one place
+- **Azure regions**
+  - Regulatory or compliance requirements
+  - Cross-region egress charges
+    - Usually minor relative to ingestion costs
+    - Typically result from send data from a VM, resource logs from diagnostic settings doesn't incur this charge
+- **Split billing**
+  - You can use [log query to view billable data volume by Azure resource, RG or subscription](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/analyze-usage#data-volume-by-azure-resource-resource-group-or-subscription)
+- **Data retention and archive**
+  - Workspace has default data retention and archive settings, could also be configured per table
+  - Use multiple workspace if you need different settings for data in the same table
+- **Commitment tiers**: reduce ingestions cost
+- **Data access control**: see [access control](#access-control)
+- **Resilience**:
+  - Ingest some data to multiple workspaces in different regions
+  - Ancillary resources, like alerts and workbooks need to be created/enabled in the case of failover
+- **Data ownership**: subsidiaries or affiliated companies
+- **Azure tenants**: several data source can only send monitoring data to a workspace in the same tenant
+- **Legacy agent limitations**
+  - Azure Monitor Agent and the Log Analytics agent for Windows can connect to multiple workspaces. The Log Analytics agent for Linux can only connect to a single workspace.
+
+#### Common workspace deployment models
 
 - **Centralized** (*hub and spoke*)
   - All logs in one workspace
@@ -494,11 +535,11 @@ You should create workspaces as less as possible for easier management, **reason
 - **Environment separation**: eg. shorter retention period for non-prod workspaces
 - **Geography**:
   - Put workspace in the same region as workloads, so outages in one region won't affect another region
-  - There are small charges for outbound data transfer, usually not an issue
+  - There are small charges for egress data transfer to another region, but usually not an issue
 
 *Usually no need to split because of scale or multiple teams (unless they are completely self-managed without central IT team)*
 
-Scale and ingestion volume:
+#### Scale and ingestion volume
 
 - Workspace are **NOT limited** in storage space, so no need to split workspaces due to scale.
 - There is a default ingestion rate limit (6GB/minute) to protect from spikes and floods situations.
@@ -588,6 +629,25 @@ InsightsMetrics
 ```
 
 ![Query result chart example](images/azure_log-analytics-chart-example.png)
+
+It's possible to [query data cross multiple Log Analytics workspaces](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/cross-workspace-query):
+
+```
+union
+  Update,
+  workspace("00000000-0000-0000-0000-000000000001").Update,
+  workspace("00000000-0000-0000-0000-000000000002").Update
+| where TimeGenerated >= ago(1h)
+| where UpdateState == "Needed"
+| summarize dcount(Computer) by Classification
+
+
+# When you are in a resource-context, and you want to query another resource, use resource()
+union
+  (Heartbeat),
+  (resource("/subscriptions/xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcesgroups/myresourcegroup).Heartbeat)
+| summarize count() by _ResourceId, TenantId
+```
 
 
 ## Workbooks
