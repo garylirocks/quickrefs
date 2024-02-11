@@ -421,6 +421,8 @@ There are a few ways how a VM can connect to the Internet:
 
 ![VM outbound options](images/azure_vm-outbound-options.png)
 
+Priority order: NAT Gateway > NIC public IP > Load balancer > Implicit public IP
+
 - An explicit **public IP** assigned to its NIC
 - Via a **public standard load balancer**
   - Load balancer should be standard SKU

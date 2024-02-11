@@ -137,6 +137,7 @@ Virtual networks and subnets **span all availability zones in a region**. You do
 - Each IP configuration has a private IP, and optionally a public IP
 - Private IPs can be in different subnets, but must be in the **same vNet**
 - You usually need to either stop or restart the attached VM to make NIC changes effective
+  - A public IP could be added to a NIC IP config without restarting the VM
 
 ### CLI
 
@@ -205,6 +206,7 @@ az network public-ip create \
 - Allows you to share public IPs among multiple internal resources
 - You associated it to a subnet (a subnet can only have one NAT gateway)
 - A zonal service, you need to choose an availability zone to deploy it
+  - And the public IP must be in the same zone
 - An NAT gateway can be associated to multiple subnets (must be in the same vNet)
 - Subnets with following resources are not compatible:
   - IPv6 address space
@@ -214,8 +216,7 @@ az network public-ip create \
   - A Basic SKU load balancer
 - Can only use **Standard SKU** Public IPs or public IP prefixes
 - After NAT is configured
-  - NAT **takes precedence** over other outbound scenarios and replaces the default Internet destination of a subnet
-  - Does it **take precedence** over directly attached public IP as well ?
+  - Outbound method priority order: NAT Gateway > NIC public IP > public load balancer
   - All UDP and TCP outbound flows from any VM instance will use NAT for Internet connectivity (**takes precedence over other public IPs on its NIC**)
   - Does not support ICMP
   - No further configuration is necessary, and you don't need to create any UDR

@@ -5,6 +5,7 @@
   - [SKUs](#skus)
   - [Backend pools](#backend-pools)
   - [Rules](#rules)
+  - [Outbound connection](#outbound-connection)
   - [Distribution modes](#distribution-modes)
 - [Application Gateway](#application-gateway)
   - [Overview](#overview)
@@ -49,9 +50,9 @@ Global vs. regional:
 - Can be used with incoming internet traffic, internal traffic, port forwarding for specific traffic, or outbound connectivity for VMs
 - Public load balancers
   - Can only have public frontend IPs (or IP prefixes)
-  - **No need to config vNet while creating**
-  - All backend pools must be in **a single vNet**
-  - Could provide outbound connections for VMs via NAT
+  - **No need to specify vNet while creating**, but all backend pools must be in **a single vNet**
+  - Could provide outbound connections for VMs via outbound rules
+  - Recommended to have different frontend IPs for inbound and outbound traffic
 - Internal load balancers
   - Could have frontend IPs from **multiple subnets** in a single vNet (CAN'T be in multiple vNets)
 
@@ -81,23 +82,54 @@ Example multi-tier architecture with load balancers
 ### Backend pools
 
 - A LB can have multiple backend pools
-  - But all backend pools can only contain resources from **a single vNet**
+  - But all backend pools can only contain instances from **a single vNet**
 - Two configuration types:
-  - NIC: VM or VMSS NICs in a vNet (only this type showing up in the Portal, VM -> Networking -> Load balancing)
-  - IP address: any resource IPs in a vNet
+  - NIC (recommended):
+    - VM or VMSS NICs in a vNet (only this type showing up in the Portal, VM -> Networking -> Load balancing)
+  - IP address
+    - any resource IPs in a vNet
 - A single IP could be in multiple pools
 
 ### Rules
 
 There are several different types of rules:
 
-| Rule type               | Target                                         | Note                                                                                                           | Scenario                                  |
-| ----------------------- | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
-| **Load balancing rule** | Backend pool                                   | Must have health probe, only healthy resources receive traffic                                                 | Load balancing web traffic                |
-| **Inbound NAT rule**    | A single VM or a Backend pool (could be empty) | Frontend port could be a range, each port maps to one IP (same backend port) in the backend pool automatically | Target a specific machine                 |
-| **Outbound rule**       | SNAT for outbound connection                   | You need to specify how many SNAT ports per backend instance                                                   | Outbound connection for backend instances |
+| Rule type               | Target                        | Note                                                                                                                                                   | Scenario                                  |
+| ----------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------- |
+| **Load balancing rule** | Backend pool                  | Must have health probe, only healthy instances receive traffic                                                                                         | Load balancing web traffic                |
+| **Inbound NAT rule**    | A single VM or a Backend pool | Frontend port could be a range (must be bigger than backend pool size), each port maps to one IP (same backend port) in the backend pool automatically | Target a specific machine                 |
+| **Outbound rule**       | SNAT for outbound connection  | You need to specify how many SNAT ports per backend instance                                                                                           | Outbound connection for backend instances |
 
 **Uniqueness**: A load balancing rule and an inbound NAT rule can't use the same frontend, protocol(TCP/UDP) and port combination
+
+### Outbound connection
+
+There are two ways that a public load balancer provides outbound connection:
+
+1. (Legacy) Outbound SNAT on load balancing rules
+    - When you create a load balancing rule, it provides automatic programming of outbound SNAT (could be disabled)
+    - Number of ports allocated based on [this table here](https://learn.microsoft.com/en-us/azure/load-balancer/load-balancer-outbound-connections#preallocatedports)
+    - Maximum number of SNAT ports (across all frontend IPs) for a backend instance is 1024
+    - Could lead to port exhaustion
+2. (Recommended) Outbound rules
+    - Explicitly define outbound SNAT behavior, eg. which pool uses which IP, TCP/UDP separation, idle timeout, TCP reset
+    - You could use default port allocation or specify number of ports based on either
+      - How many ports per instance (could be > 1024)
+      - Or maximum number of backend instances
+    - Add more IPs to mitigate SNAT exhaustion
+    - Does not support outbound ICMP
+    - Internal LB does NOT support outbound rules, you could add an additional External LB with only outbound rules
+
+    ![Outbound rules](images/azure_load-balancer-outbound-rules.png)
+
+SNAT port usage constraints:
+
+- Each port can be used for both TCP and UDP connections to a destination IP
+- For UDP, one port is needed for connections to a destination IP, no matter the destination ports
+- For TCP, one port can be used for multiple connections to the same IP provided the destination ports are different
+- **SNAT port exhaustion** occurs when a backend instance runs out of allocated SNAT ports, then it won't be able to establish new outbound connections
+- Secondary IP configurations of a NIC don't provide outbound connection via a load balancer
+
 
 ### Distribution modes
 
@@ -109,6 +141,7 @@ There are several different types of rules:
     - Web app with in-memory sessions to store the logged in user's profile
     - Windows Remote Desktop Gateway
     - Media upload (In many implementations, there's a TCP connection, which remains open to monitor the progress, and a separate UDP session to upload the file)
+
 
 ## Application Gateway
 
