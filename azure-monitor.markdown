@@ -724,7 +724,12 @@ To add diagnostic settings and send logs to a workspace, the minimum permissions
   - `Microsoft.Insights/diagnosticSettings/write`
 
 
-`Microsoft.OperationalInsights/workspaces/sharedKeys/action` is included in both "Log Analytics Contributor" and "Monitoring Contributor", the differences are
+`Microsoft.OperationalInsights/workspaces/sharedKeys/action` is included in both
 
-- "Log Analytics Contributor": can install VM extensions
+- **Log Analytics Contributor**
+- **Monitoring Contributor**
+
+the differences are
+
+- "Log Analytics Contributor": can install VM extensions, can create solutions (`Microsoft.OperationsManagement/solutions/write`)
 - "Monitoring Contributor": can manage action groups, DCR, metric alerts, scheduled query alerts, alert action rules, Private link scopes, etc

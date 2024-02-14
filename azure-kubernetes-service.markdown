@@ -2,6 +2,7 @@
 
 - [Overview](#overview)
 - [Node pools](#node-pools)
+- [Authentication](#authentication)
 - [Networking](#networking)
   - [kubenet](#kubenet)
 - [Application Gateway Ingress Controller](#application-gateway-ingress-controller)
@@ -48,6 +49,7 @@ kubectl get nodes
 
 ![AKS deployment](images/azure_aks-deployments-diagram.png)
 
+
 ## Node pools
 
 - System node pool
@@ -86,6 +88,16 @@ You could scale Pods and nodes manually or automatically
   ![AKS auto scaler](images/aks_autoscaler.png)
 
   Cluster Autoscaler scales nodes, Horizontal Pod Autoscaler scales pods on existing nodes
+
+
+## Authentication
+
+For newer versions of Kubernetes with AAD authentication, you need the `kubelogin` plugin, to install:
+
+```sh
+az aks install-cli
+```
+
 
 ## Networking
 

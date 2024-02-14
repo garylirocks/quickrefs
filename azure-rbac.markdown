@@ -307,8 +307,8 @@ To enable the elevated access:
 
 ## PIM for Azure resource roles
 
-- This uses `Az.Resources` module, which connects to `https://management.azure.com`
-- If you use a service principal to assign PIM roles for Azure resources, the SP needs to have the "User Access Administrator" or "Owner" role over the Azure scope.
+- This uses `Az.Resources` module, which connects to `https://management.azure.com`, NOT the Microsoft Graph API
+- If you use a service principal to assign PIM roles for Azure resources, the SP needs to have the "**User Access Administrator**" or "Owner" role over the Azure scope.
 
 ### Get eligible assignments or active assignments
 
