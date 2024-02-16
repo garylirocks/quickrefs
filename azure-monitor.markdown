@@ -92,6 +92,7 @@ Azure Monitor is based on a common mornitoring data platform that includes Logs 
   - Usually displayed in the overview page of resources
   - Stored for **93 days**, in the Monitor Explorer, the maximum time windows is 30 days, but you can **pan the chart** to view data older than 30 days
   - Not in a log analytics workspace by default, but you can use diagnostic settings to send metrics to it
+    - Not all metrics could be sent to a LA workspace
   - Platform metrics are usually collected at a one-minute frequency
   - No cost for Platform metrics, has cost for custom metrics
   - Custom metrics could be from:
@@ -133,6 +134,9 @@ Azure Monitor is based on a common mornitoring data platform that includes Logs 
     - Recommended, all service will be migrated to this mode
     - Better performance across ingestion latency and query times
     - You could grant RBAC access on a specific table
+- Limitations
+  - Most resource types have an `AllMetrics` category, which allows you to send metrics to a destination
+    - Some metrics could not be exported this way, you need to use REST API
 
 ### VMs
 

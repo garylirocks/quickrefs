@@ -1,10 +1,13 @@
 # Azure Kubernetes Service
 
 - [Overview](#overview)
+- [Resources](#resources)
 - [Node pools](#node-pools)
 - [Authentication](#authentication)
 - [Networking](#networking)
   - [kubenet](#kubenet)
+  - [API server access options](#api-server-access-options)
+  - [Egress](#egress)
 - [Application Gateway Ingress Controller](#application-gateway-ingress-controller)
 - [Monitoring](#monitoring)
   - [Agent](#agent)
@@ -49,6 +52,31 @@ kubectl get nodes
 
 ![AKS deployment](images/azure_aks-deployments-diagram.png)
 
+
+## Resources
+
+When you create an AKS cluster, Azure creates a resource group that contains cluster worker nodes and other supporing resources:
+
+- Worker nodes
+  - VMSS
+- Networking
+  - vNet
+  - NSG
+    - Only default rules
+  - Route table
+    - To same subnet `x.x.x.0/24`, next hop IP `x.x.x.4` ?
+- Outbound connection (optional)
+  - A public load balancer
+    - One outbound rule (both TCP/UDP)
+    - Backend pools - VMSS
+    - NO LB or inbound NAT rules
+  - A public IP for the LB
+- Managed identities
+  - `<aks-name>-agentpool` (for VMSS)
+  - `omsagent-<aks-name>-agentpool` (for VMSS)
+- Private cluster only
+  - Private endpoint for the control plane
+  - Private DNS zone (optional, could use an existing one)
 
 ## Node pools
 
@@ -98,6 +126,16 @@ For newer versions of Kubernetes with AAD authentication, you need the `kubelogi
 az aks install-cli
 ```
 
+Login to a node
+
+```sh
+# list nodes
+kubectl get nodes
+
+# SSH to a node by deploying a debug pod
+kubectl debug node/aks-nodepool1-37663765-vmss000000 -it --image=mcr.microsoft.com/cbl-mariner/busybox:2.0
+```
+
 
 ## Networking
 
@@ -105,7 +143,7 @@ AKS clusters can use kubenet (basic networking) or Azure CNI (advanced networkin
 
 ### kubenet
 
-![Kubenet overview](images/azure_kubenet-overview.png)
+![Kubenet overview](images/aks_kubenet-overview.png)
 
 - Only nodes receive an IP in the subnet
 - Pods can't communicated directly with each other
@@ -115,6 +153,53 @@ AKS clusters can use kubenet (basic networking) or Azure CNI (advanced networkin
   - Azure network policies, but Calico are supported
   - Windows node pools
   - Virtual nodes add-on
+
+### API server access options
+
+This refers to the API server(control plane) of the cluster, the endpoint which `kubectl` talks with, NOT the worker nodes.
+
+![AKS control plane access](images/aks_control-plane-access-options.drawio.svg)
+
+- Public
+  - The API server IP is different from the outbound public IP in the managed resource group
+
+- Private
+  - Can only be enabled at creation
+  - CI/CD runners needs to be self-hosted, so they can access the PEP
+  - Could have multiple private endpoints
+
+- API integration and public IP
+  - Public IP for public access, API Integration in AKS vNet for private access
+  - A subnet in the AKS vNet dedicated to the API server, an internal load balancer will be deployed in this subnet
+
+- API integration w/o public IP
+  - Similar to private access, just the private endpoint replaced with an internal load balancer
+
+
+| Modes                          | Public FQDN       | Private FQDN |
+| ------------------------------ | ----------------- | ------------ |
+| Public                         | Yes (public IP)   | No           |
+| Private                        | Optional (PEP IP) | Yes (PEP IP) |
+| vNet integration + public IP   | Yes (ILB IP)      | No ?         |
+| vNet integration w/o public IP | Optional (ILB IP) | Yes (ILB IP) |
+
+Notes:
+
+- The API public FQDN is like `dnsprefix-<xxxx>.hcp.<region>.azmk8s.io`
+  - Could be disabled when there is private access
+- The API private FQDN is like `<ask-name>-xxxx.<guid>.privatelink.<region>.azmk8s.io`
+  - When deploying using API server VNet integration, private FQDN suffix could be `private.<region>.azmk8s.io` or `<subzone>.private.<region>.azmk8s.io`
+- When using private cluster, the public FQDN resolves to the private IP, via public DNS
+- When using private FQDN, you need a private DNZ zone, connected to AKS vNet or a hub vNet
+
+### Egress
+
+A few options:
+
+- Load balancer (via a outbound rule)
+- Managed NAT gateway
+- User defined routing
+- User assigned NAT gateway
 
 
 ## Application Gateway Ingress Controller
@@ -138,7 +223,7 @@ AGIC is a Kubernetes application, it monitors the cluster to update Application 
 
 ### Agent
 
-- Both Managed Prometheus and Container insights rely on a containerized Azure Monitor agent for Linux
+- Both Managed Prometheus and Container insights rely on a containerized Azure Monitor Agent for Linux
 - This agent is deployed and registered with the specified workspace during deployment
 - When you enabled Container Insights
   - You can specify a workspace, otherwise a `DefaultAzureMonitorWorkspace-<mapped_region>` will be created (if not exists already) in `DefaultRG-<cluster_region>`

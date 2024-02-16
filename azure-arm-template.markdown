@@ -6,6 +6,7 @@
 - [Nested template](#nested-template)
 - [Linked template](#linked-template)
 - [Use KV secret in deployment](#use-kv-secret-in-deployment)
+- [Update resource](#update-resource)
 - [Scopes](#scopes)
   - [Deployment location and name](#deployment-location-and-name)
   - [Scope of nested deployments](#scope-of-nested-deployments)
@@ -346,6 +347,31 @@ Example parameter file (use `reference` instead of `value`):
 ```
 
 `secretVersion` field is optional, if you don't specify it, everytime you deploy this template with CLI, the latest version of the secret would be used
+
+
+## Update resource
+
+- You need to set all the existing properties of the resource in the template, not just the properties you want to update. See https://learn.microsoft.com/en-us/azure/architecture/guide/azure-resource-manager/advanced-templates/update-resource
+- Seems like you can also use `"mode": "Incremental"` in the `properties` part (See the deployment in this Azure Policy https://learn.microsoft.com/en-us/azure/azure-monitor/containers/kubernetes-monitoring-enable?tabs=policy#enable-container-insights)
+
+  ```json
+  ...
+  "resources": [
+    {
+      "name": "...",
+      "type": "...",
+      "location": "...",
+      "tags": "...",
+      "apiVersion": "2018-03-31",
+      "properties": {
+        "mode": "Incremental",
+        "id": "...",
+        "propertyToUpdate": "..."
+      }
+    }
+  ]
+  ...
+  ```
 
 
 ## Scopes
