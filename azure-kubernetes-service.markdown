@@ -2,11 +2,13 @@
 
 - [Overview](#overview)
 - [Resources](#resources)
+  - [Private DNS zone](#private-dns-zone)
 - [Node pools](#node-pools)
 - [Authentication](#authentication)
 - [Networking](#networking)
   - [kubenet](#kubenet)
   - [API server access options](#api-server-access-options)
+  - [`command invoke`](#command-invoke)
   - [Egress](#egress)
 - [Application Gateway Ingress Controller](#application-gateway-ingress-controller)
 - [Add-ons](#add-ons)
@@ -80,6 +82,15 @@ When you create an AKS cluster, Azure creates a resource group that contains clu
 - Private cluster only
   - Private endpoint for the control plane
   - Private DNS zone (optional, could use an existing one)
+
+### Private DNS zone
+
+If you want to BYO DNS zone (`privatelink.<region>.azmk8s.io`), the cluster needs a user assigned identity, which needs the "Azure Private DNS Zone Contributor" role on the DNS zone.
+
+![Private DNS Zone config](images/aks_private-dns-zone-hub-spoke.png)
+
+*vNet link ("3" on the diagram) is not needed, since all DNS resolution goes through the hub vNet*
+
 
 ## Node pools
 
@@ -194,6 +205,38 @@ Notes:
   - When deploying using API server VNet integration, private FQDN suffix could be `private.<region>.azmk8s.io` or `<subzone>.private.<region>.azmk8s.io`
 - When using private cluster, the public FQDN resolves to the private IP, via public DNS
 - When using private FQDN, you need a private DNZ zone, connected to AKS vNet or a hub vNet
+
+### `command invoke`
+
+To access a private cluster, apart from connecting to the cluster vNet directly, via a private endpoint, another way is to use the `command invoke` feature.
+
+- Connects through the Azure API without directly connecting to the cluster
+- Allows you to invoke commands like `kubectl` and `helm`
+- Used by the "Run command" feature in Azure Portal
+- Permissions needed: `Microsoft.ContainerService/managedClusters/runcommand/action`, `Microsoft.ContainerService/managedclusters/commandResults/read`
+- This creates a command pod in the cluster, the pod has `helm` and latest compatible version of `kubectl` for the cluster
+
+Example:
+
+```sh
+az aks command invoke \
+  --resource-group myResourceGroup \
+  --name myPrivateCluster \
+  --command "kubectl get pods -n kube-system"
+
+# multiple commands
+az aks command invoke \
+  --resource-group myResourceGroup \
+  --name myPrivateCluster \
+  --command "helm repo add bitnami https://charts.bitnami.com/bitnami && helm repo update && helm install my-release bitnami/nginx"
+
+# with all files in current directory
+az aks command invoke \
+  --resource-group myResourceGroup \
+  --name myPrivateCluster \
+  --command "kubectl apply -f deployment.yaml configmap.yaml -n default" \
+  --file .
+```
 
 ### Egress
 
