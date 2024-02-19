@@ -9,6 +9,9 @@
   - [API server access options](#api-server-access-options)
   - [Egress](#egress)
 - [Application Gateway Ingress Controller](#application-gateway-ingress-controller)
+- [Add-ons](#add-ons)
+- [Extensions](#extensions)
+- [Open-source and third-party integrations](#open-source-and-third-party-integrations)
 - [Monitoring](#monitoring)
   - [Agent](#agent)
 - [Settings](#settings)
@@ -205,6 +208,39 @@ A few options:
 ## Application Gateway Ingress Controller
 
 AGIC is a Kubernetes application, it monitors the cluster to update Application Gateway whenever a new service is selected to be exposed to the outside world.
+
+
+## Add-ons
+
+- Fully supported way to provide extra capabilities for AKS cluster. Installation, configuration, and lifecycle of addon-ons are managed on AKS.
+- Use `az aks enable-addons` to install or manage
+- Available add-ons
+  - `ingress-appgw` Application Gateway Ingress Controller
+  - `keda` event-driven autoscaling
+  - `monitoring` container insights (the name is `omsagent`)
+  - `azure-policy`
+  - `azure-keyvault-secrets-provider`
+  - `virtual-node`
+  - `web_application_routing` a managed NGINX ingress controller
+
+
+## Extensions
+
+- Build on top of certain Helm charts
+- Available extensions:
+  - Dapr: portable, event-driven runtime
+  - Azure Machine Learning
+  - Flux (GitOps): cluster configuration and application deployment
+  - Azure Container Storage: persistent volumes
+  - Azure Backup for AKS
+- Difference between add-ons and extensions
+  - Add-ons: added as part of the AKS resource provider
+  - Extensions: added as part of a separate resource provider
+
+
+## Open-source and third-party integrations
+
+- Helm, Prometheus, Grafana, Couchbase, OpenFaaS, Apache Spark, Istio, Linkerd, Consul
 
 
 ## Monitoring
