@@ -278,36 +278,30 @@ terraform output -raw lb_url
 ## Commands
 
 - `terraform init`
-
-    - Downloads the plug-ins you need (eg. `azurerm`, `docker`) and verifies that terraform can access your plan's state file
-    - `terraform init -upgrade` update provider versions in `.terraform.lock.hcl`
-    - `terraform init -migrate-state`: after you updated the backend(eg. from local to `azurerm`), use this to migrate the state file to the new backend
+  - Downloads the plug-ins you need (eg. `azurerm`, `docker`) and verifies that terraform can access your plan's state file
+  - `terraform init -upgrade` update provider versions in `.terraform.lock.hcl`
+  - `terraform init -migrate-state`: after you updated the backend(eg. from local to `azurerm`), use this to migrate the state file to the new backend
 
 - `terraform plan`
-
-    - Produces an execution plan for you to review
-    - `terraform plan -refresh-only` outputs a plan showing what has been changed to the remote resources, you need to apply the plan to bring the changes to the state file.
-
-      ```sh
-      terraform plan -refresh-only -output "refresh.plan"
-      terraform apply "refresh.plan"
-      ```
+  - Produces an execution plan for you to review
+  - `terraform plan -refresh-only` outputs a plan showing what has been changed to the remote resources, you need to apply the plan to bring the changes to the state file.
+    ```sh
+    terraform plan -refresh-only -output "refresh.plan"
+    terraform apply "refresh.plan"
+    ```
 
 - `terraform apply`
-
-    - Runs you plan, it's **idempotent**
-    - `terraform apply -var "resource_group_name=myNewResourceGroupName"` to override a variable
-    - `tf apply -target 'azurerm_resource_group.rg'` only targets a specific resource
-    - `terraform apply -replace="aws_instance.example"` force replace a paticular resource
+  - Runs you plan, it's **idempotent**
+  - `terraform apply -var "resource_group_name=myNewResourceGroupName"` to override a variable
+  - `tf apply -target 'azurerm_resource_group.rg'` only targets a specific resource, you may need to use this to fix errors, sort out dependency issues, etc
+  - `terraform apply -replace="aws_instance.example"` force replace a paticular resource
 
 - `terraform output`
 - `terraform destroy`
 
 - `terraform import ADDRESS ID`
-
   - Import existing resources which were not created by Terraform into the state, does not generate configuration
   - Example:
-
     ```sh
     terraform import azurerm_resource_group.my '/subscriptions/xxx/resourceGroups/my-rg'
     ```
