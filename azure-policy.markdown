@@ -51,10 +51,11 @@ Depending on whether a policy is targeting an Azure Resource Manager property or
   - **All**: resource groups, subscriptions, and all resource types
     - For most use cases
     - Default for PowerShell, Portal
+    - Need this mode for policies on resource groups and subscriptions
   - **Indexed**: only evaluate resource types that support tags and location
     - ie. `Microsoft.Network/routeTables/routes` does not support tags and location, so it's not evaluated in this mode
     - Should be used for policies enforcing tags or locations, to prevent resources that don't support tags and locations from showing up as non-compliant
-    - But for tags and locations policy on resource groups or subscriptions, you should use `All` mode
+    - Don't apply on resource groups or subscriptions, use `All` mode
 
 - Resource Provider modes
 
@@ -376,6 +377,8 @@ A `deployIfNotExists` or `modify` policy should define the roles it requires:
 - Defender for Cloud depends on the "Azure Security Benchmark" assignment on each subscription.
   - Policies in "ASC Default (subscription: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)" are set to "Audit", "auditIfNotExists" or "Disabled"
   - Some effects should be set to "Deny", it is best to create a new assignment at a MG to change the effects centrally, once done you should remove the auto-created assignment to avoid overlaps.
+- If you assign the [Allowed/Not allowed resource types policy](https://learn.microsoft.com/en-us/azure/governance/policy/tutorials/disallowed-resources) on the root management group, the Portal will show those resource types as "disabled" in the "All Services" view, and "Create" option is unabailable
+  - If you add an exemption in the subscope, it will not be reflected in the Portal, you need to create the resources using CLI, PowerShell, etc
 
 
 ## Terminology
