@@ -228,12 +228,13 @@ An assignment could have one of the following effects:
 - **DeployIfNotExists**
 - **Modify**
   - Used to add, update, or remove properties or tags on a subscription or resource during creation or update
-  - A single modify rule can have multiple operations
+  - A single modify rule can have **multiple** operations
   - Evaluates before the request gets processed by a Resource Provider
   -  If you're managing tags, it's recommended to use `Modify` instead of `Append` as `Modify` provides additional operation types and the ability to remediate existing resources. However, `Append` is recommended if you aren't able to create a managed identity or `Modify` doesn't yet support the alias for the resource property.
   - When assign a policy with this effect, the assignment must have a managed identity, which
     - should have proper roles for remediation (eg. "Tag Contributor" for tags)
     - needs to be residing in a location
+  - `conflictEffect` determines which policy definition "wins" if more than one policy definition modifies the same property or when the Modify operation doesn't work on the specified alias
   - Example: tags
     ```json
     "then": {
@@ -305,10 +306,15 @@ Azure Policy evaluate policies in an order determined by policy effects:
 - *sends request to Resource Provider (during creation/update)*
 - *Resource Provider returns a success code*
 - **AuditIfNotExists** and **DeployIfNotExists**: evalute to determine whether additional logging or action is required.
+  - After create or update requests, **`then.details.evaluationDelay`** determines when the existence of the related resources should be evaluated. Allowed values are `AfterProvisioning`, `AfterProvisioningSuccess`, `AfterProvisioningFailure` or an ISO 8601 duration between 0 and 360 minutes. Default is `PT10M` (10 minutes)
+  - **BuiltIn policies usually don't specify the `evaluationDelay`, which means it's 10 minutes. You need to duplicate a builtin policy to change it.**
 
-After create or update requests, **`then.details.evaluationDelay`** determines when the existence of the related resources should be evaluated. Allowed values are `AfterProvisioning`, `AfterProvisioningSuccess`, `AfterProvisioningFailure` or an ISO 8601 duration between 0 and 360 minutes. Default is `PT10M` (10 minutes)
+**Example scenario**:
 
-**BuiltIn policies usually don't specify the `evaluationDelay`, which means it's 10 minutes. You need to duplicate a builtin policy to change it.**
+A "Deny" policy requires a tag name on a resource, a separate "Modify" policy add the tag.  You create the resource, without adding the tag name:
+
+- In the Portal, you will be blocked
+- With API tools (CLI, etc), it will be successful, because the "Modify" effect will add the tag to the request, then the request can pass through the "Deny" policy evaluation
 
 
 ## Remediation
