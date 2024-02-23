@@ -12,7 +12,6 @@
   - [Authentication](#authentication)
   - [Common operations](#common-operations)
   - [Send an email](#send-an-email)
-  - [Entra roles in PIM](#entra-roles-in-pim)
 - [Permission notes](#permission-notes)
 - [Misc](#misc)
 
@@ -315,62 +314,6 @@ $message = @{
 
 Connect-MgGraph -Scopes "Mail.Send"
 Send-MgUserMail -UserId "gary@24g85s.onmicrosoft.com" -Message $message
-```
-
-### Entra roles in PIM
-
-You need to specify the correct scope when `Connect-MgGraph`, since the Microsoft Graph API is protected, this would require admin or user consent granted to the client app (Microsoft Graph PowerShell)
-
-See this page for all related permissions: https://learn.microsoft.com/en-us/graph/permissions-reference#role-management-permissions, be mindful about `*.All` and `*.Directory` permissions
-
-- `RoleManagement.Read.All` this is for all supported RBAC providers (Cloud PC, device management/Intune, AAD directory, AAD entitlement management, Exchange Online), see [here](https://learn.microsoft.com/en-us/graph/api/resources/rolemanagement?view=graph-rest-beta&preserve-view=true)
-- `RoleManagement.Read.Directory`: just for AAD role management
-
-Login and get my principal ID
-
-```powershell
-Connect-MgGraph -Scopes "RoleAssignmentSchedule.ReadWrite.Directory,RoleManagement.Read.Directory"
-
-$myUpn=(Get-MgContext).Account
-$myPrincipalId=(Get-MgUser -Filter "UserPrincipalName eq '$myUpn'").Id
-```
-
-Self activate an eligible assignment
-
-```powershell
-$params = @{
-  "PrincipalId" = $myPrincipalId
-  "RoleDefinitionId" = (Get-MgDirectoryRole -Filter "DisplayName eq 'Application Administrator'").RoleTemplateId
-  "Justification" = "Activate assignment"
-  "DirectoryScopeId" = "/"
-  "Action" = "SelfActivate"
-  "ScheduleInfo" = @{
-    "StartDateTime" = Get-Date
-    "Expiration" = @{
-      "Type" = "AfterDuration"
-      "Duration" = "PT1H"
-    }
-  }
-}
-
-New-MgRoleManagementDirectoryRoleAssignmentScheduleRequest `
-  -BodyParameter $params |
-  Format-List Id, Status, Action, AppScopeId, DirectoryScopeId, RoleDefinitionID, IsValidationOnly, Justification, PrincipalId, CompletedDateTime, CreatedDateTime, TargetScheduleID
-```
-
-List active assignments
-
-```powershell
-# show active assignments
-Get-MgRoleManagementDirectoryRoleAssignmentSchedule -Filter "principalId eq '$myPrincipalId'" `
-  | Select DirectoryScopeId,
-            AssignmentType,
-            @{
-              name='Role';
-              expression={
-                (Get-MgDirectoryRole -Filter "RoleTemplateId eq '$($_.RoleDefinitionId)'").DisplayName
-              }
-            }
 ```
 
 
