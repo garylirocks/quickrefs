@@ -67,6 +67,7 @@
 - [Azure Virtual Network Manager](#azure-virtual-network-manager)
 - [Network Watcher](#network-watcher)
   - [Auto creation](#auto-creation)
+- [vNet encryption](#vnet-encryption)
 - [Network design considerations](#network-design-considerations)
 - [Networking architecutres](#networking-architecutres)
 - [Hub-spoke architecture](#hub-spoke-architecture)
@@ -248,7 +249,8 @@ az network public-ip create \
 - To access a VM, traffic must be allowed on both subnet and NIC NSG rules
 - For inbound traffic, subnet NSG rules are evaluated first, then NIC NSG rules, the other way around for outbound traffic
 - If no NSG is attached to a subnet or NIC, the traffic is allowed
-- Intra-subnet traffic is affected by subnet-attached NSG as well !
+- Both NIC and subnet attached NSGs are always **evaluated at the NIC level**
+  - So subnet-attached NSG could be used to deny traffic between VMs in the same subnet !!
 
 ### Service Tag
 
@@ -1580,15 +1582,35 @@ A combination of network monitoring and diagnostic tools.
     - eg. a connectivity test to `sql-temp-001.database.windows.net:1433` might be successful, but the SQL Server's firewall could block the actual connection
 
 - Logging
-  - NSG Flow Logs: log all traffic in your NSGs (a sub-resource under Network Watcher), does not support private endpoints, logs saved in a storage account
-  - Traffic Analytics: ingest logs to Log Analytics, help query/visualize your NSG Flow Log data
-    ![Traffic analytics data flow](images/azure_traffic-analytics.png)
+
+  There are two types, NSG flow logs and vNet flow logs, both
+    - Saved as JSON files to a storage account
+    - A file per MAC address per hour
+    - One entry per minute
+    - No support for flow into a private endpoint (available at the flow source end)
+
+  vNet Flow Logs can capture more information:
+
+  - Capture gateway traffic
+  - Flow encryption status
+  - Whether the flow is allowed by a security admin rule
+
+- **Traffic Analytics**
+  - ingest logs to Log Analytics, help query/visualize your NSG Flow Log data
+  - works with both NSG and vNet flow logs
+  ![Traffic analytics data flow](images/azure_traffic-analytics.png)
 
 ### Auto creation
 
 - A NetworkWatcher resource is created automatically when you create or update a virtual network, in the same region as the vNet, it is placed in a resource group called `NetworkWatcherRG`, there is a subscription feature called `Microsoft.Network/DisableNetworkWatcherAutocreation`
 - When you use a NetworkWatcher feature on a VM without the `AzureNetworkWatcherExtension` extension, it's installed to the VM automatically
 - There are also built-in policies regarding this, see [Azure Policy note](./azure-policy.markdown)
+
+
+## vNet encryption
+
+- Only supported by certain VM SKUs
+- Accelarated networking must be enabled (this is done by bypassing VM v-switch, using FPGA on the host machine)
 
 
 ## Network design considerations
