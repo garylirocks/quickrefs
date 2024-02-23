@@ -1,12 +1,11 @@
 # Privileged Identity Management
 
-- [Privileged Identity Management (PIM)](#privileged-identity-management-pim)
-  - [API](#api)
+- [Overview](#overview)
+  - [API overview](#api-overview)
     - [Activate Azure roles](#activate-azure-roles)
-    - [Just-Enough-Access](#just-enough-access)
-    - [Relationship between PIM entities and role assignment entities](#relationship-between-pim-entities-and-role-assignment-entities)
-    - [Activate Entra roles](#activate-entra-roles)
-    - [PIM policies (role settings)](#pim-policies-role-settings)
+  - [Just-Enough-Access](#just-enough-access)
+  - [Relationship between PIM entities and role assignment entities](#relationship-between-pim-entities-and-role-assignment-entities)
+  - [PIM policies (role settings)](#pim-policies-role-settings)
 - [Entra roles](#entra-roles)
   - [Microsoft Graph](#microsoft-graph)
   - [`AzureADPreview` (deprecating)](#azureadpreview-deprecating)
@@ -16,7 +15,7 @@
   - [Azure role settings (PIM policies)](#azure-role-settings-pim-policies)
 
 
-## Privileged Identity Management (PIM)
+## Overview
 
 - P2 feature
   - If you have a P2 license plan and already use PIM, **all role management tasks are performed in the PIM experience**
@@ -24,17 +23,17 @@
 - Two types of role assignments:
   - Eligible role assignments
   - Active role assignments
-- Both active and eligible assignments could be time-bound or permanent
-- Roles:
-  - Entra Role
+- Both active and eligible assignments could be **time-bound** or **permanent**
+- Could be used with:
+  - Entra roles
     - Assignment scope could be `/` (tenant-wide) or `AppScopeId` (limit scope to an application only)
-  - Azure resource Role
-  - Entra privileged group membership
+  - Azure roles
+  - PIM for Entra Groups
     - You could assign either members or owners the group
     - Useful to mssign multiple roles to the group, then a user just need one activation (for the group membership), instead of activating multiple roles one by one
 - Most common use case: create "Eligible Assignment" of roles/memberships to some users/groups, who need to active them when needed
 
-### API
+### API overview
 
 See [API concepts in Privileged Identity management](https://learn.microsoft.com/en-us/azure/active-directory/privileged-identity-management/pim-apis)
 
@@ -42,11 +41,11 @@ Endpoints:
 
 - Entra roles - using Microsoft Graph endpoint (`graph.windows.net`)
 - Entra groups - using Microsoft Graph endpoint (`graph.windows.net`)
-- Azure resources - using ARM endpoint (`management.azure.com`)
+- Azure roles - using ARM endpoint (`management.azure.com`)
 
 Objects:
 
-- `*AssignmentSchedule` and `*EligibilitySchedule` objects show current assignments and assignments that will become active in the future.
+- `*AssignmentSchedule` and `*EligibilitySchedule` objects show current assignments and assignments that will become active in the future (either active or eligible assignments).
 - `*AssignmentScheduleInstance` and `*EligibilityScheduleInstance` objects show current assignments only.
 
 #### Activate Azure roles
@@ -66,13 +65,13 @@ A PUT request to `roleAssignmentScheduleRequests` is used for the following oper
 | Activate eligible assignment   | "SelfActivate"   |
 | Deactivate eligible assignment | "SelfDeactivate" |
 
-#### Just-Enough-Access
+### Just-Enough-Access
 
 If a user has an eligible role assignment at a resource (parent), they can choose to **activate the role at a child level scope** of the parent resource instead of the entire parent scope.
 
 For example, if a user has "Contributor" eligible role at a subscription, they can activate the role at a resource group in the subscription.
 
-#### Relationship between PIM entities and role assignment entities
+### Relationship between PIM entities and role assignment entities
 
 The only link between the PIM entity and the role assignment entity for persistent (active) assignment for either Microsoft Entra roles or Azure roles is the `*AssignmentScheduleInstance`. There is a one-to-one mapping between the two entities. That mapping means `roleAssignment` and `*AssignmentScheduleInstance` would both include:
 
@@ -82,20 +81,14 @@ The only link between the PIM entity and the role assignment entity for persiste
 
 PIM-specific properties (such as end time) will be available only through `*AssignmentScheduleInstance` object.
 
-#### Activate Entra roles
-
-See notes in [Microsoft Graph](./microsoft-graph.markdown) and [Azure PowerShell](./azure-powershell.markdown)
-
-#### PIM policies (role settings)
+### PIM policies (role settings)
 
 To manage the PIM policies, use `*roleManagementPolicy` and `*roleManagementPolicyAssignment` entities:
 
 - The `*roleManagementPolicy` resource includes rules that constitute PIM policy: approval requirements, maximum activation duration, notification settings, etc.
 - The `*roleManagementPolicyAssignment` object attaches the policy to a specific role.
-- For PIM for Microsoft Entra roles, PIM for Groups: `unifiedroleManagementPolicy`, `unifiedroleManagementPolicyAssignment`
-- For PIM for Azure resources: API endpoint is like `https://management.azure.com/{scope}/providers/Microsoft.Authorization/roleManagementPolicies/{roleManagementPolicyName}`
-
-
+- For PIM for Entra roles, PIM for Groups: `unifiedroleManagementPolicy`, `unifiedroleManagementPolicyAssignment`
+- For PIM for Azure roles: API endpoint is like `https://management.azure.com/{scope}/providers/Microsoft.Authorization/roleManagementPolicies/{roleManagementPolicyName}`
 
 
 ## Entra roles
