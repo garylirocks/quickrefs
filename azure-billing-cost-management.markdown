@@ -12,6 +12,7 @@
   - [Tag inheritance](#tag-inheritance)
 - [Alerts](#alerts)
 - [Cost allocation](#cost-allocation)
+- [Reservations](#reservations)
 
 
 ## Overview
@@ -184,3 +185,17 @@ Cost allocation allows to you to allocate cost of source (subscription/resource 
 - All chargeback processes happen outside of Azure
 - Reallocated costs appear in cost analysis
 - Cost can be splitted - evenly, based on target's total/compute/storage/network cost, or custom
+
+
+## Reservations
+
+- Works for many Azure services:
+  - VM
+  - Blob storage (ony storage, not transactions)
+  - SQL database (vCore)
+  - App Service
+  - Red Hat plans
+  - ...
+- Reserve to 1 year or 3 years
+- Could be paid monthly or annually
+- Applies to your billing immediately

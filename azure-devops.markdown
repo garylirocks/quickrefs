@@ -1176,6 +1176,14 @@ Use self-hosted agent:
   - Generate a PAT (Personal Access Token) to register your hosted agent in a pool
   - You need to install the agent software on your machine, and start a daemon service to connect to the pool
 
+Microsoft-hosted agents have some limitations:
+
+- Can't be connected to remotely
+- Can't drop artifacts to a UNC file share
+- Can't join directly to your corporate network
+- Can't pre-load software, you need to install during a pipeline run
+
+
 ### Deployment jobs
 
 ```yaml
