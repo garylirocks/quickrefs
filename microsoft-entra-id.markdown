@@ -57,6 +57,8 @@
 - [Identity protection](#identity-protection)
   - [Policies](#policies)
   - [Investigate and remediate](#investigate-and-remediate)
+- [Identity Governance](#identity-governance)
+  - [Identity lifecycle](#identity-lifecycle)
 - [Entitlement management](#entitlement-management)
   - [Concepts](#concepts)
   - [Scenarios](#scenarios)
@@ -96,20 +98,19 @@ Objects in Entra
 
 ## SKUs/Licenses
 
-| Feature                                             | Free      | Microsoft 365 Apps | Premium P1 | Premium P2 |
-| --------------------------------------------------- | --------- | ------------------ | ---------- | ---------- |
-| Directory Objects                                   | 500,000   | Unlimited          | Unlimited  | Unlimited  |
-| Single Sign-On                                      | Unlimited | Unlimited          | Unlimited  | Unlimited  |
-| Core Identity and Access Management                 | X         | X                  | X          | X          |
-| Business to Business Collaboration                  | X         | X                  | X          | X          |
-| Identity & Access Management for Microsoft 365 apps |           | X                  | X          | X          |
-| Premium Features                                    |           |                    | X          | X          |
-| Hybrid Identities                                   |           |                    | X          | X          |
-| Advanced Group Access Management                    |           |                    | X          | X          |
-| Conditional Access                                  |           |                    | X          | X          |
-| Identity Protection (risk users)                    |           |                    |            | X          |
-| Identity Governance (PIM)                           |           |                    |            | X          |
-| Access Reviews                                      |           |                    |            | X          |
+| Feature                                                           | Free      | Microsoft 365 Apps | Premium P1 | Premium P2 |
+| ----------------------------------------------------------------- | --------- | ------------------ | ---------- | ---------- |
+| Directory Objects                                                 | 500,000   | Unlimited          | Unlimited  | Unlimited  |
+| Single Sign-On                                                    | Unlimited | Unlimited          | Unlimited  | Unlimited  |
+| Core Identity and Access Management                               | X         | X                  | X          | X          |
+| Business to Business Collaboration                                | X         | X                  | X          | X          |
+| Identity & Access Management for Microsoft 365 apps               |           | X                  | X          | X          |
+| Premium Features                                                  |           |                    | X          | X          |
+| Hybrid Identities                                                 |           |                    | X          | X          |
+| Advanced Group Access Management                                  |           |                    | X          | X          |
+| Conditional Access                                                |           |                    | X          | X          |
+| Identity Protection (risk users)                                  |           |                    |            | X          |
+| Identity Governance (PIM, access reviews, entitlement management) |           |                    |            | X          |
 
 Licenses are per user, so one user can have P1, another have P2
 
@@ -1320,6 +1321,20 @@ Note:
 - To allow self-remediate, the user need to be previously registered for both MFA and SSPR
 
 
+## Identity Governance
+
+Includes features like Entitlement management and access reviews
+
+### Identity lifecycle
+
+![Identity lifecycle](images/entra_identity-lifecycle.png)
+
+- Inbound provisioning from HR system (eg. Workday)
+- **Lifecycle workflows** to automate tasks that run at certain key events, like sending a welcome email to the user on their first day
+- Automatic assignment policies in entitlement management, based on user's attribute
+- User provisioning via SCIM, LDAP, SQL
+
+
 ## Entitlement management
 
 ### Concepts
@@ -1385,8 +1400,7 @@ Note:
   - Group owners
     - Best reviewers in most cases
   - Selected users, delegated review capability when the review is created
-    - Groups synced from on-prem AD can not have owners in Entra, you should specify reviewers while creating the review
-    - Reviewers will need to take action in on-prem AD
+    - Groups synced from on-prem AD can not have owners in Entra, you should specify reviewers while creating the review, reviewers will need to take action in on-prem AD
   - Members of the group, attesting for themselves
 
 ### Licenses
