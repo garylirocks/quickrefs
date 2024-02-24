@@ -241,6 +241,7 @@ Three types of Availability Zone support:
 
 - *Standard Public IP could be zonal or zone-redundant, which also decides the zone support for Load Balancers and vNet Gateways*
 - For VMSS/AKS Node Pool/App Service Plan, you would need at least two (ideally three) underlying instances to make them zone-redundant
+- To help distribute workload evenly, zones are **assigned randomly** across subscription, so "Zone 1" in subscription A might **NOT** be "Zone 1" in subscription B
 
 
 ### Management groups

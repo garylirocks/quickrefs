@@ -714,8 +714,9 @@ Connectivity can be from:
   *Global Reach enables connectivity between 10.0.1.0/24 and 10.0.2.0/24*
 - DNS queries, certificate revocation list checking and Azure CDN requests are still sent over the public internet
 
-Design redundancy for an ExpressRoute deployment
+**Design redundancy** for an ExpressRoute deployment
 
+- You should have at lest two peering locations
 - Configure ExpressRoute and S2S VPN coexisting connections (VPN could serve as a failover)
 - Create a zone redundant vNet gateway in Azure Availability zones
 
