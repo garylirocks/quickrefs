@@ -1,39 +1,59 @@
 # Privileged Identity Management
 
 - [Overview](#overview)
-  - [API overview](#api-overview)
+- [Assignee](#assignee)
+- [API](#api)
     - [Activate Azure roles](#activate-azure-roles)
   - [Just-Enough-Access](#just-enough-access)
   - [Relationship between PIM entities and role assignment entities](#relationship-between-pim-entities-and-role-assignment-entities)
   - [PIM policies (role settings)](#pim-policies-role-settings)
 - [Entra roles](#entra-roles)
+  - [Overview](#overview-1)
   - [Microsoft Graph](#microsoft-graph)
   - [`AzureADPreview` (deprecating)](#azureadpreview-deprecating)
 - [Azure roles](#azure-roles)
+  - [Overview](#overview-2)
   - [Get eligible assignments or active assignments](#get-eligible-assignments-or-active-assignments)
   - [Self-activate an eligible assignment](#self-activate-an-eligible-assignment)
   - [Azure role settings (PIM policies)](#azure-role-settings-pim-policies)
+- [PIM for Groups](#pim-for-groups)
 
 
 ## Overview
 
 - P2 feature
   - If you have a P2 license plan and already use PIM, **all role management tasks are performed in the PIM experience**
-- When you enable PIM, an enterprise app named "MS-PIM" is added to your tenant automatically
+- When you enable PIM, an enterprise app named "**MS-PIM**" is added to your tenant automatically
 - Two types of role assignments:
   - Eligible role assignments
   - Active role assignments
 - Both active and eligible assignments could be **time-bound** or **permanent**
 - Could be used with:
-  - Entra roles
-    - Assignment scope could be `/` (tenant-wide) or `AppScopeId` (limit scope to an application only)
-  - Azure roles
-  - PIM for Entra Groups
-    - You could assign either members or owners the group
-    - Useful to mssign multiple roles to the group, then a user just need one activation (for the group membership), instead of activating multiple roles one by one
+  - **Entra roles**
+    - Depending on the role, assignment scope type could be
+      - Directory
+      - Group
+      - User
+      - Service principal
+      - Device
+      - Application
+  - **Azure roles**
+  - **PIM for Entra Groups**
+- Role assignments could be extended or renewed
 - Most common use case: create "Eligible Assignment" of roles/memberships to some users/groups, who need to active them when needed
 
-### API overview
+
+## Assignee
+
+- Users: works for all three
+- Groups:
+  - Entra roles: must be a cloud group that's marked as assignable to a role
+  - Azure roles: can be any Microsoft Entra security group
+  - PIM for Groups: don't recommend nesting a group to another with PIM for Groups
+- Service principals: works for all three, but only for active assignments, NOT eligible assignments
+
+
+## API
 
 See [API concepts in Privileged Identity management](https://learn.microsoft.com/en-us/azure/active-directory/privileged-identity-management/pim-apis)
 
@@ -93,7 +113,11 @@ To manage the PIM policies, use `*roleManagementPolicy` and `*roleManagementPoli
 
 ## Entra roles
 
-Programmatically, you can use either `Microsoft.Graph`(recommended) or `AzureADPreview` module to work with PIM for Entra roles.
+### Overview
+
+- Should be setup for privileged Entra roles: like Global Administrator
+- Permissions to create an assignment: Privileged Role Administrator or Global Administrator
+- Programmatically, you can use either `Microsoft.Graph`(recommended) or `AzureADPreview` module to work with PIM for Entra roles.
 
 ### Microsoft Graph
 
@@ -241,6 +265,11 @@ Get-MgRoleManagementDirectoryRoleAssignmentSchedule -Filter "principalId eq '$my
 
 ## Azure roles
 
+### Overview
+
+- Should be set up for
+  - "Owner" and "User Access Administrator" roles for all resources
+  - Other roles for critical resources
 - This uses `Az.Resources` module, which connects to `https://management.azure.com`, NOT the Microsoft Graph API
 - If you use a service principal to assign PIM roles for Azure resources, the SP needs to have the "**User Access Administrator**" or "Owner" role over the Azure scope.
 
@@ -396,3 +425,14 @@ New-AzRoleAssignmentScheduleRequest `
     }
   }
   ```
+
+
+## PIM for Groups
+
+- Member or owner role to a Entra security group
+- Also allows you to set up PIM for other Microsoft services like Intune, Azure Key Vaults, etc
+- Scenario: assign multiple Entra/Azure roles to the group, then a user just need one activation (for the group membership), instead of activating multiple roles one by one
+- If the group is configured for app provisioning, activation of group membership triggers provisioning of group membership (and the user account, if it wasn’t provisioned) to the application using the System for Cross-Domain Identity Management (SCIM) protocol
+- You can set role policy (for either member or owner) to require approval on activate, and select users or groups as approvers
+
+![PIM for groups](images/entra_pim-for-groups.png)
