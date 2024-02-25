@@ -110,6 +110,9 @@ Azure Monitor is based on a common mornitoring data platform that includes Logs 
 
 - Tracks any write operations taken on your resources, eg. VM startup, load balancer config change, etc
 - Log data is retained for 90 days, although you can archive your data to a storage account, or send it to Log Analytics
+  - Saved in `AzureActivity` table
+  - No data ingestion or retention charges for activity log data stored in a Log Analytics workspace
+- Subscription-level, when you open from a resource context, filters are scoped to current resource automatically
 - Event Categories:
   - Administrative, eg. create a VM
   - Searvice Health

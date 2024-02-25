@@ -7,12 +7,17 @@
   - [Policies and Initiatives](#policies-and-initiatives)
   - [Microsoft cloud security benchmark (MCSB)](#microsoft-cloud-security-benchmark-mcsb)
   - [Recommendattions](#recommendattions)
+  - [Secure score](#secure-score)
+  - [Security alerts](#security-alerts)
+  - [Security incidents](#security-incidents)
   - [Cloud Security Explorer](#cloud-security-explorer)
   - [Data storage](#data-storage)
     - [Continuous export](#continuous-export)
+    - [Azure Resource Graph](#azure-resource-graph)
   - [Agents for Compute resources](#agents-for-compute-resources)
   - [Just-In-Time (JIT) VM access](#just-in-time-jit-vm-access)
   - [Agentless scanning](#agentless-scanning)
+  - [Workflow automation](#workflow-automation)
 - [Defender for Containers](#defender-for-containers)
 - [Defender for Cloud Apps](#defender-for-cloud-apps)
 - [Defender for Identity](#defender-for-identity)
@@ -110,6 +115,25 @@ For a recommendation, you can:
 
 And you can create **Governance rule** to assign owners (by email or resource tag) and time frames to recommendations automatically
 
+### Secure score
+
+- Only built-in recommendations have an impact on the secure score
+- Preview recommendations aren't included in the calculations of your secure score
+- Your score only improves when you remediate **all** of the recommendations for **a single resource within a control**
+
+### Security alerts
+
+- Security alerts are triggered by advanced detections available when you enable Defender plans for specific resource types
+- Can be downloaded as CSV file
+- Can be exported to Log Analytics workspaces and Event Hubs via **continuous export**
+- **Microsoft Sentinel connector** streams security alerts from Microsoft Defender for Cloud into Microsoft Sentinel
+
+### Security incidents
+
+- A security incident is a collection of related alerts.
+- Defender for Cloud correlates alerts and contextual signals into incidents.
+
+
 ### Cloud Security Explorer
 
 Allows you to build queries interactively to hunt for risks, like SQL servers WHICH contain sensitive data AND is exposed to the Internet
@@ -121,13 +145,17 @@ Allows you to build queries interactively to hunt for risks, like SQL servers WH
 - Configured per subscription
 - Can be enabled at-scale via a DINE policy
 - Can export to Event Hub or Log Analytics Workspace
-- Workbooks (like "Secure Score Over Time") need data in LAW to work
+- Workbooks (like "Secure Score Over Time", "Compliance status over time") need data in LAW to work
 - Frequency: real-time updates and weekly snapshots
 - Data:
   - Security recommendations
   - Secure score
   - Security alerts
   - Regulatory compliance
+
+#### Azure Resource Graph
+
+- Some data could be queried in ARG, like VM vulnerability scans
 
 ### Agents for Compute resources
 
@@ -187,6 +215,13 @@ The logic that Defender for Cloud applies when deciding how to categorize VMs
 - Included in Defender Cloud Security Posture Management (CSPM) and Defender for Servers P2 plans.
 - This scans VM disks, so it needs the built-in role "VM scanner operator", which has permissions like `Microsoft.Compute/disks/read`, `Microsoft.Compute/virtualMachines/read`
 - Raw data, PIIs or sensitive business data isn't collected, and only metadata results are sent to Defender for Cloud.
+
+### Workflow automation
+
+- Resource type `Microsoft.Security/automations`
+- Allows you to specify a Logic App to trigger for security alerts, security recommendations, and regulatory compliance changes
+- There are built-in policies to deploy this automatically for each subscription
+  - You specify the what alerts to target by alert name and severity
 
 
 ## Defender for Containers
