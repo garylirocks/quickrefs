@@ -912,9 +912,28 @@ Two types of commands,
 
 ![Bastion architecture](images/azure_bastion-architecture.png)
 
-- You access VMs via Azure Portal
+- You could access VMs via Azure Portal or local SSH or RDP client
+- Seamless SSH/RDP connection over TLS
 - A bastion can connect to VM in the same or peered vNets
-- No need to configure NSGs on `AzureBastionSubnet`
+- Deployed to `AzureBastionSubnet` subnet
+  - Minimum /26 prefix
+  - No need to configure NSGs on this subnet
+  - NSGs on the VM side should allow `AzureBastion`
+
+Three SKUs:
+
+- Developer
+  - ONLY connect to VMs in same vNet
+- Basic
+  - VMs in peered vNet
+  - Concurrent connections
+  - Kerberos auth
+- Standard
+  - Connect to VMs using Azure CLI
+  - Upload/download files
+  - Shareable link
+  - Connect to VMs via IP address
+  - Host scaling (up to 50 instances)
 
 
 ## Azure Batch
