@@ -5,6 +5,7 @@
   - [Series](#series)
   - [Availability options](#availability-options)
   - [Provisioning](#provisioning)
+  - [Auto-shutdown](#auto-shutdown)
   - [Use AAD for VM authentication](#use-aad-for-vm-authentication)
   - [Linux Agent](#linux-agent)
   - [Windows VM Agent](#windows-vm-agent)
@@ -291,6 +292,15 @@ See naming convention here: https://learn.microsoft.com/en-us/azure/virtual-mach
   SETTINGS
   }
   ```
+
+### Auto-shutdown
+
+- This feature is not of the VM directly, it comes from DevTest Lab
+  - Use `azurerm_dev_test_global_vm_shutdown_schedule` in Terraform
+  - The action will be initiated by "Azure Lab Services"
+  - DevTest Lab also has an "Auto-start" feature
+- It can send notification: 15 - 120 minutes prior the shutdown
+- When you set the timezone as "(UTC+12:00) Auckland, Wellington / New Zealand Standard Time", the time is UTC+12 or UTC+13 depending on whether Daylight saving is on.
 
 ### Use AAD for VM authentication
 
