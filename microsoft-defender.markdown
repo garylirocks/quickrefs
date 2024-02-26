@@ -231,8 +231,15 @@ The logic that Defender for Cloud applies when deciding how to categorize VMs
   - The agent is registered with a Log Analytics Workspace (LAW), a default LAW is created when you install the agent
   - The default LAW will be called `DefaultWorkspace-<sub-id>-<RegionShortCode>` in a RG named `DefaultResourceGroup-<RegionShortCode>`
   - You can also specify a custom LAW
-- Pulls images from the registry and runs it in an isolated sandbox with Qualys scanner or with Microsoft Defender Vulnerability Management (MDVM) scanner
-- Only scan images in ACR, AWS ECR, NOT Docker Hub, Microsoft Artifact Registry/Microsoft Container Registry and ARO built-in registry yet
+- Security events that Microsoft Defenders for Containers monitors include:
+  - Exposed Kubernetes dashboards
+  - Creation of high privileged roles
+  - Creation of sensitive mounts
+- Image vulnerability assessment
+  - Pulls images from the registry and runs it in an isolated sandbox with
+    - Qualys scanner
+    - or Microsoft Defender Vulnerability Management (MDVM) scanner
+  - Only scan images in ACR, AWS ECR, NOT Docker Hub, Microsoft Artifact Registry/Microsoft Container Registry and ARO built-in registry yet
 
 
 ## Defender for Cloud Apps

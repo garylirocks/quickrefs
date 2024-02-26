@@ -4,7 +4,12 @@
 - [Resources](#resources)
   - [Private DNS zone](#private-dns-zone)
 - [Node pools](#node-pools)
+  - [Login to a node](#login-to-a-node)
+- [Namespace](#namespace)
 - [Authentication](#authentication)
+  - [Use Entra ID](#use-entra-id)
+  - [Use Kubernetes RBAC](#use-kubernetes-rbac)
+  - [Use Azure RBAC](#use-azure-rbac)
 - [Networking](#networking)
   - [kubenet](#kubenet)
   - [API server access options](#api-server-access-options)
@@ -131,8 +136,7 @@ You could scale Pods and nodes manually or automatically
 
   Cluster Autoscaler scales nodes, Horizontal Pod Autoscaler scales pods on existing nodes
 
-
-## Authentication
+### Login to a node
 
 For newer versions of Kubernetes with AAD authentication, you need the `kubelogin` plugin, to install:
 
@@ -149,6 +153,37 @@ kubectl get nodes
 # SSH to a node by deploying a debug pod
 kubectl debug node/aks-nodepool1-37663765-vmss000000 -it --image=mcr.microsoft.com/cbl-mariner/busybox:2.0
 ```
+
+
+## Namespace
+
+- Logical isolation boundary for workloads and resources
+- For hostile multi-tenant workloads, you should use physically isolated clusters
+
+
+## Authentication
+
+There are several ways to implement authentication in AKS
+
+### Use Entra ID
+
+This centralizes the identity management layer
+
+- You create Roles or ClusterRoles defining access permissions to resources
+- Then bind the roles to Entra users or groups
+- Authorization:
+  - User authenticate with Entra, get an access token
+  - User sends a request to AKS, such as `kubectl create pod`
+  - AKS validates token with Entra and fetches user group memberships
+  - AKS applies Kubernetes RBAC and cluster policies
+
+### Use Kubernetes RBAC
+
+// TODO
+
+### Use Azure RBAC
+
+// TODO
 
 
 ## Networking
