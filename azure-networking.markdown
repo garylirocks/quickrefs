@@ -705,6 +705,7 @@ Connectivity can be from:
 
 ![ExpressRoute connections](images/azure_expressroute-connections.drawio.svg)
 
+- If two vNets are connected to the same ER circuit, they could talk to each other via this circuit. **This should be avoided, you'd better use vNet peering (local or global)**
 - An ExpressRoute circuit located in one peering location could connect up to 10 vnets within the same geopolitical region
   - *ExpressRoute locations (peering locations) are co-location facilities where Microsoft Enterprise Edge (MSEE) devices are located, not the same as Azure regions*
 - Each gateway could have connections to multiple ER circuits, you specify the routing weight of each connection
@@ -716,9 +717,9 @@ Connectivity can be from:
 
 **Design redundancy** for an ExpressRoute deployment
 
-- You should have at lest two peering locations
+- At lest **two peering locations** (could be in the same city, if they are too far apart, there might be latency issue)
+- ER gateway should be **zone redundant**
 - Configure ExpressRoute and S2S VPN coexisting connections (VPN could serve as a failover)
-- Create a zone redundant vNet gateway in Azure Availability zones
 
 A vNet can have both ExpressRoute and VPN gateways at the same time.
 
