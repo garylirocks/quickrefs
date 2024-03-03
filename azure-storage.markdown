@@ -134,6 +134,9 @@ Azure Storage is also used by IaaS VMs, and PaaS services:
 - Encryption at rest
 
   - All data (including metadata) is automatically encrypted by Storage Service Encryption (SSE) with a 256-bit AES cipher. This can't be disabled.
+  - Keys:
+    - Data Encryption Key (DEK): this is encrypted by KEK and stored as metadata in Storage service
+    - Key Encryption Key (KEK): used to envelope encrypt (wrap) the DEK, it never leaves a Key Vault
   - This applies to all services (blobs, files, tables, queues, etc) in the account
   - You could use either
     - Microsoft managed keys

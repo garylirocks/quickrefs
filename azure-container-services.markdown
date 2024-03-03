@@ -8,6 +8,8 @@
   - [Replication](#replication)
 - [Container Instance](#container-instance)
   - [Container groups](#container-groups)
+- [Container Apps (ACA)](#container-apps-aca)
+- [Container security best practices](#container-security-best-practices)
 
 
 ## Docker Container Registry
@@ -256,3 +258,19 @@ az container logs \
 - Common scenarios:
   - An app container with a logging/monitoring container
   - A front-end container with a back-end container
+
+
+## Container Apps (ACA)
+
+// TODO
+
+
+## Container security best practices
+
+- Enforce least privileges in runtime
+  - Avoid privileged containers (run as root)
+- Preapprove files and executables that the container is allowed to access or run
+- Enforce network segmentation on running containers
+- Monitor container activity and user access
+- Monitor resources accessed by your containers
+- Log all container administrative user access for auditing
