@@ -16,6 +16,7 @@
   - [`command invoke`](#command-invoke)
   - [Egress](#egress)
 - [Application Gateway Ingress Controller](#application-gateway-ingress-controller)
+- [Application Gateway for Containers](#application-gateway-for-containers)
 - [Add-ons](#add-ons)
 - [Extensions](#extensions)
 - [Open-source and third-party integrations](#open-source-and-third-party-integrations)
@@ -286,6 +287,15 @@ A few options:
 ## Application Gateway Ingress Controller
 
 AGIC is a Kubernetes application, it monitors the cluster to update Application Gateway whenever a new service is selected to be exposed to the outside world.
+
+
+## Application Gateway for Containers
+
+- A new type of Application Gateway, an evolution over AGIC
+
+![AGW for Containers overview](./images/aks_agw-for-containers.png)
+
+- A new data plane, and control plane with new set of ARM APIs, different from existing AGW
 
 
 ## Add-ons
