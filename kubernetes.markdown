@@ -191,7 +191,7 @@ Services can be of several types, each changes the behavior of the applications 
   kubectl get service contoso-website
   ```
 
-- **NodePort** exposes the service externally, assigns each node a static port that responds to that service. When accessed through `nodeIp:port`, the node automatically redirects the request to an internal service of the `ClusterIP` type
+- **NodePort**, works on top of ClusterIP, exposes the service externally, assigns each node a static port for the service. When accessed through `nodeIp:port`, the node automatically redirects the request to the internal service of the `ClusterIP` type
   ![nodeport](images/kubernetes_service-nodeport.png)
   - Port on the node need to be in range 30000 - 32767
   - Traffic goes from Node:port -> service:port -> pod:port
@@ -1147,19 +1147,3 @@ sudo kubectl get pods -o wide
 # nginx-6799fc88d8-4wlgk   1/1     Running   0          46s   10.1.251.138   gary-tpx1   <none>           <none>
 # nginx-6799fc88d8-26fpx   1/1     Running   0          46s   10.1.251.137   gary-tpx1   <none>           <none>
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

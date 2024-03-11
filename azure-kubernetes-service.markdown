@@ -11,12 +11,14 @@
   - [Use Kubernetes RBAC](#use-kubernetes-rbac)
   - [Use Azure RBAC](#use-azure-rbac)
 - [Networking](#networking)
+  - [Concepts](#concepts)
+  - [Service types](#service-types)
   - [kubenet](#kubenet)
   - [API server access options](#api-server-access-options)
   - [`command invoke`](#command-invoke)
   - [Egress](#egress)
-- [Application Gateway Ingress Controller](#application-gateway-ingress-controller)
-- [Application Gateway for Containers](#application-gateway-for-containers)
+- [Application Gateway Ingress Controller (AGIC)](#application-gateway-ingress-controller-agic)
+- [Application Gateway for Containers (AGWC)](#application-gateway-for-containers-agwc)
 - [Add-ons](#add-ons)
 - [Extensions](#extensions)
 - [Open-source and third-party integrations](#open-source-and-third-party-integrations)
@@ -189,20 +191,56 @@ This centralizes the identity management layer
 
 ## Networking
 
-AKS clusters can use kubenet (basic networking) or Azure CNI (advanced networking)
+### Concepts
+
+- Cluster nodes are connected to a vNet
+- **Kube-proxy**:
+  - Runs on each node
+- **Services**:
+  - logically group a set of pods and provide network connectivity
+  - there are multiple service types
+- **Network policies**
+  - enable security measures and filtering for network traffic in pods
+- Network models
+  - **kubenet** (basic)
+    - network resources are typically created and configured along with AKS deployment
+  - **Azure CNI** (advanced)
+    - AKS cluster connected to exiting network resources and configs
+    - Pods get IP from the cluster vNet
+
+### Service types
+
+- ClusterIP
+  - Default type
+  - Good for *internal-only* applications
+
+  ![networking-cluster-ip](images/aks_networking-cluster-ip.png)
+
+- NodePort
+  - Access via node IP and port
+
+  ![networking-node-port](images/aks_networking-node-port.png)
+
+- LoadBalancer
+  - Via an Azure LB, either internal or external
+  - For HTTP traffic, another options is *Ingress Controller*
+
+  ![networking-load-balancing](images/aks_networking-load-balancer.png)
 
 ### kubenet
 
 ![Kubenet overview](images/aks_kubenet-overview.png)
 
-- Only nodes receive an IP in the subnet
-- Pods can't communicated directly with each other
-- AKS creates and maintains UDR and IP forwarding, which is used for connectivity between pods across nodes
-- Multiple kubenet clusters can't share a subnet
+- Each node gets an IP in the subnet
+- Each pod gets an IP from a different address space
+- NAT configured so pods can reach resources on vNet
+  - Source IP address of the traffic is translated to the node's primary IP
+- Multiple clusters can't share a subnet
 - Some features not supported:
   - Azure network policies, but Calico are supported
   - Windows node pools
   - Virtual nodes add-on
+- Not for production workloads
 
 ### API server access options
 
@@ -284,18 +322,79 @@ A few options:
 - User assigned NAT gateway
 
 
-## Application Gateway Ingress Controller
+## Application Gateway Ingress Controller (AGIC)
 
 AGIC is a Kubernetes application, it monitors the cluster to update Application Gateway whenever a new service is selected to be exposed to the outside world.
 
+- Could be deployed via Helm or as an AKS add-on
+  - As Add-on
+    - Automatic updates and increased support
+    - Only one add-on per AKS cluster, and each add-on can only target one AGW
+  - Helm
+    - Can have multiple AGIC per cluster
+    - Other differences
+- Does NOT support CNI Overlay
+- **The AGW talks to pod directly, not via a K8s service.**
 
-## Application Gateway for Containers
+
+
+## Application Gateway for Containers (AGWC)
 
 - A new type of Application Gateway, an evolution over AGIC
 
 ![AGW for Containers overview](./images/aks_agw-for-containers.png)
 
 - A new data plane, and control plane with new set of ARM APIs, different from existing AGW
+- ALB controller implements:
+  - K8S Gateway API
+  - K8S Ingress API
+- Limitations:
+  - Only supports Azure CNI networking (pods get IP from cluster vNet)
+  - Will support Azure CNI Overlay ??
+  - No support for kubenet
+
+**AGWC** is a parent resource, it contains two child resources:
+- Frontends
+  - Each has a unique FQDN and a public IP (IP is managed by MS, not visible as a resource)
+  - Private IP not supported
+  - An AGWC can have multiple frontends
+- Associations
+  - A 1:1 mapping of an association resource to a delegated subnet
+    - At least a /24 space for the subnet
+    - The subnet must be delegated to `Microsoft.ServiceNetworking/trafficControllers`
+    - This subnet typically would be in the AKS cluster vNet, but could be in another peered vNet as well
+  - AGWC is designed for multiple associations, but currently limited to 1
+
+**ALB Controller**
+
+- Deployed in Kubernetes via Helm, consists of two running pods:
+  - **alb-controller pod**, for propagating configs to AGWC
+  - **alb-controller-bootstrap pod**, for management of CRDs (Custom Resource Definition)
+- Watches Customer Resources and Resource configurations, eg: Ingress, Gateway and ApplicationLoadBalancer
+- Uses AGWC configuration API to propagate configuration to AGWC
+- If you use managed AGWC, the controller talks to ARM to create the AGWC, otherwise it doesn't need to talk to ARM
+- Needs a user-assigned managed identity, with
+  - the build-in RBAC role *AppGw for Containers Configuration Manager* on AKS managed cluster RG
+  - `Microsoft.Network/virtualNetworks/subnets/join/action` permission over the AGWC associated subnet (eg. "Network Contributor")
+- Create workload identity federation for the UAMI, so Azure trusts AKS OIDC issuer
+
+Two **deployment strategies**:
+
+- Bring your own (BYO)
+  - AGWC, association and frontend resources deployed separately
+  - When you create a new Gateway resource in Kubernetes, it references frontend resource you created prior
+- Managed by ALB Controller
+  - ALB controller in Kubernetes manages the lifecycle of AGWC
+  - In Kubernetes,
+    - When you create a new "ApplicationLoadBalancer" resource, ALB Controller provisions the AGWC and association resource in the AKS MC RG
+    - When you create a new "Gateway" resource (or "Ingress"), ALB Controller provisions a new Frontend resource
+
+Requests:
+
+- AGWC adds three headers to the requests before sending it to the backend:
+  - x-forwarded-for: client IP address(s)
+  - x-forwarded-proto: http or https
+  - x-request-id
 
 
 ## Add-ons
