@@ -84,7 +84,7 @@ resource "azurerm_subscription" "example" {
 
 - Billing Account
   - Properties: ID, name, status, Tax ID, cost allocation, etc
-  - Billing Profile
+- Billing Profile
   - Properties: ID, name, invoice email preference, enabled Azure plans, PO(Product Order) number, tags
   - A subscription is billed to a billing profile
   - Has settings controlling whether a user with access to an Azure subscription can:
