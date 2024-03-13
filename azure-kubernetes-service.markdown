@@ -22,6 +22,9 @@
 - [Add-ons](#add-ons)
 - [Extensions](#extensions)
 - [Open-source and third-party integrations](#open-source-and-third-party-integrations)
+- [Azure Policy for AKS](#azure-policy-for-aks)
+  - [Policy definitions](#policy-definitions)
+  - [How it works](#how-it-works)
 - [Monitoring](#monitoring)
   - [Agent](#agent)
 - [Settings](#settings)
@@ -428,6 +431,33 @@ Requests:
 ## Open-source and third-party integrations
 
 - Helm, Prometheus, Grafana, Couchbase, OpenFaaS, Apache Spark, Istio, Linkerd, Consul
+
+
+## Azure Policy for AKS
+
+- Extends Gatekeeper v3, an admission controller webhook for Open Policy Agent (OPA)
+- Enforcement and safeguards on cluster components: pods, containers, and namespaces
+- Supports the following environments:
+  - Azure Kubernetes Service (AKS): Azure Policy's Add-On for AKS
+  - Azure Arc enabled Kubernetes: Azure Policy's Extension for Arc
+
+### Policy definitions
+
+- Use `Microsoft.Kubernetes.Data` resource provider mode
+- Available effects: audit, deny, disabled, and mutate
+- Built-in policies usually have a parameter for "Namespace exclusions", it's recommended to exclude: kube-system, gatekeeper-system, and azure-arc.
+
+### How it works
+
+- Checks with Azure Policy service for policy assignment to the cluster
+- Deploy policy definitions into the cluster as
+  - constraint template
+  - or constraint custom resources
+  - or mutation template resource
+- Reports auditing and compliance details back to Azure Policy service
+- *You need to open some ports for AKS to talk to Azure Policy endpoints*
+- The add-on checks in with Azure Policy service for changes every 15 minutes
+- Init containers may be included during policy evaluation
 
 
 ## Monitoring
