@@ -4,13 +4,15 @@
 - [Azure Load Balancer](#azure-load-balancer)
   - [SKUs](#skus)
   - [Backend pools](#backend-pools)
+  - [Traffic flows](#traffic-flows)
   - [Rules](#rules)
   - [Outbound connection](#outbound-connection)
   - [Distribution modes](#distribution-modes)
 - [Application Gateway](#application-gateway)
   - [Overview](#overview)
   - [Components](#components)
-  - [How does routing works](#how-does-routing-works)
+  - [How does routing work](#how-does-routing-work)
+  - [TLS/TCP proxy (preview)](#tlstcp-proxy-preview)
   - [AGW subnet and NSG](#agw-subnet-and-nsg)
   - [CLI](#cli)
 - [Web Application Firewall (WAF)](#web-application-firewall-waf)
@@ -94,6 +96,13 @@ Example multi-tier architecture with load balancers
   - IP address
     - any resource IPs in a vNet
 - A single IP could be in multiple pools
+
+### Traffic flows
+
+- External LB:
+  - Return traffic does not pass through LB ?
+- Internal LB:
+  - Only the first incoming traffic goes via LB ?
 
 ### Rules
 
@@ -215,7 +224,7 @@ Benefits over a simple LB:
     - If the target is a public endpoint, then the source IP is the AGW's public IP
     - If the target is a private endpoint, then the source IP is from the AGW subnet's *private IP address space*
 
-### How does routing works
+### How does routing work
 
 1. If a request is valid and not blocked by WAF, the rule associated with the listener is evaluated, determining which backend pool to route the request to.
 1. Use round-robin algorithm to select one healthy server from the backend pool.
@@ -241,6 +250,13 @@ Notes:
 - On using cert in a Key vault:
 
   If using Private Endpoints to access Key Vault, you **must link** the `privatelink.vaultcore.azure.net` private DNS zone, containing the corresponding record to the referenced Key Vault, to the virtual network containing Application Gateway. Custom DNS servers may continue to be used on the virtual network instead of the Azure DNS provided resolvers, however the private dns zone will need to remain linked to the virtual network as well.
+
+### TLS/TCP proxy (preview)
+
+- Similar to a L4 load balancer, but you can do TLS termination here, reduce load on the backend, could be good non-HTTPS TLS flows
+- TLS/TCP type listeners
+- TLS/TCP type backend settings
+- WAF doesn't do anything for these flows
 
 ### AGW subnet and NSG
 
