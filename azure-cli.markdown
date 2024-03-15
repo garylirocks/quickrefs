@@ -215,6 +215,7 @@ For the query parameter `--query "[? properties.state=='Registered'].{Name: name
 - You could use either Bash or PowerShell terminal
 - Comes with common dev tools pre-installed: zsh, tmux, Azure CLI, AzCopy, vim, git, npm, kubectl, helm, MySQL client, sqlcmd, iPython, Terraform, Ansible, etc
 - Runs on a temporary host on a per-user, per-session basis
+  - CBL-Mariner based Linux containers
   - Multiple sessions are run on the same machine
   - You could open a port, and preview whatever is served by it in browser
 - Requires an Azure file share to be mounted (same share used for both Bash and PowerShell)
@@ -226,19 +227,18 @@ For the query parameter `--query "[? properties.state=='Registered'].{Name: name
 
 - On first launch, you are prompted to associate a new or existing file share to persist files across sessions.
 - For security reason, each user should provision their own storage account.
-
-*Azure storage firewall is not supported for cloud shell storage account.*
+- *Azure storage firewall is not supported for cloud shell storage account.*
 
 Files are persisted in two ways:
-  - **File share**: mounted at `$HOME/clouddrive`, which maps to the file share
-    - `//stdemo001.file.core.windows.net/garyli`  mounted at `/usr/csuser/clouddrive`
-    - `$HOME/clouddrive` is a symlink to `/usr/csuser/clouddrive`
-  - **Disk image**: for your `$HOME` directory, a 5GB image, at `<fileshare>/.cloudconsole/acc_<user>.img`, changes sync automatically
+- **File share**: mounted at `$HOME/clouddrive`, which maps to the file share
+  - `//stdemo001.file.core.windows.net/garyli`  mounted at `/usr/csuser/clouddrive`
+  - `$HOME/clouddrive` is a symlink to `/usr/csuser/clouddrive`
+- **Disk image**: your `$HOME` directory is a 5GB image, at `<fileshare>/.cloudconsole/acc_<user>.img`, changes sync automatically
 
-    ```sh
-    du -sh clouddrive/.cloudconsole/acc_gary.img
-    5.0G
-    ```
+  ```sh
+  du -sh clouddrive/.cloudconsole/acc_gary.img
+  5.0G
+  ```
 
 You could use `clouddrive` command to unmount current file share or mount a new share
 
