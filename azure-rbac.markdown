@@ -6,6 +6,7 @@
   - [Custom roles](#custom-roles)
 - [Attribute-based access control (ABAC)](#attribute-based-access-control-abac)
   - [Example scenarios](#example-scenarios)
+  - [Delegate role assignment management with conditions](#delegate-role-assignment-management-with-conditions)
   - [Conditions in role definition](#conditions-in-role-definition)
 - [Azure RBAC roles vs. Azure AD roles](#azure-rbac-roles-vs-azure-ad-roles)
 - [CLI](#cli)
@@ -183,38 +184,52 @@ Operation allowed when:
 - Or suboperation is `Blob.List`
 - Or blob's `Project` key value matches any values in the user's custom security attribute `Engineering_Project`
 
+### Delegate role assignment management with conditions
+
+![Role assignment with conditions](images/azure_rbac-delegate-role-assignments-conditions-steps.png)
+*Restrict roles and principal IDs*
+
+When you assign privileged administrator roles, you can add conditions to the assignment.
+
+Apply to these roles:
+
+- Owner
+- User Access Administrator
+- Role Based Access Control Administrator:
+  - similar to UAA, can assign roles
+  - Can't define roles, add locks, polices, diagnostic settings
+
+Available conditions:
+
+- Constraint roles
+- Constraint principal types
+- Constraint principal IDs
+- Allow all except specific roles
+
+See code examples here: [Examples to delegate Azure role assignment management with conditions - Azure ABAC | Microsoft Learn](https://learn.microsoft.com/en-us/azure/role-based-access-control/delegate-role-assignments-examples?tabs=condition-editor)
+
+
 ### Conditions in role definition
 
-Some builtin roles have condition in role definition.
+Some builtin roles have condition in role definition. eg.
 
-For example: "Key Vault Data Access Administrator" role allows role assignment, but only for the specified roles, not any role.
+- Key Vault Data Access Administrator
+- Virtual Machine Data Access Administrator (preview)
+
+"Key Vault Data Access Administrator" role allows role assignment, but only for the specified roles, not any role.
+
+![KV Data Access Administrator](images/azure_rbac-key-vault-roles-constrained.png)
+*Condition in role definition*
+
+Example definition:
 
 ```json
 {
-  "id": "/providers/Microsoft.Authorization/roleDefinitions/8b54135c-b56d-4d72-a534-26097cfdc8d8",
+  "id": "...",
   "properties": {
-    "roleName": "Key Vault Data Access Administrator",
-    "description": "Manage access to Azure Key Vault by adding or removing role assignments for the Key Vault Administrator, Key Vault Certificates Officer, Key Vault Crypto Officer, Key Vault Crypto Service Encryption User, Key Vault Crypto User, Key Vault Reader, Key Vault Secrets Officer, or Key Vault Secrets User roles. Includes an ABAC condition to constrain role assignments.",
-    "assignableScopes": [
-      "/"
-    ],
     "permissions": [
       {
-        "actions": [
-          "Microsoft.Authorization/*/read",
-          "Microsoft.Authorization/roleAssignments/delete",
-          "Microsoft.Authorization/roleAssignments/write",
-          "Microsoft.KeyVault/vaults/*/read",
-          "Microsoft.Management/managementGroups/read",
-          "Microsoft.Resources/deployments/*",
-          "Microsoft.Resources/subscriptions/read",
-          "Microsoft.Resources/subscriptions/resourceGroups/read",
-          "Microsoft.Support/*"
-        ],
-        "notActions": [],
-        "dataActions": [],
-        "notDataActions": [],
-        "conditionVersion": "2.0",
+        "..."
         "condition": "
           (
             (
@@ -250,6 +265,11 @@ For example: "Key Vault Data Access Administrator" role allows role assignment, 
   }
 }
 ```
+
+The above condition is in role definition, when you create assign this role, you can add more conditions in the role assignment.
+
+![KV Data Access Administrator more constraints in assignment](images/azure_rbac-key-vault-roles-principal-types-constrained.png)
+*Add principal type condition in role assignment*
 
 
 ## Azure RBAC roles vs. Azure AD roles
