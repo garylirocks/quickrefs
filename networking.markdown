@@ -14,6 +14,8 @@
 - [Network devices](#network-devices)
   - [Hub vs. Switch vs. Router](#hub-vs-switch-vs-router)
 - [Top down - from user's point of view](#top-down---from-users-point-of-view)
+- [Routing overview](#routing-overview)
+- [BGP](#bgp)
 - [Refs](#refs)
 
 
@@ -171,6 +173,52 @@ When you start using a new computer, somtimes you need to manually set up the fo
 - DNS: to get other computer's IP address
 
 Sometimes you can get this setup automatically by **DHCP** protocol
+
+
+## Routing overview
+
+![Border and interior routers](images/network_routers-border-and-interior.png)
+
+- Interior routers do not need to know AS numbers
+
+Routing protocols
+
+- Interior routing Protocols
+  - Distance Vector: RIP, IGRP
+  - Link State: OSPF, IS-IS
+  - Hybrid: EIGRP
+- Exterior routing protocols
+  - Path Vector: BGP
+
+
+## BGP
+
+BGP runs over TCP (port 179)
+- Sends keepalive message periodically to maintain the connection
+
+
+BGP can also be used
+- between ASes, called *eBGP*
+- internally within an AS, called *iBGP*
+
+![iBGP vs. eBGP](images/network_bgp-ibpg-ebgp.png)
+
+Routing policy:
+
+![Choose a path based on policy](images/network_bgp-multi-paths.png)
+
+- When there are multiple paths to a destination, a router choose one based on policy (eg. shortest path, lowest cost, ...)
+
+![No transit traffic](images/network_bgp-policy-isp.png)
+
+- An ISP may not want to carry transit traffic between two other ISPs, so it can set up a policy to not carry traffic between them
+
+![Forwording tables](images/network_bgp-forwarding-tables.png)
+
+
+![Hot potato routing](images/network_bgp-hot-potato-routing.png)
+
+**hot potato routing**: hand off the traffic as soon as possible, even though it may not be the shortest AS-path. *in the above diagram, 2d sends traffic for X to 2a because the OSPF link weights is less, even though the AS-path is longer*
 
 
 ## Refs
