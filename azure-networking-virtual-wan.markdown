@@ -35,7 +35,7 @@
 
 - A virtual hub has a router that manages all routing between gateways using BGP.
   - This router provides transit connectivity between virtual networks that connect to a virtual hub.
-  - In a spoke vnet, a VM's effective routes are like:
+  - In a spoke vnet, a VM's effective routes are like (w/o routing intent):
 
     | Prefix        | Next Hop Type           | Next Hop IP                                 |
     | ------------- | ----------------------- | ------------------------------------------- |
@@ -48,6 +48,16 @@
   - P2S VPN
   - ExpressRoute
   - vNet
+
+- Routing preference, which determines if a range has been learnt from multiple origins, which one is preferred
+  - ExpressRoute (default value)
+  - VPN
+  - AS Path (shortest AS Path first)
+
+  ![Routing preference](images/azure_vwan-vhub-routing-preference.png)
+
+  *In the above diagram, you want to set the preference on both vHubs to be **AS Path**, so the traffic would go from vHub to vHub, not be routed via the ER circuit, see https://youtu.be/D3-3BfWXzSo?si=541uRyNZ-ddwspPM*
+
 - Each virtual hub has its own
   - **Default route table**, static routes could be added, taking precedence over dynamic routes
   - **None route table**, propagating to this means no routes are required to be propagated from the connection
@@ -61,15 +71,6 @@
   - Enabling routing intent (when a Firewall is deployed in the hub) disables routing configs on connections
 
 ![Virtual hub route propagation](images/azure_virtual-wan-routes-propagation.png)
-
-- Routing preference, which determines if a range has been learnt from multiple origins, which one is preferred
-  - ExpressRoute (default value)
-  - VPN
-  - AS Path (shortest AS Path first)
-
-  ![Routing preference](images/azure_vwan-vhub-routing-preference.png)
-
-  *In the above diagram, you want to set the preference on both vHubs to be **AS Path**, so the traffic would go from vHub to vHub, not be routed via the ER circuit, see https://youtu.be/D3-3BfWXzSo?si=541uRyNZ-ddwspPM*
 
 ### Custom route tables
 

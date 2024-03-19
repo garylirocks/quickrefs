@@ -348,14 +348,14 @@ az network application-gateway rule create \
 ## Web Application Firewall (WAF)
 
 - Centralized, inbound protection for your web applications agains common exploits and vulnerabilities, like SQL injection, XSRF, etc
-- Can also protect against L& DDos attaches, such as HTTP Floods
+- Can also protect against L7 DDoS attacks, such as HTTP Floods
 - Unlike WAF Config, a WAF policy resource can be shared across multiple instances of a service
 - Can be deployed with **Application Gateway**, **Front Door** and **CDN** services, have different resource types:
   - AGW: `Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies`
   - Front Door: `Microsoft.Network/FrontDoorWebApplicationFirewallPolicies`
   - CDN: `Microsoft.Cdn/cdnWebApplicationFirewallPolicies`
 - Two modes: Detection and prevention
-- Can be managed Firewall Manager
+- Can be managed in Firewall Manager
 
 ### WAF Config (legacy)
 
