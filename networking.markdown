@@ -16,6 +16,7 @@
 - [Top down - from user's point of view](#top-down---from-users-point-of-view)
 - [Routing overview](#routing-overview)
 - [BGP](#bgp)
+  - [Routing table vs. Forwarding table](#routing-table-vs-forwarding-table)
 - [Refs](#refs)
 
 
@@ -194,10 +195,10 @@ Routing protocols
 ## BGP
 
 BGP runs over TCP (port 179)
+- Sends "UPDATE" message for updating routes
 - Sends keepalive message periodically to maintain the connection
 
-
-BGP can also be used
+BGP can be used
 - between ASes, called *eBGP*
 - internally within an AS, called *iBGP*
 
@@ -219,6 +220,21 @@ Routing policy:
 ![Hot potato routing](images/network_bgp-hot-potato-routing.png)
 
 **hot potato routing**: hand off the traffic as soon as possible, even though it may not be the shortest AS-path. *in the above diagram, 2d sends traffic for X to 2a because the OSPF link weights is less, even though the AS-path is longer*
+
+### Routing table vs. Forwarding table
+
+- Routing tables:
+  - Resides in the control plane
+  - Contains all routes, types:
+    - Connected routes: subnets directly connected to a router's interfaces
+    - Static routes: manually configured routes (not scalable)
+    - Dynamic routes: learned from routing protocols (RIP, OSPF, EIGRP, BGP, ...)
+  - There MAY BE MORE THAN ONE ENTRY for a given prefix if multiple routing information is received by the control plane
+  - "Best" path for a prefix is selected from the routing table and then put in the forwarding table
+- Forwarding tables:
+  - Resides in the forwarding plane
+  - Definitive info about where a packet is routed for any given IP prefix (or MAC address if Level 2)
+  - In bigger routers, it is often implemented in specialized chips and very fast memory for route lookups
 
 
 ## Refs
