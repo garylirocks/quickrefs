@@ -6,6 +6,8 @@
 - [Operating models](#operating-models)
 - [Landing zones](#landing-zones)
 - [Conceptual architecture](#conceptual-architecture)
+  - [Environment considerations](#environment-considerations)
+  - [Sandboxes](#sandboxes)
   - [Policies](#policies)
   - [Monitoring basline](#monitoring-basline)
   - [Tools and resources](#tools-and-resources)
@@ -94,7 +96,30 @@ Common IT operating models
 
 ![Reference architecture](images/azure_caf-reference-architecture-for-landing-zones.png)
 
-- Sandboxes management group contains subscriptions for dev/testing with loose or no policies applied. **They should NOT have direct connectivity to the landing zone subscriptions.**
+- Use management group as governance structure for policies
+- RBAC usually should be at subscription level (except for the central IT team, who may need access to all subscriptions)
+- *The hierarchy structure in the diagram shouldn't be seen as fixed, you should adjust them to your need*
+
+### Environment considerations
+
+![Environments considerations](images/azure_caf-landingzone-environments.png)
+
+- An app may have dev/test/prod environments, depending on governance requirements (same policy ?), they could be put into same or different management groups.
+- **AVOID** creating "dev/test/prod" management groups under "Corp" or "Online", it's not scalable, you may end up with lots of exemptions !
+- And as the app matures from MVP to stable, the environment placement may change (eg. evolve from App C model to App A model in the above diagram)
+
+### Sandboxes
+
+- Scenarios:
+  - Testing new un-sanctioned services
+  - Allow more developer freedom
+- Policies:
+  - Assign Landing Zones policies with "Enforcement mode" set to `Disabled` (effectively put everything in "Audit" mode)
+  - Also assign sandbox specific policies, eg.
+    - Deny VPN gateway, Express Route, so no connection to on-prem
+    - Deny vNet peerings
+- Could have children MGs if needed
+- **They should NOT have direct connectivity to the landing zone subscriptions.**
 
 ### Policies
 
@@ -107,7 +132,7 @@ The reference landing zone implementation includes DINE and Modify policies, whi
 
 ### Monitoring basline
 
-- Each subscription should have at least one action group, which should include an email notification channel
+- Each subscription should have at least one *action group* resource, which should include an email notification channel
 - You can use Azure Policy to create alert rules/alert processing rules/action groups at scale when the resources are deployed, see: https://azure.github.io/azure-monitor-baseline-alerts/welcome/
 
 ### Tools and resources
