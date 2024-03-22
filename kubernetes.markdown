@@ -22,6 +22,8 @@
 - [StatefulSet](#statefulset)
 - [Probes](#probes)
 - [Updates and Rollback](#updates-and-rollback)
+- [Authorization](#authorization)
+  - [Service account (SA)](#service-account-sa)
 - [Scaling](#scaling)
   - [Visualization and monitoring](#visualization-and-monitoring)
   - [Horizontal pod autoscaling](#horizontal-pod-autoscaling)
@@ -717,6 +719,17 @@ kubectl exec -it pod/myDeployment-66db4977c8-g79d7 bash
 # start a pod
 kubectl run -it --image=node:lts my-pod /bin/sh
 ```
+
+
+## Authorization
+
+### Service account (SA)
+
+- By default, an SA is mounted to every pod
+- Containers in the pod use the SA to send requests to the API server
+- If RBAC is not enabled, the SA has unlimited permission in the cluster
+- If RBAC is enabled, SA permissions are determined by associated `RoleBindings` and `ClusterRoleBindings`
+
 
 ## Scaling
 
