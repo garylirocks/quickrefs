@@ -444,10 +444,12 @@ A `deployIfNotExists` or `modify` policy should define the roles it requires:
   - The assignment effectively becomes an audit-only policy
   - It will NOT generate any policy compliance entries in the resource's activity log
   - Remediation task can still be triggered.
-- DINE or Modify policies should only deploy/configure auxiliary or supporting resources, NOT workloads.
+- DINE or Modify policies should only deploy/configure *auxiliary* or *supporting* resources, NOT workloads.
 - Reassign the Azure Security Benchmark at a MG level, see [Built-in policies](#built-in-policies)
 - Limit the number of initiatives (less than 5 ?)
 - `Modify` and `Append` can interfere with desired state deployment tools (eg. Terraform), use `ignore_changes` in Terraform
+- Usually it's not recommended to add resource tags in the condition of a policy
+  - In some cases it might be good to allow it, eg: control whether a resource should have backup based on environment tag ("dev/test/prod")
 
 ### Custom policies
 
