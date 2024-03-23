@@ -8,6 +8,7 @@
   - [Rules](#rules)
   - [Outbound connection](#outbound-connection)
   - [Distribution modes](#distribution-modes)
+  - [Cross-region load balancer](#cross-region-load-balancer)
 - [Application Gateway](#application-gateway)
   - [Overview](#overview)
   - [Components](#components)
@@ -155,6 +156,29 @@ SNAT port usage constraints:
     - Web app with in-memory sessions to store the logged in user's profile
     - Windows Remote Desktop Gateway
     - Media upload (In many implementations, there's a TCP connection, which remains open to monitor the progress, and a separate UDP session to upload the file)
+
+### Cross-region load balancer
+
+![Cross-region load balancer](./images/azure_load-balancer-cross-region.png)
+
+- Static anycast global IP address (IPv4 or IPv6)
+- Use regional LB as backend
+- The CR LB checks availability of regional LB every 5 seconds
+- Use geo-proximity load-balancing algorithm for routing
+- Is a layer 4 pass-through LB, so the application get the original client IP
+- **Return traffic does NOT go through the CR LB**
+- Concept about regions:
+  - Home region: where CR LB or public IP(global tier) is deployed, doesn't affect how the traffic is routed. If it goes down, traffic flow is not affected
+  - Participating region: where the global public IP is being advertised, traffic goes like: client -> closest participating region -> regional LB
+  - Regional LB region: could be any Azure Region
+- Limitations:
+  - CR LB frontend must be public IP
+  - Internal load balancer can't be added to backend pool of a CR LB
+  - Outbound rules not supported on CR LB (return traffic won't go through it)
+
+![Cross-region load balancer fail over](./images/azure_load-balancer-cross-region-failover.png)
+
+*traffic failover*
 
 
 ## Application Gateway
