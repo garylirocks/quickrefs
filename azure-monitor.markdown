@@ -376,6 +376,7 @@ Data collection scenarios:
   ![Using AMA](images/azure_monitor-data-collection-scenarios-agent.png)
 
 - Using log ingestion API (a REST client sends data to a DCE, and specifying which DCR to use)
+  - When using Custom Text or Custom JSON Logs as the data source, you can set a single line KQL to transform a record to multi columns in a table
   ![Using API](images/azure_monitor-data-collection-scenarios-api.png)
 
 - Workspace transformation DCR
@@ -388,10 +389,10 @@ Data collection scenarios:
 
 ## Data collection endpoints
 
-Required by:
-
-- AMA agent when network isolation is required
-- Log ingestion API
+- It's optional for collecting Windows Event Logs, Linux Syslog or Performance Counters. REQUIRED for all other data sources.
+- Also REQUIRED if:
+  - AMA agent when network isolation is required
+  - Log ingestion API
 
 Components:
 
