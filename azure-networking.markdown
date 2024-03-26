@@ -26,6 +26,7 @@
   - [VPN Gateway](#vpn-gateway)
   - [Site to site](#site-to-site)
   - [High availability](#high-availability)
+  - [vNet to vNet](#vnet-to-vnet)
   - [Point to site](#point-to-site)
     - [Native Azure certificate auth](#native-azure-certificate-auth)
 - [ExpressRoute](#expressroute)
@@ -449,7 +450,7 @@ The configuration of the Azure public IP resource determines whether the gateway
 Different types:
 
 - **Site to Site**: your on-premise to vNet
-  - needs a on-prem VPN device
+  - needs an on-prem VPN device
   - This could be over the Internet or a dedicated network, such as Azure ExpressRoute
   - Could be used to connect two vNets
   ![Azure VPN site to site](images/azure_vpn-site-to-site.svg)
@@ -459,7 +460,7 @@ Different types:
 ### VPN Gateway
 
 - Each vNet can have **only one** VPN gateway
-- Each gateway supports a max. 30 S2S tunnels, use Virtual WAN if more are needed
+- A gateway supports max. 100 S2S tunnels, use Virtual WAN if more are needed
 - Within each gateway there are usually **two or more VMs** that are deployed to a gateway subnet
   - this gateway subnet must be named  **`GatewaySubnet`**
   - better use a CIDR block of /27 to allow enough IP addresses for future config requirements
@@ -539,12 +540,27 @@ A few options available:
   - Require two local network gateways and two connections
   - BGP is required
 
-- vNet to vNet
+### vNet to vNet
+
+- A connection type for VPN Gateway
+- An alternative way to connect two vNets
+  - vNets could be in different regions and subscriptions (Portal doesn't support multi-subscription scenario)
+- Similar to a site-to-site connection, a few differences:
+  - No need to create local network gateway explicitly
+  - If you update address space for one vNet, the other vNet routes to the updated address space automatically
+- You can use a site-to-site connection as well to connect vNets as well
+- BGP is optional unless transit routing over the connection is required
+- Effective route for a NIC would be like
+
+  | Source                  | State  | Address Prefixes          | Next Hop Type           | Next Hop IP                     |
+  | ----------------------- | ------ | ------------------------- | ----------------------- | ------------------------------- |
+  | Default                 | Active | local vNet address space  | Virtual network         | -                               |
+  | Virtual network gateway | Active | remote vNet address space | Virtual network gateway | Public IP of VpnGw in this vNet |
+- High availability
 
   ![vNet to vNet](images/azure_vpn-vnet-vnet.png)
 
-  - Unlike the cross-premises scenario above, this needs only one connection for each gateway.
-  - BGP is optional unless transit routing over the connection is required.
+  *Unlike the cross-premises scenario above, this needs only one connection for each gateway.*
 
 ### Point to site
 
