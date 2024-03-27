@@ -26,6 +26,7 @@
   - [VPN Gateway](#vpn-gateway)
   - [Site to site](#site-to-site)
   - [High availability](#high-availability)
+  - [BGP](#bgp)
   - [vNet to vNet](#vnet-to-vnet)
   - [Point to site](#point-to-site)
     - [Native Azure certificate auth](#native-azure-certificate-auth)
@@ -33,7 +34,7 @@
 - [Routing](#routing)
   - [Default system routes](#default-system-routes)
   - [User-defined routes](#user-defined-routes)
-  - [BGP](#bgp)
+  - [BGP](#bgp-1)
   - [Route selection and priority](#route-selection-and-priority)
   - [NVA](#nva)
   - [Autonomous systems](#autonomous-systems)
@@ -429,6 +430,7 @@ az network nic show-effective-route-table \
 # Default   Active   10.3.0.0/16       VNetGlobalPeering
 ```
 
+
 ## vNet Gateways
 
 A vNet gateway serves two purposes: to exchange IP routes between the networks and to route network traffic.
@@ -444,6 +446,7 @@ The configuration of the Azure public IP resource determines whether the gateway
   - All gateway instances will be in the same zone as the public IP
 - Public IP Basic SKU
   - A regional gateway without any zone-redundancy
+
 
 ## VPN
 
@@ -539,6 +542,21 @@ A few options available:
   - A full mesh with 4 IPsec tunnels
   - Require two local network gateways and two connections
   - BGP is required
+
+### BGP
+
+- You can optionally use BGP
+  - Your on-prem VPN devices need to support BGP
+  - The minimum prefix you declare to a specific BGP peer could be as small as a host prefix (/32) or the BGP peer IP address of your on-prem VPN device.
+  - If not used, you need to configure static routes
+- With multiple tunnels, there could be automatic failover based on BGP
+  ![VPN tunnel failover based on BGP](./images/azure_vpn-failover-based-on-bgp.png)
+- Could enable transit routing between on-prem networks or multiple Azure vNets
+  ![BGP enabling transit routing](./images/azure_vpn-transit-routing-with-bgp.png)
+- You could create UDR with a next hop type of *Virtual network gateway* (VPN gateway), next hop IP be the public IP of the VPN gateway
+- BGP IP address:
+  - By default, Azure assigns a private IP from the GatewaySubnet as the BGP IP for the VPN gateway
+  - If your on-prem VPN device uses an APIPA address (169.254.0.0/16) for BGP, you must select an address from the Azure-reserved APIPA address range (169.254.21.0 to 169.254.22.255)
 
 ### vNet to vNet
 
@@ -843,8 +861,7 @@ Usually used to advertise on-prem routes to Azure when you're connected through 
   - You can't create UDR to force traffic to an ExpressRoute gateway
   - You can use UDR to force traffic from an ExpressRoute gateway to an NVA (eg. You could add a UDR on `GatewaySubnet` to route traffic to a firewall)
 - VPN
-  - You can optionally use BGP
-  - You could create UDR with a next hop type of *Virtual network gateway* (VPN gateway)
+  - See [VPN BGP](#bgp)
 
 On a route table, you could define whether **virtual network gateway route propagation** should happen,
 - If it's "Disabled", the on-prem routes (advertised via ER or VPN gateways) won't be propagated to NICs in the subnet.
