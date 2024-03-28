@@ -25,6 +25,7 @@
 - [Azure Policy for AKS](#azure-policy-for-aks)
   - [Policy definitions](#policy-definitions)
   - [How it works](#how-it-works)
+  - [Limitations](#limitations)
 - [Monitoring](#monitoring)
   - [Agent](#agent)
 - [Settings](#settings)
@@ -458,6 +459,11 @@ Requests:
 - *You need to open some ports for AKS to talk to Azure Policy endpoints*
 - The add-on checks in with Azure Policy service for changes every 15 minutes
 - Init containers may be included during policy evaluation
+
+### Limitations
+
+- Component-level exemptions aren't supported for Resource Provider modes. Parameters support is available in Azure Policy definitions to exclude and include particular namespaces.
+- AKS Pod security policy and the Azure Policy Add-on for AKS can't both be enabled. For more information, see AKS pod security limitation.
 
 
 ## Monitoring
