@@ -240,7 +240,7 @@ A new ETL-like data collection pipeline, replaces legacy monitoring agents:
 
 | Servies/features                         | Other extensions installed                                                                  |
 | ---------------------------------------- | ------------------------------------------------------------------------------------------- |
-| VM insights                              | Dependency Agent extension                                                                  |
+| VM insights                              | Dependency Agent extension (optional, for the Map feature)                                  |
 | Container insights                       | Containerized Azure Monitor agent                                                           |
 | Defender for Cloud                       | Security Agent ext., SQL Advanced Threat Protection ext., SQL Vulnerability Assessment ext. |
 | Microsoft Sentinel                       | Sentinel DNS ext. for DNS logs                                                              |
@@ -465,6 +465,8 @@ Signal types:
   - Condition: service types, regions and event types (service issue, planned maintenance, etc).
 - Advisor
 - Smart detector: Application Insights
+
+Both Resource Health and Service Health events are in resource activity logs
 
 ### Notes
 
@@ -697,10 +699,11 @@ When you enable VM insights, it
 - Creates a data collection rule (DCR) that collects and sends a predefined set of client performance data to a Log Analytics workspace.
   - Because the DCR sends performance counters to Azure Monitor Logs, you DON'T use Metrics Explorer to view them
   - Instead, view the metrics with prebuilt VM insights workbooks
-  - You need to create your own DCR to collect logs or other performance counters
-- Present data in curated workbooks.
+  - Don't change this DCR, if you need to collect other logs or other performance counters, create another DCR
+- Present data in curated workbooks
+- This could be done on-scale using built-in initiatives in Azure Policy as well
 
-Provide
+Provides
 
 - Detailed performance metrics (view them in workbooks)
 - A topology view showing dependencies like processes running, ports open, connection details, etc
