@@ -26,6 +26,7 @@
   - [Policy definitions](#policy-definitions)
   - [How it works](#how-it-works)
   - [Limitations](#limitations)
+- [Backup](#backup)
 - [Monitoring](#monitoring)
   - [Agent](#agent)
 - [Settings](#settings)
@@ -464,6 +465,24 @@ Requests:
 
 - Component-level exemptions aren't supported for Resource Provider modes. Parameters support is available in Azure Policy definitions to exclude and include particular namespaces.
 - AKS Pod security policy and the Azure Policy Add-on for AKS can't both be enabled. For more information, see AKS pod security limitation.
+
+
+## Backup
+
+- Uses Backup Vault
+- Datasources could be:
+  - All namespaces (including future namespaces)
+  - Selected namespaces
+- Other options:
+  - Filter by labels
+  - Whether to include Cluster scopes, secrets, persistent volumes
+- Two types of backup data storage:
+  - **Operational**: saved as snapshots in a storage account in your resource group
+  - **Vault**: moved off your tenant to Microsoft managed tenant
+- Restore:
+  - Can be restored to the original or another AKS cluster
+  - There are similar filtering capabilities as backup operation
+  - You can map one namespace to another namespace
 
 
 ## Monitoring
