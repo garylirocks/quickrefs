@@ -1617,7 +1617,9 @@ export TF_LOG=DEBUG
 
 Microsoft maintain verified Bicep and Terraform modules, see https://azure.github.io/Azure-Verified-Modules/
 
-Such as modules for Virtual WAN, VNet Gateways, Landing Zones.
+Two types
+  - Resource modules, eg. VM, vNet, KV, Firewall, ...
+  - Pattern modules, eg. Virtual WAN, VNet Gateways, Landing Zones, ...
 
 Sample code:
 
