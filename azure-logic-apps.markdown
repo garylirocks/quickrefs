@@ -2,11 +2,13 @@
 
 - [Types and host environments](#types-and-host-environments)
 - [Networking](#networking)
-- [Triggers](#triggers)
+- [Connectors](#connectors)
+  - [Connections](#connections)
+  - [Triggers](#triggers)
 - [ARM template](#arm-template)
 - [Workflow definition](#workflow-definition)
 - [Parameter referencing](#parameter-referencing)
-- [Connections](#connections)
+- [Connections](#connections-1)
 - [Deployment](#deployment)
 
 ## Types and host environments
@@ -14,9 +16,9 @@
 | Type                               | Note                                                                                                                                                |
 | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Consumption (multi-tenant)         | <ul><li>Only one workflow</li><li>Shared infrastructure</li></ul>                                                                                   |
-| Consumption (ISE) - **deprecated** | <ul><li>Only one workflow</li><li>Enterprise scale for large workloads</li><li>Can connect to vnet</li></ul>                                        |
-| Standard (single-tenant)           | <ul><li>Can have multiple stateful and stateless workflows</li><li>Support vnet and private endpoints</li></ul>                                     |
-| Standard (ASEv3 Windows plan)      | <ul><li>An app can have multiple workflows</li><li>Fully isolated</li><li>Pay only for the ASE</li><li>Support vnet and private endpoints</li></ul> |
+| Consumption (ISE) - **deprecated** | <ul><li>Only one workflow</li><li>Enterprise scale for large workloads</li><li>Can connect to vNet</li></ul>                                        |
+| Standard (single-tenant)           | <ul><li>Can have multiple stateful and stateless workflows</li><li>Support vNet and private endpoints</li></ul>                                     |
+| Standard (ASEv3 Windows plan)      | <ul><li>An app can have multiple workflows</li><li>Fully isolated</li><li>Pay only for the ASE</li><li>Support vNet and private endpoints</li></ul> |
 
 Logic Apps Standard
 - Powered by Azure Functions and needs an App Service plans
@@ -40,10 +42,34 @@ A logic app has three sets of IP addresses:
 
 - **Access endpoint IP addresses**: public IP of the logic app
 - **Connector outgoing IP addresses**: when an outgoing connection is made via a API connector
+   - The `AzureConnectors` tag represents the IP address prefixes used by prebuilt connectors to make outbound calls to their respective services.
+   - The same service tag also represents IP address prefixes used by some prebuilt connectors to make inbound webhook callbacks to Azure Logic Apps.
+   - Each region also has their own `AzureConnectors.[region]` service tag. You can use the same service tag to include all the IP address prefixes used by prebuilt connectors.
 - **Runtime outgoing IP addresses**: when an outgoing connection is made without a connector, such as an HTTP action
 
 
-## Triggers
+## Connectors
+
+- Work with data, events and resources in other apps, systems
+- A connector could have both triggers and actions
+- Connector types:
+  - Built-in: run directly and natively inside Azure Logic Apps
+  - Managed:
+    - deployed, hosted and managed by Azure
+    - mostly provides a proxy or wrapper around an API
+  - Custom
+    - Comsumption workflow: create Swagger-based or SOAP-based custom connector
+    - Comsumption workflow: create natively running service provider-based custom built-in connectors
+- Some connectors have both built-in and managed versions
+
+### Connections
+
+- Connections are individual resources, type `Microsoft.Web/connections`
+   - Not deleted with the Logic App resource
+- You can use Azure Policy to block connections based on ID
+-
+
+### Triggers
 
 ![Trigger types](images/azure_logic-app-trigger-types.png)
 
