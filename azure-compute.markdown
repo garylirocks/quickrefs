@@ -906,6 +906,7 @@ Two types of commands,
 ![Bastion architecture](images/azure_bastion-architecture.png)
 
 - You could access VMs via Azure Portal or local SSH or RDP client
+- You can use password, or SSH Private Key from local file or Azure Key Vault
 - Seamless SSH/RDP connection over TLS
 - A bastion can connect to VM in the same or peered vNets
 - Deployed to `AzureBastionSubnet` subnet
