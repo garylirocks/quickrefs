@@ -56,6 +56,7 @@
 - [CDK for Terraform](#cdk-for-terraform)
 - [Troubleshooting](#troubleshooting)
 - [Azure](#azure)
+  - [Azure Verified Modules](#azure-verified-modules)
   - [`AzAPI` provider](#azapi-provider)
   - [ARM template deployment](#arm-template-deployment)
 - [Gotchas](#gotchas)
@@ -1611,6 +1612,23 @@ export TF_LOG=DEBUG
 
 
 ## Azure
+
+### Azure Verified Modules
+
+Microsoft maintain verified Bicep and Terraform modules, see https://azure.github.io/Azure-Verified-Modules/
+
+Such as modules for Virtual WAN, VNet Gateways, Landing Zones.
+
+Sample code:
+
+```
+module "avm-ptn-virtualwan" {
+  source  = "Azure/avm-ptn-virtualwan/azurerm"
+  version = "0.4.1"
+  # insert the 4 required variables here
+}
+```
+
 
 ### `AzAPI` provider
 
