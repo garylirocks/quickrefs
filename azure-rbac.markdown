@@ -4,10 +4,13 @@
 - [Evaluation](#evaluation)
 - [Considerations](#considerations)
   - [Custom roles](#custom-roles)
+  - [`assignableScopes`](#assignablescopes)
 - [Attribute-based access control (ABAC)](#attribute-based-access-control-abac)
-  - [Example scenarios](#example-scenarios)
-  - [Delegate role assignment management with conditions](#delegate-role-assignment-management-with-conditions)
+  - [Blob related role assignments](#blob-related-role-assignments)
+    - [Example scenarios](#example-scenarios)
   - [Conditions in role definition](#conditions-in-role-definition)
+  - [Conditions in role assignment](#conditions-in-role-assignment)
+  - [Delegate role assignment management with conditions](#delegate-role-assignment-management-with-conditions)
 - [Azure RBAC roles vs. Azure AD roles](#azure-rbac-roles-vs-azure-ad-roles)
 - [CLI](#cli)
 
@@ -124,16 +127,21 @@ Example:
 }
 ```
 
-- The `assignableScopes` are just the scopes where this custom role could be assigned to, not where it is stored. **The definition is actually tenant-scoped, the role name must be unique within a tenant**.
+### `assignableScopes`
+
+- They are scopes where this custom role could be assigned to, not where it is stored. **The definition is actually tenant-scoped, the role name must be unique within a tenant**.
 - You could specify the assignable scopes: either management group, subscription or resource group, CAN'T be a resource
+  - You can only have one management group in the assignable scope of a custom role, this is to reduce the situation of disconnected role definition and assignment
+  - Resource provider data plane action's can't be defined in management group custom roles
+  - The existence of the assignable scope is not validated when you create the role definition
+- Custom role definition's full ID format is like `/providers/Microsoft.Authorization/roleDefinitions/<guid>|/providers/Microsoft.Management/managementGroups/<name>` (when defined at a management group level)
 
 
 ## Attribute-based access control (ABAC)
 
-- Add conditions based on attributes in the context of specific actions.
-- A condition filters down permissions granted as a part of the role definition and role assignment.
+### Blob related role assignments
 
-Currently, conditions can only be added to built-in or custom role assignments that have **blob storage** or **queue storage** **data actions**. Such as assignment of "Storage Blob Data Contributor".
+Conditions can be added to built-in or custom role assignments that have **blob storage** or **queue storage** **data actions**. Such as assignment of "Storage Blob Data Contributor".
 
 There are several types of attributes you could use:
 
@@ -151,7 +159,7 @@ There are several types of attributes you could use:
 
 See [full list here](https://learn.microsoft.com/en-us/azure/role-based-access-control/conditions-overview#where-can-conditions-be-added)
 
-### Example scenarios
+#### Example scenarios
 
 - Read access to blobs
   - with the tag `Project=Apollo`
@@ -184,37 +192,14 @@ Operation allowed when:
 - Or suboperation is `Blob.List`
 - Or blob's `Project` key value matches any values in the user's custom security attribute `Engineering_Project`
 
-### Delegate role assignment management with conditions
-
-![Role assignment with conditions](images/azure_rbac-delegate-role-assignments-conditions-steps.png)
-*Restrict roles and principal IDs*
-
-When you assign privileged administrator roles, you can add conditions to the assignment.
-
-Apply to these roles:
-
-- Owner
-- User Access Administrator
-- Role Based Access Control Administrator:
-  - similar to UAA, can assign roles
-  - Can't define roles, add locks, polices, diagnostic settings
-
-Available conditions:
-
-- Constraint roles
-- Constraint principal types
-- Constraint principal IDs
-- Allow all except specific roles
-
-See code examples here: [Examples to delegate Azure role assignment management with conditions - Azure ABAC | Microsoft Learn](https://learn.microsoft.com/en-us/azure/role-based-access-control/delegate-role-assignments-examples?tabs=condition-editor)
-
-
 ### Conditions in role definition
 
 Some builtin roles have condition in role definition. eg.
 
 - Key Vault Data Access Administrator
 - Virtual Machine Data Access Administrator (preview)
+
+*Seems can't do this in a custom role definition yet*
 
 "Key Vault Data Access Administrator" role allows role assignment, but only for the specified roles, not any role.
 
@@ -266,10 +251,39 @@ Example definition:
 }
 ```
 
-The above condition is in role definition, when you create assign this role, you can add more conditions in the role assignment.
+### Conditions in role assignment
+
+The above condition is in role definition, when you assign this role, you can add more conditions in the role assignment object
 
 ![KV Data Access Administrator more constraints in assignment](images/azure_rbac-key-vault-roles-principal-types-constrained.png)
+
 *Add principal type condition in role assignment*
+
+### Delegate role assignment management with conditions
+
+![Role assignment with conditions](images/azure_rbac-delegate-role-assignments-conditions-steps.png)
+*Restrict roles and principal IDs*
+
+When you assign privileged administrator roles, you can add conditions to the assignment.
+
+Apply to these roles:
+
+- Owner
+- User Access Administrator
+- Role Based Access Control Administrator:
+  - Similar to UAA, can assign roles
+  - Can't define roles, add locks, polices, diagnostic settings
+- Custom roles with permissions for role assignments
+
+Available conditions:
+
+- Constraint roles
+- Constraint principal types
+- Constraint principal IDs
+- Allow all except specific roles
+
+See code examples here: [Examples to delegate Azure role assignment management with conditions - Azure ABAC | Microsoft Learn](https://learn.microsoft.com/en-us/azure/role-based-access-control/delegate-role-assignments-examples?tabs=condition-editor)
+
 
 
 ## Azure RBAC roles vs. Azure AD roles

@@ -251,17 +251,45 @@ Three types of Availability Zone support:
 - Management groups serve as containers that help you manage access, policy and compliance for multiple subscriptions, eg.
   - Apply a policy to limit regions available to subscriptions under a group
   - Create a RBAC assignment on a group
+- Full resource ID is like `/providers/Microsoft.Management/managementGroups/{yourMgID}`
 - All subscriptions and management groups are within a single hierarchy in each directory
-- Each directory is given a root management group, it has the same id as the tenant, it could be used for global RBAC assignments and policies
+- Each directory is given a **root management group**
+  - it has the same id as the tenant
+  - it could be used for global RBAC assignments and policies
+  - new subscriptions and management groups are placed under it by default
+  - everyone can see the root management group
+  - no one is given any default access to it (Azure AD Global Administrator can elevate to gain access, then assign roles to others)
+- Management groups supports Activity log (role/policy assignment events), could be sent to Log Analytics workspace via REST API
 - Up to **six levels of depth**, excluding the tenant root group and subscription level
 
-```sh
-# list management groups
-az account management-group list -otable
+  ```sh
+  # list management groups
+  az account management-group list -otable
 
-# show details of a management group
-az account management-group show -n "mg-gary"
-```
+  # show details of a management group
+  az account management-group show -n "mg-gary"
+  ```
+
+- Permissions:
+  - By default, anyone can can create a new management group
+    - There's a setting to make `Microsoft.Management/managementGroups/write` permission required for creating a new management group
+  - A new management group will be placed under root MG by default
+    - You DON'T need any role on the root management group to create a new management group
+  - When you create a new management group, you will be assigned the "Owner" role over it automatically
+  - Permissions you need to move a MG/Sub to another MG (see [this](https://learn.microsoft.com/en-us/azure/governance/management-groups/manage#moving-management-groups-and-subscriptions)):
+    - MG/write and roleAssignment/write on the child MG/Sub (eg. Owner)
+    - MG/write on the target parent MG (eg. Owner, Contributor, MG Contributor)
+    - MG/write on the source parent MG (eg. Owner, Contributor, MG Contributor)
+  - Exceptions:
+    - No permissions needed on the root MG to move MG/sub to or from it
+    - If your "Owner" role is inherited on the child MG/sub, you need "Owner" role on the new MG (otherwise you would loose your "Owner" role)
+
+- Settings (only for root MG):
+  - You need `Microsoft.Management/managementgroups/settings/write` on root MG to change settings
+  - Two settings:
+    - Choose a default MG for new subscriptions (default to root MG)
+    - Whether you need `Microsoft.Management/managementGroups/write` permission to create a new MG (default "no", anyone can create a new MG)
+
 
 ### Subscription
 
