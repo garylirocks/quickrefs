@@ -277,7 +277,18 @@ tasks:
 
 ## Variables
 
-Define variables in inventory files
+Could be defined in `group_vars` folder
+
+```
+- group_vars
+  |- all/
+  |- group1/
+  |- group2/
+```
+
+Variables in `all/` will be applied to all hosts, in `group1/` for hosts in `group`, ...
+
+Could be also defined in inventory files directly
 
 ```ini
 [my-hosts]
@@ -425,7 +436,9 @@ They contain information about ansible operations.
 
 - `groups`
 - `group_names`
-- `inventory_hostname`, the name defined in inventory file, may be different from `ansible_hostname`
+- `inventory_hostname`, the name defined in inventory file (could be alias, FQDN, IP, etc)
+  - `ansible_host` IP or FQDN in inventory files
+  - `ansible_hostname` this is short hostname gathered from the remote host
 - `ansible_play_hosts` is the list of all hosts still active in the current play.
 - `ansible_play_batch` is a list of hostnames that are in scope for the current 'batch' of the play. The batch size is defined by serial, when not set it is equivalent to the whole play (making it the same as ansible_play_hosts).
 - `inventory_dir`
