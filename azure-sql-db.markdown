@@ -357,7 +357,7 @@ When you deploy Azure SQL:
 
 #### Use a managed identity to access Azure SQL
 
-You need to login to the database with an Entra admin account, then create a container user in the database for the managed identity:
+You need to login to the database with an Entra admin account, then create a **container user** in the database for the managed identity:
 
 ```sql
 USE MyDatabase;
@@ -382,6 +382,38 @@ JOIN
     sys.database_principals dprole ON drm.role_principal_id = dprole.principal_id
 ```
 
+To test this using PowerShell on a Windows VM:
+
+```powershell
+$SQL_SERVER="sql-13dcb0b659.database.windows.net"
+$SQL_DB="sqldb-test-001"
+$SQL_TABLE="[SalesLT].[Address]"
+
+# get token
+$response = Invoke-WebRequest -Uri 'http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https%3A%2F%2Fdatabase.windows.net%2F' -Method GET -Headers @{Metadata="true"}
+$content = $response.Content | ConvertFrom-Json
+$AccessToken = $content.access_token
+
+# connect
+$SqlConnection = New-Object System.Data.SqlClient.SqlConnection
+$SqlConnection.ConnectionString = "Data Source = $SQL_SERVER; Initial Catalog = $SQL_DB; Encrypt=True;"
+$SqlConnection.AccessToken = $AccessToken
+$SqlConnection.Open()
+
+# query
+$SqlCmd = New-Object System.Data.SqlClient.SqlCommand
+$SqlCmd.CommandText = "SELECT * from $SQL_TABLE;"
+$SqlCmd.Connection = $SqlConnection
+
+$SqlAdapter = New-Object System.Data.SqlClient.SqlDataAdapter
+$SqlAdapter.SelectCommand = $SqlCmd
+
+$DataSet = New-Object System.Data.DataSet
+$SqlAdapter.Fill($DataSet)
+
+# print the data
+$DataSet.Tables[0]
+```
 
 ### Authorization
 
