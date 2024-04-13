@@ -3,6 +3,9 @@
 - [Types and host environments](#types-and-host-environments)
 - [Networking](#networking)
 - [Connectors](#connectors)
+  - [Built-in connectors](#built-in-connectors)
+  - [Managed connectors](#managed-connectors)
+  - [Custom connectors](#custom-connectors)
   - [Connections](#connections)
   - [Triggers](#triggers)
 - [ARM template](#arm-template)
@@ -41,11 +44,10 @@ Logic Apps Standard
 A logic app has three sets of IP addresses:
 
 - **Access endpoint IP addresses**: public IP of the logic app
-- **Connector outgoing IP addresses**: when an outgoing connection is made via a API connector
-   - The `AzureConnectors` tag represents the IP address prefixes used by prebuilt connectors to make outbound calls to their respective services.
-   - The same service tag also represents IP address prefixes used by some prebuilt connectors to make inbound webhook callbacks to Azure Logic Apps.
-   - Each region also has their own `AzureConnectors.[region]` service tag. You can use the same service tag to include all the IP address prefixes used by prebuilt connectors.
-- **Runtime outgoing IP addresses**: when an outgoing connection is made without a connector, such as an HTTP action
+- **Connector outgoing IP addresses**: when an outgoing connection is made via a managed connector
+  - You can use service tags, `AzureConnectors` or `AzureConnectors.[region]`
+   - The same service tag also represents IP address prefixes used by some prebuilt connectors to make inbound webhook callbacks to Azure Logic Apps
+- **Runtime outgoing IP addresses**: when an outgoing connection is made with a built-in connector, such as an HTTP action
 
 
 ## Connectors
@@ -53,21 +55,57 @@ A logic app has three sets of IP addresses:
 - Work with data, events and resources in other apps, systems
 - A connector could have both triggers and actions
 - Connector types:
-  - Built-in: run directly and natively inside Azure Logic Apps
-  - Managed:
-    - deployed, hosted and managed by Azure
-    - mostly provides a proxy or wrapper around an API
+  - Built-in (aka. In-App)
+  - Managed (aka. Shared)
   - Custom
-    - Comsumption workflow: create Swagger-based or SOAP-based custom connector
-    - Comsumption workflow: create natively running service provider-based custom built-in connectors
 - Some connectors have both built-in and managed versions
+
+### Built-in connectors
+
+- Run in **the same process** as Azure Logic Apps runtime, high throughput, low latency
+- Two types:
+  - General
+    - Available to both Comsumption and Standad workflows
+    - Not tied to a specific service
+    - May don't require any specific connection
+    - eg. HTTP, Schedule, Control, Data time, Inline Code, ...
+  - Service provider-based
+    - Mostly Standard workflow only, few available for Comsumption workflows
+    - Based on Azure Functions extensibility model
+    - They have corresponding managed connector version
+    - Provide access to a service, eg. Blob Storage, SQL Server, ...
+- You can create **custom built-in connectors** for Standard workflows
+- Business-to-business (B2B) built-in operations
+  - You might need to create and link an integration account to your Logic Apps resource
+
+### Managed connectors
+
+- Usually tied to a specific service or system
+- Usually a connection is required for authentication
+- Powered by the connector infrastructure in Azure, hosted, run and managed by Microsoft, shared with Power Platform
+- A few have a corresponding built-in version (with better performance, capabilities, and pricing)
+- Categories based on workflow type
+   - Comsumption workflows:
+      - Standard connectors: Blob Storage, Office 365, ...
+      - Enterprise connectors (additional cost): SAP, IBM MQ, ...
+   - Standard stateful workflows: all under the Azure label
+   - Standard stateless workflows: can use both In-App and Shared connectors
+- Informal groups:
+  - On-premise connectors:
+    - Access to on-prem systems, such as SQL Server, SharePoint Server, Oracle DB, ...
+    - You must set up **on-premise data gateway**
+  - Integration account connectors: transform and validate XML, process B2B messages using AS2/EDIFACT/X12 protocols
+
+### Custom connectors
+
+- Comsumption workflow: create from Swagger-based or SOAP-based APIs
+- You can also create built-in connectors based on the Azure Functions extensibility model
 
 ### Connections
 
 - Connections are individual resources, type `Microsoft.Web/connections`
    - Not deleted with the Logic App resource
 - You can use Azure Policy to block connections based on ID
--
 
 ### Triggers
 
