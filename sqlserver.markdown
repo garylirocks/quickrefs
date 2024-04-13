@@ -6,6 +6,7 @@
   - [Temporary tables](#temporary-tables)
 - [Datatypes](#datatypes)
   - [`varchar` vs `nvarchar`](#varchar-vs-nvarchar)
+- [Authorization](#authorization)
 - [Cheatsheets](#cheatsheets)
 
 
@@ -76,6 +77,26 @@ SELECT * FROM #mytemptable
 ### `varchar` vs `nvarchar`
 
 `varchar` is stored as regular 8-bit data (1 byte per character) and `nvarchar` stores data at 2 bytes per character, so usually you should use `nvarchar` for Unicode text
+
+
+## Authorization
+
+- `sys.database_principals` contains both individual users and roles, each has a principal_id
+- `sys.database_role_members` contains members of each role, eg. `dbo` is a member of `db_owner`
+- users: `dbo`, `guest`, `sys`, ...
+- roles: `db_owner`, `db_accessadmin`, `db_datareader`, ...
+- Query users of each role
+
+  ```sql
+  -- Query users in a particular role
+  SELECT dp.name, dp.type_desc, dprole.name
+  FROM
+      sys.database_role_members drm
+  JOIN
+      sys.database_principals dp ON drm.member_principal_id = dp.principal_id
+  JOIN
+      sys.database_principals dprole ON drm.role_principal_id = dprole.principal_id
+  ```
 
 
 ## Cheatsheets
