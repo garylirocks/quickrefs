@@ -49,6 +49,7 @@
   - [Private endpoints vs. service endpoints](#private-endpoints-vs-service-endpoints)
 - [Private Endpoints](#private-endpoints)
 - [Deploy Azure service to vNets](#deploy-azure-service-to-vnets)
+- [Network Security Perimeters (NSP)](#network-security-perimeters-nsp)
 - [DNS](#dns)
   - [Overview](#overview-1)
   - [DNS resolution within virtual networks](#dns-resolution-within-virtual-networks)
@@ -1148,6 +1149,26 @@ See: [Azure networking - privatelink](./azure-networking-privatelink.markdown)
 ## Deploy Azure service to vNets
 
 TODO
+
+
+## Network Security Perimeters (NSP)
+
+- Provides a method to manage public network access to PaaS services at scale
+- You can have multiple profiles in one NSP resource
+  - A profile is a scope for Inbound/Outbound rules and association policies
+  - A PaaS resource could only be associated with one profile
+  - You can define policies to associate PaaS resources to a NSP profile automatically
+- PaaS resources in the same NSP (even different profiles) can talk to each other, for access from/to Internet/external resources, there are
+  - Inbound rule:
+    - By IP ranges
+    - By subscriptions (everything in the subscription, not just PaaS resources, even VM with implicit public IP can access the resource now)
+  - Outbound rule:
+    - By FQDN
+- In the Portal, you could configure public network access for associated PaaS resources in bulk ("Disabled"/"Enabled"/"Secured by perimeter")
+- For each resource, there are two possible access modes:
+  - **Learning mode**: both NSP configuration and public network access setting apply
+  - **Enforced mode**: NSP configuration is enforced, public network access setting doesn't apply
+- Public network access will be removed when you disassociate PaaS resources from an NSP
 
 
 ## DNS
