@@ -32,6 +32,8 @@ Ansible
 - [Work with Windows hosts](#work-with-windows-hosts)
   - [Setup Windows remote hosts](#setup-windows-remote-hosts)
   - [Connect](#connect)
+- [AAP](#aap)
+  - [Concepts](#concepts)
 
 ## Overview
 
@@ -592,6 +594,31 @@ ls -AF
 - `tasks/` tasks for this role
 - `templates/` jinja2 template files for the `template` task
 - `handlers/` handlers are only fired when certain tasks report changes, and are run at the end of each play
+  - usually used to restart services/machines
+  - `handlers` could be in the same playbook file
+  - Use the handler `name` field in `notify`
+
+  ```yaml
+  ---
+  - name: This is a play within a playbook
+    hosts: all
+    tasks:
+      - name: Task 1
+        module_name:
+          param1: "foo"
+        notify: restart a service
+
+      - name: Task 2
+        module_name_2:
+
+    handlers:
+      - name: restart a service
+        ansible.windows.win_service:
+          name: service_a
+          state: restarted
+          start_mode: auto
+  ```
+
 
 ### Example
 
@@ -927,3 +954,13 @@ winrm enumerate winrm/config/Listener
           shutdown_timeout: 3600
           reboot_timeout: 3600
   ```
+
+
+## AAP
+
+### Concepts
+
+- **Project**: usually a link to a Git repo
+- **Credentials**: credentials for machines, Git repos, etc
+- **Job Templates**: what playbook to run, and survey for variables
+- **Workflow Templates**: you can build a workflow by joining multiple steps together(each step could be job templates, other workflow templates, repo sync, inventory source sync, approvals, etc), similar to Azure Logic Apps
