@@ -83,3 +83,21 @@ fold_newlines: >
             single line of text
             despite appearances
 ```
+
+
+## Gochas
+
+- Most of the time you don't need to quote a string value, but there are exceptions
+  - A colon followed by a space or at the end of a line
+
+    ```yaml
+    foo: 'a colon followed with a space : here'
+    bar: 'a colon at the end of the line c:'
+    ```
+
+- Double quotes support escapse sequences, single quotes don't
+
+    ```yaml
+    foo: "a TAB \t and a newline \n"
+    bar: 'a single quote \' here'
+    ```
