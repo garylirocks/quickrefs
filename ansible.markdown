@@ -958,9 +958,24 @@ winrm enumerate winrm/config/Listener
 
 ## AAP
 
+![AAP architecture](images/ansible_aap-architecture.png)
+
 ### Concepts
 
 - **Project**: usually a link to a Git repo
+- **Inventories**:
+  - could be added manually, from supported cloud providers or through dynamic inventory scripts
+  - you can add variables for groups and individual hosts
 - **Credentials**: credentials for machines, Git repos, etc
-- **Job Templates**: what playbook to run, and survey for variables
-- **Workflow Templates**: you can build a workflow by joining multiple steps together(each step could be job templates, other workflow templates, repo sync, inventory source sync, approvals, etc), similar to Azure Logic Apps
+- **Job Templates**:
+  - what inventory to run against
+  - what playbook to run, and survey for variables
+  - waht credentials to use
+- **Workflow Templates**:
+  - you can build a workflow by joining multiple steps together(each step could be job templates, other workflow templates, repo sync, inventory source sync, approvals, etc), similar to Azure Logic Apps
+  - the included job templates could have different inventories, playbooks, credentials, etc
+
+- **RBAC**
+  - You can create users and teams
+  - Built-in roles: Normal User, Administrator, Auditor
+  - Scenarios: give user read and execute access to a job template, no permission to change anything
