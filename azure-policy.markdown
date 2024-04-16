@@ -20,6 +20,7 @@
   - [Custom policies](#custom-policies)
   - [Exemptions](#exemptions)
   - [Operations](#operations)
+- [DeployIfNotExists](#deployifnotexists)
 - [Gotchas](#gotchas)
 
 
@@ -485,6 +486,61 @@ A `deployIfNotExists` or `modify` policy should define the roles it requires:
 
 - Operational tasks (eg. Remediation tasks, generating documentation) **must be scripted**, then run the scripts when needed
 - **DO NOT use CI/CD tools (including Terraform) to execute the operational tasks**, CI/CD is intended to deploy resources, not to operatate them
+
+
+## DeployIfNotExists
+
+1. If you need to deploy something in the subscriptions scope, it's possible to get the value of a tag from the subscription, then use it in the deployment template, use `[field('tags[myTagName]')]`
+
+    ```json
+    {
+      "properties": {
+        "displayName": "DINE-xxxx",
+        "parameters": {
+          // ...
+        },
+        "policyRule": {
+          "if": {
+            "allOf": [
+              {
+                "equals": "Microsoft.Resources/subscriptions",
+                "field": "type"
+              }
+            ]
+          },
+          "then": {
+            "effect": "deployIfNotExists",
+            "details": {
+              "deployment": {
+                "properties": {
+                  "mode": "incremental",
+                  "parameters": {
+                    "param1": {
+                      "value": "[field('tags[myTagName]')]"
+                    }
+                  },
+                  "template": {
+                    "parameters": {
+                      "param1": {
+                        "type": "string"
+                      }
+                      // ...
+                    },
+                    "resources": [
+                      // ...
+                    ],
+                    "variables": {
+                      // ...
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    ```
 
 
 ## Gotchas
