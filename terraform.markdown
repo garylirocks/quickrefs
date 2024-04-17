@@ -794,6 +794,11 @@ name = "web-sg-${var.resource_tags["project"]}-${var.resource_tags["environment"
   EOT
   ```
 
+- Provider-defined functions
+  - Defined within the provider's schema using Terraform provider plugin framework
+  - Available since Terraform 1.8
+  - Example: AWS provider has a function `arn_parse`, use it like `provider::aws::arn_parse(aws_ecr_repository.hashicups.arn).account_id`
+
 ### Dynamic expressions
 
 - Conditional expression:
