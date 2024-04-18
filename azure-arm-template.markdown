@@ -15,7 +15,9 @@
   - [Why](#why)
   - [Overview](#overview-1)
   - [Deny assignments](#deny-assignments)
-  - [Cleanup options](#cleanup-options)
+    - [Notes](#notes)
+  - [Redeploy stack](#redeploy-stack)
+  - [Delete stack](#delete-stack)
   - [Best practices](#best-practices)
 
 ## Overview
@@ -393,7 +395,7 @@ Example parameter file (use `reference` instead of `value`):
   az deployment [group|sub|mg|tenant] [validate|create|show|delete|...]
   ```
 
-- The schemas you use for deployment at different levels are different, in VS Code, the ARM Tools extension could help generate scaffolding snippets for you.
+- The `$schema` url you use for deployment at different levels are different, in VS Code, the ARM Tools extension could help generate scaffolding snippets for you.
 
 ### Deployment location and name
 
@@ -576,21 +578,49 @@ Blueprints is going to be deprecated, and replaced by **deployment stacks**.
 You could create deny assignments on the deployed resources, and set exclusions for some actions or principals:
 
 - `--deny-settings-mode`: whether deny assignments should be created, allowed values: `denyDelete`, `denyWriteAndDelete`, `none`
-- `--deny-settings-excluded-actions`: List of role-based management operations that are excluded from the denySettings. Up to 200 actions are permitted.
 - `--deny-settings-excluded-principals`: List of AAD principal IDs excluded from the denySettings, up to 5 principals are permitted
+- `--deny-settings-excluded-actions`: List of role-based management operations that are excluded from the denySettings. Up to 200 actions are permitted.
 - `--deny-settings-apply-to-child-scopes`: whether the deny assignments should apply to any new child scopes, such as a new extension installed in a VM
 
-*The excluded actions* apply to all principals, not just *excluded principals*.
+#### Notes
 
-### Cleanup options
+- Deny assignments
+  - Full resource id is like `/subscriptions/<sub-id>/resourceGroups/<rg-name>/providers/Microsoft.Authorization/denyAssignments/<guid>`
+  - Only supported for deployments at subscription scope
+  - Read only in the Portal
+  - Update the deployment stack to edit the deny assignment
+- *The excluded actions* apply to all principals, not just *excluded principals*
+- If a `denyWriteAndDelete` deny assignments is on a RG, you
+  - Can update tags on the RG
+  - Can create resources in the RG
+  - Cannot delete the RG
 
-What happens if you delete a resource from the template file ?
+### Redeploy stack
 
-- By default, the resource would still exists, but become "unmanaged"
-- `--delete-resources`: delete resources
-- `--delete-resource-groups`: delete resource groups
-- `--delete-all`: delete all resources and resource groups
+What happens if you remove some resources from the template and redeploy the stack?
+
+Use `--action-on-unmanage [deleteAll|deleteResources|detachAll]` option to specify what happens to the removed resources.
+
+- `deleteAll`: delete all removed resources
+- `deleteResources`: delete removed resources, keep resource groups
+- `detachAll`: keep resources, they become unmanaged
+
+### Delete stack
+
+```sh
+az stack sub delete \
+      --name "deployment-stack-test" \
+      --action-on-unmanage "detachAll"
+```
+
+Similar to redeploying a stack, use `--action-on-unmanage` to config what happens when you delete the stack.
+
+When you use `detachAll`
+  - The stack is deleted
+  - The denyAssignment is deleted
+  - The resources remain
 
 ### Best practices
 
-- Deploy stack at **one level above**: if you want to lock resources in a subscription, you should deploy the stack at the management group level, then even the subscription owner can't change/delete the stack itself or the locked resources
+- Deploy stack at **one level above**: if you want to lock resources in a subscription, you should deploy the stack at the management group level
+  - So the deployment stack resource is at the MG level, the subscription owner can't change it, then the deny assignment can't be changed
