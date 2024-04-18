@@ -194,26 +194,20 @@ columnate text
 
 ## `update-alternatives`
 
-installed multiple version of a program in system, such as:
+If you have multiple versions of a program installed, this allows you to config multiple options, and switch among them
 
-    $ sudo update-alternatives --display node
-    node - auto mode
-      link currently points to /usr/bin/nodejs
-    /usr/bin/nodejs - priority 50
-      slave node.1.gz: /usr/share/man/man1/nodejs.1.gz
-    Current 'best' version is '/usr/bin/nodejs'.
+```sh
+# set path
+sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 100
+sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.9 50
 
-    $ node -v
-    v0.10.37
+# choose one
+sudo update-alternatives --config python3
 
-there is only one option for node now, we can add another version:
+# show current config
+sudo update-alternatives --display python3
+```
 
-    $ sudo update-alternatives --install /usr/bin/node node /usr/local/n/versions/node/5.4.1/bin/node 80
-    update-alternatives: using /usr/local/n/versions/node/5.4.1/bin/node to provide /usr/bin/node (node) in auto mode
-    update-alternatives: warning: not removing /usr/share/man/man1/node.1.gz since it's not a symlink
-
-    $ node -v
-    v5.4.1
 
 ## `rename`
 
