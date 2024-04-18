@@ -1,0 +1,42 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {},
+  "functions": [],
+  "variables": {},
+  "resources": [
+    {
+      "name": "stgaryarmtest001",
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2021-04-01",
+      "tags": {
+        "displayName": "stgaryarmtest001"
+      },
+      "location": "[resourceGroup().location]",
+      "kind": "StorageV2",
+      "sku": {
+        "name": "Standard_LRS",
+        "tier": "Standard"
+      },
+      "properties": {
+        "publicNetworkAccess": "Disabled",
+        "minimumTlsVersion": "TLS1_2",
+        "accessTier": "Cool",
+        "networkAcls": {
+          "bypass": "AzureServices,Logging",
+          "virtualNetworkRules": [],
+          "ipRules": [
+            {
+              "value": "1.1.1.1"
+            },
+            {
+              "value": "1.1.1.2"
+            }
+          ],
+          "defaultAction": "Deny"
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}

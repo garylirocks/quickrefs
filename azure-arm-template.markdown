@@ -352,7 +352,11 @@ Example parameter file (use `reference` instead of `value`):
 ## Update resource
 
 - You need to set all the existing properties of the resource in the template, not just the properties you want to update. See https://learn.microsoft.com/en-us/azure/architecture/guide/azure-resource-manager/advanced-templates/update-resource
-- Seems like you can also use `"mode": "Incremental"` in the `properties` part (See the deployment in this Azure Policy https://learn.microsoft.com/en-us/azure/azure-monitor/containers/kubernetes-monitoring-enable?tabs=policy#enable-container-insights)
+- Some fields could not be changed, eg. you can't change an existing storage account from "Standard" type to "Premium", the deployment would not pass Preflight validation.
+- It's possible to just update specified properties, you can use `"mode": "Incremental"` in the `properties` block (See the deployment in [this Azure Policy](https://learn.microsoft.com/en-us/azure/azure-monitor/containers/kubernetes-monitoring-enable?tabs=policy#enable-container-insights)), the new properties are merged to existing properties, in the following example:
+  - `name`, `type`, `location`, `apiVersion` are required
+  - `tags` is optional, if specified, it will overwrite existing tags
+  - `properties.a`, `properties.b.sub_a` will be updated, other properties will remain unchanged, including any other sub-properties of `properties.b`
 
   ```json
   ...
@@ -365,8 +369,10 @@ Example parameter file (use `reference` instead of `value`):
       "apiVersion": "2018-03-31",
       "properties": {
         "mode": "Incremental",
-        "id": "...",
-        "propertyToUpdate": "..."
+        "a": "..."
+        "b": {
+          "sub_a": "..."
+        }
       }
     }
   ]
@@ -567,14 +573,14 @@ Blueprints is going to be deprecated, and replaced by **deployment stacks**.
 
 ### Deny assignments
 
-You could create deny assignments on the deployed resources, and setting exclusions:
+You could create deny assignments on the deployed resources, and set exclusions for some actions or principals:
 
 - `--deny-settings-mode`: whether deny assignments should be created, allowed values: `denyDelete`, `denyWriteAndDelete`, `none`
 - `--deny-settings-excluded-actions`: List of role-based management operations that are excluded from the denySettings. Up to 200 actions are permitted.
 - `--deny-settings-excluded-principals`: List of AAD principal IDs excluded from the denySettings, up to 5 principals are permitted
 - `--deny-settings-apply-to-child-scopes`: whether the deny assignments should apply to any new child scopes, such as a new extension installed in a VM
 
-*The excluded actions* apply to all principals, not just *exclude principals*.
+*The excluded actions* apply to all principals, not just *excluded principals*.
 
 ### Cleanup options
 

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {},
+  "functions": [],
+  "variables": {},
+  "resources": [
+    {
+      "name": "stgaryarmtest001",
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2021-04-01",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "mode": "Incremental",
+        "accessTier": "Hot",
+        "networkAcls": {
+          "bypass": "Metrics"
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}
