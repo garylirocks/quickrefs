@@ -31,6 +31,8 @@
   - [Point to site](#point-to-site)
     - [Native Azure certificate auth](#native-azure-certificate-auth)
 - [ExpressRoute](#expressroute)
+  - [High availability](#high-availability-1)
+  - [Compare to Site-to-Site VPN](#compare-to-site-to-site-vpn)
 - [Routing](#routing)
   - [Default system routes](#default-system-routes)
   - [User-defined routes](#user-defined-routes)
@@ -745,9 +747,13 @@ Connectivity can be from:
   *Global Reach enables connectivity between 10.0.1.0/24 and 10.0.2.0/24*
 - DNS queries, certificate revocation list checking and Azure CDN requests are still sent over the public internet
 
-**Design redundancy** for an ExpressRoute deployment
+### High availability
 
-- At lest **two peering locations** (could be in the same city, if they are too far apart, there might be latency issue)
+- At lest **two peering locations**
+  - ExpressRoute Metro: two peering locations in the same city, each has one active connection
+    - It's not a different SKU, just choose a location with "Metro" suffix
+    - No additional cost on MS side, but may incur extra cost on telcom side
+  - Different cities
 - ER gateway should be **zone redundant**
 - Configure ExpressRoute and S2S VPN coexisting connections (VPN could serve as a failover)
 
@@ -755,7 +761,7 @@ A vNet can have both ExpressRoute and VPN gateways at the same time.
 
 ![Coexisting ExpressRoute and VPN gateway](images/azure_coexisting-connections.png)
 
-Compare ExpressRoute to Site-to-Site VPN:
+### Compare to Site-to-Site VPN
 
 |                    | Site-to-site VPN                                                   | ExpressRoute                                                                                 |
 | ------------------ | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
