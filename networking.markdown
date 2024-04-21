@@ -17,6 +17,7 @@
 - [Routing overview](#routing-overview)
 - [BGP](#bgp)
   - [Routing table vs. Forwarding table](#routing-table-vs-forwarding-table)
+- [VLAN](#vlan)
 - [Refs](#refs)
 
 
@@ -235,6 +236,24 @@ Routing policy:
   - Resides in the forwarding plane
   - Definitive info about where a packet is routed for any given IP prefix (or MAC address if Level 2)
   - In bigger routers, it is often implemented in specialized chips and very fast memory for route lookups
+
+
+## VLAN
+
+![VLAN structure](images/network_vlan.jpeg)
+
+- To divide a physical network into several logical networks
+- How
+  - Add a specific header that identifies the VLAN to each Ethernet packet, known as "VLAN tagging"
+  - Each switch port is assigned to a specific VLAN
+  - A switch examines the VLAN tag, and only transmits a frame to ports that are in the same VLAN
+
+
+|               | VLAN                         | Subnet                            |
+| ------------- | ---------------------------- | --------------------------------- |
+| OSI layer     | Layer 2                      | Layer 3                           |
+| Configured at | Switch level                 | Device level                      |
+| How           | Assign switch ports to VLANs | IP and subnet mask to each device |
 
 
 ## Refs
