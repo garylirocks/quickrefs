@@ -17,6 +17,7 @@
 - [Routing overview](#routing-overview)
 - [BGP](#bgp)
   - [Routing table vs. Forwarding table](#routing-table-vs-forwarding-table)
+- [Traceroute](#traceroute)
 - [VLAN](#vlan)
 - [Refs](#refs)
 
@@ -236,6 +237,20 @@ Routing policy:
   - Resides in the forwarding plane
   - Definitive info about where a packet is routed for any given IP prefix (or MAC address if Level 2)
   - In bigger routers, it is often implemented in specialized chips and very fast memory for route lookups
+
+
+## Traceroute
+
+How it works:
+
+- It leverages TTL (Time-to-Live) field in the IP packet header. Each router is expected to decrease the value by one, then send the packet down the line, when TTL becomes 0, the router will drop the packet and send back a message "Time to live exceeded".
+- Traceroute sends packets with TTL=1, then TTL=2, ..., until it reaches the destination or the maximum hops
+- By default, it sends 3 packets for each TTL value
+
+
+Note:
+- A normal IP packet would have a TTL value between 64 and 255, so typically it won't be dropped by routers
+- Apart from the original `traceroute` command on Linux/Max, `tracert` on Windows, there are also newer commands like `mtr` and "Paris Traceroute" that have some improved features
 
 
 ## VLAN
