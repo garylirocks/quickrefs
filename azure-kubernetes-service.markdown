@@ -91,7 +91,7 @@ When you create an AKS cluster, Azure creates a resource group that contains clu
   - A public IP for the LB
 - Managed identities
   - `<aks-name>-agentpool` (for VMSS)
-  - `omsagent-<aks-name>-agentpool` (for VMSS)
+  - `omsagent-<aks-name>-agentpool` (for monitoring agent)
 - Private cluster only
   - Private endpoint for the control plane
   - Private DNS zone (optional, could use an existing one)
@@ -489,12 +489,20 @@ Requests:
 
 ![Data collected](images/azure_aks-monitoring-data-collection.png)
 
-- **Managed Prometheus**
+- **Managed Prometheus** (Azure Monitor workspace)
+  - Created with Azure Monitor workspace, where Prometheus metrics will be stored
+    - A default DCE and DCR is created with the workspace
   - Collect cluster metrics
-  - View them in Grafana dashboards
+  - View them in Grafana dashboards (resource type `Microsoft.Dashboard/grafana`)
+    - You need to give the Azure Managed Grafana System Identity "**Monitoring Reader**" role on the Azure Monitor Workspace to query the metrics
+    - Grafana instance endpoint: `https://<resource-name>.<region>.grafana.azure.com/`
+    - A user needs "Grafana Viewer" role in order to access Grafana instance endpoint
   - Could be enabled with `az aks create/update --enable-azure-monitor-metrics ...`
+  - This creates `ama-metrics-*` pods in the `kube-system` namespace
 - **Container insights**
   - Collect logs from AKS and Arc-enabled Kubernetes clusters
+  - Logs sent to Log Analytics workspace
+    - Could be in a different subscription of the same tenant
   - Analyze with prebuild workbooks
   - Don't collect Kubernetes audit logs (use Diagnostic settings)
   - You can enable it with CLI `az aks enable-addons -a monitoring ...`
