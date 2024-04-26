@@ -497,8 +497,10 @@ Requests:
     - You need to give the Azure Managed Grafana System Identity "**Monitoring Reader**" role on the Azure Monitor Workspace to query the metrics
     - Grafana instance endpoint: `https://<resource-name>.<region>.grafana.azure.com/`
     - A user needs "Grafana Viewer" role in order to access Grafana instance endpoint
-  - Could be enabled with `az aks create/update --enable-azure-monitor-metrics ...`
-  - This creates `ama-metrics-*` pods in the `kube-system` namespace
+  - Could be enabled with `az aks create/update --enable-azure-monitor-metrics ...`, it creates:
+    - `ama-metrics-*` pods in the `kube-system` namespace
+    - DCR, DCE
+    - Prometheus rule groups (`Microsoft.AlertsManagement/prometheusRuleGroups`)
 - **Container insights**
   - Collect logs from AKS and Arc-enabled Kubernetes clusters
   - Logs sent to Log Analytics workspace
