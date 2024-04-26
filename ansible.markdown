@@ -7,6 +7,7 @@ Ansible
 - [Playbook](#playbook)
 - [Tasks](#tasks)
   - [Blocks](#blocks)
+- [Tags](#tags)
 - [Variables](#variables)
   - [Ansible facts](#ansible-facts)
   - [Magic variables](#magic-variables)
@@ -34,6 +35,11 @@ Ansible
   - [Connect](#connect)
 - [AAP](#aap)
   - [Concepts](#concepts)
+- [Interaction with Terraform](#interaction-with-terraform)
+  - [Call Terraform from Ansible](#call-terraform-from-ansible)
+  - [Call Ansible from Terrafrom](#call-ansible-from-terrafrom)
+  - [Provision Ansible assets from Terraform](#provision-ansible-assets-from-terraform)
+  - [Use Terraform in AAP](#use-terraform-in-aap)
 
 ## Overview
 
@@ -215,15 +221,6 @@ There are many ways to filter tasks, by tags, by conditions, etc
 ```
 
 ```sh
-# list available tags in a playbook
-ansible-playbook playbook.yml --list-tags
-
-# run tasks tagged 'nginx'
-ansible-playbook playbook.yml --tags nginx
-
-# skip tags
-ansible-playbook playbook.yml --skip-tags nginx
-
 # start from a task
 ansible-playbook playbook.yml --start-at-task 'Find nginx configs'
 
@@ -276,6 +273,40 @@ tasks:
     ignore_errors: true
     tags: [tag1, tag2]
 ```
+
+
+## Tags
+
+You can add tags to task or play, and filter tasks by tags
+
+```sh
+# list available tags in a playbook
+ansible-playbook playbook.yml --list-tags
+
+# run tasks tagged 'nginx'
+ansible-playbook playbook.yml --tags nginx
+
+# skip tags
+ansible-playbook playbook.yml --skip-tags nginx
+```
+
+There are two special tags: `always` and `never`
+
+- `always` tagged task is always run, unless skipped specifically with `--skip-tags always`
+- `never` tagged task is always skipped, unless included specifically with `--tags never`
+
+```yaml
+tasks:
+  - name: Run the rarely-used debug task
+    ansible.builtin.debug:
+     msg: '{{ aVar }}'
+    tags:
+      - never
+      - debug
+```
+
+If you specify `--tags debug`, the task will run as well
+
 
 ## Variables
 
@@ -974,8 +1005,82 @@ winrm enumerate winrm/config/Listener
 - **Workflow Templates**:
   - you can build a workflow by joining multiple steps together(each step could be job templates, other workflow templates, repo sync, inventory source sync, approvals, etc), similar to Azure Logic Apps
   - the included job templates could have different inventories, playbooks, credentials, etc
+  - You could add a survey to a workflow template
 
 - **RBAC**
   - You can create users and teams
   - Built-in roles: Normal User, Administrator, Auditor
   - Scenarios: give user read and execute access to a job template, no permission to change anything
+
+
+## Interaction with Terraform
+
+### Call Terraform from Ansible
+
+You could use `cloud.terraform.terraform` Ansible module to run Terraform commands
+
+```yaml
+- name: Run Terraform Deploy
+  cloud.terraform.terraform:
+    project_path: '{{ project_dir }}'
+    state: present
+    force_init: true
+```
+
+### Call Ansible from Terrafrom
+
+- Use `local-exec` provisioner to run Ansible playbooks
+
+### Provision Ansible assets from Terraform
+
+- Use `ansible/ansible` provider in Terraform
+- It could create Ansible inventory host/group, playbook, vault
+
+Example: add a VM to Ansible inventory
+
+```hcl
+resource "aws_instance" "my_ec2" {
+  ...
+}
+
+resource "ansible_host" "my_ec2" {
+  name   = aws_instance.my_ec2.public_dns
+  groups = ["nginx"]
+
+  variables = {
+    ansible_user                 = "ec2-user",
+    ansible_ssh_private_key_file = "~/.ssh/id_rsa",
+    ansible_python_interpreter   = "/usr/bin/python3",
+  }
+}
+```
+
+Then in `inventory.yml`, use the `cloud.terraform.terraform_provider` plugin, which reads the Terraform state file to get the host information
+
+```yaml
+---
+plugin: cloud.terraform.terraform_provider
+```
+
+You can validate this by:
+
+```sh
+ansible-inventory -i inventory.yml --graph --vars
+
+# @all:
+#   |--@nginx:
+#   |  |--ec2-13-41-80-241.eu-west-2.compute.amazonaws.com
+#   |  |  |--{ansible_python_interpreter = /usr/bin/python3}
+#   |  |  |--{ansible_ssh_private_key_file = ~/.ssh/id_rsa}
+#   |  |  |--{ansible_user = ec2-user}
+#   |--@ungrouped:
+```
+
+### Use Terraform in AAP
+
+Build a workflow template, with steps:
+
+1. Build Terraform config files with variables
+2. Run Terraform to provision VMs
+3. Sync dynamic inventory (this will add the new VM instance to the inventory)
+4. Run Ansible Playbook to configure the new VM
