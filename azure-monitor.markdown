@@ -13,7 +13,16 @@
   - [Authentication](#authentication)
   - [AMA supports other services and features](#ama-supports-other-services-and-features)
 - [Data Collection Rules (DCR)](#data-collection-rules-dcr)
-- [Data collection endpoints](#data-collection-endpoints)
+- [Data collection endpoints (DCE)](#data-collection-endpoints-dce)
+- [Azure Monitor Private Link Scope (AMPLS)](#azure-monitor-private-link-scope-ampls)
+  - [Resource endpoint types](#resource-endpoint-types)
+    - [Shared global/regional endpoints](#shared-globalregional-endpoints)
+    - [Resource-specific endpoints](#resource-specific-endpoints)
+  - [Private Link access modes](#private-link-access-modes)
+  - [Limits](#limits)
+  - [Azure Monitor resource-level access settings](#azure-monitor-resource-level-access-settings)
+    - [Managed Prometheus (Azure Monitor workspace)](#managed-prometheus-azure-monitor-workspace)
+  - [Best practices](#best-practices)
 - [Alerts](#alerts)
   - [Overview](#overview-1)
   - [Signals](#signals)
@@ -387,7 +396,7 @@ Data collection scenarios:
   ![Workspace transformation DCR](images/azure_monitor-data-collection-scenarios-workspace-transformation.png)
 
 
-## Data collection endpoints
+## Data collection endpoints (DCE)
 
 - It's optional for collecting Windows Event Logs, Linux Syslog or Performance Counters. REQUIRED for all other data sources.
 - Also REQUIRED if:
@@ -405,7 +414,94 @@ Limitations:
 - Only for machines in the same region
 - Only support Log Analytics workspace as a destination
 - Custom metrics collected by AMA aren't controlled by DCEs
-- Can be accessed over a Private Link using the Azure Monitor Private Link Scope (AMPLS) it is added to.
+- Can be accessed over a Private Link using the Azure Monitor Private Link Scope (AMPLS) it is added to
+
+
+## Azure Monitor Private Link Scope (AMPLS)
+
+For most PaaS resources, you create private endpoint directly, for Azure Monitor resources, you need to create an AMPLS, put relevant resources in it, then create a private endpoint to AMPLS.
+
+![AMPLS topology](images/azure_monitor-private-link-scope-topology.png)
+
+- Azure Monitor resources that could be added to an AMPLS:
+  - Log Analytics workspace
+  - DCE
+  - Application Insight
+- Subnet hosting the private endpoints need to be at least /27 in size
+- The private endpoint will have five DNS zones:
+  - `privatelink.monitor.azure.com` (for shared global/regional endpoints, and DCE resource-specific endpoints)
+  - `privatelink.oms.opinsights.azure.com` (LA workspace-specific)
+  - `privatelink.ods.opinsights.azure.com` (LA workspace-specific, ingestion endpoint)
+  - `privatelink.agentsvc.azure.automation.net` (LA workspace-specific)
+  - `privatelink.blob.core.windows.net` (global, agents download new/updated solution packs from this endpoint, same for all LA workspaces)
+- Resource-specific endpoints(OMS, ODS, and AgentSVC) share the same IP address per region per DNS zone.
+
+### Resource endpoint types
+
+Azure Monitor uses both resource-specific and shared global/regional endpoints.
+
+#### Shared global/regional endpoints
+
+Because these are shared, setting up a private link even for a single resource changes the DNS configuration that affects traffic to all resources.
+
+- **All Application Insights endpoints**: ingestion, live metrics, profiler, debugger
+- **The query endpoint**: to both Application Insights and Log Analytics resources
+
+#### Resource-specific endpoints
+
+- Log Analytics endpoints (except query endpoint)
+- DCE
+
+### Private Link access modes
+
+- **Private only**: allows traffic only to resources added to AMPLS
+- **Open**: uses Private Link to communicate with resources in AMPLS, but also allows traffic to non-AMPLS resources
+  - The non-AMPLS resources need to accept traffics from public network
+
+Note:
+
+- Log Analytics ingestion uses resource-specific endpoints. As such, it doesn't adhere to AMPLS access modes. To assure Log Analytics ingestion requests can't access workspaces out of the AMPLS, set the network firewall to block traffic to public endpoints.
+- Ingestion and query have separate access mode settings
+- Can be configured per vNet/PEP ?
+
+### Limits
+
+- A vNet can connect to only *one* AMPLS
+- An AMPLS can connect to 300 Log Analytics workspaces and 1000 Application Insights components
+- An Azure Monitor resource can be added to five AMPLSs at most
+- An AMPLS can have 10 private endpoints at most
+
+### Azure Monitor resource-level access settings
+
+- Log Analytics workspaces and Application Insights components have resource-level settings for:
+  - Allow/block public access to ingestion endpoint
+  - Allow/block public access to query endpoint
+- DCE has settings to allow/block public access
+
+Exceptions:
+
+- Logs/metrics uploaded to a workspace via diagnostic settings go over a secure private Microsoft channel, aren't controlled by these settings
+- Custom metrics collected via AMA aren't controlled by DCE, can't be configured over AMPLS
+- Queries sent through ARM API can't use private links, they can only go through if the target resource allows queries from public networks, the following experiences run queries through the ARM API:
+  - LogicApp connector
+  - Update Management solution
+  - Change Tracking solution
+  - VM Insights
+  - Container Insights
+  - Log Analytics Workspace Summary (deprecated) pane (that shows the solutions dashboard)
+
+#### Managed Prometheus (Azure Monitor workspace)
+
+- Ingestion endpoint access is controlled by settings on both AMPLS and DCE (which reference the Azure Monitor workspace)
+- Query endpoint access is controlled by settings on Azure Monitor workspace, not AMPLS
+
+### Best practices
+
+- Simplest and most secure approach: A single AMPLS, add all Azure Monitor resources to it, create private endpoint in hub vNet
+
+  ![Single AMPLS](images/azure_monitor-hub-and-spoke-with-single-private-endpoint.png)
+
+- To avoid DNS override: Only a single AMPLS resource should be created for all networks that share the same DNS.
 
 
 ## Alerts
