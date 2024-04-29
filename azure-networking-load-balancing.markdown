@@ -450,8 +450,10 @@ az network application-gateway rule create \
   - Three bot categories: "Bad", "Good", "Unknown"
 - Some managed rules can cause false positives and block real traffic, you can customize them by
   - Disable selected rule or rule groups
-  - Change action to "Log"
-  - Add exclusions based on request variables, exclusion could be applied globally or to a rule set, rule group or rule
+  - Change action of a rule to "Log"
+  - Exclusions:
+    - Could be applied globally or specific rules (more secure to apply to specific rules)
+    - Specific request attributes that should be excluded (header, cookie, argument), the rest of the request will still be checked, see [examples here](https://learn.microsoft.com/en-us/azure/web-application-firewall/ag/application-gateway-waf-configuration?tabs=portal#request-attribute-examples)
 - To trigger blocking by managed rules, you can use `curl -I "http://<IP-address>/?1=1"`, this triggers both IP as hostname and SQL injection rules
 
 
