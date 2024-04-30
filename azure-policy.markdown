@@ -134,8 +134,7 @@ For a resource like this
   "tags": {
     "env": "prod"
   },
-  "properties":
-  {
+  "properties": {
     "stringArray": [ "a", "b", "c" ],
     "objectArray": [
       {
