@@ -248,9 +248,12 @@ az network public-ip create \
 
 - To access a VM, traffic must be allowed on both subnet and NIC NSG rules
 - For inbound traffic, subnet NSG rules are evaluated first, then NIC NSG rules, the other way around for outbound traffic
-- If no NSG is attached to a subnet or NIC, the traffic is allowed
 - Both NIC and subnet attached NSGs are always **evaluated at the NIC level**
   - So subnet-attached NSG could be used to deny traffic between VMs in the same subnet !!
+- If **no NSG** is attached to both subnet and NIC, the traffic is
+  - allowed within the same vNet
+  - allowed for peered vNet ?
+  - not allowed on NIC public IPs
 
 ### Service Tag
 
@@ -1250,9 +1253,11 @@ hostnamectl set-hostname vm-demo-001.newdomain.com
 
 - DNS IP is `168.63.129.16`, this is static, same in every vNet
 - The IP is assigned to NICs for DNS by the default Azure DHCP assignment
-- The domain name is `.internal.cloudapp.net.`
+- The DNS zone is `.internal.cloudapp.net.`
 - Any VM created in the vNet is registered
-- It's the Azure Resource name that is registered, not the name of the guest OS on the VM
+- The domain name is
+  - Windows: computer name
+  - Linux: hostname is the same as VM resource name by default ?
   - *Tested in Ubuntu, if you update VM hostname, the DNS record updates automatically*
 - DNS names can be assigned to both VMs and network interfaces
 - PTR queries return FQDNs of form
