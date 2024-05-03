@@ -1008,9 +1008,13 @@ winrm enumerate winrm/config/Listener
   - You could add a survey to a workflow template
 
 - **RBAC**
-  - You can create users and teams
+  - Entity hierarchy: organization -> team -> user
   - Built-in roles: Normal User, Administrator, Auditor
   - Scenarios: give user read and execute access to a job template, no permission to change anything
+
+- **Automation Hub**
+  - Host private Ansible collections
+  - And execution environments
 
 
 ## Interaction with Terraform
