@@ -49,6 +49,7 @@
   - ExpressRoute
   - vNet
 
+- Up to 1000 connections are supported per vHub, each connections consists of four links, each link supports two tunnels in active-active configuration.
 - Routing preference, which determines if a range has been learnt from multiple origins, which one is preferred
   - ExpressRoute (default value)
   - VPN
