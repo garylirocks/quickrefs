@@ -500,7 +500,10 @@ VPN types:
 - Create local network gateway
   - this gateway refers to the on-prem location,
   - you specify the IP or FQDN of the on-prem VPN device,
-  - address space of your on-prem network, if you want to use this for a BGP-enabled connection, then the minimum prefix you need to declare is the host address of your BGP Peer IP address on your VPN device
+  - address space,
+    - If you want to use this for a BGP-enabled connection, then the minimum prefix you need to declare is the host address of your BGP Peer IP address on your VPN device
+    - Add **all the destination address spaces** that you want to access over the VPN connection, not only where the VPN device is located
+    - In the connection resource, you could add **custom traffic selectors**, which allow you to use different connections for different targets
   - vNet-to-vNet connection doesn't require local network gateways, you need to create a connection on either side to the VPN gateway on the other side
 
 - Configure on-prem VPN device: steps differ based on your device, you need a **shared key**(a ASCII string of up to 128 characters) and the public IP of the Azure VPN gateway

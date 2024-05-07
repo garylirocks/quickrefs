@@ -14,6 +14,8 @@
 - [Azure roles](#azure-roles)
   - [Overview](#overview-2)
   - [Get eligible assignments or active assignments](#get-eligible-assignments-or-active-assignments)
+  - [In the Portal](#in-the-portal)
+  - [By script](#by-script)
   - [Self-activate an eligible assignment](#self-activate-an-eligible-assignment)
   - [Azure role settings (PIM policies)](#azure-role-settings-pim-policies)
 - [PIM for Groups](#pim-for-groups)
@@ -65,8 +67,8 @@ Endpoints:
 
 Objects:
 
-- `*AssignmentSchedule` and `*EligibilitySchedule` objects show current assignments and assignments that will become active in the future (either active or eligible assignments).
-- `*AssignmentScheduleInstance` and `*EligibilityScheduleInstance` objects show current assignments only.
+- `*AssignmentSchedule` and `*EligibilitySchedule` objects show both current and future assignments (active or eligible)
+- `*AssignmentScheduleInstance` and `*EligibilityScheduleInstance` objects show current assignments only
 
 #### Activate Azure roles
 
@@ -275,6 +277,16 @@ Get-MgRoleManagementDirectoryRoleAssignmentSchedule -Filter "principalId eq '$my
 
 ### Get eligible assignments or active assignments
 
+### In the Portal
+
+See https://stackoverflow.com/questions/73779593/how-to-get-pim-role-assignments-for-children-resources-of-a-subscription-via-pow
+
+If you choose a subscription scope, then in the "Assignments" menu, you can export all PIM role assignments at the subscription level, and all children RGs and resources within it. (including eligible and active assignments)
+
+For management groups, you can only export assignments at the MG level, **NOT** any children scopes.
+
+### By script
+
 ```powershell
 $scope='<full-resource-id>' // FULL id required
 $principal='xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
@@ -282,13 +294,14 @@ $principal='xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
 # get eligible ones
 # - shows inherited permissions from upper scopes
 # - shows assignment in sub scopes,
-#   - if the scope is a subscription, like `/subscriptions/xxxx`, it shows assignment on children resource groups
-#   - but if the scope is a management group like `/providers/Microsoft.Management/managementGroups/xxx`, it doesn't show assignements in children subscriptions
+#   - if the scope is a subscription, like `/subscriptions/xxxx`, it shows assignment on children RGs and resources within it
+#   - but if the scope is a management group like `/providers/Microsoft.Management/managementGroups/xxx`, it doesn't show assignments in children subscriptions
 Get-AzRoleEligibilitySchedule -Scope $scope -Filter "principalId eq $principal" `
 | Select-Object ScopeDisplayName,ScopeType,PrincipalDisplayName,PrincipalType,RoleDefinitionDisplayName,RoleDefinitionType,EndDateTime,Status `
 | Format-Table
 
 # Get active role assignments and who it's been eligible to (could be current user or a containing group):
+# - if the scope is a subscription, like `/subscriptions/xxxx`, it shows assignment on children RGs and resources within it
 Get-AzRoleAssignmentSchedule -Scope $scope -Filter "principalId eq $principal" `
 | Select-Object ScopeDisplayName,ScopeType,PrincipalDisplayName,RoleDefinitionDisplayName,RoleDefinitionType,EndDateTime,AssignmentType,@{
     n='PIMRoleAssignedTo';
