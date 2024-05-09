@@ -18,6 +18,9 @@
   - [By script](#by-script)
   - [Self-activate an eligible assignment](#self-activate-an-eligible-assignment)
   - [Azure role settings (PIM policies)](#azure-role-settings-pim-policies)
+- [Access reviews](#access-reviews)
+  - [Entra roles](#entra-roles-1)
+  - [Azure roles](#azure-roles-1)
 - [PIM for Groups](#pim-for-groups)
 
 
@@ -438,6 +441,39 @@ New-AzRoleAssignmentScheduleRequest `
     }
   }
   ```
+
+
+## Access reviews
+
+- Can be configured for Entra roles and Azure roles
+- Roles required to create a review:
+  - Entra roles: "Global Administrator" or "Privileged Role Administrator"
+  - Azure roles: "Owner" or "User Access Administrator" on the Azure resource
+- Could be one time or recurring
+- Can be limited to inactive users only, you can customize the number of inactive days
+- When you create a review, you can select multiple roles, but it will create one review for each role
+- Reviewers could be
+  - Specific users or groups
+  - Members (self)
+  - Manager, can set fallback reviewers
+- The review result is NOT immediately applied after a reviewr's action, only applied
+  - after the review's end date
+  - or when the review is stopped
+- If a review is recurring, updating settings for "Current" access review instance would not affect the future recurrences
+
+### Entra roles
+
+- Scope could be "Users and Groups" (only for role-assignable groups)
+- A reviewer can approve or deny access of a group assigned to a role, denied groups will lose the assignments
+
+### Azure roles
+
+- Scope could be
+  - "Users and Groups"
+  - "Service Principals": this requires a **Microsoft Entra Workload ID Premium plan** in addition to a Microsoft Entra ID P2 or Microsoft Entra ID Governance license.
+- If a group was assigned a role, during a review, a reviewer will see a expanded list of all the members (only the direct members of the group, not members of a nested group)
+  - if a member is denied, it will not be removed from the group
+  - will the group lose the assignment ??
 
 
 ## PIM for Groups
