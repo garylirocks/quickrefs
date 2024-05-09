@@ -365,6 +365,7 @@ Connect two virtual networks together, resources in one network can communicate 
 - Traffic between networks is **private**, on Microsoft backbone network
 - You need proper permission over both vNets to configure the peering (such as `Network Contributor` role)
 - Global vNet peering has same settings as regional vnet peering
+  - You CAN'T connect to basic load balancer (and other services based on it, eg AGW v1, APIM stv1) in another vNet via global peering, see [here](https://learn.microsoft.com/en-us/azure/virtual-network/virtual-networks-faq#what-are-the-constraints-related-to-global-virtual-network-peering-and-load-balancers)
 - Under the hood, routes of type `VNetPeering`/`VNetGlobalPeering` are added on both sides
 - No downtime to resources
 - Peerings on both side are created and removed at the same time
