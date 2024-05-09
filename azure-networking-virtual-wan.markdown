@@ -2,6 +2,7 @@
 
 - [Overview](#overview)
 - [Virtual Hub Routing](#virtual-hub-routing)
+  - [Branch to branch routing](#branch-to-branch-routing)
   - [Custom route tables](#custom-route-tables)
   - [Route maps](#route-maps)
   - [Routing Intent](#routing-intent)
@@ -72,6 +73,13 @@
   - Enabling routing intent (when a Firewall is deployed in the hub) disables routing configs on connections
 
 ![Virtual hub route propagation](images/azure_virtual-wan-routes-propagation.png)
+
+### Branch to branch routing
+
+- There's a setting to enable branch-to-branch routing in a vWAN
+- For site-to-site VPN, the address spaces configured for VPN Sites determines the routing in the hub
+  - Address spaces of a VPN site in one region will be propagated to other region hubs
+  - If VPN sites in two regions have been configured with same address space, the traffic destined to it will be routed to the VPN gateway in the same hub, not hubs in other regions
 
 ### Custom route tables
 
