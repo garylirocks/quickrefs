@@ -31,7 +31,7 @@
   - [Point to site](#point-to-site)
     - [Native Azure certificate auth](#native-azure-certificate-auth)
 - [ExpressRoute](#expressroute)
-  - [High availability](#high-availability-1)
+  - [Resiliency](#resiliency)
   - [Compare to Site-to-Site VPN](#compare-to-site-to-site-vpn)
 - [Routing](#routing)
   - [Default system routes](#default-system-routes)
@@ -694,6 +694,7 @@ echo ${a//:}    # remove ':'
 
 ![ExpressRoute overview](images/azure_expressroute.svg)
 - A circuit represents a logical connection between your on-prem infrastructure and Microsoft cloud through a connectivity provider (e.g. AT&T, Verizon, Vodafone)
+  - One circuit consists of two links in active-active mode
 - A circuit does not map to any physical entities, it's uniquely identified by a standard GUID called a **service key**
 - A direct, private connection(but NOT encrypted) to Microsoft services, including Azure, Microsoft 365, Dynamics 365
 - A circuit is always active-active, two BGP sessions
@@ -754,13 +755,23 @@ Connectivity can be from:
   *Global Reach enables connectivity between 10.0.1.0/24 and 10.0.2.0/24*
 - DNS queries, certificate revocation list checking and Azure CDN requests are still sent over the public internet
 
-### High availability
+### Resiliency
 
-- At lest **two peering locations**
-  - ExpressRoute Metro: two peering locations in the same city, each has one active connection
-    - It's not a different SKU, just choose a location with "Metro" suffix
-    - No additional cost on MS side, but may incur extra cost on telcom side
-  - Different cities
+- **Standard resiliency**: one circuit in one peering location
+
+  ![ExpressRoute standard resiliency](./images/azure_expressroute-resiliency-standard.png)
+
+- **High resiliency (Metro)**: one circuit, connections in two peering locations in one metro area
+
+  ![ExpressRoute high resiliency](./images/azure_expressroute-resiliency-high.png)
+  - It's not a different SKU, just choose a location with "Metro" suffix
+  - No additional cost on MS side, but may incur extra cost on telcom side
+
+- **Maximum resiliency**: different regions
+
+  ![ExpressRoute maximum resiliency](./images/azure_expressroute-resiliency-maximum.png)
+  - Two circuits, double throughput
+
 - ER gateway should be **zone redundant**
 - Configure ExpressRoute and S2S VPN coexisting connections (VPN could serve as a failover)
 
