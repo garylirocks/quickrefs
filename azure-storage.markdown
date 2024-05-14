@@ -347,15 +347,18 @@ Two typical designs for using Azure Storage to store user data:
 
 ### View data in Azure Portal
 
+See: https://learn.microsoft.com/en-us/azure/storage/blobs/authorize-data-operations-portal#permissions-needed-to-access-blob-data
+
 When you try to view data (blob, files) in the Portal,
 
+1. You need a "**Reader**" role on the storage account (or above) to navigate to it in the Portal
 1. If you have a role with the `Microsoft.Storage/storageAccounts/listkeys/action` permission, then the portal uses access key for accessing data
     - When there is a "ReadOnly" lock on the account, the `listkeys` action, which is a POST action, would NOT be allowed, the user must use Entra credentials
-2. Otherwise, the portal attempts to use Entra credentials
+1. Otherwise, the portal attempts to use Entra credentials
 
 Note:
 
-The setting "*Default to Microsoft Entra authorization in the Azure portal*" allows you to make Microsoft Entra authorization the default option, a user can still overrides it ans use access key authorization.
+The setting "*Default to Microsoft Entra authorization in the Azure portal*" allows you to make Microsoft Entra authorization the default option, a user can still use access key authorization.
 
 ### CLI and curl commands with different auth methods
 
