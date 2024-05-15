@@ -22,6 +22,7 @@
 - [Users](#users)
   - [Emergence accounts (break-glass accounts)](#emergence-accounts-break-glass-accounts)
 - [Groups](#groups)
+  - [Group writeback](#group-writeback)
 - [Workload identities](#workload-identities)
   - [App registrations vs. Service principals](#app-registrations-vs-service-principals)
   - [Service principals](#service-principals)
@@ -270,7 +271,7 @@ Entra does not replace Active Directory, they can be used together, **Entra Conn
 - Entra Connect can sync to only a verified domain(eg. `contoso.com`, not just `contoso`) in Entra
 - You're able to specify the attribute in AD that should be used as UPN to sign in to Entra
 - You can filter what objects are synced based on domain or OU in AD
-- Alternatively, you could use **Entra Connect Cloud Sync** to run the syncing in cloud instead of on-prem
+- Alternatively, you could use **Entra Cloud Sync** to run the syncing in cloud instead of on-prem
   - You still need to download and install a lightweight provisioning agent on-prem
   - All the management is done in Azure Portal
 
@@ -526,6 +527,23 @@ Note:
   - Owner can be user or SP, not group
   - When an SP creates a group, it will be added as the owner automatically
   - If a group has only one user owner, this user owner can't be removed, even the group has an SP owner
+
+### Group writeback
+
+- Uses Entra Cloud Sync (not Connect Sync)
+  - You may be syncing only certain OUs from AD to cloud, this does not affect the group writeback
+- Scopes
+  - Group source must be **Cloud** (not Windows Server AD), type must be **Security** (not distribution list)
+  - Could be selected groups, or all eligible groups
+- Target
+  - You could specify a constant OU
+  - Or use an expression to map to OUs dynamically
+- In AD, it
+  - Creates groups
+  - Adds users to the groups
+    - users must be existing in AD already
+    - if a user was created in cloud, does not exist in AD, it will be skipped
+  - The group created in AD should NOT be edited in AD, you should update it in the cloud
 
 
 ## Workload identities
