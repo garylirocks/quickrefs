@@ -622,6 +622,24 @@ Types:
   - Data could be lost during a maintenance or redeployment of the VM;
   - Suitable for temporary data storage, eg. page or swap file, tempdb for SQL Server;
 
+- Ephemeral OS disk
+  - Benefits:
+    - No need to pay for OS disk
+    - High performance
+  - You can choose where to put it (both on local SSD in the host)
+    - OS cache placement
+    - Temp disk placement
+  - Usage scenarios
+    - When you don't care the state of the OS
+    - VMSS, and services built on top of it, AKS, App service, etc
+  - Unsupported features
+    - Capturing VM images
+    - Disk snapshots
+    - Azure Disk Encryption
+    - Azure Backup
+    - Azure Site Recovery
+    - OS Disk Swap
+
 Operations:
 
 - Data disk could be detached/attached without stopping the VM
