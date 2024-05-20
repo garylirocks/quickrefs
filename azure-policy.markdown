@@ -544,7 +544,7 @@ A `deployIfNotExists` or `modify` policy should define the roles it requires:
 
 ## Gotchas
 
-- You can't remove/rename parameter(s) when updating a policy/initiative
+- You **CAN'T** remove/rename parameter(s) when updating a policy/initiative
 - New parameters could only be added to an existing policy/initiative if they have a default value
 
     So with Terraform, you'd better put **md5 hash of the parameters file** in the name of the policy/set, whenever you update/remove/rename a parameter, it would force replacing the old policy/set with a new one.
