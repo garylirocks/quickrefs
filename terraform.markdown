@@ -465,7 +465,7 @@ Note:
       # sas_key            = 'xxxx'
       ```
 
-  1. Authentication:
+  1. Authentication, see details here https://developer.hashicorp.com/terraform/language/settings/backends/azurerm#authentication:
 
      1. You can use `access_key` or `sas_key`, they could be put in the config file, or as an environment variable
         1. access key

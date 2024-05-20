@@ -357,7 +357,7 @@ Example parameter file (use `reference` instead of `value`):
 - Some fields could not be changed, eg. you can't change an existing storage account from "Standard" type to "Premium", the deployment would not pass Preflight validation.
 - It's possible to just update specified properties, you can use `"mode": "Incremental"` in the `properties` block (See the deployment in [this Azure Policy](https://learn.microsoft.com/en-us/azure/azure-monitor/containers/kubernetes-monitoring-enable?tabs=policy#enable-container-insights)), the new properties are merged to existing properties, in the following example:
   - `name`, `type`, `location`, `apiVersion` are required
-  - `tags` is optional, if specified, it will overwrite existing tags
+  - `tags` seems always overwrite exiting tags in whole ?
   - `properties.a`, `properties.b.sub_a` will be updated, other properties will remain unchanged, including any other sub-properties of `properties.b`
 
   ```json

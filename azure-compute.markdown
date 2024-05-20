@@ -93,7 +93,7 @@ Checklist for creating VMs
     - **Data disk**, for database files, website static content, app code, etc
   - Disks are actually VHDs files (page blobs) in Azure Storage account, two options for managing the relationship between disks and storage accounts:
     - **managed disks**: newer and recommended, you only need to specify the type (Ultra/Premium/Standard SSD, Standard HDD) and size, only show the disks, hide the underlying storage account and page blobs
-    - **unmanaged disks**: expose the underlying storage accounts and page blobs, an account is capable of supporting 40 standard VHDs, it's hard to scale out, you need to take care IOPS limit, etc
+    - **unmanaged disks**: expose the underlying storage accounts and page blobs, doesn't show as a disk resource, an account is capable of supporting 40 standard VHDs, it's hard to scale out, you need to take care IOPS limit, etc
 
 - OS
   - Multiple versions of Windows and Linux

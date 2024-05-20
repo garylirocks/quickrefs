@@ -644,7 +644,9 @@ az storage blob delete-batch \
 - Automatically retry a transfer after a failure;
 - Supports copying an entire account (Blob service only) to another account;
 - Supports hierarchical containers;
-- Supports authentication with Azure AD or SAS tokens;
+- Authentication:
+  - Append an SAS token to endpoint URL
+  - Or you can use user, managed identity, service principal for authentication, see https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-authorize-azure-active-directory
 - Supports wildcard patterns in a path, `--include`, `--exclude` flags;
 - Use `--include-after` to only include files changed after a specific date/time;
 
