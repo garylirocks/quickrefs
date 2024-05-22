@@ -658,6 +658,7 @@ az storage blob delete-batch \
 - Supports hierarchical containers;
 - Authentication:
   - With Entra ID (user, managed identity, service principal), you need **data level permissions** (like Blob Data Contributor, etc), see [here](https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-authorize-azure-active-directory)
+    - Use environment variable to specify auth method, eg `export AZCOPY_AUTO_LOGIN_TYPE=AZCLI`
   - Append an SAS token to every endpoint URL
 - Supports wildcard patterns in a path, `--include`, `--exclude` flags;
 - Use `--include-after` to only include files changed after a specific date/time;
