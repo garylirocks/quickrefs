@@ -300,9 +300,21 @@ There are three types:
   - Could associate a stored access policy
 
 - **User delegation SAS**
-  - Secured with Azure AD credentials and also permissions specified for the SAS
-  - For Blob service only: could be at container or blob level
+  - Only for **Blob Storage and ADLS Gen2**: could be at container or blob level
+  - Stored access policies not supported
   - Recommended over signing with an access key
+  - How:
+    - Use RBAC to grant the desired permissions to the security principal who will request the user delegation key.
+    - Acquire an OAuth 2.0 token from Microsoft Entra ID.
+    - Use the token to request the **user delegation key** by calling the Get User Delegation Key operation.
+      - Need to specify the start and expiry time in the request body
+      - Need permission `Microsoft.Storage/storageAccounts/blobServices/generateUserDelegationKey` at the storage account level
+    - Use the user delegation key to construct the SAS token with the appropriate fields.
+      - The SAS valid time should be within the user delegation key valid time
+  - How to revoke the SAS:
+    - Revoke the "**user delegation key**"
+    - Or remove RBAC permission from the service principal
+  - The permissions are the intersection of the users' permissions and the permission specified in the SAS (`signedPermissions` field)
 
 NOTE: *Account SAS and Service SAS are signed by account access key, so if you disable account key, they won't work*
 
@@ -645,8 +657,8 @@ az storage blob delete-batch \
 - Supports copying an entire account (Blob service only) to another account;
 - Supports hierarchical containers;
 - Authentication:
-  - Append an SAS token to endpoint URL
-  - Or you can use user, managed identity, service principal for authentication, see https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-authorize-azure-active-directory
+  - With Entra ID (user, managed identity, service principal), you need **data level permissions** (like Blob Data Contributor, etc), see [here](https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-authorize-azure-active-directory)
+  - Append an SAS token to every endpoint URL
 - Supports wildcard patterns in a path, `--include`, `--exclude` flags;
 - Use `--include-after` to only include files changed after a specific date/time;
 
@@ -665,8 +677,11 @@ azcopy copy "https://sourceaccount.blob.core.windows.net/sourcecontainer/*?<sour
 # sync data
 azcopy sync ...
 
-# list data/create new container/remove blobs
-azcopy [list|make|remove] ...
+# create new container
+azcopy make ...
+
+# list/remove files
+azcopy [list|remove] ...
 
 # show job status
 azcopy jobs list
