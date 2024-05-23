@@ -1595,15 +1595,23 @@ A combination of network monitoring and diagnostic tools.
     - A file per MAC address per hour
     - One entry per minute
     - No support for flow into a private endpoint (available at the flow source end)
+    - vNet Flow Logs can capture more information:
 
-  vNet Flow Logs can capture more information:
+      | Capability                                                                               | NSG flow logs                  | Virtual network flow logs                  |
+      | ---------------------------------------------------------------------------------------- | ------------------------------ | ------------------------------------------ |
+      | Scope of enablement                                                                      | NSG                            | Virtual network, subnet, network interface |
+      | Identification of allowed/denied traffic in NSG rules                                    | Yes                            | Yes                                        |
+      | Identification of allowed/denied traffic by Virtual Network Manager security admin rules | No                             | Yes                                        |
+      | Support of Virtual Network encryption                                                    | No                             | Yes                                        |
+      | Traffic volume (bytes and packets) for stateless flows                                   | No                             | Yes                                        |
+      | Extensive resource coverage                                                              | No                             | Yes                                        |
+      | vNet gateway traffic                                                                     | No                             | Yes                                        |
+      | Price                                                                                    | per gigabyte of logs collected | per gigabyte logs collected                |
 
-  - Capture gateway traffic
-  - Flow encryption status
-  - Whether the flow is allowed by a security admin rule
+    - vNet Flow Logs does **NOT** work with vWAN hub (yet), you need to enable it on all the spoke vNets
 
 - **Traffic Analytics**
-  - ingest logs to Log Analytics, help query/visualize your NSG Flow Log data
+  - ingest logs to Log Analytics, help query/visualize traffic distribution, usage pattern, etc
   - works with both NSG and vNet flow logs
   ![Traffic analytics data flow](images/azure_traffic-analytics.png)
 
