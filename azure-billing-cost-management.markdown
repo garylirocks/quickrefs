@@ -2,9 +2,9 @@
 
 - [Overview](#overview)
 - [Billing Account types (Agreement types)](#billing-account-types-agreement-types)
-- [Enterprise Agreement (EA)](#enterprise-agreement-ea)
-- [MCA](#mca)
-  - [Billing scopes](#billing-scopes)
+  - [Enterprise Agreement (EA)](#enterprise-agreement-ea)
+  - [MCA](#mca)
+    - [Billing scopes](#billing-scopes)
 - [Budgets](#budgets)
 - [Cost management](#cost-management)
   - [Cost views](#cost-views)
@@ -25,12 +25,12 @@
 
 ## Billing Account types (Agreement types)
 
-| Type                             | How                                                  | subscription limit                                       |
-| -------------------------------- | ---------------------------------------------------- | -------------------------------------------------------- |
-| Microsoft Online Service Program | Azure Free Account, pay-as-you-go                    | 5                                                        |
-| Enterprise Agreement             | Enterprise Agreement                                 | unlimited EA accounts, 5000 subscriptions per EA account |
-| Microsoft Customer Agreement     | Sign the agreement, or pay-as-you-go in some regions | 5                                                        |
-| Microsoft Partner Agreement      | Sign the agreement, or pay-as-you-go in some regions | N/A                                                      |
+| Type                               | How                                                  | subscription limit                                       |
+| ---------------------------------- | ---------------------------------------------------- | -------------------------------------------------------- |
+| Microsoft Online Service Program   | Azure Free Account, pay-as-you-go                    | 5                                                        |
+| Enterprise Agreement (EA)          | Enterprise Agreement                                 | unlimited EA accounts, 5000 subscriptions per EA account |
+| Microsoft Customer Agreement (MCA) | Sign the agreement, or pay-as-you-go in some regions | 5                                                        |
+| Microsoft Partner Agreement        | Sign the agreement, or pay-as-you-go in some regions | N/A                                                      |
 
 **Microsoft Online Service Program**
 
@@ -40,7 +40,7 @@
 ![Microsoft Partner Agreement](images/azure_billing-mpa-hierarchy.png)
 
 
-## Enterprise Agreement (EA)
+### Enterprise Agreement (EA)
 
 ![Enterprise Agreement](images/azure_billing-ea-hierarchy.png)
 
@@ -74,11 +74,9 @@ resource "azurerm_subscription" "example" {
 }
 ```
 
+### MCA
 
-
-## MCA
-
-### Billing scopes
+#### Billing scopes
 
 ![Microsoft Customer Agreement](images/azure_billing-mca-hierarchy.png)
 
