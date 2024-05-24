@@ -23,16 +23,18 @@
   - [Blob types](#blob-types)
   - [Access tiers](#access-tiers)
   - [Organization](#organization)
+  - [Properties, metadata](#properties-metadata)
+  - [Index tags](#index-tags)
   - [Life cycle management rules](#life-cycle-management-rules)
   - [Soft delete](#soft-delete)
   - [Versioning vs. snapshot](#versioning-vs-snapshot)
+  - [Recommended data protection configuration](#recommended-data-protection-configuration)
   - [Immutable storage for Azure Blobs](#immutable-storage-for-azure-blobs)
   - [Operational backup](#operational-backup)
   - [Object replication](#object-replication)
   - [CLI](#cli-1)
   - [AzCopy](#azcopy)
   - [.NET Storage Client library](#net-storage-client-library)
-  - [Properties and Metadata](#properties-and-metadata)
   - [Concurrency](#concurrency)
 - [Azure Data Lake Storage Gen2](#azure-data-lake-storage-gen2)
   - [Authorization](#authorization)
@@ -53,6 +55,7 @@
 - [NetApp Files](#netapp-files)
 - [Elastic SAN](#elastic-san)
 - [Tables](#tables)
+- [Azure Storage Actions](#azure-storage-actions)
 - [Troubleshooting](#troubleshooting)
 
 ## Overview
@@ -113,7 +116,7 @@ Azure Storage is also used by IaaS VMs, and PaaS services:
 - Default access tier (*Standard accounts only, Does not apply to Premium accounts*)
   - Hot or cool
   - *Only applies to blobs*
-  - Can be specified for each blob individually (Hot/Cool/Archive)
+  - Can be specified for each blob individually
 
 - Redundancy
 
@@ -500,7 +503,7 @@ You could specify the blob type and access tier when you create a blob.
   - Best used for discrete, large, binary objects that change infrequently.
 - **Append blobs**:
   - Specialized block blobs
-  - Only supports "add" operation, no updateing or deleting existing blocks (*the `add` permission is for adding a block to an append blob*)
+  - Only supports "add" operation, no updating or deleting existing blocks (*the `add` permission is for adding a block to an append blob*)
   - Block size up to 4MB, blob size up to 195GB.
 - **Page blobs**:
   - Fixed size 512-byte pages.
@@ -510,7 +513,7 @@ You could specify the blob type and access tier when you create a blob.
 
 ### Access tiers
 
-For block blobs, there are three access tiers: "hot", "cool" and "archive", from hot to cool to archive, the cost of storing data decreases but the cost of retrieving data increses.
+For block blobs, there are four access tiers: "hot", "cool", "cold" and "archive", from hot to archive, the cost of storing data decreases but the cost of retrieving data increses.
 
 - An account has a default tier, either hot or cool
 - A blob can be at any tier
@@ -518,7 +521,6 @@ For block blobs, there are three access tiers: "hot", "cool" and "archive", from
   - can only be set at blob level
   - data is **offline**, only metadata available for online query
   - to access data, the blob must first be **rehydrated** (changing the blob tier from Archive to Hot or Cool, this can take hours)
-
 
 ### Organization
 
@@ -529,25 +531,124 @@ For block blobs, there are three access tiers: "hot", "cool" and "archive", from
   - Can contain unlimited blobs
   - Can be seen as a security boundary for blobs
   - Usually created in an app as needed (calling `CreateIfNotExistsAsync` on a `CloudBlobContainer` is the best way to create a container when your application starts or when it first tries to use it)
-- Virtual directories: technically containers are "flat", there is no folders. But if you give blobs hierarchical names looking like file paths, the API's listing operation can filter results to specific prefixes.
+- Virtual directories
+  - Technically containers are **"flat"** there is no folders. But if you give blobs hierarchical names looking like file paths, the API's listing operation can filter results to specific prefixes.
+
+### Properties, metadata
+
+- Both containers and blobs have properties and metadata.
+- Some properties correspond to certain standard HTTP headers, such as
+  - "ETag"
+  - "Last-Modified"
+  - "Content-Length"
+  - "Content-Type"
+  - "Content-MD5"
+  - "Content-Encoding"
+  - "Content-Language"
+  - "Cache-Control"
+  - "Origin"
+  - "Range"
+- Metadata
+  - are for your own purposes only
+  - they show up in HTTP headers, eg. `x-ms-meta-<metatag>: <metavalue>`
+  - updating metadata changes the blob's last-modified-time
+  - not indexed and queryable by default, unless you use something like Azure Search
+
+| Properties                     | Metadata                      |
+| ------------------------------ | ----------------------------- |
+| system-defined                 | user-defined name-value pairs |
+| read-only or read-write        | read-write                    |
+| `Length`, `LastModifined`, ... | `docType`, `docClass`, ...    |
+
+```sh
+export AZURE_STORAGE_ACCOUNT=<account>
+export AZURE_STORAGE_SAS_TOKEN=<token>
+
+# get details of a blob
+az storage blob show -c myContainer -n 'file.txt'
+
+# set a property on a blob
+# this will make CDN don't cache this file
+az storage blob update -c myContainer -n 'file.txt' --content-cache-control 'no-cache'
+# can be done during upload as well
+az storage blob upload -c myContainer -n 'file.txt' -f file.txt -p cacheControl="no-cache"
+# using azcopy
+azcopy cp file.txt <remote-address> --cache-control 'no-cache'
+
+# get metadata of a blob
+az storage blob metadata show -c myContainer -n 'file.txt'
+
+# properties for the whole blob service, not a specific blob
+az storage blob service-properties show
+```
+
+### Index tags
+
+See [here](https://learn.microsoft.com/en-us/azure/storage/blobs/storage-manage-find-blobs?tabs=azure-portal)
+
+Similar to metadata, they are key-value pairs, but they are indexed, so let you:
+
+- Find blobs across containers in an account
+- Use `x-ms-if-tags` HTTP header for conditional blob operations
+- Filter blobs in lifecycle management rules
+
+Operations:
+
+- Updating tags doesn't modify the blob's last-modified-time or eTag
+- Index tags is a subresource of blob (`Microsoft.Storage/storageAccounts/blobServices/containers/blobs/tags`)
+  - It could be retrived independently
+  - You needs separate permissions, see below
+  - For any blobs with at least one blob index tag, `x-ms-tag-count` is returned with "Get Blob" operation, indicating the count of tags
+- If versioning is enabled, when you update/replace a blob, the tags will be preserved on the previous version, not the current version
+- When copying blobs, index tags are not copied over
+- Blob subtypes:
+  - Base blobs: tags can be created or modified
+  - Versions: tags preserved, can't be queried
+  - Snapshots and soft-deleted: tags can't be modified
+
+Permissions required:
+
+- RBAC: "Storage Blob Data Owner" or `Microsoft.Storage/storageAccounts/blobServices/containers/blobs/tags/write` permission
+- The `t` flag in SAS permission
+
+Compare metadata and tags
+
+|                           | Metadata     | Tags               |
+| ------------------------- | ------------ | ------------------ |
+| Limits                    | max. 8KB     | max. 10 tags       |
+| Change last-modified-time | Yes          | No                 |
+| Native indexing/quering   | No           | Yes                |
+| In HTTP header            | Yes          | `x-ms-tag-count`   |
+| Permissions               | Same as blob | Additional         |
+| Encryption                | Same as blob | Microsoft-managed  |
+| Pricing                   | Storage cost | Fixed cost per tag |
+
 
 ### Life cycle management rules
 
-- You could define rules to move blobs to a cooler tier when they are not modified for X days (hot -> cool/archive, cool -> archive)
-- Or delete blobs at the end of their life cycle
+- You could define rules to move blobs to a cooler tier (hot -> cool -> cold -> archive) or deletion, after X days of creation or modification
+- Could be filtered by:
+  - Type: block / append blob
+  - Subtypes: Base blobs / versions / snapshots
+  - Filter: prefix, index tags
 - Apply rules to containers or a subset of blobs
 
 ### Soft delete
 
 - Container soft delete: only container-level operations can be restored. Can't restore deleted blobs in the container.
-- Blob soft delete: only work on blob-level operations
-  - Works for previous versions as well
+- Blob soft delete: to restore a blob, snapshot, or version that has been deleted
 
 ### Versioning vs. snapshot
 
 - When blob versioning is enabled: A blob version is created automatically on a write or delete operation
 - A blob snapshot is created manually, not necessary if versioning is enabled
 - Versioning is not supported for ADLS Gen 2, snapshot is supported (in preview)
+
+### Recommended data protection configuration
+
+- Container soft delete
+- Blob soft delete
+- Blob versioning
 
 ### Immutable storage for Azure Blobs
 
@@ -653,15 +754,19 @@ az storage blob delete-batch \
 ### AzCopy
 
 - All operations are async, each instance creates a job, you can view and restart previous jobs and resume failed jobs;
+  - "copy" operation is synchronous
 - Automatically retry a transfer after a failure;
-- Supports copying an entire account (Blob service only) to another account;
+- Supports copying an entire account (Blob/ADLS service only) to another account;
 - Supports hierarchical containers;
 - Authentication:
   - With Entra ID (user, managed identity, service principal), you need **data level permissions** (like Blob Data Contributor, etc), see [here](https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-authorize-azure-active-directory)
     - Use environment variable to specify auth method, eg `export AZCOPY_AUTO_LOGIN_TYPE=AZCLI`
   - Append an SAS token to every endpoint URL
-- Supports wildcard patterns in a path, `--include`, `--exclude` flags;
-- Use `--include-after` to only include files changed after a specific date/time;
+- Supports wildcard patterns in a path
+- Optional flags
+  - `--include`, `--exclude` for filtering
+  - `--include-after` to only include files changed after a specific date/time
+  - `--blob-type`, `--block-blob-tier` to config destination blobs type and tier
 
 ```sh
 # upload file
@@ -671,7 +776,11 @@ azcopy copy "myfile.txt" "https://myaccount.blob.core.windows.net/mycontainer/?<
 azcopy copy "myfolder" "https://myaccount.blob.core.windows.net/mycontainer/?<sas token>" \
   --recursive=true
 
-# transfer between accounts
+# copy between accounts
+# - copy data between servers directly
+# - could copy individual blob, a virtual folder, a container or the entire account
+# - client needs network access to both source and destination accounts
+# - index tags are not copied, you can add tags using `--blob-tags` parameter
 azcopy copy "https://sourceaccount.blob.core.windows.net/sourcecontainer/*?<source sas token>" \
   "https://destaccount.blob.core.windows.net/destcontainer/*?<dest sas token>"
 
@@ -684,6 +793,13 @@ azcopy make ...
 # list/remove files
 azcopy [list|remove] ...
 
+# change access tier
+azcopy set-properties '<url>' --block-blob-tier=[hot|cool|cold|archive]
+# update metadata
+azcopy set-properties '<url>' --metadata=mykey1=myvalue1;mykey2=myvalue2
+# update index tags
+azcopy set-properties '<url>' --blob-tags=mytag1=mytag1value;mytag2=mytag2value
+
 # show job status
 azcopy jobs list
 ```
@@ -693,39 +809,6 @@ azcopy jobs list
 - Suitable for complex, repeated tasks
 - Provides full access to blob properties
 - Supports async operations
-
-### Properties and Metadata
-
-- Both containers and blobs have properties and metadata.
-- Can be accessed/updated by Portal, CLI, PowerShell, SDK, REST API.
-
-| Properties                     | Metadata                      |
-| ------------------------------ | ----------------------------- |
-| system-defined                 | user-defined name-value pairs |
-| read-only or read-write        | read-write                    |
-| `Length`, `LastModifined`, ... | `docType`, `docClass`, ...    |
-
-```sh
-export AZURE_STORAGE_ACCOUNT=<account>
-export AZURE_STORAGE_SAS_TOKEN=<token>
-
-# get details of a blob
-az storage blob show -c myContainer -n 'file.txt'
-
-# set a property on a blob
-# this will make CDN don't cache this file
-az storage blob update -c myContainer -n 'file.txt' --content-cache-control 'no-cache'
-# can be done during upload as well
-az storage blob upload -c myContainer -n 'file.txt' -f file.txt -p cacheControl="no-cache"
-# using azcopy
-azcopy cp file.txt <remote-address> --cache-control 'no-cache'
-
-# get metadata of a blob
-az storage blob metadata show -c myContainer -n 'file.txt'
-
-# properties for the whole blob service, not a specific blob
-az storage blob service-properties show
-```
 
 ### Concurrency
 
@@ -1033,6 +1116,13 @@ A NoSQL solution, makes use of tables containing key/value data items
 - The composite of `PartitionKey` and `RowKey` uniquely identifies a row
 - No foreign keys, stored procedures, views, or other objects
 - You can set RBAC permissions at table level
+
+
+## Azure Storage Actions
+
+Serverless framework to perform common data operations on millions of objects across multiple storage accounts.
+
+// TODO
 
 
 ## Troubleshooting
