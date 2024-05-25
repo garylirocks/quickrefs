@@ -78,7 +78,7 @@
 
 - There's a setting to enable branch-to-branch routing in a vWAN
 - For site-to-site VPN, the address spaces configured for VPN Sites determines the routing in the hub
-  - Address spaces of a VPN site in one region will be propagated to other region hubs
+  - Address spaces of a VPN site in one region will be propagated to hubs in other regions
   - If VPN sites in two regions have been configured with same address space, the traffic destined to it will be routed to the VPN gateway in the same hub, not hubs in other regions
 
 ### Custom route tables
@@ -148,6 +148,8 @@ Apply to:
   - VNet connection
 
 ### Routing scenarios
+
+See the [ExpressRoute note](./azure-networking.markdown#expressroute) for routing scenarios involving ER circuits
 
 - Isolating vNets ([Video link](https://youtu.be/2g-_empU0GU?si=WZ0nU3iGwOnKL7Ya&t=895)):
 

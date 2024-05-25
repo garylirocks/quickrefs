@@ -33,6 +33,10 @@
 - [ExpressRoute](#expressroute)
   - [Resiliency](#resiliency)
   - [Compare to Site-to-Site VPN](#compare-to-site-to-site-vpn)
+  - [Prefer global peering over ER circuits](#prefer-global-peering-over-er-circuits)
+    - [ExpressRoute Gateway configuration](#expressroute-gateway-configuration)
+    - [vNet-to-vNet](#vnet-to-vnet-1)
+    - [vWAN hub-to-hub](#vwan-hub-to-hub)
 - [Routing](#routing)
   - [Default system routes](#default-system-routes)
   - [User-defined routes](#user-defined-routes)
@@ -788,6 +792,50 @@ A vNet can have both ExpressRoute and VPN gateways at the same time.
 | Protocol           | SSTP or IPsec                                                      | Direct over VLAN or MPLS                                                                     |
 | Routing            | Static or dynamic                                                  | Border Gateway Protocol (BGP)                                                                |
 | Use cases          | <ul><li>Dev, test and lab</li><li>Small-scale production</li></ul> | <ul><li>Enterprise-class and mission-critical workloads</li><li>Big data solutions</li></ul> |
+
+### Prefer global peering over ER circuits
+
+For traffic between Azure vNets, it is not optimal to route traffic via an ExpressRoute circuit, should be avoided.
+
+See details here in a [Microsoft Tech Community blob post](https://techcommunity.microsoft.com/t5/azure-networking-blog/customisation-controls-for-connectivity-between-virtual-networks/ba-p/4147722)
+
+#### ExpressRoute Gateway configuration
+
+- In a vNet (usually a hub)
+  - Allow traffic from remote Virtual Networks
+  - Allow traffic from remote Virtual WAN Networks
+- In a vWAN hub
+  - Allow traffic from non-Virtual WAN Networks
+
+These controls whether to accept network prefix advertisement learnt from ExpressRoute MSEE (originating from remote vNet or vWAN)
+
+These settings does not affect advertisement of prefixes originating from on-prem.
+
+#### vNet-to-vNet
+
+![ER for vNet-to-vNet connectivity](./images/azure_expressroute-for-vnet-connectivity.png)
+
+- This used to be a solution to connect two hubs, but there are issues:
+  - Dependency on Peering Location and MSEE for vNet-to-vNet traffic
+  - Increased latency comparing to vNet peering
+  - Increased load on ER VNG, could affect on-prem to Azure traffic
+- If the "Allow traffic from remote Virtual Networks" option is enabled on both sides, spoke vNets can talk to each other
+- This setup should be **avoided**, you should peer the hub vNets directly
+
+A better solution is like
+
+![hub-spoke vnet-to-vnet](./images/azure_expressroute-hub-spoke-vnet-to-vnet.png)
+
+- Untick "Allow traffic from remote Virtual Networks", so prefixes of spoke vNets in Region A won't be injected to route tables in Region B vNets
+- Add a UDR on the firewall vNet, set next hop to be firewall in the other region, so Global vNet Peering will be used for cross-region traffic
+- This needs to be mirrored on both regions
+
+#### vWAN hub-to-hub
+
+![vWAN hub-to-hub](./images/azure_expressroute-vhub-to-vhub.png)
+
+- Spoke vNet prefixes are advertised and accepted on each hub
+- But you should use "Virtual Hub Routing Preference" to ensure hub-to-hub routing (instead of ER) of vNets connected to the vWAN hubs
 
 
 ## Routing
