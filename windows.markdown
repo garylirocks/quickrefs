@@ -33,7 +33,7 @@
 - `Win + X`: quick link menu
 - `Win + Tab`: task view, switch between virtual desktops
 - `Win + Ctrl + < or >`: switch between virtual desktops
-- `Win + ?`: Shortcut guide (when enabled in PowerToys)
+- `Win + Shift + /`: Shortcut guide (when enabled in PowerToys)
 
 - `Alt + F4`: close current window
 - `Shift + F10`: right-click menu (aka. context menu)
