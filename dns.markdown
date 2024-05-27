@@ -6,6 +6,7 @@
 - [`systemd-resolve`](#systemd-resolve)
 - [Security](#security)
 - [DNSSEC](#dnssec)
+- [Windows Server DNS](#windows-server-dns)
 - [Misc](#misc)
 
 
@@ -203,6 +204,14 @@ Chain of trust:
 - Most resolvers are configured with just one trust anchor: a set of public keys for the root zone
 - The root zone and all gTLDs are already signed.
 - Domain owners generate their own keys, and upload them to the domain-name registrar, which pushes the keys to the zone operator (e.g. Verisign for .com), who signs and publishes them in DNS
+
+
+## Windows Server DNS
+
+Some notes about Windows Server DNS
+
+- Conditional Forwarders
+  - If you have `company.com` in Forward Lookup Zones, and then if you want to add a conditional forwarder for a subzone `sub.company.com`, then you'll need to add a delegation for `sub.company.com` in `company.com` first. Does it matter whether the delegation and conditional forwarder is the same ? (haven't validated this, see https://techcommunity.microsoft.com/t5/windows-server-for-it-pro/dns-delegation-and-conditional-forwarder-for-the-same-domain/m-p/3717385)
 
 
 ## Misc
