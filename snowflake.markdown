@@ -1,5 +1,18 @@
 # Snowflake
 
+- [Overview](#overview)
+- [Databases](#databases)
+- [File format and Stages](#file-format-and-stages)
+- [Warehouses](#warehouses)
+- [Data types](#data-types)
+- [Privileges](#privileges)
+- [Azure Private Link](#azure-private-link)
+- [Loading data from Azure](#loading-data-from-azure)
+  - [Networking](#networking)
+  - [Security](#security)
+    - [Storage integration object](#storage-integration-object)
+
+
 ## Overview
 
 You could choose Azure, AWS or GCP as the underlying platform.
@@ -109,6 +122,17 @@ GRANT CREATE STAGE ON SCHEMA public TO ROLE myrole;
 
 GRANT USAGE ON INTEGRATION azure_int TO ROLE myrole;
 ```
+
+
+## Azure Private Link
+
+See details here https://docs.snowflake.com/en/user-guide/privatelink-azure
+
+![Azure Private Link](./images/snowflake_azure-private-link.png)
+
+- The private endpoint is in your vNet, the private link is in Snowflake's vNet
+- After you create the private endpoint in Azure, you'll need to authorize it in Snowflake with function `SYSTEM$AUTHORIZE_PRIVATELINK`
+- You need to add multiple domain names to the `privatelink.snowflakecomputing.com` zone, which could be an Azure Private DNS zone or one in your internal DNS system
 
 
 ## Loading data from Azure
