@@ -1338,6 +1338,10 @@ Considerations:
 
 You could link a Private DNS Zone to a vNet (not subnet), enable auto-registration, then hostname of any VMs in the vNet would be registered in this Private DNS Zone
 
+- The vNet and the Private DNS Zone could be in different subscriptions, to create a vNet link, permissions required:
+  - `Microsoft.Network/privateDnsZones/virtualNetworkLinks/write` on the Private DNS Zone
+  - `Microsoft.Network/virtualNetworks/join/action` on the vNet
+  - The builtin role `Private DNS Zone Contributor` has the required permissions
 - Note
   - They are global, could be accessed from any region, sny subscription, any tenant.
   - A zone can be linked to multiple vnets

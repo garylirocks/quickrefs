@@ -216,8 +216,9 @@ You could achieve this by using Azure Policy (assigned to landingzone subscripti
   - (Optional) `Deny` public endpoint for PaaS services
   - `Deny` creating of a private DNS zone with `privatelink` prefix
   - `DeployIfNotExists` policy to automatically create `privateDnsZoneGroups`, which associate private endpoints to private DNS zones in the connectivity subscription, the managed identity needs two permissions:
-    - `Network Contributor` for the private endpoint to add `privateDnsZoneGroups` to the PE
-    - `Private DNS Zone Contributor` for the private DNS zones to add 'A' records
+    - `Network Contributor` over the private endpoint to add `privateDnsZoneGroups` to the PE
+    - `Private DNS Zone Contributor` over the private DNS zones to add 'A' records
+
 
 ### Pitfall - Resolve PaaS endpoint in other tenants
 
