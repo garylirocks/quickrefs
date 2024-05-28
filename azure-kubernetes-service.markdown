@@ -2,7 +2,6 @@
 
 - [Overview](#overview)
 - [Resources](#resources)
-  - [Private DNS zone](#private-dns-zone)
 - [Node pools](#node-pools)
   - [Login to a node](#login-to-a-node)
 - [Namespace](#namespace)
@@ -17,6 +16,9 @@
   - [API server access options](#api-server-access-options)
   - [`command invoke`](#command-invoke)
   - [Egress](#egress)
+- [DNS](#dns)
+  - [Private DNS zone](#private-dns-zone)
+  - [DNS resolution inside pods](#dns-resolution-inside-pods)
 - [Application Gateway Ingress Controller (AGIC)](#application-gateway-ingress-controller-agic)
 - [Application Gateway for Containers (AGWC)](#application-gateway-for-containers-agwc)
 - [Add-ons](#add-ons)
@@ -97,14 +99,6 @@ When you create an AKS cluster, Azure creates a resource group that contains clu
 - Private cluster only
   - Private endpoint for the control plane
   - Private DNS zone (optional, could use an existing one)
-
-### Private DNS zone
-
-If you want to BYO DNS zone (`privatelink.<region>.azmk8s.io`), the cluster needs a user assigned identity, which needs the "Azure Private DNS Zone Contributor" role on the DNS zone.
-
-![Private DNS Zone config](images/aks_private-dns-zone-hub-spoke.png)
-
-*vNet link ("3" on the diagram) is not needed, since all DNS resolution goes through the hub vNet*
 
 
 ## Node pools
@@ -327,6 +321,27 @@ A few options:
 - Managed NAT gateway
 - User defined routing
 - User assigned NAT gateway
+
+
+## DNS
+
+### Private DNS zone
+
+When you build a AKS cluster, if you want to BYO DNS zone (`privatelink.<region>.azmk8s.io`), the cluster needs a user assigned identity, which needs the "Azure Private DNS Zone Contributor" role on the DNS zone.
+
+![Private DNS Zone config](images/aks_private-dns-zone-hub-spoke.png)
+
+*vNet link ("3" on the diagram) is not needed, since all DNS resolution goes through the hub vNet*
+
+### DNS resolution inside pods
+
+See [CoreDNS customization](https://learn.microsoft.com/en-us/azure/aks/coredns-custom) and [trouble shooting guide](https://learn.microsoft.com/en-us/troubleshoot/azure/azure-kubernetes/connectivity/troubleshoot-dns-failure-from-pod-but-not-from-worker-node)
+
+- For DNS resolution, pods send requests to the **CoreDNS** pods in the `kube-system` namespace.
+- If the DNS query is for an internal component, such as a service name, the CoreDNS pod responds by itself. However, if the request is for an external domain, the CoreDNS pod sends the request to the upstream DNS server.
+- The upstream DNS servers are obtained based on the `resolv.conf` file of the worker node in which the pod is running. The `resolv.conf` file (`/run/systemd/resolve/resolv.conf`) is updated based on the **DNS settings of the virtual network** on which the worker node is running.
+- A cluster node usually query the first DNS server in the list, however, a pod may pick a random DNS server from the list, see [here](https://learn.microsoft.com/en-us/troubleshoot/azure/azure-kubernetes/connectivity/troubleshoot-dns-failure-from-pod-but-not-from-worker-node#step-3-check-whether-dns-requests-work-when-the-upstream-dns-server-is-explicitly-specified)
+- If you update DNS settings of the vNet, you'll need to restart network service in the nodes, and the CoreDNS pods
 
 
 ## Application Gateway Ingress Controller (AGIC)
