@@ -295,6 +295,7 @@ There are three types:
     - Allowed services: Blob, File, Queue, Table
     - Allowed resource types: Service, Container, Object
     - Allowed permissions: Read, Write, Delete, List, ...
+      - "Add" permission is for adding a block to an append blob
     - No support for stored access policies
 
 - **Service SAS**
@@ -784,7 +785,7 @@ azcopy copy "myfolder" "https://myaccount.blob.core.windows.net/mycontainer/?<sa
 azcopy copy "https://sourceaccount.blob.core.windows.net/sourcecontainer/*?<source sas token>" \
   "https://destaccount.blob.core.windows.net/destcontainer/*?<dest sas token>"
 
-# sync data
+# sync data, similar to copy, but it can compare timestamp/MD5 to determine if a file needs to be copied
 azcopy sync ...
 
 # create new container
