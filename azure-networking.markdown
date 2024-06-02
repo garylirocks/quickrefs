@@ -118,6 +118,8 @@ Virtual networks and subnets **span all availability zones in a region**. You do
   - `x.x.x.1`: Reserved by Azure for the default gateway
   - `x.x.x.2`, `x.x.x.3`: Reserved by Azure to map the Azure DNS IPs to the VNet space
   - `x.x.x.255`: Network broadcast address
+- A vNet and subnet can have **non-contiguous** address spaces, eg. `10.0.1.0/24`, `10.0.3.0/24`
+  - You can add non-contiguous address space to an existing vNet/subnet
 
 #### Design
 
@@ -776,7 +778,7 @@ Connectivity can be from:
   ![ExpressRoute maximum resiliency](./images/azure_expressroute-resiliency-maximum.png)
   - Two circuits, double throughput
 
-- ER gateway should be **zone redundant**
+- You should use the **zone redundant** SKUs for ER gateways (you could migrate an existing non-AZ-enabled ERG to an AZ-enabled one, this is done by creating the new ERG, then migrating traffic to it)
 - Configure ExpressRoute and S2S VPN coexisting connections (VPN could serve as a failover)
 
 A vNet can have both ExpressRoute and VPN gateways at the same time.
