@@ -284,9 +284,8 @@ Get-MgRoleManagementDirectoryRoleAssignmentSchedule -Filter "principalId eq '$my
 
 See https://stackoverflow.com/questions/73779593/how-to-get-pim-role-assignments-for-children-resources-of-a-subscription-via-pow
 
-If you choose a subscription scope, then in the "Assignments" menu, you can export all PIM role assignments at the subscription level, and all children RGs and resources within it. (including eligible and active assignments)
-
-For management groups, you can only export assignments at the MG level, **NOT** any children scopes.
+- If you choose a **subscription scope**, then in the "Assignments" menu, you can export all PIM role assignments at the subscription level, and all children RGs and resources within it. (including eligible and active assignments)
+- For **management groups**, you can only export assignments at the MG level, **NOT** any children scopes.
 
 ### By script
 
