@@ -293,9 +293,9 @@ See https://stackoverflow.com/questions/73779593/how-to-get-pim-role-assignments
 $scope='<full-resource-id>' // FULL id required
 $principal='xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
 
-# get eligible ones
-# - shows inherited permissions from upper scopes
-# - shows assignment in sub scopes,
+# get eligible assignments
+# - always show inherited permissions from upper scopes
+# - for sub scopes,
 #   - if the scope is a subscription, like `/subscriptions/xxxx`, it shows assignment on children RGs and resources within it
 #   - but if the scope is a management group like `/providers/Microsoft.Management/managementGroups/xxx`, it doesn't show assignments in children subscriptions
 Get-AzRoleEligibilitySchedule -Scope $scope -Filter "principalId eq $principal" `
@@ -303,8 +303,10 @@ Get-AzRoleEligibilitySchedule -Scope $scope -Filter "principalId eq $principal" 
 | Format-Table
 
 # Get active role assignments and who it's been eligible to (could be current user or a containing group):
-# - if the scope is a subscription, like `/subscriptions/xxxx`, it shows assignment on children RGs and resources within it, but NOT inherited ones from ancestor MGs
-# - if the scope is a management group, it shows assignment inherited from ancestor MGs, but not assignments in children subscriptions
+# - always show inherited permissions from upper scopes
+# - for sub scopes,
+#   - if the scope is a subscription, it shows assignment on children RGs and resources within it
+#   - but if the scope is a management group, it doesn't show assignments in children subscriptions
 Get-AzRoleAssignmentSchedule -Scope $scope -Filter "principalId eq $principal" `
 | Select-Object ScopeDisplayName,ScopeType,PrincipalDisplayName,RoleDefinitionDisplayName,RoleDefinitionType,EndDateTime,AssignmentType,@{
     n='PIMRoleAssignedTo';
