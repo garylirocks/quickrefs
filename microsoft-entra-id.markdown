@@ -31,6 +31,7 @@
   - [Workload identity federation](#workload-identity-federation)
     - [How it works](#how-it-works)
     - [CLI](#cli)
+  - [Workload Identity Premium](#workload-identity-premium)
 - [Application](#application)
   - [Application management](#application-management)
   - [My Apps portal](#my-apps-portal)
@@ -99,19 +100,19 @@ Objects in Entra
 
 ## SKUs/Licenses
 
-| Feature                                                           | Free      | Microsoft 365 Apps | Premium P1 | Premium P2 |
-| ----------------------------------------------------------------- | --------- | ------------------ | ---------- | ---------- |
-| Directory Objects                                                 | 500,000   | Unlimited          | Unlimited  | Unlimited  |
-| Single Sign-On                                                    | Unlimited | Unlimited          | Unlimited  | Unlimited  |
-| Core Identity and Access Management                               | X         | X                  | X          | X          |
-| Business to Business Collaboration                                | X         | X                  | X          | X          |
-| Identity & Access Management for Microsoft 365 apps               |           | X                  | X          | X          |
-| Premium Features                                                  |           |                    | X          | X          |
-| Hybrid Identities                                                 |           |                    | X          | X          |
-| Advanced Group Access Management                                  |           |                    | X          | X          |
-| Conditional Access                                                |           |                    | X          | X          |
-| Identity Protection (risk users)                                  |           |                    |            | X          |
-| Identity Governance (PIM, access reviews, entitlement management) |           |                    |            | X          |
+| Feature                                                           | Free      | Microsoft 365 | Entra ID P1 | Entra ID P2 |
+| ----------------------------------------------------------------- | --------- | ------------- | ----------- | ----------- |
+| Directory Objects                                                 | 500,000   | Unlimited     | Unlimited   | Unlimited   |
+| Single Sign-On                                                    | Unlimited | Unlimited     | Unlimited   | Unlimited   |
+| Core Identity and Access Management                               | X         | X             | X           | X           |
+| Business to Business Collaboration                                | X         | X             | X           | X           |
+| Identity & Access Management for Microsoft 365 apps               |           | X             | X           | X           |
+| Premium Features                                                  |           |               | X           | X           |
+| Hybrid Identities                                                 |           |               | X           | X           |
+| Advanced Group Access Management                                  |           |               | X           | X           |
+| Conditional Access                                                |           |               | X           | X           |
+| Identity Protection (risk users)                                  |           |               |             | X           |
+| Identity Governance (PIM, access reviews, entitlement management) |           |               |             | X           |
 
 Licenses are per user, so one user can have P1, another have P2
 
@@ -781,6 +782,20 @@ jobs:
           az account show
           az group list
 ```
+
+### Workload Identity Premium
+
+- It's a standalone product, you need a license for it
+  - Not included in other product plans, like Entra ID P1/P2, E5
+  - Charges you $3 per workload ID per month
+- One license in the tenant unlocks all the features for all the workload IDs, NO need to assign licenses to individual workload IDs
+- Provides more security features for workload identities:
+
+| Feature            | Service principal                | Managed identity | Note                        |
+| ------------------ | -------------------------------- | ---------------- | --------------------------- |
+| Conditional Access | Y (single-tenant app only)       | N                | eg. IP range                |
+| ID Protection      | Y (single and multi-tenant apps) | N                | Detect compromised IDs      |
+| Access Review      | Y                                | Y                | Review PIM role assignments |
 
 
 ## Application
