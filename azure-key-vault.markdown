@@ -10,6 +10,7 @@
   - [Certificate Policy](#certificate-policy)
 - [Permission models](#permission-models)
   - [Read a secret](#read-a-secret)
+  - [Understanding built-in roles](#understanding-built-in-roles)
 - [Recover](#recover)
 - [Networking](#networking)
 - [Vault authentication](#vault-authentication)
@@ -167,6 +168,17 @@ To allow a service principal to retrieve value of a secret from key vault, you n
 - Vault access policy
   - "Get" on secrets
   - "Key Vault Reader" role on the vault (only required by Terraform data block `azurerm_key_vault_secret`, not by AZ CLI)
+
+### Understanding built-in roles
+
+| Built-in role                       | Permission model | Management or data plane | Can                                                         |
+| ----------------------------------- | ---------------- | ------------------------ | ----------------------------------------------------------- |
+| Key Vault Secrets User              | RBAC             | D                        | read secrets                                                |
+| Key Vault Secrets Officer           | RBAC             | D                        | any action on secrets                                       |
+| Key Vault Administrator             | RBAC             | D                        | all actions on secrets/keys/certs                           |
+| Key Vault Data Access Administrator | RBAC             | M                        | assign data plane RBAC roles                                |
+| Key Vault Contributor               | -                | M                        | no access to data plane values, can change permission model |
+| Key Vault Reader                    | -                | M                        | no access to data plane values                              |
 
 
 ## Recover
