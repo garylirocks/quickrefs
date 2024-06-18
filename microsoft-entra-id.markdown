@@ -756,9 +756,11 @@ az ad app federated-credential create --id <APPLICATION-OBJECT-ID> --parameters 
 Subject format could be:
 
 - `repo:my-org/my-repo:environment:<env-name>`: tied to an env
-- `repo:my-org/my-repo:ref:refs/heads/my-branch`: tied to a branch
-- `repo:my-org/my-repo:ref:refs/tags/my-tag`: tied to a tag
+- `repo:my-org/my-repo:ref:refs/heads/<branch-name>`: tied to a branch
+- `repo:my-org/my-repo:ref:refs/tags/<tag-name>`: tied to a tag
 - `repo:my-org/my-repo:ref:pull_request`: for pull requests
+
+*You must use the exact name of the branch, tag and environment, there is **NO support for pattern matching** at the moment*
 
 Then in your GitHub workflow, use the `azure/login` action, providing the `client-id`, `tenant-id` and `subscription-id`, it will try to use OIDC to login by default.
 
