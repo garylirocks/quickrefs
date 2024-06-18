@@ -761,6 +761,7 @@ Subject format could be:
 - `repo:my-org/my-repo:ref:pull_request`: for pull requests
 
 *You must use the exact name of the branch, tag and environment, there is **NO support for pattern matching** at the moment*
+*It's commmon to use this in multiple branches/tags, you'd better use the environment subject, which takes precedence*
 
 Then in your GitHub workflow, use the `azure/login` action, providing the `client-id`, `tenant-id` and `subscription-id`, it will try to use OIDC to login by default.
 
