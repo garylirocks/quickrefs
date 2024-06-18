@@ -96,6 +96,7 @@
 - Use service endpoints to connect to other PaaS services: storage accounts, key vaults, SQL databases, etc
 - Or use private endpoints to connect to PaaS or your own custom services.
 - A vNet spans multiple availability zones, not limited to a single data center
+  - There's NO charge for inter-AZ traffic
 
 ### Subnets
 

@@ -511,12 +511,12 @@ Exceptions:
 Make sure you understand the differences between:
 
 - **Action groups**:
+  - Resource type: `Microsoft.Insights/actionGroups`
   - Configure notifications (Email, SMS, etc) and actions (runbook, webhook, etc)
   - Instead of fixed email addresses, you can also email people with a specific role on the subscription, eg. "Owner", "Contributor"
     - Only works for role assignment on the scope, NOT inherited ones
-    - Only work for Non-PIM assignment or PIM active assignment, not activated PIM eligible assignment
-    - Doesn't work for assignment on a group
-  - Resource type: `Microsoft.Insights/actionGroups`
+    - Only work for Non-PIM assignment (permanent active PIM assignment), not activated PIM eligible assignment
+    - Works for assignment to groups (it will email each user in the group)
 - **Alert rule**: the configuration of an alert
   - Generate new alerts based on conditions
   - Resource type differs depending on signal type:
