@@ -505,7 +505,11 @@ dsregcmd /status
 
 - Group types
   - Security groups
-    - Members can be users, devices, service principals, and other groups
+    - Members can be
+      - users
+      - devices
+      - service principals
+      - and other groups
     - For access control(RBAC), assigning licenses, etc
   - Microsoft 365
     - Members can only be users

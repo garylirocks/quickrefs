@@ -15,7 +15,7 @@
 - [State file](#state-file)
 - [Remote runs and state](#remote-runs-and-state)
   - [Terraform Cloud](#terraform-cloud)
-  - [Azure blob storage](#azure-blob-storage)
+  - [`azurerm` backend (Blob Storage)](#azurerm-backend-blob-storage)
 - [HCL language features](#hcl-language-features)
   - [Resource blocks](#resource-blocks)
     - [Meta-Arguments](#meta-arguments)
@@ -440,57 +440,71 @@ Note:
 - For workspaces configured with VCS-driven workflow, you can trigger `plan` from local CLI, but **not** `apply`
 - When running a remote `plan` or `apply`, a copy of your directory is uploaded to Terraform Cloud, you could use `.terraformignore` to exclude paths (`.git/` and `.terraform/` are ignored by default)
 
-### Azure blob storage
+### `azurerm` backend (Blob Storage)
 
-  1. Add a `backend` block in Terraform config
+Three methods of authentication, see https://developer.hashicorp.com/terraform/language/settings/backends/azurerm#authentication
 
-      ```terraform
-      terraform {
-        ...
+- Access Key (default)
+  - Explicitly set `access_key = <xxxx>` (in config or as env var)
+  - Or with an Entra principal: TF will try to retrieve the access key from the storage account (use the specified client ID or Azure CLI)
+    - `use_oidc=true`
+    - `use_msi=true`
+    - `client_secret=true` or `client_certificate_path=true`
+    - Azure CLI
+- Azure AD
+  - Must set `use_azuread_auth = true`, and
+    - `use_oidc=true`
+    - `use_msi=true`
+    - `client_secret=true` or `client_certificate_path=true`
+    - Azure CLI
+- SAS Token
+  - Explicitly set `sas_key = <xxxx>` (in config or as env var)
 
-        backend "azurerm" {
-        }
-      }
-      ```
+How to configure
 
-  1. Create a file `backend.tfvars`
+- Add a `backend` block in `terraform` block
 
-      ```
-      resource_group_name  = "learning-rg"
-      storage_account_name = "tfstatey2hkc"
-      container_name       = "tfstate"
-      key                  = "terraform.tfstate"
-      subscription_id      = "00000000-0000-0000-0000-000000000000"   # optional
-      # access_key         = 'xxxx'
-      # sas_key            = 'xxxx'
-      ```
+  ```terraform
+  terraform {
+    ...
 
-  1. Authentication, see details here https://developer.hashicorp.com/terraform/language/settings/backends/azurerm#authentication:
+    backend "azurerm" {
+      resource_group_name  = "StorageAccount-ResourceGroup"  # Can be passed via `-backend-config=`"resource_group_name=<resource group name>"` in the `init` command.
+      storage_account_name = "abcd1234"                      # Can be passed via `-backend-config=`"storage_account_name=<storage account name>"` in the `init` command.
+      container_name       = "tfstate"                       # Can be passed via `-backend-config=`"container_name=<container name>"` in the `init` command.
+      key                  = "prod.terraform.tfstate"        # Can be passed via `-backend-config=`"key=<blob key name>"` in the `init` command.
+    }
+  }
+  ```
 
-     1. You can use `access_key` or `sas_key`, they could be put in the config file, or as an environment variable
-        1. access key
+- Create a separate file `backend.tfvars`, and use it with `terraform init -backend-config="backend.tfvars"`
 
-            ```sh
-            ARM_ACCESS_KEY=$(az storage account keys list \
-                          --resource-group $RESOURCE_GROUP_NAME \
-                          --account-name $STORAGE_ACCOUNT_NAME \
-                          --query '[0].value' \
-                          -o tsv)
-            export ARM_ACCESS_KEY
-            ```
-        1. SAS key
+  ```
+  resource_group_name  = "learning-rg"
+  storage_account_name = "tfstatey2hkc"
+  container_name       = "tfstate"
+  key                  = "terraform.tfstate"
+  subscription_id      = "00000000-0000-0000-0000-000000000000"   # optional
+  # access_key         = 'xxxx'
+  # sas_key            = 'xxxx'
+  ```
 
-            ```sh
-            export ARM_SAS_TOKEN
-            ```
-     1. Or if you are logged in to AZ CLI, then it's used
+  It's better to set `access_key` and `sas_key` as environment variables
 
-  1. Init with the backend config file `terraform init -backend-config="backend.tfvars"`
-  1. When you run `terraform apply`, the state file will be created or updated
+  ```sh
+  export ARM_ACCESS_KEY
+  # or
+  export ARM_SAS_TOKEN
+  ```
+
+- Use env vars
+  - `ARM_SUBSCRIPTION_ID`, `ARM_TENANT_ID`, `ARM_CLIENT_ID`, ...
 
 
 ## HCL language features
+
 ### Resource blocks
+
 #### Meta-Arguments
 
 Apart from arguments, ech resource block can have meta-arguments:

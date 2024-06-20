@@ -27,6 +27,8 @@
   - [Index tags](#index-tags)
   - [Life cycle management rules](#life-cycle-management-rules)
   - [Soft delete](#soft-delete)
+    - [Container soft delete](#container-soft-delete)
+    - [Blob soft delete](#blob-soft-delete)
   - [Versioning vs. snapshot](#versioning-vs-snapshot)
   - [Recommended data protection configuration](#recommended-data-protection-configuration)
   - [Immutable storage for Azure Blobs](#immutable-storage-for-azure-blobs)
@@ -636,8 +638,19 @@ Compare metadata and tags
 
 ### Soft delete
 
-- Container soft delete: only container-level operations can be restored. Can't restore deleted blobs in the container.
-- Blob soft delete: to restore a blob, snapshot, or version that has been deleted
+#### Container soft delete
+
+Only container-level operations can be restored. Can't restore deleted blobs in the container.
+
+#### Blob soft delete
+
+- To restore a blob, snapshot, or version that has been deleted
+- When you delete a blob:
+  - If the blob has snapshots, you must delete the snapshots along with the blob itself, the snapshots will be in soft-deleted state as well
+  - If versioning is enabled
+    - the blob will NOT be in soft-deleted state, instead, it's saved as a version
+    - previous versions are NOT in soft-deleted state
+    - a version could be deleted and become soft-deleted
 
 ### Versioning vs. snapshot
 
