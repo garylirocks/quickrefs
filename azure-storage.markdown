@@ -398,12 +398,15 @@ With CLI, if nothing specified explicitly, environment variables or config files
 
 Examples:
 
-- RBAC
+- RBAC (data plane RBAC role assigned to current Entra principal)
 
   ```sh
   az storage container list --account-name sttest001 --auth-mode login
+  ```
 
-  # curl
+  or if using curl
+
+  ```sh
   accessToken=$(az account get-access-token \
                           --resource='https://storage.azure.com/' \
                           --query accessToken \
@@ -414,7 +417,7 @@ Examples:
        "https://sttest001.blob.core.windows.net/?comp=list"
   ```
 
-- Access keys
+- Access keys (you need control plane RBAC role, eg. Contributor, to get the key)
 
   ```sh
   az storage container list --account-name sttest001 --auth-mode key
