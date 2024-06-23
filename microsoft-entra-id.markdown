@@ -28,6 +28,9 @@
   - [Service principals](#service-principals)
   - [Service principals (application)](#service-principals-application)
   - [Managed identities](#managed-identities)
+    - [System-assigned (SAMI)](#system-assigned-sami)
+    - [User-assigned (UAMI)](#user-assigned-uami)
+    - [Considerations](#considerations)
   - [Workload identity federation](#workload-identity-federation)
     - [How it works](#how-it-works)
     - [CLI](#cli)
@@ -644,59 +647,61 @@ az login --service-principal --username appID --tenant tenantID --password /path
 ### Managed identities
 
 - For Azure resources only
+- Two types: System-assigned Managed Identity (SAMI), and User-assigned Managed Identity (UAMI)
 - Eliminate the need for developers to manage credentials
 - When a managed identity is enabled, a **service principal** representing that managed identity is created in your tenant
   - The service principal is listed under **Enterprise applications -> Managed Identities** in Azure Portal
   - There is **NO** corresponding app registration in your tenant
-- Which MI is used:
-  - If system assigned managed identity(SAMI) is enabled and no identity is specified in the request, Azure Instance Metadata Service (IMDS) defaults to the SAMI.
-  - If SAMI isn't enabled, and only one user assigned managed identity(UAMI) exists, IMDS defaults to that UAMI.
-  - If SAMI isn't enabled, and multiple UAMIs exist, then you are required to specify a managed identity in the request.
+- **Which MI is used**:
+  - If SAMI is enabled and no identity is specified in the request, Azure Instance Metadata Service (IMDS) defaults to the SAMI
+  - If SAMI isn't enabled, and only one UAMI exists, IMDS defaults to that UAMI
+  - If SAMI isn't enabled, and multiple UAMIs exist, then you are required to specify a managed identity in the request
 
-Two types:
+#### System-assigned (SAMI)
 
-- System-assigned
+A resource can have only one system-assigned managed identity, if the resource is deleted, so is the managed identity
 
-  A resource can have only one system-assigned managed identity, if the resource is deleted, so is the managed identity
+```sh
+# assign a system-assigned managed identity to a VM
+az vm identity assign \
+    --name <vm name> \
+    --resource-group <resource group>
+```
 
-  ```sh
-  # assign a system-assigned managed identity to a VM
-  az vm identity assign \
-      --name <vm name> \
-      --resource-group <resource group>
-  ```
+#### User-assigned (UAMI)
 
-- User-assigned (UAMI)
+- A UAMI is independent of any resources, so if your app is running on multiple VMs, it can use the same identity. This helps when you have hundreds of VMs, using a UAMI instead of SAMI reduces identity churn in Entra.
+- If you delete a UAMI, resources using the identity can not get a new token when its current token expires
+- A UAMI as a resource would reside in a region, but the associated service principal **is global**, its availability is only dependent on Entra
+  - When the region is unavailable, the control plane won't work, but the SP still works
+- Related built-in roles:
+  - "Managed Identity Contributor": Create UAMI and federated identity credentails
+  - "Managed Identity Operator": Assign UAMI to a resource (also needs write permission on the target resource)
 
-  - A UAMI is independent of any resources, so if your app is running on multiple VMs, it can use the same identity. This helps when you have hundreds of VMs, using a UAMI instead of SAMI reduces identity churn in Entra.
-  - If you delete a UAMI, resources using the identity can not get a new token when its current token expires, but the identity assignment on the resource is NOT automatically removed
-  - A UAMI as a resource would reside in a region, but the associated service principal **is global**, its availability is only dependent on Entra
-    - When the region is unavailable, the control plane won't work, but the SP still works
+A resource can have multiple user-assigned managed identities.
 
-  A resource can have multiple user-assigned managed identities.
+```sh
+az identity create \
+    --name <identity name> \
+    --resource-group <resource group>
 
-  ```sh
-  az identity create \
-      --name <identity name> \
-      --resource-group <resource group>
+# view identities, including system-assigned
+az identity list \
+    --resource-group <resource group>
 
-  # view identities, including system-assigned
-  az identity list \
-      --resource-group <resource group>
+# assign identities to a function app
+az functionapp identity assign \
+    --name <function app name> \
+    --resource-group <resource group> \
+    --identities <id1 id2 ...>
 
-  # assign identities to a function app
-  az functionapp identity assign \
-      --name <function app name> \
-      --resource-group <resource group> \
-      --identities <id1 id2 ...>
-
-  # grant key vault permissions to an identity
-  #  ! this is policy based keyvault access, not RBAC based
-  az keyvault set-policy \
-      --name <key vault name> \
-      --object-id <principal id> \
-      --secret-permissions get list
-  ```
+# grant key vault permissions to an identity
+#  ! this is policy based keyvault access, not RBAC based
+az keyvault set-policy \
+    --name <key vault name> \
+    --object-id <principal id> \
+    --secret-permissions get list
+```
 
 To login to Azure using a managed identity:
 
@@ -710,7 +715,24 @@ az login --identity
 az login --identity --username <client_id|object_id|resource_id>
 ```
 
-Compare Service principal (application) to managed identity:
+**UAMI advantages over SAMI**:
+
+- UAMI and its role assignments could be configured in advance
+- Users who create the resources only require the permission to assign a UAMI (`Microsoft.ManagedIdentity/userAssignedIdentities/*/assign/action` or the built-in "Managed Identity Operator" role), no need for the privileged role assignment permission
+- If multiple resources need the same permissions, UAMI is better
+- If you create lots of SAMI simultaneously, you may exceed Microsoft Entra rate limit
+
+#### Considerations
+
+- If a resource (eg. app, VM) has been assigned a SAMI/UAMI, and a user can run code in the resource, the user gets all the permission granted to the SAMI/UAMI
+- When you delete a SAMI/UAMI, it is only fully purged after 30 days
+- When you delete a SAMI/UAMI, the associated role assignments AREN'T automatically deleted. These role assignments should be manually deleted so the limit of role assignments per subscription isn't exceeded. Can be done with command `Get-AzRoleAssignment | Where-Object {$_.ObjectType -eq "Unknown"} | Remove-AzRoleAssignment`
+- A managed identity can also get permissions via being added to an Entra group, or being assigned an App Role
+  - But there is a drawback, the identity's groups and roles are claims in the access token, any authorization changes do not take effect until the token is refreshed. The token is usually cached for **24 hours** by Azure (A user's access token is only valid for 1 hour by default). And it is **not possible** to force a managed identity's token to be refreshed before its expiry. So you may need to wait several hours for your change to take effect.
+  - A UAMI can be used like a group because it can be assigned to one or more Azure resources to use it.
+  - See [details here](https://learn.microsoft.com/en-gb/entra/identity/managed-identities-azure-resources/managed-identity-best-practice-recommendations#limitation-of-using-managed-identities-for-authorization)
+
+**Compare Service principal (application) to managed identity**:
 
 | Type              | App Registrations | Enterprise applications |
 | ----------------- | ----------------- | ----------------------- |
@@ -934,10 +956,16 @@ How admins consent to an app:
 This allows you to adopt RBAC for authorization in your application code.
 
 1. Define your custom roles in "Application registrations" -> "App roles"
-  ![App roles](./images/azure_ad-app-roles.png)
-2. Add users/groups/applications to a role in "Enterprise Application" -> "User and Groups"
-  ![App role assignment](images/azure_ad-app-role-assignment.png)
-3. Now, when user login to your app, Entra adds `roles` claim to tokens it issues.
+
+    ![App roles](./images/azure_ad-app-roles.png)
+
+2. Add users/groups to a role in "Enterprise Application" -> "User and Groups".
+
+    To assign the App Role to an app, use PowerShell, see https://learn.microsoft.com/en-gb/entra/identity/managed-identities-azure-resources/how-to-assign-app-role-managed-identity
+
+    ![App role assignment](images/azure_ad-app-role-assignment.png)
+
+1. Now, when user login to your app, Entra adds `roles` claim to tokens it issues.
 
 See: https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-add-app-roles-in-azure-ad-apps
 
@@ -946,8 +974,8 @@ See: https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-add-a
 - The "Expose an API" menu in the Portal allows you to define scopes for an API application.
   - This creates only "deletegated permissions".
   - For application-only scopes, use "App roles" and define app roles assignable to applications.
-- You could add another application as an authorized client application to the scopes, then user won't be prompted to consent when login to the client application.
 - Application ID URI need to be globally unique, usually has the form `api://<app-id>`, eg. `api://dev.guisheng.li/demo/api1`
+- You could add another application as an authorized client application to the scopes, then user won't be prompted to consent when login to the client application.
 - When a client app requests the scope in its OAuth request, and the user consents (or pre-approved), Entra sends back an access token which contains the required scopes
 
 #### Example:
