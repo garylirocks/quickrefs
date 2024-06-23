@@ -37,6 +37,7 @@
   - [CLI](#cli-1)
   - [AzCopy](#azcopy)
   - [.NET Storage Client library](#net-storage-client-library)
+  - [Leases](#leases)
   - [Concurrency](#concurrency)
 - [Azure Data Lake Storage Gen2](#azure-data-lake-storage-gen2)
   - [Authorization](#authorization)
@@ -648,6 +649,8 @@ Only container-level operations can be restored. Can't restore deleted blobs in 
 #### Blob soft delete
 
 - To restore a blob, snapshot, or version that has been deleted
+- When you overwrite a blob:
+  - If versioning not enabled: A snapshot is created in soft-deleted state, if you overwrite again, then another soft-deleted snapshot will be created
 - When you delete a blob:
   - If the blob has snapshots, you must delete the snapshots along with the blob itself, the snapshots will be in soft-deleted state as well
   - If versioning is enabled
@@ -657,12 +660,22 @@ Only container-level operations can be restored. Can't restore deleted blobs in 
 
 ### Versioning vs. snapshot
 
+- A container could have three types of data, each could be in normal or soft-deleted state:
+  - Active blobs
+  - Versions
+  - Snapshots
 - When blob versioning is enabled: A blob version is created automatically on a write or delete operation
 - A blob snapshot is created manually, not necessary if versioning is enabled
-- Versioning is not supported for ADLS Gen 2, snapshot is supported (in preview)
+  - Depending on how often you overwrite blobs, versioning could be costly
+- For ADLS Gen 2
+  - Snapshot is supported (in preview)
+  - Blob soft delete is supported
+  - Versioning is NOT supported
 
 ### Recommended data protection configuration
 
+- Resource lock on the storage account (prevent deletion and config changes)
+  - This doesn't protect containers or blobs from being deleted or overwritten
 - Container soft delete
 - Blob soft delete
 - Blob versioning
@@ -826,6 +839,11 @@ azcopy jobs list
 - Suitable for complex, repeated tasks
 - Provides full access to blob properties
 - Supports async operations
+
+### Leases
+
+- On container: prevents it from being deleted, doesn't affect operations on blobs in it
+- On blob: prevents a blob from being modified by other apps
 
 ### Concurrency
 
