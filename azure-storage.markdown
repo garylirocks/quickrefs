@@ -399,7 +399,7 @@ With CLI, if nothing specified explicitly, environment variables or config files
 
 Examples:
 
-- RBAC (data plane RBAC role assigned to current Entra principal)
+- RBAC (**data plane RBAC role** assigned to current Entra principal, ALSO works with "**Contributor**" role on the storage account)
 
   ```sh
   az storage container list --account-name sttest001 --auth-mode login

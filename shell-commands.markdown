@@ -445,6 +445,9 @@ find . -path '*/js/*'
 # match multiple names
 find . -name '*.html' -o -name '*.md'
 
+# exclude something
+find . -name '*.html' -not \( -name '*home*' \)
+
 # or use extended RegEx, matches full path
 find . -regextype posix-extended -regex '.*(php)|(phtml)'
 

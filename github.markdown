@@ -1074,7 +1074,14 @@ gh repo list my-org
 ### Pull request
 
 ```sh
-gh pr create --base main --title "Update script"
+gh pr create \
+    --base main \
+    --title "PR title" \
+    --fill-verbose \    # Use commits msg+body for description
+    --reviewer "Gary-Li" # specify reviewer
+
+# enable auto merge on the PR
+gh pr merge --subject "Update xxx" --auto --squash
 ```
 
 ### Workflow
