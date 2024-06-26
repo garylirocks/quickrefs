@@ -727,6 +727,12 @@ ansible-playbook rg.yml --extra-vars "subscription_id=<sub-id> client_id=<client
         var: rg_info.resourcegroups
 ```
 
+To install all collections in a requirements file
+
+```sh
+ansible-galaxy collection install -r collections/requirements.yml
+```
+
 
 ## Importing and including
 
@@ -829,6 +835,22 @@ Ansible configs are in `/etc/ansible/ansible.cfg`
 # control the output format
 stdout_callback = yaml
 ```
+
+You can also configure your own Ansible collection repo URLs in the config (like the Ansible Automation Hub)
+
+```
+[galaxy]
+server_list = community, rh-verified
+
+[galaxy_server.community]
+url=https://my-ansible-hub.example.com/api/galaxy/content/community/
+token=<token>
+
+[galaxy_server.rh-verified]
+url=https://my-ansible-hub.example.com/api/galaxy/content/rh-verified/
+token=<token>
+```
+
 
 ## Work with Azure
 
