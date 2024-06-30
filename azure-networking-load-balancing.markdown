@@ -63,6 +63,7 @@ Global vs. regional:
   - Recommended to have different frontend IPs for inbound and outbound traffic
 - Internal load balancers
   - Could have frontend IPs from **multiple subnets** in a single vNet (CAN'T be in multiple vNets)
+- (Preview) Frontend IP and backend pools could be in different subscriptions
 
 Example multi-tier architecture with load balancers
 

@@ -516,7 +516,7 @@ Make sure you understand the differences between:
   - Instead of fixed email addresses, you can also email people with a specific role on the subscription, eg. "Owner", "Contributor"
     - Only works for role assignment on the scope, NOT inherited ones
     - Only work for Non-PIM assignment (permanent active PIM assignment), not activated PIM eligible assignment
-    - Works for assignment to groups (it will email each user in the group)
+    - **Works for assignment to groups** (every user in the group gets emails)
 - **Alert rule**: the configuration of an alert
   - Generate new alerts based on conditions
   - Resource type differs depending on signal type:

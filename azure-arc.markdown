@@ -1,5 +1,8 @@
 # Azure ARC
 
+- [Overview](#overview)
+- [Multicloud connector](#multicloud-connector)
+
 
 ## Overview
 
@@ -12,3 +15,25 @@ Azure Arc allows you to manage the following resource types hosted outside of Az
   - and PostgreSQL server (preview) services
 - **SQL Server**: Extend Azure services to SQL Server instances hosted outside of Azure.
 - **Virtual machines (preview)**: Provision, resize, delete, and manage virtual machines based on *VMware vSphere* or *Azure Stack hyper-converged infrastructure (HCI)* and enable VM self-service through role-based access
+
+
+## Multicloud connector
+
+- Works with AWS now, may be extended to other clouds
+- Lightweight, only utilizes AWS API
+  - No agents
+- AWS account type
+  - Single account
+  - Organization account
+- Solutions (could be multiple ones):
+  - Inventory: read resources, put them in a single inventory view
+      - Filter by AWS service types and regions
+  - Arc onboarding: install Arc agent
+    - Connectivity method: public endpoint or proxy server
+    - Filter by AWS regions and tags
+- Polling interval: 1 ~ 24 hours
+- You'll need to use CloudFormation Stack to create two required custom IAM roles in AWS
+  - The roles need to be applied to AWS resources
+- A discovered AWS resources would have a resource type like `Microsoft.AWSConnector/S3Buckets`
+  - For EC2, EKS etc (which could be Arc enabled), the resource type would be like `Microsoft.HybridCompute/*`
+  - The resources could be queried use Azure Resource Graph
