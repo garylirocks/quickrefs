@@ -50,6 +50,7 @@
     - [Best practices](#best-practices)
     - [RBAC and ACL](#rbac-and-acl)
 - [Files](#files)
+  - [Premium file shares](#premium-file-shares)
   - [Create and mount a share](#create-and-mount-a-share)
   - [Authentication](#authentication)
   - [Snapshots](#snapshots)
@@ -1044,6 +1045,12 @@ Compare to Blobs and Disks
 - Files have true directory objects, Blobs have a flat namespace.
 - File shares can be mounted concurrently by multiple cloud or on-prem machines, Disks are exclusive to a single VM (except shared disks).
 - Files shares are best suited for random access workloads.
+
+### Premium file shares
+
+- Billed on the provisioned size, no matter how much data is stored
+  - Minimum size: 100GiB, incremental unit 1GiB
+  - IOPS and throughput increase along with the provisioned size
 
 ### Create and mount a share
 

@@ -111,15 +111,16 @@ You can start from an cheaper tier and scale up later.
   - By default, your app only routes RFC1918 and service endpoints traffic into your vNet, if outbound internet traffic routing is enabled (`WEBSITE_VNET_ROUTE_ALL=1`), all outbound traffic is routed to the vNet
   - You could add a NAT gateway to the integration subnet for connection to the Internet
 - **Configuration routing** (via public route by default, can be configured for individual components)
-  - Content share: often used by Functions app (often via port 443 or 445)
-  - Container image pull
-  - Backup/restore:
+  - Content share (`properties.vnetContentShareEnabled`): often used by Functions app (often via port 443 or 445)
+  - Container image pull (`properties.vnetImagePullEnabled`)
+  - Backup/restore (`properties.vnetBackupRestoreEnabled`):
     - Custom backup to your own storage account
     - Database backup isn't supported over vNet integration
   - App settings using Key Vault references
     - Attempted if the KV blocks public access and the app is using vNet integration
     - Configure SSL/TLS certificate from private KV is not supported
   - App Service logs to private storage account is not supported, recommendation is using Diagnostic Logging and allowing trusted services for the storage account
+  - If you use a private-endpoint only storage account for Standard Logic App, you need to set `WEBSITE_CONTENTOVERVNET = 1` to allow the app to access the storage account
 - **Network routing**
   - NSG and route tables only apply to traffic routed through the integration subnet
   - NSG
