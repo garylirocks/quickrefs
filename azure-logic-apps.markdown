@@ -30,14 +30,15 @@ Logic Apps Standard
    - Has a domain name like `logic-app-001.azurewebsites.net`
 - Multiple workflows (stateful or stateless) can be created in a single logic app
   - Stateful and stateless have different in-app triggers and actions
-- Needs a storage account for
-   - Stateful workflows use this storageaccount:
-     - using queues for scheduling
-     - storing workflow states in tables and blobs
-     - file shares for workflow artifacts
+- Needs a storage account
+   - A file share for workflow artifacts
+     - including `host.json`, `connections.json`, `workflow.json` (for each workflow), logs, etc
+   - Blob containers (`azure-webjobs-hosts`, `azure-webjobs-secrets`) for workflow some configurations, secrets, etc
+   - Queues: MS docs mentions scheduling for stateful workflows, but seems needed by stateless workflows as well in my test
+   - Tables: MS docs mentions storing states for stateful workflows, but seems needed by stateless workflows as well in my test
    - If you want to create a standard logic app using a private-endpoint only storage account, you need to
-     - create a file share in the storage account
-     - set `WEBSITE_CONTENTOVERVNET = 1` and `WEBSITE_CONTENTSHARE = <file-share-name>` in the app settings
+     - set `WEBSITE_CONTENTOVERVNET = 1` in the app settings
+     - create a file share in the storage account (may need to do this manually if your pipeline can't do it because of the networking restrictions)
 - Support local development, execution, debugging
 - Improved support for source control and automated deployment
 - Fully separates infrastructure from code logic
