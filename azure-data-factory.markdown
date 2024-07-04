@@ -9,7 +9,7 @@
   - [Which IR is used ?](#which-ir-is-used-)
 - [Linked services](#linked-services)
   - [Storage account](#storage-account)
-- [Security](#security)
+- [Roles and permissions](#roles-and-permissions)
 - [Git integration](#git-integration)
 - [CI/CD process](#cicd-process)
 - [Object definition examples](#object-definition-examples)
@@ -151,12 +151,16 @@ A few ways to authenticate an IR to a storage account:
 If you use a self-hosted IR, then the credentials would be saved in the IR. If you use managed identity, it means the **identity of the ADF instance, not the IR VM**.
 
 
-## Security
+## Roles and permissions
 
 - To create ADF instances: *contributor/owner/administrator* on subscription
 - To create and manage child resources:
   - in portal: *Data Factory Contributor* role at resource group or above
   - with PowerShell or SDK: *contributor* role at the resource level or above
+
+Operations, like create a pipeline run, **are control-plane operations, not data-plane.** And there are NO built-in data-plane roles.
+
+For example: the action for reading a pipeline run is `Microsoft.DataFactory/factories/pipelineRuns/read`
 
 
 ## Git integration

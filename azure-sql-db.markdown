@@ -357,12 +357,14 @@ When you deploy Azure SQL:
 
 #### Use a managed identity to access Azure SQL
 
-You need to login to the database with an Entra admin account, then create a **container user** in the database for the managed identity:
+You need to login to the database with an Entra account (NOT SQL Server authentication, otherwise you can't create an external Entra user), then create a **container user** in the database for the managed identity:
 
 ```sql
 USE MyDatabase;
 CREATE USER "<identity-name>" FROM EXTERNAL PROVIDER;
 ALTER ROLE db_datareader ADD MEMBER "<identity-name>";
+
+-- for a system assigned managed identity, <identity-name> is the same as the resource name
 ```
 
 Help queries:
