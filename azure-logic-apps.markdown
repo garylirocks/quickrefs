@@ -30,18 +30,20 @@ Logic Apps Standard
    - Has a domain name like `logic-app-001.azurewebsites.net`
 - Multiple workflows (stateful or stateless) can be created in a single logic app
   - Stateful and stateless have different in-app triggers and actions
+- Support local development, execution, debugging
+- Improved support for source control and automated deployment
+- Fully separates infrastructure from code logic
 - Needs a storage account
    - A file share for workflow artifacts
      - including `host.json`, `connections.json`, `workflow.json` (for each workflow), logs, etc
    - Blob containers (`azure-webjobs-hosts`, `azure-webjobs-secrets`) for workflow some configurations, secrets, etc
-   - Queues: MS docs mentions scheduling for stateful workflows, but seems needed by stateless workflows as well in my test
+   - Queues: MS docs mentions scheduling for stateful workflows, but it's needed by stateless workflows as well in my test
    - Tables: MS docs mentions storing states for stateful workflows, but seems needed by stateless workflows as well in my test
-   - If you want to create a standard logic app using a private-endpoint only storage account, you need to
-     - set `WEBSITE_CONTENTOVERVNET = 1` in the app settings
-     - create a file share in the storage account (may need to do this manually if your pipeline can't do it because of the networking restrictions)
-- Support local development, execution, debugging
-- Improved support for source control and automated deployment
-- Fully separates infrastructure from code logic
+- If you want to create a standard logic app using a **private-endpoint only storage account**, you need to
+   - set `WEBSITE_CONTENTOVERVNET = 1` when creating the logic app, once created, it can be removed
+   - enable "Configuration routing" for the vNet integration
+   - private endpoints need to be enabled for all four sub services
+   - create a file share in the storage account (may need to do this manually if your pipeline can't do it because of the networking restrictions)
 
 
 ## Networking
