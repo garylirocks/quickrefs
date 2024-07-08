@@ -1580,12 +1580,19 @@ Types of DDoS attack:
   - So a vnet could be targeted by multiple manager instances
 - Cost: you pay per subscription per AVNM instance, so if a subscription is included in two AVNM instances, you pay for it twice
 - Entities: Network Groups, Configurations (Connectivity or Security Admin)
+- Support vWAN in preview
+
+Network groups:
+
+- Could be static or dynamic (based on policy)
 
 Connectivity:
 
 - Allows you to deploy a topology(hub-spoke or mesh) to network groups, saving you time to create and manage the peerings one by one
 - For the Hub-Spoke topology, every vnet in a network group is peered to the hub, you could also enable
   - Direct Connectivity: all vnets in the same region and network group can talk to each other directly (**This is NOT done by peerings, a route with "ConnectedGroup" type is added to the effective routes**)
+    - This enables spokes communicate frequently, with low latency and high throughput with each other
+    - In the meantime, they can still access common services or NVAs in the hub
   - Global Mesh: each vnet in the same network group can talk to all other vnets, regardless of regions
 - For the mesh topology
   - Also uses the "ConnectedGroup" type route, not by peerings
@@ -1601,6 +1608,7 @@ Security Admin rules:
 - They are checked before NSGs
 - Rules from manager instances with a higher scope level are checked first
 - A rule has three possible actions: "Allow", "Deny", "Always allow", if it's "Always allow", rules from lower level manager instances and NSGs are ignored
+- This allows the central IT team to manage global rules, and delegate NSG rules to application teams
 
 ![Security admin rules evaluation](./images/azure_networking-virtual-network-manager-security-admin-rules.png)
 
