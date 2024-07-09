@@ -21,6 +21,17 @@
     - [Azure AD](#azure-ad)
     - [Token store](#token-store)
   - [Backup](#backup)
+- [App Service Environment (ASE)](#app-service-environment-ase)
+  - [Cost](#cost)
+  - [Networking](#networking-1)
+    - [Subnet](#subnet)
+  - [Inbound](#inbound)
+  - [Outbound](#outbound)
+  - [Private endpoint](#private-endpoint)
+  - [Domain](#domain)
+    - [Custom domain](#custom-domain)
+- [Kudu service](#kudu-service)
+  - [RBAC permissions](#rbac-permissions)
 - [Static Web Apps](#static-web-apps)
 - [Azure Functions](#azure-functions)
   - [Durable functions](#durable-functions)
@@ -47,14 +58,14 @@ A plan's **size** (aka **sku**, **pricing tier**) determines
 | Isolated   | Isolated             | <=100     | ASE, Isolated network, Internal Load Balancing |
 
 - **Shared compute** (Free, Shared): VM shared with other customers
-- **Dedicated compute** (Basic, Standard, Premium): run on dedicated Azure VMs
+- **Dedicated compute** (Basic, Standard, Premium): run on dedicated Azure VMs, some resources are still shared, such as load balancer, file system, public IP, etc
 - **Isolated**: dedicated VMs in dedicated vNets
 
-Plans are the unit of billing. How much you pay for a plan is determined by the plan size(sku) and bandwidth usage, not the number of apps in the plan.
+Notes:
 
-Azure Functions could be run in an App Service Plan as well.
-
-You can start from an cheaper tier and scale up later.
+- Plans are the **unit of billing**. How much you pay for a plan is determined by the plan size(sku) and bandwidth usage, not the number of apps in the plan.
+- You can start from an cheaper tier and scale up later.
+- **Azure Functions** could be run in an App Service Plan as well.
 
 ### vNet integration
 
@@ -140,7 +151,6 @@ You can start from an cheaper tier and scale up later.
 
 - vNet integration works by mounting virtual interfaces to the worker roles with addresses in the delegated subnet. Customers don't have direct access to the virtual interfaces.
 - Because the from address is in your vNet, it can access most things in or through your vNet like a VM in your virtual network would.
-
 
 ### Deployment
 
@@ -311,6 +321,115 @@ Tokens are cached in the store and passed to app code in headers like: `X-MS-TOK
 - You could do a full or partial backup
 - Backup goes to a storage account and container in the same subscription
 - Backup contains app configuration, files, and database connected to your app
+
+
+## App Service Environment (ASE)
+
+Comparing to app service plan:
+
+- Larger scale: allows >30 compute instances
+- More isolated: in your own vNet
+
+You own isolated environment, dedicated to your organization, with the following benefits:
+
+- External (behind a ELB) or internal (behind an ILB)
+  - For external access, a good practice is using an internal ASE and put an AGW in front of it
+- Host group
+- Zone redundant
+- No need for vNet integration, it's still in a vNet
+
+After ASE is created,
+
+- you can choose it as "Region" when you create a web app
+- you still need to create app service plans in it
+
+Limits:
+
+- Up to 200 instances per ASE
+- 1 - 100 instances in one app service plan
+
+How:
+
+- Apart from your own vNet, there is a hidden infrastructure vNet underneath, which is how the various ASE components talking to each other
+
+### Cost
+
+- You pay for the app service plans in the ASE
+- The plans must be Isolated v2 SKUs, depending on the cores and RAM, SKUs could be like `I1v2`, `I1mv2`, `I2v2`,  `I2mv2`, etc
+- If ASE is empty, you pay for 1 Isolated v2 SKU (if zone redundant, you pay for 9 Isolated v2 SKUs)
+
+### Networking
+
+#### Subnet
+
+- You must delegate an empty subnet to `Microsoft.Web/hostingEnvironments`
+- Size:
+  - `/27` minimum
+  - `/24` is recommended
+  - use `/23` if you want to scale up to the max capacity of 200 instances
+- Specific addresses used by an app in the subnet will change over time
+
+### Inbound
+
+- You can put an AGW in front of an internal ASE
+
+### Outbound
+
+- Apps use one of the default outbound addresses for egress traffic to public endpoints
+- You can add an NAT gateway to the subnet
+- You can also use a route table to direct traffic to a firewall/NVA
+- Outbound SMTP (port 25) is supportted for ASEv3 (determined by a setting on the containing subscription of the vNet)
+
+### Private endpoint
+
+- To allow private endpoints for apps, you need to enabled this at the ASE level
+
+  ```sh
+  az appservice ase update --name <my-ase> --allow-new-private-endpoint-connections true
+  ```
+
+### Domain
+
+- Internal apps will have domains like `<app-name>.<ase-name>.appserviceenvironment.net`
+  - If you choose to use Azure Private DNS zones when creating ASE, it will be created for you
+  - If you use your own custom DNS, and want to use this default domain, you need to add the zone to your custom DNS
+- If you have custom domain for the ASE, the app will also have a domain like `<app-name>.<ase-custom-domain>`
+  - For custom domain name to work for the `scm` site, you'll need `<app-name>.<ase-name>.appserviceenvironment.net` to be resolveable
+- App name is truncated at 40 characters because of DNS limits, slot name is truncated at 19 characters
+- By default, apps in ASE use the DNS configured on the vNet, but it could be customized on a per app basis with app settings: `WEBSITE_DNS_SERVER` and `WEBSITE_DNS_ALT_SERVER`
+
+#### Custom domain
+
+Apart from the default domain, you can add a custom domain
+
+- The certificate needs to be stored in a key vault, the ASE needs a managed identity to retrieve it
+- The key vault must be public accessible
+- The certificate must be a wildcard certificate, such as `*.example.com`
+
+
+## Kudu service
+
+Anytime you create an app, App Service creates a companion app for it that's secured by HTTPS. This Kudu app is accessible at these URLs:
+
+- App not in the Isolated tier: `https://<app-name>.scm.azurewebsites.net`
+- Internet-facing app in the Isolated tier (ASE): `https://<app-name>.scm.<ase-name>.p.azurewebsites.net`
+- Internal app in the Isolated tier (ASE for ILB): `https://<app-name>.scm.<ase-name>.appserviceenvironment.net`
+
+Features:
+
+- Run command in Kudu console
+- Access
+  - App settings
+  - Connection strings
+  - Environment variables
+  - Server variables
+  - HTTP headers
+  - Logs
+
+### RBAC permissions
+
+- Built-in: Website Contributor, Contributor, Owner
+- Custom: `Microsoft.Web/sites/publish/Action`
 
 
 ## Static Web Apps
