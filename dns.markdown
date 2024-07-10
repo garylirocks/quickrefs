@@ -213,6 +213,15 @@ Some notes about Windows Server DNS
 - Conditional Forwarders
   - If you have `company.com` in Forward Lookup Zones, and then if you want to add a conditional forwarder for a subzone `sub.company.com`, then you'll need to add a delegation for `sub.company.com` in `company.com` first. Does it matter whether the delegation and conditional forwarder is the same ? (haven't validated this, see https://techcommunity.microsoft.com/t5/windows-server-for-it-pro/dns-delegation-and-conditional-forwarder-for-the-same-domain/m-p/3717385)
 - See [this diagram](./images/azure_dns-resolution.drawio.svg) for another quirky behavior of Windows Server DNS: if it gets from an upstream server a response containing a CNAME record, and it has an authoritative zone itself for the CNAME zone, then it overrides values in the upstream response
+- If you have two Forward Lookup Zones:
+  - `example.com` zone, with record `host1.sub` -> `1.1.1.1`, `host2.sub` -> `2.2.2.2`
+  - `sub.example.com` zone, with record `host1` -> `10.10.10.10`
+
+  When you query
+  - `host1.sub.example.com`, it returns `10.10.10.10`
+  - `host2.sub.example.com`, it returns null
+
+  Meaning that the most specific zones take precedence, all queries for `*.sub.example.com` goes to the `sub.example.com` zone
 
 
 ## Misc
