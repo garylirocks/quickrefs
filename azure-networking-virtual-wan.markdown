@@ -109,6 +109,10 @@ Apply to:
 - Any branch or VNet connections
 - Inbound, outbound or both directions
 
+Example:
+
+- Using route map to fix asymmetric routing, see https://youtu.be/R5C8zJ7NEfk?si=w9H89XsypAL6HgI-
+
 ### Routing Intent
 
 - Can be enabled in either of the following places:

@@ -33,6 +33,7 @@
 - [ExpressRoute](#expressroute)
   - [Resiliency](#resiliency)
   - [Compare to Site-to-Site VPN](#compare-to-site-to-site-vpn)
+  - [ER traffic collector](#er-traffic-collector)
   - [Prefer global peering over ER circuits](#prefer-global-peering-over-er-circuits)
     - [ExpressRoute Gateway configuration](#expressroute-gateway-configuration)
     - [vNet-to-vNet](#vnet-to-vnet-1)
@@ -70,6 +71,7 @@
 - [DDoS Protection](#ddos-protection)
 - [Azure Virtual Network Manager](#azure-virtual-network-manager)
 - [Network Watcher](#network-watcher)
+  - [Flow logs and traffic analytics](#flow-logs-and-traffic-analytics)
   - [Auto creation](#auto-creation)
 - [vNet encryption](#vnet-encryption)
 - [Network design considerations](#network-design-considerations)
@@ -795,6 +797,24 @@ A vNet can have both ExpressRoute and VPN gateways at the same time.
 | Protocol           | SSTP or IPsec                                                      | Direct over VLAN or MPLS                                                                     |
 | Routing            | Static or dynamic                                                  | Border Gateway Protocol (BGP)                                                                |
 | Use cases          | <ul><li>Dev, test and lab</li><li>Small-scale production</li></ul> | <ul><li>Enterprise-class and mission-critical workloads</li><li>Big data solutions</li></ul> |
+
+### ER traffic collector
+
+- Data sent to a Log Analytics Workspace
+- Fields: ER circuit ID, Source/Destination IP/Port, protocol, bytes, ASN, etc
+- Doesn't work with  (yet)
+
+Comparing to vNet Flow logs
+
+|                   | ER traffic Collector | Flow log       |
+| ----------------- | -------------------- | -------------- |
+| Sampled           | Yes 1:4096           | No             |
+| Collected at      | ER circuit (MSEE)    | vNet/SDN (NIC) |
+| Log ICMP          | Yes                  | No             |
+| Traffic Analytics | No                   | Yes            |
+
+It could be complementary to vNet flow logs, see details here https://youtu.be/4MuCzTO-feE?si=U8zIeFWgSy07UBf-
+
 
 ### Prefer global peering over ER circuits
 
@@ -1651,32 +1671,41 @@ A combination of network monitoring and diagnostic tools.
   - In some cases, a successful connectivity test does not mean you could connect to the service:
     - eg. a connectivity test to `sql-temp-001.database.windows.net:1433` might be successful, but the SQL Server's firewall could block the actual connection
 
-- Logging
+### Flow logs and traffic analytics
 
-  There are two types, NSG flow logs and vNet flow logs, both
-    - Saved as JSON files to a storage account
-    - A file per MAC address per hour
-    - One entry per minute
-    - No support for flow into a private endpoint (available at the flow source end)
-    - vNet Flow Logs can capture more information:
+There are two types: **NSG flow logs** (legacy) and **vNet flow logs** (new), both
 
-      | Capability                                                                               | NSG flow logs                  | Virtual network flow logs                  |
-      | ---------------------------------------------------------------------------------------- | ------------------------------ | ------------------------------------------ |
-      | Scope of enablement                                                                      | NSG                            | Virtual network, subnet, network interface |
-      | Identification of allowed/denied traffic in NSG rules                                    | Yes                            | Yes                                        |
-      | Identification of allowed/denied traffic by Virtual Network Manager security admin rules | No                             | Yes                                        |
-      | Support of Virtual Network encryption                                                    | No                             | Yes                                        |
-      | Traffic volume (bytes and packets) for stateless flows                                   | No                             | Yes                                        |
-      | Extensive resource coverage                                                              | No                             | Yes                                        |
-      | vNet gateway traffic                                                                     | No                             | Yes                                        |
-      | Price                                                                                    | per gigabyte of logs collected | per gigabyte logs collected                |
+- Saved as JSON files to a storage account
+- A file per MAC address per hour
+- One entry per minute
+- No support for flow into a private endpoint (only available at the flow source end)
+- vNet Flow Logs can capture more information:
 
-    - vNet Flow Logs does **NOT** work with vWAN hub (yet), you need to enable it on all the spoke vNets
+| Capability                                                                               | NSG flow logs                  | Virtual network flow logs                  |
+| ---------------------------------------------------------------------------------------- | ------------------------------ | ------------------------------------------ |
+| Scope of enablement                                                                      | NSG                            | Virtual network, subnet, network interface |
+| Identification of allowed/denied traffic in NSG rules                                    | Yes                            | Yes                                        |
+| Identification of allowed/denied traffic by Virtual Network Manager security admin rules | No                             | Yes                                        |
+| Support of Virtual Network encryption                                                    | No                             | Yes                                        |
+| Traffic volume (bytes and packets) for stateless flows                                   | No                             | Yes                                        |
+| Extensive resource coverage                                                              | No                             | Yes                                        |
+| vNet gateway traffic                                                                     | No                             | Yes                                        |
+| Price                                                                                    | per gigabyte of logs collected | same                                       |
 
-- **Traffic Analytics**
-  - ingest logs to Log Analytics, help query/visualize traffic distribution, usage pattern, etc
-  - works with both NSG and vNet flow logs
-  ![Traffic analytics data flow](images/azure_traffic-analytics.png)
+- vNet Flow Logs does **NOT** work with vWAN hub (yet), you need to enable it on all the spoke vNets
+
+**Best practices**
+
+- You should enable Flow logs on both hub and spoke vNets
+  - If enabled only at hub vNet,
+    - traffic from on-prem to a spoke vNet, will be logged at the ER gateway
+    - the return traffic bypasses the ER gateway, won't be logged
+
+**Traffic Analytics**
+
+- ingest logs to Log Analytics, help query/visualize traffic distribution, usage pattern, etc
+- works with both NSG and vNet flow logs
+![Traffic analytics data flow](images/azure_traffic-analytics.png)
 
 ### Auto creation
 
