@@ -12,6 +12,7 @@
   - [Contexts](#contexts)
   - [`env` variables](#env-variables)
   - [`vars` and `secrets`](#vars-and-secrets)
+  - [`GITHUB_TOKEN`](#github_token)
   - [`github` context](#github-context)
   - [Expressions](#expressions)
     - [Comparisons](#comparisons)
@@ -405,9 +406,23 @@ jobs:
     creds: ${{ secrets.AZURE_CREDENTIALS }}
 ```
 
-- `secrets.GITHUB_TOKEN` is automatically created for each workflow run, the default access level could be `permissive` or `restrictive`, see https://docs.github.com/en/enterprise-cloud@latest/actions/security-guides/automatic-token-authentication#permissions-for-the-github_token
-  - You can use `permissions:` key to customize the permissions for entire workflow or individual jobs, this overwrites the default permissions
-  - You can see the permissions in "Set up job" section in the workflow run log
+### `GITHUB_TOKEN`
+
+`secrets.GITHUB_TOKEN` is automatically created for each workflow run, the default access level could be `permissive` or `restrictive`, see https://docs.github.com/en/enterprise-cloud@latest/actions/security-guides/automatic-token-authentication#permissions-for-the-github_token
+
+- You can use `permissions:` key to customize the permissions for entire workflow or individual jobs, this overwrites the default permissions, example:
+
+  ```yaml
+  jobs:
+    job1:
+      permissions:
+        contents: read
+        pull-requests: write
+        id-token: write       # this is required if you want to login to Azure using OIDC
+      steps:
+        # ...
+  ```
+- You can see the permissions in "Set up job" section in the workflow run log
 
 ### `github` context
 
