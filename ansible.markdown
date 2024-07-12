@@ -7,7 +7,6 @@ Ansible
 - [Playbook](#playbook)
 - [Tasks](#tasks)
   - [Blocks](#blocks)
-- [Tags](#tags)
 - [Variables](#variables)
   - [Ansible facts](#ansible-facts)
   - [Magic variables](#magic-variables)
@@ -15,6 +14,11 @@ Ansible
 - [Loops](#loops)
 - [Testing](#testing)
   - [Test with localhost](#test-with-localhost)
+- [Tags](#tags)
+  - [Tag inheritance](#tag-inheritance)
+  - [Configuring tags globally](#configuring-tags-globally)
+- [Limit](#limit)
+  - [Common patterns](#common-patterns)
 - [Error handling](#error-handling)
 - [Debugging](#debugging)
   - [`debugger` keyword](#debugger-keyword)
@@ -23,8 +27,9 @@ Ansible
 - [Collections](#collections)
 - [Importing and including](#importing-and-including)
 - [Secrets](#secrets)
-  - [File-level encryption](#file-level-encryption)
+  - [Vaulted file](#vaulted-file)
   - [Variable-level encryption](#variable-level-encryption)
+  - [Multiple passwords](#multiple-passwords)
 - [Configs](#configs)
 - [Work with Azure](#work-with-azure)
   - [Install az collection](#install-az-collection)
@@ -275,39 +280,6 @@ tasks:
 ```
 
 
-## Tags
-
-You can add tags to task or play, and filter tasks by tags
-
-```sh
-# list available tags in a playbook
-ansible-playbook playbook.yml --list-tags
-
-# run tasks tagged 'nginx'
-ansible-playbook playbook.yml --tags nginx
-
-# skip tags
-ansible-playbook playbook.yml --skip-tags nginx
-```
-
-There are two special tags: `always` and `never`
-
-- `always` tagged task is always run, unless skipped specifically with `--skip-tags always`
-- `never` tagged task is always skipped, unless included specifically with `--tags never`
-
-```yaml
-tasks:
-  - name: Run the rarely-used debug task
-    ansible.builtin.debug:
-     msg: '{{ aVar }}'
-    tags:
-      - never
-      - debug
-```
-
-If you specify `--tags debug`, the task will run as well
-
-
 ## Variables
 
 Could be defined in `group_vars` folder
@@ -540,6 +512,90 @@ It's often easier to test with localhost first
 - Use `-K, --ask-become-pass` if it needs root password:  `ansible-playbook -i ./localhost.localonly.ini -K my_playbook.yml`
 
 
+## Tags
+
+You can add tags to task or play, and filter tasks by tags
+
+```sh
+# list available tags in a playbook
+ansible-playbook playbook.yml --list-tags
+
+# run tasks tagged 'tag1' or 'tag2'
+ansible-playbook playbook.yml --tags "tag1,tag2"
+
+# skip tags
+ansible-playbook playbook.yml --skip-tags nginx
+```
+
+There are two special tags: `always` and `never`
+
+- `always` tagged task is always run, unless skipped specifically with `--skip-tags always`
+- `never` tagged task is always skipped, unless included specifically with `--tags never`
+
+```yaml
+tasks:
+  - name: Run the rarely-used debug task
+    ansible.builtin.debug:
+     msg: '{{ aVar }}'
+    tags:
+      - never
+      - debug
+```
+
+If you specify `--tags debug`, the task will run as well
+
+### Tag inheritance
+
+- With plays, blocks, `role`, `import_*`, tags are inherited.
+- With `include_role` and `include_tasks`, tags are not inherited.
+  - This means if you add `--tag myTag` when running a playbook, for a task in the included file or role to run, the `include_*` statement itself needs to have `myTag`, and the included task need to have the same tag as well, see an example [here](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_tags.html#selective-reuse)
+
+  - There are two ways to workaround this:
+    - Use `apply` keyword
+
+    ```yaml
+    - name: Apply the db tag to the include and to all tasks in db.yml
+      include_tasks:
+        file: db.yml
+        # adds 'db' tag to tasks within db.yml
+        apply:
+          tags: db
+      # adds 'db' tag to this 'include_tasks' itself
+      tags: db
+    ```
+
+    - Use a block
+
+    ```yaml
+    - block:
+      - name: Include tasks from db.yml
+        include_tasks: db.yml
+      tags: db
+    ```
+
+### Configuring tags globally
+
+If you run or skip certain tags by default, you can use the `TAGS_RUN` and `TAGS_SKIP` options in Ansible configuration to set those defaults.
+
+
+## Limit
+
+When you run a playbook, you can selectively choose (with `--limit` flag) which managed nodes or groups in your inventory to target.
+
+A pattern can refere to a single host, an IP address, an inventory group, a set of groups, or all hosts in your inventory.
+
+### Common patterns
+
+- `all` or `*`: all hosts
+- `host1`
+- `host1:host2` or `host1,host2`
+- `192.0.*`, `one*.com`: wildcard is allowed
+- `group1:group2`: multiple groups
+- `group1:!group2`: all hosts in group1, but not in group2
+- `group1:&group2`: all hosts in both group1 and group2
+- `~(web|db).*\.example\.com`: use `~` for a regex pattern
+
+
 ## Error handling
 
 - By default if a command returns non-zero code, the task fails, but this could be customized
@@ -551,7 +607,7 @@ It's often easier to test with localhost first
     failed_when: (diff_cmd.rc == 0) or (diff_cmd.rc >= 2)
   ```
 
-- By default a error would stop tasks on the host, but you can change this behavior
+- By default an error would stop tasks on the host, but you can change this behavior
 
   ```yaml
   - name: Do not count this as a failure
@@ -762,7 +818,7 @@ Compare `include_*` and `import_*`:
   ```
 
 - The bare `include` keyword is deprecated
-- Avoid using both includes and imports in a single playbook, it can lead to difficult-to-diagnose bugs
+- **Avoid** using both includes and imports in a single playbook, it can lead to difficult-to-diagnose bugs
 - If you use roles at play level, they are treated as static imports, tags are applied to all tasks within the role:
   ```yaml
   ---
@@ -780,7 +836,28 @@ Compare `include_*` and `import_*`:
 
 "Vault" is a feature that allows you to encrypt sensitive data in your playbooks and roles. The encrypted data can then be safely stored in a source control system.
 
-### File-level encryption
+Two types:
+
+- Vaulted files
+  - Full file is encrypted, could contain variables, tasks, etc
+  - Decrypted when loaded or referenced
+  - Can be used for inventory, anything that loads variables (vars_files, group_vars, include_vars, etc)
+- Single encrypted variable
+  - Only work for variables
+  - Decrypted on demand, so you can have vaulted variables with different vault secrets and only provide those needed
+  - You can mix vaulted and non-vaulted variables in the same file, even inline in a play or role
+
+When using `-v` (verbose) mode, you can hide a secret value by adding `no_log: true` to the task
+
+```yaml
+- name: secret task
+  shell: /usr/bin/do_something --value={{ secret_value }}
+  no_log: True
+```
+
+Note that the use of the `no_log` attribute does not prevent data from being shown when debugging Ansible itself via the `ANSIBLE_DEBUG` environment variable.
+
+### Vaulted file
 
 You can encrypt any file
 
@@ -790,10 +867,22 @@ ansible-vault encrypt demo-playbook.yml
 
 # edit
 ansible-vault edit demo-playbook.yml
-
-# run an encrypted playbook
-ansible-playbook demo-playbook.yml --ask-vault-pass
 ```
+
+When using this encrypted playbook, you could provide the password by prompt or a file
+
+```sh
+# provide the vault password by prompt
+ansible-playbook demo-playbook.yml --ask-vault-pass
+
+# use a password file
+ansible-playbook demo-playbook.yml --vault-password-file ~/.vault_pass.txt
+
+# use a script, which outputs the password to standard output
+ansible-playbook demo-playbook.yml --vault-password-file ~/.vault_pass.py
+```
+
+You can also specify the password file with environment variable `ANSIBLE_VAULT_PASSWORD_FILE=~/.vault_pass.txt`
 
 ### Variable-level encryption
 
@@ -819,11 +908,30 @@ Use the secret in a playbook
       var: secret
 ```
 
+`!vault` tag is needed, so both Ansible and YAML are aware of the need to decrypt
+
 Run the playbook
 
 ```sh
 ansible-playbook use-secret.yml --ask-vault-pass
 ```
+
+### Multiple passwords
+
+Multiple vaults could be encrypted with different passwords. And different vaults can be given a label to distinguish them.
+
+You can use `--vault-id` to specify the password for each vault
+
+```sh
+# use a password file for vault "label1"
+# use prompt for vault "label2"
+ansible-playbook site.yml --vault-id label1@~/.vault_pass.txt --vault-id label2@prompt
+```
+
+By default the vault label ("label1", "label2" etc.) is just a hint. Ansible will try to decrypt each vault with every provided password.
+
+Setting the config option `DEFAULT_VAULT_ID_MATCH` will change this behavior so that each password is only used to decrypt data that was encrypted with the same label.
+
 
 ## Configs
 
@@ -1023,7 +1131,7 @@ winrm enumerate winrm/config/Listener
 - **Job Templates**:
   - what inventory to run against
   - what playbook to run, and survey for variables
-  - waht credentials to use
+  - what credentials to use
 - **Workflow Templates**:
   - you can build a workflow by joining multiple steps together(each step could be job templates, other workflow templates, repo sync, inventory source sync, approvals, etc), similar to Azure Logic Apps
   - the included job templates could have different inventories, playbooks, credentials, etc
