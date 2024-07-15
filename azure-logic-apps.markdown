@@ -494,7 +494,10 @@ Depending on the connection, there are different ways to authorize, you often ne
     }
     ```
 
-  - For OAuth connections, you need to authorize manually, an API connection you authorized could be used by multiple logic apps (see: https://docs.microsoft.com/en-us/azure/logic-apps/logic-apps-deploy-azure-resource-manager-templates#authorize-oauth-connections)
+  - For OAuth connections (such as Office 365 Outlook), you need to authorize manually, an API connection you authorized could be used by multiple logic apps (see: https://docs.microsoft.com/en-us/azure/logic-apps/logic-apps-deploy-azure-resource-manager-templates#authorize-oauth-connections)
+      - The connection doesn't expire until revoked, even if you changed your sign-in credentials.
+      - You'd better use a service account instead of your own account
+      - [MS doc here](https://learn.microsoft.com/en-us/azure/connectors/connectors-create-api-office365-outlook?tabs=standard#connect-using-other-accounts) says you can only create a connection with the same account you used to login in to the Azure Portal, but seems like in the login popup, you could use another account ?
 
 
 ## Deployment
