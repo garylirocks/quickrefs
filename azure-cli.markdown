@@ -10,7 +10,9 @@
   - [AccessToken for other scopes](#accesstoken-for-other-scopes)
 - [Preview features](#preview-features)
 - [Azure Cloud Shell](#azure-cloud-shell)
+  - [Features](#features)
   - [File persistence](#file-persistence)
+  - [Networking](#networking)
   - [PowerShell](#powershell)
 
 ## General
@@ -212,22 +214,26 @@ For the query parameter `--query "[? properties.state=='Registered'].{Name: name
 
 ## Azure Cloud Shell
 
-- You could use either Bash or PowerShell terminal
+### Features
+
 - Comes with common dev tools pre-installed: zsh, tmux, Azure CLI, AzCopy, vim, git, npm, kubectl, helm, MySQL client, sqlcmd, iPython, Terraform, Ansible, etc
 - Runs on a temporary host on a per-user, per-session basis
   - CBL-Mariner based Linux containers
   - Multiple sessions are run on the same machine
   - You could open a port, and preview whatever is served by it in browser
-- Requires an Azure file share to be mounted (same share used for both Bash and PowerShell)
-- Persists `$HOME` using a 5GB image held in the file share
+- On first launch or after reset the settings, you have a few options:
+  - Bash or PowerShell
+  - Whether to mount a file share (if not, the sessions is **ephemeral**)
+  - Default subscription
+  - Whether you want to deploy Cloud Shell into a virtual network (this allows it to connect to resources privately)
 - You can find information regarding your Cloud Shell container by inspecting environment variables prefixed with `ACC_`, eg. `ACC_LOCATION` is the region or your container
-- By default, Cloud Shell runs in a container in a Microsoft network separate from your resources. This means it cannot access private resources. You could deploy Cloud Shell into your own VNet, see: https://docs.microsoft.com/en-us/azure/cloud-shell/private-vnet
 
 ### File persistence
 
-- On first launch, you are prompted to associate a new or existing file share to persist files across sessions.
-- For security reason, each user should provision their own storage account.
-- *Azure storage firewall is not supported for cloud shell storage account.*
+- On first launch, you could choose to mount a file share (new or existing) to persist files across sessions
+- Persists `$HOME` using a 5GB image held in the file share
+- For security reason, each user should provision their own storage account
+- *Azure storage firewall is not supported for cloud shell storage account.* If you deploy Cloud Shell to your own vNet, you could connect to the storage account via private endpoint.
 
 Files are persisted in two ways:
 - **File share**: mounted at `$HOME/clouddrive`, which maps to the file share
@@ -256,6 +262,12 @@ clouddrive mount \
   -n storageAccountName \
   -f fileShareName
 ```
+
+### Networking
+
+By default, Cloud Shell runs in a container in a Microsoft network separate from your resources. This means it cannot access private resources.
+
+You could optionally deploy Cloud Shell into your own vNet, see: https://docs.microsoft.com/en-us/azure/cloud-shell/private-vnet
 
 ### PowerShell
 
