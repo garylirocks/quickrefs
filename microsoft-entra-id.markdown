@@ -479,7 +479,8 @@ dsregcmd /status
 - Users with Global Administrator or User Administrator role can create new users
 - When you delete an account, the account remains in suspended state for 30 days
 - Users can also be added to Entra through Microsoft 365 Admin Center, Microsoft Intune admin console, and the CLI
-- All users are granted a set of default permissions, a user's access consists of:
+- "**Default user role permissions**" can be accessed in the Portal at "Users" -> "User settings"
+- All users are granted a set of default permissions, based on:
   - the type of user (member or guest)
   - their role assignments
   - whether they are owner of a object
