@@ -44,8 +44,10 @@
       - Application
   - **Azure roles**
   - **PIM for Entra Groups**
-- Role assignments could be extended or renewed
 - Most common use case: create "Eligible Assignment" of roles/memberships to some users/groups, who need to active them when needed
+- Expiration:
+  - Within 14 days before expiration, user could request extension (admin to approve), or an admin could extend it
+  - Within **30 days after expiration**, an expired assignment is still visible in the Portal (seems **NOT** returned by API call), and user could request to **renew** it
 
 
 ## Assignee
