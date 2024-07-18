@@ -8,6 +8,8 @@
   - [Rules](#rules)
   - [Outbound connection](#outbound-connection)
   - [Distribution modes](#distribution-modes)
+  - [Limitations](#limitations)
+  - [Cross-subscription load balancer (in preview)](#cross-subscription-load-balancer-in-preview)
   - [Cross-region load balancer](#cross-region-load-balancer)
 - [Application Gateway](#application-gateway)
   - [Overview](#overview)
@@ -21,6 +23,7 @@
   - [WAF policy on AGW](#waf-policy-on-agw)
     - [Custom rules](#custom-rules)
     - [Managed rules](#managed-rules)
+  - [Troubleshooting](#troubleshooting)
 - [Traffic Manager](#traffic-manager)
   - [DNS resolution example](#dns-resolution-example)
   - [Traffic-routing methods](#traffic-routing-methods)
@@ -63,7 +66,7 @@ Global vs. regional:
   - Recommended to have different frontend IPs for inbound and outbound traffic
 - Internal load balancers
   - Could have frontend IPs from **multiple subnets** in a single vNet (CAN'T be in multiple vNets)
-- (Preview) Frontend IP and backend pools could be in different subscriptions
+- Frontend IP and backend pools could be in different subscriptions from the LB (see sections below)
 
 Example multi-tier architecture with load balancers
 
@@ -81,11 +84,12 @@ Example multi-tier architecture with load balancers
 
 - Standard SKU is recommended
 - VMs, availability sets, and VMSS can be connected to either Basic or Standart SKU LB, not both
+- Private LB could be basic or standard as well, standard one is always zone-redundant
 - When public IPs are used, the SKU must match
 - Availability zones
-  - Zone-redundant (Need a zone redundant frontend IP)
+  - Zone-redundant (Need a zone redundant frontend IP, could be public or private)
     ![Zone redundant](images/azure_load-balancer-zone-redundant.png)
-  - Zonal (Need zonal frontend IPs)
+  - Zonal (Need zonal frontend IPs, could be public or private)
     ![Zonal](images/azure_load-balancer-zonal.png)
 
 ### Backend pools
@@ -94,17 +98,18 @@ Example multi-tier architecture with load balancers
   - But all backend pools can only contain instances from **a single vNet**
 - Two configuration types:
   - NIC (recommended):
-    - VM or VMSS NICs in a vNet (only this type showing up in the Portal, VM -> Networking -> Load balancing)
+    - VM or VMSS NICs in a vNet
+    - Reflected on each backend pool instance (eg. VM -> Networking -> Load balancing)
   - IP address
-    - any resource IPs in a vNet
+    - any resource IPs in a vNet, not reflected on the end of backend pool instance
 - A single IP could be in multiple pools
 
 ### Traffic flows
 
-- External LB:
-  - Return traffic does not pass through LB ?
-- Internal LB:
-  - Only the first incoming traffic goes via LB ?
+LB does traffic mapping, doesn't terminate the flow
+
+- Incoming: destination IP/port changed to one of the backend instance's
+- Return: source IP/port changed to the LB frontend IP/port
 
 ### Rules
 
@@ -146,7 +151,6 @@ SNAT port usage constraints:
 - **SNAT port exhaustion** occurs when a backend instance runs out of allocated SNAT ports, then it won't be able to establish new outbound connections
 - Secondary IP configurations of a NIC don't provide outbound connection via a load balancer
 
-
 ### Distribution modes
 
 - The default is **Five-tuple hash** (Source IP, Source Port, Destination IP, Destination Port, Protocol)
@@ -157,6 +161,41 @@ SNAT port usage constraints:
     - Web app with in-memory sessions to store the logged in user's profile
     - Windows Remote Desktop Gateway
     - Media upload (In many implementations, there's a TCP connection, which remains open to monitor the progress, and a separate UDP session to upload the file)
+
+### Limitations
+
+- A backend instance should not access the frontend IP of the LB, it could lead to asymmetric routing (in case the LB maps the flow to the same instance)
+- You CAN ping the frontend IP of a Standard Public LB (not other types ?)
+- You can't include on-prem IP in the backend pool. Because the health probe won't work (always originating from `168.63.129.16`)
+
+### Cross-subscription load balancer (in preview)
+
+Either the frontend IP or the backend pool could be in a different subscription from the LB.
+
+- Public LB
+
+  ![Cross-subscription load balancer](./images/azure_load-balancer-cross-subscriptions.png)
+  *backend pool in another sub*
+
+  ![Cross-subscription load balancer - frontend](./images/azure_load-balancer-cross-subscriptions-frontend.png)
+  *frontend IP in another sub*
+
+- Internal LB
+
+  Frontend IP and backendpool must be in same vNet, so same subscription, but the LB itself could be in a different subscription
+
+- Cross-region LB
+
+  Could be in its own subscription
+
+- Backend pools (for regional LB)
+
+  Cross-subscription backend pools must utilize a new property known as **SyncMode**.
+
+  - A new type of backend pool, different from NIC-based of IP-based
+  - Two possible values:
+    - "Automatic": backend pool instances are synced with the LB configuration, useful for VMSS
+    - "Manual": might be useful in scenarios like DR, active-passive, or dynamic provisioning
 
 ### Cross-region load balancer
 
@@ -232,7 +271,7 @@ Benefits over a simple LB:
   - Maps one-to-one to a listener
   - Rule types:
     - **Basic**
-    - **Path-based**: request is routed to the first-matching path, you should add a default one for any un-matched requests
+    - **Path-based**: request is routed to the first-matching path, you should add a default one for any un-matched requests, you could use a wildcard like `/images/*`, the wildcard *must* be at the end  (something like `/*.pdf` is NOT supported)
   - Rule target types:
     - Backend pool: with HTTP settings
     - Redirection: to another listener or external site with a specified HTTP code, you can choose to include the original query string in redirection, but not the path in the original request
@@ -410,10 +449,12 @@ az network application-gateway rule create \
 - Can only be associated to AGW of **WAF_v2** SKU
 - A policy includes settings for managed rules, custom rules, exclusions, file upload limit, etc
 - A WAF policy can be associated to
-  - AGW (global)
-  - a listener (per-site)
-  - a path-based rule (per-URI)
-- A AGW can have only one WAF policy associated
+  - **AGW (global)**
+  - a **listener (per-site)**, overwrites the global policy
+  - a **path-based rule (per-URI)**
+    - a blocking custom rule works with a backend pool target, NOT redirection, it always redirects
+- Precedence: **per-URI > per-site > global**, usually, global policy have some basic rules, per-site could be more strict, and per-URI could be the most strict, see [here for an example](https://learn.microsoft.com/en-us/azure/web-application-firewall/ag/policy-overview#example)
+- An AGW/site/path-based rule can have **only one** WAF policy associated, but a policy could be associated to **multiple** AGWs/sites/rules
 - A WAF policy must be in the **same region and subscription** as the associated AGW
 - You can config **log scrubbing rules** to mask sensitive data in WAF logs
 
@@ -456,6 +497,23 @@ az network application-gateway rule create \
     - Could be applied globally or specific rules (more secure to apply to specific rules)
     - Specific request attributes that should be excluded (header, cookie, argument), the rest of the request will still be checked, see [examples here](https://learn.microsoft.com/en-us/azure/web-application-firewall/ag/application-gateway-waf-configuration?tabs=portal#request-attribute-examples)
 - To trigger blocking by managed rules, you can use `curl -I "http://<IP-address>/?1=1"`, this triggers both IP as hostname and SQL injection rules
+
+### Troubleshooting
+
+Add diagnostic settings, then use KQL to query logs:
+
+```
+# AGW access logs
+AzureDiagnostics
+| where Category == "ApplicationGatewayAccessLog"
+| where requestUri_s contains ".log"
+
+# WAF action logs
+AzureDiagnostics
+| where Category == "ApplicationGatewayFirewallLog"
+| where requestUri_s == '<xxx>'
+| project TimeGenerated, OperationName, requestUri_s, Message, clientIP_s, ruleId_s, ruleGroup_s, action_s, details_message_s, details_data_s
+```
 
 
 ## Traffic Manager
