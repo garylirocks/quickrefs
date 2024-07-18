@@ -418,7 +418,6 @@ jobs:
       permissions:
         contents: read
         pull-requests: write
-        id-token: write       # this is required if you want to login to Azure using OIDC
       steps:
         # ...
   ```
@@ -898,6 +897,29 @@ jobs:
 ```
 
 ### Azure login
+
+Use the `azure/login` task, it could login using a secret or federated workload identity (OIDC)
+
+Using OIDC is recommended, you don't need to maintain a secret
+
+```yaml
+jobs:
+  job1:
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write   # this is required requesting the JWT, so it could login to Azure using OIDC
+    steps:
+      - name: "Az CLI login"
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          allow-no-subscriptions: true
+
+      # ...
+```
 
 
 ## Reuse workflows
