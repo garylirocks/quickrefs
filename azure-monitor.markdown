@@ -162,6 +162,9 @@ For VMs, Azure collects some metrics(host-level) by default, such as CPU usage, 
   - works with Azure Automation accounts to onboard Azure Update Management and Azure Automation State Configuration, Change Tracking and Inventory
 - **Azure Diagnostics extension**: see table below
 - **Dependency agent**: maps dependencies between VMs
+  - Need AMA agent to be installed
+  - Sends heartbeat data to the `InsightsMetrics` table, for which you incur data ingestion charges. This behavior is different from Azure Monitor Agent, which sends agent health data to the `Heartbeat` table, which is free from data collection charges
+
 
 ## Log Analytics Agent
 

@@ -460,16 +460,16 @@ az network application-gateway rule create \
 
 #### Custom rules
 
-- Processed before managed rules, **if a custom rule allows a request, NO managed rules will be processed**
+- Processed before managed rules, **if a custom rule allows a request, NO lower priority custom rules or managed rules will be processed**
 - Two types:
   - Match
     - Conditions: IP address, Geo location, Request (method, URI, headers, cookies, body, query string, post args)
+      - The URI condition matches the path AND query string, like `/path/to/page?arg1=1&arg2=2`
   - Rate limit:
     - All the MatchRule conditions can be used, so you can create rate limit rule just for a paticular URI, header, etc
     - Can be grouped by client address and geo location
     - Action can only be "Block" or "Log" (*"Allow" is not necessary*)
     - Using a sliding windows algorithm, traffic exceeding the limit is dropped in each window
-- Once a rule is matched, the action will be applied, lower priorities rules will not be processed
 
 #### Managed rules
 
