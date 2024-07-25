@@ -31,6 +31,7 @@
   - [Point to site](#point-to-site)
     - [Native Azure certificate auth](#native-azure-certificate-auth)
 - [ExpressRoute](#expressroute)
+  - [FastPath](#fastpath)
   - [Resiliency](#resiliency)
   - [Compare to Site-to-Site VPN](#compare-to-site-to-site-vpn)
   - [ER traffic collector](#er-traffic-collector)
@@ -764,6 +765,15 @@ Connectivity can be from:
   *Global Reach enables connectivity between 10.0.1.0/24 and 10.0.2.0/24*
 - DNS queries, certificate revocation list checking and Azure CDN requests are still sent over the public internet
 
+### FastPath
+
+By default,
+  - ingress traffic goes through the ER gateway
+  - egress traffic bypasses the ER gateway, goes to the edge router directly
+
+With FastPath, the ingress traffic bypasses the gateway as well
+  - Supports vNet peering and UDR
+
 ### Resiliency
 
 - **Standard resiliency**: one circuit in one peering location
@@ -802,7 +812,7 @@ A vNet can have both ExpressRoute and VPN gateways at the same time.
 
 - Data sent to a Log Analytics Workspace
 - Fields: ER circuit ID, Source/Destination IP/Port, protocol, bytes, ASN, etc
-- Doesn't work with  (yet)
+- Doesn't work with ? (yet)
 
 Comparing to vNet Flow logs
 
