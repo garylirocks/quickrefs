@@ -1,6 +1,8 @@
 # Azure ARC
 
 - [Overview](#overview)
+- [Arc machines](#arc-machines)
+  - [Roles](#roles)
 - [Multicloud connector](#multicloud-connector)
 
 
@@ -15,6 +17,22 @@ Azure Arc allows you to manage the following resource types hosted outside of Az
   - and PostgreSQL server (preview) services
 - **SQL Server**: Extend Azure services to SQL Server instances hosted outside of Azure.
 - **Virtual machines (preview)**: Provision, resize, delete, and manage virtual machines based on *VMware vSphere* or *Azure Stack hyper-converged infrastructure (HCI)* and enable VM self-service through role-based access
+
+
+## Arc machines
+
+### Roles
+
+- "Azure Connected Machine Onboarding":
+  - Create Arc machine resources(`Microsoft.HybridCompute/machines`) in Azure
+  - Can NOT manage extensions on Arc machines
+- "Azure Connected Machine Resource Administrator":
+  - Create Arc machine resources(`Microsoft.HybridCompute/machines`) in Azure
+  - CAN manage extensions on Arc machines
+  - Can manage licenses
+  - Can runCommand
+- "Azure Connected Machine Resource Manager":
+  - Similar to above, can also manage hybrid connectivity endpoints, but seems intended for Azure HCI
 
 
 ## Multicloud connector
