@@ -11,7 +11,6 @@
 - [Workload identity federation](#workload-identity-federation)
   - [How it works](#how-it-works)
   - [CLI](#cli)
-- [Workload Identity Premium](#workload-identity-premium)
 - [Application](#application)
   - [Application management](#application-management)
   - [My Apps portal](#my-apps-portal)
@@ -20,6 +19,8 @@
   - [App roles](#app-roles)
   - [Expose API](#expose-api)
 - [Application Proxy](#application-proxy)
+- [Workload Identity Premium](#workload-identity-premium)
+  - [Conditional Access for workload identities](#conditional-access-for-workload-identities)
 - [CLI](#cli-1)
   - [Application registration and service principal(Enterprise app) owners](#application-registration-and-service-principalenterprise-app-owners)
   - [Applications](#applications)
@@ -29,6 +30,13 @@
 ## Overview
 
 <img src="images/azure_identity-types.svg" width="600" alt="Identity types" />
+
+A workload identity is an identity that allows an application or service principal access to resources, sometimes in the context of a user. These workload identities differ from traditional user accounts as they:
+
+- Can’t perform multifactor authentication (MFA)
+- Often have no formal lifecycle process
+- Need to store their credentials or secrets somewhere
+
 
 ## App registrations vs. Service principals
 
@@ -283,20 +291,6 @@ jobs:
           az account show
           az group list
 ```
-
-## Workload Identity Premium
-
-- It's a standalone product, you need a license for it
-  - Not included in other product plans, like Entra ID P1/P2, E5
-  - Charges you $3 per workload ID per month
-- One license in the tenant unlocks all the features for all the workload IDs, NO need to assign licenses to individual workload IDs
-- Provides more security features for workload identities:
-
-| Feature            | Service principal                | Managed identity | Note                        |
-| ------------------ | -------------------------------- | ---------------- | --------------------------- |
-| Conditional Access | Y (single-tenant app only)       | N                | eg. IP range                |
-| ID Protection      | Y (single and multi-tenant apps) | N                | Detect compromised IDs      |
-| Access Review      | Y                                | Y                | Review PIM role assignments |
 
 
 ## Application
@@ -573,6 +567,32 @@ Kerberos auth flow
 - The on-prem app is using Integrated Windows Authentication (IWA), which requires a Kerberos token
 - In this case, the Proxy connector will impersonate to get the Kerberos token and present it to the on-prem app
 - *The yellow is an Entra token, the red an Kerberos token*
+
+
+## Workload Identity Premium
+
+- It's a standalone product, you need a license for it
+  - Not included in other product plans, like Entra ID P1/P2, E5
+  - Charges you $3 per workload ID per month
+- One license in the tenant unlocks all the features for all the workload IDs, NO need to assign licenses to individual workload IDs
+- Provides more security features for workload identities:
+
+| Feature            | Service principal                                  | Managed identity | Note                                                |
+| ------------------ | -------------------------------------------------- | ---------------- | --------------------------------------------------- |
+| Conditional Access | Y (single-tenant app only)                         | N                | eg. IP range                                        |
+| ID Protection      | Y (single and multi-tenant apps, third-party SaaS) | N                | Detect suspicious sign-ins, leaked credentials, etc |
+| Access Review      | Y                                                  | Y                | Review PIM role assignments                         |
+
+### Conditional Access for workload identities
+
+- Only for **single-tenant** service principals owned by the organization
+  - SaaS and multi-tenant apps not supported
+  - Managed identities not supported
+- Policy example:
+  - Location: Block from any, except the allowed ones
+  - Based on Id Protection risk
+- Use "Service principal sign-ins" log to view "Conditional Access" evaluation info
+- If you use "Report-only" mode, view results in "Report-only" tab of "Sign-in report"
 
 
 ## CLI
