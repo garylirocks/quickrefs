@@ -19,6 +19,7 @@
   - [Self-activate an eligible assignment](#self-activate-an-eligible-assignment)
   - [Azure role settings (PIM policies)](#azure-role-settings-pim-policies)
 - [Access reviews](#access-reviews)
+  - [Multi-stage](#multi-stage)
   - [Entra roles](#entra-roles-1)
   - [Azure roles](#azure-roles-1)
 - [PIM for Groups](#pim-for-groups)
@@ -460,10 +461,25 @@ New-AzRoleAssignmentScheduleRequest `
   - Specific users or groups
   - Members (self)
   - Manager, can set fallback reviewers
-- The review result is NOT immediately applied after a reviewr's action, only applied
+- The review result is NOT immediately applied after a reviewer's action, only applied
   - after the review's end date
-  - or when the review is stopped
+  - or when the review is ended by an admin
 - If a review is recurring, updating settings for "Current" access review instance would not affect the future recurrences
+
+### Multi-stage
+
+Reviews could be multi-stage, max. three stages.
+
+- Each stage could have its own:
+  - Reviewers
+  - Duration (in days)
+- Options:
+  - whether to show previous stage decisions to later stage reviewers
+  - Which "Reviewees going to the next stage": eg. you can set that only **"Denied"** and **"Not reviewed"** ones progress to next stage
+- Reviewers in later stage can overwrite decisions from previous stage
+  - But if a reviewee is not progressed to later stages, the decision from the earlier stage will be applied
+- An admin could stop current stage, progress the review to the next stage
+- If the "auto apply results" is disabled, an admin can manually apply results
 
 ### Entra roles
 
