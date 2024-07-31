@@ -23,6 +23,7 @@
     - [Disk throughput testing](#disk-throughput-testing)
   - [Monitoring](#monitoring)
   - [Copy files](#copy-files)
+- [Windows Updates](#windows-updates)
 
 ## Shortcuts
 
@@ -348,3 +349,10 @@ robocopy /?
 - "System Volume Information": do not robocopy the system information of the old disk, the new disk needs to build its own partition/volume information;
 - "$RECYCLE.BIN": ignore recycle bin;
 - `/XO`: exclude older files (files which has a newer version in destination)
+
+
+## Windows Updates
+
+To find whether a Windows Server Update Services (WSUS) is configured on a machine, go to this regitstry path: `HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate`
+
+Check keys `WUServer` and `WUStatusServer`
