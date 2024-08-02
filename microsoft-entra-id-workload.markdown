@@ -25,6 +25,7 @@
   - [Application registration and service principal(Enterprise app) owners](#application-registration-and-service-principalenterprise-app-owners)
   - [Applications](#applications)
   - [Service principals](#service-principals-1)
+- [Monitoring](#monitoring)
 
 
 ## Overview
@@ -747,3 +748,12 @@ az ad app list \
     ```
 
     **You need `az keyvault secret download` here to retrieve the private key and the cert, `az keyvault certificate download` only downloads the public potion of a certificate**
+
+
+## Monitoring
+
+```
+// query service principal sign-in logs
+AADServicePrincipalSignInLogs
+| where ServicePrincipalName startswith "<service-principal-name>"
+```
