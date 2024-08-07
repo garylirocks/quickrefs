@@ -657,7 +657,7 @@ jobs:
 ```
 
 - Specify the `dev` environment
-- Each environment could have its own `AZURE_CREDENTIALS` secret
+- Secrets/variables could be scoped to an environment (or the whole repo, or an organization)
 
 ### Workflow commands
 
