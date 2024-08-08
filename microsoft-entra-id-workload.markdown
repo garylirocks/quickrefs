@@ -626,9 +626,22 @@ az rest -m POST -u https://graph.microsoft.com/beta/servicePrincipals/$spObjectI
 ### Applications
 
 ```sh
+# get app ID by display name (display name is not unique)
+# single quotes are required
+appName="<app-name>"
+az ad app list --filter "displayName eq '$appName'" --query "[].appId" -otsv
+# xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+
+# ! Not Recommended: this matches $appName as a prefix of the whole name
+az ad app list --display-name "$appName" --query "[].appId" -o tsv
+
 # app regs created by me
 az ad app list \
   --filter "publisherDomain eq 'garyli.onmicrosoft.com'" -otable
+
+# list secrets
+az ad app credential list --id <app-id> \
+  --query "[].{Name:displayName, keyId:keyId, EndDate:endDateTime}" -o table
 ```
 
 ### Service principals
@@ -756,4 +769,10 @@ az ad app list \
 // query service principal sign-in logs
 AADServicePrincipalSignInLogs
 | where ServicePrincipalName startswith "<service-principal-name>"
+| where TimeGenerated > ago(90d)
+
+// query audit logs (updates to the service principal)
+AuditLogs
+| where TargetResources[0].displayName == '<service-principal-name>'
+| where TimeGenerated > ago(90d)
 ```
