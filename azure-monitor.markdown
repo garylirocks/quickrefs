@@ -391,7 +391,7 @@ Data collection scenarios:
   ![Using AMA](images/azure_monitor-data-collection-scenarios-agent.png)
 
 - Using log ingestion API (a REST client sends data to a DCE, and specifying which DCR to use)
-  - When using Custom Text or Custom JSON Logs as the data source, you can set a single line KQL to transform a record to multi columns in a table
+  - When using Custom Text or Custom JSON Logs as the data source, you can set **a single line KQL** to transform a record to multi columns in a table
   ![Using API](images/azure_monitor-data-collection-scenarios-api.png)
 
 - Workspace transformation DCR
@@ -400,6 +400,15 @@ Data collection scenarios:
   - applied to any data sent to the table that doesn't use another DCR
   - could work with resource logs using a diagnostic setting, Log Analytics agent or Container insights
   ![Workspace transformation DCR](images/azure_monitor-data-collection-scenarios-workspace-transformation.png)
+
+Best practices:
+
+![DCR management best practices](images/azure_monitor-data-collection-rules-management.png)
+
+Since DCR and VM have a multi-to-multi relationship, DCR should be as granular as possible, create a DCR specific for
+- an observability scope (eg. all VMs for central IT, a group of VMs for an LOB)
+- data source type (eg. perf vs. events)
+- destination (eg. different workspaces)
 
 
 ## Data collection endpoints (DCE)
