@@ -68,12 +68,23 @@ Example (for OIDC based apps)
 - The service principals reference the application object
 - Service principals are granted RBAC roles in each tenant
 
-Microsoft maintains two directories internally to publish applications:
+Microsoft maintains some directories internally to publish applications:
 
 ![Microsoft directories for applications](images/azure_ad-application-vs-service-principal.png)
 
-- Microsoft services directory - for Microsoft Apps
+- Microsoft services directory (tenant ID: `f8cdef31-a31e-4b4a-93e4-5f571e91255a`) - for first-party Microsoft applications
+  - Could not be deleted
+  - Examples:
+    - Azure Portal
+    - Microsoft Azure CLI (`04b07795-8ddb-461a-bbee-02f9e1bf7b46`)
+    - Microsoft Graph (`00000003-0000-0000-c000-000000000000`)
+    - Office 365 SharePoint Online (`00000003-0000-0ff1-ce00-000000000000`)
+    - Windows Azure Active Directory (`00000002-0000-0000-c000-000000000000`)
+    - Meru19 First Party App (`93efed00-6552-4119-833a-422b297199f9`), for "Azure Database for PostgreSQL Flexible Server Private Network Integration", this adds DNS record for PostgreSQL server to specified private DNS zone
 - App gallery directory - for pre-integrated third party apps
+- Microsoft tenant (ID: `72f988bf-86f1-41af-91ab-2d7cd011db47`)
+  - Graph Explorer (`de8bc8b5-d9f9-48b1-a8ad-b748da725064`)
+  - Microsoft Graph Command Line Tools (`14d82eec-204b-4c2f-b7e8-296a70dab67e`)
 
 
 ## Service principals
@@ -632,8 +643,10 @@ appName="<app-name>"
 az ad app list --filter "displayName eq '$appName'" --query "[].appId" -otsv
 # xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 
-# ! Not Recommended: this matches $appName as a prefix of the whole name
+# --display-name param matches $appName as a prefix of the whole name
 az ad app list --display-name "$appName" --query "[].appId" -o tsv
+# same as
+az ad app list --filter "startswith(displayName, '$appName')" --query "[].appId" -o tsv
 
 # app regs created by me
 az ad app list \
@@ -687,7 +700,7 @@ az ad app credential list --id <app-id> \
   ```sh
   # NOTE: seems you can only use "displayName" field for filtering
   az ad sp list \
-    --filter "startswith(displayName, 'sp_name_')"
+    --filter "startswith(displayName, 'sp_name_')" \
     -otable
   ```
 
