@@ -101,7 +101,7 @@ Azure Monitor is based on a common mornitoring data platform that includes Logs 
   - Usually displayed in the overview page of resources
   - Stored for **93 days**, in the Monitor Explorer, the maximum time windows is 30 days, but you can **pan the chart** to view data older than 30 days
   - Not in a log analytics workspace by default, but you can use diagnostic settings to send metrics to it
-    - Not all metrics could be sent to a LA workspace
+    - **Not all** metrics could be sent to a LA workspace
   - Platform metrics are usually collected at a one-minute frequency
   - No cost for Platform metrics, has cost for custom metrics
   - Custom metrics could be from:
@@ -141,7 +141,7 @@ Azure Monitor is based on a common mornitoring data platform that includes Logs 
 - When sending logs to Log Analytics Workspace, the table used depends what type of collection the resource is using:
   - **Azure diagnostics**: All data is written to `AzureDiagnostic` table
     - Legacy
-    - Its schema is the superset of the schemas of all the different data types being collected
+    - There's a common schema for all resource logs with service-specific fields then added for different log categories.
   - **Resource-specific**: individual tables for each category of the resource
     - Recommended, all service will be migrated to this mode
     - Better performance across ingestion latency and query times
@@ -149,6 +149,9 @@ Azure Monitor is based on a common mornitoring data platform that includes Logs 
 - Limitations
   - Most resource types have an `AllMetrics` category, which allows you to send metrics to a destination
     - Some metrics could not be exported this way, you need to use REST API
+- Pricing
+  - The destination you send the logs to will incur charges, for ingesting and storing data
+  - Some log categories have export costs associated, eg. for `Microsoft.KeyVault/vaults`, `AuditEvent` category does not have export costs, `AzurePolicyEvaluationDetails` does
 
 ### VMs
 
