@@ -36,7 +36,9 @@ Notes
 - Connections can only be initiated in one direction: from client to the endpoint
 - **Outbound NSG rules do not affect PE connectivity, you could set a Deny-all outbound rule on the NSG, a PE could still connect to its service**
 - For some service, you need separate private endpoints for each sub-resource, for a RA-GRS storage account, there are sub-resources like `blob`, `blob_secondary`, `file`, `file_secondary`, ...
-- Private endpoints **DO NOT** restrict public network access to services, except **Azure App Service** and **Azure Functions**, they become inaccessible publicly when they are associated with a private endpoint. Other PaaS services may have additional access control. (*such as the `publicNetworkAccess` property, this property is not always visible in the Portal*)
+- Private endpoints **DO NOT** restrict public network access to services,
+  - Except **Azure App Service** and **Azure Functions**, they become inaccessible publicly when they are associated with a private endpoint.
+  - Other PaaS services may have additional access control. (*such as the `publicNetworkAccess` property, this property is not always visible in the Portal*)
 - The connected private link resource could be in a different region
 - To allow automatic approval for private endpoints, you need this permission on the private-link resource: `Microsoft.<Provider>/<resource_type>/privateEndpointConnectionsApproval/action`
 - It's considered best practice to expose private endpoints on a small, **dedicated subnet** within the consuming virtual network. One reason is that you can apply `PrivateEndpointNetworkPolicies` on the subnet for added traffic control and security.
@@ -387,7 +389,6 @@ Connection between the private endpoint and the storage service uses a **private
 - A Private Link service receives connections from multiple private endpoints. A private endpoint connects to one Private Link service.
 - Private Link works across Azure AD tenants
 - No gateways, NAT devices, ExpressRoute or VPN connections, or public IP addresses are needed.
-- **Azure App Service** and **Azure Functions** become inaccessible publicly when they are associated with a private endpoint, other Azure services require additional access controls.
 - To make your service private to consumers in Azure, place your service behind a standard Azure Load Balancer, then you can create a Private Link Service referencing the load balancer.
   - Choose a subnet for NAT IP addresses
   - You need disable `privateLinkServiceNetworkPolicies` on this subnet, only applies to the NAT IP you chose, NSG still applies to other resources in the subnet
@@ -400,7 +401,7 @@ Connection between the private endpoint and the storage service uses a **private
       --disable-private-link-service-network-policies true
     ```
 
-  - All consumer traffic will appear to originate from this pool of private IP addresses (192.168.0.5 in the diagram below) to the service provider.
+  - All consumer traffic will appear to originate from this pool of private IP addresses (192.168.0.5 in the diagram below) to the service provider (VM/VMSS in the diagram).
 
   ![Private link service](images/azure_private-link-service.png)
 
