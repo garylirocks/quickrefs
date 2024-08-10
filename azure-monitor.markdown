@@ -604,12 +604,12 @@ Both Resource Health and Service Health events are in resource activity logs
 
 ### Cost
 
-If Microsoft Sentinel is enabled in a LAW:
+If **Microsoft Sentinel** is enabled in a LAW:
 - All data collected is subject to Sentinel charges, in addition to Log Analytics charges
 
 Commitment tiers
 - Works for a single workspace, so you might consider combine multiple workspaces to one to reduce costs
-- If you daily ingest is > 100GB, you should use a dedicated cluster, then commitment tier could apply to multiple workspaces
+- If you daily ingest is > 100GB, you should use a **dedicated cluster**, then commitment tier could apply to multiple workspaces
 
 ### Design considerations
 
@@ -620,7 +620,7 @@ Commitment tiers
   - Cost implications:
     - When Microsoft Sentinel is enabled in a workspace, all data in that workspace is subject to **Microsoft Sentinel pricing** even if it's operational data collected by Azure Monitor, this usually ends up with higher cost
     - But if combining operational and security data helps you reach a commitment tier, then it will reduce cost
-  - If you use both Microsoft Sentinel and Defender for Cloud, you should use same workspace for them to keep security data in one place
+  - If you use both Microsoft Sentinel and Defender for Cloud, you should use **same** workspace for them to keep security data in one place
 - **Azure regions**
   - Regulatory or compliance requirements
   - Cross-region egress charges
@@ -634,8 +634,15 @@ Commitment tiers
 - **Commitment tiers**: reduce ingestions cost
 - **Data access control**: see [access control](#access-control)
 - **Resilience**:
-  - Ingest some data to multiple workspaces in different regions
-  - Ancillary resources, like alerts and workbooks need to be created/enabled in the case of failover
+  - Workspaces are AZ redundant by default (in supported regions)
+  - **Data export**: ingested logs could be backed-up in a geo-redundant storage account
+  - **Workspace replication**: data synced to a secondary workspace in another region
+    - Can be applied to a subset of data
+    - Cost more than data export, but less than ingesting data to two separate workspaces
+    - In case of failover, DNS automatically routes you to the secondary instance
+    - The secondary instance's configs are read-only
+  - (Not recommended) Ingest some data to multiple workspaces in different regions
+    - Ancillary resources, like alerts and workbooks need to be created/enabled in the case of failover
 - **Data ownership**: subsidiaries or affiliated companies
 - **Azure tenants**: several data source can only send monitoring data to a workspace in the same tenant
 - **Legacy agent limitations**
@@ -672,18 +679,26 @@ You should create workspaces as less as possible for easier management, **reason
 
 ### Storage
 
-To better manage cost, there are different plans which could be configured for each table:
+To better manage cost, there are different plans which could be configured for **each table**:
 
-![Workplace data plan](images/azure_workspace-plan-overview.png)
+![Workplace data plan](images/azure_workspace-data-plan-overview.png)
 
 - Analytics
-  - Support all queries
+  - For real-time monitoring, alerting and dashboards
+  - Support unlimited queries, no additional charge
+  - 30 days retention included, can extends to 2 years ?
 
 - Basic
   - Cheaper
+  - Additional charge for queries
+  - Best for on-off troubleshooting and incident response
   - Can only search within the table, no joins
-  - "Search jobs" bring the logs to analytics log tables
-  - Fixed interactive period of 8 days
+  - Fixed interactive period of 8 days ?
+  - 30 days retention included, can extends to 2 years ?
+
+- Auxillary logs
+  - Best for low-touch data for high verbose logs, auditing and compliance
+  - Additional charge for queries
 
 - Archive
   - After the interactive periods, both "Analytics" and "Basic" logs are archived
@@ -691,6 +706,10 @@ To better manage cost, there are different plans which could be configured for e
     - "Search jobs": data matching paticular criteria
     - or "Restore": data from a paticular time range
   - Up to 7 years
+
+- Conversion between data plans
+  - In some cases, you only care some kind of aggregated data, you can ingest data as Basic or Auxiliary logs, and use a "Summary Rule" to generate the aggregated data you want in Analytics Logs
+  - "Search Job" will bring data back to Analytics Logs
 
 ### Access Control
 

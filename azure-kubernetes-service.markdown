@@ -112,6 +112,16 @@ When you create an AKS cluster, Azure creates a resource group that contains clu
 - User node pool
   - Node count can be 0
 
+Some OS SKUs could be switched in-place, such as Ubuntu and Azure Linux:
+
+```sh
+az aks nodepool scale \
+    --resource-group <resourceGroup> \
+    --cluster-name <aksCluster> \
+    --name <nodepool1> \
+    --os-sku AzureLinux
+```
+
 You could scale Pods and nodes manually or automatically
 
 - Manual scaling
