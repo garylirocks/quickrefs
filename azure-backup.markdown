@@ -3,6 +3,7 @@
 - [Vaults](#vaults)
   - [Recovery Service Vault](#recovery-service-vault)
   - [Backup Vault](#backup-vault)
+  - [Alerting](#alerting)
 - [Concepts](#concepts)
   - [Backup](#backup)
   - [Restore](#restore)
@@ -46,8 +47,8 @@
 
 - Resource type `Microsoft.DataProtection/BackupVaults`
 - Supports certain newer workloads: Azure Disks, Azure Blobs, Azure Databases for PostgreSQL servers
-  - For Azure Blobs, backup is kept in the source storage account, won't be copied to the vault storage
-  - For Azure Disks, backup is kept as snapshots in your subscription, won't be copied to the vault storage
+  - For Azure Blobs, backup is kept in the source storage account, won't be copied to the vault storage ? could be in a vault storage now ?
+  - For Azure Disks, backup is kept as snapshots in your subscription, won't be copied to the vault storage ? could be in a vault storage now ?
 - A config is called "backup instance"
 - Three types of redundancy: LRS, ZRS, GRS
 - Storage tiers:
@@ -57,6 +58,13 @@
 - Similar to Recovery Service Vault, but does not support:
   - Integrated monitoring
   - Recovering of individual folders and files
+
+### Alerting
+
+Previously Azure Backup and Azure Site Recovery did not suport Azure Monitor alert rules, only native built-in alerts.
+
+Now it's supported.
+
 
 ## Concepts
 
