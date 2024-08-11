@@ -7,6 +7,7 @@
   - [High availability](#high-availability)
   - [Scaling](#scaling)
   - [Networking](#networking)
+  - [Free offer](#free-offer)
 - [SQL Managed Instance](#sql-managed-instance)
   - [High availability](#high-availability-1)
 - [Shared between SQL, SQL MI](#shared-between-sql-sql-mi)
@@ -27,6 +28,7 @@
   - [Transparent data encryption (TDE)](#transparent-data-encryption-tde)
   - [Dynamic data masking](#dynamic-data-masking)
   - [Always Encrypted](#always-encrypted)
+- [Database Watcher](#database-watcher)
 - [Azure SQL Edge](#azure-sql-edge)
 
 ## Overview
@@ -134,6 +136,8 @@ Read Scale-out in a business critical service tier:
 
 ### Networking
 
+Applies to all databases in a server.
+
 There is a networking setting called "**Allow Azure services and resources to access this server**",
   - when turned **ON**, it creates a subresource `Microsoft.Sql/servers/<sql-name>/firewallRules/AllowAllWindowsAzureIps`, this enables connection in both of the following scenarios, you don't need to allow the client subnet:
     - Client Azure VM subnet does not have a `Sql` ServiceEndpoint (via Internet)
@@ -141,6 +145,14 @@ There is a networking setting called "**Allow Azure services and resources to ac
   - when turned **OFF**, you need to either
     - Allow the client subnet (to connect via ServiceEndpoint)
     - Allow public IP (to connect via Internet)
+
+### Free offer
+
+- 100,000 vCore seconds per month, 32GB data storage
+- Free limit exhausted, either:
+  - pause the DB for the month, ensure it's free
+  - allow over usage, get billed
+
 
 ## SQL Managed Instance
 
@@ -467,6 +479,17 @@ Steps:
 - The driver substitutes the plaintext values of the parameters with their encrypted values, and it sends the query to the server for processing
 - The server computes the result set
 - The driver decrypts the results and returns plaintext values to the application
+
+
+## Database Watcher
+
+A separate resource in Azure to help monitor SQL databases
+
+- Target: collecting data from Azure SQL and managed instances
+- Auth: use managed identity
+- Data store: a KQL data store
+- Networking: supports private endpoints
+- Usage: KQL query, dashboards
 
 
 ## Azure SQL Edge
