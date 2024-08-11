@@ -12,6 +12,8 @@
   - [Authentication](#authentication)
   - [Common operations](#common-operations)
   - [Send an email](#send-an-email)
+  - [Limitations](#limitations)
+  - [`Microsoft.Graph.Entra` module](#microsoftgraphentra-module)
 - [Permission notes](#permission-notes)
 - [Misc](#misc)
 
@@ -31,7 +33,7 @@ Some entities (such as `/groups`) work with
   - Delegated (work or school account) permissions
   - Application permissions
 
-But does **NOT support delegated (personal account)** permission, so it doesn't work in Graph Explorer for personal account
+But does **NOT** support **delegated (personal account)** permission, so it doesn't work in Graph Explorer for personal account
 
 ### Web experience
 
@@ -314,6 +316,62 @@ $message = @{
 
 Connect-MgGraph -Scopes "Mail.Send"
 Send-MgUserMail -UserId "gary@24g85s.onmicrosoft.com" -Message $message
+```
+
+### Limitations
+
+- This module is auto-generated off the REST API, so some of the command names are really long, and you may need to call multiple commands to do something.
+- Commands does not support pipeline, eg `Get-MgGroup | GetMgGroupMember` does not work
+
+
+### `Microsoft.Graph.Entra` module
+
+Also based on the same Graph REST API, but has
+- tailored commands for certain scenarios, more user-friendly
+- supports pipeline, eg. `Get-EntraGroup --SearchString "PIM-test-reader" | Get-EntraGroupOwner -Property "displayName"` (*only return user owners, not any app owners*)
+- could be used together with the `Microsoft.Graph` module
+
+```powershell
+Install-Module Microsoft.Graph.Entra -AllowPrerelease
+# there is also a Beta version `Microsoft.Graph.Entra.Beta`
+
+# list available objects
+Get-Command -module Microsoft.Graph.Entra | Select-Object -Unique Noun | Sort-Object Noun
+# Noun
+# ----
+# Entra
+# EntraApplication
+# EntraApplicationOwner
+# EntraApplicationPassword
+# EntraApplicationPasswordCredential
+# ...
+# EntraGroup
+# EntraGroupMember
+# EntraGroupOwner
+# ...
+# EntraServicePrincipal
+# ...
+# EntraUser
+# EntraUserManager
+# EntraUserMembership
+# EntraUserOwnedObject
+# EntraUserPassword
+# ...
+```
+
+Usage
+
+Note: *Some entities do not support delegated permissions for personal account, so you many need to create a **service principal**, grant permissions to it, and then use it on your personal account*
+
+```powershell
+# you could login using the same command, specifying the scopes
+Connect-MgGraph -Scopes "User.Read.All","Group.Read.All"
+
+# show current context scopes
+(Get-MgContext).Scopes
+
+# Use `-Debug` to show all the raw REST queries
+Get-EntraUser -SearchString "gary" -Debug
 ```
 
 
