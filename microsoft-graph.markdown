@@ -5,7 +5,7 @@
   - [Web experience](#web-experience)
   - [Query paramters](#query-paramters)
   - [PowerShell `Invoke-RestMethod`](#powershell-invoke-restmethod)
-  - [CLI](#cli)
+  - [`az` CLI](#az-cli)
 - [PowerShell module](#powershell-module)
   - [Install](#install)
   - [Find Command](#find-command)
@@ -14,6 +14,8 @@
   - [Send an email](#send-an-email)
   - [Limitations](#limitations)
   - [`Microsoft.Graph.Entra` module](#microsoftgraphentra-module)
+- [`mgc` CLI](#mgc-cli)
+- [Bicep](#bicep)
 - [Permission notes](#permission-notes)
 - [Misc](#misc)
 
@@ -119,7 +121,7 @@ The `$` sign needs to be escaped with a **backstick** if you use parameters like
 Invoke-RestMethod -Uri "https://graph.microsoft.com/v1.0/users?`$filter=displayName eq 'Alex Wilber'" -Headers $headers
 ```
 
-### CLI
+### `az` CLI
 
 You need to specify the scope as `ms-graph` to get a correct access toke:
 
@@ -375,10 +377,35 @@ Get-EntraUser -SearchString "gary" -Debug
 ```
 
 
+## `mgc` CLI
+
+```sh
+# "delegated" mode, using interactive Browser authentication
+mgc login --strategy InteractiveBrowser
+
+# "app-only" mode
+mgc login --strategy ClientCertificate
+
+# query your user details
+mgc me get
+```
+
+
+## Bicep
+
+- Some Entra objects could be managed by Bicep, such as `groups`, `applications`
+  - These objects support an alternative unique key (eg. `uniqueName` for `groups`), you should provide the value, it can only be set once, then it's read-only (the normal `id` is generated on the server-side)
+  - They support "**Upsert**" operations for idempotency
+    - "Upsert", uses the alternative key field, eg. `PATCH /groups/(uniqueName='uniqueName')`
+    - The usual "Update" operation uses the `id` field, eg. `PATCH /groups/{id}`
+- This is an extension to the usual ARM deployment, so even if you only work on Entra objects, this still create a deployment in an ARM scope (MG, sub, or RG), so you still need permission to be able to create a deployment in Azure
+
+
 ## Permission notes
 
 - `AccessReview.ReadWrite.Membership` supposed to be able to create access reviews for group memberships, but seems not work (at least for an SP), `AccessReview.ReadWrite.All` works
-- `Group.Create` permission allows an SP to create a group, and adds itself as an owner, then the SP can manage this group, but not other groups, this means the SP does not need the broader `Group.ReadWrite.All` permission
+- `Group.Create` permission allows an SP to create a group, if no owner specified, the SP will be added as owner automatically, this allows the SP manage this group, but not other groups, this means the SP does not need the broader `Group.ReadWrite.All` permission
+
 
 ## Misc
 
