@@ -22,7 +22,9 @@
   - [Backup](#backup-1)
 - [Authentication and authorization](#authentication-and-authorization)
   - [Authentication](#authentication)
-    - [Use a managed identity to access Azure SQL](#use-a-managed-identity-to-access-azure-sql)
+  - [Entra auth (contained user)](#entra-auth-contained-user)
+  - [Entra auth (server principals - logins)](#entra-auth-server-principals---logins)
+  - [Applications](#applications)
   - [Authorization](#authorization)
 - [Data security](#data-security)
   - [Transparent data encryption (TDE)](#transparent-data-encryption-tde)
@@ -55,7 +57,7 @@ Deployment options:
 
 - **Elastic pools**: you buy a set of compute and storage resources that are shared among all the databases in the pool
 - **SQL DB Server**: a logic container for databases (could be a mix of single databases and elastic pools), it defines
-  - Access: connection string (FQDN), location, authentication method (SQL auth, AAD auth, or both)
+  - Access: connection string (FQDN), location, authentication method (SQL auth, Entra auth, or both)
   - Backup settings
   - Business continuity management: failover groups
   - Security: networking, TDE, Defender for Cloud, identity, auditing
@@ -345,45 +347,74 @@ Most SQL Server HADR solutions are supported on VMs, as both Azure-only and hybr
 
 ## Authentication and authorization
 
+This section applies to Azure SQL Database, Azure SQL Managed Instance, or Azure Synapse.
+
 ### Authentication
 
-Logins and users:
+SQL logins and users:
 
-- A **login** is an individual account in the `master` database, to which a user account in one or more databasese can be linked. Credential stored with the login in `master`.
-- A **user account** is an individual account in any database that may be, but not have to be, linked to a login. If not linked, credential is stored in the database.
+- A **login** is an individual **account** in the `master` database, to which a user account in one or more databasese can be linked. Credential stored with the login in `master`.
+- A **user account** is an individual **account** in any database that may be, but not have to be, linked to a login. If not linked, credential is stored in the database.
 
-Auth methods:
+To create a user, you need `ALTER ANY USER` permission in the database, it's held by:
+- server admin accounts
+- with the `CONTROL ON DATABASE` or `ALTER ON DATABASE` permission for that database
+- members of the `db_owner` database role
 
-- SQL auth
-  - User account linked or not linked to a login
-- AAD auth
+Azure SQL DB server has two types of admins:
+
+![SQL admin accounts](images/azure_sql-entra-auth-admin-accounts.png)
+
+- SQL Server admin, could create
+  - users based on SQL Server auth logins
+  - contained users based on SQL Server auth (without logins)
+- Entra Admin (could be a user or group, group is recommended)
+  - (same as above), and
+  - contained users based on Entra ID user and groups
 
 When you deploy Azure SQL:
 
-- A SQL login created with specified name
+- A SQL **login** created with specified name
 - This login has full admin permissions on all databases as a server-level principal
-- When you sign into a database with this login, it's matched to the `dbo` user account, which
+- When you sign into a database with this login, it's matched to the **`dbo` user account**, which
   - exists in every user database
   - has all database permissions
   - is member of the `db_owner` fixed database role
 
-#### Use a managed identity to access Azure SQL
+### Entra auth (contained user)
 
-You need to login to the database with an Entra account (NOT SQL Server authentication, otherwise you can't create an external Entra user), then create a **container user** in the database for the managed identity:
+- To use Entra auth, you need create a Entra ID-based contained database user
+  - A contained user doesn't have a login in the `master` database
+- You need to login with a Entra admin account to create the first contained user.
+- If the Entra admin was removed from the server, existing Entra users created previously inside the server can **no longer** connect to the database with Entra auth.
+- Works with users, groups and apps (service principals or managed identity)
+  - No implicit users are created for Entra users logged in via membership in a group, operations which require assigning ownership will fail, to resolve this, a contained user must be created for the Entra user
+  - Identities in a different tenant don't work, guest users work.
+- **Azure RBAC roles** (eg. SQL Server Contributor role) **doesn't** grant access to connect to the database in SQL Database, SQL Managed Instance, or Azure Synapse. The access permission must be granted directly in the database using Transact-SQL statements.
 
 ```sql
 USE MyDatabase;
-CREATE USER "<identity-name>" FROM EXTERNAL PROVIDER;
-ALTER ROLE db_datareader ADD MEMBER "<identity-name>";
 
--- for a system assigned managed identity, <identity-name> is the same as the resource name
+-- <identity-name>:
+--  user principal name for a user
+--  display name for a group
+--  resource name for a managed identity
+CREATE USER "<identity-name>" FROM EXTERNAL PROVIDER;
+
+-- the user gets the "public" role by default
+-- you usually want to assign other roles to the user
+ALTER ROLE db_datareader ADD MEMBER "<identity-name>";
 ```
 
-Help queries:
+The `CREATE USER "<identity-name>" FROM EXTERNAL PROVIDER` command requires **access from SQL to Entra on behalf of the logged-in user**, the user needs MS Graph permissions to read user/group/apps.
+
+Helpful queries:
 
 ```sql
 -- List users
 USE MyDatabase;
+-- a principal could be either
+--    "SQL_USER", "EXTERNAL_USER", "EXTERNAL_GROUPS" or "DATABASE_ROLE"
 SELECT * FROM sys.database_principals;
 
 -- Query users and roles
@@ -396,7 +427,7 @@ JOIN
     sys.database_principals dprole ON drm.role_principal_id = dprole.principal_id
 ```
 
-To test this using PowerShell on a Windows VM:
+To test auth with a managed identity of a Windows VM:
 
 ```powershell
 $SQL_SERVER="sql-13dcb0b659.database.windows.net"
@@ -428,6 +459,55 @@ $SqlAdapter.Fill($DataSet)
 # print the data
 $DataSet.Tables[0]
 ```
+
+### Entra auth (server principals - logins)
+
+You can also create Entra ID-based logins in the `master` database
+
+```sql
+-- The login_name specifies the Entra principal, which is a user, group, or application
+CREATE LOGIN login_name
+  {
+    FROM EXTERNAL PROVIDER [WITH OBJECT_ID = 'objectid']
+    | WITH <option_list> [,..]
+  }
+
+<option_list> ::=
+    PASSWORD = { 'password' }
+    [ , SID = sid ]
+
+-- create user mapped to the login
+CREATE USER [user_name] FROM LOGIN [login_name]
+
+-- a login could be disabled
+ALTER LOGIN [login_name] DISABLE
+```
+
+### Applications
+
+See: https://learn.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-service-principal
+
+- An app could access SQL using Entra auth, it could be
+  - Just a normal app, for data operations
+  - Or an admin app, manage other users/logins in SQL
+- Could be service principals or managed identities (recommended)
+- An app could be a SQL admin (by itself or as a member of a group), this allows full automation for user/login creation in SQL
+- To create Entra-based user/logins in SQL, requires access from SQL to Entra to read user/group/apps via Microsoft Graph
+  - When a user does this, Azure SQL's firsty-party Microsoft application uses delegated permissions of the user
+  - When an app does this, SQL engine uses its **server identity** (see below), which **must have the Microsoft Graph query permissions**.
+    - MS doc suggests creating a roles-assignable group, assign "Directory Readers" role to it, then group owner can add server identities to the group
+    - Or assign individual permissions to the app
+    - Avoid assign the "Directory Readers" role to the app directly, which has unnecessary permissions
+- **server identity**
+  - Is the **primary managed identity** assigned to the Azure SQL logical server, SQL managed instance, Synapse workspace
+  - Could be system-assigned managed identity (SMI) or user-assigned managed identity (UMI)
+  - The managed identity of SQL Managed Instance is referred to as the managed **instance identity**, and is automatically assigned when the instance is created
+- NOTE there are two app identities involved:
+  - One is the app used to create users/logins in SQL (Graph permission is not required)
+  - One is the managed identity of SQL logical server/instance, Graph permissions are required to read Entra entities
+- SMI / UMI
+  - !! In addition to using a UMI/SMI as the server identity, you can use them (only UMI ?) to access the database by using the SQL connection string option `Authentication=Active Directory Managed Identity`, you need to create a contained user in the target database first
+  - UMI is recommended, because it's independent, can be used for all SQL servers/instances in a tenant
 
 ### Authorization
 
