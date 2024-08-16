@@ -10,6 +10,7 @@
 - [Scopes](#scopes)
   - [Deployment location and name](#deployment-location-and-name)
   - [Scope of nested deployments](#scope-of-nested-deployments)
+- [Export template for existing resources](#export-template-for-existing-resources)
 - [Template specs](#template-specs)
 - [Deployment stacks](#deployment-stacks)
   - [Why](#why)
@@ -508,6 +509,19 @@ If your deployment is targeting a resource group, with nested deployment, you ar
     "outputs": {}
   }
   ```
+
+
+## Export template for existing resources
+
+You could export ARM template for existing resources:
+
+```sh
+# for a RG
+az group export --name '<rg-name>' --include-parameter-default-value > rg-template.json
+
+# for individual resources
+az group export --resource-group '<rg-name>' --resource-ids <resource-id1> <resource-id2> ...
+```
 
 
 ## Template specs
