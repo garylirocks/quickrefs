@@ -1,5 +1,9 @@
 # Active Directory
 
+- [Overview](#overview)
+- [DNS](#dns)
+  - [Replication](#replication)
+
 ## Overview
 
 - There are objects, like users, groups, machines
@@ -7,42 +11,39 @@
 - Group policy can be linked to OU
 - Each object has a distinguished name like `CN=Gary Li,OU=IT,DC=example,DC=com`
 - Data are saved using X.500 schema
-
 - Access
   - LDAP protocol
-
-- Domain Controllers
-  - Each DC has a full copy of the domain data
-  - Start a domain by install "AD DS" and "DNS Server" roles on a Windows Server, then promote it to be a domain controller
-  - Other DCs can join an existing domain, then the domain data is replicated to it
-  - Most DCs are read-write
-    - A DC could be read-only as well, it may only have a subset of the data
-  - A Domain Controller can also be of type "Global Catalog", caching data from other domains in the same forest
-
 - Authentication
   - Kerberos (preferred)
   - LDAP
   - NTLM
-
+- **Domain Controllers (DC)**
+  - Each DC has a full copy of the domain data
+  - Start a domain by
+    - install "AD DS" and "DNS Server" roles on a Windows Server,
+    - then promote it to be a domain controller
+  - Other DCs can join an existing domain, then the domain data is replicated to it
+  - Most DCs are read-write
+    - A DC could be read-only as well, it may only have a subset of the data
+  - A DC can also be of type "Global Catalog", caching data from other domains in the same forest
 - The domain name is the DNS domain name, such as `example.com`
   - The default NetBIOS name is the first 15 characters of the first section of the domain name, in this case `EXAMPLE`
-
-- Sites and Subnets
-  - You can have subnets like
-    - "CN=10.0.0.0/16,CN=Subnets,CN=Sites,CN=Configuration,DC=example,DC=com"
-    - "CN=10.1.0.0/16,CN=Subnets,CN=Sites,CN=Configuration,DC=example,DC=com"
+- **Sites** and **Subnets**
   - You can have sites like
-    - "CN=NewYork,CN=Sites,CN=Configuration,DC=example,DC=com"
-    - "CN=Azure,CN=Sites,CN=Configuration,DC=example,DC=com"
+    - `CN=NewYork,CN=Sites,CN=Configuration,DC=example,DC=com`
+    - `CN=Azure,CN=Sites,CN=Configuration,DC=example,DC=com`
+  - You can have subnets like
+    - `CN=10.0.0.0/16,CN=Subnets,CN=Sites,CN=Configuration,DC=example,DC=com`
+    - `CN=10.1.0.0/16,CN=Subnets,CN=Sites,CN=Configuration,DC=example,DC=com`
   - A site can link to a subnet
   - You can have DCs in an Azure vNet, define them as a site
   - Then based on the IP of each machine, AD knows which site each machine belongs to
-
-- Trees and forests
+- **Trees** and **forests**
   - A single domain is also a tree and a forest, you can expand it with more domains
   - `example.com` could have children domains `us.example.com` and `uk.example.com`, they form a tree, and have transitive trust between them
   - `foo.com` can join the forest, and have a forest root trust to `example.com`
   - "Schemas" and "Configurations" are replicated forest wide
+
 
 ## DNS
 

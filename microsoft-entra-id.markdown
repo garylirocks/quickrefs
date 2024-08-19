@@ -10,8 +10,14 @@
   - [Best practices](#best-practices-1)
 - [AD DS vs. Entra ID vs. Entra DS](#ad-ds-vs-entra-id-vs-entra-ds)
   - [Entra DS](#entra-ds)
-  - [Entra Connect](#entra-connect)
+- [Hybrid identity](#hybrid-identity)
+  - [Concepts](#concepts)
+  - [Entra Connect Sync](#entra-connect-sync)
+  - [Entra Cloud Sync](#entra-cloud-sync)
   - [Hybrid authentication](#hybrid-authentication)
+    - [Password hash synchronization (PHS) (recommended)](#password-hash-synchronization-phs-recommended)
+    - [Pass-through authentication (PTA)](#pass-through-authentication-pta)
+    - [Federated authentication](#federated-authentication)
   - [Entra Connect Health service](#entra-connect-health-service)
 - [Devices](#devices)
   - [Entra registered](#entra-registered)
@@ -45,7 +51,7 @@
 - [Identity Governance](#identity-governance)
   - [Identity lifecycle](#identity-lifecycle)
 - [Entitlement management](#entitlement-management)
-  - [Concepts](#concepts)
+  - [Concepts](#concepts-1)
   - [Scenarios](#scenarios)
   - [Features](#features)
 - [Access reviews](#access-reviews)
@@ -238,7 +244,33 @@ _On prem AD is optional here_
 - You don't need to deploy, manage and patch Domain Controllers (DCs).
 - A one-way sync is configured from Entra to the managed domain, so you could login to a Windows VM using your Entra credentials.
 
-### Entra Connect
+
+## Hybrid identity
+
+### Concepts
+
+- Identity provisioning
+  - **HR-driven provisioning**: from HR system (eg. Workday, Oracle, SAP) to Entra ID
+  - **App provisioning**: create users and roles in Cloud apps
+  - **Directory provisioning**: from on-prem AD to Entra ID
+  - **Inter-directory provisioning**: sync user from on-prem AD to Entra ID
+- Authentication methods
+  - Cloud authentication (recommended)
+    - **Password hash synchronization** (PHS)
+    - **Pass-through synchronization** (PTA)
+  - Non-cloud auth
+    - **Federation** (AD FS)
+- **Seamless SSO**: automatically signs in users from their network-connected corporate desktops, so they can access cloud apps without sign-in again.
+  - Works with password hash sync and pass-through authentication
+  - The computer is AD-joined, no need to be Entra-joined
+  - Works on Windows 7 and above, Mac
+  - How it works:
+    - During setup, Entra gets an computer account in AD
+    - Entra will receive Kerberos tickets
+- **Password writeback**: changes made in Entra are written back to on-prem AD, eg. password updated by SSPR
+- **Device writeback**: sync Entra registered device to on-prem AD. Used to enable device-based conditional access for ADFS
+
+### Entra Connect Sync
 
 Entra does not replace Active Directory, they can be used together, **Entra Connect** is a software you download and run on your on-prem host, it can synchronize identities between on-prem AD and Entra:
 
@@ -251,44 +283,67 @@ Entra does not replace Active Directory, they can be used together, **Entra Conn
 - Entra Connect can sync to only a verified domain(eg. `contoso.com`, not just `contoso`) in Entra
 - You're able to specify the attribute in AD that should be used as UPN to sign in to Entra
 - You can filter what objects are synced based on domain or OU in AD
-- Alternatively, you could use **Entra Cloud Sync** to run the syncing in cloud instead of on-prem
-  - You still need to download and install a lightweight provisioning agent on-prem
-  - All the management is done in Azure Portal
+- Requires a SQL Server database to store identity data. By default, a SQL Server 2019 Express LocalDB (a light version of SQL Server Express) is installed.
+
+**Installation**
+
+- You need to provide two accounts/passwords:
+  - Entra account: at least with "**Hybrid Identity Administrator**" role
+    - Creates another Entra account "On-Premises Directory Synchronization Service Account": used to write information to Entra ID
+  - AD DS enterprise administrator
+    - Creates "AD DS Connector account" (with name like `ADSyncMSAxxxxx`): read/write info to AD
+- Other accounts
+  - "ADSync service account": run the sync service and access the SQL Server database
+
+**Configuration**
+
+After installation, you can run the software to configure sign-on method, whether to enable SSO, device hybrid join, etc
+
+### Entra Cloud Sync
+
+- Recommended over Entra Connect Sync
+- Need to download and install a lightweight provisioning agent on-prem
+- All the management is done in Azure Portal
+- Future proof, no need to update
+- Could be used along with Connect Sync, as long as scoping filters in each is mutually exclusive
 
 ### Hybrid authentication
 
-Cloud authentication (both works with seamless SSO):
+- PHS and PTA works with seamless SSO, federated auth does not
+- This only applies to hybrid users (users synced from on-prem), users created in Entra always use Entra authentication
 
-- **Password hash synchronization** (recommended)
+#### Password hash synchronization (PHS) (recommended)
 
-  ![Password hash synchronization](images/azure_ad-password-hash.png)
+![Password hash synchronization](images/azure_ad-password-hash.png)
 
-  - Most basic and least-effort solution in hybrid scenario
-  - Allows on-prem user to auth against Entra for cloud applications
-  - On-prem AD stores user password as a hash, AD Connect retrieves the hash and hashes that hash, sends the second hash to Entra
-    - Password hash is synced every 2 minutes, more frequent than other AD objects
-    - You can set up a selective password hash sync
-  - Hight availability: you should deploy a second Entra Connect server in standby mode
-  - On-prem account state changes are NOT synced to Entra immediately, you might want to trigger a new synchronization cycle after bulk update on-prem.
-  - Even if you are using another auth method, you should still **enable "Password synchronization" feature**, this helps as a back-up for
-    - High availability and disaster recovery
-    - On-prem outage survival
-    - Identity protection: check if the password is leaked
+- Most basic and least-effort solution in hybrid scenario
+- Allows on-prem user to auth against Entra for cloud applications
+- On-prem AD stores user password as a hash, AD Connect retrieves the hash and hashes that hash, sends the second hash to Entra
+  - Password hash is synced every 2 minutes, more frequent than other AD objects
+  - You can set up a selective password hash sync
+- Hight availability: you should deploy a second Entra Connect server in standby mode
+- On-prem account state changes are NOT synced to Entra immediately, you might want to trigger a new synchronization cycle after bulk update on-prem.
+- Even if you are using another auth method, you should still **enable "Password synchronization" feature**, this helps as a back-up for
+  - High availability and disaster recovery
+  - On-prem outage survival
+  - Identity protection: check if the password is leaked
 
-- **Pass-through authentication**
+#### Pass-through authentication (PTA)
 
-  ![Pass through synchronization](images/azure_ad-pass-through-auth.png)
+![Pass through synchronization](images/azure_ad-pass-through-auth.png)
 
-  - Passwords only stored in on-prem AD, not in the Entra
-  - Only on-prem AD is used to authenticate
-  - It's a tenant-level feature, turning it on affects the sign-in for users across all the managed domains in your tenant.
+- Authentication Agent
+  - Handles the authentication, so if it's down, hybrid users won't be able to sign in to cloud apps
   - High availability:
-    - One agent is running on the Entra Connect server
-    - You should deploy two extra agents on other servers
-  - The agents need access to Internet and on-prem AD domain controllers
-  - Why choose this: To enforce on-prem user account states, password policies and sign in hours at the time of sign-in
+    - One Authentication Agent is running on the Entra Connect server
+    - You should deploy two extra Agents on other servers
+  - Networking:
+    - The agents need access to Internet (port 80 and 443) and on-prem AD domain controllers
+    - No need for inbound connection to the agent
+- Why choose this: To enforce on-prem user account states, password policies and sign in hours at the time of sign-in
+- You can still optionally enable the "Password synchronization" feature
 
-**Federated authentication**:
+#### Federated authentication
 
 ![Federated synchronization](images/azure_ad-federated-auth.png)
 
@@ -303,18 +358,6 @@ Entra hands off authentication process to a separate trusted authentication syst
   - Sign in that requires SAMAccountName(`DOMAIN\username`) instead of UPN(`user@domain.com`)
 - High availability: federated systems typically require a load-balanced array of servers, known as a farm.
 - More complex to operate and troubleshoot compared to cloud authentication
-
-Related concepts:
-
-- **Seamless SSO**: automatically signs in users from their network-connected corporate desktops, so they can access cloud apps without sign-in again.
-  - Works with password hash sync and pass-through authentication
-  - The computer is AD-joined, no need to be Entra-joined
-  - Works on Windows 7 and above, Mac
-  - How it works:
-    - During setup, Entra gets an computer account in AD
-    - Entra will receive Kerberos tickets
-- **Password writeback**: changes made in Entra are written back to on-prem AD, eg. password updated by SSPR
-- **Device writeback**: sync Entra registered device to on-prem AD. Used to enable device-based conditional access for ADFS
 
 ### Entra Connect Health service
 
@@ -395,8 +438,9 @@ Usage:
   - Configuration Manager standalone
   - or co-management with Microsoft Intune
 - Capabilities: same as Entra joined devices
-- You set a Service Connection Point (SCP) in Entra Connect, then Entra Connect will sync your on-prem device objects to Entra
-- Your AD-joined device also registers itself with Entra, the device would get an Entra primary refresh token
+- Use Entra Connect to configure hybrid Entra join,
+  - It adds a Service Connection Point (SCP) in your AD
+- Your AD-joined device also registers itself with Entra, the device would get an Entra primary refresh token (PRT)
 
 #### Device writeback
 
