@@ -291,7 +291,7 @@ Could be defined in `group_vars` folder
   |- group2/
 ```
 
-Variables in `all/` will be applied to all hosts, in `group1/` for hosts in `group`, ...
+Variables in `all/` will be applied to all hosts, in `group1/` for hosts in `group1`, ...
 
 Could be also defined in inventory files directly
 
@@ -379,7 +379,7 @@ Some important facts:
 ```
 
 - You can reference an env variable by `{{ ansible_facts['env']['HOME'] }}`
-- Facts are cached (in memory by default), and available to all hosts, you can accessible fact of one remote host in another host like `{{ hostvars['vm1']['ansible_facts']['os_family'] }}`
+- Facts are cached (in memory by default), and available to all hosts, you can access fact of one remote host in another host like `{{ hostvars['vm1']['ansible_facts']['os_family'] }}`
 - `set_fact` set fact about current host, by default, you can not access it via `ansible_facts`, unless you set `cacheable: yes`
 
   ```yaml
@@ -440,7 +440,7 @@ They contain information about ansible operations.
   ```
 
 - `groups`
-- `group_names`
+- `group_names`, a list of group names the current host is a member of
 - `inventory_hostname`, the name defined in inventory file (could be alias, FQDN, IP, etc)
   - `ansible_host` IP or FQDN in inventory files
   - `ansible_hostname` this is short hostname gathered from the remote host
@@ -974,7 +974,7 @@ sudo pip3 install -r ~/.ansible/collections/ansible_collections/azure/azcollecti
 
 ### Azure credentials
 
-Use an service principal, it should have proper permissions on the target subscription, two ways for credentials:
+Use a service principal, it should have proper permissions on the target subscription, two ways for credentials:
 
 1. Put it in `~/.azure/credentials`
 
@@ -1127,7 +1127,11 @@ winrm enumerate winrm/config/Listener
 - **Inventories**:
   - could be added manually, from supported cloud providers or through dynamic inventory scripts
   - you can add variables for groups and individual hosts
-- **Credentials**: credentials for machines, Git repos, etc
+- **Credentials**:
+  - Secrets could be saved externally, such as in Azure Key Vault
+  - Could be
+    - password for logging in host
+    - password for decrypting a vault file/string
 - **Job Templates**:
   - what inventory to run against
   - what playbook to run, and survey for variables
@@ -1136,12 +1140,10 @@ winrm enumerate winrm/config/Listener
   - you can build a workflow by joining multiple steps together(each step could be job templates, other workflow templates, repo sync, inventory source sync, approvals, etc), similar to Azure Logic Apps
   - the included job templates could have different inventories, playbooks, credentials, etc
   - You could add a survey to a workflow template
-
 - **RBAC**
   - Entity hierarchy: organization -> team -> user
   - Built-in roles: Normal User, Administrator, Auditor
   - Scenarios: give user read and execute access to a job template, no permission to change anything
-
 - **Automation Hub**
   - Host private Ansible collections
   - And execution environments
