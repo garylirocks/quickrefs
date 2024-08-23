@@ -30,6 +30,7 @@
   - [Transparent data encryption (TDE)](#transparent-data-encryption-tde)
   - [Dynamic data masking](#dynamic-data-masking)
   - [Always Encrypted](#always-encrypted)
+  - [Classification and labeling](#classification-and-labeling)
 - [Database Watcher](#database-watcher)
 - [Azure SQL Edge](#azure-sql-edge)
 
@@ -547,11 +548,11 @@ Managed using database roles and explicit permissions.
 
 - A presentation layer feature
 - Data in the database is not changed, admins can always view the unmasked data
-- You set data masking policy on columns (such as Social security number)
+- You set data masking policy on **columns** (such as Social security number)
 
 ### Always Encrypted
 
-- Protect sensitive data stored in specific database columns
+- Protect sensitive data stored in specific database **columns**
 - Data can only be decrypted by **client applications** with access to the encryption key, a DBA can't see the data if he does not have the key
 - Could be used in cases like: you want a third-party to manage the DB for you without exposing all the data
 - Can't be used together with dynamic data masking
@@ -568,6 +569,21 @@ Steps:
 - The driver substitutes the plaintext values of the parameters with their encrypted values, and it sends the query to the server for processing
 - The server computes the result set
 - The driver decrypts the results and returns plaintext values to the application
+
+### Classification and labeling
+
+- Apply at **column** level
+- Policy options:
+  - SQL Information Protection policy (legacy)
+    - Supports both Sensitivity label and Information type
+  - Microsoft Information Protection (MIP) policy
+    - Integrate with Purview, Microsoft 365
+    - Propagate to downstream applications, such as Power BI
+    - Only support Sensitivity label, not Information type
+- Sensitivity label:
+  - Personal, Public, General, Confidential, Highly Confidential
+  - Saved in `sys.sensitivity_classifications` table
+- Information type: Credit card, etc
 
 
 ## Database Watcher
