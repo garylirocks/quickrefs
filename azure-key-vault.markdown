@@ -245,7 +245,7 @@ Key Vault contents are natively replicated
 Backup is not usually necessary, if you need to replicate/move a vault to other regions, you could back up then restore
 
 - Backup/restore operation is at individual secret/key/cert level
-  - you can't backup the whole vault as a whole
+  - you can't backup the vault as a whole
   - backup includes all previous versions of the object
 - The backup is encrypted, can't be decrypted outside of Azure
 - Backup can only be restored to a KV in the

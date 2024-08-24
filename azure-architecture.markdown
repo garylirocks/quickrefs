@@ -1,5 +1,17 @@
 # Azure architecture
 
+- [Well Architected Framework](#well-architected-framework)
+  - [Cost optimization](#cost-optimization)
+  - [Operational excellence](#operational-excellence)
+  - [Reliability](#reliability)
+  - [Performance efficiency](#performance-efficiency)
+  - [Security](#security)
+- [Paired regions](#paired-regions)
+  - [Regions with no pair](#regions-with-no-pair)
+  - [Storage](#storage)
+  - [Key Vault](#key-vault)
+
+
 ## Well Architected Framework
 
 Five pillars, use "CORPS" as a mnemonic
@@ -37,7 +49,6 @@ Five pillars, use "CORPS" as a mnemonic
 - Availability sets
 - Availability zones
 - Regions
-
 - RPO: recovery point objective, how much can I lose
 - RTO: recovery time objective
   - Backup
@@ -64,3 +75,48 @@ Five pillars, use "CORPS" as a mnemonic
   - Perimeter
   - Policy: Conditional access, MFA, PIM
   - Physical security (Microsoft's responsibility)
+
+
+## Paired regions
+
+- Usually in the same geo-political boundary (100s of miles apart)
+- Latency in 10s of ms, data sync is asynchronous
+- Some services use paired regions for resiliency:
+  - Storage: GRS
+  - Key Vault: replication
+  - Staged rollout, one region in a pair is prioritized
+    - One region gets the update 24 hours earlier than the other
+    - If you have a active-passive workload, the active instance needs to be in the first region, when there's an issue with an update, you could failover to the second region
+- Cons:
+  - Paired regions could have different features (eg. one doesn't support AZ)
+
+### Regions with no pair
+
+- Region pairs were introduced before AZs
+- Some new regions support AZs, but have no region pair
+  - Use ZRS, or Cross Region Disaster Recovery
+- Some servies don't care about region pairs
+  - Data services: eg. Cosmos DB, SQL could have replicas in any region
+  - Global services: eg. AFD, Traffic manager, cross-region load balancer
+
+### Storage
+
+GRS has some limitations:
+- All data are copied, no filtering
+- Same access tier on the paired region, you can't use a cheaper tier
+- Mostly used in DR scenario, although you could have RAGRS
+
+Alternatively, we could use **[Object replication](./azure-storage.markdown#object-replication)**, it's more flexible
+- Destination could be any region
+- Destination could be a cheaper access tier
+- Filter on data
+
+*But it's slower, and only supports blobs, not ADLS Gen2, Files, etc*
+
+### Key Vault
+
+See [here](./azure-key-vault.markdown#replication-and-backup)
+
+You should avoid using global secrets, keys.
+- Create one per country
+- Consider using managed identity, federated credentials, etc

@@ -665,7 +665,9 @@ Only container-level operations can be restored. Can't restore deleted blobs in 
   - Active blobs
   - Versions
   - Snapshots
-- When blob versioning is enabled: A blob version is created automatically on a write or delete operation
+- When blob versioning is enabled:
+  - A new version is created automatically on a write or delete operation
+  - Should use life cycle management rules to clean up old versions
 - A blob snapshot is created manually, not necessary if versioning is enabled
   - Depending on how often you overwrite blobs, versioning could be costly
 - For ADLS Gen 2
