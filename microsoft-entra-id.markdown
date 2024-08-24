@@ -262,8 +262,10 @@ _On prem AD is optional here_
     - **Federation** (AD FS)
 - **Seamless SSO**: automatically signs in users from their network-connected corporate desktops, so they can access cloud apps without sign-in again.
   - Works with password hash sync and pass-through authentication
+    - Does not work with ADFS
   - The computer is AD-joined, no need to be Entra-joined
   - Works on Windows 7 and above, Mac
+  - It **isn't** used on Windows 10 Entra-joined devices or Entra hybrid joined devices. SSO on Entra-joined, Entra hybrid joined, and Entra registered devices works based on the Primary Refresh Token (PRT)
   - How it works:
     - During setup, Entra gets an computer account in AD
     - Entra will receive Kerberos tickets
