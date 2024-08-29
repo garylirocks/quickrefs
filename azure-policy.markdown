@@ -396,10 +396,35 @@ A `deployIfNotExists` or `modify` policy should define the roles it requires:
 
 ## Regulatory Compliance
 
+```json
+{
+  ...
+  "metadata": {
+    "category": "Regulatory Compliance"
+  },
+  "policyDefinitions": [
+    {
+      "policyDefinitionId": "...",
+      "groupNames": [
+        "Group1",
+        "Group2"
+      ]
+    }
+  ],
+  "policyDefinitionGroups": [
+    {
+      "name": "Group1",
+      "additionalMetadataId": "..."
+    }
+  ]
+}
+```
+
 - Special initiatives for regulatory compliance, eg. PCI-DSS, HIPAA, ISO 27001, NZISM Restricted Regulatory Compliance initiative
-- Has special requirements:
+- Has special requirements on the initiative definition:
   - The initiative category must be `Regulatory Compliance`
-  - Field of each grouping in the initiative:
+  - It could have multiple groupings, each policy could be a member of multiple groupings
+  - Each grouping has:
     - `name` - name of the control
     - `category` - the compliance domain of the control
     - `policyMetadata` - a reference to metadata of the control,

@@ -4,9 +4,11 @@
 - [Defender for Cloud](#defender-for-cloud)
   - [Roles](#roles)
   - [Multicloud](#multicloud)
+  - [Security policies](#security-policies)
+    - [Security standards](#security-standards)
+    - [Security recommendations](#security-recommendations)
   - [Policies and Initiatives](#policies-and-initiatives)
   - [Microsoft cloud security benchmark (MCSB)](#microsoft-cloud-security-benchmark-mcsb)
-  - [Recommendattions](#recommendattions)
   - [Secure score](#secure-score)
   - [Security alerts](#security-alerts)
   - [Security incidents](#security-incidents)
@@ -75,6 +77,49 @@ Can protect AWS and GCP resources
 - Microsoft Defender for Servers
   - Can cover EC2 instances
 
+### Security policies
+
+#### Security standards
+
+Sources:
+
+- MCSB
+- Regulatory compliance standards
+- Custom standards
+  - Can contain built-in and **custom recommendations**
+
+Two approaches for custom recommendations:
+
+- (recommend) KQL
+  - Requires enabling "Defender CSPM" plan
+  - Supports all clouds
+- (Legacy) Azure Policy custom initiatives
+  - To onboard a custom initiative to Defender for Cloud, set `properties.metadata.ASC`
+  - To customize the remediation, set the `metadata.securityCenter` property
+
+    ```json
+    "metadata": {
+      "ASC": "true",
+      "securityCenter": {
+        "RemediationDescription": "Custom description goes here",
+        "Severity": "High"
+      }
+    }
+    ```
+
+#### Security recommendations
+
+Based on assessment of resources against security standards
+
+For a recommendation, you can:
+
+- Take action
+- Trigger logic app
+- Exempt
+- Assign owner and due date
+
+And you can create **Governance rule** to assign owners (by email or resource tag) and time frames to recommendations automatically
+
 ### Policies and Initiatives
 
 Defender for Cloud mainly uses '**Audit**' policies that check specific conditions and configurations and then report on compliance.
@@ -82,7 +127,7 @@ Defender for Cloud mainly uses '**Audit**' policies that check specific conditio
 - When you enable Defender for Cloud, the initiative named "**Microsoft cloud security benchmark**" is automatically assigned to all Defender for Cloud registered subscriptions
   - You can enable or disable individual policies by editing parameters
 - You can toggle which standards to enable for each subscription (such as CIS, NIST, PCI-DSS, SOC 2 etc)
-  - Each standard includes a group os recommendations
+  - Each standard includes a group of recommendations
 - You can add your own custom standards
 
 ### Microsoft cloud security benchmark (MCSB)
@@ -102,22 +147,10 @@ Has input from a set of holistic Microsoft and industry security guidance that i
     - National Institute of Standards and Technology (NIST)
     - Payment Card Industry Data Security Standard (PCI-DSS)
 
-### Recommendattions
-
-Based on policy evaluation results.
-
-For a recommendation, you can:
-
-- Take action
-- Trigger logic app
-- Exempt
-- Assign owner and due date
-
-And you can create **Governance rule** to assign owners (by email or resource tag) and time frames to recommendations automatically
-
 ### Secure score
 
 - Only built-in recommendations have an impact on the secure score
+- Based on assessment against some MCSB recommendations only ?
 - Preview recommendations aren't included in the calculations of your secure score
 - Your score only improves when you remediate **all** of the recommendations for **a single resource within a control**
 
