@@ -808,6 +808,19 @@ name = "web-sg-${var.resource_tags["project"]}-${var.resource_tags["environment"
   EOT
   ```
 
+- `fileset`
+
+  ```sh
+  fileset("${path.module}/files", "**")
+
+  #[
+  #  "hello.txt",
+  #  "world.txt",
+  #  "subdirectory/anotherfile.txt",
+  #]
+  ```
+
+
 - Provider-defined functions
   - Defined within the provider's schema using Terraform provider plugin framework
   - Available since Terraform 1.8
