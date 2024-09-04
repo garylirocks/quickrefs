@@ -7,6 +7,7 @@
 - [PostgreSQL](#postgresql)
   - [Azure Database for PostgreSQL](#azure-database-for-postgresql)
   - [Modes](#modes-1)
+  - [Flexible Server](#flexible-server)
 
 
 ## Overview
@@ -75,3 +76,14 @@ Azure Database for MySQL
     - You could specify a zone for the active replica
     - Have a standby replica in a different zone
   - Better cost optimization
+
+### Flexible Server
+
+- Audit logging
+  - To enable, you need to
+    - Enable `pgAudit` in `azure.extensions`
+    - Add `pgaudit` to `shared_preload_libraries`
+    - Restart server
+    - Run `CREATE EXTENSION pgaudit;` after connecting to the server
+    - Configure other parameters, eg. set `pgaudit.log` to `WRITE`
+  - Send to `AzureDiagnostics` table, with category `PostgreSQLLogs`
