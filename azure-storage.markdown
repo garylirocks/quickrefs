@@ -1166,7 +1166,21 @@ A NoSQL solution, makes use of tables containing key/value data items
 
 Serverless framework to perform common data operations on millions of objects across multiple storage accounts.
 
-// TODO
+- You create storage tasks, which are individual resources (`Microsoft.StorageActions/storageTasks`)
+- Comparing to life cycle management, this is
+  - More flexible
+  - Could be applied across storage accounts
+  - But there will be cost (Life cycle management is free)
+- Each task has
+  - Conditions (access tier, name, tag, access time, etc)
+  - Operations (set tier, set tag, delete, etc)
+    - Optionally, you could have operations for un-matched blobs as well
+- Each task could be assigned to multiple storage accounts, each assignment (`Microsoft.StorageActions/storageTasks/<task-name>/assignments`) specify:
+  - Storage account
+  - What role to assign to the managed identity of the storage task
+  - Filter: include/exclude blob prefixes
+  - Schedule: single-run or recurring
+- If a single-run assignment has completed, you can't update it, you need to duplicate and edit
 
 
 ## Troubleshooting
