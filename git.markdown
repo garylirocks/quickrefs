@@ -23,6 +23,7 @@
 - [Undoing changes](#undoing-changes)
 - [Branches](#branches)
   - [set a local branch to track a remote branch](#set-a-local-branch-to-track-a-remote-branch)
+- [Worktree](#worktree)
 - [Remotes](#remotes)
   - [push](#push)
   - [Add a local branch that tracks a remote branch](#add-a-local-branch-that-tracks-a-remote-branch)
@@ -44,6 +45,7 @@
   - [Split a subfolder out into a new repository](#split-a-subfolder-out-into-a-new-repository)
   - [Multiple accounts setup for Bitbucket/Github](#multiple-accounts-setup-for-bitbucketgithub)
 - [Misc](#misc)
+- [Help](#help)
 - [Rules](#rules)
 
 ## Preface
@@ -562,6 +564,30 @@ git branch --set-upstream-to=bb/master
 git branch --track testing origin/testing
 ```
 
+
+## Worktree
+
+You could have multiple working trees of a repo, so you can work on multiple branches at the same time.
+
+- The first one (you cloned or initialized) is the **main** worktree, others are called **linked** worktrees
+- The metadata of a linked worktree are in the `.git/worktree/<worktree-name>` folder within the main worktree
+- Each linked worktree has a `.git` file containing the path of its metadata folder
+
+```sh
+# create a new worktree, in folder `../hotfix`, and a new branch `hotfix`
+git worktree add ../hotfix
+
+# create a new worktree, in folder `../path`, check out an existing branch
+git worktree add ../path <branch>
+
+# list existing worktrees
+git worktree list
+
+# remove a worktree
+git worktree remove <path>
+```
+
+
 ## Remotes
 
 show remotes:
@@ -1052,6 +1078,12 @@ in `.ssh/config`
   # xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx refs/remotes/origin/main
   # xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx refs/tags/1.0.0
   ```
+
+
+## Help
+
+Use `g help -a` to list all available commands
+
 
 ## Rules
 
