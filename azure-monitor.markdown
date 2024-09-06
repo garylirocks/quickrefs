@@ -146,6 +146,41 @@ Azure Monitor is based on a common mornitoring data platform that includes Logs 
     - Recommended, all service will be migrated to this mode
     - Better performance across ingestion latency and query times
     - You could grant RBAC access on a specific table
+- Logs **category** and **category group**
+  - See https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings#resource-logs
+  - You can enable logs by category or by category group
+    - Category group is recommended, as categories may be added/removed
+  - All resources have an `allLogs` category group, and a lot of them also have an `audit` group
+  - Example - by category group:
+    ```json
+    "logs": [
+      {
+        "categoryGroup": "audit",
+        "enabled": false,
+      },
+      {
+        "categoryGroup": "allLogs",
+        "enabled": true,
+      }
+    ]
+    ```
+  - Example - by category:
+    ```json
+    "logs": [
+      {
+        "category": "StorageRead",
+        "enabled": false,
+      },
+      {
+        "category": "StorageWrite",
+        "enabled": true,
+      },
+      {
+        "category": "StorageDelete",
+        "enabled": true,
+      }
+    ]
+    ```
 - Limitations
   - Most resource types have an `AllMetrics` category, which allows you to send metrics to a destination
     - Some metrics could not be exported this way, you need to use REST API
