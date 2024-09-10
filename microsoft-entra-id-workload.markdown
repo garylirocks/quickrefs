@@ -378,6 +378,27 @@ Two types of permissions:
   - The *effective permissions* are exactly the permissions granted to the app
   - An app can also by assigned an Entra RBAC role
 
+The definition schema looks like:
+
+```json
+"requiredResourceAccess": [
+  {
+    "resourceAppId": "00000003-0000-0000-c000-000000000000",  // Microsoft Graph
+    "resourceAccess": [
+      {
+        "id": "e1fe6dd8-ba31-4d61-89e7-88639da4683d", // the `User.Read` scope
+        "type": "Scope"                               // For Delegated permissions
+      },
+      {
+        "id": "ef5f7d5c-338f-44b0-86c3-351f46c8bb5f",
+        "type": "Role"                                // For Application permissions
+      },
+      // ...
+    ]
+  }
+]
+```
+
 Supported OpenID Connect scopes:
 
 - `Openid`:

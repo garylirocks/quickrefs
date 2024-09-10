@@ -405,6 +405,7 @@ mgc me get
 
 - `AccessReview.ReadWrite.Membership` supposed to be able to create access reviews for group memberships, but seems not work (at least for an SP), `AccessReview.ReadWrite.All` works
 - `Group.Create` permission allows an SP to create a group, if no owner specified, the SP will be added as owner automatically, this allows the SP manage this group, but not other groups, this means the SP does not need the broader `Group.ReadWrite.All` permission
+- `Application.ReadWrite.OwnedBy` this permission allows an SP to create an application, and the SP will be the owner of the application, this allows the SP to manage this application, but not other applications, this means the SP does not need the broader `Application.ReadWrite.All` permission
 
 
 ## Misc
