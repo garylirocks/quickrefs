@@ -242,7 +242,7 @@ az network public-ip create \
 
   ![NAT compatibility](images/azure_networking-nat-flow-direction-inbound-outbound.png)
 
-  *Traffic coming in from a load balancer will return vai it, not via the NAT Gateway*
+  *Traffic coming in from a load balancer will return via it, not via the NAT Gateway*
 
 ## Network security group (NSG)
 
