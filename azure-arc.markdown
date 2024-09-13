@@ -3,6 +3,7 @@
 - [Overview](#overview)
 - [Arc machines](#arc-machines)
   - [Roles](#roles)
+  - [Onboarding](#onboarding)
 - [Multicloud connector](#multicloud-connector)
 
 
@@ -21,6 +22,8 @@ Azure Arc allows you to manage the following resource types hosted outside of Az
 
 ## Arc machines
 
+You need to install the "Azure Connected Machine agent" on the target machine(s) to be managed by Azure Arc. It does not replace "Azure Monitor Agent".
+
 ### Roles
 
 - "Azure Connected Machine Onboarding":
@@ -33,6 +36,28 @@ Azure Arc allows you to manage the following resource types hosted outside of Az
   - Can runCommand
 - "Azure Connected Machine Resource Manager":
   - Similar to above, can also manage hybrid connectivity endpoints, but seems intended for Azure HCI
+
+### Onboarding
+
+- Permissions: administrator permission required to install the agent on the target machine
+  - Linux: by using the root account
+  - Windows: as a member of the Local Administrators group
+- Interactively:
+  - Download a deployment script from Azure portal
+  - Windows Admin Center (a web service you deploy on-prem)
+  - PowerShell
+  - Azure Arc installation wizard
+- At scale:
+  - You need a **service principal** with at least `Azure Connected Machine Onboarding` role on the resource group (could be an issue, this role can't install VM extensions, but sometimes the `DeployIfNotExists` policy action is triggered this SP, and extension installation fails)
+  - Use a tool to run a script:
+    - Configuration Manager
+    - Group policy
+    - Ansible
+    - Azure Automation Update Management
+- You could specify how the agent connects to Arc service:
+  - Public endpoint
+  - Private endpoint (`hybridcompute` sub-resource)
+  - Proxy server
 
 
 ## Multicloud connector
