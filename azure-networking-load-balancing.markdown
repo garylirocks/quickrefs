@@ -6,6 +6,7 @@
   - [Backend pools](#backend-pools)
   - [Traffic flows](#traffic-flows)
   - [Rules](#rules)
+  - [Floating IP](#floating-ip)
   - [Outbound connection](#outbound-connection)
   - [Distribution modes](#distribution-modes)
   - [Limitations](#limitations)
@@ -103,6 +104,7 @@ Example multi-tier architecture with load balancers
   - IP address
     - any resource IPs in a vNet, not reflected on the end of backend pool instance
 - A single IP could be in multiple pools
+- A VM could be in multiple backend pools (one or more multiple LBs), but you can't associate rules with the same port and protocol to these backend pools (unless you use floating IP)
 
 ### Traffic flows
 
@@ -122,6 +124,21 @@ There are several different types of rules:
 | **Outbound rule**       | SNAT for outbound connection  | You need to specify how many SNAT ports per backend instance                                                                                           | Outbound connection for backend instances |
 
 **Uniqueness**: A load balancing rule and an inbound NAT rule can't use the same frontend, protocol(TCP/UDP) and port combination
+
+### Floating IP
+
+If multiple applications in a single VM need to use the same port (eg. [one or more Always On availability group listeners](https://learn.microsoft.com/en-us/azure/azure-sql/virtual-machines/windows/availability-group-listener-powershell-configure)). You need to enable floating IP.
+
+This requires you add loop back interface within the guest OS that is configured with the LB's front end IP address.
+
+![Floating IP](./images/azure_load-balancer-floating-ip.png)
+
+In this diagram above, each backend VM has two loop back interfaces, each configured with one of the front end IPs. And there are two load balancing rules like:
+
+| Frontend IP | Protocol/port | Destination                  | Port |
+| ----------- | ------------- | ---------------------------- | ---- |
+| 65.52.0.1   | TCP/80        | same as frontend (65.52.0.1) | 80   |
+| 65.52.0.2   | TCP/80        | same as frontend (65.52.0.2) | 80   |
 
 ### Outbound connection
 
