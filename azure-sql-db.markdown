@@ -599,6 +599,8 @@ A separate resource in Azure to help monitor SQL databases
 
 ## Azure SQL Edge
 
+*This services is retiring, switch to SQL Express*
+
 - For IoT and IoT Edge deployments
 - Is a containerized Linux application, startup memory footprint is less than 500MB
 - Provides capabilities to stream, process and analyze relational and non-relational data (JSON, graph and time-series)
