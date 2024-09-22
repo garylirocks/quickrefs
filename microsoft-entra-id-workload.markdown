@@ -16,6 +16,7 @@
   - [My Apps portal](#my-apps-portal)
   - [API Permissions](#api-permissions)
   - [Consent](#consent)
+  - [Consent settings](#consent-settings)
   - [App roles](#app-roles)
   - [Expose API](#expose-api)
 - [Application Proxy](#application-proxy)
@@ -428,9 +429,9 @@ Best practices:
 
 Some high-privilege permissions are admin-restricted, only an admin can consent, like:
 
-- User.Read.All
-- Groups.Read.All
-- Directory.ReadWrite.All
+- `User.Read.All`
+- `Groups.Read.All`
+- `Directory.ReadWrite.All`
 
 The requested permissions in "App registration" should be all the permissions this app could possibly require, should be a **superset** of the permissions that it will request dynamically/incrementally.
 
@@ -449,6 +450,12 @@ How admins consent to an app:
 - In the Portal, click button in either "Enterprise applications" -> "Permissions" or "App registrations" -> "API permissions"
 - Use the admin consent endpoint
   - During sign-up or the first sign-in, you can redirect the user to the admin consent endpoint, `https://login.microsoftonline.com/\{tenant\}/v2.0/adminconsent?client_id={client-id}&state=12345&redirect_uri=http://localhost/myapp/permissions&scope=https://graph.microsoft.com/calendars.read https://graph.microsoft.com/mail.send`
+
+### Consent settings
+
+You could configure tenant-wide consent settings in "Enterprise applications" -> "Consent and permissions"
+
+
 
 ### App roles
 
@@ -472,6 +479,7 @@ See: https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-add-a
 
 - The "Expose an API" menu in the Portal allows you to define scopes for an API application.
   - This creates only "deletegated permissions".
+  - You could specify who can consent for this scope: "Admins and users" or "**Admins only**"
   - For application-only scopes, use "App roles" and define app roles assignable to applications.
 - Application ID URI need to be globally unique, usually has the form `api://<app-id>`, eg. `api://dev.guisheng.li/demo/api1`
 - You could add another application as an authorized client application to the scopes, then user won't be prompted to consent when login to the client application.
