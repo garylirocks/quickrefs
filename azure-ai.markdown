@@ -16,19 +16,24 @@ Some capabilities exist in both platforms
 ## Copilot studio
 
 - Re-branded from Power Virtual Agents
-- For creating custom copilot agent
-  - The built agent could be published anywhere, like Microsoft 365 Copilot (Teams, SharePoint, Business Chat)
+- You can
+  - build a custom copilot
+  - or extend a Microsoft Copilot
+    - The built agent could be published anywhere, like Microsoft 365 Copilot (Teams, SharePoint, Business Chat)
 - For none/low code usage, using natural language or a GUI
 
-Knowledge source:
+### Knowledge sources
 
 You can connect it to your public websites or internal data (files, databases, etc)
 
-Topics:
+### Topics
 
-Allows you to trigger actions based on certain phrases
+For certain specified phrases, you might want to control the response message or action, you can define a topic.
+
+This is called *conversational orchestration*.
 
 
 ## Azure AI Studio
 
 - You can pick models
+- Integrate with other resources, like Azure Search for managing indexes
