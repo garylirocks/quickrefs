@@ -7,6 +7,7 @@
 - [Security](#security)
 - [DNSSEC](#dnssec)
 - [Windows Server DNS](#windows-server-dns)
+- [TTL](#ttl)
 - [Misc](#misc)
 
 
@@ -56,6 +57,13 @@ dig @a.root-servers.net. google.com
 # com.                    172800  IN      NS      c.gtld-servers.net.
 # com.                    172800  IN      NS      d.gtld-servers.net.
 # ...
+```
+
+Query options
+
+```sh
+# Use query options to show only the answer section
+dig @8.8.8.8 -q google.com -t A +nocmd +nocomments +noquestion +nostats
 ```
 
 
@@ -222,6 +230,13 @@ Some notes about Windows Server DNS
   - `host2.sub.example.com`, it returns null
 
   Meaning that the most specific zones take precedence, all queries for `*.sub.example.com` goes to the `sub.example.com` zone
+
+
+## TTL
+
+When you do some cutover operations (eg. point a domain name to a new IP), as a preparation, you'd better lower the TTL prior to the cutover, so that the change propagates faster when you do the cutover.
+
+- In Windows DNS Manager, to see the TTL of a record, you need to enable "View" -> "Advanced" first, then you can see TTL setting of each record in "Properties"
 
 
 ## Misc
