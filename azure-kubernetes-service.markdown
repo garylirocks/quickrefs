@@ -373,6 +373,7 @@ AGIC is a Kubernetes application, it monitors the cluster to update Application 
 ## Application Gateway for Containers (AGWC)
 
 - A new type of Application Gateway, an evolution over AGIC
+- Supports mTLS for traffic with both client and server
 
 ![AGW for Containers overview](./images/aks_agw-for-containers.png)
 
