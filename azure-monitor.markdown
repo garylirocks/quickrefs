@@ -719,32 +719,39 @@ To better manage cost, there are different plans which could be configured for *
 ![Workplace data plan](images/azure_workspace-data-plan-overview.png)
 
 - Analytics
+  - Charged for ingestion, free for queries
   - For real-time monitoring, alerting and dashboards
   - Support unlimited queries, no additional charge
-  - 30 days retention included, can extends to 2 years ?
+  - 30 days retention included (90 days if Sentinel enabled), can extends to 2 years
 
 - Basic
-  - Cheaper
+  - Cheaper for ingestion (1/5 of the analytics type)
   - Additional charge for queries
   - Best for on-off troubleshooting and incident response
   - Can only search within the table, no joins
-  - Fixed interactive period of 8 days ?
-  - 30 days retention included, can extends to 2 years ?
+  - Fixed interactive period of 30 days
+  - 30 days retention included, can extend to 2 years ?
 
 - Auxillary logs
   - Best for low-touch data for high verbose logs, auditing and compliance
   - Additional charge for queries
 
-- Archive
-  - After the interactive periods, both "Analytics" and "Basic" logs are archived
-  - To query archived logs, you need to bring it back to Analytics log tables, by either
-    - "Search jobs": data matching paticular criteria
-    - or "Restore": data from a paticular time range
-  - Up to 7 years
+- Long-term retention
+  - After the interactive periods, "Analytics", "Basic", "Auxiliary" logs are moved to long-term retention
+  - Up to 12 years
+  - To query long-term retention logs, you need to either
+    - "Search jobs"
+      - data matching paticular criteria will be brought to a table called `xxx_SRCH`
+      - this table is in Analytics tier
+    - or "Restore"
+      - data from a paticular time range
+      - to a table called `xxx_RST`, which is in hot cache tier, kept until you delete it
+      - does not support "Auxiliary" logs
 
-- Conversion between data plans
-  - In some cases, you only care some kind of aggregated data, you can ingest data as Basic or Auxiliary logs, and use a "Summary Rule" to generate the aggregated data you want in Analytics Logs
-  - "Search Job" will bring data back to Analytics Logs
+- **Summary Rule**
+  - In some cases, you only care some kind of aggregated data, you can ingest data as Basic or Auxiliary logs, and use a "Summary Rule" to generate aggregated data you want into Analytics Logs
+  - The aggregated data will be in a table with name like `xxx_CL`
+  - You specify the query and cadence
 
 ### Access Control
 
