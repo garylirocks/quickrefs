@@ -12,6 +12,7 @@
   - [OpenID Connect](#openid-connect)
   - [How to choose](#how-to-choose)
 - [SAML](#saml)
+- [Passkey](#passkey)
 
 ## JWT
 
@@ -306,3 +307,46 @@ Authentication process:
 The request and response are
   - In XML format
   - Passed through the browser, IdP and SP do not need to talk to each other directly
+
+
+## Passkey
+
+Can be used as a secure alternative for password, or a method in MFA.
+
+- Parties
+  - Relying party (eg. a website)
+  - Client (eg. a browser)
+  - Authenticator (eg. a laptop, a mobile device)
+  - User
+- Registering
+  - Authenticator generates a public-private key pair
+  - Relying party saves the public key, associate it with an account
+  - Authenticator keeps the private key
+- Authentication
+  - Relying party sends a nonce (no more than once) to the client
+  - Client forwards it to the authenticator
+  - Authenticator prompts the user
+  - The user needs to perform some gestures to approve the intent
+    - Such as: some biometric proof (eg. fingerprint, facial) or a PIN
+    - The gesture is always performed on the authenticator device
+  - The nonce gets signed by the private key, and sent back
+  - The replying party validate the signature using the public key
+
+
+WebAuthn
+
+- Talks to the authenticator
+- Checks the relying party ID (eg. `x.com`) is a subset of the website URL
+
+Passkey
+- There is one unique passkey for a unique combination of
+  - Relying party
+  - User Account
+  - Authenticator
+- Passkey could be
+  - Device bound (might be used in a corporate context)
+  - Synced (synced to cloud, more suitable for consumers)
+
+Authenticator
+
+- Each authenticator has a unique AAGUID (*Microsoft Authenticator has different GUID for iOS and Android*)
