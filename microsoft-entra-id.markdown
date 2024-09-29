@@ -784,6 +784,10 @@ A tenant-wide setting, provides secure default settings until organizations are 
 ### Management
 
 - You can set policies to control which methods are available to which users
+- User can register for these methods in the "My Account" portal
+- There's a separate setting for "Password reset"
+  - For users, you control whether it is enabled, and what methods are available
+  - "Password Reset" is always enabled for administrators, and are required to pass 2 auth methods
 
 ### Monitoring
 
