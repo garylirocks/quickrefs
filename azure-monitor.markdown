@@ -563,7 +563,13 @@ Make sure you understand the differences between:
 - **Action groups**:
   - Resource type: `Microsoft.Insights/actionGroups`
   - Configure notifications (Email, SMS, etc) and actions (runbook, webhook, etc)
-  - Instead of fixed email addresses, you can also email people with a specific role on the subscription, eg. "Owner", "Contributor"
+  - **Secure webhook** action:
+    - Sends alerts to ITSM tool, like ServiceNOw
+    - Uses Entra for authentication, instead of username/password
+      ![Secure webhook](images/azure_monitor-secure-webhook.png)
+    - For metric alerts, "resolved" state could flow to ITSM tool automatically
+    - You'll need to register an app in Azure AD, and possibly create app roles, and set the app ID in ServiceNow (so it can validate the token)
+  - For email notifications, instead of fixed email addresses, you can also email people with a specific role on the subscription, eg. "Owner", "Contributor"
     - Only works for role assignment on the scope, NOT inherited ones
     - Only work for Non-PIM assignment (permanent active PIM assignment), not activated PIM eligible assignment
     - **Works for assignment to groups** (every user in the group gets emails)
