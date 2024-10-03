@@ -115,10 +115,13 @@ Other roles:
 
 ## Budgets
 
-- A budget is a tenant level resource, doesn't show up in any subscription.
-- A budget could have alerts configured
-  - Can be based on a pencentage of actual or predicted spending
-  - Can notify specified email addresses or action groups
+- Scope:
+  - Could be in a subscription, like `/subscriptions/<sub-id>/providers/Microsoft.Consumption/budgets/test-budget`
+- If the cost exceeds the budget, it sends out notifications, the service will not be stopped automatically
+- A budget could have an amount, and multiple thresholds
+  - Each threshhold is based on a pencentage of actual or predicted spending
+  - Each can have an action group
+- Or you could specify emails to receive notifications
 
 
 ## Cost management

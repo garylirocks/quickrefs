@@ -518,45 +518,62 @@ A `deployIfNotExists` or `modify` policy should define the roles it requires:
 
     ```json
     {
-      "properties": {
-        "displayName": "DINE-xxxx",
-        "parameters": {
-          // ...
+      // ...
+      "parameters": {
+        // ...
+      },
+      "policyRule": {
+        "if": {
+          "allOf": [
+            {
+              "field": "type",
+              "equals": "Microsoft.Resources/subscriptions"
+            }
+          ]
         },
-        "policyRule": {
-          "if": {
-            "allOf": [
-              {
-                "equals": "Microsoft.Resources/subscriptions",
-                "field": "type"
-              }
-            ]
-          },
-          "then": {
-            "effect": "deployIfNotExists",
-            "details": {
-              "deployment": {
-                "properties": {
-                  "mode": "incremental",
-                  "parameters": {
-                    "param1": {
-                      "value": "[field('tags[myTagName]')]"
-                    }
+        "then": {
+          "effect": "[parameters('effect')]",
+          "details": {
+            "type": "Microsoft.Consumption/budgets",
+            "deploymentScope": "subscription",
+            "existenceScope": "subscription",
+            "existenceCondition": {
+              // ...
+            },
+            "roleDefinitionIds": [
+              "..."
+            ],
+            "deployment": {
+              "location": "australiaeast",
+              "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                  "amount": {
+                    "value": "[field('tags[BudgetAmount]')]" # you can use `field` function here
                   },
-                  "template": {
-                    "parameters": {
-                      "param1": {
-                        "type": "string"
-                      }
-                      // ...
+                  // ...
+                },
+                "template": {
+                  "$schema": "http://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json",
+                  "contentVersion": "1.0.0.0",
+                  "parameters": {
+                    "contactGroups": {
+                      "type": "Array",
+                      # you can use ARM functions here, eg. `array`, `resourceId`, etc
+                      "defaultValue": "[array(resourceId(subscription().subscriptionId, 'rg-test', 'Microsoft.Insights/actiongroups', 'ag-test'))]"
                     },
-                    "resources": [
-                      // ...
-                    ],
-                    "variables": {
-                      // ...
+                    // ...
+                  },
+                  "resources": [
+                    {
+                      "type": "Microsoft.Consumption/budgets",
+                      "apiVersion": "2019-10-01",
+                      "name": "[parameters('budgetName')]",
+                      "properties": {
+                        // ...
+                      }
                     }
-                  }
+                  ]
                 }
               }
             }
