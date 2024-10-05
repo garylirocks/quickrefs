@@ -350,3 +350,32 @@ Passkey
 Authenticator
 
 - Each authenticator has a unique AAGUID (*Microsoft Authenticator has different GUID for iOS and Android*)
+
+Solutions:
+
+- Windows Hello
+  - Windows 10 and up
+  - No sync or backup
+
+- Google/Android
+  - Android 9 and up, screen-lock turned on
+  - Always saved and synced with Google Password Manager
+    - No option to save in Microsoft Authenticator
+  - When on a computer, to use passkeys on your phone, you'll need to login to the same Google account in Chrome
+
+- Apple/iOS
+  - iOS/iPadOS 16 and up
+  - You can use the builtin "Camera" app to scan a QR code
+  - Could be saved in
+    - iCloud Keychain (synced among your Apple devices)
+    - or Microsoft Authenticator app (not synced)
+
+Notes:
+
+- For your **personal Microsoft account**, in your account security settings, you can add passkey as a sign-in method
+  - You can have one on Android, another on Apple
+  - Seems you can't use Windows Hello alone, you'll need a security key USB disk
+  - On your computer, with Google Chrome, you can create passkeys on your mobile devices, seems don't work with Firefox
+- For accounts in your **Entra tenant**, you need to enable passkey as a method in "Authentication methods -> Policies" for your tenant first, then a user can go to his "Account -> Security" page to add a passkey
+  - Worked with iOS device
+  - Created for Android, but failed to add it to the sign-in method list
