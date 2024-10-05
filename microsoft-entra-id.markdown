@@ -941,6 +941,7 @@ Includes features like Entitlement management and access reviews
   - Membership of cloud-created Microsoft 365 Groups and Teams
   - Assignment to Entra enterprise applications
   - Membership of SharePoint Online sites/site collections
+  - Entra roles (preview)
 - **Access package**:
   - A bundle of all the resources with the access a user needs to work on a project or in a role
   - An package could have include a subset of resources in a catalog
