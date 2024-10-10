@@ -16,6 +16,7 @@
 - [Homebrew](#homebrew)
 - [Troubleshooting](#troubleshooting)
   - [Mouse lagging](#mouse-lagging)
+- [Cookbook](#cookbook)
 
 
 ## Shortcuts
@@ -102,3 +103,9 @@ Logitech mouse connected via Unifying USB dongle doesn't work well, the cursor i
 Seems turning off "Handoff" feature fixes it.
 
 See https://www.reddit.com/r/mac/comments/kkf331/logitech_mx_master_3_jitterlag_solution/?rdt=63317
+
+
+## Cookbook
+
+- Uninstall an app: remove the app from `/Applications` folder
+- Clipboard history: install "Clipy", then `Shift + Cmd + V`

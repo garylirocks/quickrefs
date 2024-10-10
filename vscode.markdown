@@ -2,6 +2,7 @@
 
 - [Profile](#profile)
 - [Shortcuts](#shortcuts)
+  - [Mac](#mac)
 - [Settings](#settings)
 - [Extensions](#extensions)
 - [VSCodeVim extension](#vscodevim-extension)
@@ -21,7 +22,7 @@
 - [Debugging](#debugging)
   - [Trouble shooting](#trouble-shooting)
   - [Sample debugging settings for React / Mocha](#sample-debugging-settings-for-react--mocha)
-- [Mac trivias](#mac-trivias)
+- [Mac trivia](#mac-trivia)
 
 
 ## Profile
@@ -38,6 +39,15 @@
 ## Shortcuts
 
 - `Ctrl + Shift + L`: multi word cursors/selections, allows you to change multi occurrences of a word simultaneously
+
+### Mac
+
+*may be the same on Windows/Linux*
+
+Terminal
+
+- `Cmd + J`: Show/hide terminal panel
+- `Alt + Up/Down`: Resize terminal
 
 
 ## Settings
@@ -248,10 +258,15 @@ see [vscode-chrome-debug](https://github.com/Microsoft/vscode-chrome-debug) for 
 }
 ```
 
-## Mac trivias
 
-Mac does not repeat the holded down key, fix it (https://stackoverflow.com/questions/39972335/how-do-i-press-and-hold-a-key-and-have-it-repeat-in-vscode/44010683#44010683)
+## Mac trivia
 
-```bash
-defaults write com.microsoft.VSCode ApplePressAndHoldEnabled -bool false
-```
+- Mac does not repeat a held down key by default (it allows you to select an alternative character), see here to fix it (https://github.com/VSCodeVim/Vim?tab=readme-ov-file#mac)
+
+  ```bash
+  # For VS Code
+  defaults write com.microsoft.VSCode ApplePressAndHoldEnabled -bool false
+
+  # If necessary, reset global default
+  defaults delete -g ApplePressAndHoldEnabled
+  ```
