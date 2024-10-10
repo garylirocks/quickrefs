@@ -10,7 +10,7 @@
   - [Lock/Sleep/Power](#locksleeppower)
   - [Keyboard](#keyboard)
 - [Concepts](#concepts)
-  - [Desktop](#desktop)
+  - [App organization](#app-organization)
   - [Stack](#stack)
 - [Setup](#setup)
 - [Homebrew](#homebrew)
@@ -70,16 +70,23 @@
 
 - For each connected keyboard, you can remap the action of modifier key (eg. use Caps Lock key for Command)
 - For functions keys (F1, F2), you can control whether they perform standard functions, or do special actions by default
+- In Terminal App and VS Code, you need to update settings, enable "Use Option as Meta key", there is no global settings
 
 
 ## Concepts
 
-### Desktop
+### App organization
 
-- A full-screen app occupies its own desktop.
-- Each display screen has its own desktop(s).
+The hierarchy is like:
+
+Screen/Display -> Desktop/Space -> Apps -> Windows
+
+- Each screen/display can have multiple desktops of its own
+- A full-screen app occupies its own desktop/space
 
 ### Stack
+
+On a desktop, you can group files by stack
 
 - A group of files, by kind, date, tags, etc
 
