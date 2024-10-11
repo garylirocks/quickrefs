@@ -103,6 +103,7 @@ In the scenario above, you might expect the data packet goes from VM in West Eur
 
 - Even `PrivateEndpointNetworkPolicies` is "Enabled", return traffic from PEs always go back to the source IP directly, **UDRs do not apply**, the return traffic could be asymmetric, bypassing NVA.
   - To mitigate this, use SNAT at the NVA, then the private endpoint see the NVA IP as source IP, this ensures symmetric routing
+    - With [this update](https://azure.microsoft.com/en-us/updates/v2/generally-available-Private-endpoint-support-without-NVA-source-network-address-translation), SNAT is no longer a requirement, you need to add a tag to the NVA NIC (`disableSnatOnPL`)
   - But there are exceptions (https://github.com/MicrosoftDocs/azure-docs/issues/69403), in the following cases, the return traffic does go through NVA, SNAT is not required:
     - Connecting to a storage PE (tested `blob`, not sure about other services)
     - Connecting via VPN
