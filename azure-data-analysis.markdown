@@ -11,7 +11,11 @@
 - [Stream Analytics](#stream-analytics)
 - [Azure Data Explorer](#azure-data-explorer)
 - [Microsoft Purview](#microsoft-purview)
+  - [Data map](#data-map)
+    - [Data sources](#data-sources)
+    - [Collections](#collections)
   - [Authentication](#authentication)
+  - [Collection](#collection)
   - [Data classification](#data-classification)
   - [RBAC Roles](#rbac-roles)
 - [Power BI](#power-bi)
@@ -170,18 +174,57 @@ A solution for enterprise-wide data governance and discoverability.
 
 - Automated data discovery
 - Sensitive data classification
+  - Labeling, and actions based on labels
 - End-to-end data lineage
+- Data sharing within Azure
+  - Another storage account can have a "view" of a source storage account
 
 You can register data sources in Purview. Purview will scan all the data sources, colleting data schema, sensitivity, etc. And a copy of the metadata for data sources is added to Purview.
+
+Resource features:
+
+- Resource type: `Microsoft.Purview/accounts`
+- Every Purview account has an ancillary managed resource group
+- A Purview account could be created in Azure Portal, Purview has its own portal at `https://web.purview.azure.com`
+- Supports private endpoint
+
+### Data map
+
+#### Data sources
+
+- Microsoft 365
+- Azure
+  - Storage
+  - DB
+  - Data Factory
+- Other clouds
+
+#### Collections
+
+A group of data sources or assets.
+
+- An account has one root collection (same name as the account)
+- A collection can have subcollections
+- Roles are assigned at collection scope
+  - Collection admins (inherited by subcollections)
+  - Data source admins
+  - Data curators
+  - Data readers
+  - Insights readers
+  - Policy authors
+  - Workflow admins
 
 ### Authentication
 
 Options for Purview authentication to data sources:
 
-- Purview managed identity
+- Purview managed identity (only support user-assigned MI)
 - Account key (using Azure Key Vault)
 - SQL authentication (using Azure Key Vault)
 - Service principal (using Azure Key Vault)
+
+### Collection
+
 
 ### Data classification
 
