@@ -1,12 +1,13 @@
 # Azure Firewall
 
-- [Azure Firewall](#azure-firewall-1)
-  - [Asymmetric routing](#asymmetric-routing)
-  - [Azure Firewall Manager](#azure-firewall-manager)
-  - [Firewall policy](#firewall-policy)
+- [Overview](#overview)
+- [Asymmetric routing](#asymmetric-routing)
+- [Azure Firewall Manager](#azure-firewall-manager)
+- [Firewall policy](#firewall-policy)
+- [TLS inspection](#tls-inspection)
 
 
-## Azure Firewall
+## Overview
 
 Firewall in a hub-spoke network:
 
@@ -71,7 +72,8 @@ Premium SKU only:
 - TLS inspection
 - IDPS: Intrusion Detection and Prevention System
 
-### Asymmetric routing
+
+## Asymmetric routing
 
 ![Azure Firewall asymmetric routing](images/azure_networking-firewall-asymmetric_routing.png)
 
@@ -80,7 +82,8 @@ Premium SKU only:
 - The UDR rule in red could cause asymmetric routing, inbound traffic goes via instance `.7`, but return traffic goes via instance `.6`
 - The UDR rule in spoke should not include the Firewall subnet, set the prefix to `192.168.1.0/24`, instead of the whole hub address space
 
-### Azure Firewall Manager
+
+## Azure Firewall Manager
 
 ![Firewall manager overview](images/azure_firewall-manager.png)
 
@@ -94,7 +97,8 @@ In a large network deployment, you could have multiple firewall instances in hub
   - Third-party security-as-a-service integration, they use Firewall Manager's API to set up security policies (currently supports zScaler, iBoss, Check Point)
   - Centralized route management: easily route traffic to your secured hub for filtering and logging without the need to manually setup UDR on spoke vNets
 
-### Firewall policy
+
+## Firewall policy
 
 - Created in Firewall Manager
 - Not only security policies, can have **routing policies as well**.
@@ -112,3 +116,20 @@ In a large network deployment, you could have multiple firewall instances in hub
   - Allows DevOps to create local firewall policies on top of organization mandated base policy
 
 ![Firewall policies](images/azure_firewall-manager-policies.png)
+
+
+## TLS inspection
+
+Without TLS inspection
+
+![Without TLS](./images/azure_firewall-without-tls-inspection.png)
+
+With TLS inspection
+
+![Without TLS](./images/azure_firewall-with-tls-inspection.png)
+
+- The certificate presented to the client is generated on-the-fly
+- Supports:
+  - Outbound TLS inspection
+  - East-West (Azure from/to on-prem)
+- No support for Inbound TLS inspection (you can do this with WAF on AGW)
