@@ -1798,27 +1798,6 @@ A few things to note:
   }
   ```
 
-- `azurerm_subscription`
-
-  The aliases resource type is an extension resource, which means you can apply it to another resource.
-
-    - You could manage it with `az account alias` commands
-    - Subscription id is like `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`, while a full alias id is like `/providers/Microsoft.Subscription/aliases/test-alias`
-    - A subscription could have multiple aliases
-
-  The `azurerm_subscription` actually manages subscription aliases, if `subscription_id` is applied, it creates an alias for it, otherwise it tries to create a new subscription
-
-  ```terraform
-  resource "azurerm_subscription" "test" {
-    alias = "my-alias"
-    subscription_name = "sub-test"
-    subscription_id   = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-    tags = {
-      foo = "bar"
-    }
-  }
-  ```
-
 - `azuread_group`
 
   ```terraform

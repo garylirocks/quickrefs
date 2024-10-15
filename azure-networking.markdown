@@ -1621,9 +1621,23 @@ There are two types: **NSG flow logs** (legacy) and **vNet flow logs** (new), bo
 
 ## Network design considerations
 
-- Segmentation:
+- IP addressing
 
-  Some resources need their own virtual network or subnet, eg. both Application Gateway and VPN Gateway need a dedicated subnet, multiple gateways can be hosted in the same subnet
+  - Avoid overlapping IP ranges, use an IPAM tool is recommended
+  - vNet CIDR range can't be larger than /16
+  - You can add or delete an address space of a virtual network without downtime, each peering needs a resync operation.
+
+
+- Subnet
+
+  - Azure retains 5 IP addresses from each subnet
+  - The smallest subnet you can create is /29, with 3 usable addresses
+  - Some services require dedicated subnets
+  - You can delegate subnets to certain services to create instances of a service within the subnet
+
+- IPv6
+  - vNet can be IPv4-only or dual stack IPv4+IPv6
+  - IPv6 subnets must be exactly /64 in size
 
 - Security
 
@@ -1653,15 +1667,7 @@ There are two types: **NSG flow logs** (legacy) and **vNet flow logs** (new), bo
       - Azure Defender for DNS
       - Azure Defender for App Service to detect dangling DNS records
 
-- IP addressing
 
-  - vNet CIDR range can't be larger than /16
-  - vNet address space shouldn't be overlapping with on-premises ranges
-
-- Subnet
-
-  - Azure retains 5 IP addresses from each subnet
-  - The smallest subnet you can create is /29, with 3 usable addresses
 
 
 ## Networking architecutres
