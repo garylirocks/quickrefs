@@ -52,15 +52,15 @@
 
 ![Organization hierarchy overview](images/azure-devops_organization-project-overview.png)
 
-  - Organization is also called project collection.
+  - Organization is also called **project collection**.
   - Project could be either private or public.
   - It is recommended to use just **a single project for an organization**, unless:
     - To support custom work tracking process for specific business units
     - To prohibit or manage access to the information contained within a project to select groups
     - To support entirely separate business units that have their own policies and administrators
   - Project can not be moved to another organization without losing history data
-  - Each project has a default team (which is also a security group), you can add more teams.
-  - Some project resources are scoped under a team, such as Notifications, Dashboards, Iteration and Area Paths
+  - Each project has a default **team** (which is also a security group), you can add more teams.
+  - **Some project resources are scoped under a team**, such as Notifications, Dashboards, Iteration and Area Paths
 
 ### How to structure a project
 
@@ -145,9 +145,15 @@ Two types of boards
 
 ### Teams vs. Groups
 
+|                | Team                       | Group                                       |
+| -------------- | -------------------------- | ------------------------------------------- |
+| Resource scope | Yes                        | No                                          |
+| Can be nested  | No                         | Yes                                         |
+| Level          | Project                    | Org or Project                              |
+| Built-in       | A default team per project | Default groups (Contributors, Readers, etc) |
+
+- Team is a resource scope level: Org -> project -> team
 - Each team you create automatically creates a security group for that team, so you can manage permissions for a team;
-- There are security groups at both organization and project level;
-- Groups could be nested;
 - All security groups are organizational level entities, even groups that only have permissions to a specific project;
 
 **A permission caveat:** *If you were in multiple groups, they have different permissions, you may get permissions inherited from the less permissive group, in this case, you could remove yourself from that less permissive group*
