@@ -741,6 +741,7 @@ Benefits:
 
 A tenant-wide setting, provides secure default settings until organizations are ready to manage their own identity story. You'll need to disable "Security defaults" if you want to define your own Conditional Access policy.
 
+- Located at "Overview" -> "Properties" in Entra Portal
 - Requiring all users to register MFA, and perform MFA when necessary
 - Admins must perform MFA for every sign-in
 - Block legacy auth:
