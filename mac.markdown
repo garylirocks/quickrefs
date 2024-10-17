@@ -15,7 +15,7 @@
 - [Setup](#setup)
 - [Homebrew](#homebrew)
 - [Troubleshooting](#troubleshooting)
-  - [Mouse lagging](#mouse-lagging)
+  - [Mouse stuttering/jittering](#mouse-stutteringjittering)
 - [Cookbook](#cookbook)
 
 
@@ -103,13 +103,13 @@ Follow steps here https://github.com/garylirocks/dotfiles/blob/master/mac-setup/
 
 ## Troubleshooting
 
-### Mouse lagging
+### Mouse stuttering/jittering
 
 Logitech mouse connected via Unifying USB dongle doesn't work well, the cursor is lagging/jittering.
 
-Seems turning off "Handoff" feature fixes it.
+Seems **moving the dongle away from the dock** (to an USB hub extension, so less RF interference) fixed it.
 
-See https://www.reddit.com/r/mac/comments/kkf331/logitech_mx_master_3_jitterlag_solution/?rdt=63317
+See https://forums.anandtech.com/threads/logitech-wireless-mouse-stutter-here-is-the-fix.2591285
 
 
 ## Cookbook
