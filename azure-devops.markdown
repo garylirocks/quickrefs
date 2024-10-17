@@ -347,7 +347,7 @@ stages:
         ...
 ```
 
-- *#1* By default, a job is independent from other jobs. They could run in any order or in parallel, use `dependsOn` to make sure the correct execution order.
+- *#1* By default, a stage is implicitly depending on preceding stage. Use `dependsOn` to make dependency explicit.
 - *#2* An environment is created automatically if it does not exist, you can create one manually and add approvals and checks to it.
 
 #### Stage dependencies
@@ -503,13 +503,11 @@ Variable names **can't** be prefixed with `endpoint`, `input`, `secret` and `sec
 #### Syntax
 
 - Template expression `${{ variables.myVar }}`
-
   - processed at compile time, based only on the YAML file content
   - for reusing parts of YAML as templates
   - the same syntax as template parameters
   - can appear as either keys or values: `${{ variables.key }} : ${{ variables.value }}`
   - examples:
-
     ```yaml
     steps:
       - ${{ each item in parameters.my_list }}:
@@ -527,26 +525,22 @@ Variable names **can't** be prefixed with `endpoint`, `input`, `secret` and `sec
     ```
 
 - Macro `$(myVar)`
-
   - processed during runtime, before a task runs
   - designed to interpolate variable values into task inputs and into other variables
   - can only be values, not keys
   - renders as '$(myVar)' if not found
-
     ```yaml
     variables:
       my.name: 'gary'
 
     steps:
-      # macro syntax is the same for all three
-      # the value is interpolated before passing to 'echo'
-      # 'echo' only see the env variable
+      # macro syntax is interpolated before the task run
       - bash: |
-          echo $(my.name)
-          echo $MY_NAME
+          echo $(my.name)       # interpolated before the task
+          echo $MY_NAME         # interpolated by Bash
       - powershell: |
-          echo $(my.name)
-          echo $env:MY_NAME
+          echo $(my.name)       # interpolated before the task
+          echo $env:MY_NAME     # interpolated by PowerShell
       - script: echo $(my.name)
     ```
 
@@ -555,7 +549,6 @@ Variable names **can't** be prefixed with `endpoint`, `input`, `secret` and `sec
   - runtime, designed for use with conditions and expressions
   - must take up the entire right side of a definition
   - eg. get variables outputted from a previous job
-
     ```yaml
     dependsOn: A
     variables:
@@ -589,7 +582,7 @@ steps:
 | ------------------- | ---------------------- | ------------------------------ | ---------------------------------------------- | ---------------------------------- |
 | template expression | `${{ variables.var }}` | compile time                   | key or value (left or right side)              | empty string                       |
 | macro               | `$(var)`               | runtime before a task executes | value (right side)                             | prints `$(var)`                    |
-| runtime expression  | `$[variables.var]`     | runtime                        | value (right side)                             | empty string                       |
+| runtime expression  | `$[variables.var]`     | runtime                        | value (entire right side)                      | empty string                       |
 
 #### Environment variables
 
@@ -632,7 +625,7 @@ System and user-defined variables get injected as environment variables for your
 - Define it in the Pipeline settings UI or in a variable group (only accessible within the same project)
 - Secret variables are encrypted at rest with a 2048-bit RSA key
 - You could use the macro syntax `$(mySecretVar)` to include it as task input
-- They are not automatically decrypted into environment variables for scripts though, you need to map it with `env`
+- They are NOT automatically decrypted into environment variables for scripts though, you need to map it with `env`
 
 ```yaml
 variables:
@@ -748,7 +741,6 @@ Examples:
 - `Build.SourceBranch`: 'refs/heads/main', 'refs/pull/123/merge', 'refs/tags/my-tag-name', ...
 - `Build.SourceBranchName`: 'main', 'my-tag-name' ..., if the full ref is `refs/heads/feature/tools`, then this value is just `tools`
 - `Build.Reason`: 'Manual', 'IndividualCI', 'Schedule', 'PullRequest', ...
-- `Pipeline.Workspace`
 - `System.AccessToken`, a special variable that carries the security token used by the running build, could be used as a PAT token or a `Bearer` token to call Azure Pipelines REST API
   - Could be used like:
 
@@ -775,55 +767,59 @@ Deployment job only:
 
 see: https://docs.microsoft.com/en-us/azure/devops/pipelines/process/expressions?view=azure-devops
 
-Expressions can be evaluated at either
+Two types of expressions:
 
-- Compile time:
-  - syntax: `${{ <expression> }}`
-  - evaluated when the YAML file is compiled into a plan
-  - can be used everywhere
-  - have access to `parameters` and *statically defined `variables`*
-- or Run time:
-  - syntax: `$[ <expression> ]`
-  - can be used in variables and conditions
-  - have access to `variables` but *not parameters*
+|            | Compile time                 | Run time                           |
+| ---------- | ---------------------------- | ---------------------------------- |
+| Syntax     | `${{ <expression> }}`        | `$[ <expression> ]`                |
+| Where      | everywhere                   | in variables and conditions        |
+| Scenarios  | if, else                     | outputs from preceding jobs/stages |
+| Parameters | yes                          | no                                 |
+| Variables  | statically defined variables | yes                                |
 
 Example:
 
-```yaml
-variables:
-  staticVar: 'my value'                                             # static variable
-  compileVar: ${{ variables.staticVar }}                            # compile time expression
-  isMain: $[eq(variables['Build.SourceBranch'], 'refs/heads/main')] # runtime expression
+- Static and runtime variables
 
-# load different variable template based on how the pipeline is triggered
-variables:
-  # use prod-vars.yml if
-  #   - explicitly selected 'prod' env as parameter
-  #   - or automatically triggered on 'main' branch
-  - ${{ if or(eq(parameters.env, 'prod'), and(eq(variables['Build.Reason'], 'IndividualCI'), eq(variables['Build.SourceBranchName'], 'main'))) }}:
-      - template: prod-vars.yml
-  - ${{ else }}:
-      - template: dev-vars.yml
+  ```yaml
+  variables:
+    staticVar: 'my value'                                               # static variable
+    compileVar: ${{ variables.staticVar }}                              # compile time expression
+    isMain: $[ eq(variables['Build.SourceBranch'], 'refs/heads/main') ] # runtime expression
 
-steps:
-  - script: |
-      echo ${{variables.staticVar}} # outputs my value
-      echo $(compileVar) # outputs my value
-      echo $(isMain) # outputs True
-```
+  steps:
+    - script: |
+        echo ${{variables.staticVar}} # outputs "my value"
+        echo $(compileVar)            # outputs "my value"
+        echo $(isMain)                # outputs True
+  ```
 
-Use in `condition`
+- If-else expressions
 
-```yaml
-  - job: B1
-    condition: ${{ containsValue(parameters.branchOptions, variables['Build.SourceBranch']) }}
-    steps:
-      - script: echo "Matching branch found"
-```
+  ```yaml
+  # load different variable template based on how the pipeline is triggered
+  variables:
+    # use prod-vars.yml if
+    #   - explicitly selected 'prod' env as parameter
+    #   - or automatically triggered on 'main' branch
+    - ${{ if or(eq(parameters.env, 'prod'), and(eq(variables['Build.Reason'], 'IndividualCI'), eq(variables['Build.SourceBranchName'], 'main'))) }}:
+        - template: prod-vars.yml
+    - ${{ else }}:
+        - template: dev-vars.yml
+  ```
+
+- `condition` expression
+
+  ```yaml
+    - job: B1
+      condition: ${{ containsValue(parameters.branchOptions, variables['Build.SourceBranch']) }}
+      steps:
+        - script: echo "Matching branch found"
+  ```
 
 ### Templates
 
-For some common tasks, you could extract them into templates, then use them in each pipeline:
+For some common tasks, you could extract them into templates, then use them in multiple pipelines:
 
 ```yaml
 parameters:
@@ -1038,7 +1034,7 @@ Scenarios:
 - Use `checkout: none` if you don't need to checkout the source code
 - Or specify one or more `checkout: ` steps
 
-For Git repos in the same ADO organization, you could checkout like:
+For Git repos in the same ADO organization, you could check out like:
 
 ```yaml
 steps:
@@ -1103,8 +1099,8 @@ resources:
 A run is triggered whenever:
 
 - `main` or `feature` branch updates
-- `main` branch updates in `MyProject/A`
-- `main` or `release` branch updates in `MyProject/B`
+- `main` branch updated in `MyProject/A`
+- `main` or `release` branch updated in `MyProject/B`
 
 #### Trigger by another pipeline
 
@@ -1117,7 +1113,7 @@ resources:
   pipelines:
     - pipeline: build-pipeline
       source: my-build-pipeline
-      trigger: true # Trigger this pipeline
+      trigger: true               # Trigger this pipeline
 ```
 
 ### Job authorization
@@ -1139,13 +1135,11 @@ Azure Pipelines uses a dynamically generated **job access token**
 - For a private project, the default scope is **organization**, this means a job could access all repos in an organization.
 - You could limit the scope to "project" in Organization or Project level pipeline settings
 - If you enable **Protect access to repositories in YAML pipelines** option, use a `checkout` step or `uses` statement in the YAML pipeline to explicitly reference repos:
-
   ```yaml
   steps:
   - checkout: git://MyProject/AnotherRepo # An ADO repo in the same organization
   - script: # Do something with that repo
   ```
-
   ```yaml
   # Or you can reference it with a uses statement in the job
   uses:
@@ -1172,7 +1166,7 @@ The collection-scoped one is used unless you limit the job access scope to "proj
 Build agent can be organized into pools, either Microsoft hosted or self-hosted.
 
 Use self-hosted agent:
-  - Install needed build tools, such as Node, NPM, Make, .NET, etc, each agent's capabilities are registered in a pool, Azure Piplines select the right one for a build job (which specifies capability requirement using the `demands` section)
+  - Install needed build tools, such as Node, NPM, Make, .NET, etc, each agent's capabilities are registered in a pool, Azure Pipelines select the right one for a build job (which specifies capability requirement using the `demands` section)
     ```yaml
     pool:
       name: 'MyAgentPool'   # specify a self-hosted pool
@@ -1203,15 +1197,15 @@ jobs:
       clean: outputs | resources | all # what to clean up before the job runs
     dependsOn: string
     condition: string
-    continueOnError: boolean                # 'true' if future jobs should run even if this job fails; defaults to 'false'
-    container: containerReference # container to run this job inside
-    services: { string: string | container } # container resources to run as a service container
-    timeoutInMinutes: nonEmptyString        # how long to run the job before automatically cancelling
-    cancelTimeoutInMinutes: nonEmptyString  # how much time to give 'run always even if cancelled tasks' before killing them
-    variables: # several syntaxes, see specific section
-    environment: string  # target environment name and optionally a resource name to record the deployment history; format: <environment-name>.<resource-name>
+    continueOnError: boolean                  # 'true' if future jobs should run even if this job fails; defaults to 'false'
+    container: containerReference             # container to run this job inside
+    services: { string: string | container }  # container resources to run as a service container
+    timeoutInMinutes: nonEmptyString          # how long to run the job before automatically cancelling
+    cancelTimeoutInMinutes: nonEmptyString    # how much time to give 'run always even if cancelled tasks' before killing them
+    variables:            # several syntaxes, see specific section
+    environment: string   # target environment name and optionally a resource name to record the deployment history; format: <environment-name>.<resource-name>
     strategy:
-      runOnce:    #rolling, canary are the other strategies that are supported
+      runOnce:            # "rolling", "canary" are the other strategies that are supported
         deploy:
           steps: [ script | bash | pwsh | powershell | checkout | task | templateReference ]
 ```
