@@ -71,6 +71,10 @@ To make a long line easier to read and edit, you could break it into multiple li
 
   - `|` keeps trailing spaces and new lines, `>` folds newlines to spaces.
   - In either case, indentation is ignored.
+  - Block chomping indicator, what to do for newlines at the end
+    -  "clip", default, a single newline
+    -  "strip", `|-`, `>-`, remove all newlines
+    -  "keep", `|+`, `>+`, keep all newlines
 
 ```yaml
 include_newlines: |
@@ -82,10 +86,18 @@ fold_newlines: >
             this is really a
             single line of text
             despite appearances
+
+# remove all newlines at the end
+fold_newlines: >-
+            this is really a
+            single line of text
+            despite appearances
+
+
 ```
 
 
-## Gochas
+## Gotchas
 
 - Most of the time you don't need to quote a string value, but there are exceptions
   - A colon followed by a space or at the end of a line
