@@ -1227,12 +1227,14 @@ az network nic show-effective-route-table \
 
 ![Service endpoint policies](images/azure_networking-vnet-service-endpoint-policies-overview.png)
 
-- You could attach a policy to allow access only to
-  - all storage accounts in a subscription
-  - all storage accounts in a resource group
-  - specified storage accounts
-- Managed services other than Azure SQL Managed Instance are not currently supported with service endpoints.
-- Managed Storage Accounts are not supported with service endpoint policies.
+- Resource type: `Microsoft.Network/serviceEndpointPolicies`
+- Need to be associated to subnets (like NSGs), one subnet could have multiple policies associated
+- A policy could have scopes for allowed resources:
+  - Storage: all in a subscition / all in a resource group / individual ones
+  - Other, using service aliases, eg. `Azure`, `Batch`, `DataFactory`, `ManagedInstance`, `WebPI`
+- Limitations:
+  - Managed services other than Azure SQL Managed Instance are not currently supported with service endpoints.
+  - Managed Storage Accounts are not supported with service endpoint policies.
 
 ### Private endpoints vs. service endpoints
 
