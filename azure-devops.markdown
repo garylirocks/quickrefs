@@ -32,7 +32,9 @@
   - [Resources](#resources)
   - [Checkout task](#checkout-task)
   - [Triggering](#triggering)
-    - [Trigger by another pipeline](#trigger-by-another-pipeline)
+    - [By push to a branch](#by-push-to-a-branch)
+    - [By pull requests](#by-pull-requests)
+    - [By other repos or pipelines](#by-other-repos-or-pipelines)
   - [Job authorization](#job-authorization)
     - [Job authorization scope](#job-authorization-scope)
     - [Built-in identities](#built-in-identities)
@@ -240,6 +242,14 @@ steps:
 
   - ...
 ```
+
+The step hierarchy could be:
+
+- `steps:` -> `task:`
+- `jobs:` -> `steps:` -> `task:`
+- `stages:` -> `jobs:` -> `steps:` -> `task:`
+
+See: https://learn.microsoft.com/en-us/azure/devops/pipelines/yaml-schema/pipeline?view=azure-pipelines
 
 ### Multistage pipeline
 
@@ -1066,7 +1076,30 @@ Default checkout path(s):
 
 ### Triggering
 
-You could trigger a pipeline run when an update is pushed to the `self` repo or to any of the repos declared as resources (only work for Git repos in same ADO organization). This could be useful:
+#### By push to a branch
+
+```yaml
+trigger:
+- main
+- feature
+```
+
+A push could have multiple commits, if one commit contains **`[skip ci]`** in message or description, the pipeline will be skipped.
+
+#### By pull requests
+
+- For ADO Git repos, you need to configure Branch Policy (Build Validation)
+  - This could be configured on all repos in a project and inherited by each repo
+  - Draft PR does not trigger this
+  - This will run on the **merged** commit between the source and target branches
+  - Always run, even one of the pushed commits has `[skip ci]` in message or description
+- The `pr:` key in the YAML pipeline definition only works for repos hosted in  GitHub and Bitbucket Cloud
+
+#### By other repos or pipelines
+
+You could trigger a pipeline run when an update is pushed to any of the repos declared as resources (only work for ADO Git repos in the same ADO organization). Or when another pipeline completes.
+
+This could be useful:
 
 - Trigger a run whenever a dependency repo updated
 - Keep your YAML pipeline in a separate repo
@@ -1074,47 +1107,34 @@ You could trigger a pipeline run when an update is pushed to the `self` repo or 
 Example:
 
 ```yaml
-trigger:
-- main
-- feature
-
 resources:
   repositories:
-  - repository: A
-    type: git
-    name: MyProject/A
-    ref: main
-    trigger:
-    - main
+    - repository: A
+      type: git
+      name: MyProject/A
+      ref: main
+      trigger:
+      - main
 
-  - repository: B
-    type: git
-    name: MyProject/B
-    ref: release
-    trigger:
-    - main
-    - release
-```
+    - repository: B
+      type: git
+      name: MyProject/B
+      ref: release
+      trigger:
+      - main
+      - release
 
-A run is triggered whenever:
-
-- `main` or `feature` branch updates
-- `main` branch updated in `MyProject/A`
-- `main` or `release` branch updated in `MyProject/B`
-
-#### Trigger by another pipeline
-
-In the following example, the `test-pipeline` will be triggered whenever `my-build-pipeline` completes successfully
-
-```yaml
-# test-pipeline.yaml
-
-resources:
   pipelines:
     - pipeline: build-pipeline
       source: my-build-pipeline
       trigger: true               # Trigger this pipeline
 ```
+
+A run is triggered whenever:
+
+- `main` branch updated in `MyProject/A`
+- `main` or `release` branch updated in `MyProject/B`
+- Pipeline `my-build-pipeline` completed successfully
 
 ### Job authorization
 
