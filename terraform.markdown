@@ -59,7 +59,8 @@
   - [Azure Verified Modules](#azure-verified-modules)
   - [`AzAPI` provider](#azapi-provider)
   - [ARM template deployment](#arm-template-deployment)
-- [Gotchas](#gotchas)
+  - [`azurerm` v4 changes](#azurerm-v4-changes)
+  - [Gotchas](#gotchas)
 
 ## Overview
 
@@ -124,7 +125,9 @@ output "resource_group_id" {
 ```
 
 - Terraform installs providers from [Terraform Registry](https://registry.terraform.io) by default
-- `version` key is recommended
+- `version` key is recommended, it's recommended to pin to either
+  - A fixed version: `version = "=1.2.3"`
+  - Or a major version: `version = "~> 4.0"`, (don't do this in a reusable module, see the [module section](#modules))
 - You can have multiple providers in one file
 - `azurerm_resource_group` is the resource type, prefixed with resource provider name, `azurerm_resource_group.rg` is a unique ID of the resource
 
@@ -316,7 +319,7 @@ terraform output -raw lb_url
 
 ## Authenticate to Azure providers
 
-- This section is covers authentication to a provider, for authentication to remote runner or state storage, see [Remote run and state](#remote-runs-and-state) section
+- This section covers authentication to a provider, for authentication to remote runner or state storage, see [Remote run and state](#remote-runs-and-state) section
 - When using Terraform interactively on command line, Terraform uses Azure CLI to authenticate, this ONLY works with user account (no need to set `ARM_*` env variables), NOT service principals (need to set `ARM_*` env variables)
 - In a non-interactive context, use a service principal or managed identity, there are several ways for the authentication:
   - Client secret/certificate
@@ -384,7 +387,7 @@ In a collaborative or CI/CD context, you may want to run Terraform plan/apply or
 
 Terraform Cloud supports remote run, storing state file, input variables, environment variables, private module registry, policy as code, etc
 
-1. Add a `backend` to config
+1. Add a `terraform.cloud` block
 
     ```terraform
     terraform {
@@ -1222,6 +1225,8 @@ terraform {
 ```
 
 - #1 a modules needs to declare its provider version requirements
+  - **Only specify a minimum version**, NOT the maximum version
+  - The maximum version should be specified by the root module
 - #2 optional, declare an expected alias provider configuration named `aws.alternate`, the calling module should provide this
 - #3 no need for `provider` block, it should be defined in the root module
 
@@ -1782,8 +1787,22 @@ A few things to note:
 - If a parameter references a KV secret, without the `secretVersion` field, if you only update the secrets, Terraform will not detect any changes during rerun, so it won't pick up the latest secret
   - If another parameter changes, Terraform will update the deployment object, which will pick up the latest secret
 
+### `azurerm` v4 changes
 
-## Gotchas
+- You can customize what resource providers to register
+  - `resource_provider_registrations = core|extended|all|none|legacy`
+  - `resource_providers_to_register`, extra RPs to register besides `resource_provider_registrations`
+
+- When using Azure CLI auth, subscription ID is mandatary in a provider block
+  - Use either `subscription_id` attribute or `ARM_SUBSCRIPTION_ID` environment variable
+  - Other auth methods already require this
+
+- Provider functions
+  - `provider::azurerm::normalise_resource_id`: Fixing casing
+  - `provider::azurerm::parse_resource_id`: see [here](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/4.0-upgrade-guide#example-usage)
+
+
+### Gotchas
 
 - `azurerm_management_group`
 
