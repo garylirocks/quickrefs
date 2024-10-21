@@ -529,24 +529,33 @@ dsregcmd /status
 
 ## Groups
 
-- Group types
-  - Security groups
-    - Members can be
-      - users
-      - devices
-      - service principals
-      - and other groups
-    - For access control(RBAC), assigning licenses, etc
-  - Microsoft 365
-    - Members can only be users
-    - For sharing/collaboration over M365 apps: giving members access to shared mailbox, calendar, files, teams(not channels) in MS Teams, etc
-  - Distribution: for Exchange
-- Membership types
-  - Assigned: assigned manually
-  - Dynamic User: based on users' attributes
-  - Dynamic Device: based on devices' attributes
+Group types
 
-Note:
+- **Security groups**
+  - For access control(RBAC), assigning licenses, etc
+  - Members can be
+    - users
+    - devices
+    - service principals
+    - and other groups
+- **Security groups (mail-enabled)**
+  - Can only contain users, NOT devices
+  - Need to be managed in M365 Admin center
+- **Microsoft 365**
+  - Members can only be users
+  - Has a shared email address, calendar and SharePoint site, OneNote notebook
+  - You could create a team in Teams from a group
+- **Distribution**
+  - A groups of email addresses (could have external email addresses)
+
+
+Membership types:
+
+- **Assigned**: assigned manually
+- **Dynamic User**: based on users' attributes
+- **Dynamic Device**: based on devices' attributes
+
+Notes:
 
 - In the Azure portal, you can see all the groups, but you can't edit some of them:
 
@@ -554,8 +563,9 @@ Note:
   - Other group types such as **distribution lists** and **mail-enabled security groups** are managed only in Exchange admin center or Microsoft 365 admin center.
 
 - There is a flag determining whether a group can be assigned "Entra Roles"
+
 - Group owners
-  - Owner can be user or SP, not group
+  - Owners could be users or SPs, not a group
   - When an SP creates a group, it will be added as the owner automatically
   - If a group has only one user owner, this user owner can't be removed, even the group has an SP owner
 
