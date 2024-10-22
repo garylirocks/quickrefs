@@ -932,6 +932,7 @@ Two types of commands,
   - Minimum /26 prefix
   - No need to configure NSGs on this subnet
   - NSGs on the VM side should allow `AzureBastion`
+  - **No route table** on this subnet, it should connect to VMs **directly**, not via a Firewall/NVA
 
 Three SKUs:
 
