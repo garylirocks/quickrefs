@@ -47,6 +47,10 @@
 - `Cmd + Q` quit an app
 - `Ctrl + Cmd + F` Make window full screen
 
+You can add custom shortcuts to move a window among displays, see details [here](https://discussions.apple.com/thread/255197821)
+
+![Custom shortcuts for moving a window](./images/mac_custom-shortcuts-move-windows-to-display.png)
+
 ### Menus
 
 - `Ctrl + F2`: Focus menu bar
