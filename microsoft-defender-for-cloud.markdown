@@ -19,6 +19,7 @@
 - [Just-In-Time (JIT) VM access](#just-in-time-jit-vm-access)
 - [Agentless scanning](#agentless-scanning)
 - [Workflow automation](#workflow-automation)
+- [DevOps security](#devops-security)
 
 
 ## Overview
@@ -34,7 +35,7 @@
 
   - **Cloud Workload Protection (CWP)** - Identify unique workload security requirements, there are defender plans for
 
-    | Plan              | Level               |
+    | Plan              | Enablement scope    |
     | ----------------- | ------------------- |
     | Servers           | sub or workspace    |
     | SQL server on VMs | sub or workspace    |
@@ -53,11 +54,13 @@
 
 - You can enabled Defender for Cloud on a subscription automatically by using an Azure policy: `Enable Microsoft Defender for Cloud on your subscription`, which checks whether the VM plan is either set to "Free" or "Standard", see [Defender for Cloud on all subscriptions](https://learn.microsoft.com/en-us/azure/defender-for-cloud/onboard-management-group)
 
+
 ## Roles
 
 There are two specific roles for Defender for Cloud:
 
 ![Security reader and administrator roles](images/azure_defender-for-cloud-roles.jpg)
+
 
 ## Multicloud
 
@@ -69,6 +72,7 @@ Can protect AWS and GCP resources
   - Extends to EKS clusters
 - Microsoft Defender for Servers
   - Can cover EC2 instances
+
 
 ## Security policies
 
@@ -113,6 +117,7 @@ For a recommendation, you can:
 
 And you can create **Governance rule** to assign owners (by email or resource tag) and time frames to recommendations automatically
 
+
 ## Policies and Initiatives
 
 Defender for Cloud mainly uses '**Audit**' policies that check specific conditions and configurations and then report on compliance.
@@ -122,6 +127,7 @@ Defender for Cloud mainly uses '**Audit**' policies that check specific conditio
 - You can toggle which standards to enable for each subscription (such as CIS, NIST, PCI-DSS, SOC 2 etc)
   - Each standard includes a group of recommendations
 - You can add your own custom standards
+
 
 ## Microsoft cloud security benchmark (MCSB)
 
@@ -140,6 +146,7 @@ Has input from a set of holistic Microsoft and industry security guidance that i
     - National Institute of Standards and Technology (NIST)
     - Payment Card Industry Data Security Standard (PCI-DSS)
 
+
 ## Secure score
 
 - Only built-in recommendations have an impact on the secure score
@@ -147,12 +154,14 @@ Has input from a set of holistic Microsoft and industry security guidance that i
 - Preview recommendations aren't included in the calculations of your secure score
 - Your score only improves when you remediate **all** of the recommendations for **a single resource within a control**
 
+
 ## Security alerts
 
 - Security alerts are triggered by advanced detections available when you enable Defender plans for specific resource types
 - Can be downloaded as CSV file
 - Can be exported to Log Analytics workspaces and Event Hubs via **continuous export**
 - **Microsoft Sentinel connector** streams security alerts from Microsoft Defender for Cloud into Microsoft Sentinel
+
 
 ## Security incidents
 
@@ -163,6 +172,7 @@ Has input from a set of holistic Microsoft and industry security guidance that i
 ## Cloud Security Explorer
 
 Allows you to build queries interactively to hunt for risks, like SQL servers WHICH contain sensitive data AND is exposed to the Internet
+
 
 ## Data storage
 
@@ -182,6 +192,7 @@ Allows you to build queries interactively to hunt for risks, like SQL servers WH
 ### Azure Resource Graph
 
 - Some data could be queried in ARG, like VM vulnerability scans
+
 
 ## Agents for Compute resources
 
@@ -236,11 +247,13 @@ The logic that Defender for Cloud applies when deciding how to categorize VMs
 
 ![Just-in-time VM status - AWS EC2](images/azure_just-in-time-vm-access-aws-ec2.png)
 
+
 ## Agentless scanning
 
 - Included in Defender Cloud Security Posture Management (CSPM) and Defender for Servers P2 plans.
 - This scans VM disks, so it needs the built-in role "VM scanner operator", which has permissions like `Microsoft.Compute/disks/read`, `Microsoft.Compute/virtualMachines/read`
 - Raw data, PIIs or sensitive business data isn't collected, and only metadata results are sent to Defender for Cloud.
+
 
 ## Workflow automation
 
@@ -248,3 +261,35 @@ The logic that Defender for Cloud applies when deciding how to categorize VMs
 - Allows you to specify a Logic App to trigger for security alerts, security recommendations, and regulatory compliance changes
 - There are built-in policies to deploy this automatically for each subscription
   - You specify the what alerts to target by alert name and severity
+
+
+## DevOps security
+
+- Intended for security teams
+- Supports ADO, GitHub, GitLab
+- Can integrate with workflow automations to send alerts
+
+Capabilities:
+
+- Code, secrets, and open-source dependency scanning
+  - Via GitHub Advanced Security for Azure DevOps
+  - Recurring every 24 hours
+  - Resources scanned: Repos, Builds, Service Connections, Variable Groups, Secure Files, Organizations
+- Security of IaC and container image templates
+  - Via the Microsoft Security DevOps extension
+- Add pull request annotations (only supports ADO)
+  - Requires Defender CSPM plan enabled
+
+To onboard ADO organizations, you'll need to
+
+- Create a connector resource in Azure (`Microsoft.Security/securityconnectors`)
+  - The connector makes API calls to ADO (counts agains the global rate limit)
+- This installs extensions to your ADO organizations:
+  - `Microsoft Security DevOps`
+  - `Microsoft Defender for DevOps Container Mapping`
+- Permissions:
+  - "Contributor" in Azure to create the connector resource
+  - "Project Collection Administrator" on target ADO organizations
+  - "Basic" access level in the ADO organization
+  - "Third-party application access via OAuth" must be set to "On" on for each Azure DevOps organization
+- To read the DevOps security posture assessments, a user needs "Security Reader" on the connector resources

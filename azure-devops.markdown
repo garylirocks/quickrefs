@@ -55,6 +55,8 @@
 ![Organization hierarchy overview](images/azure-devops_organization-project-overview.png)
 
   - Organization is also called **project collection**.
+    - An Entra tenant can have multiple organizations
+    - An organization can have **only one owner**
   - Project could be either private or public.
   - It is recommended to use just **a single project for an organization**, unless:
     - To support custom work tracking process for specific business units
