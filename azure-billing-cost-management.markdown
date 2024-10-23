@@ -88,6 +88,10 @@ resource "azurerm_subscription" "example" {
 ![Microsoft Partner Agreement](images/azure_billing-mpa-hierarchy.png)
 
 - Customer scope id example: `/providers/Microsoft.Billing/billingAccounts/99a13315-xxxx-xxxx-xxxx-xxxxxxxxxxxx:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx_xxxx-xx-xx/customers/7d15644f-xxxx-xxxx-xxxx-xxxxxxxxxxxx`
+- To create a subscription manually
+  - You need to do it in the CSP's Parter Center Portal
+  - You need "Global Admin" and "Admin Agent" role in the CSP partner tenant (NOT the customer's tenant), this is managed in Parter Center (`partner.microsoft.com`)
+  - See details https://learn.microsoft.com/en-us/partner-center/account-settings/permissions-overview
 
 ### MCA
 
