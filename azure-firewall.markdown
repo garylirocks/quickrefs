@@ -79,8 +79,8 @@ Premium SKU only:
 
 - Under the hood, Azure Firewall has a public ALB and a internal ALB
 - You want traffic from spoke to a shared service in the CommonServices subnet in hub to be filtered by Firewall
-- The UDR rule in red could cause asymmetric routing, inbound traffic goes via instance `.7`, but return traffic goes via instance `.6`
-- The UDR rule in spoke should not include the Firewall subnet, set the prefix to `192.168.1.0/24`, instead of the whole hub address space
+- The UDR rule in red (hub vNet range as prefix) could cause asymmetric routing, inbound traffic goes via instance `.7`, but return traffic goes via instance `.6`
+- If a spoke needs to reach a specific subnet in hub vNet, use the subnet's range as prefix (eg. `192.168.1.0/24`), instead of the whole hub vNet address space
 
 
 ## Azure Firewall Manager
@@ -96,6 +96,12 @@ In a large network deployment, you could have multiple firewall instances in hub
 - For secured vHubs only:
   - Third-party security-as-a-service integration, they use Firewall Manager's API to set up security policies (currently supports zScaler, iBoss, Check Point)
   - Centralized route management: easily route traffic to your secured hub for filtering and logging without the need to manually setup UDR on spoke vNets
+
+Pricing:
+
+- Azure Firewall policies could incur charges
+- No charge if a policy is associated to a single firewall
+- Otherwise, if a policy is associated to multiple firewalls, it's charged per region per month
 
 
 ## Firewall policy
