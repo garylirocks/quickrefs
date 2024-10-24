@@ -22,6 +22,7 @@
 - [Savings plans](#savings-plans)
 - [Azure Plans/SKUs](#azure-plansskus)
   - [Microsoft Azure Plan](#microsoft-azure-plan)
+  - [Visual Studio subscribers](#visual-studio-subscribers)
   - [Enterprise Dev/Test](#enterprise-devtest)
   - [Pay-As-You-Go Dev/Test](#pay-as-you-go-devtest)
 
@@ -309,7 +310,19 @@ Cost allocation allows to you to allocate cost of source (subscription/resource 
 
 - Standard pay-as-you-go rates
 - Under the Microsoft Customer Agreement
-- When you sign up, you may receive some credits to use in the first 30 days, then you need to upgrade to the pay-as-you-go pricing
+- Sign up incentives:
+  - $200 credit for first 30 days (convert to Pay-as-You-Go when it ends)
+  - 12 month free services
+- Some services have monthly free amount, eg.
+  - ADO: unlimited private repos
+  - Entra ID: 50,000 stored objects
+  - Networking: 100 GB outbound data transfer
+  - SQL database: 100,000 vCore seconds with 32GB of storage
+  - ...
+
+### Visual Studio subscribers
+
+- Gets some credit per month, eg. Visual Studio Enterprise subscriptions gives you $150 credit per month
 
 ### Enterprise Dev/Test
 
