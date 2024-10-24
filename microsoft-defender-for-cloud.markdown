@@ -20,6 +20,8 @@
 - [Agentless scanning](#agentless-scanning)
 - [Workflow automation](#workflow-automation)
 - [DevOps security](#devops-security)
+  - [ADO onboarding](#ado-onboarding)
+  - [Microsoft Security DevOps](#microsoft-security-devops)
 
 
 ## Overview
@@ -30,8 +32,8 @@
 
     ![CSPM plans](images/azure_defender-cspm-plans.png)
 
-    - Foundational CSPM - Free, enabled for all your subscriptions when you visit "Defender for Cloud" in the Portal,
-    - Defender CSPM - charged per resource (Servers, DBs, Storage accounts)
+    - **Foundational CSPM** - Free, enabled for all your subscriptions when you visit "Defender for Cloud" in the Portal,
+    - **Defender CSPM** - charged per resource (Servers, DBs, Storage accounts)
 
   - **Cloud Workload Protection (CWP)** - Identify unique workload security requirements, there are defender plans for
 
@@ -53,6 +55,24 @@
     - When you enable Microsoft Defender for Servers on an Azure subscription (or a connected AWS account), all of the connected machines are protected by Defender for Servers. You can enable Microsoft Defender for Servers at the Log Analytics workspace level, but only servers reporting to that workspace will be protected and billed and those servers won't receive some benefits, such as Microsoft Defender for Endpoint, vulnerability assessment, and just-in-time VM access.
 
 - You can enabled Defender for Cloud on a subscription automatically by using an Azure policy: `Enable Microsoft Defender for Cloud on your subscription`, which checks whether the VM plan is either set to "Free" or "Standard", see [Defender for Cloud on all subscriptions](https://learn.microsoft.com/en-us/azure/defender-for-cloud/onboard-management-group)
+- Some plans have extension components, which could be turned on or off
+  - Some components are shared by multiple plans
+  - These components will be installed on resources, by assigning a security policy
+  - Example:
+    - Agentless container vulnerability
+    - Agentless discovery for Kubernetes
+    - Agentless scanning for machines (could exclude VMs by tag)
+    - Azure Monitoring Agent for SQL server on machines
+    - Azure Policy for Kubernetes
+    - Defender sensor in Azure
+    - Enable user prompt evidenceassessment
+    - Endpoint protection
+    - File Integrity Monitoring
+    - Guest Configuration agent (preview)
+    - Malware scanning
+    - Permissions Management (CIEM)
+    - Sensitive data discovery (integrates with Purview)
+    - Vulnerability assessment for machines
 
 
 ## Roles
@@ -171,7 +191,7 @@ Has input from a set of holistic Microsoft and industry security guidance that i
 
 ## Cloud Security Explorer
 
-Allows you to build queries interactively to hunt for risks, like SQL servers WHICH contain sensitive data AND is exposed to the Internet
+Allows you to build queries interactively to hunt for risks, like "SQL servers WHICH contain sensitive data AND is exposed to the Internet"
 
 
 ## Data storage
@@ -250,7 +270,7 @@ The logic that Defender for Cloud applies when deciding how to categorize VMs
 
 ## Agentless scanning
 
-- Included in Defender Cloud Security Posture Management (CSPM) and Defender for Servers P2 plans.
+- Included in "Defender CSPM" and "Defender for Servers P2" plans.
 - This scans VM disks, so it needs the built-in role "VM scanner operator", which has permissions like `Microsoft.Compute/disks/read`, `Microsoft.Compute/virtualMachines/read`
 - Raw data, PIIs or sensitive business data isn't collected, and only metadata results are sent to Defender for Cloud.
 
@@ -276,20 +296,66 @@ Capabilities:
   - Recurring every 24 hours
   - Resources scanned: Repos, Builds, Service Connections, Variable Groups, Secure Files, Organizations
 - Security of IaC and container image templates
-  - Via the Microsoft Security DevOps extension
-- Add pull request annotations (only supports ADO)
-  - Requires Defender CSPM plan enabled
+  - Via the "Microsoft Security DevOps" extension
+- Add pull request annotations
+  - Requires "Defender CSPM plan" enabled
+  - Add comments in the PR
+  - Only add annotations about changes introduced in the PR
+  - For ADO, you need to enable it for each repo in Azure Portal
+  - Could optionally do IaC scanning, see [here](https://learn.microsoft.com/en-us/azure/defender-for-cloud/enable-pull-request-annotations#enable-pull-request-annotations)
+- Map IaC templates to cloud resources
+  - Requires "Defender CSPM plan" enabled
+  - Only supports ADO repos
+  - Require tags in IaC templates:
+    - `yor_trace`, could be automated with Yor (see https://github.com/bridgecrewio/yor)
+    - `mapping_tag`
+
+### ADO onboarding
 
 To onboard ADO organizations, you'll need to
 
-- Create a connector resource in Azure (`Microsoft.Security/securityconnectors`)
-  - The connector makes API calls to ADO (counts agains the global rate limit)
+- Create a **connector resource** in Azure (`Microsoft.Security/securityconnectors`)
+  - This resource contains an auth token to the ADO organizations, and it's tied to the user who created it, the connector makes API calls to ADO, to avoid rate limiting issue, you can re-authorize using another account if needed
+  - To read the DevOps security posture assessments, a user needs "Security Reader" on the connector resources
 - This installs extensions to your ADO organizations:
-  - `Microsoft Security DevOps`
-  - `Microsoft Defender for DevOps Container Mapping`
+  - Microsoft Security DevOps
+  - Microsoft Defender for DevOps Container Mapping
 - Permissions:
   - "Contributor" in Azure to create the connector resource
   - "Project Collection Administrator" on target ADO organizations
   - "Basic" access level in the ADO organization
   - "Third-party application access via OAuth" must be set to "On" on for each Azure DevOps organization
-- To read the DevOps security posture assessments, a user needs "Security Reader" on the connector resources
+
+### Microsoft Security DevOps
+
+See here for [details](https://github.com/microsoft/security-devops-azdevops/wiki)
+
+Microsoft Security DevOps uses tools:
+
+- Checkov (Terraform, CloudFormation, Dockerfile, Helm, Bicep, ARM, ...)
+- ESlint
+- IaCFileScanner
+- Terrascan (Terraform, Kubernetes, Helm v3, Dockerfiles, ...)
+- Trivy (container images, IaC)
+- AntiMalware (Windows only)
+
+You can add a task to the pipeline to config what to run:
+
+```yaml
+steps:
+- task: MicrosoftSecurityDevOps@1
+  displayName: 'Microsoft Security DevOps'
+  inputs:
+    config: 'test.gdnconfig' # see here for details https://github.com/microsoft/security-devops-azdevops/wiki
+    tools: 'checkov,eslint,templateanalyzer,terrascan,trivy'
+    publish: true
+    artifactName: CodeAnalysisLogs
+    ...
+```
+
+See *[details](https://learn.microsoft.com/en-us/azure/defender-for-cloud/azure-devops-extension#configure-your-pipelines-using-yaml)*
+
+- This generates a **Static Analysis Results Interchange Format (SARIF)** file and uploads to artifacts.
+- You need to install "SARIF SAST Scans Tab" extension to show a tab for the SARIF result
+- Defender for Cloud continuously monitors the `CodeAnalysisLogs` artifact for SARIF output
+- You can use third-party tools do run the analysis and upload the SARIF results to the `CodeAnalysisLogs` artifact

@@ -46,6 +46,7 @@
 - [Tests](#tests)
 - [Deployment patterns](#deployment-patterns)
 - [CLI](#cli)
+- [Billing](#billing)
 
 
 ## Overview
@@ -1463,3 +1464,17 @@ az repos pr list -otable
 # list pipelines
 az pipelines list -otable
 ```
+
+
+## Billing
+
+Some resources are free. But you need to enable billing to go over the free tier limits.
+
+When you enabled billing, it will create a resource in an Azure subscription, so it's billed with your Azure subscription invoice.
+
+You can purchase these resources individually:
+
+- Paid parallel jobs (for pipeline), price differs for MS Hosted and Self-Hosted agents
+- Users: Basic, or Basic + Test Plans access level, Stackerholder users are free
+- Advanced security: based on count of unique active committers
+- Artifact: based on storage usage

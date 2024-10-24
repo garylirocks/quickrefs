@@ -455,7 +455,7 @@ Three methods of authentication, see https://developer.hashicorp.com/terraform/l
     - `client_secret=true` or `client_certificate_path=true`
     - Azure CLI
 - Azure AD
-  - Must set `use_azuread_auth = true`, and
+  - Must set `use_azuread_auth = true`, and one of
     - `use_oidc=true`
     - `use_msi=true`
     - `client_secret=true` or `client_certificate_path=true`
