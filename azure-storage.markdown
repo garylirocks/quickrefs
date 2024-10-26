@@ -26,13 +26,17 @@
   - [Properties, metadata](#properties-metadata)
   - [Index tags](#index-tags)
   - [Life cycle management rules](#life-cycle-management-rules)
-  - [Soft delete](#soft-delete)
-    - [Container soft delete](#container-soft-delete)
-    - [Blob soft delete](#blob-soft-delete)
-  - [Versioning vs. snapshot](#versioning-vs-snapshot)
-  - [Recommended data protection configuration](#recommended-data-protection-configuration)
+  - [Data protection](#data-protection)
+    - [Account](#account)
+    - [Snapshot](#snapshot)
+    - [Soft delete](#soft-delete)
+    - [Versioning vs. soft-delete](#versioning-vs-soft-delete)
+    - [Recommended settings](#recommended-settings)
+    - [ADLS Gen 2](#adls-gen-2)
   - [Immutable storage for Azure Blobs](#immutable-storage-for-azure-blobs)
+  - [Point-in-time restore](#point-in-time-restore)
   - [Operational backup](#operational-backup)
+  - [Vaulted backup](#vaulted-backup)
   - [Object replication](#object-replication)
   - [CLI](#cli-1)
   - [AzCopy](#azcopy)
@@ -631,7 +635,6 @@ Compare metadata and tags
 | Encryption                | Same as blob | Microsoft-managed  |
 | Pricing                   | Storage cost | Fixed cost per tag |
 
-
 ### Life cycle management rules
 
 - You could define rules to move blobs to a cooler tier (hot -> cool -> cold -> archive) or deletion, after X days of creation or modification
@@ -641,47 +644,55 @@ Compare metadata and tags
   - Filter: prefix, index tags
 - Apply rules to containers or a subset of blobs
 
-### Soft delete
+### Data protection
 
-#### Container soft delete
+A container could have three types of data, each could be in normal or soft-deleted state:
+- Active blobs
+- Versions
+- Snapshots
 
-Only container-level operations can be restored. Can't restore deleted blobs in the container.
+See various options [here](https://learn.microsoft.com/en-us/azure/storage/blobs/data-protection-overview)
 
-#### Blob soft delete
+#### Account
 
-- To restore a blob, snapshot, or version that has been deleted
-- When you overwrite a blob:
-  - If versioning not enabled: A snapshot is created in soft-deleted state, if you overwrite again, then another soft-deleted snapshot will be created
-- When you delete a blob:
-  - If the blob has snapshots, you must delete the snapshots along with the blob itself, the snapshots will be in soft-deleted state as well
-  - If versioning is enabled
-    - the blob will NOT be in soft-deleted state, instead, it's saved as a version
-    - previous versions are NOT in soft-deleted state
-    - a version could be deleted and become soft-deleted
+A deleted storage account is retained for 14 days, can be restored.
 
-### Versioning vs. snapshot
+#### Snapshot
 
-- A container could have three types of data, each could be in normal or soft-deleted state:
-  - Active blobs
-  - Versions
-  - Snapshots
-- When blob versioning is enabled:
-  - A new version is created automatically on a write or delete operation
-  - Should use life cycle management rules to clean up old versions
-- A blob snapshot is created manually, not necessary if versioning is enabled
-  - Depending on how often you overwrite blobs, versioning could be costly
-- For ADLS Gen 2
-  - Snapshot is supported (in preview)
-  - Blob soft delete is supported
-  - Versioning is NOT supported
+A blob snapshot is created manually, not necessary if versioning is enabled
+- If you delete/undelete a blob, same action applies to the snapshots
+- Depending on how often you overwrite blobs, versioning could be costly
 
-### Recommended data protection configuration
+#### Soft delete
+
+- Container soft delete
+
+  - When you restore a container, the blobs in it are still there
+
+- Blob soft delete
+
+  - Blob/snapshot/version could all be in soft-deleted state and restored
+
+#### Versioning vs. soft-delete
+
+|           | Versioning enabled    | Soft-delete only                                          |
+| --------- | --------------------- | --------------------------------------------------------- |
+| Overwrite | A new version created | A new snapshot (soft-deleted) created for every overwrite |
+| Delete    | A new version created | Blob and snapshots became soft-deleted                    |
+| Manage    | life cycle management | life cycle management                                     |
+
+#### Recommended settings
 
 - Resource lock on the storage account (prevent deletion and config changes)
   - This doesn't protect containers or blobs from being deleted or overwritten
 - Container soft delete
-- Blob soft delete
-- Blob versioning
+- Blob versioning for Blob Storage
+- Manual snapshots for ADLS
+
+#### ADLS Gen 2
+- Snapshot is supported (in preview)
+- Blob soft delete is supported
+- Versioning is NOT supported
 
 ### Immutable storage for Azure Blobs
 
@@ -705,9 +716,20 @@ Immutability policies can be scoped to a blob version or to a container.
 
 A blob's storage tier could still be changed (eg. from hot to cool) with an applied immutability policy.
 
+### Point-in-time restore
+
+- Restore one or more containers
+- If point-in-time restore is enabled, then versioning, change feed, and blob soft delete must also be enabled
+- Only support block blobs, NOT page blobs, or append blobs
+
 ### Operational backup
 
 You can turn on this feature, you need a backup policy in a Backup vault, this enables soft delete for blobs, and blob versioning automatically
+
+### Vaulted backup
+
+- Data backed up to a Microsoft tenant with no-direct access
+- Individual containers could be restored to a different storage account
 
 ### Object replication
 
