@@ -352,8 +352,9 @@ A setting that can by applied to any resource to block inadvertent modification 
 
 - Two types: **Delete** or **Read-only**
 - Can be applied at different levels: subscriptions, resource groups, and individual resources
-- Are inherited from higher levels;
-- Apply regardless of RBAC permissions, even you are the owner, you still need to remove the lock before deleting a resource;
+- Are inherited from higher levels
+- It's an extension resource, id format is like `/subscriptions/<sub-id>/resourceGroups/rg1/providers/Microsoft.Network/virtualNetworks/vnet1/providers/Microsoft.Authorization/locks/mylock`
+- Apply regardless of RBAC permissions, even you are the owner, you still need to remove the lock before deleting a resource
 
 ### Azure Resource Manager (ARM)
 

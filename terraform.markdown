@@ -1672,12 +1672,20 @@ module "avm-ptn-virtualwan" {
 ### `AzAPI` provider
 
 - A thin layer on top of the Azure ARM REST APIs
-- Compliments the AzureRM provider, allows you to manage an Azure service that is not yet supported by the AzureRM provider, such as private/public preview services and features
-- Two resources:
+- Compliments the AzureRM provider, allows you to manage an Azure service that is not yet supported by the `azurerm` provider, such as private/public preview services and features
+- Authentication is similar to `azurerm`, recommended to use AZ CLI on localhost, and OIDC in CI/CD
+- Resources:
   - `azapi_resource`: manage a resource
   - `azapi_update_resource`: manage a subset of any existing resource's properties, **WON'T remove the properties when this resource is removed**
   - `azapi_resource_action`: triggers an action on a resource, such as generating SSH keys
-
+  - `azapi_data_plane_resource`: supports some data plane resources
+- V2 changes:
+  - You don't need `jsonencode()` for the `body` argument, use HCL directly
+  - It now supports `lifecycle.ignore_changes` block
+  - You can trigger a replacement using `replace_triggers_external_values` or `replace_triggers_refs`
+  - Has `retry` block to retry API calls based on error message
+  - Support query headers and query parameters with `create_headers`, `create_query_parameters`, `update_query_parameters`, ...
+  - Support JMESPath in `response_export_values` to filter and transform response data, to use as outputs, see [here](https://registry.terraform.io/providers/Azure/azapi/latest/docs/guides/2.0-upgrade-guide#jmespath-query-support)
 
 ```terraform
 # providers.tf
@@ -1721,11 +1729,11 @@ resource "azapi_resource" "qs101-account" {
   name      = "qs101LabAccount"
   parent_id = azurerm_resource_group.qs101.id
 
-  body = jsonencode({
+  body = {
     properties = {
       enabledRegionSelection = false
     }
-  })
+  }
 }
 
 resource "azapi_resource" "qs101-lab" {
@@ -1733,14 +1741,16 @@ resource "azapi_resource" "qs101-lab" {
   name      = "qs101Lab"
   parent_id = azapi_resource.qs101-account.id
 
-  body = jsonencode({
+  body = {
     properties = {
       maxUsersInLab  = 10
       userAccessMode = "Restricted"
     }
-  })
+  }
 }
 ```
+
+`azapi_resource_action` example:
 
 ```
 resource "random_pet" "ssh_key_name" {
@@ -1765,7 +1775,7 @@ resource "azapi_resource_action" "ssh_public_key_gen" {
 }
 
 output "key_data" {
-  value = jsondecode(azapi_resource_action.ssh_public_key_gen.output).publicKey
+  value = azapi_resource_action.ssh_public_key_gen.output.publicKey
 }
 ```
 
