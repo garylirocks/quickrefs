@@ -2,6 +2,8 @@
 
 - [Overview](#overview)
 - [Permissions management (CloudKnox)](#permissions-management-cloudknox)
+- [Global Secure Access](#global-secure-access)
+  - [Global settings](#global-settings)
 
 
 ## Overview
@@ -14,3 +16,12 @@
 - At very granular permission level
 - Ad-hoc, on-demand elevation
 - Separate license based on resources scanned
+
+
+## Global Secure Access
+
+### Global settings
+
+- Tenant Restrictions: whether user can use accounts in another tenant
+- Adaptive Access: provides network location info to Conditional Access
+  - Shows as "**All Compliant Network locations**" in the "Network" condition

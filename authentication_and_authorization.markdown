@@ -361,7 +361,9 @@ Solutions:
   - Android 9 and up, screen-lock turned on
   - Always saved and synced with Google Password Manager
     - No option to save in Microsoft Authenticator
-  - When on a computer, to use passkeys on your phone, you'll need to login to the same Google account in Chrome
+  - When on a computer, using Chrome browser, logged in to a Google account
+    - It will prompt you to use either the passkey on the computer
+    - Or use your Android device
 
 - Apple/iOS
   - iOS/iPadOS 16 and up

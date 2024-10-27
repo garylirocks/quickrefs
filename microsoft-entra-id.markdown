@@ -24,6 +24,7 @@
   - [Entra joined](#entra-joined)
   - [Hybrid joined](#hybrid-joined)
     - [Device writeback](#device-writeback)
+  - [Keys and tokens](#keys-and-tokens)
   - [Debugging](#debugging)
 - [Users](#users)
   - [Emergence accounts (break-glass accounts)](#emergence-accounts-break-glass-accounts)
@@ -404,7 +405,7 @@ Usage:
 
 ### Entra joined
 
-- Primarily intended for organizations without on-prem AD
+- Primarily intended for organizations **without on-prem AD**
 - Usually a work/school device, you login with your work/school account
 - OS: Works on Windows 10 & 11 (and above)
 - Capabilities:
@@ -419,7 +420,7 @@ Usage:
   - Out of Box Experience (OOBE)
   - bulk enrollment
   - Windows Autopilot
-- You can still login to an Entra joined machine using a non Entra account
+- You can still login to an Entra joined machine using a non-Entra account
 - If you want to RDP an Entra joined machine using an Entra account
   - you use username in the form like `MyAAD\gary@example.com`
   - your local machine needs to be Entra joined/registered or hybrid joined
@@ -451,6 +452,31 @@ Usage:
   - ADFS issues "is managed" claim based on whether the device object is in the "Registered Devices" container
 - Window Hello For Business (WHFB) requires device writeback to function in Hybrid and Federated scenarios
 
+### Keys and tokens
+
+When you register or join a device, two pairs of keys are generated ans stored in the device's security module (eg. TPM)
+
+- Device key
+- Transport key
+
+The device gets a Primary Refresh Token (PRT), which is valid for 14 days, and auto-refreshes
+
+- There is also a **session key** embedded in the PRT
+  - The session key hardware-bound, can't be stolen
+  - It is used to sign the PRT (called **token binding**), to make sure the PRT can't be used on another device
+- The PRT is used to get other tokens
+  - The request would be signed by the session key
+- A client application gets its own refresh token and access token
+  - Refresh token (long-lived, default to 90 days, gets regenerated)
+  - Access token (short-lived, usually one hour)
+
+Token brokers
+
+- WAM (Web Auth Manager), for Windows 10 and above
+- MS Auth App, for Android and iOS
+- When your app/script uses MSAL, it utilize the brokers
+- The brokers interact with browsers
+
 ### Debugging
 
 ```sh
@@ -468,27 +494,44 @@ dsregcmd /status
 #                Device Name : hostname.MyAAD.example.com
 
 # +----------------------------------------------------------------------+
+# | Device Details                                                       |
+# +----------------------------------------------------------------------+
+
+#  ...
+
+# +----------------------------------------------------------------------+
 # | Tenant Details                                                       |
 # +----------------------------------------------------------------------+
 
 #                 TenantName : My Tenant
 #                   TenantId : xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 #                        Idp : login.windows.net
+# ...
+
+# +----------------------------------------------------------------------+
+# | User State                                                           |
+# +----------------------------------------------------------------------+
 
 # ...
 
 # +----------------------------------------------------------------------+
-# | Ngc Prerequisite Check                                               |
+# | SSO State                                                            |
 # +----------------------------------------------------------------------+
 
-#             IsDeviceJoined : YES
-#              IsUserAzureAD : YES
-#              PolicyEnabled : NO
-#           PostLogonEnabled : YES
-#             DeviceEligible : YES
-#         SessionIsNotRemote : YES
-#             CertEnrollment : none
-#               PreReqResult : WillNotProvision
+#                 AzureAdPrt : YES
+#       AzureAdPrtUpdateTime : 2024-10-01 00:00:00.000 UTC
+#       AzureAdPrtExpiryTime : 2024-10-15 00:00:00.000 UTC
+#        AzureAdPrtAuthority : https://login.microsoftonline.com/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+#              EnterprisePrt : NO
+#                  OnPremTgt : YES
+#                   CloudTgt : YES
+# ...
+
+# +----------------------------------------------------------------------+
+# | Diagnostic Data                                                      |
+# +----------------------------------------------------------------------+
+
+# ...
 ```
 
 
@@ -695,6 +738,7 @@ Common policies:
   - Not jailbroken or rooted
 - Require approved client applications
 - Require trusted location/compliant device/hybrid joined device to register MFA or SSPR
+  - You could choose "User actions" as "Target resources"
 - Enforce a user to consent to the terms of use
 
 Best practices:
