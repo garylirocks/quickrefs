@@ -337,13 +337,12 @@ You can organize resource groups in different ways:
 
 ### Tags
 
-Another way to organize resources
-
+- It's an extension type resource, a full ID is like `/subscriptions/<sub-id>/resourceGroups/<rg-id>/providers/Microsoft.Storage/storageAccounts/<name>/providers/Microsoft.Resources/tags/default`
 - Can be assigned to subscriptions, resource groups and resources
 - **NOT** all types of resources support tags
-- There are limitations on number of tags for each resource, lengths of tag name and value;
-- Tags are not inherited;
-- Can be used to automate task, such as adding `shutdown:6PM` and `startup:7AM` to virtual machines, then create an automation job that accomplish tasks based on tags;
+- There are limitations on number of tags for each resource, lengths of tag name and value
+- Tags are NOT inherited
+- Can be used to automate task, such as adding `shutdown:6PM` and `startup:7AM` to virtual machines, then create an automation job that accomplish tasks based on tags
 - Consider using Azure policy to apply tags and enforce tagging rules and conventions
 
 ### Locks
