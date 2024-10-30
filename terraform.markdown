@@ -1452,76 +1452,61 @@ terraform init -backend-config="backend.tfvars"
 
 ### Azure DevOps Pipeline
 
-- Use a extension, which provides Terraform tasks, such as https://marketplace.visualstudio.com/items?itemName=charleszipp.azure-pipelines-tasks-terraform
+- Install an ADO extension (https://marketplace.visualstudio.com/items?itemName=JasonBJohnson.azure-pipelines-tasks-terraform), which provides Terraform tasks, but it does not support OIDC authentication
 
-- Use custom script:
+- Use script tasks
+  - You need to set env variables, from on OIDC service connection
+  - Also specify `use_oidc = true` in your backend storage config file
+  - Need further customization for stages, artifacts upload/download, templates, etc
 
   ```yaml
-  - stage: "Dev"
-    displayName: "Deploy to the dev environment"
-    dependsOn: Build
-    jobs:
-      - job: Provision
-        displayName: "Provision Azure App Service"
-        pool:
-          vmImage: "ubuntu-18.04"
-        variables:
-          - group: Release
-        steps:
-          - script: |
-              # Exit when any command returns a failure status.
-              set -e
+  steps:
+  - task: AzureCLI@2
+    name: set_variables
+    displayName: set terraform credentials
+    inputs:
+      azureSubscription: ${{ parameters.serviceConnection }}
+      addSpnToEnvironment: true   # this sets env variables from the service connection
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        echo "##vso[task.setvariable variable=ARM_USE_OIDC]true"
+        echo "##vso[task.setvariable variable=ARM_OIDC_TOKEN]$idToken"
+        echo "##vso[task.setvariable variable=ARM_CLIENT_ID]$servicePrincipalId"
+        echo "##vso[task.setvariable variable=ARM_TENANT_ID]$tenantId"
 
-              # Write terraform.tfvars.
-              echo 'resource_group_location = "'$(ResourceGroupLocation)'"' | tee terraform.tfvars
+  - script: |
+      terraform init -backend-config=${{ parameters.backendConfigFilePath }}
+    displayName: 'terraform init'
+    workingDirectory: ${{ parameters.workingDirectory }}
 
-              # Write backend.tfvars.
-              echo 'resource_group_name = "tf-storage-rg"' | tee backend.tfvars
-              echo 'storage_account_name = "'$(StorageAccountName)'"' | tee -a backend.tfvars
-              echo 'container_name = "tfstate"' | tee -a backend.tfvars
-              echo 'key = "terraform.tfstate"' | tee -a backend.tfvars
+  - script: |
+      # exitcode:
+      #   0 - Succeeded, diff is empty (no changes)
+      #   1 - Errored
+      #   2 - Succeeded, there is a diff
+      terraform plan -var-file variables/${{ parameters.environment }}.tfvars -out "output.tfplan" -detailed-exitcode
 
-              # Initialize Terraform.
-              terraform init -input=false -backend-config="backend.tfvars"
+      # exit if there is an error
+      planExitCode=$?
+      if [[ $planExitCode == 1 ]]; then
+        exit 1
+      fi
 
-              # Apply the Terraform plan.
-              terraform apply -input=false -auto-approve
+      echo "##vso[task.setvariable variable=TF_HAS_CHANGES]$([[ $planExitCode == 2 ]] && echo 'true' || echo 'false')"
+    displayName: 'terraform plan'
+    workingDirectory: ${{ variables.workingDirectory }}
 
-              # Get output
-              WebAppNameDev=$(terraform output appservice_name_dev)
-
-              # Write the WebAppNameDev variable to the pipeline.
-              echo "##vso[task.setvariable variable=WebAppNameDev;isOutput=true]$WebAppNameDev"
-            name: "RunTerraform"
-            displayName: "Run Terraform"
-            # set env variables for Azure authentication
-            env:
-              ARM_CLIENT_ID: $(ARM_CLIENT_ID)
-              ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
-              ARM_TENANT_ID: $(ARM_TENANT_ID)
-              ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
-      - deployment: Deploy
-        dependsOn: Provision
-        variables:
-          # use a variable set by 'RunTerraform' task in job 'Provision'
-          WebAppNameDev: $[ dependencies.Provision.outputs['RunTerraform.WebAppNameDev'] ]
-        pool:
-          vmImage: "ubuntu-18.04"
-        environment: dev
-        strategy:
-          runOnce:
-            deploy:
-              steps:
-                - download: current
-                  artifact: drop
-                - task: AzureWebApp@1
-                  displayName: "Azure App Service Deploy: website"
-                  inputs:
-                    azureSubscription: "Resource Manager - Tailspin - Space Game"
-                    appName: "$(WebAppNameDev)"
-                    package: "$(Pipeline.Workspace)/drop/$(buildConfiguration)/*.zip"
+  - script: |
+      terraform apply output.tfplan
+    condition: |
+      and(
+        succeeded(),
+        eq(variables['TF_HAS_CHANGES'], 'true')
+      )
+    displayName: 'terraform apply'
+    workingDirectory: ${{ variables.workingDirectory }}
   ```
-
 
 ## Internals
 
