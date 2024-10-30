@@ -251,6 +251,7 @@ The step hierarchy could be:
 - `steps:` -> `task:`
 - `jobs:` -> `steps:` -> `task:`
 - `stages:` -> `jobs:` -> `steps:` -> `task:`
+  - If you want "Approvals" for your run, you'll need `stages:`, if using `jobs:` only, you'll need approve before any job runs
 
 See: https://learn.microsoft.com/en-us/azure/devops/pipelines/yaml-schema/pipeline?view=azure-pipelines
 
@@ -361,7 +362,7 @@ stages:
 ```
 
 - *#1* By default, a stage is implicitly depending on preceding stage. Use `dependsOn` to make dependency explicit.
-- *#2* An environment is created automatically if it does not exist, you can create one manually and add approvals and checks to it.
+- *#2* An environment needs to be created before use, you can add checks (branch control, approval, etc), and permissions for users and pipelines
 
 #### Stage dependencies
 
