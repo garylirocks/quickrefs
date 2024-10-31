@@ -685,7 +685,7 @@ Macros like `$(mySecret)`, `$(global_secret)` work, they are interpreted by the 
 
 - A different job
 
-  - You must have `isOutput=true` in the logging command
+  - You must have **`isOutput=true`** in the logging command
   - In following job, use the runtime expression syntax `$[ dependencies.PrevJob.outputs['Task.VarName'] ]` to map it to a variable in the job
 
   ```yaml
@@ -710,8 +710,9 @@ Macros like `$(mySecret)`, `$(global_secret)` work, they are interpreted by the 
 
 - A different stage
 
-  - At the stage level, the format for referencing variables from a different stage is `dependencies.STAGE.outputs['JOB.TASK.VARIABLE']`
-  - At the job level, the format for referencing variables from a different stage is `stageDependencies.STAGE.JOB.outputs['TASK.VARIABLE']`
+  - You must have **`isOutput=true`** in the logging command
+  - To reference an output variable in `condition` of another stage, use `dependencies.STAGE.outputs['JOB.TASK.VARIABLE']`
+  - To reference an output variable in `variables` of another stage/job, use `stageDependencies.STAGE.JOB.outputs['TASK.VARIABLE']`
 
   ```yaml
   stages:
@@ -730,11 +731,13 @@ Macros like `$(mySecret)`, `$(global_secret)` work, they are interpreted by the 
         succeeded(),
         eq(dependencies.StageOne.outputs['JobA.ProduceVar.MyVar'], 'true')
       )
+    variables:
+      varFromA: $[ stageDependencies.StageOne.JobA.outputs['ProduceVar.MyVar'] ]
     jobs:
     - job: JobB
       variables:
         # map the output variable from JobA into this job
-        varFromA: $[ stageDependencies.StageOne.A.outputs['ProduceVar.MyVar'] ]
+        varFromA: $[ stageDependencies.StageOne.JobA.outputs['ProduceVar.MyVar'] ]
       steps:
       - script: echo $(varFromA) # this step uses the mapped-in variable
   ```
@@ -988,7 +991,7 @@ steps:
   patterns: '**/*.js' # optional
 ```
 
-- Files are downloaded into `$(Pipeline.Workspace)`
+- Files are downloaded into folder `$(Pipeline.Workspace)/WebApp`
 - `artifact` controls which artifact to download, if empty, download everything
 - Use `patterns` to filter which files to download
 - Artifacts are downloaded automatically in deployment jobs (a download task is auto injected), use the following step to stop it:
