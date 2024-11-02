@@ -4,8 +4,12 @@
 - [DNS resolution within virtual networks](#dns-resolution-within-virtual-networks)
 - [Azure-provided name resolution](#azure-provided-name-resolution)
 - [Private DNS zones](#private-dns-zones)
+  - [CLI](#cli)
 - [Your own DNS server](#your-own-dns-server)
-- [CLI](#cli)
+- [DNS Private Resolver](#dns-private-resolver)
+  - [Inbound endpoint](#inbound-endpoint)
+  - [Outbound endpoint](#outbound-endpoint)
+  - [DNS forwarding rulesets](#dns-forwarding-rulesets)
 
 
 ## Overview
@@ -150,6 +154,19 @@ You could link a Private DNS Zone to a vNet (not subnet), enable auto-registrati
   # ;4.0.0.10.in-addr.arpa.         IN      PTR
   ```
 
+### CLI
+
+```sh
+az network private-dns zone list
+    --output table
+
+az network private-dns record-set list \
+    -g <resource-group> \
+    -z <zone-name> \
+    --output table
+```
+
+
 ## Your own DNS server
 
 - You could configure custom DNS servers at both vnet level and VM NIC level (takes precedence, if not specified, NIC inherits DNS settings from vnet)
@@ -190,14 +207,45 @@ Non-authoritative answer:
 4.0.0.10.in-addr.arpa   name = vm-demo-001.example.private.
 ```
 
-## CLI
 
-```sh
-az network private-dns zone list
-    --output table
+## DNS Private Resolver
 
-az network private-dns record-set list \
-    -g <resource-group> \
-    -z <zone-name> \
-    --output table
-```
+![Overview](./images/azure_dns-private-resolver.png)
+
+A private resolver is deployed into a vNet, it needs a subnet for inbound endpoint, another for outbound endpoint.
+
+### Inbound endpoint
+
+- Provisioned with a private IP
+- On-prem DNS servers need a forwarding rule pointing to this IP
+- Other vNets can have a DNS forwarding ruleset associated, to forward some queries to this IP
+
+### Outbound endpoint
+
+- NOT provisioned with an IP
+- Can be linked to DNS forwarding rulesets
+
+### DNS forwarding rulesets
+
+- A ruleset can have up to 1000 DNS forwarding rules
+- A ruleset can be linked to up to multiple virtual networks in the same region
+  - vNet could be in another subscription
+  - CAN'T be in another region
+- A single ruleset can be associated with up to 2 outbound endpoints belonging to the same DNS Private Resolver instance
+  - CAN'T be associated to multiple private resolver instances
+
+Rules example:
+
+| Rule name    | Domain name        | Destination IP:Port       | Rule state |
+| ------------ | ------------------ | ------------------------- | ---------- |
+| Contoso      | contoso.com.       | 10.11.0.4:53,10.11.0.5:53 | Enabled    |
+| AzurePrivate | azure.contoso.com. | 10.10.0.4:53              | Enabled    |
+| Wildcard     | .                  | 10.11.0.4:53,10.11.0.5:53 | Enabled    |
+
+- Longer domain names take precedence
+- Destination IP
+  - Could have multiple destinations IPs, only the first one is used, unless it's unresponsive
+  - Can't use the Azure DNS IP address of `168.63.129.16` as the destination IP
+- Could have a wildcard `.`, matching any domain names
+  - Azure services domains (eg. `windows.net`, `azure.com`, `azure.net`, `windowsazure.us`) are excluded
+- If any destination in a rule is an inbound endpoint, this ruleset should not be linked to the vNet containing the inbound endpoint, doing this will lead to a **resolution loop**
