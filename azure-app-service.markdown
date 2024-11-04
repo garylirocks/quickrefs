@@ -92,11 +92,12 @@ Notes:
   - On-prem via ExpressRoute or S2S VPN
   - Across Service Endpoints
 - The integration subnet will be delegated to `Microsoft.Web/serverFarms`
+- One subnet could be shared by multiple plans
 - **Subnet size** considerations:
   - Each instance in your app plan needs a private IP in the subnet
   - If you use Windows Containers, you need one extra IP per app per instance
   - When you scale up/down in size (in/out in instances), the required address space is doubled for a short period of time
-  - Minimum size is `/28`
+  - Minimum size is `/26` ?
 - The private IP of an instance is exposed via environment variable `WEBSITE_PRIVATE_IP`
 - No matter whether or not you route Internet traffic via the vNet, the destination determines the source address:
   - destination in integration vNet or peered vNet, the source address is the private IP
@@ -108,7 +109,6 @@ Notes:
     - No IPv6 address space
   - The integration subnet
     - Can't have service endpoint policies enabled
-    - Can only be used by one App Service Plan
   - You must "Disconnect" the integration first before you can update/delete the subnet/vnet
 
 #### Routing
