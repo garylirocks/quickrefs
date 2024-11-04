@@ -647,6 +647,7 @@ Operations:
 - You could **increase** the disk size
   - You could increase size of an attached disk, either below 4TiB, or above it
   - To increase the size from < 4TiB to > 4TiB, you need to detach it the disk or stop the VM first, this is because the page blob needs to be copied to another storage account if the size goes over 4TiB
+  - Premium SSD v2 and Ultra disk supports **live resizing**
 - To shrink the size, you need to create a new disk and copy the data over
 
 ### Host caching
