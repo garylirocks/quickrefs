@@ -619,5 +619,11 @@ A `deployIfNotExists` or `modify` policy should define the roles it requires:
   - Can't verify rules targeting subscriptions or resource groups
   - It doesn't validate some of the limits, sometimes a rule is fine locally, but would be rejected by Azure when you deploy:
     - 100 "value count" iterations per policy
-    - Use of `current()` or `field()` in `count.value`
+    - Can't use `current()` or `field()` in `count.where.count.value`
     - ...
+- Functions
+  - See full list here: https://learn.microsoft.com/en-us/azure/governance/policy/concepts/definition-structure-policy-rule#policy-functions
+  - There are restrictions:
+    - Can't use `current()` or `field()` in `count.where.count.value`
+    - Can't use `field()` and `current()` in the `"field": ` accessor
+    - `objectKeys()` seems not supported, use `[contains(field('tags'), 'my-key'))]` to check if an object contains the specified key
