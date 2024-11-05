@@ -10,6 +10,7 @@
   - [Inbound endpoint](#inbound-endpoint)
   - [Outbound endpoint](#outbound-endpoint)
   - [DNS forwarding rulesets](#dns-forwarding-rulesets)
+  - [Architecture](#architecture)
 
 
 ## Overview
@@ -47,6 +48,8 @@ There are a few options:
 
 Example (a VM `vm-demo-001` in a vNet)
 
+View/update hostname
+
 ```sh
 hostname --fqdn
 # vm-demo-001.bkz3n5lfd3kufhikua4wl40kwg.px.internal.cloudapp.net
@@ -54,6 +57,13 @@ hostname --fqdn
 hostname --all-fqdns
 # vm-demo-001.internal.cloudapp.net
 
+# change hostname
+hostnamectl set-hostname vm-demo-001.newdomain.com
+```
+
+View DNS setting
+
+```sh
 # get DNS Server name (not the local 127.0.0.1:53)
 systemd-resolve --status
 # ...
@@ -66,7 +76,11 @@ resolvectl status eth0
 #       Current Scopes: DNS
 #   Current DNS Server: 168.63.129.16
 #          DNS Servers: 168.63.129.16
+```
 
+Reverse lookup
+
+```sh
 nslookup -type=PTR 10.0.0.4
 # Non-authoritative answer:
 # 4.0.0.10.in-addr.arpa   name = vm-demo-001.internal.cloudapp.net.
@@ -76,23 +90,20 @@ nslookup -type=PTR 10.0.0.4
 # Non-authoritative answer:
 # 4.0.0.10.in-addr.arpa   name = vm-demo-001.internal.cloudapp.net.
 # 4.0.0.10.in-addr.arpa   name = vm-demo-001.example.private.
-
-# change hostname
-hostnamectl set-hostname vm-demo-001.newdomain.com
 ```
 
 - DNS IP is `168.63.129.16`, this is static, same in every vNet
 - The IP is assigned to NICs for DNS by the default Azure DHCP assignment
+  - If you update the DNS server setting of a vNet, you need to restart a VM for the change to take effect on the VM
 - The DNS zone is `.internal.cloudapp.net.`
 - Any VM created in the vNet is registered
 - The domain name is
   - Windows: computer name
   - Linux: hostname is the same as VM resource name by default ?
   - *Tested in Ubuntu, if you update VM hostname, the DNS record updates automatically*
-- DNS names can be assigned to both VMs and network interfaces
 - PTR queries return FQDNs of form
-  - `[vm].internal.cloudapp.net.`
-  - `[vm].[privatednszonename].` (when private DNS zone linked to the vNet, and auto-registration enabled)
+  - `[vm-name].internal.cloudapp.net.`
+  - `[vm-name].[privatednszonename].` (when private DNS zone linked to the vNet, and auto-registration enabled)
 - See here for client side DNS caching(`dnsmasq`) and retry configs: https://learn.microsoft.com/en-us/azure/virtual-network/virtual-networks-name-resolution-for-vms-and-role-instances#dns-client-configuration
 
 Considerations:
@@ -228,9 +239,10 @@ A private resolver is deployed into a vNet, it needs a subnet for inbound endpoi
 ### DNS forwarding rulesets
 
 - A ruleset can have up to 1000 DNS forwarding rules
-- A ruleset can be linked to up to multiple virtual networks in the same region
+- A ruleset can be linked to multiple vNets in the same region
   - vNet could be in another subscription
   - CAN'T be in another region
+- A ruleset must be associated with **at least one** outbound endpoint
 - A single ruleset can be associated with up to 2 outbound endpoints belonging to the same DNS Private Resolver instance
   - CAN'T be associated to multiple private resolver instances
 
@@ -242,10 +254,25 @@ Rules example:
 | AzurePrivate | azure.contoso.com. | 10.10.0.4:53              | Enabled    |
 | Wildcard     | .                  | 10.11.0.4:53,10.11.0.5:53 | Enabled    |
 
-- Longer domain names take precedence
+- Rules are prioritized by longest suffix match
 - Destination IP
   - Could have multiple destinations IPs, only the first one is used, unless it's unresponsive
   - Can't use the Azure DNS IP address of `168.63.129.16` as the destination IP
 - Could have a wildcard `.`, matching any domain names
   - Azure services domains (eg. `windows.net`, `azure.com`, `azure.net`, `windowsazure.us`) are excluded
 - If any destination in a rule is an inbound endpoint, this ruleset should not be linked to the vNet containing the inbound endpoint, doing this will lead to a **resolution loop**
+
+### Architecture
+
+![Centralized DNS architecture](./images/azure_dns-private-resolver-centralized-architecture.png)
+
+- Private DNS zones linked to hub vNet
+- DNS private resolver in hub vNet
+  - Outbound endpoint and DNS forwarding ruleset is *optional*, only required if you need to resolve on-prem DNS names
+- To resolve on-prem DNS names
+  - Add a rule to the ruleset, eg. `onprem.local. 192.168.10.10`
+  - The ruleset needs to be linked to **both the outbound endpoint and the hub vNet**
+- Spoke vNet uses inbound endpoint IP as DNS server
+  - So for a VM in spoke vNet to resolve an on-prem DNS name, the query goes like this: `spoke vm -> inbound endpoint in hub vNet -> (matching the rule) -> outbound endpoint -> on-prem DNS server`
+- Hub vNet uses Azure provided DNS
+  - So for a VM in hub vNet to resolve an on-prem DNS name, the query goes like this: `hub vm -> Azure-provided DNS in hub vNet -> (matching the rule) -> outbound endpoint -> on-prem DNS server`
