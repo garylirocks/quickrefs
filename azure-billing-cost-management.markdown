@@ -7,6 +7,8 @@
   - [Microsoft Partner Agreement](#microsoft-partner-agreement)
   - [MCA](#mca)
     - [Billing scopes](#billing-scopes)
+    - [Billing tags](#billing-tags)
+    - [Billing Roles](#billing-roles)
 - [Subscription vending](#subscription-vending)
   - [CLI command](#cli-command)
   - [Terraform `azurerm_subscription`](#terraform-azurerm_subscription)
@@ -118,12 +120,12 @@ resource "azurerm_subscription" "example" {
 - Subscription
   - Could have a "cost center" attached, which could be project, department, etc
 
-**Billing tags**
+#### Billing tags
 
 - "Billing profile" and "invoice sections" can have tags, which are called billing tags
 - You can use "Tag inheritance" feature to apply them (as well as subscription and resource group tags) to new usage data of resources
 
-**Billing Roles**
+#### Billing Roles
 
 See: https://learn.microsoft.com/en-us/azure/cost-management-billing/manage/understand-mca-roles
 
@@ -228,27 +230,32 @@ Gotchas:
 
 ### Tags in cost and usage data
 
-- Tags must be applied directly ro resources
+Individual resources submit usage record to Cost Management, and tags are included.
+
+Limitations:
+
+- Tags must be applied directly to resources
   - Or you could enable tag inheritance (instead of using Azure Policy)
-- Some resources does not support tags
+- Only support resources deployed to resource groups
+- Some resources does not support tags, or might not include tags in usage data
+- Newly added tags aren't applied to historical usage data
 
 ### Tag inheritance
 
-- Tags are inherited to resource usage records, NOT resources
-
-  ![Tag inheritance](./images/azure_tags-inheritance.svg)
+![Tag inheritance](./images/azure_tags-inheritance.svg)
 
 - Works for these billing account types:
   - Enterprise Agreement (EA)
   - Microsoft Customer Agreement (MCA)
   - Microsoft Partner Agreement (MPA) with Azure plan subscriptions
-
-- If the same tag is on both subscription and resource group levels, the subscription one takes precedence.
-
-- When enabled, the resource usage records are updated for the current month.
-
-- If a resource that doesn't emit usage at a subscription scope, they will not have the subscription tags applied.
-
+- For MCA, you could also enabled inheritance of billing tags at Billing Profile or Invoice Section level
+- Tags are inherited to resource usage records, **NOT** resources themselves
+- When enabled
+  - Takes 8-24 hour to update usage records
+  - The current tags are applied to all usage records of current month
+- If the same tag is on both subscription and resource group levels, the subscription one takes precedence
+- If a resource that doesn't emit usage at a subscription scope, they will not have the subscription tags applied
+- These inherited tags could be used for filters in budgets
 
 ## Alerts
 
