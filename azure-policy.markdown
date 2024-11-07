@@ -624,6 +624,7 @@ A `deployIfNotExists` or `modify` policy should define the roles it requires:
 - Functions
   - See full list here: https://learn.microsoft.com/en-us/azure/governance/policy/concepts/definition-structure-policy-rule#policy-functions
   - There are restrictions:
-    - Can't use `current()` or `field()` in `count.where.count.value`
-    - Can't use `field()` and `current()` in the `"field": ` accessor
+    - `lambda()` not supported
+    - Can't use `field()` or `current()` in `count.value`
+    - Can't use `field()` or `current()` in the `"field": ` accessor
     - `objectKeys()` seems not supported, use `[contains(field('tags'), 'my-key'))]` to check if an object contains the specified key
