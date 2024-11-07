@@ -624,6 +624,7 @@ A `deployIfNotExists` or `modify` policy should define the roles it requires:
 - Functions
   - See full list here: https://learn.microsoft.com/en-us/azure/governance/policy/concepts/definition-structure-policy-rule#policy-functions
   - There are restrictions:
+    - There are limits are number of parameters, nested function depth, function expression length, etc, see https://learn.microsoft.com/en-us/azure/governance/policy/concepts/definition-structure-policy-rule#limits-enforced-during-authoring
     - `lambda()` not supported
     - Can't use `field()` or `current()` in `count.value`
     - Can't use `field()` or `current()` in the `"field": ` accessor
