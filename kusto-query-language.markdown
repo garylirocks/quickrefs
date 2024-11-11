@@ -261,6 +261,22 @@ To create a **saved function**
   1	{"age":20}
   ```
 
+  Or you can expand a property bag into arrays
+
+  ```kusto
+  datatable (a:int, b:dynamic) [
+    1, dynamic({"name": "gary", "age": 20})
+  ]
+  | mv-expand bagexpansion=array b
+  ```
+
+  returns:
+
+  ```
+  1	["name", "gary"]
+  1	["age", 20]
+  ```
+
 - `mv-apply`, does `mv-expand` first, which create a subtable for each row, then apply a subquery on the subtable, then return the union of the results
 
   ```kusto

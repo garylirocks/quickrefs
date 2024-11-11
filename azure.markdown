@@ -453,6 +453,36 @@ Tables:
   | project name, subName
   ```
 
+- Get resources based on tags on resource groups
+
+  ```kusto
+  // Case-sensitive
+  Resources
+  | where type =~ 'microsoft.storage/storageaccounts'
+  | join kind=inner (
+    ResourceContainers
+    | where type =~ 'microsoft.resources/subscriptions/resourcegroups'
+    | where tags['Key1'] =~ 'Value1'
+    | project subscriptionId, resourceGroup)
+  on subscriptionId, resourceGroup
+  | project-away subscriptionId1, resourceGroup1
+
+  // Case-insensitive
+  // Find resources based on tags on resource groups
+  // `isnotempty` only checks if the value is `null`, use `array_length(bag_keys(tags))` to check if it's an empty bag
+  Resources
+  | join kind=inner (
+    ResourceContainers
+    | where type =~ 'microsoft.resources/subscriptions/resourcegroups'
+    | where isnotempty(tags) and array_length(bag_keys(tags)) > 0
+    | mv-expand bagexpansion=array tags
+    | where tags[0] =~ 'yor_name' and tags[1] =~ 'demo'
+    | project subscriptionId, resourceGroup)
+  on subscriptionId, resourceGroup
+  | project-away subscriptionId1, resourceGroup1
+
+  ```
+
 - Find storage accounts with public network access
 
   ```kusto
