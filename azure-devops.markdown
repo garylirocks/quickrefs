@@ -43,8 +43,10 @@
     - [Deployment strategies](#deployment-strategies)
   - [GitHub integration](#github-integration)
 - [Artifacts](#artifacts)
-- [Tests](#tests)
 - [Deployment patterns](#deployment-patterns)
+- [Tests](#tests)
+- [Test Plans](#test-plans)
+  - [Test cases](#test-cases)
 - [CLI](#cli)
 - [Billing](#billing)
 
@@ -1384,27 +1386,6 @@ To publish an NPM package to a feed:
     ```
 
 
-## Tests
-
-- Functional tests
-  - **Smoke testing**: most basic functionality, eg. `curl` to verify a web page returns 200
-  - **Unit testing**: test individual function and method
-  - **Integration testing**: multiple components work together, eg. add products to shoping car and then check out
-  - **Regression testing**: make sure one component change doesn't affect other components, might involve just running unit tests and integration test for every change
-  - **Sanity testing**: usually manually verify the software appears to be working before more thorough testing
-  - **UI testing**: verify UI displays correctly and a sequence of interactions leads to expected result
-  - **Usability testing**: usually manual, verify the software is intuitive
-  - **User acceptance testing (UAT)**: typically done by real end users
-
-- Nonfunctional tests
-
-  - Performance testing
-    - **Load testing**: performance at the upper limit of its SLA
-    - **Stress testing**: under abnormally heavy loads, whether the application would fail gracefully
-  - Security testing
-    - **Penetration testing**: vulnerabilities
-    - **Compliance testing**: eg. PCI, HIPPA
-
 ## Deployment patterns
 
 Deployment pattern is an automated way to smoothly roll out new application features to users. It
@@ -1446,6 +1427,45 @@ Common patterns:
 - Progressive-exposure deployment
 
   ![Deployment Pattern progressive exposure](images/azure-devops_progressive-exposure-deployment.png)
+
+
+## Tests
+
+- Functional tests
+  - **Smoke testing**: most basic functionality, eg. `curl` to verify a web page returns 200
+  - **Unit testing**: test individual function and method
+  - **Integration testing**: multiple components work together, eg. add products to shoping car and then check out
+  - **Regression testing**: make sure one component change doesn't affect other components, might involve just running unit tests and integration test for every change
+  - **Sanity testing**: usually manually verify the software appears to be working before more thorough testing
+  - **UI testing**: verify UI displays correctly and a sequence of interactions leads to expected result
+  - **Usability testing**: usually manual, verify the software is intuitive
+  - **User acceptance testing (UAT)**: typically done by real end users
+
+- Nonfunctional tests
+
+  - Performance testing
+    - **Load testing**: performance at the upper limit of its SLA
+    - **Stress testing**: under abnormally heavy loads, whether the application would fail gracefully
+  - Security testing
+    - **Penetration testing**: vulnerabilities
+    - **Compliance testing**: eg. PCI, HIPPA
+
+
+## Test Plans
+
+For managing tests, entity hierarchy: Test Plan -> Test Suite -> Test Case
+
+- Each entity is a work item, showing up in the Boards menu as well
+- When you create a test plan, a suite would be created with the same name
+- Test suites could be nested
+
+### Test cases
+
+You add steps in a test case
+
+"*Automated test*" here seems to refer to tests created in Visual Studio, not UI tests in a browser.
+
+
 
 ## CLI
 
