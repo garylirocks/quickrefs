@@ -47,6 +47,7 @@
 - [Tests](#tests)
 - [Test Plans](#test-plans)
   - [Test cases](#test-cases)
+  - [Test runs](#test-runs)
 - [CLI](#cli)
 - [Billing](#billing)
 
@@ -1465,6 +1466,11 @@ You add steps in a test case
 
 "*Automated test*" here seems to refer to tests created in Visual Studio, not UI tests in a browser.
 
+### Test runs
+
+- Test runs are recorded for test suites
+- There's a browser extension to capture screenshots and record videos
+- You can create bugs in a test run, steps will show up in the bug
 
 
 ## CLI
