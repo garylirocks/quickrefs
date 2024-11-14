@@ -771,9 +771,31 @@ A users status could be:
   - Monitor user sessions
   - Block custom actions: like sending sensitive content in Teams or Slack
 - Continuous access evaluation (CAE)
-  ![Continuous access evaluation](images/azure_ad-continuous-access-evaluation.png)
+
+    <img src="images/azure_ad-continuous-access-evaluation.png" width="480" alt="Continuous access evaluation" />
+
   - By default, an access token is valid for 1 hour, it can't be revoked
-  - With CAE, in some cases(eg. user disabled, password change, location change, etc), IdP sends a revocation event to resource provider, which checks revocation for the user when verifying an access token
+    - With CAE, access token could be long-lived, 24-28 hours
+  - With CAE, when some *critical event* occurs (eg. user disabled, password change, ression revoked, etc), IdP generates a revocation event.
+    - Resource provider retrieves the events from an endpoint at the IdP
+    - Resource provider verifies access tokens against the revocation events
+    - The SLA is 15 minutes (resource provider became aware of the events within 15 minutes)
+    - If an access token became invalid, the resource provider sends a 401 response (with a *claim challenge*) to the client
+  - Only some MS services supported now:
+    - Exchange Online
+    - SharePoint Online / OneDrive
+    - Teams
+    - Graph
+  - Client needs to be CAE capable as well
+    - It lets IdP know it's CAE capable, so IdP would issue long-lived access tokens to it
+    - It can respond to the 401 response from resource provider properly
+    - It sends a request (with the claim challenge, and refresh token) to IdP, requesting a new access token
+    - IdP sends a new access token (including response to the claim challenge) to client
+  - Enforcing IP location:
+    - IdP adds the conditional access policy ID (CAPID) to the access token
+    - Resource provider uses the CAPID to retrieve the allowed IP range from IdP endpoint
+    - Resource provider checks the IP of the client for every request
+    - In split path scenarios (the data path is different from the auth path, they have different public IPs), you could disable location enforcement in CAE, then IdP wouldn't add the CAPID to the access token
 
 ### App protection policies (APP) on devices
 

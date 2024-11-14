@@ -335,10 +335,11 @@ Can be used as a secure alternative for password, or a method in MFA.
 
 WebAuthn
 
-- Talks to the authenticator
+- JavaScript APIs for webpage to interactor with authenticators in the OS
 - Checks the relying party ID (eg. `x.com`) is a subset of the website URL
 
 Passkey
+
 - There is one unique passkey for a unique combination of
   - Relying party
   - User Account
@@ -350,6 +351,9 @@ Passkey
 Authenticator
 
 - Each authenticator has a unique AAGUID (*Microsoft Authenticator has different GUID for iOS and Android*)
+- Two types:
+  - Platform: built-into a user's device, eg. Windows Hello, TouchID, FaceID, smartphone's authenticator
+  - Roaming: removable device, eg. USB, NFC, Bluetooth
 
 Solutions:
 

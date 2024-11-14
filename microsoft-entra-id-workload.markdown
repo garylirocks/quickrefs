@@ -317,7 +317,7 @@ Three types of applications:
 | Your own                         | Yes               | Yes                     | Add in App registrations                                          |
 | On-prem                          | Yes               | Yes                     | Entra App Proxy                                                   |
 
-- Pre-integrated applications (can be added from the gallery)
+- Gallery applications (Microsoft has worked with third-party for basic integration, and the app added into the app gallery)
 - Your own applications (register it in App Registrations)
 - On-premises applications (can be published externally via Entra Application Proxy)
 
