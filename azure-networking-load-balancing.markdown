@@ -6,11 +6,12 @@
   - [Backend pools](#backend-pools)
   - [Traffic flows](#traffic-flows)
   - [Rules](#rules)
+  - [Admin state](#admin-state)
   - [Floating IP](#floating-ip)
   - [Outbound connection](#outbound-connection)
   - [Distribution modes](#distribution-modes)
   - [Limitations](#limitations)
-  - [Cross-subscription load balancer (in preview)](#cross-subscription-load-balancer-in-preview)
+  - [Cross-subscription load balancer](#cross-subscription-load-balancer)
   - [Cross-region load balancer](#cross-region-load-balancer)
 - [Application Gateway](#application-gateway)
   - [Overview](#overview)
@@ -125,6 +126,22 @@ There are several different types of rules:
 
 **Uniqueness**: A load balancing rule and an inbound NAT rule can't use the same frontend, protocol(TCP/UDP) and port combination
 
+### Admin state
+
+![Admin state values](./images/azure_load-balancer-admin-state.png)
+
+Allows you to override the Load Balancer's health probe behavior on a per backend pool instance basis.
+
+Could be used when you want to take down an instance for maintenance, patching, etc.
+
+- If an instance is in multiple pools, the admin state only applied on one pool doesn't affect the other pool
+- Admin state only takes effect when there's a health probe configured on the load balancing rule
+
+Limitations
+
+- Isn't supported with inbound NAT rule
+- Can't be configured during the creation of a NIC-based pool (TODO: can be added after creation ?)
+
 ### Floating IP
 
 If multiple applications in a single VM need to use the same port (eg. [one or more Always On availability group listeners](https://learn.microsoft.com/en-us/azure/azure-sql/virtual-machines/windows/availability-group-listener-powershell-configure)). You need to enable floating IP.
@@ -185,7 +202,7 @@ SNAT port usage constraints:
 - You CAN ping the frontend IP of a Standard Public LB (not other types ?)
 - You can't include on-prem IP in the backend pool. Because the health probe won't work (always originating from `168.63.129.16`)
 
-### Cross-subscription load balancer (in preview)
+### Cross-subscription load balancer
 
 Either the frontend IP or the backend pool could be in a different subscription from the LB.
 
@@ -209,7 +226,7 @@ Either the frontend IP or the backend pool could be in a different subscription 
 
   Cross-subscription backend pools must utilize a new property known as **SyncMode**.
 
-  - A new type of backend pool, different from NIC-based of IP-based
+  - A new type of backend pool, different from NIC-based or IP-based
   - Two possible values:
     - "Automatic": backend pool instances are synced with the LB configuration, useful for VMSS
     - "Manual": might be useful in scenarios like DR, active-passive, or dynamic provisioning

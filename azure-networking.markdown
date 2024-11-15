@@ -60,6 +60,10 @@
 - [Network Security Perimeters (NSP)](#network-security-perimeters-nsp)
 - [DDoS Protection](#ddos-protection)
 - [Azure Virtual Network Manager](#azure-virtual-network-manager)
+  - [Network groups](#network-groups)
+  - [Connectivity](#connectivity)
+  - [Security Admin rules](#security-admin-rules)
+  - [UDR management](#udr-management)
 - [Network Watcher](#network-watcher)
   - [Flow logs and traffic analytics](#flow-logs-and-traffic-analytics)
   - [Auto creation](#auto-creation)
@@ -1313,11 +1317,11 @@ Types of DDoS attack:
 - Entities: Network Groups, Configurations (Connectivity or Security Admin)
 - Support vWAN in preview
 
-Network groups:
+### Network groups
 
 - Could be static or dynamic (based on policy)
 
-Connectivity:
+### Connectivity
 
 - Allows you to deploy a topology(hub-spoke or mesh) to network groups, saving you time to create and manage the peerings one by one
 - For the Hub-Spoke topology, every vnet in a network group is peered to the hub, you could also enable
@@ -1332,7 +1336,9 @@ Connectivity:
 - If you add/remove vnets in a group, connectivity gets updated automatically (seems done by Azure Policy ?)
 - If the connectivity settings are updated, you need to redeploy
 
-Security Admin rules:
+### Security Admin rules
+
+![Security admin rules evaluation](./images/azure_networking-virtual-network-manager-security-admin-rules.png)
 
 - Similar to NSGs, but target at vnets level
 - They are populated to all NICs within the vnets
@@ -1341,7 +1347,15 @@ Security Admin rules:
 - A rule has three possible actions: "Allow", "Deny", "Always allow", if it's "Always allow", rules from lower level manager instances and NSGs are ignored
 - This allows the central IT team to manage global rules, and delegate NSG rules to application teams
 
-![Security admin rules evaluation](./images/azure_networking-virtual-network-manager-security-admin-rules.png)
+### UDR management
+
+![UDR management overview](./images/azure_networking-virtual-network-manager-udr-management.png)
+
+- You create a routing configuration, and then rule collection (similar to a route table) within it.
+- A rule collection targets a network group.
+- You need to deploy the configuration to apply it.
+  - Upon this, all routes are stored in a route table inside an AVNM-managed resource group
+  - You can create 1000 UDRs in a route table (rather than the traditional 400 limit)
 
 
 ## Network Watcher
