@@ -899,6 +899,9 @@ Networking requirements:
 - Number of instances can automatically increase or decrease in response to demand or a defined schedule.
 - You could use your own custom VM images.
 - It has instance repair feature which replaces a VM if it health check fails.
+- Orchestration mode
+  - Flexible:
+    - You could attach a new or existing VM to a VMSS, it could have a different OS, network configuration, etc
 
 
 ## Run Commands

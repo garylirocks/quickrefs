@@ -224,6 +224,7 @@ az login --identity --username <client_id|object_id|resource_id>
   - But there is a drawback, the identity's groups and roles are claims in the access token, any authorization changes do not take effect until the token is refreshed. The token is usually cached for **24 hours** by Azure (A user's access token is only valid for 1 hour by default). And it is **not possible** to force a managed identity's token to be refreshed before its expiry. So you may need to wait several hours for your change to take effect.
   - A UAMI can be used like a group because it can be assigned to one or more Azure resources to use it.
   - See [details here](https://learn.microsoft.com/en-gb/entra/identity/managed-identities-azure-resources/managed-identity-best-practice-recommendations#limitation-of-using-managed-identities-for-authorization)
+- A managed identity could be assigned Entra roles as well
 
 **Compare Service principal (application) to managed identity**:
 

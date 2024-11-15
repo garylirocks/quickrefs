@@ -253,6 +253,7 @@ az container logs \
 
 - Top-level resource in ACI
 - Similar to a pod in K8s, containers in a group share a lifecycle, resources, local network and storage volumes
+- Could be deployed to a subnet, the subnet must be delegated to `Microsoft.ContainerInstance/containerGroups`, a subnet could host multiple container groups
 - Could be deployed using ARM teamplates(recommended when additional Azure resources are needed) or a YAML file
 - Share an external-facing IP address, a FQDN
 - Common scenarios:

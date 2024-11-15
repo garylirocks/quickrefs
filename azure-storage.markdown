@@ -166,7 +166,18 @@ Azure Storage is also used by IaaS VMs, and PaaS services:
     - Could be for the entire storage account or a custom **encryption scope**
       - Account level infrastructure encryption can only be enabled when creating the account
       - If account level infrastructure encryption is not enabled, when you create an encryption scope, you can still enable infrastructure encryption for the scope
-      - *When you upload a blob, you can either use default scope or specify a custom encryption scope*
+  - **Encryption scope**
+    - Encryption scopes enable you to manage encryption with a key that is scoped to a container or an individual blob.
+      - When create a container, you can choose a default encryption scope, and whether to enforce this scope for all blobs uploaded to this container
+      - When you upload a blob
+        - If the container has an enforced encryption scope, you cannot specify another encryption scope
+        - Otherwise, you can specify a any encryption scope in the storage account
+    - Allows you to create secure boundaries between data that resides in the same storage account but belongs to different customers.
+    - A scope could use either Microsoft-managed or customer-managed key
+      - CMK key version could be updated either automatically or manually
+    - Limitations:
+      - A blob in an encryption scope always uses the default access tier, can't be changed
+      - An scope could be disabled, but NOT deleted
 
 - Encryption at tansit
 
@@ -532,7 +543,9 @@ For block blobs, there are four access tiers: "hot", "cool", "cold" and "archive
 - Archive
   - can only be set at blob level
   - data is **offline**, only metadata available for online query
-  - to access data, the blob must first be **rehydrated** (changing the blob tier from Archive to Hot or Cool, this can take hours)
+  - to access data, the blob must first be **rehydrated**, two methods
+    - Copying it to a new blob in the hot or cool tier
+    - Changing the blob tier from Archive to hot or cool (this can take hours)
 
 ### Organization
 
@@ -643,6 +656,7 @@ Compare metadata and tags
   - Subtypes: Base blobs / versions / snapshots
   - Filter: prefix, index tags
 - Apply rules to containers or a subset of blobs
+- **Changing a blob's tier doesn't affect its last modified time**. If there is a lifecycle management policy in effect for the storage account, then rehydrating a blob with "Set Blob Tier" can result in a scenario where the lifecycle policy moves the blob back to the archive tier after rehydration because the last modified time is beyond the threshold set for the policy.  To avoid this scenario, add the `daysAfterLastTierChangeGreaterThan` condition to the `tierToArchive` action of the policy. Alternatively, you can rehydrate the archived blob by copying it instead, copy operation creates a new instance of the blob with an updated last modified time, so it won't trigger the lifecycle management policy.
 
 ### Data protection
 
