@@ -1271,11 +1271,25 @@ TODO
 
 ![DDoS Protection](images/azure_ddos-protection.png)
 
-- Basic: Free, part of your Azure subscription
+- Basic: Free, part of your Azure subscription, no need to deploy anything
 - Standard:
   - Protection policies are tuned through dedicated traffic monitoring and machine learning algorithms
   - Policies are applied to public IP addresses associated to resources deployed in virtual networks, such as VMs, Azure Load Balancer, AGW and Azure Fabric instances
   - Does NOT apply to App Service Environments
+
+Standard mode has two tiers:
+
+- **IP Protection**
+  - For public IP addresses that are enabled for IP protection
+  - Cost begins once public IP is configured with IP protection, and its associated vNet isn't protected by a DDoS plan
+  - **NO** need to create a DDoS protection plan, you can enable IP protection on any public IP resource directly
+- **Network Protection**
+  - For all public IPs associated to resources in a vNet
+  - Only need one plan for a tenant, you can link vNets across subscriptions/regions to the same plan
+  - Cost begins once the plan is created
+  - Includes extra valued-added benefits: DDoS Rapid Protection, WAF Discount, and Cost Protection
+
+Usually, with less IPs, it costs less with IP Protection, with a lot of IPs, it costs less with Network Protection.
 
 Types of DDoS attack:
 
