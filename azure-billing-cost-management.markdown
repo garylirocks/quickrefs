@@ -25,8 +25,7 @@
 - [Azure Plans/SKUs](#azure-plansskus)
   - [Microsoft Azure Plan](#microsoft-azure-plan)
   - [Visual Studio subscribers](#visual-studio-subscribers)
-  - [Enterprise Dev/Test](#enterprise-devtest)
-  - [Pay-As-You-Go Dev/Test](#pay-as-you-go-devtest)
+  - [Dev/Test pricing](#devtest-pricing)
 
 
 ## Overview
@@ -331,11 +330,22 @@ Cost allocation allows to you to allocate cost of source (subscription/resource 
 
 - Gets some credit per month, eg. Visual Studio Enterprise subscriptions gives you $150 credit per month
 
-### Enterprise Dev/Test
+### Dev/Test pricing
 
-- Lower rates on Windows VM, SQL, App Service, Logic Apps
-- Need a Visual Studio subscription for each member who needs to access an Enterprise Dev/Test subscription
+- Only available to active Visual Studio subscribers
+  - This is in addition of the $150 per month credit
+  - Need a Visual Studio subscription for each user who needs to access a Dev/Test subscription
+- Significantly reduce costs of dev/test workloads
+  - Windows VMs: Billed at CentOS/Ubuntu Linux VM rates
+  - SQL database: Up to 55%
+  - Logic Apps Enterprise Connector: 50% discount
+  - ...
+- Plans:
+  | Visual Studio subscription | Azure Plan                                              |
+  | -------------------------- | ------------------------------------------------------- |
+  | Personal                   | Pay-As-You-Go Dev/Test                                  |
+  | Organization (Azure EA)    | Enterprise Dev/Test (Create in Azure Enterprise Portal) |
+  | Organization (Azure MCA)   | Azure Plan for Dev/Test                                 |
 - Not available for MPA
-- Specify the workload is "DevTest" when creating a subscription
-
-### Pay-As-You-Go Dev/Test
+- Specify `--workload "DevTest"` when creating a subscription by API
+- These subscriptions do not have SLAs, except Azure DevOps and Azure Monitor
