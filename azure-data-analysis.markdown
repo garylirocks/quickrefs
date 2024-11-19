@@ -179,7 +179,7 @@ A solution for enterprise-wide data governance and discoverability.
 - Data sharing within Azure
   - Another storage account can have a "view" of a source storage account
 
-You can register data sources in Purview. Purview will scan all the data sources, colleting data schema, sensitivity, etc. And a copy of the metadata for data sources is added to Purview.
+You can register data sources in Purview. Purview will scan all the data sources, colleting data schema, sensitivity, etc. And a copy of the **metadata** for data sources is added to Purview.
 
 Resource features:
 
