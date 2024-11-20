@@ -64,6 +64,7 @@
   - [Connectivity](#connectivity)
   - [Security Admin rules](#security-admin-rules)
   - [UDR management](#udr-management)
+  - [IP address management (preview)](#ip-address-management-preview)
 - [Network Watcher](#network-watcher)
   - [Flow logs and traffic analytics](#flow-logs-and-traffic-analytics)
   - [Auto creation](#auto-creation)
@@ -1311,25 +1312,33 @@ Types of DDoS attack:
 
 ## Azure Virtual Network Manager
 
-- Scope: A manager instance could be created at a paticular scope: a management group or subscription, then you could target all vnets within the scope
-  - So a vnet could be targeted by multiple manager instances
+- Scope:
+  - A manager instance could be associated to multiple management groups and subscriptions (could be **cross-tenant**)
+  - A vnet could be targeted by multiple manager instances
 - Cost: you pay per subscription per AVNM instance, so if a subscription is included in two AVNM instances, you pay for it twice
 - Entities: Network Groups, Configurations (Connectivity or Security Admin)
 - Support vWAN in preview
 
 ### Network groups
 
-- Could be static or dynamic (based on policy)
+- Member type could be:
+  - Virtual network
+  - Subnet
+- A vNet could be added to a group:
+  - Manually
+  - or Via Azure Policy
+    - The policy is special: category will be `Azure Virtual Network Manager`, mode will be `Microsoft.Network.Data`, effect will be `addToNetworkGroup`
+- A group could have vNets added both ways
 
 ### Connectivity
 
 - Allows you to deploy a topology(hub-spoke or mesh) to network groups, saving you time to create and manage the peerings one by one
-- For the Hub-Spoke topology, every vnet in a network group is peered to the hub, you could also enable
-  - Direct Connectivity: all vnets in the same region and network group can talk to each other directly (**This is NOT done by peerings, a route with "ConnectedGroup" type is added to the effective routes**)
+- **Hub-Spoke topology**: every vnet in a network group is peered to the hub, you could also enable
+  - Direct Connectivity: all vnets in the same region and network group can talk to each other directly (*This is NOT done by peerings, a route with "ConnectedGroup" type is added to the effective routes*)
     - This enables spokes communicate frequently, with low latency and high throughput with each other
     - In the meantime, they can still access common services or NVAs in the hub
   - Global Mesh: each vnet in the same network group can talk to all other vnets, regardless of regions
-- For the mesh topology
+- **Mesh topology**
   - Also uses the "ConnectedGroup" type route, not by peerings
   - By default it's mesh within regions, **across network groups**
   - You could turn on global mesh
@@ -1356,6 +1365,12 @@ Types of DDoS attack:
 - You need to deploy the configuration to apply it.
   - Upon this, all routes are stored in a route table inside an AVNM-managed resource group
   - You can create 1000 UDRs in a route table (rather than the traditional 400 limit)
+
+### IP address management (preview)
+
+Need to create IP address pool (`Microsoft.Network/networkManagers/ipamPools`)
+
+- A pool could have child pools
 
 
 ## Network Watcher
