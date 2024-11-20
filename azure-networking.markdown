@@ -61,9 +61,11 @@
 - [DDoS Protection](#ddos-protection)
 - [Azure Virtual Network Manager](#azure-virtual-network-manager)
   - [Network groups](#network-groups)
-  - [Connectivity](#connectivity)
-  - [Security Admin rules](#security-admin-rules)
-  - [UDR management](#udr-management)
+  - [Connectivity configuration](#connectivity-configuration)
+  - [Security Admin configuration](#security-admin-configuration)
+  - [UDR management (Routing configuration)](#udr-management-routing-configuration)
+  - [Deployment](#deployment)
+  - [Verifier workspaces (Preview)](#verifier-workspaces-preview)
   - [IP address management (preview)](#ip-address-management-preview)
 - [Network Watcher](#network-watcher)
   - [Flow logs and traffic analytics](#flow-logs-and-traffic-analytics)
@@ -370,7 +372,7 @@ Connect two virtual networks together, resources in one network can communicate 
 - You need proper permission over both vNets to configure the peering (such as `Network Contributor` role)
 - Global vNet peering has same settings as regional vnet peering
   - You CAN'T connect to basic load balancer (and other services based on it, eg AGW v1, APIM stv1) in another vNet via global peering, see [here](https://learn.microsoft.com/en-us/azure/virtual-network/virtual-networks-faq#what-are-the-constraints-related-to-global-virtual-network-peering-and-load-balancers)
-- Under the hood, routes of type `VNetPeering`/`VNetGlobalPeering` are added on both sides
+- Under the hood, routes of type `VNet peering`/`VNetGlobalPeering` are added on both sides
 - No downtime to resources
 - Peerings on both side are created and removed at the same time
 - Non-transitive, for example, with peering like this A <-> B <-> C, A can't communicate with C, you need to peer A <-> C
@@ -433,7 +435,7 @@ az network nic show-effective-route-table \
 # Source    State    Address Prefix    Next Hop Type      Next Hop IP
 # --------  -------  ----------------  -----------------  -------------
 # Default   Active   10.1.0.0/16       VnetLocal
-# Default   Active   10.2.0.0/16       VNetPeering
+# Default   Active   10.2.0.0/16       VNet peering
 # Default   Active   0.0.0.0/0         Internet
 # Default   Active   10.0.0.0/8        None
 # Default   Active   100.64.0.0/10     None
@@ -975,7 +977,7 @@ On a route table, you could define whether **virtual network gateway route propa
 - You can't configure multiple UDRs with the same address prefix
 - If multiple routes share the same prefix, route is selected based on this order of priority:
   - UDR
-  - BGP routes (**So routes advertised by ExpressRoute gateway overrides vNetPeering ?**)
+  - BGP routes (**So routes advertised by ExpressRoute gateway overrides VNet peering ?**)
   - System routes
 
 ### NVA
@@ -1126,8 +1128,8 @@ az network nic show-effective-route-table \
 # Source    State    Address Prefix    Next Hop Type      Next Hop IP
 # --------  -------  ----------------  -----------------  -------------
 # Default   Active   10.0.0.0/16       VnetLocal
-# Default   Active   10.2.0.0/16       VNetPeering
-# Default   Active   10.1.0.0/16       VNetPeering
+# Default   Active   10.2.0.0/16       VNet peering
+# Default   Active   10.1.0.0/16       VNet peering
 # Default   Active   0.0.0.0/0         Internet
 # Default   Active   10.0.0.0/8        None
 # ...
@@ -1323,29 +1325,38 @@ Types of DDoS attack:
 
 - Member type could be:
   - Virtual network
-  - Subnet
+  - Subnet (**TODO**: how does this work ?)
 - A vNet could be added to a group:
   - Manually
   - or Via Azure Policy
     - The policy is special: category will be `Azure Virtual Network Manager`, mode will be `Microsoft.Network.Data`, effect will be `addToNetworkGroup`
 - A group could have vNets added both ways
 
-### Connectivity
+### Connectivity configuration
 
 - Allows you to deploy a topology(hub-spoke or mesh) to network groups, saving you time to create and manage the peerings one by one
-- **Hub-Spoke topology**: every vnet in a network group is peered to the hub, you could also enable
-  - Direct Connectivity: all vnets in the same region and network group can talk to each other directly (*This is NOT done by peerings, a route with "ConnectedGroup" type is added to the effective routes*)
-    - This enables spokes communicate frequently, with low latency and high throughput with each other
-    - In the meantime, they can still access common services or NVAs in the hub
-  - Global Mesh: each vnet in the same network group can talk to all other vnets, regardless of regions
+  - A configuration could target multiple network groups
+  - In general, you should NOT use both normal peering and vNet manager peering together, to avoid conflicts
+- **Hub-Spoke topology**: every vNet in the target vNet groups is peered to a hub vNet (not need to be in a vNet group)
+  - This create normal vNet peerings, adding `VNet peering` type of routes
+  - Optionally enable "Delete existing peerings":
+    - This deletes existing peerings NOT matching the configuration
+    - If an existing peering matches the configuration, it's not touched
+  - Settings per vNet group:
+    - Direct Connectivity: all vnets in the same region and group are peered to each other directly
+      - *This creates `ConnectedGroup` type of routes, without visible peerings in the Portal*
+    - Global Mesh: vNets are peered cross regions
 - **Mesh topology**
-  - Also uses the "ConnectedGroup" type route, not by peerings
-  - By default it's mesh within regions, **across network groups**
-  - You could turn on global mesh
-- If you add/remove vnets in a group, connectivity gets updated automatically (seems done by Azure Policy ?)
-- If the connectivity settings are updated, you need to redeploy
+  - Mesh is applied to vNets ACROSS vNet groups
+  - *Adds `ConnectedGroup` type routes to effective routes, NO visible peerings in the Portal*
+    - If both hub-spoke and mesh topology configurations apply to two vNets (a hub and a spoke), the hub-spoke type takes precedence, the route type added will be `VNet peering`
+  - By default it's mesh within regions
+  - You could enable connectivity cross regions
+- Updates:
+  - If you add/remove vnets in a group, connectivity gets updated automatically (seems done by Azure Policy ?)
+  - If the connectivity settings are updated, you need to redeploy
 
-### Security Admin rules
+### Security Admin configuration
 
 ![Security admin rules evaluation](./images/azure_networking-virtual-network-manager-security-admin-rules.png)
 
@@ -1356,21 +1367,43 @@ Types of DDoS attack:
 - A rule has three possible actions: "Allow", "Deny", "Always allow", if it's "Always allow", rules from lower level manager instances and NSGs are ignored
 - This allows the central IT team to manage global rules, and delegate NSG rules to application teams
 
-### UDR management
+### UDR management (Routing configuration)
 
 ![UDR management overview](./images/azure_networking-virtual-network-manager-udr-management.png)
 
+- **Should be GA now, but can't find this option in the Portal ?? tried Australia East and West US**
 - You create a routing configuration, and then rule collection (similar to a route table) within it.
 - A rule collection targets a network group.
 - You need to deploy the configuration to apply it.
   - Upon this, all routes are stored in a route table inside an AVNM-managed resource group
   - You can create 1000 UDRs in a route table (rather than the traditional 400 limit)
 
+### Deployment
+
+- Need to specify the regions
+- You can deploy multiple configurations (of the same type) to a region
+  - eg. multiple hub-and-spoke and mesh topology connectivity configurations, not really make sense in most cases
+- To remove deployments, you deploy a "None" configuration to the target regions
+  - Peerings created by vNet manager are removed, pre-existing peerings (matching the config) are not removed
+
+### Verifier workspaces (Preview)
+
+- Allows you to create "Reachability analysis intents" (type `Microsoft.Network/networkManagers/verifierWorkspaces`), similar to Connection Monitor:
+  - Protocol could be: ICMP, TCP, UDP
+  - Source could be: VM, Internet, Subnets
+  - Destination could be: VM, Internet, Subnets, Storage account, SQL server, Cosmos DB
+- You need to trigger analysis manually, does not support scheduling
+
 ### IP address management (preview)
 
-Need to create IP address pool (`Microsoft.Network/networkManagers/ipamPools`)
-
-- A pool could have child pools
+- Need to create IP address pool (`Microsoft.Network/networkManagers/ipamPools`)
+- Support both IPv4 and IPv6 address pools
+- A pool could have 3 types of allocations:
+  - Child pools
+    - Up to seven layers
+    - Allows more granular control
+  - Resources: vNets
+  - Static CIDRs: reservations for your on-premise or non-Azure resources
 
 
 ## Network Watcher
