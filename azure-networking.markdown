@@ -1318,7 +1318,7 @@ Types of DDoS attack:
   - A manager instance could be associated to multiple management groups and subscriptions (could be **cross-tenant**)
   - A vnet could be targeted by multiple manager instances
 - Cost: you pay per subscription per AVNM instance, so if a subscription is included in two AVNM instances, you pay for it twice
-- Entities: Network Groups, Configurations (Connectivity or Security Admin)
+- Entities: Network Groups, Configurations (Connectivity, Security Admin, Routing)
 - Support vWAN in preview
 
 ### Network groups
@@ -1371,7 +1371,6 @@ Types of DDoS attack:
 
 ![UDR management overview](./images/azure_networking-virtual-network-manager-udr-management.png)
 
-- **Should be GA now, but can't find this option in the Portal ?? tried Australia East and West US**
 - You create a routing configuration, and then rule collection (similar to a route table) within it.
 - A rule collection targets a network group.
 - You need to deploy the configuration to apply it.
