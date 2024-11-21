@@ -277,7 +277,8 @@ Three types of Availability Zone support:
     - You DON'T need any role on the root management group to create a new management group
   - When you create a new management group, you will be assigned the "Owner" role over it automatically
   - Permissions you need to move a MG/Sub to another MG (see [this](https://learn.microsoft.com/en-us/azure/governance/management-groups/manage#moving-management-groups-and-subscriptions)):
-    - MG/write and roleAssignment/write on the child MG/Sub (eg. Owner)
+    - MG/write and roleAssignment/write on the target MG/Sub (eg. Owner)
+      - **WON'T** work if the Owner (or similar) role assignment has conditions !!
     - MG/write on the target parent MG (eg. Owner, Contributor, MG Contributor)
     - MG/write on the source parent MG (eg. Owner, Contributor, MG Contributor)
   - Exceptions:
