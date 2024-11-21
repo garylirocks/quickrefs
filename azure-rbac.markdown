@@ -264,7 +264,7 @@ The above condition is in role definition, when you assign this role, you can ad
 ![Role assignment with conditions](images/azure_rbac-delegate-role-assignments-conditions-steps.png)
 *Restrict roles and principal IDs*
 
-When you assign privileged administrator roles, you can add conditions to the assignment.
+When you assign privileged administrator roles (`roleAssignments/write`), you can add conditions to the assignment.
 
 Apply to these roles:
 
@@ -273,7 +273,7 @@ Apply to these roles:
 - Role Based Access Control Administrator:
   - Similar to UAA, can assign roles
   - Can't define roles, add locks, polices, diagnostic settings
-- Custom roles with permissions for role assignments
+- Custom roles with permissions for role assignments (`roleAssignments/write`)
 
 Available conditions:
 
@@ -281,6 +281,8 @@ Available conditions:
 - Constraint principal types
 - Constraint principal IDs
 - Allow all except specific roles
+  - By default, it excludes these built-in roles: "Owner", "User Access Administrator", "Role Based Access Control Administrator"
+  - You should add any built-in or custom role with admin permission `roleAssignments/write`, otherwise the user could use this role to elevate his permission
 
 See code examples here: [Examples to delegate Azure role assignment management with conditions - Azure ABAC | Microsoft Learn](https://learn.microsoft.com/en-us/azure/role-based-access-control/delegate-role-assignments-examples?tabs=condition-editor)
 
