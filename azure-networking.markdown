@@ -1360,26 +1360,40 @@ Types of DDoS attack:
 
 ![Security admin rules evaluation](./images/azure_networking-virtual-network-manager-security-admin-rules.png)
 
-- Similar to NSGs, but target at vnets level
-- They are populated to all NICs within the vnets
-- They are checked before NSGs
-- Rules from manager instances with a higher scope level are checked first
-- A rule has three possible actions: "Allow", "Deny", "Always allow", if it's "Always allow", rules from lower level manager instances and NSGs are ignored
+- A config could have multiple rule collections
+  - Each collection have multiple rules
+  - Each collection targets one or more network groups
+- Security admin rule
+  - Each rule is similar to an NSG rule
+  - In a rule, aggregated CIDRs of a network group could be used as source or destination
+  - Populated to all NICs within the vNets
+  - Checked before NSGs
+  - Rules from manager instances with a higher scope level are checked first
+  - A rule has three possible actions: "Allow", "Deny", "Always allow", if it's "Always allow", rules from lower level manager instances and NSGs are ignored
 - This allows the central IT team to manage global rules, and delegate NSG rules to application teams
 
 ### UDR management (Routing configuration)
 
 ![UDR management overview](./images/azure_networking-virtual-network-manager-udr-management.png)
 
-- You create a routing configuration, and then rule collection (similar to a route table) within it.
-- A rule collection targets a network group.
-- You need to deploy the configuration to apply it.
-  - Upon this, all routes are stored in a route table inside an AVNM-managed resource group
+- You create a routing configuration, and then rule collections(similar to a route table) within it
+- A rule collection could targets multiple vNet groups
+- A rule is similar to a normal UDR
+- You need to deploy the configuration to apply it
+  - Upon this, NVM creates route table resources in a managed resource group (name is like `AVNM_Managed_ResourceGroup_<subscription-id>`)
+    - If a subnet has a **pre-existing route table**, the rules are merged into a new route table resource
+    - When deleting the deployment, the mixed route table is not deleted, still associated to the subnet, only AVNM managed rules are deleted
   - You can create 1000 UDRs in a route table (rather than the traditional 400 limit)
+  - The new route tables are associated with the targeted subnets
+- When you delete a routing deployment,
+  - The route tables are deleted, the resource group is not
 
 ### Deployment
 
+- Each deployment is for a specific configuration type
 - Need to specify the regions
+- No need to specify vNet groups, which are already in configurations
+  - TODO: if the vNets in a group is not in the region, then nothing changes ?
 - You can deploy multiple configurations (of the same type) to a region
   - eg. multiple hub-and-spoke and mesh topology connectivity configurations, not really make sense in most cases
 - To remove deployments, you deploy a "None" configuration to the target regions
