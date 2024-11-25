@@ -1,6 +1,6 @@
 # Azure Networking - DNS
 
-- [Overview](#overview)
+- [Azure DNS (public DNS)](#azure-dns-public-dns)
 - [DNS resolution within virtual networks](#dns-resolution-within-virtual-networks)
 - [Azure-provided name resolution](#azure-provided-name-resolution)
 - [Private DNS zones](#private-dns-zones)
@@ -11,9 +11,11 @@
   - [Outbound endpoint](#outbound-endpoint)
   - [DNS forwarding rulesets](#dns-forwarding-rulesets)
   - [Architecture](#architecture)
+- [Security](#security)
+  - [DNS security policy](#dns-security-policy)
 
 
-## Overview
+## Azure DNS (public DNS)
 
 Concepts:
 
@@ -25,10 +27,10 @@ Concepts:
 Features:
 
 - Split-horizon DNS support: allows the same domain name to exist in both private and public zones, so you could have a private version of your services within your virtual network.
-
 - Alias record sets: allows you to setup alias record to direct traffic to an Azure public IP address(load balancer), an Azure Traffic Manager profile, or an Azure CDN endpoint.
   - It's a dynamic link between a record and a resource, so when the resource's IP changes, it's automatically handled;
   - Supports these record types: A, AAAA, CNAME;
+- DNSSEC (in preview)
 
 Missing features:
 
@@ -114,16 +116,23 @@ Considerations:
 
 ## Private DNS zones
 
-You could link a Private DNS Zone to a vNet (not subnet), enable auto-registration, then hostname of any VMs in the vNet would be registered in this Private DNS Zone
+A private zone could be linked to one or more vNet (not subnet)
 
 - The vNet and the Private DNS Zone could be in different subscriptions, to create a vNet link, permissions required:
   - `Microsoft.Network/privateDnsZones/virtualNetworkLinks/write` on the Private DNS Zone
   - `Microsoft.Network/virtualNetworks/join/action` on the vNet
   - The builtin role `Private DNS Zone Contributor` has the required permissions
+- Auto-registration
+  - Hostname of any VMs in the vNet would be registered in this Private DNS Zone
+  - A vNet could be linked to multiple private zones, but **ONLY ONE** could have auto-registration enabled, even your vNet is configured with custom DNS servers, the auto-registration still happens
+- Fallback to internet (preview)
+  - It's a setting in vNet link `"resolutionPolicy": "NxDomainRedirect"`
+  - When `NXDOMAIN` is returned from a private DNS zone, Azure redirects the query to public DNS resolver
+  - Only available for Private DNS zones associated to Private Link resources (`privatelink.*` domains)
+  - This helps when you access a private-link enabled PaaS resource in another tenant
+    - Your DNS query would resolve to the public IP address of the resource
 - Note
-  - They are global, could be accessed from any region, sny subscription, any tenant.
-  - A zone can be linked to multiple vnets
-  - A vnet can have **ONLY ONE** registration zone, but can have multiple resolution zones, even your vnet is configured with custom DNS servers, the auto-registration still happens
+  - A private zone is global, could be accessed from any region, any subscription, any tenant.
 
 - Scoped to a single vNet
 
@@ -276,3 +285,19 @@ Rules example:
   - So for a VM in spoke vNet to resolve an on-prem DNS name, the query goes like this: `spoke vm -> inbound endpoint in hub vNet -> (matching the rule) -> outbound endpoint -> on-prem DNS server`
 - Hub vNet uses Azure provided DNS
   - So for a VM in hub vNet to resolve an on-prem DNS name, the query goes like this: `hub vm -> Azure-provided DNS in hub vNet -> (matching the rule) -> outbound endpoint -> on-prem DNS server`
+
+
+## Security
+
+### DNS security policy
+
+- **DNS traffic rules**:
+  - Processed in order of priority
+  - A rule can have multiple DNS domain lists
+  - Actions: Allow, Block and Alert
+- **Virtual network links**
+  - A policy can only be linked to vNets in the same region
+  - policy:VNet relationship is **1:N**
+- **DNS domain lists**
+  - A list could be used in multiple DNS traffic rules in different security policies
+  - Wildcard domains are allowed

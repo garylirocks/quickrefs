@@ -235,9 +235,10 @@ There is a gotcha in all the above scenarios:
   - Now company A can't resolve `kv-b.vault.azure.net`, since now it CNAME to `kv-b.privatelink.vaultcore.azure.net`, Azure provided DNS consults the linked private DNS zone, which doesn't have a record for `kv-b`
 
 To remediate this, you could
-  - (**recommended**) create a private endpoint in Company A's vnet to `kv-b.vault.azure.net` (need approval from Company B's side)
-  - in your custom DNS server, conditionally forward `kv-b.vault.azure.net` to an Internet DNS resolver
-  - (**not recommended**) on client VMs, use dnsmasq for Linux or NRPT (Name Resolution Policy Table) feature for Windows (see: https://github.com/dmauser/PrivateLink/tree/master/DNS-Client-Configuration-Options)
+  - (**recommended**) Enable "Fallback to internet" option on private DNS zone vNet link
+  - (**recommended**) Create a private endpoint in Company A's vnet to `kv-b.vault.azure.net` (need approval from Company B's side)
+  - In your custom DNS server, conditionally forward `kv-b.vault.azure.net` to an Internet DNS resolver
+  - (**not recommended**) On client VMs, use dnsmasq for Linux or NRPT (Name Resolution Policy Table) feature for Windows (see: https://github.com/dmauser/PrivateLink/tree/master/DNS-Client-Configuration-Options)
 
 ### Subresources and DNS zone group
 

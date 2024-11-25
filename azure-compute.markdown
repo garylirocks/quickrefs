@@ -938,7 +938,7 @@ Two types of commands,
   - NSGs on the VM side should allow `AzureBastion`
   - **No route table** on this subnet, it should connect to VMs **directly**, not via a Firewall/NVA
 
-Three SKUs:
+SKUs:
 
 - Developer
   - ONLY connect to VMs in same vNet
@@ -952,6 +952,11 @@ Three SKUs:
   - Shareable link
   - Connect to VMs via IP address
   - Host scaling (up to 50 instances)
+- Premium
+  - Session recording (saved in blob storage)
+  - Private-only Bastion
+    - Connect to Bastion host via private IP, no public IP needed
+    - Use native client instead of the Azure Portal
 
 
 ## Azure Batch

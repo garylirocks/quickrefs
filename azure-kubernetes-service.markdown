@@ -381,6 +381,7 @@ AGIC is a Kubernetes application, it monitors the cluster to update Application 
 - ALB controller implements:
   - K8S Gateway API
   - K8S Ingress API
+- Supports WAF (in preview)
 - Limitations:
   - Only supports Azure CNI networking (pods get IP from cluster vNet)
   - Will support Azure CNI Overlay ??

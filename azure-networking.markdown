@@ -1260,7 +1260,7 @@ TODO
 - You can have multiple profiles in one NSP resource
   - A profile is a scope for Inbound/Outbound rules and association policies
   - A PaaS resource could only be associated with one profile
-  - You can define policies to associate PaaS resources to a NSP profile automatically
+  - You can define policies to associate PaaS resources to an NSP profile automatically
 - PaaS resources in the same NSP (even different profiles) can talk to each other, for access from/to Internet/external resources, there are
   - Inbound rule:
     - By IP ranges
@@ -1271,7 +1271,7 @@ TODO
 - For each resource, there are two possible access modes:
   - **Learning mode**: both NSP configuration and public network access setting apply
   - **Enforced mode**: NSP configuration is enforced, public network access setting doesn't apply
-- Public network access will be removed when you disassociate PaaS resources from an NSP
+- Public network access will be removed when you disassociate PaaS resources from an NSP profile
 
 
 ## DDoS Protection
