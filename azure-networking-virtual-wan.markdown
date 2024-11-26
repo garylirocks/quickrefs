@@ -95,6 +95,13 @@ You can create your own custom route tables
 
 ### Route maps
 
+Seems most useful when
+  - you have an SD-WAN NVA
+  - the NVA can't be deployed to a vHub, you need to put it in a spoke vNet
+  - the NVA does not support route map itself
+
+See an example here: https://youtu.be/5nHP3i5JG_8?si=ctJ99-HMVCMu6Ijp
+
 Function:
 
 - Route aggregation, eg. summarize `172.16.0.0/24` and `172.16.1.0/24` to one route `172.16.0.0/16`
