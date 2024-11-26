@@ -31,6 +31,7 @@
   - [Point to site](#point-to-site)
     - [Native Azure certificate auth](#native-azure-certificate-auth)
 - [ExpressRoute](#expressroute)
+  - [IP addresses](#ip-addresses)
   - [FastPath](#fastpath)
   - [Resiliency](#resiliency)
   - [Compare to Site-to-Site VPN](#compare-to-site-to-site-vpn)
@@ -582,7 +583,7 @@ A few options available:
 - Similar to a site-to-site connection, a few differences:
   - No need to create local network gateway explicitly
   - If you update address space for one vNet, the other vNet routes to the updated address space automatically
-- You can use a site-to-site connection as well to connect vNets as well
+- You can use a site-to-site connection as well to connect vNets
 - BGP is optional unless transit routing over the connection is required
 - Effective route for a NIC would be like
 
@@ -760,6 +761,18 @@ Connectivity can be from:
 
   *Global Reach enables connectivity between 10.0.1.0/24 and 10.0.2.0/24*
 - DNS queries, certificate revocation list checking and Azure CDN requests are still sent over the public internet
+
+### IP addresses
+
+If your gateway subnet's CIDR range is `10.0.0.32/28`
+
+- ER gateway instances could get IP `10.0.0.36`, `10.0.0.37`
+  - Without FastPath: inbound traffic always goes via these IPs
+  - With FastPath: inbound traffic skips these IPs
+- Edge router instances could get IP `10.0.0.46`, `10.0.0.47`
+  - Outbound traffic always goes via these IPs
+
+See an explanation in this video https://youtu.be/Pg7dGDwNNPU?si=226jygTmqyHr4VxB
 
 ### FastPath
 
@@ -1066,7 +1079,7 @@ Azure Route Server could help address this.
 - Routes are exchanged using BGP protocol.
 - Injects route to the route tables in the VNet (NICs in the VNet).
 - NVAs could be in peered vNets.
-- Branch-to-branch: whether routes should be exchanged between NVAs and ER gateways, this could effectively enable spoke-to-spoke traffic transit via a hub.
+- **Branch-to-branch**: whether routes should be exchanged between NVAs and ER gateways, this could effectively enable spoke-to-spoke traffic transit via a hub
 
 Requirements:
 
@@ -1085,11 +1098,15 @@ Behind the scenes:
 
 #### Usage scenarios
 
-- With firewall and SD-WAN appliances, need to be configured as BGP peers
+- With firewall and SD-WAN appliances
+  - They need to be configured as BGP peers
 
   ![Azure Route Server scenario NVAs](./images/azure_route-server-scenario-nvas.png)
 
-- With network gateways, no need to configure peering, you should enable "Branch-to-branch" traffic
+- With network gateways
+  - By default, the gateways do not exchange routes with each other
+  - With route server, no need to configure peering, but should enable "Branch-to-branch" traffic
+  - See detailed explanation in this video https://youtu.be/Pg7dGDwNNPU?si=226jygTmqyHr4VxB
 
   ![Azure Route Server scenario expressroute and VPN gateways](./images/azure_route-server-scenario-expressroute-vpn-gateways.png)
 
