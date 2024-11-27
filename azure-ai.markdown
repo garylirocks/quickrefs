@@ -1,5 +1,14 @@
 # Azure AI
 
+
+## Overview
+
+General usage pattern:
+
+- Deploy resources in Azure
+- Use an auth token to access the service's API endpoint
+
+
 ## Azure vs. Power Platform
 
 Some capabilities exist in both platforms
@@ -37,3 +46,9 @@ This is called *conversational orchestration*.
 
 - You can pick models
 - Integrate with other resources, like Azure Search for managing indexes
+
+
+## Azure OpenAI service
+
+
+## Azure AI Foundry
