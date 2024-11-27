@@ -316,7 +316,7 @@ Can be used as a secure alternative for password, or a method in MFA.
 - Parties
   - Relying party (eg. a website)
   - Client (eg. a browser)
-  - Authenticator (eg. a laptop, a mobile device)
+  - Authenticator (eg. TPM module in a laptop, USB key, a mobile device)
   - User
 - Registering
   - Authenticator generates a public-private key pair
@@ -335,8 +335,8 @@ Can be used as a secure alternative for password, or a method in MFA.
 
 WebAuthn
 
-- JavaScript APIs for webpage to interactor with authenticators in the OS
-- Checks the relying party ID (eg. `x.com`) is a subset of the website URL
+- JavaScript APIs for webpage to interact with authenticators in the OS
+- Checks the relying party ID (eg. `example.com`) is a subset of the website URL
 
 Passkey
 
