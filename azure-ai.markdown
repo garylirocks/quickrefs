@@ -8,6 +8,20 @@ General usage pattern:
 - Deploy resources in Azure
 - Use an auth token to access the service's API endpoint
 
+### Computer vision
+
+![CNN model](./images/ai_computer-vision-cnn.png)
+
+*CNN for image classification*
+
+![Multi-modal model](./images/ai_computer-vision-multi-modal.png)
+
+*Multi-modal model, capturing relations between natural language tokens and image features*
+
+![Computer vision tasks](./images/ai_computer-vision-tasks.png)
+
+*Usual computer vision tasks: Classification, object detection, tagging, ...*
+
 
 ## Azure vs. Power Platform
 
