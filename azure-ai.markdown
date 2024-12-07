@@ -1,5 +1,15 @@
 # Azure AI
 
+- [Overview](#overview)
+  - [Computer vision](#computer-vision)
+- [Azure vs. Power Platform](#azure-vs-power-platform)
+- [Azure AI services](#azure-ai-services)
+- [Copilot studio](#copilot-studio)
+  - [Knowledge sources](#knowledge-sources)
+  - [Topics](#topics)
+- [Azure AI Studio](#azure-ai-studio)
+- [Azure AI Foundry](#azure-ai-foundry)
+
 
 ## Overview
 
@@ -36,6 +46,40 @@ Some capabilities exist in both platforms
 | Integration | Flexible |                |
 
 
+## Azure AI services
+
+You can often choose to deploy a single-service resource or a multi-service resource, considerations are:
+
+- Single-service resource: only that service is required, or to track utilization and costs separately
+- Multi-service resource:
+  - Simplify administration and development
+  - Single auth key and endpoint
+
+Three principals:
+
+- Ready to use:
+  - Azure AI services use pre-built models, can be used without any modification
+  - Some AI services can be customized to better fit specific requirements
+- Accessible via APIs
+- //TODO
+
+
+|                                                             | Type                                   | Endpoint                             |
+| ----------------------------------------------------------- | -------------------------------------- | ------------------------------------ |
+| AI Services (kind: `AIServices`)                            | `Microsoft.CognitiveServices/accounts` | depending on service                 |
+| Multi-service account (kind: `CognitiveServices`) (legacy?) | `Microsoft.CognitiveServices/accounts` | `<name>.cognitiveservices.azure.com` |
+
+
+- AI Services
+  - Portal (Azure AI Foundry): https://ai.azure.com
+  - Organized by project
+- Vision:
+  - Portal (Vision Studio): https://portal.vision.cognitive.azure.com/
+  - Vision Studio only works with "Multi-service account" resource, NOT "Azure AI Vision" resource
+- Language:
+  - Portal (Language Studio): https://language.cognitive.azure.com
+
+
 ## Copilot studio
 
 - Re-branded from Power Virtual Agents
@@ -62,7 +106,6 @@ This is called *conversational orchestration*.
 - Integrate with other resources, like Azure Search for managing indexes
 
 
-## Azure OpenAI service
-
-
 ## Azure AI Foundry
+
+Azure AI Foundry portal combines access to multiple Azure AI services and generative AI models into one user interface.

@@ -53,6 +53,7 @@ When a workspace is created, a few supporting resources are created with it in t
   - Four types:
     - **Compute instance**: ideal as a dev environment to run Jupyter notebooks
     - **Compute cluster**: CPU or GPU compute nodes, ideal for production workloads, automatically scale
+    - **Serverless**: // TODO
     - **Inference cluster**: AKS cluster, ideal to deploy models in production
     - **Attached compute**: attach other Azure compute resources, like Azure Databricks or Synapse Spark pools
   - Most cost-intensive, should only allow admins to create and manage, not data scientists
@@ -166,7 +167,7 @@ GPU is more powerful, but cost more
 
 ### Spark
 
-- A Spark cluster consists of a **driver node** and **workder nodes**. Driver nodes distribute the work, and summarize the result.
+- A Spark cluster consists of a **driver node** and **worker nodes**. Driver nodes distribute the work, and summarize the result.
 - You code needs to be written in a Spark-friendly language, such as Scala, SQL, RSpark, or PySpark
 
 
@@ -176,6 +177,8 @@ Two types:
 
 - **Real-time**: the compute needs to be running all the time
 - **Batch**: the compute could be started/shutdown as needed
+- **OpenAI**: //TODO
+- **Serverless**: //TODO
 
 Compute:
 
@@ -194,6 +197,12 @@ az ml online-endpoint create --name my-endpoint \
 
 
 ## Jobs
+
+Organized as:
+
+Experiment -> Jobs -> Child jobs
+
+A AutoML job could have multiple child jobs,
 
 ### Command job
 
