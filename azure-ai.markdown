@@ -78,7 +78,20 @@ Three principals:
   - Vision Studio only works with "Multi-service account" resource, NOT "Azure AI Vision" resource
 - Language:
   - Portal (Language Studio): https://language.cognitive.azure.com
-
+  - Question and Answering:
+    - You need a AI Search resource
+    - You can create a knowledge base by adding a existing FAQ url, or adding questions and answers manually
+    - You'll need to deploy the knowledge base, then call it via a URL, or through a bot
+  - Conversational language understanding
+    - Train computers to interpret text or voice controls
+    - Concepts: intent, utterances, entities
+    - Define intents ("switchOn", "switchOff" etc), then utterances ("switch on the light") for the intent, then label entities ("light", "door") in the utterance
+- Speech
+  - Text to speech and speech to text
+  - Real-time or batch
+- Translation
+  - AI Translator: text-to-text, can translate to multiple target languages simultaneously
+  - AI Speech: speech-to-text or speech-to-speech
 
 ## Copilot studio
 
