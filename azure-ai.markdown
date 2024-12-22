@@ -2,8 +2,11 @@
 
 - [Overview](#overview)
   - [Computer vision](#computer-vision)
+- [Large Language Models (LLMs)](#large-language-models-llms)
+  - [Prompt engineering](#prompt-engineering)
 - [Azure vs. Power Platform](#azure-vs-power-platform)
 - [Azure AI services](#azure-ai-services)
+- [AI Search](#ai-search)
 - [Copilot studio](#copilot-studio)
   - [Knowledge sources](#knowledge-sources)
   - [Topics](#topics)
@@ -31,6 +34,52 @@ General usage pattern:
 ![Computer vision tasks](./images/ai_computer-vision-tasks.png)
 
 *Usual computer vision tasks: Classification, object detection, tagging, ...*
+
+
+## Large Language Models (LLMs)
+
+- Based on transformer model
+
+  - "transform" here means transforming source text/images to vectors
+  - An *encoder* block that creates semantic representations of the training vocabulary
+  - A *decoder* block that generates new language sequences
+
+  ![Transformer model](./images/ai_transformer-model.png)
+
+- Tokenization:
+  - A token could be partial words, or combination of words and punctuation
+
+- Embedding:
+  - Vectors for the tokens, each element represents a feature of the token
+
+    ```
+    - 4 ("dog"): [10,3,2]
+    - 8 ("cat"): [10,3,1]
+    - 9 ("puppy"): [5,2,1]
+    - 10 ("skateboard"): [-3,3,2]
+    ```
+
+- Attention:
+  - A technique used to examine a sequence of text tokens and try to quantify the strength of the relationships between them
+
+
+### Prompt engineering
+
+![Prompt engineering](./images/ai_prompt-engineering.png)
+
+Consider the following ways you can improve the response a generative AI assistant provides:
+
+1. Start with a specific **goal** for what you want the assistant to do
+1. Provide a **source** to ground the response in a specific scope of information
+1. Add **context** to maximize response appropriateness and relevance
+1. Set clear **expectations** for the response
+1. **Iterate** based on previous prompts and responses to refine the result
+
+In most cases, an agent doesn't just send your prompt as-is to the language model. Usually, your prompt is augmented with:
+
+1. A **system message** that sets conditions and constraints for the language model behavior. For example, "You're a helpful assistant that responds in a cheerful, friendly manner." These system messages determine constraints and styles for the model's responses.
+1. The conversation **history for the current session**, including past prompts and responses. The history enables you to refine the response iteratively while maintaining the context of the conversation.
+1. The **current prompt** – potentially optimized by the agent to reword it appropriately for the model or to add more grounding data to scope the response.
 
 
 ## Azure vs. Power Platform
@@ -93,13 +142,38 @@ Three principals:
   - AI Translator: text-to-text, can translate to multiple target languages simultaneously
   - AI Speech: speech-to-text or speech-to-speech
 
+
+## AI Search
+
+- Built on Apache Lucene
+- Data indexing process:
+  - Data source
+  - Indexer:
+    - Document cracking: opens files and extracts content
+    - Enrichment: by skillset, eg. OCR, text translation, image captioning, etc, enriched results could be saved in a knowledge store
+  - Push to index
+
+Querying:
+
+- Supports simple and full Lucene query syntax
+- Simple query example: `coffee (-"busy" + "wifi")`
+- Example JSON query:
+
+  ```json
+  {
+    "search": "locations:'Chicago'",
+    "count": true
+  }
+  ```
+
+
 ## Copilot studio
 
 - Re-branded from Power Virtual Agents
 - You can
-  - build a custom copilot
-  - or extend a Microsoft Copilot
+  - extend Microsoft Copilot
     - The built agent could be published anywhere, like Microsoft 365 Copilot (Teams, SharePoint, Business Chat)
+  - build custom copilot-like agents
 - For none/low code usage, using natural language or a GUI
 
 ### Knowledge sources
