@@ -4,6 +4,7 @@
   - [Computer vision](#computer-vision)
 - [Large Language Models (LLMs)](#large-language-models-llms)
   - [Prompt engineering](#prompt-engineering)
+- [Responsible generative AI](#responsible-generative-ai)
 - [Azure vs. Power Platform](#azure-vs-power-platform)
 - [Azure AI services](#azure-ai-services)
 - [AI Search](#ai-search)
@@ -12,6 +13,7 @@
   - [Topics](#topics)
 - [Azure AI Studio](#azure-ai-studio)
 - [Azure AI Foundry](#azure-ai-foundry)
+  - [AI Hub](#ai-hub)
 
 
 ## Overview
@@ -80,6 +82,26 @@ In most cases, an agent doesn't just send your prompt as-is to the language mode
 1. A **system message** that sets conditions and constraints for the language model behavior. For example, "You're a helpful assistant that responds in a cheerful, friendly manner." These system messages determine constraints and styles for the model's responses.
 1. The conversation **history for the current session**, including past prompts and responses. The history enables you to refine the response iteratively while maintaining the context of the conversation.
 1. The **current prompt** – potentially optimized by the agent to reword it appropriately for the model or to add more grounding data to scope the response.
+
+
+## Responsible generative AI
+
+- Identify potential harms
+- Measure potential harms
+- Mitigate potential harms (4 layers)
+  - Model layer
+    - Simpler model with lower risk
+    - Fine-tune a foundational model
+  - Safety system layer
+    - Content filters to suppress prompts and responses
+    - Abuse detection algorithms
+  - Metaprompt and grounding layer
+    - Metaprompt or system inputs that define behavioral parameters for the model
+    - Add grounding data to input prompts
+    - RAG (Retrieval Augmented Generation): retrieve contextual data from trusted data sources and include it in prompts
+  - User experience layer
+    - Documentations and guidelines
+- Operate a responsible Gen-AI solution
 
 
 ## Azure vs. Power Platform
@@ -169,6 +191,8 @@ Querying:
 
 ## Copilot studio
 
+For low-code or no-code usage
+
 - Re-branded from Power Virtual Agents
 - You can
   - extend Microsoft Copilot
@@ -195,4 +219,30 @@ This is called *conversational orchestration*.
 
 ## Azure AI Foundry
 
+For developers, allow full customization
+
 Azure AI Foundry portal combines access to multiple Azure AI services and generative AI models into one user interface.
+- Model catalog
+- Prompt flow engineering
+- Gen-AI model deployment, testing, and custom data integration capabilities of Azure OpenAI service
+- Integration with Azure AI Services for speech, vision, language, etc
+
+### AI Hub
+
+- A collaborative workspace for AI development
+- A resource in Azure
+- Define assets that can be used across multiple projects
+- Create members with different roles
+- Manage compute instances
+- Connections (to data sources, GitHub, etc)
+- Policies (eg. automatic compute shutdown)
+- A hub can host one or more projects
+  - Projects are also resources in Azure
+
+Supporting services:
+
+- A **Storage account** in which the data for your AI projects is stored securely.
+- A **Key vault** in which credentials used to access external resources and other sensitive values are secured.
+- A **Container registry** to store Docker images used by your AI solutions.
+- An **Application insights** resource to record usage and performance metrics.
+- An **Azure OpenAI Service** resource that provides generative AI models for your applications.
