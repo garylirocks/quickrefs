@@ -19,7 +19,7 @@
 
   > If I **saw** the rabbit now, I **would bite** him.
 
-  > // 无论什么人称，始终用were
+  > // **无论什么人称，始终用were**
 
   > If I **were** you, I **would give** it to him.
 
