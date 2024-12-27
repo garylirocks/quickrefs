@@ -10,7 +10,14 @@
 ## Concepts
 
 - OneLake
+  ![OneLake](./images/microsoft_fabric-onelake.png)
+
+  - Automatically provisioned in Fabric
   - One instance for the whole tenant
+    - Use workspaces for governance boundaries
+  - Central repository for all your analytics data: structured or unstructured, any type of file, and allows you to use the same data across multiple analytical engines without data movement or duplication
+  - Stores data in **Delta Parquet** format
+  - Built upon Azure Data Lake Gen 2, supports existing ADLS Gen2 APIs and SDKs
 
 - Fabric capacity
   - Resources in Azure (`Microsoft.Fabric/capacities`)
