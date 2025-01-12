@@ -53,10 +53,21 @@
 - Is included with Git for Windows, select it as the credential helper during installation
 - Uses Windows Credential Store to store credentials
 
+
 ## Windows Terminal
 
 - Allows you to run CmdLet, PowerShell, AZ CLI, WSL in different tabs
 - Split tab into panes
+
+|          | Command Shell    | PowerShell                             |
+| -------- | ---------------- | -------------------------------------- |
+| Runs     | Windows Commands | Windows Commands + cmdlet              |
+| Returns  | strings          | .Net objects                           |
+| Aliases  | n/a ??           | eg. `cd` is an alias of `Set-Location` |
+| File ext | `.bat`           | `.ps1`                                 |
+
+*Cmdlet uses `Verb-Noun` structure, eg. `Set-Location`*
+
 
 ## WSL
 
