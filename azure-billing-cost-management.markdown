@@ -329,6 +329,13 @@ Cost allocation allows to you to allocate cost of source (subscription/resource 
 ### Visual Studio subscribers
 
 - Gets some credit per month, eg. Visual Studio Enterprise subscriptions gives you $150 credit per month
+- Visual Studio subscription portal (`https://my.visualstudio.com`)
+  - You can create a new Azure subscription to get the credit
+    - Subscription name is "Visual Studio Enterprise Subscription – MPN"
+    - Subscription is created under a new billing account of type "**Microsoft Online Services Program**"
+    - The subscription has a spending limit per month, it will be disabled once it reaches its spending limit. You can remove the limit by adding a credit or debit card.
+    - Remaining credit is shown on the subscription overview page, seems there's no dedicated page for it.
+  - You can associate an alternate email to get the Azure credit, access ADO, sign-in to Visual Studio
 
 ### Dev/Test pricing
 
@@ -347,5 +354,5 @@ Cost allocation allows to you to allocate cost of source (subscription/resource 
   | Organization (Azure EA)    | Enterprise Dev/Test (Create in Azure Enterprise Portal) |
   | Organization (Azure MCA)   | Azure Plan for Dev/Test                                 |
 - Not available for MPA
-- Specify `--workload "DevTest"` when creating a subscription by API
+- When using CLI, specify option `--workload "DevTest"` when creating a subscription
 - These subscriptions do not have SLAs, except Azure DevOps and Azure Monitor
