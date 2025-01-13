@@ -54,7 +54,7 @@
     - [Best practices](#best-practices)
     - [RBAC and ACL](#rbac-and-acl)
 - [Files](#files)
-  - [Premium file shares](#premium-file-shares)
+  - [Billing](#billing)
   - [Create and mount a share](#create-and-mount-a-share)
   - [Authentication](#authentication)
   - [Snapshots](#snapshots)
@@ -1080,15 +1080,22 @@ Tiers:
 
 Compare to Blobs and Disks
 
-- Files have true directory objects, Blobs have a flat namespace.
+- Files have true directory objects, Blobs have a flat namespace (excluding ADLS v2).
 - File shares can be mounted concurrently by multiple cloud or on-prem machines, Disks are exclusive to a single VM (except shared disks).
 - Files shares are best suited for random access workloads.
 
-### Premium file shares
+### Billing
 
-- Billed on the provisioned size, no matter how much data is stored
-  - Minimum size: 100GiB, incremental unit 1GiB
-  - IOPS and throughput increase along with the provisioned size
+You need to select the tier when creating the storage account, not for individual file shares
+
+- Standard tier
+  - Actual capacity usage
+  - or Provisioned v2 (size, IOPS, and throughput could be changed independently)
+
+- Premium tier
+  - Provisioned
+    - Minimum size: 100GiB, incremental unit 1GiB
+    - IOPS and throughput increase along with the provisioned size
 
 ### Create and mount a share
 
