@@ -2,11 +2,17 @@
 
 - [Overview](#overview)
   - [Concepts](#concepts)
+- [Logs](#logs)
+  - [Example queries](#example-queries)
+  - [Views](#views)
+  - [Facet](#facet)
 - [Keys](#keys)
 - [Integrations](#integrations)
 - [Agent/library Configuration](#agentlibrary-configuration)
   - [Remote configuration](#remote-configuration)
-- [Tagging](#tagging)
+- [Universal Service Monitoring (USM)](#universal-service-monitoring-usm)
+  - [`docker-compose`](#docker-compose)
+  - [Service Catalog](#service-catalog)
 - [Audit Trail](#audit-trail)
 
 
@@ -16,6 +22,25 @@
 
 - **Monitoring**: what happened in a system
 - **Observability**: why it happened
+
+
+## Logs
+
+### Example queries
+
+- `service:nginx`
+- `@filename:banner.php` (`@` indicates an attribute of a log entry)
+- `"total amount"` - search text in the log message
+
+### Views
+
+- Queries could be saved into views
+- There are also predefined views, eg. Postgres, NGINX, Redis, ...
+
+### Facet
+
+- Common tags and log attributes are created as facets automatically
+- You can create custom facet from log attributes
 
 
 ## Keys
@@ -70,9 +95,30 @@ By priority:
   - Control observability pipeline workers
 
 
-## Tagging
+## Universal Service Monitoring (USM)
 
-Unified service tagging: `service`, `env`, `version`
+Enabling USM requires the following:
+
+- If on Linux, your service must be running in a container.
+- If on Windows and using IIS, your service must be running on a virtual machine.
+- The Datadog Agent needs to be installed alongside your service.
+- The `env` tag for Unified Service Tagging must be applied to your deployment.
+
+Commonly used container tags: `app`, `short_image`, `container_name`
+- `short_name` tag is used to discover common services, eg. `short_name:nginx` will identify `nginx` service
+
+### `docker-compose`
+
+- You need a few settings for the agent container to turn on USM
+- Use `labels` like `com.datadoghq.tags.*` in other containers for tagging
+
+### Service Catalog
+
+For a service to show up, it needs to have unified service tags: `service`, `env`, `version`
+
+You can manage metadata of a service either:
+- Manually: using the web UI
+- Automatically: Github or Terraform
 
 
 ## Audit Trail
