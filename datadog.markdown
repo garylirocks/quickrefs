@@ -4,15 +4,22 @@
   - [Concepts](#concepts)
 - [Logs](#logs)
   - [Example queries](#example-queries)
-  - [Views](#views)
+  - [Tags and attributes](#tags-and-attributes)
+  - [Indexing](#indexing)
   - [Facet](#facet)
-- [Keys](#keys)
+  - [Views](#views)
+  - [Log processing rules (pipelines)](#log-processing-rules-pipelines)
+- [Metrics](#metrics)
+  - [Metric types](#metric-types)
+  - [SLI \& SLO](#sli--slo)
 - [Integrations](#integrations)
+  - [Installation](#installation)
 - [Agent/library Configuration](#agentlibrary-configuration)
   - [Remote configuration](#remote-configuration)
 - [Universal Service Monitoring (USM)](#universal-service-monitoring-usm)
   - [`docker-compose`](#docker-compose)
   - [Service Catalog](#service-catalog)
+- [Keys](#keys)
 - [Audit Trail](#audit-trail)
 
 
@@ -28,49 +35,94 @@
 
 ### Example queries
 
-- `service:nginx`
-- `@filename:banner.php` (`@` indicates an attribute of a log entry)
-- `"total amount"` - search text in the log message
+| Search term | Format                                     | Example              |
+| ----------- | ------------------------------------------ | -------------------- |
+| tag         | key:value                                  | `service:frontend`   |
+| attribute   | @key:value                                 | `@http.method:POST`  |
+| single term | word                                       | `Response`           |
+| sequence    | group of words surrounded by double quotes | `"Response fetched"` |
+| wildcard    | tag or attribute name and value            | `*:prod*`            |
+| wildcard    | log message                                | `prod*`              |
+
+### Tags and attributes
+
+- Tags are assigned at host or container level
+- Attributes are extracted from logs
+
+### Indexing
+
+- Ingested logs:
+  - Watchdog(automated) Insights, Error Tracking, generating metrics, and Cloud SIEM detection rules
+- Indexed logs:
+  - Can be used in monitors, dashboards, notebooks
+
+### Facet
+
+- Automatically created from common tags and log attributes
+- A facet could be a **measure**, which is numerical and continuous, could be filtered by a range
+  - eg. `@network.bytes_written:[512 TO 1024]`
+- You can create custom facet from log tags or attributes
 
 ### Views
 
 - Queries could be saved into views
 - There are also predefined views, eg. Postgres, NGINX, Redis, ...
 
-### Facet
-
-- Common tags and log attributes are created as facets automatically
-- You can create custom facet from log attributes
+### Log processing rules (pipelines)
 
 
-## Keys
+## Metrics
 
-|                          | API keys | App Keys | Client tokens                                      |
-| ------------------------ | -------- | -------- | -------------------------------------------------- |
-| Scope                    | org      | user     | org                                                |
-| Disabled with user ?     | No       | Yes      | No                                                 |  |
-| Auth scopes customizable | No       | Yes      | No                                                 |  |
-| Usage                    | DD Agent | DD API   | End user facing applications (browser, mobile, TV) |
+Can be collected by:
 
-- **API keys**
-  - Datadog Agent requires an API key to submit metrics and events to Datadog
-- **Application keys**
-  - In conjunction with your organization's API key, give users access to Datadog's programmatic API.
-  - By default have the permissions and scopes of the user who created them
-  - Permissions required to create or edit application keys:
-    - `user_app_keys` permission to scope their own application keys
-    - `org_app_keys_write` permission to scope application keys owned by any user in their organization
-    - `service_account_write` permission to scope application keys for service accounts
-  - If a user's role or permissions change, authorization scopes specified for their application keys remain unchanged
+- DD Agent
+- Integrations
+- Generated with Datadog (eg. form logs)
+- Custom metrics
+  - Agent
+  - DogStatsD
+  - HTTP API
+
+### Metric types
+
+- Count (times in an interval)
+- Rate (frequency)
+- Gauge (last value in an interval)
+- Histogram (five values: mean, count, median, 95th percentile, and maximum)
+- Distribution (summarize values across all the hosts)
+  - Enhanced query functionality and configuration options
+
+### SLI & SLO
+
+Service Level Indicators (SLI): metrics to measure some aspect of the level of service
+
+Service Level Objectives (SLO): SLIs monitored overtime, eg.
+- 99% of requests being successful over the past 7 days
+- less than 1 second latency 99% of the time over the past 30 days
+
+You can create an SLO based on a monitor, then you can create a monitor on an SLO to get alerts.
 
 
 ## Integrations
 
 Three types:
 
-- **Agent-based**, use a Python class method called `check`
-- **Authentication (crawler)**, based integrations are set up **in Datadog** where you provide credentials for obtaining metrics from APIs of other systems, such as Slack, AWS, Azure, and PagerDuty.
+- **Agent-based (system checks)**, use a Python class method called `check`
+  - `check` methos executes every 15 seconds
+  - A check could collects multiple metrics, events, logs and service checks
+  - Show the checks `docker compose exec datadog agent status`
+  - Run a specific check `docker compose exec datadog agent check disk`
+- **Authentication based (crawler)**
+  - Either pull data from other systems, using other system's credentials
+  - Or authorize other systems to push data to Datadog, using Datadog's API key
 - **Library** integrations, use the Datadog API to allow you to monitor applications based on the language they are written in, like Node.js or Python.
+  - Imported as packages to your code
+  - Use Datadog's tracing API
+  - Collect performance, profiling, and debugging metrics from your application at runtime
+
+### Installation
+
+When an integration is installed, it may also install OOTB dashboards, log processing pipelines, etc
 
 
 ## Agent/library Configuration
@@ -119,6 +171,27 @@ For a service to show up, it needs to have unified service tags: `service`, `env
 You can manage metadata of a service either:
 - Manually: using the web UI
 - Automatically: Github or Terraform
+
+
+## Keys
+
+|                          | API keys | App Keys | Client tokens                                      |
+| ------------------------ | -------- | -------- | -------------------------------------------------- |
+| Scope                    | org      | user     | org                                                |
+| Disabled with user ?     | No       | Yes      | No                                                 |  |
+| Auth scopes customizable | No       | Yes      | No                                                 |  |
+| Usage                    | DD Agent | DD API   | End user facing applications (browser, mobile, TV) |
+
+- **API keys**
+  - Datadog Agent requires an API key to submit metrics and events to Datadog
+- **Application keys**
+  - In conjunction with your organization's API key, give users access to Datadog's programmatic API.
+  - By default have the permissions and scopes of the user who created them
+  - Permissions required to create or edit application keys:
+    - `user_app_keys` permission to scope their own application keys
+    - `org_app_keys_write` permission to scope application keys owned by any user in their organization
+    - `service_account_write` permission to scope application keys for service accounts
+  - If a user's role or permissions change, authorization scopes specified for their application keys remain unchanged
 
 
 ## Audit Trail
