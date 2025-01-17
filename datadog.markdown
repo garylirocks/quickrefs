@@ -14,10 +14,16 @@
   - [SLI \& SLO](#sli--slo)
 - [Integrations](#integrations)
   - [Installation](#installation)
+- [Kubernetes](#kubernetes)
+- [Tagging](#tagging)
+  - [`docker-compose`](#docker-compose)
+  - [Best practices](#best-practices)
 - [Agent/library Configuration](#agentlibrary-configuration)
   - [Remote configuration](#remote-configuration)
+- [Monitor](#monitor)
+  - [Notifications](#notifications)
 - [Universal Service Monitoring (USM)](#universal-service-monitoring-usm)
-  - [`docker-compose`](#docker-compose)
+  - [`docker-compose`](#docker-compose-1)
   - [Service Catalog](#service-catalog)
 - [Keys](#keys)
 - [Audit Trail](#audit-trail)
@@ -125,6 +131,77 @@ Three types:
 When an integration is installed, it may also install OOTB dashboards, log processing pipelines, etc
 
 
+## Kubernetes
+
+The Datadog Agent is run as a DaemonSet to ensure the Agent is deployed on all nodes in the cluster.
+
+Agent config:
+
+```yaml
+apiVersion: datadoghq.com/v2alpha1
+kind: DatadogAgent
+metadata:
+  name: datadog-agent
+  namespace: default
+spec:
+  global:
+    clusterName: tagging-use-cases-k8s
+    credentials:
+      apiSecret:
+        secretName: datadog-secret
+        keyName: api-key
+      appSecret:
+        secretName: datadog-secret
+        keyName: api-key
+    podLabelsAsTags:
+      "*": kube_pod_%%label%%
+```
+
+Configure `podLabelsAsTags:` to extract pod labels as tags
+
+
+Pod config:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-pod61
+  labels:
+    component: backend
+  annotations:
+    ad.datadoghq.com/tags: '{"env": "production", "service": "user-service", "office": "lax", "team": "community", "role": "backend", "color": "red"}'
+...
+```
+
+Pod `labels` and `annotations` will be extracted as tags
+
+
+## Tagging
+
+Tags could be key-value pairs (eg. `env:prod`), or simple value tags (eg. `file-server`)
+
+Reserved tag key:
+
+- `host`: correlation between metrics, traces, processes, and logs
+- `device`
+- `source`
+- `env`
+- `service`
+- `version`
+- `team`
+
+Unified Service Tagging: `service`, `env`, `version`
+
+### `docker-compose`
+
+- To map a custom container label to a tag, use this environment variable on the agent container: `DD_CONTAINER_LABELS_AS_TAGS={"my.custom.label.color":"color"}`
+
+### Best practices
+
+- `trace_id` can be injected as tags in logs, for correlation
+
+
 ## Agent/library Configuration
 
 By priority:
@@ -145,6 +222,20 @@ By priority:
   - Dynamic instrumentation (metrics, logs and traces from live application without code change)
   - Fleet automation
   - Control observability pipeline workers
+
+
+## Monitor
+
+### Notifications
+
+There's not a field dedicated for recipients, you need to specify it with `@`, `@slack` in the message
+
+```
+The {{service.name}} service container {{color.name}} has high CPU usage!!
+
+Contact: Email - @{{service.name}}@mycompany.com, @admin@mycompany.com
+Slack - @slack-{{service.name}}
+```
 
 
 ## Universal Service Monitoring (USM)
