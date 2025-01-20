@@ -12,6 +12,10 @@
 - [Metrics](#metrics)
   - [Metric types](#metric-types)
   - [SLI \& SLO](#sli--slo)
+- [Application Performance Monitoring (APM)](#application-performance-monitoring-apm)
+  - [Instrumentation](#instrumentation)
+  - [Continuous Profiler](#continuous-profiler)
+- [Network Performance Monitoring (NPM)](#network-performance-monitoring-npm)
 - [Integrations](#integrations)
   - [Installation](#installation)
 - [Kubernetes](#kubernetes)
@@ -107,6 +111,58 @@ Service Level Objectives (SLO): SLIs monitored overtime, eg.
 - less than 1 second latency 99% of the time over the past 30 days
 
 You can create an SLO based on a monitor, then you can create a monitor on an SLO to get alerts.
+
+
+## Application Performance Monitoring (APM)
+
+- **Trace**: tracks the time spent by an application processing a request and the status of this request. Each trace consists of one or more spans.
+- **Span**: represents a logical unit of work in a distributed system for a given time period. Multiple spans construct a trace.
+
+### Instrumentation
+
+- You use language-specific Datadog libraries (`ddtrace`) in your application code.
+- By default, Agent collects traces using TCP port 8126.
+- Instrumented application expect some environment variables, eg. `DATADOG_HOST` `DD_ENV`, `DD_VERSION`, and `DD_SERVICE`.
+  - `DD_AGENT_HOST`: which service hosts the agent
+  - `DD_LOGS_INJECTION`: injects tracing data into the log lines and formats the output as JSON
+  - `DD_TRACE_SAMPLE_RATE`
+  - `DD_PROFILING_ENABLED` whether enable continuous profiler
+  - `DD_SERVICE_MAPPING` rename service
+
+
+### Continuous Profiler
+
+- Find CPU, memory and IO bottlenecks
+- Supported by client libraries
+
+
+## Network Performance Monitoring (NPM)
+
+- Built on eBPF (detailed visibility into network flows at the Linux kernel level)
+- Powerful and efficient with extremely low overhead
+- Can monitor DNS traffic and DNS servers
+
+To enable with containerized agent:
+
+```yaml
+    environment:
+      - DD_SYSTEM_PROBE_NETWORK_ENABLED=true
+      - ...
+    volumes:
+      - /sys/kernel/debug/:/sys/kernel/debug
+      - ...
+    cap_add:
+      - SYS_ADMIN
+      - SYS_RESOURCE
+      - SYS_PTRACE
+      - NET_ADMIN
+      - NET_BROADCAST
+      - NET_RAW
+      - IPC_LOCK
+      - CHOWN
+    security_opt:
+      - apparmor:unconfined
+```
 
 
 ## Integrations
