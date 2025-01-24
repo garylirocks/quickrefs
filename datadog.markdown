@@ -173,7 +173,7 @@ To enable with containerized agent:
 Three types:
 
 - **Agent-based (system checks)**, use a Python class method called `check`
-  - `check` methos executes every 15 seconds
+  - `check` method executes every 15 seconds
   - A check could collects multiple metrics, events, logs and service checks
   - Show the checks `docker compose exec datadog agent status`
   - Run a specific check `docker compose exec datadog agent check disk`
