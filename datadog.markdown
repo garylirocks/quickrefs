@@ -4,6 +4,7 @@
   - [Concepts](#concepts)
 - [Logs](#logs)
   - [Example queries](#example-queries)
+  - [Configs](#configs)
   - [Tags and attributes](#tags-and-attributes)
   - [Indexing](#indexing)
   - [Facet](#facet)
@@ -29,6 +30,8 @@
 - [Universal Service Monitoring (USM)](#universal-service-monitoring-usm)
   - [`docker-compose`](#docker-compose-1)
   - [Service Catalog](#service-catalog)
+- [Synthetic testing](#synthetic-testing)
+- [Real User Monitoring (RUM)](#real-user-monitoring-rum)
 - [Keys](#keys)
 - [Audit Trail](#audit-trail)
 
@@ -54,9 +57,37 @@
 | wildcard    | tag or attribute name and value            | `*:prod*`            |
 | wildcard    | log message                                | `prod*`              |
 
+### Configs
+
+`docker-composer.yml` config for the Agent service
+
+```yaml
+services:
+  agent:
+    image: "datadog/agent:7.31.1"
+    environment:
+      - DD_API_KEY
+      - DD_APM_ENABLED=true
+      - DD_LOGS_ENABLED=true
+      - DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true
+      - DD_PROCESS_AGENT_ENABLED=true
+      - DD_DOCKER_LABELS_AS_TAGS={"my.custom.label.team":"team"}
+      - DD_TAGS='env:intro-to-logs'
+      - DD_HOSTNAME=intro-logs-host
+    ports:
+      - "8126:8126"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /proc/:/host/proc/:ro
+      - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
+    labels:
+      com.datadoghq.ad.logs: '[{"source": "agent", "service": "agent"}]'
+```
+
 ### Tags and attributes
 
 - Tags are assigned at host or container level
+  - `source` tag is for the integration name, corresponding to Log Processing Pipeline
 - Attributes are extracted from logs
 
 ### Indexing
@@ -124,18 +155,23 @@ You can create an SLO based on a monitor, then you can create a monitor on an SL
 ### Instrumentation
 
 - You use language-specific Datadog libraries (`ddtrace`) in your application code.
+- Traces are submitted to Datadog Agent first, then sent to Datadog.
 - By default, Agent collects traces using TCP port 8126.
 - Instrumented application expect some environment variables, eg. `DATADOG_HOST` `DD_ENV`, `DD_VERSION`, and `DD_SERVICE`.
   - `DD_AGENT_HOST`: which service hosts the agent
-  - `DD_LOGS_INJECTION`: injects tracing data into the log lines and formats the output as JSON
+  - `DD_LOGS_INJECTION`: injects `trace_id` and `span_id` into logs
   - `DD_TRACE_SAMPLE_RATE`
   - `DD_PROFILING_ENABLED` whether enable continuous profiler
   - `DD_SERVICE_MAPPING` rename service
+- For Python app, run it with command `ddtrace-run`, like:
 
+    ```sh
+    DD_SERVICE="<SERVICE>" DD_ENV="<ENV>" DD_LOGS_INJECTION=true ddtrace-run python my_app.py
+    ```
 
 ### Continuous Profiler
 
-- Find CPU, memory and IO bottlenecks
+- Gives you insight into the system resource consumption (eg. CPU, memory and IO bottlenecks) of your applications beyond traces
 - Supported by client libraries
 
 
@@ -258,7 +294,7 @@ Unified Service Tagging: `service`, `env`, `version`
 
 ### Best practices
 
-- `trace_id` can be injected as tags in logs, for correlation
+- `trace_id`, `span_id` can be injected as tags in logs, for correlation
 
 
 ## Agent/library Configuration
@@ -318,9 +354,26 @@ Commonly used container tags: `app`, `short_image`, `container_name`
 
 For a service to show up, it needs to have unified service tags: `service`, `env`, `version`
 
+Some services (eg. databases) showing up in the Catalog, but do not communicate with the Datadog Agent directly, their traces get captured by other services.
+
 You can manage metadata of a service either:
 - Manually: using the web UI
 - Automatically: Github or Terraform
+
+
+## Synthetic testing
+
+Associate testing results to APM:
+
+- Not done by default
+- You must specify the URLs for which Datadog should add the necessary HTTP headers
+
+
+## Real User Monitoring (RUM)
+
+- Works for web JS and mobile apps
+- You need to instrument your app with RUM SDK (by `<script />` tag or NPM package)
+
 
 
 ## Keys
