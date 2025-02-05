@@ -307,6 +307,7 @@ Each option has its advantage and disadvantages.
 
 - **Zone per region**: Optimal, no manual intervention needed (same as using the PaaS public endpoint)
 - **Shared zone**: Upon failover, need user-intervention in the shared zone to point FQDN to IP of the private endpoint in the failover region
+  - When a region is down, you won't be able to access metadata of resource groups in it, so you **won't** be able to update the DNS zones with Portal, Bicep, ARM, direct REST API calls should work (Terraform, CLI, PowerShell)
 
 Actually, there are different scenarios for different PaaS services, if the PaaS service use the same FQDN for regional replicas, then you need user-intervention during failover if using a shared zone
 
