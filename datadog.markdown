@@ -9,7 +9,7 @@
   - [Indexing](#indexing)
   - [Facet](#facet)
   - [Views](#views)
-  - [Log processing rules (pipelines)](#log-processing-rules-pipelines)
+  - [Log processing rules (Pipelines)](#log-processing-rules-pipelines)
 - [Metrics](#metrics)
   - [Metric types](#metric-types)
   - [SLI \& SLO](#sli--slo)
@@ -89,6 +89,7 @@ services:
 - Tags are assigned at host or container level
   - `source` tag is for the integration name, corresponding to Log Processing Pipeline
 - Attributes are extracted from logs
+  - By a log processing pipeline, either a built-in Integration Pipeline, or a custom one
 
 ### Indexing
 
@@ -109,7 +110,14 @@ services:
 - Queries could be saved into views
 - There are also predefined views, eg. Postgres, NGINX, Redis, ...
 
-### Log processing rules (pipelines)
+### Log processing rules (Pipelines)
+
+- Each pipeline includes a list of sequential Processors
+  - Each pipeline has a query filter (eg. `source:nginx`), only matching logs are processed by the pipeline
+  - Pipelines could be nested up to one level
+- Pipelines extract attributes from each log message
+- There are out-of-the-box integration pipelines for common services
+- JSON format logs are pre-processed before pipelines
 
 
 ## Metrics
