@@ -118,6 +118,15 @@ services:
 - Pipelines extract attributes from each log message
 - There are out-of-the-box integration pipelines for common services
 - JSON format logs are pre-processed before pipelines
+- Processors
+  - Grok
+    - Regex matching
+    - A pipeline can have multiple Grok parsers
+    - One Grok parser can have multiple parsing rules
+    - Subsequent Grok parser can be used on an attribute extracted by preceding parsers
+- Standard Attribute
+  - Processed after all the pipelines
+  - Instead of adding a remapper to each pipeline, you can use this to remap a common attribute from any source
 
 
 ## Metrics
