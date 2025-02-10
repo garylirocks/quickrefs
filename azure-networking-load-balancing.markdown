@@ -31,7 +31,9 @@
   - [Traffic-routing methods](#traffic-routing-methods)
   - [Nested profiles](#nested-profiles)
 - [Front Door](#front-door)
-- [CDN](#cdn)
+  - [Origin with private link](#origin-with-private-link)
+  - [CLI](#cli-1)
+- [CDN (retiring)](#cdn-retiring)
   - [Standard rules engine notes](#standard-rules-engine-notes)
   - [Custom domain HTTPS](#custom-domain-https)
 
@@ -617,6 +619,21 @@ Supports:
   - WAF
   - URL redirect/rewrite
   - Caching: like a CDN
+  - Private link connection to origin (premium tier only)
+
+Tiers:
+  - Standard
+  - Premium
+
+### Origin with private link
+
+![Front door origin with private link](./images/azure_front-door-private-endpoint-architecture.png)
+
+- Only available for Premium tier
+- The private endpoints are created in AFD managed regional private network
+- You should choose the same (or closest) region to the origin resource
+
+### CLI
 
 ```sh
 az extension add --name front-door
@@ -628,7 +645,10 @@ az network front-door create \
   --backend-address webapp1.azurewebsites.net webapp2.azurewebsites.net
 ```
 
-## CDN
+
+## CDN (retiring)
+
+<span style="background: yellow; font-weight: bold">Azure CDN is retiring, use Azure Front Door instead</span>
 
 - Get content to users in their local region to **minimize latency**
 - Can be hosted by Azure or other providers

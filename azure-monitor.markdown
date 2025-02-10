@@ -620,6 +620,10 @@ Signal types:
   - Scope: Can be created only at subscription level. If you need to alert on more subscriptions, create a separate alert rule for each subscription. You'll only be notified on health events impacting the services used in your subscription.
   - Condition: service types, regions and event types (service issue, planned maintenance, etc).
 - Advisor
+  - Scope: subscription, or resource group
+  - Condition:
+    - Category (one of the five pillars) and impact level
+    - or Specific recommendation
 - Smart detector: Application Insights
 
 Both Resource Health and Service Health events are in resource activity logs
