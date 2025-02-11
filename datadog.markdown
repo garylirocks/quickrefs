@@ -10,6 +10,7 @@
   - [Facet](#facet)
   - [Views](#views)
   - [Log processing rules (Pipelines)](#log-processing-rules-pipelines)
+  - [Log pathway](#log-pathway)
 - [Metrics](#metrics)
   - [Metric types](#metric-types)
   - [SLI \& SLO](#sli--slo)
@@ -127,6 +128,10 @@ services:
 - Standard Attribute
   - Processed after all the pipelines
   - Instead of adding a remapper to each pipeline, you can use this to remap a common attribute from any source
+
+### Log pathway
+
+![Log processing pathway](./images/datadog_log-pathway-condensed.png)
 
 
 ## Metrics
