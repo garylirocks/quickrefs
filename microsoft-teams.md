@@ -1,6 +1,7 @@
 # Microsoft Teams
 
 - [Concepts](#concepts)
+- [Tips](#tips)
 
 
 ## Concepts
@@ -16,6 +17,13 @@
   - Types:
     - Standard: accessible to all members in the team
     - Private: selected members
-    - Shared: **TODO: how does this work?**
+    - Shared: **TODO: how does this work? shared with guest users in other tenant ?**
   - Team members can adjust or limit notifications they're getting from a channel
   - Messages here are called **posts**, organized in threads
+
+
+## Tips
+
+- Access another account as a guest
+
+  You have email address `john@tenant-a.com`, and been added to a chat in `tenant-b.com`, and get a reminder email. To access the chat in `tenant-b`, you need to quit Teams, then click a link in the email. (if not quitting, it will show you are not in the chat)
