@@ -6,11 +6,11 @@
   - [Example queries](#example-queries)
   - [Configs](#configs)
   - [Tags and attributes](#tags-and-attributes)
-  - [Indexing](#indexing)
   - [Facet](#facet)
   - [Views](#views)
-  - [Log processing rules (Pipelines)](#log-processing-rules-pipelines)
   - [Log pathway](#log-pathway)
+  - [Log processing rules (Pipelines)](#log-processing-rules-pipelines)
+  - [Indexing](#indexing)
 - [Metrics](#metrics)
   - [Metric types](#metric-types)
   - [SLI \& SLO](#sli--slo)
@@ -34,6 +34,7 @@
 - [Synthetic testing](#synthetic-testing)
 - [Real User Monitoring (RUM)](#real-user-monitoring-rum)
 - [Keys](#keys)
+- [DogStatsD](#dogstatsd)
 - [Audit Trail](#audit-trail)
 
 
@@ -92,13 +93,6 @@ services:
 - Attributes are extracted from logs
   - By a log processing pipeline, either a built-in Integration Pipeline, or a custom one
 
-### Indexing
-
-- Ingested logs:
-  - Watchdog(automated) Insights, Error Tracking, generating metrics, and Cloud SIEM detection rules
-- Indexed logs:
-  - Can be used in monitors, dashboards, notebooks
-
 ### Facet
 
 - Automatically created from common tags and log attributes
@@ -110,6 +104,10 @@ services:
 
 - Queries could be saved into views
 - There are also predefined views, eg. Postgres, NGINX, Redis, ...
+
+### Log pathway
+
+![Log processing pathway](./images/datadog_log-pathway-condensed.png)
 
 ### Log processing rules (Pipelines)
 
@@ -129,9 +127,12 @@ services:
   - Processed after all the pipelines
   - Instead of adding a remapper to each pipeline, you can use this to remap a common attribute from any source
 
-### Log pathway
+### Indexing
 
-![Log processing pathway](./images/datadog_log-pathway-condensed.png)
+- Ingested logs:
+  - Watchdog(automated) Insights, Error Tracking, generating metrics, and Cloud SIEM detection rules
+- Indexed logs:
+  - Can be used in monitors, dashboards, notebooks
 
 
 ## Metrics
@@ -321,11 +322,11 @@ Unified Service Tagging: `service`, `env`, `version`
 
 ## Agent/library Configuration
 
-By priority:
+By priority (high to low):
 
-- Remote configuration (could be disabled on each individual agent ?)
+- Remote configuration
 - Environment variables
-- Local configuration
+- Local configuration (`remote_config.enabled` setting controls whether an agent accepts Remote Configuration)
 
 ### Remote configuration
 
@@ -417,6 +418,21 @@ Associate testing results to APM:
     - `org_app_keys_write` permission to scope application keys owned by any user in their organization
     - `service_account_write` permission to scope application keys for service accounts
   - If a user's role or permissions change, authorization scopes specified for their application keys remain unchanged
+
+
+## DogStatsD
+
+- DogStatsD consists of a server, which is bundled with the Datadog Agent
+  - Could be installed as a standalone package as well
+- and a client library, which is available in multiple languages.
+- The DogStatsD server is enabled by default over UDP port 8125 for Agent v6+. You can set a custom port for the server if necessary.
+
+- DogStatsD accepts custom metrics, events, and service checks over UDP and periodically aggregates and forwards them to Datadog.
+
+- Because it uses UDP, your application can send metrics to DogStatsD and resume its work without waiting for a response. If DogStatsD ever becomes unavailable, your application doesn’t experience an interruption.
+
+- As it receives data, DogStatsD aggregates multiple data points for each unique metric into a single data point over a period of time called the flush interval. DogStatsD uses a flush interval of **10 seconds**.
+
 
 
 ## Audit Trail
