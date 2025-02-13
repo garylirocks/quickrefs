@@ -1372,6 +1372,14 @@ Two primary ways of separating environments:
 
     The default workspace has its state in the root folder, other environments have their state files in the `terraform.tfstate.d` folder
 
+    You can access current workspace name in HCL config via `terraform.workspace`
+
+    ```yaml
+    locals {
+      instance_type = terraform.workspace == "prod" ? "t2.large" : "t2.micro"
+    }
+    ```
+
 
 ## Automate Terraform
 
