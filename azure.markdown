@@ -481,7 +481,39 @@ Tables:
     | project subscriptionId, resourceGroup)
   on subscriptionId, resourceGroup
   | project-away subscriptionId1, resourceGroup1
+  ```
 
+- Resource creation and change times
+
+  ```kusto
+  // some resources have creation/modification time in `properties`
+  //   but the field name is not consistent
+  | extend timeCreated = iff(
+                              isnotnull(properties.createdTime),
+                              properties.createdTime,
+                              iff(
+                                  isnotnull(properties.createdDate),
+                                  properties.createdDate,
+                                  iff(
+                                          isnotnull(properties.timeCreated),
+                                          properties.timeCreated,
+                                          properties.creationTime
+                                      )
+                                  )
+                              )
+  | extend timeChanged = iff(
+                              isnotnull(properties.changedTime),
+                              properties.changedTime,
+                              iff(
+                                  isnotnull(properties.lastModifiedTime),
+                                  properties.lastModifiedTime,
+                                  iff(
+                                          isnotnull(properties.lastModifiedTimeUtc),
+                                          properties.lastModifiedTimeUtc,
+                                          properties.modifiedDate
+                                      )
+                                  )
+                              )
   ```
 
 - Find storage accounts with public network access
