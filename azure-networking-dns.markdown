@@ -125,7 +125,7 @@ A private zone could be linked to one or more vNet (not subnet)
 - Auto-registration
   - Hostname of any VMs in the vNet would be registered in this Private DNS Zone
   - A vNet could be linked to multiple private zones, but **ONLY ONE** could have auto-registration enabled, even your vNet is configured with custom DNS servers, the auto-registration still happens
-- Fallback to internet (preview)
+- Fallback to internet
   - It's a setting in vNet link `"resolutionPolicy": "NxDomainRedirect"`
   - When `NXDOMAIN` is returned from a private DNS zone, Azure redirects the query to public DNS resolver
   - Only available for Private DNS zones associated to Private Link resources (`privatelink.*` domains)
