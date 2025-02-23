@@ -1,6 +1,7 @@
 # Active Directory
 
 - [Overview](#overview)
+  - [PowerShell](#powershell)
 - [DNS](#dns)
   - [Replication](#replication)
 
@@ -43,6 +44,17 @@
   - `example.com` could have children domains `us.example.com` and `uk.example.com`, they form a tree, and have transitive trust between them
   - `foo.com` can join the forest, and have a forest root trust to `example.com`
   - "Schemas" and "Configurations" are replicated forest wide
+
+### PowerShell
+
+```powershell
+# show forest info: name, domains, sites, global catalogs, partitions, etc
+Get-ADForest
+
+# must have `-Filter *` to list all the DCs
+Get-ADDomainController -Filter * | select Name,Domain,Site,IPv4Address,Enabled,OperatingSystem,OperationMasterRoles
+```
+
 
 
 ## DNS
