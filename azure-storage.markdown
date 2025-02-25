@@ -718,17 +718,19 @@ There are two types of policies:
   - **Time-based retention policy**: during the retention period, objects can be created and read, but not modified or deleted. After the period has expired, objects can be deleted but not overwritten.
   - **Legal hold policies**: data is immutable until the legal hold is explicitly cleared
 
-Immutability policies can be scoped to a blob version or to a container.
+Levels:
 
-- Version-level scope:
-  - You must enable support for version-level immutability on either the storage account or a container.
-  - Configure a default version-level immutability policy for the account or container.
-  - A blob version supports one version-level immutability policy and one legal hold. A policy on a blob version can override a default policy specified on the account or container.
-- Container-level scope:
-  - When support for version-level immutability has not been enabled for a storage account or a container, then any immutability policies are scoped to the container. Policies apply to all objects within the container.
-  - A container can have both a legal hold and a time-based retention policy at the same time
+- You can enable version-level immutability support on account/container
+  - Blob versioning must be enabled
+  - You could apply a default policy (time-based retention) on the account/container
+  - If the support is enabled on a container (no default policy), and the container is NOT empty, you cannot delete the container or account
+  - Once a policy is created and locked, you cannot change the policy or delete the container/account
+- Or you can set policies for specific blob versions
 
-A blob's storage tier could still be changed (eg. from hot to cool) with an applied immutability policy.
+Notes:
+
+- A blob's storage tier could still be changed (eg. from hot to cool) with an applied immutability policy.
+- Blob overwrites are be allowed, but Azure will maintain immutable versions of each blob.
 
 ### Point-in-time restore
 
