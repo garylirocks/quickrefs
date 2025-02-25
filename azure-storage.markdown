@@ -722,8 +722,8 @@ Levels:
 
 - You can enable version-level immutability support on account/container
   - Blob versioning must be enabled
-  - You could apply a default policy (time-based retention) on the account/container
-  - If the support is enabled on a container (no default policy), and the container is NOT empty, you cannot delete the container or account
+  - You could add a default policy (time-based retention) on the account/container
+  - *If the support is enabled on a container, even there is no default policy, and the container is NOT empty, you cannot delete the container or account, you must clear out all the blobs in the container first*
   - Once a policy is created and locked, you cannot change the policy or delete the container/account
 - Or you can set policies for specific blob versions
 
