@@ -37,6 +37,7 @@
 - [Ignore files](#ignore-files)
   - [Examples](#examples)
   - [Negate pattern](#negate-pattern)
+  - [Ignore local changes to a tracked file](#ignore-local-changes-to-a-tracked-file)
 - [Hooks](#hooks)
   - [`pre-commit`](#pre-commit)
 - [Merge \& Diff](#merge--diff)
@@ -826,7 +827,7 @@ Set a global ignore file with
 git config --global core.excludesfile ~/.gitignore
 ```
 
-Local ignore files: `$PROJECT/.gitignore`, `$PROJECT/info/exclude`
+Local ignore files: `$PROJECT/.gitignore`, `$PROJECT/.git/info/exclude`
 
 Ignore an already tracked file,
 
@@ -841,7 +842,6 @@ Ignore an already tracked file,
 ### Examples
 
 - `foo/bar/` ignores folder `foo/bar/` relative to the `.gitignore` file, so when the `.gitignore` is at the root, this is the same as `/foo/bar/`, to ignore `foo/bar` anywhere, use **`**/foo/bar/`**
-
 
 ### Negate pattern
 
@@ -870,6 +870,16 @@ top/sub/*
 ```
 
 See here for details: https://stackoverflow.com/questions/5533050/gitignore-exclude-folder-but-include-specific-subfolder
+
+### Ignore local changes to a tracked file
+
+```sh
+git update-index --skip-worktree <file-list>
+
+# reverse it by
+git update-index --no-skip-worktree <file-list>
+```
+
 
 ## Hooks
 
