@@ -10,6 +10,7 @@
 - [HTTPS](#https)
   - [Get a certificate](#get-a-certificate)
   - [Install](#install)
+  - [Windows/IIS](#windowsiis)
   - [How does it work](#how-does-it-work)
   - [SNI](#sni)
 - [CORS](#cors)
@@ -167,6 +168,11 @@ ssl_certificate_key file;
 -----END CERTIFICATE-----
 ```
 
+### Windows/IIS
+
+- In IIS manager, import the domain cert to the server certificates list, this will add the cert to the computer's "Web Hosting" cert store
+- For a paticular site, in bindings, associate a cert to the HTTPS binding
+- If there is an intermediate cert, it should be imported to the "Intermediate Certification Authorities" store
 
 ### How does it work
 

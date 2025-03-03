@@ -1400,12 +1400,25 @@ done < my_file.txt
 Read a file in to a two-dimensional array:
 
 ```sh
+while read -r row; do
+  row_array=(${row})
+  f1=${row_array[0]}
+  f2=${row_array[1]}
+
+  echo ${f2}
+done < demo.txt
+```
+
+OR use `readarray`
+
+```sh
 readarray rows < demo.txt
 
 for row in "${rows[@]}";do
   row_array=(${row})
-  first=${row_array[0]}
-  echo ${first}
+
+  first_field=${row_array[0]}
+  echo ${first_field}
 done
 ```
 
