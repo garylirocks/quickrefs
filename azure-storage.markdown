@@ -822,6 +822,16 @@ az storage blob delete-batch \
   --if-unmodified-since $date
 ```
 
+To promote a previous version to a current version, you need to copy it, this creates a new version:
+
+```sh
+az storage blob copy start --account-name <accountName> \
+      --source-uri "<blobUrl>?versionId=<versionId>" \
+      --destination-container <containerName>
+      --destination-blob "<blobName>" \
+```
+
+
 ### AzCopy
 
 - All operations are async, each instance creates a job, you can view and restart previous jobs and resume failed jobs;
