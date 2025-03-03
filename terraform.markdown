@@ -461,7 +461,7 @@ Three methods of authentication, see https://developer.hashicorp.com/terraform/l
     - `client_secret=true` or `client_certificate_path=true`
     - Azure CLI
 - SAS Token
-  - Explicitly set `sas_key = <xxxx>` (in config or as env var)
+  - Explicitly set `sas_token = <xxxx>` (in config or as env var)
 
 How to configure
 
@@ -489,10 +489,10 @@ How to configure
   key                  = "terraform.tfstate"
   subscription_id      = "00000000-0000-0000-0000-000000000000"   # optional
   # access_key         = 'xxxx'
-  # sas_key            = 'xxxx'
+  # sas_token          = 'xxxx'
   ```
 
-  It's better to set `access_key` and `sas_key` as environment variables
+  It's better to set `access_key` and `sas_token` as environment variables
 
   ```sh
   export ARM_ACCESS_KEY
