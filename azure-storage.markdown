@@ -780,6 +780,9 @@ az storage blob upload \
   --name MyBlob \
   --if-unmodified-since 2019-05-26T10:30Z
 
+# in PowerShell, use tripe quotes for the SAS token
+az storage blob upload -f .\test.txt --blob-url "https://<account>.blob.core.windows.net/test/test.txt" --sas-token """sp=rcwl&st=..."""
+
 # (sync) batch upload
 az storage blob upload-batch \
   --destination myContainer \

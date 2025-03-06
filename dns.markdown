@@ -62,7 +62,11 @@ dig @a.root-servers.net. google.com
 Query options
 
 ```sh
-# Use query options to show only the answer section
+# show only short answer
+dig google.com +short
+# 172.217.24.46
+
+# Or use options to control what sections show up
 dig @8.8.8.8 -q google.com -t A +nocmd +nocomments +noquestion +nostats
 ```
 
