@@ -94,22 +94,24 @@ This refers to importing a key from an on-prem HSM to an Azure key vault, steps:
 When a certificate is created, key vault also creates an addressable key and secret with the same name (**NOT visible in the Portal**).
 
 For a cert version with this URL `https://kv-gary.vault.azure.net/certificates/cert-gary/123456789`, you would have its
-  - key at  `https://kv-gary.vault.azure.net/keys/cert-gary/123456789`
   - secret at  `https://kv-gary.vault.azure.net/secrets/cert-gary/123456789`
+    - Not visible in the Portal
+    - If the private key is exportable, you could retrieve the cert with the private key from this address
+  - key at  `https://kv-gary.vaault.azure.net/keys/cert-gary/123456789`
+    - Not visible in the Portal
+    - Operations are mapped from the *keyusage* field specified in "Issuance Policy" of the cert
 
 Operatons on the secret and key:
 
-- If the private key is exportable, you could retrieve the cert with the private key from the addressable secret.
-- The addresssable key's operations are mapped from the *keyusage* field of the policy used to create the cert.
 - When the certificate expires, its addressable key and secret become inoperable.
 
 ```sh
 # download the public potion of the certificate
 az keyvault certificate download \
-    --file /path/to/cert.pfx \
+    --file /path/to/cert.pem \
     --vault-name VaultName \
     --name CertName \
-    --encoding base64
+    --encoding PEM  # base64 encoded
 
 # if the private key is exportable
 # you could download the private key of a certificate

@@ -349,7 +349,17 @@ Notes:
 
 - On using cert in a Key vault:
 
-  - You need to use a UMI to authenticate to the KV, it needs "Key Vault Secrets User" role
+  ![Cert in KV](./images/azure_agw-cert-in-kv.png)
+  - The cert needs to be in `.pfx` format (imported or generated)
+    - The private key must be exportable
+  - The KV needs these networking settings
+    - AGW subnet allowed
+    - "Allow trusted Microsoft services to access this resource" enabled
+  - AGW uses a secret url (eg. `https://myvault.vault.azure.net/secrets/mysecret/`) to reference the certificate
+    - You should use one WITHOUT a version id, so newer versions could be picked up
+    - This could NOT be done in the Portal, you need to use CLI/PowerShell/ARM
+    - AGW polls KV at four-hour intervals to retrieve a renewed version of the certificate, if it exists
+    - AGW needs a UAMI to authenticate to the KV, with "**Key Vault Secrets User**" role (**NOT** "Key Vault Certificate User")
   - If using Private Endpoints to access Key Vault, you **must link** the `privatelink.vaultcore.azure.net` private DNS zone, containing the corresponding record to the referenced Key Vault, to the virtual network containing Application Gateway. Custom DNS servers may continue to be used on the virtual network instead of the Azure DNS provided resolvers, however the private dns zone will need to remain linked to the virtual network as well. (See [here](https://learn.microsoft.com/en-us/azure/application-gateway/key-vault-certs?WT.mc_id=Portal-Microsoft_Azure_HybridNetworking#verify-firewall-permissions-to-key-vault))
 
 ### TLS/TCP proxy (preview)
