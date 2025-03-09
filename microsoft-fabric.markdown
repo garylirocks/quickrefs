@@ -22,6 +22,8 @@
 - Fabric capacity
   - Resources in Azure (`Microsoft.Fabric/capacities`)
   - You can use with your Fabric workspaces
+    - Shared by all workloads in a workspace: SQL DB, DW, Spark, MI, etc, NO need for pre-allocation
+  - A capacity could be shared by multiple workspaces
   - Charged per capacity unit (CU) (F2 ~ F2048, ~150NZD per unit/month)
   - Each business unit can create their own capacity resources
   - Can be paused, and easily scale up and down
