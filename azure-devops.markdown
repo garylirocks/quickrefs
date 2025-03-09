@@ -15,6 +15,7 @@
     - [Stage dependencies](#stage-dependencies)
   - [Variables](#variables)
     - [Scopes](#scopes)
+    - [Nested templates](#nested-templates)
     - [Naming](#naming)
     - [Syntax](#syntax)
     - [Environment variables](#environment-variables)
@@ -512,6 +513,10 @@ stages:
 Variables can be defined at multiple levels, the most locally scoped one wins:
 
 Job -> Stage -> Pipeline root -> Pipeline settings UI
+
+#### Nested templates
+
+Variables defined at the entry pipeline file are available to all nested templates, NO NEED to pass them as parameters.
 
 #### Naming
 
