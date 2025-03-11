@@ -518,6 +518,8 @@ Job -> Stage -> Pipeline root -> Pipeline settings UI
 
 Variables defined at the entry pipeline file are available to all nested templates, NO NEED to pass them as parameters.
 
+CAREFUL: If a variable is not defined, it will be rendered as `$(myVar)`, which typically causes error, so you may want to give it an empty string as value.
+
 #### Naming
 
 Variable names **can't** be prefixed with `endpoint`, `input`, `secret` and `securefile`
