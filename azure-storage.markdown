@@ -734,9 +734,12 @@ Notes:
 
 ### Point-in-time restore
 
-- Restore one or more containers
 - If point-in-time restore is enabled, then versioning, change feed, and blob soft delete must also be enabled
-- Only support block blobs, NOT page blobs, or append blobs
+  - The oldest restore point must be within the soft-delete retention days set for blobs
+- It restores blobs within the targeted containers
+  - It does NOT un-delete a deleted container, you need to do this step
+  - Only support block blobs, NOT page blobs, or append blobs
+  - You could specify a blob range
 
 ### Operational backup
 
