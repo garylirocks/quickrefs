@@ -12,6 +12,7 @@
   - [Conditions in role assignment](#conditions-in-role-assignment)
   - [Delegate role assignment management with conditions](#delegate-role-assignment-management-with-conditions)
 - [Azure RBAC roles vs. Azure AD roles](#azure-rbac-roles-vs-azure-ad-roles)
+- [Portal](#portal)
 - [CLI](#cli)
 
 
@@ -335,6 +336,12 @@ To enable the elevated access:
       # remove the elevated access
       az role assignment delete --role "User Access Administrator" --scope "/"
       ```
+
+
+## Portal
+
+- Better to use "Check access" -> "View my access" to check your access, it shows your access via groups
+- "Role assignments" shows assignments, either direct or inherited
 
 
 ## CLI
