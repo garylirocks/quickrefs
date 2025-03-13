@@ -2,6 +2,7 @@
 
 - [Overview](#overview)
 - [How](#how)
+  - [Troubleshooting](#troubleshooting)
 - [Maintenance configuration](#maintenance-configuration)
 - [Policies](#policies)
 
@@ -28,17 +29,14 @@
     - `patchMode` set to `AutomaticByPlatform`
     - `bypassPlatformChecksOnUserSchedule` set to `true`
 
-The update happens within the maintenance window, so may be a few minutes later than the scheduled time.
+### Troubleshooting
 
-The update activity will be logged in activity log as "Install OS update patches on virtual machine"
-
-For all the updates shown installed by the Update Manager, if you check the Windows VM:
-  - They don't show up in update history
-  - Only some show up in "Programs and Features" -> "Installed Updates"
-
-If you install an update within the VM via Windows Update:
-  - In the VM: it shows up in update history
-  - In Azure Update Manager: after an assessment it still shows up as pending to be installed, seems like it doesn't know that it's already installed
+- The update happens within the maintenance window, so may be a few minutes later than the scheduled time.
+- In the VM resource's activity log, the update operation will be logged as "Install OS update patches on virtual machine", no matter if it's manually triggered or scheduled.
+- Within the VM
+  - In "Programs and Features" -> "Installed Updates", some updates (KBs) don't show up, no matter whether they were installed by Windows Update or Azure Update Manager
+  - In "Update history", only the ones installed by Windows Update show up, NOT the ones by Azure Update Manager
+  - If you install an update via Windows Update, in Azure Update Manager: after an assessment it still shows up as pending to be installed, seems like it doesn't know that it's already installed
 
 
 ## Maintenance configuration
