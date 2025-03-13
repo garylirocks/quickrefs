@@ -7,6 +7,7 @@
   - [Provisioning](#provisioning)
   - [Auto-shutdown](#auto-shutdown)
   - [Use AAD for VM authentication](#use-aad-for-vm-authentication)
+  - [Extensions vs. applications](#extensions-vs-applications)
   - [Linux Agent](#linux-agent)
   - [Windows VM Agent](#windows-vm-agent)
   - [How to connect to Internet](#how-to-connect-to-internet)
@@ -347,6 +348,12 @@ See naming convention here: https://learn.microsoft.com/en-us/azure/virtual-mach
 
     - You have your own uid, gid, home directory, etc;
     - If you have the `Virtual Machine Administrator Login` role, you would be in `aad_admins` group, which has **sudo** permission (`%aad_admins ALL=(ALL) NOPASSWD:ALL` is in file `/etc/sudoers.d/aad_admins`)
+
+### Extensions vs. applications
+
+|             | Extensions | Applications       |
+| ----------- | ---------- | ------------------ |
+| When to add | Any time   | Initial deployment |
 
 ### Linux Agent
 
