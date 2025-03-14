@@ -2,6 +2,11 @@
 
 - [Overview](#overview)
 - [How](#how)
+  - [Extension](#extension)
+  - [Update source](#update-source)
+  - [Update process](#update-process)
+  - [Azure Resource Graph](#azure-resource-graph)
+  - [Networking requirements](#networking-requirements)
   - [Troubleshooting](#troubleshooting)
 - [Maintenance configuration](#maintenance-configuration)
 - [Policies](#policies)
@@ -10,11 +15,13 @@
 ## Overview
 
 - Unlike the legacy version, the new Update Manager does NOT use Log Analytics or Automation Account
-- Utilizes Azure Resource Graph to store information about the patches, reboot requirements, etc
+- Utilizes Azure Resource Graph to store information about the assessment and update results
 - Extension based
   - Works for Arc-enabled Server OS
   - For both Windows and Linux
 - VM level RBAC
+- No support for Windows 10, 11 (you should use Intune instead)
+- Free for Azure VMs, $5 per server per month for Arc-enabled servers
 
 
 ## How
@@ -28,6 +35,43 @@
   - To associate a schedule (maintenance configuration) to an Azure VM, there are prerequisites:
     - `patchMode` set to `AutomaticByPlatform`
     - `bypassPlatformChecksOnUserSchedule` set to `true`
+
+
+### Extension
+
+Update Manager VM extensions
+- Automatically installed when you initiate any AUM operations: on-demand/periodic assessment, on-demand/scheduled update
+- Single extention for Azure VMs, two for Arc-enabled servers
+- The extension interacts with the VM/Arc agent to fetch and install updates
+- No dependency on MMA or AMA
+
+### Update source
+
+AUM honors the settings on the machine.
+
+- Windows, the source could be:
+  - Windows Update repository
+  - Microsoft Update repository
+  - Windows Server Update Services (WSUS)
+- Linux, package manager
+
+### Update process
+
+See [docs](https://learn.microsoft.com/en-gb/azure/update-manager/workflow-update-manager?tabs=azure-vms%2Cupdate-win#how-patches-are-installed-in-azure-update-manager)
+
+- Begins and ends with an assessment
+- Stops the update if it's going to exceed the maintenance window, based on calculations
+
+### Azure Resource Graph
+
+Some information is stored in ARG tables:
+
+- Pending updates (table: `patchassessmentresources`): 7 days
+- Update results (table: `patchinstallationresources`): 30 days
+
+### Networking requirements
+
+See [docs](https://learn.microsoft.com/en-gb/azure/update-manager/prerequisites#network-planning)
 
 ### Troubleshooting
 
