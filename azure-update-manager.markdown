@@ -8,6 +8,7 @@
   - [Azure Resource Graph](#azure-resource-graph)
   - [Networking requirements](#networking-requirements)
   - [Troubleshooting](#troubleshooting)
+- [Windows](#windows)
 - [Maintenance configuration](#maintenance-configuration)
 - [Policies](#policies)
 
@@ -83,6 +84,23 @@ See [docs](https://learn.microsoft.com/en-gb/azure/update-manager/prerequisites#
   - If you install an update via Windows Update, in Azure Update Manager: after an assessment it still shows up as pending to be installed, seems like it doesn't know that it's already installed
 
 
+## Windows
+
+AUM relies on the Windows Update client, its settings could be managed by:
+
+- Local Group Policy Editor
+- Group Policy
+- PowerShell
+- Direct editing the Registry
+
+Notes:
+
+- ?? Don't use pre-download functionality through AUOptions while using Azure Update Manager default/advanced patching mechanisms which sets `NoAutoUpdate=1`.
+- Some registry keys could cause your machines to reboot, even if you specify "Never Reboot" in your maintenance configuration
+
+
+
+
 ## Maintenance configuration
 
 - Reboot settings:
@@ -105,6 +123,8 @@ See [docs](https://learn.microsoft.com/en-gb/azure/update-manager/prerequisites#
 - Resources (static)
 - Update types: Security, Critical, KBs/packages to include/exclude, etc
 - Pre/post event to Event Grid
+  - You could use it to start a VM before a scheduled patching, and stop it after
+  - You could use an Automation Account runbook or a function app, see [here](https://learn.microsoft.com/en-us/azure/update-manager/tutorial-using-functions)
 
 
 ## Policies
