@@ -1,6 +1,8 @@
 # Azure Update Manager
 
 - [Overview](#overview)
+- [Update Options](#update-options)
+  - [Hotpatching](#hotpatching)
 - [How](#how)
   - [Extension](#extension)
   - [Update source](#update-source)
@@ -23,6 +25,34 @@
 - VM level RBAC
 - No support for Windows 10, 11 (you should use Intune instead)
 - Free for Azure VMs, $5 per server per month for Arc-enabled servers
+- AUM doesn't support In-place upgrade for VMs running Windows Server in Azure
+
+
+## Update Options
+
+- Automatic VM guest patching (patch orchestration: Azure Managed-Safe Deployment)
+  - For VM
+  - And for VMSS flexible orchestration ?
+  - "Critical" and "Security" patches automatically applied
+  - During off-peak hours of the datecenter
+  - Availability-first principles apply
+
+- Windows automatic updates
+  - This is a Windows level setting, NOT an AUM setting
+  - Prerequisite: `enableAutomaticUpdates` must be `true`
+  - Set `patchMode` to `AutomaticByOS`
+
+- Automatic OS image upgrade (for VMSS)
+  - In rolling manner
+  - Could be opt out any time
+  - The OS Disk of a VM is replaced with the new OS Disk created with the latest image version. Configured extensions and custom data scripts are run while persisted data disks are retained.
+
+### Hotpatching
+
+- For supported Windows Server Datacenter: Azure Edition VMs
+- For OS security updates that don't require a reboot after installation
+- Patching in-memory code of running processes without the need to restart the process
+- Reboots typically required on every third month instead of every month
 
 
 ## How

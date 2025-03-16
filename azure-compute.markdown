@@ -10,6 +10,8 @@
   - [Extensions vs. applications](#extensions-vs-applications)
   - [Linux Agent](#linux-agent)
   - [Windows VM Agent](#windows-vm-agent)
+  - [Automatic Extension Upgrade](#automatic-extension-upgrade)
+    - [Availability-first model](#availability-first-model)
   - [How to connect to Internet](#how-to-connect-to-internet)
   - [Updating](#updating)
   - [CLI Cheatsheet](#cli-cheatsheet)
@@ -425,6 +427,28 @@ systemctl restart walinuxagent.service
 - Could be installed manually
 - `WindowsAzureGuestAgent.exe` is the process in the guest VM
 - It spawns `CollectGuestLogs.exe`, which collects some logs, produces a ZIP file that's transferred to the VM's host. Support professionals could use this ZIP file to investigate issues on the request of the VM owner.
+
+### Automatic Extension Upgrade
+
+VM health is monitored after the new extension is installed, if the VM is not healthy within 5 minutes of the upgrade, the extension is rolled back
+
+- Supports VM and VMSS
+- Follow thea Availability-first deployment model
+
+#### Availability-first model
+
+Ensures the availability configurations in Azure are respected across multiple availability levels
+
+- Across regions
+  - Phased
+  - Geo-paired regions NOT in the same phase
+- Within a region
+  - VMs in different availability zones are NOT upgraded concurrently
+  - Single VMs that aren't part of an availability set are batched on a best-effort basis to avoid concurrent upgrades for all VMs in a subscription
+- Within a set
+  - All VMs in a common availability set are NOT upgraded concurrently
+  - VMs in a common availability set are upgraded within update domain boundaries. VMs across multiple update domains aren't upgraded concurrently
+
 
 ### How to connect to Internet
 
