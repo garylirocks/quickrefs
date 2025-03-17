@@ -1042,7 +1042,8 @@ steps:
         sudo ln -s -t /etc/ssl/certs/ $(caCertificate.secureFilePath)
     ```
 
-  - service connections (can be shared across projects)
+  - service connections
+    - Can be shared across projects, if you update it in one project, it will be updated in all projects that use it
   - environments
   - repositories
 
