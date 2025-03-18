@@ -1,7 +1,7 @@
 # Azure Update Manager
 
 - [Overview](#overview)
-- [Update Options](#update-options)
+- [Patch orchestration options](#patch-orchestration-options)
   - [Hotpatching](#hotpatching)
 - [How](#how)
   - [Extension](#extension)
@@ -28,24 +28,35 @@
 - AUM doesn't support In-place upgrade for VMs running Windows Server in Azure
 
 
-## Update Options
+## Patch orchestration options
 
-- Automatic VM guest patching (patch orchestration: Azure Managed-Safe Deployment)
+- Customer Managed Schedules
+  - `patchMode=AutomaticByPlatform`
+  - `bypassPlatformChecksOnUserSchedule=TRUE` (if no schedule is associated, the VM won't be patched)
+  - See [here](https://learn.microsoft.com/en-us/azure/update-manager/prerequsite-for-schedule-patching?tabs=new-prereq-portal%2Cauto-portal#user-scenarios)
+- Azure Managed-Safe Deployment
+  - `patchMode=AutomaticByPlatform`
+  - To be autopatched, `bypassPlatformChecksOnUserSchedule` must be `FALSE` and there must be NO schedule associated
+  - Automatic VM guest patching
   - For VM
   - And for VMSS flexible orchestration ?
   - "Critical" and "Security" patches automatically applied
   - During off-peak hours of the datecenter
   - Availability-first principles apply
+- Image Default
+  - For Linux machines only
+  - Automatic OS image upgrade (for VMSS)
+    - In rolling manner
+    - Could be opt out any time
+    - The OS Disk of a VM is replaced with the new OS Disk created with the latest image version. Configured extensions and custom data scripts are run while persisted data disks are retained.
+- OS orchestrated
+  - Windows automatic updates
+    - This is a Windows level setting, NOT an AUM setting
+    - Prerequisite: `enableAutomaticUpdates` must be `true`
+    - Set `patchMode` to `AutomaticByOS`
+- Manual updates
+  - Automatic updates are disabled for Windows OS
 
-- Windows automatic updates
-  - This is a Windows level setting, NOT an AUM setting
-  - Prerequisite: `enableAutomaticUpdates` must be `true`
-  - Set `patchMode` to `AutomaticByOS`
-
-- Automatic OS image upgrade (for VMSS)
-  - In rolling manner
-  - Could be opt out any time
-  - The OS Disk of a VM is replaced with the new OS Disk created with the latest image version. Configured extensions and custom data scripts are run while persisted data disks are retained.
 
 ### Hotpatching
 
@@ -81,8 +92,8 @@ Update Manager VM extensions
 AUM honors the settings on the machine.
 
 - Windows, the source could be:
-  - Windows Update repository
-  - Microsoft Update repository
+  - Windows Update repository: OS patches only
+  - Microsoft Update repository: OS and other MS software patches
   - Windows Server Update Services (WSUS)
 - Linux, package manager
 
