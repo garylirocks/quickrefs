@@ -5,6 +5,7 @@
   - [Private keys](#private-keys)
 - [Certificates](#certificates)
   - [Certificate information](#certificate-information)
+  - [Extract cert and key from `.pfx` (add intermediate cert to `.pfx`)](#extract-cert-and-key-from-pfx-add-intermediate-cert-to-pfx)
   - [Convert `.pfx` to `.pem`](#convert-pfx-to-pem)
   - [Add a CA certificate to Linux system](#add-a-ca-certificate-to-linux-system)
 - [Self-signed SSL certs](#self-signed-ssl-certs)
@@ -28,6 +29,7 @@ Different CAs and servers may issue or require X.509 certificates in different f
   - P7B/PKCS#7
     - Extensions: `.p7b`, `.p7c`
     - Can only contain certificates, **NOT** private keys
+    - Could be in binary format as well (and contain private keys), you can import it to Windows cert manager and then export as `.pfx`
     - Can be single certificate or the whole certificate chain
     - Commonly used by Windows and Java Tomcat servers
     - Delimiter lines are `-----BEGIN PKCS7-----` and `-----END PKCS7-----`
@@ -39,7 +41,7 @@ Different CAs and servers may issue or require X.509 certificates in different f
     - Most commonly used in Java-based platforms
   - PFX/P12/PKCS#12 (Personal Information Exchange)
     - Extensions: `.pfx`, `.p12`
-    - A single archive file that **contains the entire certificate chain plus the matching private key**, the key *could be password protected*. Essentially it is everything that a server needs, so often used for import/export.
+    - A single archive file that **contains the entire certificate chain (public key) plus the matching private key**, the key *could be password protected*. Essentially it is everything that a server needs, so often used for import/export.
     - Typically used on Windows platforms
 
 Notes:
@@ -106,6 +108,26 @@ openssl s_client \
         -servername example.com \
         -connect example.com:443 </dev/null \
         | openssl x509 -noout -issuer -subject -dates -fingerprint -ext subjectAltName
+```
+
+### Extract cert and key from `.pfx` (add intermediate cert to `.pfx`)
+
+```sh
+# output the private key, encrypted
+# you need password used to create the private key, and a new one to encrypt the key again
+openssl pkcs12 -in mycert.pfx -nocerts -out private.key
+
+# decrypt the key
+openssl rsa -in private.key -out private-decrypted.key
+
+# export cert to `.crt`
+openssl pkcs12 -in mycert.pfx -clcerts -nokeys -out mycert.crt
+
+# (optional) combine end cert with intermediate cert
+cat mycert.crt intermediate.crt > mycert-full.crt
+
+# combine cert and key to `.pfx`
+openssl pkcs12 -export -in mycert-full.crt -inkey private-decrypted.key -out mycert_new.pfx
 ```
 
 ### Convert `.pfx` to `.pem`

@@ -21,6 +21,7 @@
     - [Azure AD](#azure-ad)
     - [Token store](#token-store)
   - [Backup](#backup)
+  - [Move](#move)
 - [App Service Environment (ASE)](#app-service-environment-ase)
   - [Cost](#cost)
   - [Networking](#networking-1)
@@ -321,6 +322,10 @@ Tokens are cached in the store and passed to app code in headers like: `X-MS-TOK
 - You could do a full or partial backup
 - Backup goes to a storage account and container in the same subscription
 - Backup contains app configuration, files, and database connected to your app
+
+### Move
+
+You need to move the plan and app together, and some accessory resources, like a certificate in the app (show hidden types in the Portal)
 
 
 ## App Service Environment (ASE)

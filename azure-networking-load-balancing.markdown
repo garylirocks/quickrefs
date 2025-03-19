@@ -356,7 +356,7 @@ Notes:
     - AGW subnet allowed
     - "Allow trusted Microsoft services to access this resource" enabled
   - AGW uses a secret url (eg. `https://myvault.vault.azure.net/secrets/mysecret/`) to reference the certificate
-    - You should use one WITHOUT a version id, so newer versions could be picked up
+    - You should use one WITHOUT a version id, so newer versions could be picked up, to force a pickup, update a tag on the AGW (see [here](https://learn.microsoft.com/en-gb/azure/application-gateway/key-vault-certs#supported-certificates))
     - This could NOT be done in the Portal, you need to use CLI/PowerShell/ARM
     - AGW polls KV at four-hour intervals to retrieve a renewed version of the certificate, if it exists
     - AGW needs a UAMI to authenticate to the KV, with "**Key Vault Secrets User**" role (**NOT** "Key Vault Certificate User")

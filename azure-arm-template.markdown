@@ -519,6 +519,12 @@ You could export ARM template for existing resources:
 # for a RG
 az group export --name '<rg-name>' --include-parameter-default-value > rg-template.json
 
+# for all RGs in a sub
+for i in $(az group list --query '[].name' -otsv); do
+  echo $i;
+  az group export --name "$i" --include-parameter-default-value > $i.json;
+done
+
 # for individual resources
 az group export --resource-group '<rg-name>' --resource-ids <resource-id1> <resource-id2> ...
 ```
