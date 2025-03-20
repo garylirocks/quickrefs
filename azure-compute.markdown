@@ -33,6 +33,9 @@
 - [VMSS - Virtual Machine Scale Sets](#vmss---virtual-machine-scale-sets)
 - [Run Commands](#run-commands)
 - [Azure Bastion](#azure-bastion)
+  - [Instances](#instances)
+  - [Pricing](#pricing)
+  - [Connect from Linux client](#connect-from-linux-client)
 - [Azure Batch](#azure-batch)
 - [Azure Compute Gallery](#azure-compute-gallery)
 
@@ -963,6 +966,9 @@ Two types of commands,
 - You can use password, or SSH Private Key from local file or Azure Key Vault
 - Seamless SSH/RDP connection over TLS
 - A bastion can connect to VM in the same or peered vNets
+  - Seems if the vNets are not peered directly, but **via a Firewall/NVA in a hub vNet**
+    - on the VM page, it can't detect the bastion
+    - you need to go to the Bastion page, and connect to a VM using its private IP
 - Deployed to `AzureBastionSubnet` subnet
   - Minimum /26 prefix
   - No need to configure NSGs on this subnet
@@ -978,7 +984,10 @@ SKUs:
   - Concurrent connections
   - Kerberos auth
 - Standard
-  - Connect to VMs using Azure CLI
+  - Connect to VMs using native client
+    - Windows RDP client
+    - Azure CLI
+  - Custom port
   - Upload/download files
   - Shareable link
   - Connect to VMs via IP address
@@ -988,6 +997,23 @@ SKUs:
   - Private-only Bastion
     - Connect to Bastion host via private IP, no public IP needed
     - Use native client instead of the Azure Portal
+
+### Instances
+
+- An instance is an Azure managed VM, also called a scale unit
+- 2 instances for basic SKU, 2 - 50 for standard SKU
+- Each instance can support 20 concurrent RDP connections and 40 concurrent SSH connections for medium workloads
+
+### Pricing
+
+Billed per hour, based on SKU, instance count, and outbound data transfer
+
+### Connect from Linux client
+
+- To a Linux VM using `az network bastion ssh`
+- To a Windows VM using `az network bastion tunnel`
+- To any VM using `az network bastion tunnel`
+- Transfer files to your target VM over SSH using `az network bastion tunnel`
 
 
 ## Azure Batch

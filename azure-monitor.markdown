@@ -36,6 +36,7 @@
   - [Storage](#storage)
   - [Access Control](#access-control)
     - [Access modes](#access-modes)
+  - [Solutions (legacy)](#solutions-legacy)
 - [Kusto Query Language](#kusto-query-language)
 - [Workbooks](#workbooks)
 - [Insights](#insights)
@@ -785,6 +786,19 @@ The data a user has access to is determined by a combination of factors that are
 | Permissions required | [Permissions to the workspace](https://docs.microsoft.com/en-us/azure/azure-monitor/logs/manage-access)                                                             | **Read access** to the resource. Permission to the logs for the resource will be automatically assigned.                                                                      |
 | Permissions scopes   | Workspace. Users with access to the workspace can query all logs in the workspace from tables that they have permissions to (allowed by optional table-level RBAC). | Azure resource. User can query logs for specific resources, resource groups, or subscription they have access to from any workspace but can't query logs for other resources. |
 | Multiple workspaces  | Use `union` expression, see [next section](#kusto-query-language)                                                                                                   | This queries **all workspaces**, not limited to the ones currently configured in the diagnostic settings of the resource                                                      |
+
+### Solutions (legacy)
+
+- Legacy resources
+- Example:
+  - Updates
+  - VMInsights
+  - SecurityCenterFree
+  - ChangeTracking
+- Some solutions depends on a linked Automation Account, eg.
+  - Update management
+  - Change tracking
+  - Start/Stop VMs during off-hours
 
 
 ## Kusto Query Language

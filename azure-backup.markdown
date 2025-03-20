@@ -42,6 +42,11 @@
     - For all workload
     - An auto-scaling set of storage accounts in a **Microsoft managed tenant**
   - **Vault-archive tier**
+- Could have "soft delete" enabled, first 14 days are free
+- To delete an RSV, you need to:
+  - Stop and delete all backup items
+  - Disable replication for site recovery
+  - Remove private endpoints
 
 ### Backup Vault
 
