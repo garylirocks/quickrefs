@@ -1,6 +1,7 @@
 # Azure Firewall
 
 - [Overview](#overview)
+  - [Rule matching](#rule-matching)
 - [Asymmetric routing](#asymmetric-routing)
 - [Azure Firewall Manager](#azure-firewall-manager)
 - [Firewall policy](#firewall-policy)
@@ -59,11 +60,6 @@ By default, all traffic is blocked, you can configure:
 - **Threat Intelligence**
   - Alert/deny traffic from known malicious IP and domains
 
-Rule matching:
-- Network rules are processed before application rules
-- Rules are terminating, if a match is found in network rules, application rules are not processed
-- If no rules match, the traffic is denied
-
 DNS proxy:
 - Azure Firewall could be used as a DNS proxy, this enables FQDN-based network rules
 - Supports DNS request logging
@@ -71,6 +67,13 @@ DNS proxy:
 Premium SKU only:
 - TLS inspection
 - IDPS: Intrusion Detection and Prevention System
+
+### Rule matching
+
+- Network rules are processed **before** application rules
+- If a match is found in network rules, application rules are not processed
+- If no network and application rules match, the traffic is denied
+- For application rule, Firewall needs to be **able to resolve the FQDN**, otherwise you get a "Failed to resolve address" error, and the traffic is denied
 
 
 ## Asymmetric routing
