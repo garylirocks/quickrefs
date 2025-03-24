@@ -1229,6 +1229,7 @@ terraform {
   - The maximum version should be specified by the root module
 - #2 optional, declare an expected alias provider configuration named `aws.alternate`, the calling module should provide this
 - #3 no need for `provider` block, it should be defined in the root module
+  - A module with `provider` block is not compatible with `for_each`, `count`, or `depends_on` arguments in the caller
 
 #### Implicit provider inheritance
 
