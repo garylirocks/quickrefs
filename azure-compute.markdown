@@ -35,7 +35,10 @@
 - [Azure Bastion](#azure-bastion)
   - [Instances](#instances)
   - [Pricing](#pricing)
-  - [Connect from Linux client](#connect-from-linux-client)
+  - [Using native client](#using-native-client)
+    - [Windows native client](#windows-native-client)
+    - [Linux native client](#linux-native-client)
+    - [Tunnel command](#tunnel-command)
 - [Azure Batch](#azure-batch)
 - [Azure Compute Gallery](#azure-compute-gallery)
 
@@ -1008,12 +1011,73 @@ SKUs:
 
 Billed per hour, based on SKU, instance count, and outbound data transfer
 
-### Connect from Linux client
+### Using native client
 
-- To a Linux VM using `az network bastion ssh`
-- To a Windows VM using `az network bastion tunnel`
-- To any VM using `az network bastion tunnel`
-- Transfer files to your target VM over SSH using `az network bastion tunnel`
+- "Native client support" must be enabled on the Bastion
+- You could connect using target VM resource ID, or private IP
+- To connect via private IP:
+  - You need to enable "IP-based connection"
+  - Microsoft Entra authentication, and custom ports and protocols aren't supported
+
+#### Windows native client
+
+- To Windows VM
+
+  ```sh
+  az network bastion rdp \
+      --name "<bas-name>" \
+      --resource-group "<rg-name>" \
+      --target-ip-address "<private-ip-of-the-vm>"
+  ```
+
+  - You must run this in Windows, not WSL
+  - It will open up "Remote Desktop Connection" window
+    - This enables copy/pasting files between your local machine and the target VM
+  - You could login using
+    - VM local username and password
+    - Microsoft Entra credentials (with prerequisites)
+
+#### Linux native client
+
+To a Linux VM using `az network bastion ssh`
+
+```sh
+# AAD auth
+az network bastion ssh --name "<BastionName>" --resource-group "<ResourceGroupName>" --target-resource-id "<VMResourceId or VMSSInstanceResourceId>" --auth-type "AAD"
+
+# SSH key auth
+az network bastion ssh --name "<BastionName>" --resource-group "<ResourceGroupName>" --target-resource-id "<VMResourceId or VMSSInstanceResourceId>" --auth-type "ssh-key" --username "<Username>" --ssh-key "<Filepath>"
+
+# password auth
+az network bastion ssh --name "<BastionName>" --resource-group "<ResourceGroupName>" --target-resource-id "<VMResourceId or VMSSInstanceResourceId>" --auth-type "password" --username "<Username>"
+```
+
+#### Tunnel command
+
+Features:
+
+- Connect to Windows or Linux VM
+- RDP or SSH
+- Transfer files (using `scp` or RDP copy/paste)
+
+Limitations:
+
+- SSH private key must be on local computer (NOT in a key vault)
+- Not supported in Cloud Shell
+
+```sh
+# Create the tunnel
+az network bastion tunnel \
+    --name "<bas-name>" \
+    --resource-group "<rg-name>" \
+    --target-ip-address "<private-ip-of-the-vm>" \
+    --resource-port 3389 \
+    --port 50022
+```
+
+Then
+- On Windows, you could RDP to the VM using `localhost:50022`
+- On Linux, use `ssh <username>@127.0.0.1 -p 50022`
 
 
 ## Azure Batch
