@@ -40,6 +40,7 @@
     - [Job authorization scope](#job-authorization-scope)
     - [Built-in identities](#built-in-identities)
   - [Agent pools](#agent-pools)
+  - [Managed DevOps Pool](#managed-devops-pool)
   - [Deployment jobs](#deployment-jobs)
     - [Deployment strategies](#deployment-strategies)
   - [GitHub integration](#github-integration)
@@ -1221,6 +1222,17 @@ Microsoft-hosted agents have some limitations:
 - Can't join directly to your corporate network
 - Can't pre-load software, you need to install during a pipeline run
 
+### Managed DevOps Pool
+
+- Resources in Azure
+- Placed in "Dev Center" -> "Dev Center project"
+- You could specify
+  - OS disk type
+  - OS image (Windows, Ubuntu, custom)
+  - VM size
+  - Max. count of agents
+- Networking: could be an isolated vNet or an existing vNet
+- Scaling: could have a schedule to pre-provision agents, so they become standby, ready to receive jobs
 
 ### Deployment jobs
 
