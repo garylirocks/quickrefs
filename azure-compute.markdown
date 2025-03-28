@@ -6,6 +6,7 @@
   - [Availability options](#availability-options)
   - [Provisioning](#provisioning)
   - [Auto-shutdown](#auto-shutdown)
+  - [Stop and start VMs on a schedule](#stop-and-start-vms-on-a-schedule)
   - [Use AAD for VM authentication](#use-aad-for-vm-authentication)
   - [Extensions vs. applications](#extensions-vs-applications)
   - [Linux Agent](#linux-agent)
@@ -304,6 +305,20 @@ See naming convention here: https://learn.microsoft.com/en-us/azure/virtual-mach
   - DevTest Lab also has an "Auto-start" feature
 - It can send notification: 15 - 120 minutes prior the shutdown
 - When you set the timezone as "(UTC+12:00) Auckland, Wellington / New Zealand Standard Time", the time is UTC+12 or UTC+13 depending on whether Daylight saving is on.
+
+### Stop and start VMs on a schedule
+
+Microsoft provides a solution "Start/Stop VMs v2"
+
+- Deploys multiple resources:
+  - Logic Apps
+    - AutoStop: stop based on VM CPU usage
+    - Scheduled_start/stop
+    - Sequenced_start/stop: based on tags `sequencestart` and `sequencestop`
+  - Function App
+  - App Insights
+  - Log analytics
+  - Other accessory resources
 
 ### Use AAD for VM authentication
 
