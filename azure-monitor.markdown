@@ -565,7 +565,7 @@ Make sure you understand the differences between:
   - Resource type: `Microsoft.Insights/actionGroups`
   - Configure notifications (Email, SMS, etc) and actions (runbook, webhook, etc)
   - **Secure webhook** action:
-    - Sends alerts to ITSM tool, like ServiceNOw
+    - Sends alerts to ITSM tool, like ServiceNow
     - Uses Entra for authentication, instead of username/password
       ![Secure webhook](images/azure_monitor-secure-webhook.png)
     - For metric alerts, "resolved" state could flow to ITSM tool automatically
@@ -578,7 +578,7 @@ Make sure you understand the differences between:
   - Generate new alerts based on conditions
   - Resource type differs depending on signal type:
     - Metric alerts: `Microsoft.Insights/metricAlerts`
-    - Log query alerts: `microsoft.insights/scheduledqueryrules`
+    - Log query alerts: `Microsoft.Insights/scheduledQueryRules`
 - **Alert processing rule**:
   - Previously know as 'action rule', resource type is still `Microsoft.AlertsManagement/actionRules`
   - Rule type:
@@ -608,29 +608,28 @@ Make sure you understand the differences between:
 
 Signal types:
 
-- Metric
-- **Log search**
+- Metric (`Microsoft.Insights/metricAlerts`)
+- **Log search** (`Microsoft.Insights/scheduledQueryRules`)
   - Condition: result of a log query
-- **Activity log**
+- **Activity log** (`Microsoft.Insights/activityLogAlerts`)
   - Scope: all or selected resource types, at subscription or resource group level
   - Condition: create/update/delete a resource, other actions (eg. approve private endpoint connection)
-- **Resource health**
+- **Resource health** (`Microsoft.Insights/ActivityLogAlerts`)
   - Scope: all or selected resource types, at subscription or resource group level
   - Condition: resource status change (eg. from available to unavailable), and whether it's platform or user initiated
-- **Service health**
+- **Service health** (`Microsoft.Insights/ActivityLogAlerts`)
   - Scope: Can be created only at subscription level. If you need to alert on more subscriptions, create a separate alert rule for each subscription. You'll only be notified on health events impacting the services used in your subscription.
   - Condition: service types, regions and event types (service issue, planned maintenance, etc).
-- Advisor
+- **Advisor** (`Microsoft.Insights/ActivityLogAlerts`)
   - Scope: subscription, or resource group
   - Condition:
     - Category (one of the five pillars) and impact level
     - or Specific recommendation
-- Smart detector: Application Insights
-
-Both Resource Health and Service Health events are in resource activity logs
+- Smart detector: Application Insights (`Microsoft.AlertsManagement/smartDetectorAlertRules`)
 
 ### Notes
 
+- "Activity Log", "Resource Health", "Service Health", "Advisor" types are all based on activity logs, having the same type `Microsoft.Insights/ActivityLogAlerts`
 - An alert rule can only be applied at **subscription level or below**, NOT at management group level
 - An alert rule resource could only be in the **same subscription** as the resource it monitors
 - A rule's **action group** could be in another subscription
@@ -890,6 +889,10 @@ Provided insights:
   - **Runtime instrumentation**: can be enabled without making any changes to code (Windows IIS web app only, works best with ASP.NET)
   - **Build-time instrumentation**: by installing SDK to code, enables full functionality, supports custom events
   - **Client-side instrumentation**: JavaScript SDK, you can configure App Service to inject it automatically (Windows IIS web app only)
+- Resource type `microsoft.insights/components`
+- Properties:
+  - `AppId`, `InstrumentationKey`, `ConnectionString`
+  - Need to be associated to a Log Analytics workspace to save data
 
 
 ### VM Insights
