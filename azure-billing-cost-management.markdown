@@ -41,9 +41,9 @@
 | Type                               | How                                                  | subscription limit                                       |
 | ---------------------------------- | ---------------------------------------------------- | -------------------------------------------------------- |
 | Microsoft Online Service Program   | Azure Free Account, pay-as-you-go                    | 5                                                        |
-| Enterprise Agreement (EA)          | Enterprise Agreement                                 | unlimited EA accounts, 5000 subscriptions per EA account |
 | Microsoft Customer Agreement (MCA) | Sign the agreement, or pay-as-you-go in some regions | 5                                                        |
 | Microsoft Partner Agreement (MPA)  | Sign the agreement, or pay-as-you-go in some regions | N/A                                                      |
+| Enterprise Agreement (EA)          | Enterprise Agreement                                 | unlimited EA accounts, 5000 subscriptions per EA account |
 
 **A tenant could contain subscriptions of different agreement types**
 
@@ -55,13 +55,16 @@
 
 ![Enterprise Agreement](images/azure_billing-ea-hierarchy.png)
 
-- Invoices created at billing account level
+- Scopes
+  - `providers/Microsoft.Billing/billingAccounts/{billingAccountId}` for Billing Account
+  - `providers/Microsoft.Billing/billingAccounts/{billingAccountId}/departments/{departmentId}` for Department
+  - `providers/Microsoft.Billing/billingAccounts/{billingAccountId}/enrollmentAccounts/{enrollmentAccountId}` for EnrollmentAccount
+- Invoices at billing account level
 - Departments and enrollment accounts
   - Used to organize subscriptions
   - AREN'T represented winthin invoice PDF
   - Can be used in cost analysis
-- The only Enterprise Agreement role with access to Azure subscriptions is the **account owner** because this permission was granted when the subscription was created.
-- Each account owner is a subscription owner for all subscriptions provisioned under the account
+- The only Enterprise Agreement role with access to Azure subscriptions is the **account owner**, an account owner becomes subscription owner for all subscriptions provisioned under the account
 
 Best practices:
 
@@ -89,7 +92,9 @@ resource "azurerm_subscription" "example" {
 
 ![Microsoft Partner Agreement](images/azure_billing-mpa-hierarchy.png)
 
-- Customer scope id example: `/providers/Microsoft.Billing/billingAccounts/99a13315-xxxx-xxxx-xxxx-xxxxxxxxxxxx:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx_xxxx-xx-xx/customers/7d15644f-xxxx-xxxx-xxxx-xxxxxxxxxxxx`
+- Scopes:
+  - `providers/Microsoft.Billing/billingAccounts/{billingAccountId}/billingProfiles/{billingProfileId}` for BillingProfile
+  - `/providers/Microsoft.Billing/billingAccounts/{billingAccountId}/customers/{customerId}`
 - To create a subscription manually
   - You need to do it in the CSP's Parter Center Portal
   - You need "Global Admin" and "Admin Agent" role in the CSP partner tenant (NOT the customer's tenant), this is managed in Parter Center (`partner.microsoft.com`)
@@ -101,10 +106,11 @@ resource "azurerm_subscription" "example" {
 
 #### Billing scopes
 
-- Billing Account
+- Billing account
   - Properties: ID, name, status, Tax ID, Agreement type, Sold-to address, etc
   - "**Cost allocation**" is configured at this level
-- Billing Profile
+- Billing profile
+  - `providers/Microsoft.Billing/billingAccounts/{billingAccountId}/billingProfiles/{billingProfileId}`
   - Payment methods and Invoices are scoped at this level
   - Properties: ID, name, invoice email preference, enabled Azure plans, PO(Product Order) number, tags
   - Has settings controlling whether a user with access to an Azure subscription can:
@@ -112,7 +118,7 @@ resource "azurerm_subscription" "example" {
     - Purchase Azure Reservation, Savings Plan, Marketplace products
     - Manage invoice section tags
 - Invoice sections
-  - Resource id format `/providers/Microsoft.Billing/billingAccounts/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx_xxxx-xx-xx/billingProfiles/xxxx-xxxx-xxx-xxx/invoiceSections/xxxx-xxxx-xxx-xxx`
+  - `providers/Microsoft.Billing/billingAccounts/{billingAccountId}/invoiceSections/{invoiceSectionId}`
   - A billing profile has a default invoice section
   - You can create additional sections to track and allocate costs based on project, department, environments etc.
   - A subscription is always associated to an invoice section
@@ -218,7 +224,10 @@ resource "azurerm_subscription" "test" {
   - A resource management scope (MG, sub, RG)
 - There are preset cost views
 - You can customize the views and save them
+  - `"type": "Microsoft.CostManagement/views"`
 - You can subscribe to a view and get emails
+  - `"type": "Microsoft.CostManagement/ScheduledActions"`
+  - `"kind": "Email"`
 
 Gotchas:
   - If you create a custom view in the Portal, it will have a unscoped resource ID like `/providers/Microsoft.CostManagement/views/costview-gary`, though the data could be scoped to a resource group
@@ -262,10 +271,19 @@ Limitations:
   - Available for every budget scope
   - Subscription and resource group scoped budgets also support action group
 - **Anomaly alerts**
-  - Only for subscription scope
+  - `"type": "Microsoft.CostManagement/ScheduledActions"`
+  - `"kind": "InsightAlert"`
+  - Only for subscription scope, maximum 5 in a subscription
+  - Cost anomalies are evaluated for subscriptions daily and compare the day's total usage to a forecasted total based on the last 60 days to account for common patterns in your recent usage. For example, spikes every Monday. (using a deep learning algorithm called WaveNet, different from the Cost Management forecast)
+  - The anomalies show in "Smart views" in cost analysis (*the insights light bulb icon*)
+  - The anomalies are always evaluated, the alerts export it as emails
+  - Requires `Microsoft.CostManagement/scheduledActions/write` permission to create one (the permission of the rule creator is evaluated at the time that the email is sent, so you may need a service principal to create the rule)
+  - Could be created using API [CreateOrUpdateInsightAlertScheduledActionByScope](https://learn.microsoft.com/en-us/rest/api/cost-management/scheduled-actions/create-or-update-by-scope?view=rest-cost-management-2024-08-01&tabs=HTTP#createorupdateinsightalertscheduledactionbyscope)
 - **Reservation utilization**
   - Scopes: MCA billing profile, MPA customer scope, EA billing account
 - Scheduled emails for **saved cost views**
+  - `"type": "Microsoft.CostManagement/ScheduledActions"`
+  - `"kind": "Email"`
 - EA commitment balance alerts
 - Invoice alerts
 
