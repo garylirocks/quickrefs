@@ -7,6 +7,8 @@
   - [Cross-tenant access settings](#cross-tenant-access-settings)
   - [Best practices](#best-practices)
 - [B2C](#b2c)
+  - [Features](#features)
+  - [Permissions](#permissions)
   - [Best practices](#best-practices-1)
 - [AD DS vs. Entra ID vs. Entra DS](#ad-ds-vs-entra-id-vs-entra-ds)
   - [Entra DS](#entra-ds)
@@ -54,7 +56,7 @@
 - [Entitlement management](#entitlement-management)
   - [Concepts](#concepts-1)
   - [Scenarios](#scenarios)
-  - [Features](#features)
+  - [Features](#features-1)
 - [Access reviews](#access-reviews)
   - [Licenses](#licenses)
 - [Administrative Units (AU)](#administrative-units-au)
@@ -210,6 +212,26 @@ B2B direct connect feature
 B2C tenant is for your application's customers, it's different from your organization's tenant
 
 <img src="images/azure_ad-b2c.svg" width="600" alt="B2C process" />
+
+### Features
+
+- B2C doesn't use Entra ID P1/P2 licensing
+  - Seems it has it's own P1/P2 license ?
+- If you have an Entra ID tenant for your employees, and Azure AD B2C for customers. By adding new OpenID Connect provider under "Azure AD B2C" > "Identity providers" or with custom policies, Azure AD B2C can federate to Microsoft Entra ID, allowing authentication of employees in the Entra tenant.
+- B2C can't be used to authenticate users for Microsoft 365, it's for your custom web or mobile apps
+- User names (local accounts) could be one of two types:
+  - Any email addresses, eg. `alice@gmail.com`, `bob@example.com`
+  - Arbitrary, eg. alice, bob
+- (Preview) Open B2C pages within an iFrame
+- You can customize sign-up and sign-in page URL, eg. `contoso.b2clogin.com` -> `login.contoso.com`
+
+### Permissions
+
+- A B2C tenant is created as a resource in a subscription (max 20 B2C tenants per subscription)
+  - But a B2C tennant itself cannot contain subscriptions
+  - When a B2C directory is created, an application called `b2c-extensions-app` is automatically created inside the new directory. Do not modify or delete it. The application is used by Azure AD B2C for storing user data.
+- There is a user setting in Entra tenant which controls whether a non-admin user can create a tenant (Entra or B2C)
+  - If enOnly users with at least "Tenant Creator" roles can create a B2C tenant
 
 ### Best practices
 
