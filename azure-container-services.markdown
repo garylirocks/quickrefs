@@ -9,6 +9,7 @@
 - [Container Instance](#container-instance)
   - [Container groups](#container-groups)
 - [Container Apps (ACA)](#container-apps-aca)
+  - [ACA environments](#aca-environments)
 - [Container security best practices](#container-security-best-practices)
 
 
@@ -264,6 +265,24 @@ az container logs \
 ## Container Apps (ACA)
 
 // TODO
+
+### ACA environments
+
+![Container Apps environments](images/azure_container-apps-environment.png)
+
+- Resource type: `Microsoft.App/managedEnvironments`
+- Two types:
+  - Workload profiles environment: support both Consumption and Dedicated plans
+  - Consumption only environment
+- vNet: you can use an existing vNet
+  - Has a static IP
+- Multiple container apps
+  - Share the same vNet and logging destination
+- Other services: can add Azure Functions and Azure Spring Apps to the your ACA environment
+- Supports KEDA and Dapr
+- Logging:
+  - Go to a Log Analytics Workspace configured in `properties.appLogsConfiguration`
+  - Configure App Insights for Dapr `properties.containerAppsConfiguration.daprAIInstrumentationKey`
 
 
 ## Container security best practices
