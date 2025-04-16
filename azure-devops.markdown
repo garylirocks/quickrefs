@@ -1525,6 +1525,6 @@ When you enabled billing, it will create a resource in an Azure subscription, so
 You can purchase these resources individually:
 
 - Paid parallel jobs (for pipeline), price differs for MS Hosted and Self-Hosted agents
-- Users: Basic, or Basic + Test Plans access level, Stackerholder users are free
+- Users: Basic, or Basic + Test Plans access level, Stakeholder users are free
 - Advanced security: based on count of unique active committers
 - Artifact: based on storage usage
