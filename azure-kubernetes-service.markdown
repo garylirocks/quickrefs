@@ -535,6 +535,7 @@ Requests:
 - Collect logs from AKS and Arc-enabled Kubernetes clusters
 - Logs sent to Log Analytics workspace
   - Could be in a different subscription of the same tenant
+  - Multi-tenant: you can send logs to different workspaces based on namespace
 - Analyze with prebuild workbooks
 - Don't collect Kubernetes audit logs (use Diagnostic settings)
 - You can enable it with CLI `az aks enable-addons -a monitoring ...`
