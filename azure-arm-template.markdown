@@ -20,6 +20,7 @@
   - [Redeploy stack](#redeploy-stack)
   - [Delete stack](#delete-stack)
   - [Best practices](#best-practices)
+- [Deployment Scripts](#deployment-scripts)
 
 ## Overview
 
@@ -644,3 +645,12 @@ When you use `detachAll`
 
 - Deploy stack at **one level above**: if you want to lock resources in a subscription, you should deploy the stack at the management group level
   - So the deployment stack resource is at the MG level, the subscription owner can't change it, then the deny assignment can't be changed
+
+
+## Deployment Scripts
+
+- Resource type `Microsoft.Resources/deploymentScripts`
+- Could be a PowerShell script
+- Could have environment variables (including secret ones)
+- Runs in a temporary container instance (removed after the run)
+- Could be used to setup resources in or out of Azure

@@ -36,6 +36,8 @@
 - [Keys](#keys)
 - [DogStatsD](#dogstatsd)
 - [Audit Trail](#audit-trail)
+- [Azure](#azure)
+  - [Container Apps](#container-apps)
 
 
 ## Overview
@@ -439,3 +441,26 @@ Associate testing results to APM:
 
 - Retention in Datadog up to 90 days
 - Can be forwarded for archiving in Azure Storage, etc
+
+
+## Azure
+
+- Two integration methods
+  - "Datadog - An Azure Native ISV Service"resource in Azure
+  - App registration
+    - The app reg needs "Monitoring Reader" role over the monitored scope
+    - Need Datadog API key and App key
+- Configuration
+  - All metrics are collected by default, you could add filters to include/exclude VMs, ASPs, Container apps (eg. `datadog:monitored,env:production,!env:staging,instance-type:c1.*`)
+  - Whether include custom metrics from App Insights (will be under namespace `application_insights.custom.<METRIC_NAME>`)
+  - Whether collect resource metadata and configurations
+  - Whether enable Cloud security management on resource configurations
+
+### Container Apps
+
+- Tracing: instrument your code with `dd-trace-*` library
+- Metrics:
+  - Standard metrics by the overall Azure integration
+  - Custom metrics by the tracer
+- Logs:
+  - Need a sidecar container

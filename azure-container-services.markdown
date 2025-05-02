@@ -264,7 +264,16 @@ az container logs \
 
 ## Container Apps (ACA)
 
-// TODO
+- Need to be placed in a container apps environment
+- Deployment source:
+  - Container image (or build from a Dockerfile)
+  - Source code or artifact (eg. JAR file)
+- Each app could have multiple containers:
+  - Each could have specified amount of CPU/memory
+- Revisions:
+  - Each revision is an immutable snapshots of your app
+  - You could split traffic among revisions
+  - Support blue-green deployments
 
 ### ACA environments
 
