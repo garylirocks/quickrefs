@@ -150,13 +150,23 @@ Example:
 
 ### BGP peers
 
-- Usecase: your NVA is not supported to be deployed in the vHub yet, then you can deploy it to a connected VNet, and add the NVA as a BGP peer
-- If your NVA is already supported in a vHub, this is not necessary
-- A vHub hosts BGP Endpoint service, it could peer to an NVA in a connected vNet, this allows your vHub to get all the routes from the NVA
+- NVA or a BGP end point in a vNet connected to a vHub can directly peer with the vHub router, this allows your vHub to get all the routes from the NVA
+  - The ASN of the NVA must be different from the vHub ASN
+- Usecase:
+  - If your NVA is already supported in a vHub, this is not necessary
+  - If your NVA is not supported in the vHub yet, then you can deploy it to a connected vNet, and add the NVA as a BGP peer
 - You need to configure:
   - ASN
   - Private IP address of the NVA
-  - VNet connection
+  - vNet connection
+- In the routes the NVA advertises to the vHub, the next hop IP could be the NVA itself, or you can set it to the private IP of a load balancer
+  ![BGP peering next hop IP](./images/azure_vwan-bgp-peer-next-hop-ip.png)
+
+  *vNet-1 connected to vHub, and it has an NVA BGP peer*
+
+  ![BGP peering effective routes](./images/azure_vwan-bgp-peer-next-hop-ip-effective-routes.png)
+
+  *The BGP peer advertises two routes, one with the next hop IP to itself, another to the load balancer*
 
 ### Routing scenarios
 
