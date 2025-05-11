@@ -9,6 +9,7 @@
 - [Container Instance](#container-instance)
   - [Container groups](#container-groups)
 - [Container Apps (ACA)](#container-apps-aca)
+  - [Containers](#containers)
   - [ACA environments](#aca-environments)
 - [Container security best practices](#container-security-best-practices)
 
@@ -268,12 +269,39 @@ az container logs \
 - Deployment source:
   - Container image (or build from a Dockerfile)
   - Source code or artifact (eg. JAR file)
-- Each app could have multiple containers:
-  - Each could have specified amount of CPU/memory
+- Secrets:
+  - Passwords, connection strings, API keys, etc.
+  - Valid across all revisions
+  - Could be mounted to containers as files or environment variables
 - Revisions:
   - Each revision is an immutable snapshots of your app
   - You could split traffic among revisions
   - Support blue-green deployments
+  - Settings: min/max replicas, scale rules
+
+### Containers
+
+- Each revision could have multiple containers:
+  - Each could have specified amount of CPU/memory
+  - They share hard disk and network resources, and having the same application lifecycle
+  - Two ways: sidecar containers and init containers
+- Sidecar container usage examples:
+  - Read logs from the primary app container on a shared volume and send them to a logging service
+  - A background process that refereshes a cache on a shared volume used by the primary app container
+- Init containers:
+  - Used to download data or prepare the environment
+  - Could be multiple, defined in the `initContainers` array, run in definition order
+  - Must complete successfully before the app container starts
+- Container-scoped settings:
+  - Container registry
+  - Environment variables (can't be shared among containers)
+    - Could reference secrets defined in a container app
+  - Health probes
+  - Volume mounts
+
+Limits:
+- `linux/amd64` images only
+- Does not allow privileged containers mode with host-level access
 
 ### ACA environments
 
@@ -287,7 +315,8 @@ az container logs \
   - Has a static IP
 - Multiple container apps
   - Share the same vNet and logging destination
-- Other services: can add Azure Functions and Azure Spring Apps to the your ACA environment
+- Azure Files could be added to the environment, then mounted to container as a volume
+- Other services: can add Azure Functions and Azure Spring Apps to your ACA environment
 - Supports KEDA and Dapr
 - Logging:
   - Go to a Log Analytics Workspace configured in `properties.appLogsConfiguration`
