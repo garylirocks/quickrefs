@@ -42,6 +42,7 @@
     - [Tunnel command](#tunnel-command)
 - [Azure Batch](#azure-batch)
 - [Azure Compute Gallery](#azure-compute-gallery)
+- [Azure Linux](#azure-linux)
 
 
 ## VMs
@@ -1116,3 +1117,19 @@ Organization:
   - Replica count in target regions
   - `endOfLifeDate`
   - `StorageAccountType`
+
+
+## Azure Linux
+
+- RPM package manager (`packages.microsoft.com/azurelinux`)
+- Used by Microsoft's 1st party services
+  - M365, Xbox, Azure, Defender, etc
+  - AKS control plane
+- Usage for users:
+  - AKS node pools
+- Features:
+  - Reduced number of packages
+  - Improved performance and resiliency
+  - Additional features:
+    - Pod sandboxing (KATA containers, running kernel in a container)
+    - Confidential containers
