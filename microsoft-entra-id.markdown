@@ -46,6 +46,8 @@
   - [Management](#management)
   - [Monitoring](#monitoring)
 - [Entra roles](#entra-roles)
+  - [Notable roles](#notable-roles)
+    - [Add users to groups](#add-users-to-groups)
 - [License management](#license-management)
 - [Custom security attribute](#custom-security-attribute)
 - [SCIM](#scim)
@@ -650,9 +652,8 @@ Notes:
 
   - Groups **synced from on-premises Active Directory** can be managed only in on-premises Active Directory.
   - Other group types such as **distribution lists** and **mail-enabled security groups** are managed only in Exchange admin center or Microsoft 365 admin center.
-
 - There is a flag determining whether a group can be assigned "Entra Roles"
-
+  - Does NOT affect Azure RBAC role assignments
 - Group owners
   - Owners could be users or SPs, not a group
   - When an SP creates a group, it will be added as the owner automatically
@@ -940,6 +941,34 @@ az rest -u "https://graph.microsoft.com/v1.0/roleManagement/directory/roleDefini
   --query "value[0].id" \
   -otsv
 ```
+
+### Notable roles
+
+- Global Administrator
+- Global Reader
+  - Counterpart of Global Administrator, can't change anything
+- Directory Reader
+  - Much limited than Global Reader
+  - Seems to be the default role for all members
+  - Common usecases:
+    - Granting a specific set of guest users read access instead of granting it to all guest users.
+- User Administrator
+
+Roles that can add users to role-assignable groups:
+
+#### Add users to groups
+
+- `microsoft.directory/groups/members/update`
+  - Update members of Security groups and Microsoft 365 groups, *EXCLUDING* role-assignable groups, so can't assign roles to users
+  - Roles with this permission:
+    - User Administrator
+    - Groups Administrator
+    - Directory Writers
+- `microsoft.directory/groupsAssignableToRoles/allProperties/update`
+  - Update role-assignable groups, including adding users
+  - Roles with this permission:
+    - Global Administrator
+    - Privileged Role Administrator
 
 
 ## License management
