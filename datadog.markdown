@@ -38,6 +38,8 @@
 - [Audit Trail](#audit-trail)
 - [Azure](#azure)
   - [Container Apps](#container-apps)
+    - [Via sidecar container](#via-sidecar-container)
+    - [Via `serverless-init`](#via-serverless-init)
 
 
 ## Overview
@@ -463,4 +465,44 @@ Associate testing results to APM:
   - Standard metrics by the overall Azure integration
   - Custom metrics by the tracer
 - Logs:
-  - Need a sidecar container
+  - Azure Integration
+  - Agent for direct log collection
+
+#### Via sidecar container
+
+- Uses file tailing to collect logs
+  - The volume is mounted to both the app container and the sidecar
+- Env variables can't be shared, must be set on both containers
+  - You could use references to secrets set on the ACA resource
+  - Common env variables:
+    - `DD_SERVICE`
+    - `DD_ENV`
+    - `DD_VERSION`
+- Additional env variables for the sidecar container:
+    - `DD_AZURE_SUBSCRIPTION_ID`
+    - `DD_AZURE_RESOURCE_GROUP`
+    - `DD_API_KEY`
+    - `DD_SERVERLESS_LOG_PATH`
+
+#### Via `serverless-init`
+
+- Use `serverless-init` to wrap your process
+  - Starts a DogStatsD listener for metrics
+  - And a Trace Agent listener for traces
+  - Collects logs by wrapping the stdout/stderr streams of your process
+  - Launches your command as a subprocess
+- Logs collected by Azure integration, alternatively, set `DD_LOGS_ENABLED=true` environment variable to capture logs through the serverless instrumentation directly
+- This integration depends on your runtime having a full SSL implementation. If you are using a slim image for Node, you may need to add the following command to your Dockerfile to include certificates.
+
+  `RUN apt-get update && apt-get install -y ca-certificates`
+
+- `Dockerfile` example:
+  ```dockerfile
+  COPY --from=datadog/serverless-init:1 /datadog-init /app/datadog-init
+  RUN npm install --prefix /dd_tracer/node dd-trace  --save
+  ENV DD_SERVICE=datadog-demo-run-nodejs
+  ENV DD_ENV=datadog-demo
+  ENV DD_VERSION=1
+  ENTRYPOINT ["/app/datadog-init"]
+  CMD ["/nodejs/bin/node", "/path/to/your/app.js"]
+  ```

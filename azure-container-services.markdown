@@ -10,6 +10,7 @@
   - [Container groups](#container-groups)
 - [Container Apps (ACA)](#container-apps-aca)
   - [Containers](#containers)
+  - [Logs](#logs)
   - [ACA environments](#aca-environments)
 - [Container security best practices](#container-security-best-practices)
 
@@ -303,6 +304,11 @@ Limits:
 - `linux/amd64` images only
 - Does not allow privileged containers mode with host-level access
 
+### Logs
+
+- System logs: pulling image, creating container, etc
+- Application logs: stdout/stderr of the app container
+
 ### ACA environments
 
 ![Container Apps environments](images/azure_container-apps-environment.png)
@@ -318,9 +324,10 @@ Limits:
 - Azure Files could be added to the environment, then mounted to container as a volume
 - Other services: can add Azure Functions and Azure Spring Apps to your ACA environment
 - Supports KEDA and Dapr
-- Logging:
-  - Go to a Log Analytics Workspace configured in `properties.appLogsConfiguration`
-  - Configure App Insights for Dapr `properties.containerAppsConfiguration.daprAIInstrumentationKey`
+- Logging options:
+  - Log Analytics Workspace: you specify a workspace, `properties.appLogsConfiguration`
+  - Azure Monitor: you only see "Diagnostic settings" menu (for both ACA Environment and ACA) in the Portal after you enabled this option
+  - To configure App Insights for Dapr `properties.containerAppsConfiguration.daprAIInstrumentationKey`
 
 
 ## Container security best practices

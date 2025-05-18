@@ -15,6 +15,7 @@
   - [Scaling](#scaling)
   - [Node app](#node-app)
   - [App Logs](#app-logs)
+  - [Site extensions](#site-extensions)
   - [Authentication](#authentication)
     - [Authentication flow](#authentication-flow)
     - [Authorization behavior](#authorization-behavior)
@@ -269,6 +270,11 @@ az webapp log download \
   --resource-group my-rg \
   --name my-web-app
 ```
+
+### Site extensions
+
+You could install site extensions to an app, for example: Datadog, Dynatrace
+  - Dynatrace could inject JS tags to HTML files served by the app
 
 ### Authentication
 
