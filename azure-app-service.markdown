@@ -16,6 +16,7 @@
   - [Node app](#node-app)
   - [App Logs](#app-logs)
   - [Site extensions](#site-extensions)
+  - [WebJobs](#webjobs)
   - [Authentication](#authentication)
     - [Authentication flow](#authentication-flow)
     - [Authorization behavior](#authorization-behavior)
@@ -275,6 +276,18 @@ az webapp log download \
 
 You could install site extensions to an app, for example: Datadog, Dynatrace
   - Dynatrace could inject JS tags to HTML files served by the app
+
+### WebJobs
+
+- Available for both Windows and Linux environments (code or container based)
+- Could be run:
+  - Continuously
+  - On-demand
+  - Scheduled (as a CRON job)
+- Could be:
+  - Shell script
+  - Runtime of the app (eg. Node, Python, .NET, etc)
+
 
 ### Authentication
 
