@@ -26,6 +26,7 @@
   - [Best practices](#best-practices)
 - [Agent/library Configuration](#agentlibrary-configuration)
   - [Remote configuration](#remote-configuration)
+  - [Processes](#processes)
 - [Monitor](#monitor)
   - [Notifications](#notifications)
 - [Universal Service Monitoring (USM)](#universal-service-monitoring-usm)
@@ -344,6 +345,16 @@ By priority (high to low):
   - Dynamic instrumentation (metrics, logs and traces from live application without code change)
   - Fleet automation
   - Control observability pipeline workers
+
+### Processes
+
+By default, the agent do not collect process-level metrics, you need to enable it with `process.d/conf.yaml`
+
+It could collect metrics like:
+- `system.processes.cpu.pct`
+- `system.processes.ioread_bytes`
+- `system.processes.threads`
+- `system.processes.run_time.avg` (The average running time of all instances of this process)
 
 
 ## Monitor
