@@ -20,6 +20,7 @@
   - [Virtual IP of the host node](#virtual-ip-of-the-host-node)
     - [`168.63.129.16`](#1686312916)
 - [Network Peering](#network-peering)
+  - [Subnet peering](#subnet-peering)
   - [CLI](#cli-2)
 - [vNet Gateways](#vnet-gateways)
 - [VPN](#vpn)
@@ -364,11 +365,11 @@ A virtual public IP address, used to facilitate a communication channel to Azure
 
 ## Network Peering
 
-Connect two virtual networks together, resources in one network can communicate with resources in another network.
+Connect two virtual networks together, resources in one vNet can communicate with resources in another vNet.
 
 ![network peering](images/azure_network-peering.png)
 
-- The networks can be in **different** subscriptions, AAD tenants, or regions
+- The networks can be in **different** subscriptions, tenants, or regions
 - Traffic between networks is **private**, on Microsoft backbone network
 - You need proper permission over both vNets to configure the peering (such as `Network Contributor` role)
 - Global vNet peering has same settings as regional vnet peering
@@ -382,10 +383,10 @@ A typical use for peering is creating hub-spoke architecture:
 
 ![Azure gateway transit](images/azure_gateway-transit.png)
 
-- In above diagram, to allow connection between vNet B and on-prem, you need configure **Allow Gateway Transit** in the hub vNet, and **Use Remote Gateway** in vNet B
+- In above diagram, to allow connection between vNet B and on-prem, you need to configure **Allow Gateway Transit** on the end of hub vNet, and **Use Remote Gateway** on the end of vNet B
   - In the background, this adds routes to vNet B's route table, VPN Gateway's IP would be the Next Hop if on-prem is the destination
-- Spoke networks can **NOT** connect with each other by default through the hub network, you need to add peering between the spokes or consider using user defined routes (UDRs)
-  - Peering enables the next hop in a UDR to be the IP address of an NVA (network virtual appliance) or VPN gateway. Then traffic between spoke networks can flow through the NVA or VPN gateway in the hub vNet.
+- Spoke networks can **NOT** connect with each other by default through the hub network, you need to add peering between the spokes or using an NVA in the hub vNet
+  - And in the UDR of spoke vNets, use the NVA IP as the next hop. Then traffic between spoke networks can flow through the NVA.
 - Azure Bastion in hub network can be used to access VMs in spoke network (networks must be in same tenant)
 
 Peering on each side has these settings:
@@ -402,6 +403,13 @@ Peering on each side has these settings:
   - A vNet only allows **one gateway**, you choose whether to use gateway in this vNet or the remote vNet
   - Under the hood, the chosen gateway's IP would be used as next hop IP in system defined routes for related address prefixes
   - It also controls which gateway would advertise (via BGP) this vNet's address range to on-prem
+
+### Subnet peering
+
+- When you create vNet peering, you could choose to peer the complete vNet or only certain subnets
+  - If you only peer certain subnets, then only those subnet addresses will appear in the route table of the peered vNet
+  - You could add or remove subnets in a peering, then do a resync
+- You could only create one peering between a pair of vNets, no matter which type
 
 ### CLI
 
