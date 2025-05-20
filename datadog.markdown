@@ -38,6 +38,7 @@
 - [DogStatsD](#dogstatsd)
 - [Audit Trail](#audit-trail)
 - [Azure](#azure)
+  - [Logging](#logging)
   - [Container Apps](#container-apps)
     - [Via sidecar container](#via-sidecar-container)
     - [Via `serverless-init`](#via-serverless-init)
@@ -461,15 +462,39 @@ Associate testing results to APM:
 ## Azure
 
 - Two integration methods
-  - "Datadog - An Azure Native ISV Service"resource in Azure
+  - "Datadog - An Azure Native ISV Service" resource in Azure (seems only available to Datadog org in US3 region)
   - App registration
     - The app reg needs "Monitoring Reader" role over the monitored scope
     - Need Datadog API key and App key
 - Configuration
-  - All metrics are collected by default, you could add filters to include/exclude VMs, ASPs, Container apps (eg. `datadog:monitored,env:production,!env:staging,instance-type:c1.*`)
-  - Whether include custom metrics from App Insights (will be under namespace `application_insights.custom.<METRIC_NAME>`)
+  - Metrics
+    - All metrics are collected by default, you could add filters to include/exclude VMs, ASPs, Container apps (eg. `datadog:monitored,env:production,!env:staging,instance-type:c1.*`)
+    - Whether include custom metrics from App Insights (will be under namespace `application_insights.custom.<METRIC_NAME>`)
+  - Logs
+    - Whether include activity logs
+    - Tags rules for limiting logs
   - Whether collect resource metadata and configurations
   - Whether enable Cloud security management on resource configurations
+
+### Logging
+
+To collect Azure platform logs (activity logs, resource diagnostics logs, AAD logs), you need to setup an Event Hub, and a Function App
+
+- Event Hub
+  - Diagnostic settings -> Event Hub -> trigger a Function App
+- Storage accounts
+  - For resources that can not stream to an Event Hub
+
+You could set up everything with a template provided by Datadog, it deploys:
+- Event hub
+- Function app
+  - A function with event hub trigger
+  - Has env variables like `DD_API_KEY`, `DD_SITE`, `DD_TAGS`
+- Storage account used by the function app
+- Deployment script
+  - Has a UAMI, with "Website Contributor" role on the RG
+- Diagnostic settings for activity logs on the subscription
+- No diagnostic settings on any resources, you need to set them up yourself
 
 ### Container Apps
 

@@ -327,7 +327,10 @@ Limits:
 - Multiple container apps
   - Share the same vNet and logging destination
 - Azure Files could be added to the environment, then mounted to container as a volume
-- Other services: can add Azure Functions and Azure Spring Apps to your ACA environment
+- Could also host:
+  - Container App Job
+  - Function App
+  - Hybrid Logic App
 - Supports KEDA and Dapr
 - Logging options:
   - Log Analytics Workspace: you specify a workspace, `properties.appLogsConfiguration`

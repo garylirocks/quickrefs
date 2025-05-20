@@ -331,6 +331,7 @@ Often used for a specific type of high-flow stream of communications used for an
 - Partition: a unit of parallelism, each partition is an ordered sequence of events that is held in an Event Hub.
   - Each consumer only reads a specific partition
   - The number of partitions is specified when an Event Hub is created, and can't be changed
+  - Set it according to the number of expected concurrent readers
 - Consumer group
   - It's recommended that there's only one active consumer in a group for a partition
   - Each active consumer receives all of the events from its partition

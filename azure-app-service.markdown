@@ -37,6 +37,7 @@
   - [RBAC permissions](#rbac-permissions)
 - [Static Web Apps](#static-web-apps)
 - [Azure Functions](#azure-functions)
+  - [Overview](#overview)
   - [Durable functions](#durable-functions)
 
 ## App Service
@@ -568,6 +569,21 @@ Notes:
     ```
 
 ## Azure Functions
+
+### Overview
+
+Hosting options:
+
+- Comsumption
+- Flex Consumption
+  - Virtual networking
+  - Up to 1000 instances
+- Premium
+  - Multiple apps in one plan
+- App service
+  - Web apps and functions in one app service plan
+- Container Apps environment
+
 
 Benefits:
 
