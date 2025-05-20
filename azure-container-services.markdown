@@ -279,6 +279,11 @@ az container logs \
   - You could split traffic among revisions
   - Support blue-green deployments
   - Settings: min/max replicas, scale rules
+- Volumes:
+  - Could be Azure Files share
+    - Added to the ACA environment
+  - Or ephemeral
+    - Would be an empty directory everytime a new revision is created
 
 ### Containers
 

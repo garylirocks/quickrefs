@@ -188,6 +188,8 @@ You can create an SLO based on a monitor, then you can create a monitor on an SL
 - Instrumented application expect some environment variables, eg. `DATADOG_HOST` `DD_ENV`, `DD_VERSION`, and `DD_SERVICE`.
   - `DD_AGENT_HOST`: which service hosts the agent
   - `DD_LOGS_INJECTION`: injects `trace_id` and `span_id` into logs
+    - In Node.js, could be set in code `const tracer = require('dd-trace').init({ logInjection: false });` and it takes precedence over the env variable
+    - If nothing in code, the env variable is applied
   - `DD_TRACE_SAMPLE_RATE`
   - `DD_PROFILING_ENABLED` whether enable continuous profiler
   - `DD_SERVICE_MAPPING` rename service
@@ -483,17 +485,24 @@ Associate testing results to APM:
 
 - Uses file tailing to collect logs
   - The volume is mounted to both the app container and the sidecar
+  - The volume could be ephemeral
 - Env variables can't be shared, must be set on both containers
   - You could use references to secrets set on the ACA resource
   - Common env variables:
     - `DD_SERVICE`
     - `DD_ENV`
     - `DD_VERSION`
+- Additional env variables for the app container:
+  - `DD_LOGS_INJECTION` *must be on the app container, could be overwritten by setting in the app code*
+  - could be on app container, not sure if they work on the sidecar
+    - `DD_LOGS_ENABLED`
+    - `DD_TRACE_SAMPLE_RATE`
 - Additional env variables for the sidecar container:
     - `DD_AZURE_SUBSCRIPTION_ID`
     - `DD_AZURE_RESOURCE_GROUP`
     - `DD_API_KEY`
     - `DD_SERVERLESS_LOG_PATH`
+    - `DD_SOURCE` *must be set on the sidecar, won't work on the app container, will be `containerapp` if not set*
 
 #### Via `serverless-init`
 
