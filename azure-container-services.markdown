@@ -11,6 +11,7 @@
 - [Container Apps (ACA)](#container-apps-aca)
   - [Containers](#containers)
   - [Logs](#logs)
+  - [Cost](#cost)
   - [ACA environments](#aca-environments)
 - [Container security best practices](#container-security-best-practices)
 
@@ -313,6 +314,15 @@ Limits:
 
 - System logs: pulling image, creating container, etc
 - Application logs: stdout/stderr of the app container
+
+### Cost
+
+- Based on per-second CPU/GPU/memory usage, and requests
+- With some monthly free grant
+- No charges when an app is scale to zero replicas
+- You can optionally configure an app with a minimum number of replicas to always be running
+  - When replicas are in idle mode, and not processing requests, usage is charged at a reduced idle rate
+  - A replica is active when vCPU usage is above 0.01 cores, or when data received is above 1000 bytes/s
 
 ### ACA environments
 
