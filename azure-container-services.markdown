@@ -11,6 +11,7 @@
 - [Container Apps (ACA)](#container-apps-aca)
   - [Containers](#containers)
   - [Logs](#logs)
+  - [Metrics](#metrics)
   - [Cost](#cost)
   - [ACA environments](#aca-environments)
 - [Container security best practices](#container-security-best-practices)
@@ -314,6 +315,10 @@ Limits:
 
 - System logs: pulling image, creating container, etc
 - Application logs: stdout/stderr of the app container
+
+### Metrics
+
+- Probes (liveness/readiness) are not counted as requests
 
 ### Cost
 

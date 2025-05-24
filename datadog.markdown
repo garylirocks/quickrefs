@@ -16,6 +16,8 @@
   - [SLI \& SLO](#sli--slo)
 - [Application Performance Monitoring (APM)](#application-performance-monitoring-apm)
   - [Instrumentation](#instrumentation)
+  - [Sampling](#sampling)
+  - [Filtering](#filtering)
   - [Continuous Profiler](#continuous-profiler)
 - [Network Performance Monitoring (NPM)](#network-performance-monitoring-npm)
 - [Integrations](#integrations)
@@ -199,6 +201,60 @@ You can create an SLO based on a monitor, then you can create a monitor on an SL
     ```sh
     DD_SERVICE="<SERVICE>" DD_ENV="<ENV>" DD_LOGS_INJECTION=true ddtrace-run python my_app.py
     ```
+
+### Sampling
+
+When you want the span included in the trace metrics but don't want it ingested.
+
+Sampling rules could be based on resource names, service names, tags and operation names (based on the first span in a trace)
+
+```sh
+# resource name
+DD_TRACE_SAMPLING_RULES='[{"resource": "GET healthcheck", "sample_rate": 0.0}]'
+
+# tags
+DD_TRACE_SAMPLING_RULES='[{"tags": {"http.url": "http://.*/healthcheck$"}, "sample_rate": 0.0}]'
+```
+
+### Filtering
+
+If you don't want the span ingested, and don't want to see it reflected in trace metrics.
+
+Could be done with either Trace Agent (in Datadog Agent) configuration or Tracer configuration
+
+- Trace Agent
+  - Based on tags or resources (support regex)
+  - Example tags:
+    - `DD_APM_FILTER_TAGS_REQUIRE="key1:value1 key2:value2"`
+    - `DD_APM_FILTER_TAGS_REJECT="key1:value1 key2:value2"`
+    - `DD_APM_IGNORE_RESOURCES="(GET|POST) /healthcheck,API::NotesController#index"`
+  - Or you can do it in `datadog.yaml` file
+
+    ```yaml
+    apm_config:
+      ignore_resources: ["(GET|POST) /healthcheck","API::NotesController#index"]
+      filter_tags:
+        require: ["db:sql", "db.instance:mysql"]
+        reject: ["outcome:success", "key2:value2", "http.url:http://localhost:5050/healthcheck"]
+    ```
+- Tracer
+  - Language specific code
+  - Node.js example
+
+    ```js
+    const tracer = require('dd-trace').init();
+    tracer.use('http', {
+      // incoming http requests match on the path
+      server: {
+        blocklist: ['/healthcheck']
+      },
+      // outgoing http requests match on a full URL
+      client: {
+        blocklist: ['https://telemetry.example.org/api/v1/record']
+      }
+    })
+    ```
+
 
 ### Continuous Profiler
 
@@ -511,6 +567,7 @@ You could set up everything with a template provided by Datadog, it deploys:
 - Uses file tailing to collect logs
   - The volume is mounted to both the app container and the sidecar
   - The volume could be ephemeral
+- You need to import the `ddtrace` library to your app
 - Env variables can't be shared, must be set on both containers
   - You could use references to secrets set on the ACA resource
   - Common env variables:
@@ -536,6 +593,7 @@ You could set up everything with a template provided by Datadog, it deploys:
   - And a Trace Agent listener for traces
   - Collects logs by wrapping the stdout/stderr streams of your process
   - Launches your command as a subprocess
+- You don't need to import the `ddtrace` library to your app
 - Logs collected by Azure integration, alternatively, set `DD_LOGS_ENABLED=true` environment variable to capture logs through the serverless instrumentation directly
 - This integration depends on your runtime having a full SSL implementation. If you are using a slim image for Node, you may need to add the following command to your Dockerfile to include certificates.
 
