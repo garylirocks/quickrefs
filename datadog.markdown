@@ -16,6 +16,7 @@
   - [SLI \& SLO](#sli--slo)
 - [Application Performance Monitoring (APM)](#application-performance-monitoring-apm)
   - [Instrumentation](#instrumentation)
+  - [Attributes](#attributes)
   - [Sampling](#sampling)
   - [Filtering](#filtering)
   - [Continuous Profiler](#continuous-profiler)
@@ -201,6 +202,13 @@ You can create an SLO based on a monitor, then you can create a monitor on an SL
     ```sh
     DD_SERVICE="<SERVICE>" DD_ENV="<ENV>" DD_LOGS_INJECTION=true ddtrace-run python my_app.py
     ```
+
+### Attributes
+
+- See https://docs.datadoghq.com/standard-attributes/?product=apm
+- The headers of requests/responses are NOT collected by default, you need to enable it with
+  - `DD_TRACE_HEADER_TAGS=Brand-ID:http.brand_id,Color-ID:http.color_id` (with name remapping)
+  - OR `DD_TRACE_HEADER_TAGS=Brand-ID,Color-ID` (keep in `http.request.headers.*` or `http.response.headers.*`)
 
 ### Sampling
 
