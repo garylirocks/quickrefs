@@ -17,7 +17,12 @@
 - [Application Performance Monitoring (APM)](#application-performance-monitoring-apm)
   - [Instrumentation](#instrumentation)
   - [Attributes](#attributes)
-  - [Sampling](#sampling)
+  - [Trace ingestion and retention](#trace-ingestion-and-retention)
+    - [Head-based sampling](#head-based-sampling)
+  - [Trace metrics](#trace-metrics)
+  - [Runtime metrics](#runtime-metrics)
+    - [Node.js](#nodejs)
+  - [Ingestion Sampling](#ingestion-sampling)
   - [Filtering](#filtering)
   - [Continuous Profiler](#continuous-profiler)
 - [Network Performance Monitoring (NPM)](#network-performance-monitoring-npm)
@@ -37,8 +42,11 @@
   - [Service Catalog](#service-catalog)
 - [Synthetic testing](#synthetic-testing)
 - [Real User Monitoring (RUM)](#real-user-monitoring-rum)
+- [Error Tracking](#error-tracking)
 - [Keys](#keys)
 - [DogStatsD](#dogstatsd)
+- [Source code integration](#source-code-integration)
+  - [Setup](#setup)
 - [Audit Trail](#audit-trail)
 - [Azure](#azure)
   - [Logging](#logging)
@@ -194,6 +202,9 @@ You can create an SLO based on a monitor, then you can create a monitor on an SL
   - `DD_LOGS_INJECTION`: injects `trace_id` and `span_id` into logs
     - In Node.js, could be set in code `const tracer = require('dd-trace').init({ logInjection: false });` and it takes precedence over the env variable
     - If nothing in code, the env variable is applied
+    - **Automated injection** only works for certain logging libraries (eg. Winston, Bunyan, Pino, etc for NodeJS) and logs formatted as JSON, see https://docs.datadoghq.com/tracing/other_telemetry/connect_logs_and_traces/nodejs/
+      - Not working for `console.log()`
+      - Not working for `morgan` in NodeJS, you may make it work manually, see https://github.com/delfiatech/dd-nodejs-morgan
   - `DD_TRACE_SAMPLE_RATE`
   - `DD_PROFILING_ENABLED` whether enable continuous profiler
   - `DD_SERVICE_MAPPING` rename service
@@ -210,7 +221,67 @@ You can create an SLO based on a monitor, then you can create a monitor on an SL
   - `DD_TRACE_HEADER_TAGS=Brand-ID:http.brand_id,Color-ID:http.color_id` (with name remapping)
   - OR `DD_TRACE_HEADER_TAGS=Brand-ID,Color-ID` (keep in `http.request.headers.*` or `http.response.headers.*`)
 
-### Sampling
+### Trace ingestion and retention
+
+![Trace ingestion and retention](./images/datadog_trace-pipeline.avif)
+
+- Concepts:
+  - Ingestion: data sent to Datadog
+  - Indexing: indexed for search
+- To each span ingested, there is attached a unique ingestion reason
+- Relevant built-in dashboards:
+  - APM Traces Estimated Usage
+  - APM Traces Ingestion Reasons Overview
+
+#### Head-based sampling
+
+![Head-based sampling](./images/datadog_head-based-sampling.avif)
+
+- Decision made at the start of the root span
+- Decision propagated to other services as part of their request context, for example an HTTP request header
+- The trace is guranteed to be kept or dropped as a whole
+- You can set sampling rates for head-based sampling in two places:
+  - Agent (default)
+    - `ingestion_reason: auto`
+    - Default value is 10 traces per second
+    - Could be customized with `DD_APM_TARGET_TPS`
+  - Tracing library (overrides the Agent's config)
+
+
+### Trace metrics
+
+- Metrics:
+  - request counts
+  - error counts
+  - latency
+- Available for dashboards and monitors
+- Based on 100% of the application's traffic, regardless of ingestion sampling configs
+
+### Runtime metrics
+
+- About your application's memory usage, garbage collection, and parallelization
+- Can be enabled with `DD_RUNTIME_METRICS_ENABLED=true` environment variable
+- Send to `localhost:8125` by default
+
+#### Node.js
+
+- Not enabled by default for Node.js
+- Can be enabled with `DD_RUNTIME_METRICS_ENABLED=true` or in code
+
+    ```js
+    require('dd-trace').init({
+      // other tracer options...
+      runtimeMetrics: true
+    })
+    ```
+- Example metrics:
+  - `runtime.node.cpu.total`
+  - `runtime.node.mem.rss`
+  - `runtime.node.process.uptime`
+  - `runtime.node.event_loop.delay.avg`
+  - `runtime.node.gc.pause.avg`
+
+### Ingestion Sampling
 
 When you want the span included in the trace metrics but don't want it ingested.
 
@@ -398,7 +469,8 @@ By priority (high to low):
 
 - Remote configuration
 - Environment variables
-- Local configuration (`remote_config.enabled` setting controls whether an agent accepts Remote Configuration)
+- Local configuration (`datadog.yaml`)
+  - `remote_config.enabled` controls whether an agent accepts Remote Configuration
 
 ### Remote configuration
 
@@ -480,6 +552,15 @@ Associate testing results to APM:
 - You need to instrument your app with RUM SDK (by `<script />` tag or NPM package)
 
 
+## Error Tracking
+
+- Automatically groups uncaught exceptions found in certain error events
+- Sources: APM traces, RUM sessions, standalone frontend errors, and logs
+- No additional cost for errors collected as part of APM traces and RUM sessions
+- Filtering:
+  - Error Tracking Rules: to include and exclude certain errors that are ingested and billed
+  - Rate limiting: to safeguard against unexpected costs by allowing you to set a budget
+
 
 ## Keys
 
@@ -515,6 +596,25 @@ Associate testing results to APM:
 
 - As it receives data, DogStatsD aggregates multiple data points for each unique metric into a single data point over a period of time called the flush interval. DogStatsD uses a flush interval of **10 seconds**.
 
+
+## Source code integration
+
+- Help you debug stack traces, slow profiles
+- Quickly access the relevant lines of code in your repo
+- Code snippets:
+  - Support GitHub, GitLab
+  - Not supported for ADO
+
+### Setup
+
+  - Set environment variables
+      ```sh
+      export DD_GIT_COMMIT_SHA="<commitSha>"
+      export DD_GIT_REPOSITORY_URL="<git-provider.example/me/my-repo>"
+      ```
+  - Run `datadog-ci git-metadata upload` in your CI pipeline
+    - This reports repo URL, commit SHA, and tracked file paths to Datadog
+  - For GitHub, you could use a GitHub App
 
 
 ## Audit Trail
@@ -601,7 +701,10 @@ You could set up everything with a template provided by Datadog, it deploys:
   - And a Trace Agent listener for traces
   - Collects logs by wrapping the stdout/stderr streams of your process
   - Launches your command as a subprocess
-- You don't need to import the `ddtrace` library to your app
+- You don't need to import the `dd-trace` library to your app
+  - Correlating Node.js Logs and Traces
+    - works if you are using a supported logging library (eg. Winston, Bunyan, Pino, etc) and logs formatted as JSON
+    - not working for `console.log()`
 - Logs collected by Azure integration, alternatively, set `DD_LOGS_ENABLED=true` environment variable to capture logs through the serverless instrumentation directly
 - This integration depends on your runtime having a full SSL implementation. If you are using a slim image for Node, you may need to add the following command to your Dockerfile to include certificates.
 
