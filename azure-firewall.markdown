@@ -87,8 +87,7 @@ Pricing:
 - **NAT rules**:
   - Translate firewall public IP/port to a private IP/port, could be helpful in publishing SSH, RDP, or non-HTTP/S applications to the Internet
   - DNAT rules are applied first. If a match is found, an **implicit corresponding network rule to allow the translated traffic is added**. You can override this behavior by explicitly adding a network rule collection with deny rules that match the translated traffic. **No application rules are applied for these connections**.
-  - Limitations:
-    - Doesn't work for private IP destinations (ie. spoke to spoke, on-prem to spoke)
+  - Work for private IP destinations as well (ie. spoke to spoke, on-prem to spoke)
   - In addition to DNAT, inbound connections via public IP are always SNATed to one of the firewall private IPs. (For HTTP/s traffic, Azure Front Door or Application Gateway in front of the firewall could preserve the original client IP in `X-Forwarded-For` header)
 - **Network rules**:
   - Apply to TCP, UDP, ICMP or any IP protocol
