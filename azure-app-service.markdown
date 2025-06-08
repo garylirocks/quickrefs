@@ -1,5 +1,6 @@
 # Azure App Service
 
+- [Overview](#overview)
 - [App Service](#app-service)
   - [App Service plans](#app-service-plans)
     - [SKUs](#skus)
@@ -37,8 +38,21 @@
   - [RBAC permissions](#rbac-permissions)
 - [Static Web Apps](#static-web-apps)
 - [Azure Functions](#azure-functions)
-  - [Overview](#overview)
-  - [Durable functions](#durable-functions)
+  - [Overview](#overview-1)
+- [Durable functions](#durable-functions)
+  - [Patterns](#patterns)
+
+## Overview
+
+There are different app types:
+
+- All `type=Microsoft.Web/sites`
+- `kind` field is different:
+  - `api` for Api App
+  - `app` for Web App
+  - `functionapp` for Function App
+  - `functionapp,workflowapp` for Logic App (Standard)
+
 
 ## App Service
 
@@ -708,7 +722,19 @@ module.exports = function (context, req) {
 - `"connectionStringSetting": "gary-cosmos_DOCUMENTDB"` is an application setting in app scope, not restricted to current function, available to the function as an env variable;
 - Simply assign a value to `newbookmark` and `newmessage` for output
 
-### Durable functions
+
+## Durable functions
+
+- A feature of Functions
+- Uses an extension to manages state, checkpoints, and restarts
+- Durable Functions extension is built on top of the Durable Task Framework, an open-source library that's used to build workflows in code
+- Three types of functions:
+  - Client function: a regular function that starts an orchestrator function
+  - Orchestrator function: a workflow that orchestrates other functions
+  - Activity function: called by the orchestrator function, performs work, and optionally returns a value
+- With v4 programming model, you can create all three functions in one file in your project
+
+### Patterns
 
 ![Durable function patterns](./images/azure-durable_function_workflow_patterns.png)
 

@@ -645,6 +645,9 @@ Tiers:
 - Only available for Premium tier
 - The private endpoints are created in AFD managed regional private network
 - You should choose the same (or closest) region to the origin resource
+- Supported PaaS services:
+  - Azure Container Apps
+  - Azure Functions
 
 ### CLI
 

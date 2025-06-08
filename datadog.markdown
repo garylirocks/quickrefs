@@ -42,6 +42,8 @@
   - [Service Catalog](#service-catalog)
 - [Synthetic testing](#synthetic-testing)
 - [Real User Monitoring (RUM)](#real-user-monitoring-rum)
+  - [Data masking](#data-masking)
+  - [Notes](#notes)
 - [Error Tracking](#error-tracking)
 - [Keys](#keys)
 - [DogStatsD](#dogstatsd)
@@ -550,6 +552,26 @@ Associate testing results to APM:
 
 - Works for web JS and mobile apps
 - You need to instrument your app with RUM SDK (by `<script />` tag or NPM package)
+- RUM (user sessions, actions, more metrics) could be enabled/disabled separately
+  - Error Tracking is enabled when you enable RUM
+- Parameters:
+  - `trackUserInteractions` enables the collection of user clicks in your application, which means sensitive and private data contained in your pages may be included to identify elements that a user interacted with
+  - `enablePrivacyForActionName` masks all action names, you can use it in conjunction with the `mask` privacy setting. This operation automatically substitutes all non-overridden action names with the placeholder `Masked Element`
+
+### Data masking
+
+- `Sensitive Data Scanner` could be used for RUM events
+  - You could add custom regex to mask URL paths
+- RUM init parameters:
+  - `defaultPrivacyLevel`
+  - `enablePrivacyForActionName`
+  - `beforeSend` callback function to redact event properties like `view.url`, `action.target.name`, etc
+
+
+### Notes
+
+- URL path segment with any number `/hello-10.html` will be showing up as `/?` by default, you'll need to manually set the view name
+  - This is not controlled by `defaultPrivacyLevel`, or `Sensitive Data Scanner `
 
 
 ## Error Tracking
