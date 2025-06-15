@@ -50,7 +50,10 @@ There are different app types:
 - `kind` field is different:
   - `api` for Api App
   - `app` for Web App
+    - `app,linux` Linux host
+    - `app,linux,container` Linux host, deployed as a container
   - `functionapp` for Function App
+    - `functionapp,linux` Linux host
   - `functionapp,workflowapp` for Logic App (Standard)
 
 
@@ -232,6 +235,8 @@ App settings are passed to app code as environment variables, your app restarts 
 - A slot is a separate instance of your app, has its own hostname
 - Each slot shares the resources of the App Service plan
 - Only available in the Standard, Premium or Isolated tier
+  - max 5 slots per app for Standard
+  - max 20 slots per app for Premium, Isolated
 - You can create a new slot by cloning the config of an existing slot, but you can't clone the content, which needs to be deployed
 
 If you app name is `garyapp`, the urls would be like
@@ -289,8 +294,22 @@ az webapp log download \
 
 ### Site extensions
 
-You could install site extensions to an app, for example: Datadog, Dynatrace
+- You could install site extensions to an app, for example: Datadog, Dynatrace
   - Dynatrace could inject JS tags to HTML files served by the app
+- Can't query site extensions in Azure Resource Graph, use CLI:
+  ```sh
+  az resource show
+    --resource-group <rg-name> \
+    --resource-type Microsoft.Web/sites/siteextensions \
+    --name "<app-name>/siteextensions"
+  ```
+- For slots, you need to install extensions separately
+  ```sh
+  az resource show
+    --resource-group <rg-name> \
+    --resource-type Microsoft.Web/sites/siteextensions \
+    --name "<app-name>/slots/<slot-name>/siteextensions"
+  ```
 
 ### WebJobs
 
