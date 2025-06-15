@@ -1176,7 +1176,7 @@ gh run list --workflow "Custom test" \
 - Hosted by GitHub in a Docker container, running on a VM
 - The VM
   - The VM is dedicated to you
-  - Code is cloned to `/workspaces` directory in the VM and them mounted into the dev container
+  - Code is cloned to `/workspaces` directory in the VM and then mounted into the dev container
 - The Container
   - Based on `devcontainer.json`, or a default image based on Ubuntu is used
   - If no `devcontainer.json` exists, you will be using a default image
@@ -1190,6 +1190,6 @@ gh run list --workflow "Custom test" \
 
 ### Features
 
-- Publish your app from a codespace, could be accessied with a url like `https://<codespace-name>-<port>.app.github.dev/`
+- Publish your app from a codespace, could be accessed with a url like `https://<codespace-name>-<port>.app.github.dev/`
 - Quickstart templates for popular frameworks (React, Jupyter, etc)
 - Use "Settings Sync" to sync your settings
