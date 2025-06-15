@@ -18,7 +18,7 @@
   - [Run Prettier and ESLint together](#run-prettier-and-eslint-together)
 - [Dev Containers](#dev-containers)
   - [Config file](#config-file)
-  - [Files](#files)
+  - [Files in the container](#files-in-the-container)
 - [Debugging](#debugging)
   - [Trouble shooting](#trouble-shooting)
   - [Sample debugging settings for React / Mocha](#sample-debugging-settings-for-react--mocha)
@@ -178,11 +178,13 @@ ESLint's rules regarding code style may conflict with Prettier, to make them wor
 ### Config file
 
 - Location: `.devcontainer/devcontainer.json`
+- Check `https://containers.dev` for a list of dev container templates
+  - All are based on Linux
 - When you open a folder in container, and no config files exist, VS Code allows you to choose a devcontainer template, you can choose image, version, additional features
   - The result is written into `.devcontainer/devcontainer.json`
   - The templates come from [`devcontainers/templates`](https://github.com/devcontainers/templates) repository
 
-### Files
+### Files in the container
 
 - `/workspaces` - the code
 - `/vscode/vscode-server/`
