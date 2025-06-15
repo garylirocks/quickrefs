@@ -552,7 +552,7 @@ Associate testing results to APM:
 
 - Works for web JS and mobile apps
 - You need to instrument your app with RUM SDK (by `<script />` tag or NPM package)
-- RUM (user sessions, actions, more metrics) could be enabled/disabled separately
+- There is a setting to enable/disable RUM, but if disabled, no session is ingested, seems only data collected is view count ?
   - Error Tracking is enabled when you enable RUM
 - Parameters:
   - `trackUserInteractions` enables the collection of user clicks in your application, which means sensitive and private data contained in your pages may be included to identify elements that a user interacted with
