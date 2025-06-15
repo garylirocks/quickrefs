@@ -12,6 +12,7 @@
   - [Deployment](#deployment)
   - [App settings and connection strings](#app-settings-and-connection-strings)
   - [Deployment slots](#deployment-slots)
+    - [Routing](#routing-1)
     - [Swap](#swap)
   - [Scaling](#scaling)
   - [Node app](#node-app)
@@ -244,6 +245,12 @@ If you app name is `garyapp`, the urls would be like
 - production: https://garyapp.azurewebsites.net/
 - staging: https://garyapp-staging.azurewebsites.net/
 
+#### Routing
+
+By default, all client requests to the app's production URL are routed to the production slot. You can route a portion of the traffic to another slot.
+
+- It's done via the `x-ms-routing-name=<slot-name>` cookie, use `self` for the prod slot
+- Or you can pin to a specific slot by adding it to the URL `<webappname>.azurewebsites.net/?x-ms-routing-name=staging`
 
 #### Swap
 
@@ -251,6 +258,7 @@ If you app name is `garyapp`, the urls would be like
 - If you want rollback, swap again.
 - App Service warms up the app by sending a request to the root of the site after a swap.
 - When swapping two slots, configurations get swapped as well, unless a configuration is '**Deployment slot settings**', then it sticks with the slot (this allows you to config different DB connection strings or `NODE_ENV` for production and staging and make sure they don't swap with the app)
+- Site extensions are swapped as well
 - 'Auto Swap' option is available for Windows.
 
 ### Scaling
@@ -310,6 +318,7 @@ az webapp log download \
     --resource-type Microsoft.Web/sites/siteextensions \
     --name "<app-name>/slots/<slot-name>/siteextensions"
   ```
+- When you swap slots, the site extensions are swapped as well
 
 ### WebJobs
 
