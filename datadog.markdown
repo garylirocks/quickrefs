@@ -24,6 +24,7 @@
     - [Node.js](#nodejs)
   - [Ingestion Sampling](#ingestion-sampling)
   - [Filtering](#filtering)
+  - [Trace retention](#trace-retention)
   - [Continuous Profiler](#continuous-profiler)
 - [Network Performance Monitoring (NPM)](#network-performance-monitoring-npm)
 - [Integrations](#integrations)
@@ -336,6 +337,22 @@ Could be done with either Trace Agent (in Datadog Agent) configuration or Tracer
     })
     ```
 
+### Trace retention
+
+- **The Intelligent Retention Filter**
+  - Retains spans for every environment, service, operation, and resource for different latency distributions.
+- Default retention filters:
+  - Synthetics Default: `@_dd.origin:(synthetics OR synthetics-browser)`
+  - Error Default: `status:error`
+- Custom filters:
+  - Based on span attributes or tag filters
+  - Query could be targeting: Trace root spans, Service entry spans, or all spans
+  - Then you define:
+    - Span rate: percentage of matching spans to index
+    - Trace rate: percentage of full traces associated with the indexed span
+- Depending on your filters:
+  - some spans are indexed by itself, not in a full trace
+  - some spans are indexed because it is in the same trace with an indexed span
 
 ### Continuous Profiler
 
