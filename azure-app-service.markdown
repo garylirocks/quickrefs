@@ -306,14 +306,14 @@ az webapp log download \
   - Dynatrace could inject JS tags to HTML files served by the app
 - Can't query site extensions in Azure Resource Graph, use CLI:
   ```sh
-  az resource show
+  az resource show \
     --resource-group <rg-name> \
     --resource-type Microsoft.Web/sites/siteextensions \
     --name "<app-name>/siteextensions"
   ```
 - For slots, you need to install extensions separately
   ```sh
-  az resource show
+  az resource show \
     --resource-group <rg-name> \
     --resource-type Microsoft.Web/sites/siteextensions \
     --name "<app-name>/slots/<slot-name>/siteextensions"
