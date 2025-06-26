@@ -40,7 +40,9 @@
     - [Job authorization scope](#job-authorization-scope)
     - [Built-in identities](#built-in-identities)
   - [Agent pools](#agent-pools)
-  - [Managed DevOps Pool](#managed-devops-pool)
+    - [Microsoft-hosted](#microsoft-hosted)
+    - [Managed DevOps Pool](#managed-devops-pool)
+    - [Self-hosted](#self-hosted)
   - [Deployment jobs](#deployment-jobs)
     - [Deployment strategies](#deployment-strategies)
   - [GitHub integration](#github-integration)
@@ -1199,30 +1201,25 @@ ADO uses built-in identities(users) to execute pipelines. For a project `MyProje
 The collection-scoped one is used unless you limit the job access scope to "project" as described above.
 
 
-
 ### Agent pools
 
-Build agent can be organized into pools, either Microsoft hosted or self-hosted.
+- Build agent can be organized into pools
+- Pools are shared across projects in an organization
+- Types:
+  - Managed DevOps Pool
+  - Azure VMSS
+  - Self-hosted
 
-Use self-hosted agent:
-  - Install needed build tools, such as Node, NPM, Make, .NET, etc, each agent's capabilities are registered in a pool, Azure Pipelines select the right one for a build job (which specifies capability requirement using the `demands` section)
-    ```yaml
-    pool:
-      name: 'MyAgentPool'   # specify a self-hosted pool
-      demands:
-        - npm               # capability requirement for an agent
-    ```
-  - Generate a PAT (Personal Access Token) to register your hosted agent in a pool
-  - You need to install the agent software on your machine, and start a daemon service to connect to the pool
+#### Microsoft-hosted
 
-Microsoft-hosted agents have some limitations:
+Have some limitations:
 
 - Can't be connected to remotely
 - Can't drop artifacts to a UNC file share
 - Can't join directly to your corporate network
 - Can't pre-load software, you need to install during a pipeline run
 
-### Managed DevOps Pool
+#### Managed DevOps Pool
 
 - Resources in Azure
 - Placed in "Dev Center" -> "Dev Center project"
@@ -1233,6 +1230,20 @@ Microsoft-hosted agents have some limitations:
   - Max. count of agents
 - Networking: could be an isolated vNet or an existing vNet
 - Scaling: could have a schedule to pre-provision agents, so they become standby, ready to receive jobs
+
+#### Self-hosted
+
+- Install needed build tools, such as Node, NPM, Make, .NET, etc, each agent's capabilities are registered in a pool, Azure Pipelines select the right one for a build job (which specifies capability requirement using the `demands` section)
+  ```yaml
+  pool:
+    name: 'MyAgentPool'   # specify a self-hosted pool
+    demands:
+      - npm               # capability requirement for an agent
+  ```
+- Generate a PAT (Personal Access Token) to register your hosted agent in a pool
+- You need to install the agent software on your machine, and start a daemon service to connect to the pool
+
+
 
 ### Deployment jobs
 
