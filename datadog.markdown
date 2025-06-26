@@ -35,6 +35,7 @@
   - [Best practices](#best-practices)
 - [Agent/library Configuration](#agentlibrary-configuration)
   - [Remote configuration](#remote-configuration)
+  - [Fleet Automation](#fleet-automation)
   - [Processes](#processes)
 - [Monitor](#monitor)
   - [Notifications](#notifications)
@@ -44,6 +45,7 @@
 - [Synthetic testing](#synthetic-testing)
 - [Real User Monitoring (RUM)](#real-user-monitoring-rum)
   - [Data masking](#data-masking)
+  - [Correlate RUM with APM](#correlate-rum-with-apm)
   - [Notes](#notes)
 - [Error Tracking](#error-tracking)
 - [Keys](#keys)
@@ -396,6 +398,7 @@ Three types:
 - **Agent-based (system checks)**, use a Python class method called `check`
   - `check` method executes every 15 seconds
   - A check could collects multiple metrics, events, logs and service checks
+    - You can use `http_check` to collect metrics from an HTTP endpoint, it generates metrics like `network.http.can_connect`, `network.http.response_time`, etc
   - Show the checks `docker compose exec datadog agent status`
   - Run a specific check `docker compose exec datadog agent check disk`
 - **Authentication based (crawler)**
@@ -493,16 +496,45 @@ By priority (high to low):
 
 ### Remote configuration
 
-- Works for agents or tracing libraries
-- Enables them to pull configurations from Datadog
+- Remotely config Datadog components: Agents, tracing libraries, Observability Pipelines Worker
+- Agents poll, receive, and automatically apply configuration updates from Datadog
+  - Tracing libraries communicate with Agents to request and receive configuration updates
 - Could be enabled at organization scope
+  - Enabled by default in most cases, see [here](https://docs.datadoghq.com/agent/remote_config/?tab=configurationyamlfile#enabling-remote-configuration)
+  - An API key could be enabled or disabled for remote configuration
+- Supported environments:
+  - Agents on hosts
+  - Serverless container cloud services: AWS Fargate
+  - Not supported: Azure Container Apps, Azure Functions
 - Supported features:
-  - APM (config, sampling rate)
+  - Fleet automation
+  - APM
+    - services's trace sampling rate, log injection enablement, HTTP header tags, etc
+    - Agent trace sampling rate, etc
+  - Dynamic instrumentation (metrics, logs and traces from live application without code change)
   - ASM (protect against OWASP, WAF attack patterns)
   - CSM (default agent rules, agentless scanning in AWS only ?)
-  - Dynamic instrumentation (metrics, logs and traces from live application without code change)
-  - Fleet automation
-  - Control observability pipeline workers
+  - Control observability pipeline workers (OPW)
+  - Sensitive Data Scanner (SDS)
+    - Redact sensitive info in your logs
+
+### Fleet Automation
+
+- View Agent configuration
+  - Enabled by default in later versions
+  - Set `inventories_configuration_enabled=true` for older versions
+- View Agent integration configurations
+  - Enabled by default in later versions
+  - Set `inventories_checks_configuration_enabled=true` for older versions
+- Remotely Upgrade/Downgrade and Configure Agents
+  - Needs to enable "Remote Agent Management"
+  - You need to set `DD_REMOTE_UPDATES=true` when installing the Agent
+  - Upgrade is supported only for Agents on Hosts or in Kubernetes
+- Send a flare
+- Rotate API keys (which key is used by which Agents)
+- Audit trail: config changes, API key updates, etc
+  - 90 days if enabled in your org, otherwise 24 hours
+
 
 ### Processes
 
@@ -531,14 +563,22 @@ Slack - @slack-{{service.name}}
 
 ## Universal Service Monitoring (USM)
 
-Enabling USM requires the following:
+Features:
+
+- No instrumentation
+- Relies on configured Agent and Unified Service Tagging
+- Only supports HTTP/HTTPS
+
+Prerequisites:
 
 - If on Linux, your service must be running in a container.
 - If on Windows and using IIS, your service must be running on a virtual machine.
-- The Datadog Agent needs to be installed alongside your service.
+- The Datadog Agent needs to be installed alongside your service
+  - Could be installed on the hosts or as a container
+  - No need for a tracing library
 - The `env` tag for Unified Service Tagging must be applied to your deployment.
 
-Commonly used container tags: `app`, `short_image`, `container_name`
+If `service` tag not found, Datadog uses container tags: `app`, `short_image`, `container_name`
 - `short_name` tag is used to discover common services, eg. `short_name:nginx` will identify `nginx` service
 
 ### `docker-compose`
@@ -555,6 +595,10 @@ Some services (eg. databases) showing up in the Catalog, but do not communicate 
 You can manage metadata of a service either:
 - Manually: using the web UI
 - Automatically: Github or Terraform
+
+Metrics:
+- `universal.http.server.*`: inbound traffic to your service
+- `universal.http.client.*`: outbound traffic to other destinations
 
 
 ## Synthetic testing
@@ -584,6 +628,11 @@ Associate testing results to APM:
   - `enablePrivacyForActionName`
   - `beforeSend` callback function to redact event properties like `view.url`, `action.target.name`, etc
 
+### Correlate RUM with APM
+
+You need to add `allowedTracingUrls` to the RUM init parameters
+
+Then the RUM SDK will add soem HTTP headers prefixed with `x-datadog-*` to XHR requests.
 
 ### Notes
 
