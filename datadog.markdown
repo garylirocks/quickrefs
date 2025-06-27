@@ -58,6 +58,7 @@
   - [Container Apps](#container-apps)
     - [Via sidecar container](#via-sidecar-container)
     - [Via `serverless-init`](#via-serverless-init)
+- [Gotchas](#gotchas)
 
 
 ## Overview
@@ -196,6 +197,9 @@ You can create an SLO based on a monitor, then you can create a monitor on an SL
 - **Trace**: tracks the time spent by an application processing a request and the status of this request. Each trace consists of one or more spans.
 - **Span**: represents a logical unit of work in a distributed system for a given time period. Multiple spans construct a trace.
   - **Trace root span**: The entry point of the entire trace, the service that generates this first span also creates the Trace ID
+  - Span tags and attributes are similar but distinct concepts:
+  - **Tags** provide context (about the host, container or service): `hostname`, `pod_name`, ...
+  - **Attributes** are about the content of a span, eg. `http.url`, `http.status_code`, `error.message`, ..., use `@` prefix in queries, like `@http.status_code:500`
 
 ### Instrumentation
 
@@ -808,3 +812,10 @@ You could set up everything with a template provided by Datadog, it deploys:
   ENTRYPOINT ["/app/datadog-init"]
   CMD ["/nodejs/bin/node", "/path/to/your/app.js"]
   ```
+
+
+## Gotchas
+
+- `http.client_ip` is disabled by default, you need to enable it with :
+  - `DD_TRACE_CLIENT_IP_ENABLED="true"`
+  - To use a custom header, use `DD_TRACE_CLIENT_IP_HEADER="x-custom-ip-header"`
