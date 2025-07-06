@@ -549,6 +549,7 @@ By priority (high to low):
 - Enable it in `datadog.yaml`
 - Monitor all running processes
 - Does not support Unix (IBM AIX)
+- Show up in "Infrastructure -> Processes"
 
 #### Process checks
 
@@ -559,6 +560,7 @@ By priority (high to low):
   - `system.processes.cpu.pct`
   - `system.processes.threads`
   - `system.processes.run_time.avg` (The average running time of all instances of this process)
+- Don't show up in "Infrastructure -> Processes"
 
 
 ## Monitor
