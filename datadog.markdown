@@ -37,6 +37,8 @@
   - [Remote configuration](#remote-configuration)
   - [Fleet Automation](#fleet-automation)
   - [Processes](#processes)
+    - [Live Processes](#live-processes)
+    - [Process checks](#process-checks)
 - [Monitor](#monitor)
   - [Notifications](#notifications)
 - [Universal Service Monitoring (USM)](#universal-service-monitoring-usm)
@@ -44,6 +46,7 @@
   - [Service Catalog](#service-catalog)
 - [Synthetic testing](#synthetic-testing)
 - [Real User Monitoring (RUM)](#real-user-monitoring-rum)
+  - [Collected event types](#collected-event-types)
   - [Data masking](#data-masking)
   - [Correlate RUM with APM](#correlate-rum-with-apm)
   - [Notes](#notes)
@@ -539,16 +542,23 @@ By priority (high to low):
 - Audit trail: config changes, API key updates, etc
   - 90 days if enabled in your org, otherwise 24 hours
 
-
 ### Processes
 
-By default, the agent do not collect process-level metrics, you need to enable it with `process.d/conf.yaml`
+#### Live Processes
 
-It could collect metrics like:
-- `system.processes.cpu.pct`
-- `system.processes.ioread_bytes`
-- `system.processes.threads`
-- `system.processes.run_time.avg` (The average running time of all instances of this process)
+- Enable it in `datadog.yaml`
+- Monitor all running processes
+- Does not support Unix (IBM AIX)
+
+#### Process checks
+
+- Enable in `conf.d/process.d`
+- Specify which processes to monitor by PID file or command string matching
+- Collects metrics like
+  - `system.processes.number` number of processes
+  - `system.processes.cpu.pct`
+  - `system.processes.threads`
+  - `system.processes.run_time.avg` (The average running time of all instances of this process)
 
 
 ## Monitor
@@ -623,6 +633,24 @@ Associate testing results to APM:
   - `trackUserInteractions` enables the collection of user clicks in your application, which means sensitive and private data contained in your pages may be included to identify elements that a user interacted with
   - `enablePrivacyForActionName` masks all action names, you can use it in conjunction with the `mask` privacy setting. This operation automatically substitutes all non-overridden action names with the placeholder `Masked Element`
 
+### Collected event types
+
+<img src="./images/datadog_rum-event-types.png" width="400" alt="Collected event types" />
+
+- Session: has a session id (reset after 15mins of inactivity)
+- View: create a new view each time when you load a new page, or route change an SPA
+- Resource: images, JS, CSS, XHR, Fetch, etc
+- Long Task: any task that blocks the main thread for more than 50ms
+- Error
+- Action: when `trackUserInteractions` is `true`
+  - You could use `data-dd-action-name=<my-action>` on elements to customize action name
+  - Use `addAction` to send custom actions
+
+To add additional data to events at different levels:
+- `setGlobalContextProperty()`
+- `setViewContextProperty()`
+- `event.context.<key> = <value>`
+
 ### Data masking
 
 - `Sensitive Data Scanner` could be used for RUM events
@@ -636,11 +664,11 @@ Associate testing results to APM:
 
 You need to add `allowedTracingUrls` to the RUM init parameters
 
-Then the RUM SDK will add soem HTTP headers prefixed with `x-datadog-*` to XHR requests.
+Then the RUM SDK will add some HTTP headers prefixed with `x-datadog-*` to XHR requests.
 
 ### Notes
 
-- URL path segment with any number `/hello-10.html` will be showing up as `/?` by default, you'll need to manually set the view name
+- A URL path segment with any number `/hello-10.html` will be showing up as `/?` by default, you'll need to manually set the view name
   - This is not controlled by `defaultPrivacyLevel`, or `Sensitive Data Scanner `
 
 
