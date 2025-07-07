@@ -418,14 +418,6 @@ Supported OpenID Connect scopes:
 
 *At this time, the `offline_access` and `user.read` permissions are automatically included in the initial consent to an application. These permissions are generally required for proper app functionality; `offline_access` gives the app access to refresh tokens, critical for native and web apps, while `user.read` gives access to the `sub` claim, allowing the client or app to correctly identify the user over time and access rudimentary user information.*
 
-Best practices:
-
-- There are settings for
-  - "User consent for applications"
-  - "Group owner consent for apps accessing data"
-  - "Admin consent request" - whether user can request admin consent to apps they are unable to consent to
-- Restricting user consent to "Allow user consent for apps from verified publishers, for selected permissions (Recommended)"
-
 ### Consent
 
 Some high-privilege permissions are admin-restricted, only an admin can consent, like:
@@ -436,6 +428,13 @@ Some high-privilege permissions are admin-restricted, only an admin can consent,
 
 The requested permissions in "App registration" should be all the permissions this app could possibly require, should be a **superset** of the permissions that it will request dynamically/incrementally.
 
+**Which admins** can grant admin consent:
+
+- "Privileged Role Administrator", "Global Administrator"
+  - `microsoft.directory/servicePrincipals/managePermissionGrantsForAll.microsoft-company-admin` Grant consent for any permission to any application
+- "Application Administrator", "Cloud Application Administrator"
+  - `microsoft.directory/servicePrincipals/managePermissionGrantsForAll.microsoft-application-admin` Grant consent for application permissions and delegated permissions on behalf of any user or all users, except for application permissions for Azure AD Graph and Microsoft Graph
+
 Admins could grant **tenant-wide admin consent**:
 
 - In the Portal, you could do it in either
@@ -445,7 +444,7 @@ Admins could grant **tenant-wide admin consent**:
 - Whether a permission is "Admin consent required" could be different in different organizations.
 - An admin could consent to both delegated permissions and application permissions
 
-How admins consent to an app:
+**How** admins consent to an app:
 
 - When an admin logs in to the app for the first time (in the `/authorize` endpoint), they would be asked if they would consent on behalf of the entire tenant
 - In the Portal, click button in either "Enterprise applications" -> "Permissions" or "App registrations" -> "API permissions"
@@ -456,7 +455,15 @@ How admins consent to an app:
 
 You could configure tenant-wide consent settings in "Enterprise applications" -> "Consent and permissions"
 
-
+- User consent settings:
+  - Whether allow users to consent
+  - **Recommended**: Allow user consent for apps from verified publishers, for selected permissions
+- Admin consent settings:
+  - Whether users can request admin consent
+  - Who can review admin consent requests (specify users, groups, roles)
+  - Consent request expiration days
+- Permission classifications
+  - Which permissions that users are allowed to consent to
 
 ### App roles
 
