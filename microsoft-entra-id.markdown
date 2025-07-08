@@ -637,7 +637,7 @@ Group types
   - Has a shared email address, calendar and SharePoint site, OneNote notebook
   - You could create a team in Teams from a group
 - **Distribution**
-  - A groups of email addresses (could have external email addresses)
+  - A group of email addresses (could have external email addresses)
 
 
 Membership types:
