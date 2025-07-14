@@ -89,6 +89,7 @@ Pricing:
   - DNAT rules are applied first. If a match is found, an **implicit corresponding network rule to allow the translated traffic is added**. You can override this behavior by explicitly adding a network rule collection with deny rules that match the translated traffic. **No application rules are applied for these connections**.
   - Work for private IP destinations as well (ie. spoke to spoke, on-prem to spoke)
   - In addition to DNAT, inbound connections via public IP are always SNATed to one of the firewall private IPs. (For HTTP/s traffic, Azure Front Door or Application Gateway in front of the firewall could preserve the original client IP in `X-Forwarded-For` header)
+  - Allows FQDN filtering, helpful if the destination IP is dynamic
 - **Network rules**:
   - Apply to TCP, UDP, ICMP or any IP protocol
   - Could inspect traffic from one subnet to another
