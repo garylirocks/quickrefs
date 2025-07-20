@@ -7,6 +7,7 @@
   - [Provisioning](#provisioning)
   - [Auto-shutdown](#auto-shutdown)
   - [Stop and start VMs on a schedule](#stop-and-start-vms-on-a-schedule)
+  - [Authentication](#authentication)
   - [Use AAD for VM authentication](#use-aad-for-vm-authentication)
   - [Extensions vs. applications](#extensions-vs-applications)
   - [Linux Agent](#linux-agent)
@@ -320,6 +321,13 @@ Microsoft provides a solution "Start/Stop VMs v2"
   - App Insights
   - Log analytics
   - Other accessory resources
+
+### Authentication
+
+- For Windows
+  - the user you created during the VM creation is an administrator, in the `Administrators` local group
+  - After you join the VM to a domain, `DOMAIN\Domain Admins` will be added to the `Administrators` local group as well
+
 
 ### Use AAD for VM authentication
 

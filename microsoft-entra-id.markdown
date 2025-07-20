@@ -954,8 +954,6 @@ az rest -u "https://graph.microsoft.com/v1.0/roleManagement/directory/roleDefini
     - Granting a specific set of guest users read access instead of granting it to all guest users.
 - User Administrator
 
-Roles that can add users to role-assignable groups:
-
 #### Add users to groups
 
 - `microsoft.directory/groups/members/update`
