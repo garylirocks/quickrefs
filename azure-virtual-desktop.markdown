@@ -16,8 +16,10 @@
   - A logical grouping of applications that are available on session hosts
   - Must be put in a host pool, and a workspace
   - Two types: RemoteApp or Desktop
+  - Assigned to users or groups
 - **Workspace**
   - A logical grouping of application groups
+  - Controls network access (public, or private endpoint)
 - **Scaling plan**
   - Allows you to define schedules and automatically scale session hosts in a host pool based on workload and the schedules defined in the scaling plan
 - **Custom image template**
