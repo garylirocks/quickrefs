@@ -1,6 +1,7 @@
 # Microsoft Entra
 
 - [Overview](#overview)
+- [Data Protection](#data-protection)
 - [Permissions management (CloudKnox)](#permissions-management-cloudknox)
 - [Global Secure Access](#global-secure-access)
   - [Global settings](#global-settings)
@@ -12,6 +13,19 @@
 
 
 ## Overview
+
+
+## Data Protection
+
+- Data is stored in one of four geographies: US, Europe, Asia Pacific, Australia
+  - One is chosen based on the country you selected for your tenant
+- Each geography contains 4 regions
+- Each region hosts multiple "cells"
+  - Each cell is replicated to 4 regions in the geo
+  - Each cell serves multiple tenants
+  - Each cell has multiple partitions
+  - A tenant's objects are spread across multiple partitions in a cell
+
 
 ## Permissions management (CloudKnox)
 
