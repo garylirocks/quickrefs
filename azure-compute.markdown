@@ -1115,7 +1115,7 @@ Organization:
 
 - Gallery: `Microsoft.Compute/galleries`
   - could be either shared with community or not
-- Image: `Microsoft.Compute/galleries/images`
+- VM image definition: `Microsoft.Compute/galleries/images`
   - `osType`: Windows or Linux
   - `osState`: Generalized or Specified
   - `identifier` -> `publisher`, `offer`, `sku`
