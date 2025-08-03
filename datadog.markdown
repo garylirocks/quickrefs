@@ -218,7 +218,7 @@ You can create an SLO based on a monitor, then you can create a monitor on an SL
       - Not working for `console.log()`
       - Not working for `morgan` in NodeJS, you may make it work manually, see https://github.com/delfiatech/dd-nodejs-morgan
   - `DD_TRACE_SAMPLE_RATE`
-  - `DD_PROFILING_ENABLED` whether enable continuous profiler
+  - `DD_PROFILING_ENABLED` whether enable continuous profiler (NOT supported by all languages)
   - `DD_SERVICE_MAPPING` rename service
 - For Python app, run it with command `ddtrace-run`, like:
 
@@ -349,11 +349,12 @@ Could be done with either Trace Agent (in Datadog Agent) configuration or Tracer
 ### Trace retention
 
 - **The Intelligent Retention Filter**
-  - Retains spans for every environment, service, operation, and resource for different latency distributions.
-- Default retention filters:
+  - Always on
+  - Retains a subset of spans for every environment, service, operation, and resource for different latency distributions
+- **Default retention filters**:
   - Synthetics Default: `@_dd.origin:(synthetics OR synthetics-browser)`
   - Error Default: `status:error`
-- Custom filters:
+- **Custom filters**:
   - Based on span attributes or tag filters
   - Query could be targeting: Trace root spans, Service entry spans, or all spans
   - Then you define:
