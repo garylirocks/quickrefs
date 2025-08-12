@@ -50,6 +50,7 @@
   - [Data masking](#data-masking)
   - [Correlate RUM with APM](#correlate-rum-with-apm)
   - [Notes](#notes)
+- [Database Monitoring (DBM)](#database-monitoring-dbm)
 - [Error Tracking](#error-tracking)
 - [Keys](#keys)
 - [DogStatsD](#dogstatsd)
@@ -673,6 +674,15 @@ Then the RUM SDK will add some HTTP headers prefixed with `x-datadog-*` to XHR r
 
 - A URL path segment with any number `/hello-10.html` will be showing up as `/?` by default, you'll need to manually set the view name
   - This is not controlled by `defaultPrivacyLevel`, or `Sensitive Data Scanner `
+
+
+## Database Monitoring (DBM)
+
+- It has a small impact on the DB performance, you can tweak data collection frequency and query sampling rate
+- For self-hosted databases, you can install the Datadog Agent on the database host, and enable the integration
+- For cloud-managed databases, you need to intall the Agent on a separate host, and configure it to connect to each managed instance
+  - Metrics such as CPU, memory, disk usage and related telemetry are collected directly from the cloud provider using Datadog integration with that provider
+  ![DBM architecture](./images/datadog_database-monitoring-cloud-dbs.avif)
 
 
 ## Error Tracking

@@ -354,8 +354,8 @@ This section applies to Azure SQL Database, Azure SQL Managed Instance, or Azure
 
 SQL logins and users:
 
-- A **login** is an individual **account** in the `master` database, to which a user account in one or more databasese can be linked. Credential stored with the login in `master`.
-- A **user account** is an individual **account** in any database that may be, but not have to be, linked to a login. If not linked, credential is stored in the database.
+- A **login** is an individual **account** in the `master` database, to which a **user account** in one or more databasese can be linked to. Credential for the **login** is stored in `master`.
+- A **user account** is an individual **account** in any database that may be, but not have to be, linked to a **login**. If not linked, credential is stored in the database.
 
 To create a user, you need `ALTER ANY USER` permission in the database, it's held by:
 - server admin accounts
@@ -383,8 +383,7 @@ When you deploy Azure SQL:
   - is member of the `db_owner` fixed database role
 
 ### Entra auth (contained user)
-
-- To use Entra auth, you need create a Entra ID-based contained database user
+- To use Entra auth, you need to create an Entra ID-based contained database user
   - A contained user doesn't have a login in the `master` database
 - You need to login with a Entra admin account to create the first contained user.
 - If the Entra admin was removed from the server, existing Entra users created previously inside the server can **no longer** connect to the database with Entra auth.
@@ -407,7 +406,7 @@ When you deploy Azure SQL:
   ALTER ROLE db_datareader ADD MEMBER "<identity-name>";
   ```
 
-  The `CREATE USER "<identity-name>" FROM EXTERNAL PROVIDER` command requires **access from SQL to Entra on behalf of the logged-in user**, the user needs MS Graph permissions to read user/group/apps (see the [applications section](#applications) below.
+  The `CREATE USER "<identity-name>" FROM EXTERNAL PROVIDER` command requires **access from SQL to Entra on behalf of the logged-in user**, the user needs MS Graph permissions to read user/group/apps (see the [applications section](#applications) below).
 - There are a few authentication options when you use tools like SSMS to connect to Azure SQL, notes:
   - **Microsoft Entra integrated**, only works if
     - You are signed in to a domain-joined machine

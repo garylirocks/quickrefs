@@ -33,6 +33,11 @@ docker exec -it sql1 "bash"
 
 ## Concepts
 
+- schema
+  - A schema is like a folder inside a database that holds tables, views, etc.
+  - Helps with organization, permissions, and naming separation
+  - Default schema is typically `dbo`
+
 - "dbo"
 
   "dbo" stands for "database owner" and is the default schema. When you create a table without explicitly specifying a schema, SQL Server assumes the "dbo" schema by default.
