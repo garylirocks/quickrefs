@@ -447,6 +447,9 @@ Admins could grant **tenant-wide admin consent**:
 **How** admins consent to an app:
 
 - When an admin logs in to the app for the first time (in the `/authorize` endpoint), they would be asked if they would consent on behalf of the entire tenant
+- "Enterprise applications" -> "Admin consent requests" allows admins to review and approve/deny requests from users
+  - *Multiple requests for the same app are grouped together*
+  - *If a user requests multiple times, only the first request is shown*
 - In the Portal, click button in either "Enterprise applications" -> "Permissions" or "App registrations" -> "API permissions"
 - Use the admin consent endpoint
   - During sign-up or the first sign-in, you can redirect the user to the admin consent endpoint, `https://login.microsoftonline.com/\{tenant\}/v2.0/adminconsent?client_id={client-id}&state=12345&redirect_uri=http://localhost/myapp/permissions&scope=https://graph.microsoft.com/calendars.read https://graph.microsoft.com/mail.send`

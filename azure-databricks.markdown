@@ -48,7 +48,7 @@ Networking diagram:
   - If you have Azure resources in another subnet you want to protect, add a Inbound *deny* rule
 - You might need to configure UDRs for these two subnets, to route via `INTERNET` for following destinations:
   - `Azure Databricks`
-  - Extended infrastructure IP (for standby Azure Databricks inferastructure to improve the stability of Databricks services)
+  - Extended infrastructure IP (for standby Azure Databricks infrastructure to improve the stability of Databricks services)
   - `Azure SQL` (for Azure Databricks metastore)
   - `Azure Storage` (for artifact Blob storage and log Blob storage)
   - `Azure Event Hub` (for logging to Azure Event Hub)
