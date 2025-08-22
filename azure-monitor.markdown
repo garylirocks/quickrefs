@@ -618,8 +618,15 @@ Signal types:
   - Scope: all or selected resource types, at subscription or resource group level
   - Condition: resource status change (eg. from available to unavailable), and whether it's platform or user initiated
 - **Service health** (`Microsoft.Insights/ActivityLogAlerts`)
-  - Scope: Can be created only at subscription level. If you need to alert on more subscriptions, create a separate alert rule for each subscription. You'll only be notified on health events impacting the services used in your subscription.
+  - Scope:
+    - **Tenant level** (preview): For issues impacting entire tenant, the alert rule resource still needs to be created in a subscription.
+      - Events show up in Service Health page, NOT the usual alerts list.
+      - To create a rule, user must have Read access to tenant data, (put it another way, must have an admin role, could be the "Global Reader" role, see a list of eligible roles [here](https://learn.microsoft.com/en-us/azure/service-health/admin-access-reference))
+    - **Subscription level**: You'll only be notified on health events impacting the services used in your subscription. So you need create rules for each subscription.
   - Condition: service types, regions and event types (service issue, planned maintenance, etc).
+  - Notes:
+    - You should create both tenant and subscription level rules
+    - An issue will only trigger alert at one level, not both
 - **Advisor** (`Microsoft.Insights/ActivityLogAlerts`)
   - Scope: subscription, or resource group
   - Condition:
