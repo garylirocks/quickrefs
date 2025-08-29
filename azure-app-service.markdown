@@ -24,6 +24,7 @@
     - [Authorization behavior](#authorization-behavior)
     - [Azure AD](#azure-ad)
     - [Token store](#token-store)
+    - [Application to application](#application-to-application)
   - [Backup](#backup)
   - [Move](#move)
 - [App Service Environment (ASE)](#app-service-environment-ase)
@@ -366,7 +367,6 @@ You could either
 
 You can inspect the user's claims for finer authorization. App service pass these two headers to your app code: `X-MS-CLIENT-PRINCIPAL-NAME`, `X-MS-CLIENT-PRINCIPAL-ID`
 
-
 #### Azure AD
 
 - If you use Azure AD, then an app registration is created
@@ -378,6 +378,64 @@ You can inspect the user's claims for finer authorization. App service pass thes
 #### Token store
 
 Tokens are cached in the store and passed to app code in headers like: `X-MS-TOKEN-AAD-ACCESS-TOKEN`, see https://docs.microsoft.com/en-us/azure/app-service/configure-authentication-oauth-tokens
+
+#### Application to application
+
+You can configure another application to access your web app. See: https://learn.microsoft.com/en-us/azure/app-service/configure-authentication-provider-aad?tabs=workforce-configuration#-configure-client-apps-to-access-app-service
+
+```sh
+tenantID="xxx"
+
+# web app reg
+webAppID="xxx"
+webAppName="xxx"
+
+# client app reg
+clientAppID="xxx"
+clientAppPassword="xxx"
+
+# login with client app
+az login --service-principal --tenant "$tenantID" --username "$clientAppID" --password "$clientAppPassword" --allow-no-subscriptions
+
+# get access token for the web app
+accessToken=$(az account get-access-token --scope "api://$webAppID/.default" --query accessToken -o tsv)
+
+echo $accessToken
+
+curl -I -H "authorization: Bearer $accessToken" "https://$webAppName.azurewebsites.net/"
+```
+
+Some important fields in the access token:
+
+```json
+{
+  "aud": "<app-id-of-the-web-app-reg>", // if the target web app's manifest has `"accessTokenAcceptedVersion": null`, then the `aud` has the format: `api://<app-id-of-the-web-app-reg>`; if it's `2`, then the `aud` is just the app id
+  "iss": "https://login.microsoftonline.com/<tenant-id>/v2.0",
+  "azp": "<app-id-of-client-app>", // authorized party
+  "oid": "<object-id-of-client-app>",
+  "roles": [ // if the target app has "App roles" defined, and the client app is assigned to one or more roles
+    "Writer"
+  ],
+  "sub": "<object-id-of-client-app>",
+  "tid": "<tenant-id>",
+  "ver": "2.0",
+}
+```
+
+Notes:
+
+- The web app needs to have an app registration (should be in the users tenant, could be the same as or different from the client app's tenant)
+- In the web app's Microsoft "Identity provider" setting
+  - the client ID of the client app needs to be in "Allowed client applications"
+  - seems no need to configure "Allowed token audiences"
+- The MS doc mentions you need to configure either "API permission" or "App roles"
+  - seems not always needed ?
+  - But if there's authorization error, add "App roles" in the web app and grant it to the client app
+  - After the client app been assigned an "App role", it shows up in "Enterprise Application" -> "User and Groups" as well
+- Careful which token version is used in the web app's app registration manifest, it affects the `aud` field in the token
+  - `accessTokenAcceptedVersion`:
+    - `null` or `1`: v1.0 token
+    - `2`: v2.0 token
 
 ### Backup
 

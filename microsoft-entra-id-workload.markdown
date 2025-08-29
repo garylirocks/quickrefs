@@ -476,11 +476,13 @@ This allows you to adopt RBAC for authorization in your application code.
 
     ![App roles](./images/azure_ad-app-roles.png)
 
-2. Add users/groups to a role in "Enterprise Application" -> "User and Groups".
-
-    To assign the App Role to an app, use PowerShell, see https://learn.microsoft.com/en-gb/entra/identity/managed-identities-azure-resources/how-to-assign-app-role-managed-identity
+1. Add users/groups to a role in "Enterprise Application" -> "User and Groups" (you can't assign an app here directly, see below)
 
     ![App role assignment](images/azure_ad-app-role-assignment.png)
+
+1. To assign an App Role to another app, use PowerShell (see [here](https://learn.microsoft.com/en-gb/entra/identity/managed-identities-azure-resources/how-to-assign-app-role-managed-identity)), or add it in "API permissions" of the client app
+
+    - Then the client app shows up in "Enterprise Application" -> "User and Groups" as well
 
 1. Now, when user login to your app, Entra adds `roles` claim to tokens it issues.
 
@@ -489,11 +491,11 @@ See: https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-add-a
 ### Expose API
 
 - The "Expose an API" menu in the Portal allows you to define scopes for an API application.
-  - This creates only "deletegated permissions".
+  - This creates only "**deletegated permissions**".
   - You could specify who can consent for this scope: "Admins and users" or "**Admins only**"
   - For application-only scopes, use "App roles" and define app roles assignable to applications.
 - Application ID URI need to be globally unique, usually has the form `api://<app-id>`, eg. `api://dev.guisheng.li/demo/api1`
-- You could add another application as an authorized client application to the scopes, then user won't be prompted to consent when login to the client application.
+- You could add another application as an authorized client application to the scopes, then user won't be prompted to consent when login with the client application.
 - When a client app requests the scope in its OAuth request, and the user consents (or pre-approved), Entra sends back an access token which contains the required scopes
 
 **Example**
