@@ -785,7 +785,7 @@ Common policies:
   - Not jailbroken or rooted
 - Require approved client applications
 - Require trusted location/compliant device/hybrid joined device to register MFA or SSPR
-  - You could choose "User actions" as "Target resources"
+  - You could choose "User actions -> Register security information" as "Target resources"
 - Enforce a user to consent to the terms of use
 
 Best practices:
