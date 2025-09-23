@@ -54,6 +54,9 @@
   - [Test runs](#test-runs)
 - [CLI](#cli)
 - [Billing](#billing)
+- [Users and groups](#users-and-groups)
+  - [Users](#users)
+  - [Groups](#groups)
 
 
 ## Overview
@@ -1536,6 +1539,25 @@ When you enabled billing, it will create a resource in an Azure subscription, so
 You can purchase these resources individually:
 
 - Paid parallel jobs (for pipeline), price differs for MS Hosted and Self-Hosted agents
-- Users: Basic, or Basic + Test Plans access level, Stakeholder users are free
+- Users:
+  - Basic, or Basic + Test Plans access level
+  - Stakeholder users are free
 - Advanced security: based on count of unique active committers
 - Artifact: based on storage usage
+
+
+## Users and groups
+
+### Users
+
+- Users could have different access levels
+  - Stakeholder: free, limited access to Boards, not repos ?
+  - Basic: most commonly used, access to most features except Test Plans
+  - Basic + Test Plans: access to all features except advanced security
+  - Other levels: based on Visual Studio/MSDN/GitHub Enterprise subscriptions
+- User access level could be assigned directly, or via group rules
+
+### Groups
+
+- Could be ADO group or MS Entra group
+- You can assign access level to users in a group, and scope to selected projects
