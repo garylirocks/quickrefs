@@ -58,6 +58,12 @@ az account show --query 'tenantId' -otsv
 
 After login, tokens (AccessToken, IdToken, RefreshToken) are saved in `~/.azure/msal_token_cache.json`
 
+Login with a service principal
+
+```sh
+az login --service-principal --username appID --tenant tenantID --password PASSWORD
+```
+
 ## Configurations
 
 ```sh
