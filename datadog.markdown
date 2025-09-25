@@ -51,6 +51,7 @@
   - [Correlate RUM with APM](#correlate-rum-with-apm)
   - [Notes](#notes)
 - [Database Monitoring (DBM)](#database-monitoring-dbm)
+  - [Example config for Oracle](#example-config-for-oracle)
 - [Error Tracking](#error-tracking)
 - [Keys](#keys)
 - [DogStatsD](#dogstatsd)
@@ -683,6 +684,46 @@ Then the RUM SDK will add some HTTP headers prefixed with `x-datadog-*` to XHR r
 - For cloud-managed databases, you need to intall the Agent on a separate host, and configure it to connect to each managed instance
   - Metrics such as CPU, memory, disk usage and related telemetry are collected directly from the cloud provider using Datadog integration with that provider
   ![DBM architecture](./images/datadog_database-monitoring-cloud-dbs.avif)
+
+
+### Example config for Oracle
+
+Config file path: `/etc/datadog-agent/conf.d/oracle.d/conf.yaml`
+
+With custom queries:
+
+```yaml
+init_config:
+instances:
+  - server: 'localhost:1521'
+    service_name: "XE" # The Oracle CDB service name
+    username: 'c##datadog'
+    password: 'OraclePass'
+    dbm: true
+    tags:  # Optional
+      - 'service:oracle-dbm-test'
+      - 'env:dev'
+
+    custom_queries:
+      - metric_prefix: oracle
+        query: SELECT 'foo', 11 FROM dual
+        columns:
+        - name: foo
+          type: tag
+        - name: gary.event.total
+          type: gauge
+        tags:
+        - test:tag_value_1
+        pdb: XEPDB1
+      - metric_prefix: oracle
+        query: select count(*) as audit_count from audit_actions
+        columns:
+        - name: audit_count
+          type: gauge
+        tags:
+        - test:tag_value_2
+        pdb: XEPDB1
+```
 
 
 ## Error Tracking
