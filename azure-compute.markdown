@@ -160,6 +160,7 @@ See naming convention here: https://learn.microsoft.com/en-us/azure/virtual-mach
   - Multiple VMs in an availability set are spread across Fault Domains and Update Domains
     - The maximum fault domain count is depended on region
     - The maximum update domain count is 20
+    - VMs are placed to update domains in round-robin fashion, so VMs in the same availability set are evenly distributed across update domains
   - The VMs in a set should perform identical functionalities and have the same software installed
   - You can only add a VM to an availability set when creating a VM, you can't add an existing VM to an availability set
   - Combine a Load Balancer with an availability set
@@ -875,7 +876,7 @@ Use the Disk Management tool
 Types of encryption:
 
 - **Azure Storage Service Encryption** (SSE, also known as Server-Side Encryption, encryption-at-rest)
-- **Azure Disk Encryption** (ADE)
+- **Azure Disk Encryption** (ADE) ***it's retiring***
 - **Encryption at host**
   - Disk with this aren't encrypted with SSE
   - Instead, the server hosting your VM encrypts your data, then flows into Storage.
