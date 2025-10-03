@@ -62,8 +62,11 @@ Deployment options:
   - Backup settings
   - Business continuity management: failover groups
   - Security: networking, TDE, Defender for Cloud, identity, auditing
+  - A server could contain databases of different purchasing models
 
 ### Purchasing models
+
+This is at database level, NOT server level
 
 ![Purchasing models](./images/azure_sql-db-purchasing-models.png)
 
@@ -113,9 +116,14 @@ All the options below have **RPO == 0**, **RTO < 60 seconds**
   ![Hyperscale architecture](./images/azure_hyperscale-architecture.png)
 
   - Page servers (sharding) serve database pages out to the compute nodes on demand
+  - Auto-scale quickly up to 128TB
   - Data changes from the primary compute replica are propagated through the log service: it gets logs from primary compute replica, persists them, forwards them to other compute replicas and relevant page servers
   - Transcations can commit when the log service hardens to the landing zone
-  - Can have 0 to 4 secondary replicas, can all be used for read-scale
+  - Different types of replicas
+    - **High-availability replicas**: up to 4, share primary's page servers, same region, same SLO
+    - **Named replicas**: up to 30, share primary's page servers, same region, SLO can be different
+    - **Geo replicas**: up to 4 in the same or multiple regions, its own copy of the data
+
 
 ### Scaling
 
@@ -193,14 +201,19 @@ DR options:
 - Geo replicas
   - Using log shipping to replicate data
   - Set at DB level
-  - Each DB can have 4 replicas
+  - Each DB can have 4 geo replicas
   - SQL DB only, not for SQL MI
+  - No endpoint redirection automatically via failover, you need to change the connection string manually
+  - You need to have a SQL server in the replica regions to host the replicas
+  - You can failover to a geo replica manually
+  - You can have up to 4 geo replicas for Hyperscale DBs
 - Automatic failover group
   - Is an abstraction over geo replicas
-  - A SQL server can have multiple failover groups
   - A failover group can include multiple databases
   - A databases can only be in one group
+  - A SQL server can have multiple failover groups
   - For SQL MI, all databases will be in one failover group
+  - Endpoint redirection automatically when failover
 
 #### Notes
 
