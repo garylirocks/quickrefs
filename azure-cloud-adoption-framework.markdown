@@ -47,7 +47,7 @@ Sometimes, you'd better commit to a single motivation category for a time-bound 
 Cost-saving offers:
 
 - Reserved Instances
-- Hybrid Benefit: Use your on-prem Windows Server ans SQL Server licenses on Azure
+- Hybrid Benefit: Use your on-prem Windows Server/RHEL/SUSE and SQL Server licenses on Azure
 - Spot VM: VMs for workloads that can be interrupted (eg. CI/CD, dev/test, visual rendering, etc)
 - Enterprise Agreement
 - Dev/Test pricing (requires active Visual Studio subscription)

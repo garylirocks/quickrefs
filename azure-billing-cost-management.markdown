@@ -22,6 +22,7 @@
 - [Cost allocation](#cost-allocation)
 - [Reservations](#reservations)
 - [Savings plans](#savings-plans)
+- [Azure Hybrid Benefit](#azure-hybrid-benefit)
 - [Azure Plans/SKUs](#azure-plansskus)
   - [Microsoft Azure Plan](#microsoft-azure-plan)
   - [Visual Studio subscribers](#visual-studio-subscribers)
@@ -326,6 +327,17 @@ Cost allocation allows to you to allocate cost of source (subscription/resource 
   - Any subscription in the same billing profile
 - Automatically apply to matching resources (no need to create any associations)
 - **Cannot** be cancelled
+
+
+## Azure Hybrid Benefit
+
+- For Windows Server
+- For SQL Server
+- For RHEL/Suse
+  - Bring Your Own Subscription (BYOS): you need to enable this in RedHat portal first
+  - Pay As You Go (PAYG): purchase your subscription through Azure
+  - License could be converted from BYOS to PAYG, or vice versa, without downtime
+  - Applies to VMs, VMSS, and custom images
 
 
 ## Azure Plans/SKUs
