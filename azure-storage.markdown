@@ -60,6 +60,8 @@
   - [Snapshots](#snapshots)
   - [File Sync](#file-sync)
     - [Components](#components)
+- [Independent `FileShares` resource](#independent-fileshares-resource)
+  - [Connection](#connection)
 - [NetApp Files](#netapp-files)
 - [Elastic SAN](#elastic-san)
 - [Tables](#tables)
@@ -1169,6 +1171,33 @@ To protect against unintended changes, accidental deletions, or for backup/audit
 
 - Storage Sync Service is the top-level Azure resource for Azure File Sync.
 - A Storage Sync Service instance can connect to multiple storage accounts via multiple sync groups.
+
+
+## Independent `FileShares` resource
+
+- A new top-level resource type (`Microsoft.FileShares/fileShares`), independent of storage accounts
+- A resource is just for one file share, unlike a storage account, which could have multiple shares
+- Resource name
+  - Does NOT need to be globally unique
+  - It gets a system-generated unique FQDN like: `fs-xxxxxxxxxxxxxxxxx.z18.file.storage.azure.net`
+  - Could specify a mount name different from the resource name
+- Tier: SSD
+- Protocol: NFS only, no SMB support
+  - NFS v4.1
+  - Support most Linux distributions
+  - You need to install `aznfs` package on the client VM first
+- Reliability: LRS or ZRS
+- Performance: customizable size (min 32GB), IOPS and throughput
+- Root squash: permissions for NFS file shares are enforced by the client OS rather than the Azure Files service. Toggling the root squash behavior reduces the rights of the root user for NFS shares
+- Management requests throttling:
+  - Similar to Azure Resource Manager throttling method
+  - Uses token bucket algorithm
+  - e.g. max 300 write operations per second, refilled at 15 requests per second
+
+### Connection
+
+- Public endpoint: must specificy vNet/subnet, no open access
+- Or private endpoint
 
 
 ## NetApp Files
