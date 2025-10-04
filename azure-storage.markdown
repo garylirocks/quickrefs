@@ -1196,8 +1196,10 @@ To protect against unintended changes, accidental deletions, or for backup/audit
 
 ### Connection
 
-- Public endpoint: must specificy vNet/subnet, no open access
-- Or private endpoint
+- There's NO password for authentication
+- Security is based on network access control
+  - Public endpoint: must specificy vNet/subnet, no public IP allowed
+  - Or private endpoint
 
 
 ## NetApp Files
