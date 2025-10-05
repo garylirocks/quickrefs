@@ -58,10 +58,11 @@
   - [Create and mount a share](#create-and-mount-a-share)
   - [Authentication](#authentication)
   - [Snapshots](#snapshots)
-  - [File Sync](#file-sync)
-    - [Components](#components)
 - [Independent `FileShares` resource](#independent-fileshares-resource)
   - [Connection](#connection)
+- [File Sync](#file-sync)
+  - [Components](#components)
+  - [Authentication](#authentication-1)
 - [NetApp Files](#netapp-files)
 - [Elastic SAN](#elastic-san)
 - [Tables](#tables)
@@ -1160,18 +1161,6 @@ To protect against unintended changes, accidental deletions, or for backup/audit
 - Snapshots are incremental, only data changed after last snapshot  is saved.
 - But you only need to retain the most recent snapshot to restore the share.
 
-### File Sync
-
-- Centralizes file shares in Azure Files, and transforms Windows Server into a quick cache of your file shares.
-- You can use any available protocols to aceess your data locally, such as SMB, NFS, and FTPS.
-
-#### Components
-
-![Azure File Sync](images/azure_file-sync-components.png)
-
-- Storage Sync Service is the top-level Azure resource for Azure File Sync.
-- A Storage Sync Service instance can connect to multiple storage accounts via multiple sync groups.
-
 
 ## Independent `FileShares` resource
 
@@ -1200,6 +1189,36 @@ To protect against unintended changes, accidental deletions, or for backup/audit
 - Security is based on network access control
   - Public endpoint: must specificy vNet/subnet, no public IP allowed
   - Or private endpoint
+
+
+## File Sync
+
+- Centralizes file shares in Azure Files, and transforms Windows Server into a quick cache of your file shares.
+- You can use any available protocols to aceess your data locally, such as SMB, NFS, and FTPS.
+
+### Components
+
+![Azure File Sync](images/azure_file-sync-components.png)
+
+- Storage Sync Service (SSS) is the top-level Azure resource for Azure File Sync
+  - A Storage Sync Service instance can connect to multiple storage accounts via multiple sync groups
+- A **sync group* can contain
+  - One cloud endpoint
+  - Multiple server endpoints
+- **server endpoint**
+  - A server needs to have Azure File Sync agent, and register with a SSS instance, before it can be added as a server endpoint
+  - A server endpoint do not need to store all the files locally, could pull from the cloud endpoint on demand
+  - These server endpoints sync with each other via the cloud endpoint, not directly
+
+### Authentication
+
+- **Legacy**: certificate for server endpoint registration, SAS for access to the file shares in a storage account
+- **New**: Managed identity
+  - SSS instance needs a SAMI, permissions needed:
+    - Storage Account Contributor
+    - Storage File Data Privileged Contributor
+  - File servers need SAMI as well, either be Azure VMs or Arc-enabled servers (you can install the File Sync agent via Arc extensions), permissions needed:
+    - Storage File Data Privileged Contributor
 
 
 ## NetApp Files
