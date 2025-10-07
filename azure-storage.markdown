@@ -115,7 +115,7 @@ Azure Storage is also used by IaaS VMs, and PaaS services:
       - Suitable for most scenarios
       - Includes all services and Data Lake Storage
       - Has Standard or Premium performance tier
-    - **BlobStorage**
+    - **BlobStorage** (retiring)
       - Block and append blobs, only standard performance tier
   - **Premium** tier
     - **BlockBlobStorage**: for low-latency, high-rate, small transactions
