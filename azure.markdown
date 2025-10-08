@@ -24,6 +24,7 @@
   - [Tags](#tags)
   - [Locks](#locks)
   - [Azure Resource Manager (ARM)](#azure-resource-manager-arm)
+  - [Azure Service Groups](#azure-service-groups)
   - [Management tools](#management-tools)
 - [Azure Resource Graph](#azure-resource-graph)
   - [Sample KQL queries](#sample-kql-queries)
@@ -361,6 +362,21 @@ A setting that can by applied to any resource to block inadvertent modification 
 ![Resource manager](images/azure_resource-manager.png)
 
 Azure Resource Manager (ARM) is the management layer which allows you automate the deployment and configuration of resources;
+
+### Azure Service Groups
+
+- Tenant-level resource
+  - Type `Microsoft.Management/serviceGroups`
+  - ID `/providers/Microsoft.Management/serviceGroups/sg-gary-001`
+  - There is a "Tenant root service group", ID is the same as the tenant ID
+  - ID needs to be globally unique, not just within a tenant
+- For identifying workloads, states, and processes
+  - Could be used as a scope for **health monitoring**
+- Can be nested
+  - Up to 10 levels, excluding the root
+- Can contain resources and resource containers (sub, RG), not MGs
+  - Adding a member to a group, actually creates an extension type resource under the member, you need permissions on the member: `Microsoft.Relationships/serviceGroupMember`
+- Every could crate a service group, no special permission is needed
 
 ### Management tools
 
