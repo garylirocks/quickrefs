@@ -409,8 +409,15 @@ Three types:
   - `check` method executes every 15 seconds
   - A check could collects multiple metrics, events, logs and service checks
     - You can use `http_check` to collect metrics from an HTTP endpoint, it generates metrics like `network.http.can_connect`, `network.http.response_time`, etc
-  - Show the checks `docker compose exec datadog agent status`
-  - Run a specific check `docker compose exec datadog agent check disk`
+  - You can define custom checks, see [here](https://docs.datadoghq.com/developers/custom_checks/write_agent_check/), you need to create a custom Python file `checks.d/my_custom_check.py`, and then `conf.d/my_custom_check.yaml` (could be in a sub-folder like `conf.d/my_custom_check/conf.yaml` as well)
+  - Commands:
+    ```sh
+    # Show the checks
+    sudo datadog-agent status
+
+    # Run a specific check
+    sudo datadog-agent check uptime
+    ```
 - **Authentication based (crawler)**
   - Either pull data from other systems, using other system's credentials
   - Or authorize other systems to push data to Datadog, using Datadog's API key
