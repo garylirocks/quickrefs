@@ -788,8 +788,12 @@ By default,
   - ingress traffic goes through the ER gateway
   - egress traffic bypasses the ER gateway, goes to the edge router directly
 
-With FastPath, the ingress traffic bypasses the gateway as well
-  - Supports vNet peering and UDR
+With FastPath
+- The ingress traffic bypasses the gateway
+- Supports for vNet peering and UDR only available for connections associated with ER Direct
+  - Meaning the connection respects vNet peering and UDR configured on the ER gateway subnet, although the data path bypasses it
+  - The UDR is been pushed to the edge routers, which makes the decision for next hop, that's how it's working
+- Supports for private endpoint only available for ER Direct and with limited regions and limited services behind a private endpoint
 
 ### Resiliency
 

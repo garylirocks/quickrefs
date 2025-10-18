@@ -408,6 +408,8 @@ Connection between the private endpoint and the storage service uses a **private
 
   ![Private link service](images/azure_private-link-service.png)
 
+- If you use Private Link Service Direct (preview), you don't need the Standard Load Balancer
+
 
 ## Quick Recipes
 
