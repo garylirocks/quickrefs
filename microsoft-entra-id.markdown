@@ -978,7 +978,7 @@ Group-based licensing allows you assign licenses to groups, all users in the gro
 - Can be any security group (cloud-only or synced from AD)
 - When a user joins/leaves a group, the license is added/removed automatically for the user
 - If a user got the same license multiple times via multiple groups, the license is only consumed once
-- A *product license* could have multiple **service plans**, some of the plans could be disabled (eg. disable Yammer service in Microsoft 365)
+- A *product license* (eg. Microsoft 365 E5) could have multiple **services** (eg. Office, Teams, Power BI), you could disable some services when assigning the license to a group
 - Available only through Azure portal
 - There might be errors due to various reasons, like:
   - Not enough licenses left
