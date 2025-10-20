@@ -35,6 +35,7 @@
   - [Best practices](#best-practices)
 - [Agent](#agent)
   - [Docker](#docker)
+  - [Agent running as a container](#agent-running-as-a-container)
 - [Agent/library Configuration](#agentlibrary-configuration)
   - [Remote configuration](#remote-configuration)
   - [Fleet Automation](#fleet-automation)
@@ -540,6 +541,16 @@ usermod -a -G docker dd-agent
 ```
 
 For the agent on a host to receive APM traces from containers, you need to set `apm_non_local_traffic: true`
+
+### Agent running as a container
+
+<img src="./images/datadog_agent-in-a-container.png" width="600" alt="Agent in a container" />
+
+- Can monitor the host, container runtime, and other containers
+- Monitor the agent by mounting host resources as volumes within the Agent container
+- The Agent is configured by setting environment variables on the Agent container
+- `service` tags are defined by assigning labels to respective containers
+- The Agent can collect logs from services that are writing to respective containers standard output
 
 
 ## Agent/library Configuration
