@@ -33,6 +33,8 @@
 - [Tagging](#tagging)
   - [`docker-compose`](#docker-compose)
   - [Best practices](#best-practices)
+- [Agent](#agent)
+  - [Docker](#docker)
 - [Agent/library Configuration](#agentlibrary-configuration)
   - [Remote configuration](#remote-configuration)
   - [Fleet Automation](#fleet-automation)
@@ -405,10 +407,10 @@ To enable with containerized agent:
 
 Three types:
 
-- **Agent-based (system checks)**, use a Python class method called `check`
-  - `check` method executes every 15 seconds
+- **Agent-based (AKA. checks)**
+  - Use a Python class method called `check`, executes every 15 seconds
   - A check could collects multiple metrics, events, logs and service checks
-    - You can use `http_check` to collect metrics from an HTTP endpoint, it generates metrics like `network.http.can_connect`, `network.http.response_time`, etc
+    - eg. use `http_check` to collect metrics from an HTTP endpoint, it generates metrics like `network.http.can_connect`, `network.http.response_time`, etc
   - You can define custom checks, see [here](https://docs.datadoghq.com/developers/custom_checks/write_agent_check/), you need to create a custom Python file `checks.d/my_custom_check.py`, and then `conf.d/my_custom_check.yaml` (could be in a sub-folder like `conf.d/my_custom_check/conf.yaml` as well)
   - Commands:
     ```sh
@@ -502,6 +504,44 @@ Unified Service Tagging: `service`, `env`, `version`
 - `trace_id`, `span_id` can be injected as tags in logs, for correlation
 
 
+## Agent
+
+- Could be installed on a host, or in a container
+- Components:
+  - Collector: running checks and collect metrics
+  - Forwarder: sending payloads to Datadog
+  - APM Agent: collect app traces
+  - Process Agent: collect live process infomation
+  - Dozens of Integrations (checks):
+    - Python scripts that the Agent runs to collect metrics, events, and logs from the host and running services, such as: Nginx, Redis, PostgreSQL, etc
+    - Some core system checks run by default: disk, cpu, memory, uptime etc
+- Main config file in `datadog.yaml`
+  - Enabled by default: system checks, accepting APM traces
+  - Disabled by default: live processes, log collection
+- Common commands
+  ```sh
+  # Show status
+  sudo datadog-agent status
+
+  # configs
+  sudo datadog-agent config
+
+  # list running checks
+  sudo datadog-agent configcheck
+  ```
+
+### Docker
+
+The Agent collects metrics, events and logs from containers by reading `docker.sock`, which is only accessible to users in the `docker` group.
+
+```sh
+# Add the dd-agent user to the docker group
+usermod -a -G docker dd-agent
+```
+
+For the agent on a host to receive APM traces from containers, you need to set `apm_non_local_traffic: true`
+
+
 ## Agent/library Configuration
 
 By priority (high to low):
@@ -513,12 +553,12 @@ By priority (high to low):
 
 ### Remote configuration
 
-- Remotely config Datadog components: Agents, tracing libraries, Observability Pipelines Worker
-- Agents poll, receive, and automatically apply configuration updates from Datadog
-  - Tracing libraries communicate with Agents to request and receive configuration updates
+- Remotely config Datadog components (such as Agents, tracing libraries, Observability Pipelines Workers) for select features
 - Could be enabled at organization scope
   - Enabled by default in most cases, see [here](https://docs.datadoghq.com/agent/remote_config/?tab=configurationyamlfile#enabling-remote-configuration)
   - An API key could be enabled or disabled for remote configuration
+- When enabled, Agents polls and automatically applies configuration updates from Datadog
+  - Tracing libraries communicate with Agents to request and receive configuration updates
 - Supported environments:
   - Agents on hosts
   - Serverless container cloud services: AWS Fargate
