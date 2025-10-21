@@ -547,10 +547,83 @@ For the agent on a host to receive APM traces from containers, you need to set `
 <img src="./images/datadog_agent-in-a-container.png" width="600" alt="Agent in a container" />
 
 - Can monitor the host, container runtime, and other containers
-- Monitor the agent by mounting host resources as volumes within the Agent container
-- The Agent is configured by setting environment variables on the Agent container
-- `service` tags are defined by assigning labels to respective containers
+- Monitor the host by mounting host resources as volumes within the Agent container
+- Configuration on Agent container:
+  - Environment variables: `DD_API_KEY`, `DD_ENV`, etc
+    - Use this to configure which custom labels to collect as tags: `DD_CONTAINER_LABELS_AS_TAGS={"my.custom.label.team":"team"}`
+- Configuration on workload containers:
+  - Environment variables: typically used if the container has been instrumented with APM libraries, can be used to tag logs and metrics
+    - You could set `DD_ENV` to override the one on the Agent container
+    - `DD_AGENT_HOST` for APM library to send traces to the Agent
+    - `DD_SERVICE` (overriding the container name), `DD_VERSION`, etc
+  - **Labels**: for tagging logs and metrics, usually for containers NOT instrumented with APM libraries
+    ```yaml
+    labels:
+      my.custom.label.team: 'discounts'
+      com.datadoghq.tags.service: 'discounts'
+      com.datadoghq.tags.version: '1.0.3'
+      com.datadoghq.ad.logs: '[{"source": "python", "service": "discounts"}]' # apply to logs, help Datadog to process the logs, `service` tag is optional here, because already set by `com.datadoghq.tags.service`
+    ```
+    Could also have additional labels for specific integrations, eg. for the Agent to connect to a Postgres database:
+    ```yaml
+    com.datadoghq.ad.checks: '{"<INTEGRATION_NAME>": {"instances": [<INSTANCE_CONFIG>], "logs": [<LOGS_CONFIG>]}}'
+    com.datadoghq.ad.init_configs: '[{}]'
+    com.datadoghq.ad.instances: '[{"host":"%%host%%", "port":5432, "username":"datadog", "password":"datadog"}]'
+    ```
+    In newer Agent versions, it could try autodiscovery with some common services
 - The Agent can collect logs from services that are writing to respective containers standard output
+
+Example config for the Agent container:
+
+```yaml
+dd-agent:
+    image: gcr.io/datadoghq/agent:7.56.0
+    environment:
+      - DD_API_KEY
+      - DD_HOSTNAME
+      - DD_ENV
+      - DD_LOGS_ENABLED=true
+      - DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true
+      - DD_PROCESS_AGENT_ENABLED=true
+      - DD_CONTAINER_LABELS_AS_TAGS={"my.custom.label.team":"team"}
+      - DD_APM_NON_LOCAL_TRAFFIC=true
+      - DD_DOGSTATSD_NON_LOCAL_TRAFFIC=true
+      - DD_SYSTEM_PROBE_NETWORK_ENABLED=true
+      - DD_SYSTEM_PROBE_SERVICE_MONITORING_ENABLED=true
+      - HOST_ROOT='/host/root'
+    pid: "host"
+    ports:
+      - "8126:8126/tcp"
+      - "8125:8125/udp"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /proc/:/host/proc/:ro
+      - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
+      - /sys/kernel/debug:/sys/kernel/debug
+      - /:/host/root:ro
+      - /etc/passwd:/etc/passwd:ro
+      - /etc/group:/etc/group:ro
+      - /etc/os-release:/etc/os-release
+    cap_add:
+      - SYS_ADMIN
+      - SYS_RESOURCE
+      - SYS_PTRACE
+      - NET_ADMIN
+      - NET_BROADCAST
+      - NET_RAW
+      - IPC_LOCK
+      - CHOWN
+    security_opt:
+      - apparmor:unconfined
+```
+
+Commands:
+
+```sh
+docker compose exec dd-agent agent status
+
+docker compose exec dd-agent agent config
+```
 
 
 ## Agent/library Configuration
