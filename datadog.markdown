@@ -51,6 +51,7 @@
 - [Real User Monitoring (RUM)](#real-user-monitoring-rum)
   - [Collected event types](#collected-event-types)
   - [Data masking](#data-masking)
+  - [Session replay](#session-replay)
   - [Correlate RUM with APM](#correlate-rum-with-apm)
   - [Notes](#notes)
 - [Database Monitoring (DBM)](#database-monitoring-dbm)
@@ -409,9 +410,10 @@ To enable with containerized agent:
 Three types:
 
 - **Agent-based (AKA. checks)**
-  - Use a Python class method called `check`, executes every 15 seconds
+  - Use a Python class method called `check`, executed every 15 seconds
   - A check could collects multiple metrics, events, logs and service checks
     - eg. use `http_check` to collect metrics from an HTTP endpoint, it generates metrics like `network.http.can_connect`, `network.http.response_time`, etc
+  - Some are considered core integrations, eg. disk, Docker, Nginx, MySQL, Redis, etc
   - You can define custom checks, see [here](https://docs.datadoghq.com/developers/custom_checks/write_agent_check/), you need to create a custom Python file `checks.d/my_custom_check.py`, and then `conf.d/my_custom_check.yaml` (could be in a sub-folder like `conf.d/my_custom_check/conf.yaml` as well)
   - Commands:
     ```sh
@@ -422,11 +424,14 @@ Three types:
     sudo datadog-agent check uptime
     ```
 - **Authentication based (crawler)**
-  - Either pull data from other systems, using other system's credentials
+  - Either pull data from other systems, using other system's credentials, eg. AWS, Azure, GCP, etc
   - Or authorize other systems to push data to Datadog, using Datadog's API key
-- **Library** integrations, use the Datadog API to allow you to monitor applications based on the language they are written in, like Node.js or Python.
-  - Imported as packages to your code
+- **Library**
+  - Often refereed to as trace libraries
   - Use Datadog's tracing API
+  - Mostly for APM
+  - You import packages to your code
+  - Send data to the Agent, the Agent then sends it to Datadog (with related tags)
   - Collect performance, profiling, and debugging metrics from your application at runtime
 
 ### Installation
@@ -773,7 +778,9 @@ Associate testing results to APM:
 
 <img src="./images/datadog_rum-event-types.png" width="400" alt="Collected event types" />
 
-- Session: has a session id (reset after 15mins of inactivity)
+- Session:
+  - Session id saved in a cookie, so a session could be continued after closing and reopening a browser tab
+  - Reset after 15mins of inactivity
 - View: create a new view each time when you load a new page, or route change an SPA
 - Resource: images, JS, CSS, XHR, Fetch, etc
 - Long Task: any task that blocks the main thread for more than 50ms
@@ -792,15 +799,23 @@ To add additional data to events at different levels:
 - `Sensitive Data Scanner` could be used for RUM events
   - You could add custom regex to mask URL paths
 - RUM init parameters:
-  - `defaultPrivacyLevel`
   - `enablePrivacyForActionName`
+  - `defaultPrivacyLevel` for Session Replay masking
+    - Three options: `mask-user-input`, `mask` (mask labels etc), and `allow`
   - `beforeSend` callback function to redact event properties like `view.url`, `action.target.name`, etc
+
+### Session replay
+
+- The RUM SDK records snapshots of the browser's DOM and CSS to build the animation
+- There is a Session Replay sample rate
+- You can modify the `defaultPrivacyLevel` to control what elements are masked
+  - Some elements are ALWAYS masked, eg. `<input type="password">`, `<input type="email">`, `<input type="tel">`, etc
 
 ### Correlate RUM with APM
 
-You need to add `allowedTracingUrls` to the RUM init parameters
+You need to add `allowedTracingUrls` to the RUM init parameters.
 
-Then the RUM SDK will add some HTTP headers prefixed with `x-datadog-*` to XHR requests.
+Then for those URLs, the RUM SDK will inject HTTP headers prefixed with `x-datadog-*` to XHR requests.
 
 ### Notes
 
