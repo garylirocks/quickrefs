@@ -18,13 +18,19 @@
   - [Instrumentation](#instrumentation)
   - [Attributes](#attributes)
   - [Trace ingestion and retention](#trace-ingestion-and-retention)
+  - [Ingestion](#ingestion)
     - [Head-based sampling](#head-based-sampling)
+    - [Error and rare spans sampling](#error-and-rare-spans-sampling)
+    - [Manual](#manual)
+    - [Single span sampling rule](#single-span-sampling-rule)
+    - [Other ingestion reasons](#other-ingestion-reasons)
+    - [Span filtering](#span-filtering)
+  - [Generating metrics](#generating-metrics)
+  - [Retention](#retention)
   - [Trace metrics](#trace-metrics)
   - [Runtime metrics](#runtime-metrics)
     - [Node.js](#nodejs)
-  - [Ingestion Sampling](#ingestion-sampling)
-  - [Filtering](#filtering)
-  - [Trace retention](#trace-retention)
+  - [Usage metrics](#usage-metrics)
   - [Continuous Profiler](#continuous-profiler)
 - [Network Performance Monitoring (NPM)](#network-performance-monitoring-npm)
 - [Integrations](#integrations)
@@ -203,18 +209,18 @@ You can create an SLO based on a monitor, then you can create a monitor on an SL
 
 ## Application Performance Monitoring (APM)
 
-- **Trace**: tracks the time spent by an application processing a request and the status of this request. Each trace consists of one or more spans.
+- **Trace**: tracks the time spent by an application processing a request and the status of this request. Each trace consists of one or more spans. Created from spans by Datadog.
 - **Span**: represents a logical unit of work in a distributed system for a given time period. Multiple spans construct a trace.
   - **Trace root span**: The entry point of the entire trace, the service that generates this first span also creates the Trace ID
   - Span tags and attributes are similar but distinct concepts:
-  - **Tags** provide context (about the host, container or service): `hostname`, `pod_name`, ...
-  - **Attributes** are about the content of a span, eg. `http.url`, `http.status_code`, `error.message`, ..., use `@` prefix in queries, like `@http.status_code:500`
+    - **Tags** provide context (about the host, container or service): `hostname`, `pod_name`, ...
+    - **Attributes** are about the content of a span, eg. `http.url`, `http.status_code`, `error.message`, ..., use `@` prefix in queries, like `@http.status_code:500`
 
 ### Instrumentation
 
 - You use language-specific Datadog libraries (`ddtrace`) in your application code.
 - Traces are submitted to Datadog Agent first, then sent to Datadog.
-- By default, Agent collects traces using TCP port 8126.
+  - By default, Agent collects traces using TCP port 8126.
 - Instrumented application expect some environment variables, eg. `DATADOG_HOST` `DD_ENV`, `DD_VERSION`, and `DD_SERVICE`.
   - `DD_AGENT_HOST`: which service hosts the agent
   - `DD_LOGS_INJECTION`: injects `trace_id` and `span_id` into logs
@@ -227,7 +233,6 @@ You can create an SLO based on a monitor, then you can create a monitor on an SL
   - `DD_PROFILING_ENABLED` whether enable continuous profiler (NOT supported by all languages)
   - `DD_SERVICE_MAPPING` rename service
 - For Python app, run it with command `ddtrace-run`, like:
-
     ```sh
     DD_SERVICE="<SERVICE>" DD_ENV="<ENV>" DD_LOGS_INJECTION=true ddtrace-run python my_app.py
     ```
@@ -243,28 +248,160 @@ You can create an SLO based on a monitor, then you can create a monitor on an SL
 
 ![Trace ingestion and retention](./images/datadog_trace-pipeline.avif)
 
-- Concepts:
-  - Ingestion: data sent to Datadog
-  - Indexing: indexed for search
-- To each span ingested, there is attached a unique ingestion reason
+- **Ingestion**: data sent to Datadog, available for 15 mins live search
+  - To each span ingested, there is attached a unique ingestion reason
+- **Indexing/retention**: indexed for search, retained for 15 days
+- Metrics generated are stored for 15 months
 - Relevant built-in dashboards:
   - APM Traces Estimated Usage
   - APM Traces Ingestion Reasons Overview
+
+### Ingestion
+
+- Sampling rate could be controlled remotely for newer Agents with `DD_REMOTE_CONFIGURATION_ENABLED=true`
+- Use "Ingestion Control" page to view and set sampling rate remotely
+- For each service, the config mode could be:
+  - Automatic (10 TPS per Agent)
+  - Configured remotely (via Ingestion Control)
+  - Configured locally (via `DD_TRACE_SAMPLING_RULES` targeting a service)
+  - Adaptive (both Agent and Tracer versions are compatible, and onboarded)
 
 #### Head-based sampling
 
 ![Head-based sampling](./images/datadog_head-based-sampling.avif)
 
 - Decision made at the start of the root span
-- Decision propagated to other services as part of their request context, for example an HTTP request header
 - The trace is guranteed to be kept or dropped as a whole
+- Decision propagated to other services as part of their request context, for example an HTTP request header
 - You can set sampling rates for head-based sampling in two places:
   - Agent (default)
     - `ingestion_reason: auto`
     - Default value is 10 traces per second
-    - Could be customized with `DD_APM_TARGET_TPS`
-  - Tracing library (overrides the Agent's config)
+    - Could be customized in "Ingest Control" page, or env var `DD_APM_MAX_TPS`
+    - The Agent tunes sampling by **sending sampling rates to trace libraries**
+    - The rate is distributed **across all services** reporting to the Agent, if both service A nad B report to the same Agent, A might be instructed to keep 7 traces per second, B to keep 3
+  - Tracing library
+    - `ingestion_reason: rule`
+    - User defined rule (eg. `DD_TRACE_SAMPLING_RULES`), could be at service or resource level
+    - Overrides rate limit sent to the tracing library by the Agent
+    - New rate limit default to 100 per second, per service instance (configured by `DD_TRACE_RATE_LIMIT`)
 
+#### Error and rare spans sampling
+
+- Additional sampling mechanisms to keep critical and diverse traces
+- Capture **local** traces at the Agent level (no propagation to other services, so traces could be not complete)
+- They are **IGNORED** when using custom library sampling rules for services
+- Error sampler:
+  - `ingestion_reason:error`
+  - Not already caught by head-based sampling
+  - Up to 10 traces per second per Agent (customizable with `DD_APM_ERROR_TPS`)
+- Rare sampler:
+  - `ingestion_reason:rare`
+  - Based on combinations of `env`, `service`, `name`, `resource`, `error.type` and `http.status`
+  - Up to 5 traces per second per Agent
+  - Could be disabled in "Ingest Control" page
+
+#### Manual
+
+- `ingestion_reason: manual`
+- In the code, you could **manually force keep or drop** a trace , but this trace could be incomplete, and could still be dropped at the Agent level based on rules
+
+#### Single span sampling rule
+
+- `ingestion_reason: single_span` (seems show up in Datadog as `ingestion_reason:rule` ?)
+- When you want a specific span ingested for metrics, but don't want to ingest the whole traces
+- Sampling rules could be based on resource names, service names, tags and operation names (based on the first span in a trace)
+- Span kept by head-based sampling won't be affected
+- Example:
+  ```sh
+  # service name
+  DD_TRACE_SAMPLING_RULES='[{"service": "store-frontend-api", "sample_rate": 0.20}]'
+
+  # resource name
+  DD_TRACE_SAMPLING_RULES='[{"resource": "GET healthcheck", "sample_rate": 1.0, "max_per_second": 50}]'
+
+  # tags
+  DD_TRACE_SAMPLING_RULES='[{"tags": {"http.url": "http://.*/healthcheck$"}, "sample_rate": 0.5}]'
+  ```
+
+#### Other ingestion reasons
+
+- `ingestion_reason:otel`: OpenTelemetry setup
+- `ingestion_reason:rum`
+  - For traces initiated by Real User Monitoring (RUM) sessions, default to 100%, could be controlled by `traceSampleRate` parameter
+- `ingestion_reason:synthetics` or `ingestion_reason:synthetics-browser`
+  - 100% by default
+- Others:
+  - `lambda` or `xray`: AWS Lambda or X-Ray
+  - `appsec`: flagged by AAP as a threat
+  - `data_jobs`: Datadog Java Tracer Spark integration or Databricks integration
+
+#### Span filtering
+
+If you don't want a span ingested, and don't want to see it reflected in trace metrics.
+
+Could be done with either Trace Agent (in Datadog Agent) configuration or Tracer configuration
+- Trace Agent
+  - Based on tags or resources (support regex)
+  - Env variables:
+    - `DD_APM_FILTER_TAGS_REQUIRE="key1:value1 key2:value2"`
+    - `DD_APM_FILTER_TAGS_REJECT="key1:value1 key2:value2"`
+    - `DD_APM_IGNORE_RESOURCES="(GET|POST) /healthcheck,API::NotesController#index"`
+  - Or do it in `datadog.yaml` file
+    ```yaml
+    apm_config:
+      ignore_resources: ["(GET|POST) /healthcheck","API::NotesController#index"]
+      filter_tags:
+        require: ["db:sql", "db.instance:mysql"]
+        reject: ["outcome:success", "key2:value2", "http.url:http://localhost:5050/healthcheck"]
+    ```
+- Tracer
+  - Language specific code
+  - Node.js example
+    ```js
+    const tracer = require('dd-trace').init();
+    tracer.use('http', {
+      // incoming http requests match on the path
+      server: {
+        blocklist: ['/healthcheck']
+      },
+      // outgoing http requests match on a full URL
+      client: {
+        blocklist: ['https://telemetry.example.org/api/v1/record']
+      }
+    })
+    ```
+
+### Generating metrics
+
+- Happens before retention/indexing
+- Based on 100% of ingested spans
+  - You can base metrics on *all* application traffic, without ingesting 100% all traces. This is done by configuring **span sampling rules** at the trace library.
+- Available for 15 months
+- Billed as custom metrics
+
+### Retention
+
+- **The Intelligent Retention Filter**
+  - Always on
+  - Retains a subset of spans for every environment, service, operation, and resource for different latency distributions
+  - A combination of diversity sampling and 1% flat sampling
+    - Diversity-sampled spans are **biased** towards errors and high latency traces, you can choose to exclude them by adding `-retained_by:diversity_sampling` to a search query
+    - For the reasons explained above, spans indexed by the intelligent retention filter are **excluded** from alert monitors that use APM trace analytics.
+  - **Not** counted towards the usage of indexed spans, do not impact your bill
+- **Default retention filters**:
+  - Synthetics Default: `@_dd.origin:(synthetics OR synthetics-browser)`
+  - Error Default: `status:error`
+- **Custom filters**:
+  - Based on span attribute or tag filters
+  - Query could be targeting: Trace root spans, Service entry spans, or all spans
+  - Then you define:
+    - Span rate: percentage of matching spans to index
+    - Trace rate: percentage of full traces associated with the indexed span
+  - A span is processed by the first matching retention filter only, so filter order matters
+- Depending on your filters:
+  - some spans are indexed by itself, not in a full trace
+  - some spans are indexed because it is in the same trace with an indexed span
 
 ### Trace metrics
 
@@ -274,6 +411,7 @@ You can create an SLO based on a monitor, then you can create a monitor on an SL
   - latency
 - Available for dashboards and monitors
 - Based on 100% of the application's traffic, regardless of ingestion sampling configs
+
 
 ### Runtime metrics
 
@@ -299,76 +437,13 @@ You can create an SLO based on a monitor, then you can create a monitor on an SL
   - `runtime.node.event_loop.delay.avg`
   - `runtime.node.gc.pause.avg`
 
-### Ingestion Sampling
+### Usage metrics
 
-When you want the span included in the trace metrics but don't want it ingested.
-
-Sampling rules could be based on resource names, service names, tags and operation names (based on the first span in a trace)
-
-```sh
-# resource name
-DD_TRACE_SAMPLING_RULES='[{"resource": "GET healthcheck", "sample_rate": 0.0}]'
-
-# tags
-DD_TRACE_SAMPLING_RULES='[{"tags": {"http.url": "http://.*/healthcheck$"}, "sample_rate": 0.0}]'
-```
-
-### Filtering
-
-If you don't want the span ingested, and don't want to see it reflected in trace metrics.
-
-Could be done with either Trace Agent (in Datadog Agent) configuration or Tracer configuration
-
-- Trace Agent
-  - Based on tags or resources (support regex)
-  - Example tags:
-    - `DD_APM_FILTER_TAGS_REQUIRE="key1:value1 key2:value2"`
-    - `DD_APM_FILTER_TAGS_REJECT="key1:value1 key2:value2"`
-    - `DD_APM_IGNORE_RESOURCES="(GET|POST) /healthcheck,API::NotesController#index"`
-  - Or you can do it in `datadog.yaml` file
-
-    ```yaml
-    apm_config:
-      ignore_resources: ["(GET|POST) /healthcheck","API::NotesController#index"]
-      filter_tags:
-        require: ["db:sql", "db.instance:mysql"]
-        reject: ["outcome:success", "key2:value2", "http.url:http://localhost:5050/healthcheck"]
-    ```
-- Tracer
-  - Language specific code
-  - Node.js example
-
-    ```js
-    const tracer = require('dd-trace').init();
-    tracer.use('http', {
-      // incoming http requests match on the path
-      server: {
-        blocklist: ['/healthcheck']
-      },
-      // outgoing http requests match on a full URL
-      client: {
-        blocklist: ['https://telemetry.example.org/api/v1/record']
-      }
-    })
-    ```
-
-### Trace retention
-
-- **The Intelligent Retention Filter**
-  - Always on
-  - Retains a subset of spans for every environment, service, operation, and resource for different latency distributions
-- **Default retention filters**:
-  - Synthetics Default: `@_dd.origin:(synthetics OR synthetics-browser)`
-  - Error Default: `status:error`
-- **Custom filters**:
-  - Based on span attributes or tag filters
-  - Query could be targeting: Trace root spans, Service entry spans, or all spans
-  - Then you define:
-    - Span rate: percentage of matching spans to index
-    - Trace rate: percentage of full traces associated with the indexed span
-- Depending on your filters:
-  - some spans are indexed by itself, not in a full trace
-  - some spans are indexed because it is in the same trace with an indexed span
+- Built-in metrics for number of ingested/indexed spans
+- Metric names start with `datadog.estimated_usage.apm`
+  - Metrics like `datadog.estimated_usage.apm.ingested_spans` is tagged with `ingestion_reason`, `service`, `env`
+- You can create alert monitors on these metrics to avoid unexpected usages
+- There are built-in APM dashboards
 
 ### Continuous Profiler
 
