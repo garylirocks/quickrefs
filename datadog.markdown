@@ -32,6 +32,7 @@
     - [Node.js](#nodejs)
   - [Usage metrics](#usage-metrics)
   - [Continuous Profiler](#continuous-profiler)
+  - [APM monitors](#apm-monitors)
 - [Network Performance Monitoring (NPM)](#network-performance-monitoring-npm)
 - [Integrations](#integrations)
   - [Installation](#installation)
@@ -387,7 +388,7 @@ Could be done with either Trace Agent (in Datadog Agent) configuration or Tracer
   - Retains a subset of spans for every environment, service, operation, and resource for different latency distributions
   - A combination of diversity sampling and 1% flat sampling
     - Diversity-sampled spans are **biased** towards errors and high latency traces, you can choose to exclude them by adding `-retained_by:diversity_sampling` to a search query
-    - For the reasons explained above, spans indexed by the intelligent retention filter are **excluded** from alert monitors that use APM trace analytics.
+    - For the reasons explained above, spans indexed by the intelligent retention filter are **excluded** from alert monitors that use APM Trace Analytics.
   - **Not** counted towards the usage of indexed spans, do not impact your bill
 - **Default retention filters**:
   - Synthetics Default: `@_dd.origin:(synthetics OR synthetics-browser)`
@@ -449,6 +450,15 @@ Could be done with either Trace Agent (in Datadog Agent) configuration or Tracer
 
 - Gives you insight into the system resource consumption (eg. CPU, memory and IO bottlenecks) of your applications beyond traces
 - Supported by client libraries
+
+### APM monitors
+
+Three types:
+
+- APM metrics
+- Trace Analytics
+  - Only for traces retained by custom retention filters, not the ones retained by Datadog's Intelligent Retention Filter (those are biased)
+- Watchdog
 
 
 ## Network Performance Monitoring (NPM)
@@ -783,11 +793,36 @@ By priority (high to low):
 
 There's not a field dedicated for recipients, you need to specify it with `@`, `@slack` in the message
 
-```
+```yaml
 The {{service.name}} service container {{color.name}} has high CPU usage!!
 
 Contact: Email - @{{service.name}}@mycompany.com, @admin@mycompany.com
 Slack - @slack-{{service.name}}
+```
+
+Conditional notifications:
+
+```yaml
+{{#is_alert}}
+@pagerduty-incident-response
+The store-frontend service is currently experiencing elevated latency which has exceeded {{threshold}}.
+
+Some places to begin investigation are:
+- ...
+- ...
+{{/is_alert}}
+
+{{#is_warning}}
+@slack-incident-response
+@slack-frontend-team
+The store-frontend service latency has surpassed its warning threshold of {{threshold}}.
+{{/is_warning}}
+
+{{#is_recovered}}
+@slack-incident-response
+@slack-frontend-team
+The store-frontend service latency has returned to acceptable levels.
+{{/is_recovered}}
 ```
 
 
