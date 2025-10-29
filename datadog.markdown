@@ -62,6 +62,8 @@
   - [Correlate RUM with APM](#correlate-rum-with-apm)
   - [Notes](#notes)
 - [Database Monitoring (DBM)](#database-monitoring-dbm)
+  - [DBM features](#dbm-features)
+  - [Diagnose DB performance issues](#diagnose-db-performance-issues)
   - [Example config for Oracle](#example-config-for-oracle)
 - [Error Tracking](#error-tracking)
 - [Keys](#keys)
@@ -940,7 +942,31 @@ Then for those URLs, the RUM SDK will inject HTTP headers prefixed with `x-datad
 - For cloud-managed databases, you need to intall the Agent on a separate host, and configure it to connect to each managed instance
   - Metrics such as CPU, memory, disk usage and related telemetry are collected directly from the cloud provider using Datadog integration with that provider
   ![DBM architecture](./images/datadog_database-monitoring-cloud-dbs.avif)
+- DBM instrumentation is a superset of DB infrastructure integration
+  - A lot of metrics could be collected by the infra integration
+  - The infra integration needs a read-only account in the DB
+  - To turn on DBM, usually you just need to set `dbm: true` in the integration config file
+    - The `datadog` account in the DB may require additional permissions for DBM
+    - DB engine may require additional configs
+    - Each monitored database may need additional instrumentation (schema, user, function) as well
+  - DBM could get more detailed info, such as query metrics, query samples, explain plans, wait events, blocking summaries, etc
+  - After DBM is on, in the `status` command output, you should see "Database Monitoring ..." in the DB checks section
 
+### DBM features
+
+- Query metrics
+  - Metrics for normalized queries (with parameters removed), across hosts
+  - Saved for 3 monthes
+  - Execution count, avg. rows, avg. duration, etc
+  - Execution plan
+- Query samples
+  - Individual execution of a query
+  - There are samples of explain plans as well
+
+### Diagnose DB performance issues
+
+- Investigate locks/blocking queries
+- Investigate slow and frequent queries
 
 ### Example config for Oracle
 
