@@ -27,12 +27,14 @@
     - [Span filtering](#span-filtering)
   - [Generating metrics](#generating-metrics)
   - [Retention](#retention)
+  - [Custom spans](#custom-spans)
   - [Trace metrics](#trace-metrics)
   - [Runtime metrics](#runtime-metrics)
     - [Node.js](#nodejs)
   - [Usage metrics](#usage-metrics)
-  - [Continuous Profiler](#continuous-profiler)
   - [APM monitors](#apm-monitors)
+  - [Continuous Profiler](#continuous-profiler)
+  - [Application Security Management](#application-security-management)
 - [Network Performance Monitoring (NPM)](#network-performance-monitoring-npm)
 - [Integrations](#integrations)
   - [Installation](#installation)
@@ -239,6 +241,19 @@ You can create an SLO based on a monitor, then you can create a monitor on an SL
     ```sh
     DD_SERVICE="<SERVICE>" DD_ENV="<ENV>" DD_LOGS_INJECTION=true ddtrace-run python my_app.py
     ```
+- For Java, load the tracer as a Java agent:
+  ```sh
+  java \
+    -javaagent:dd-java-agent.jar \
+    -Ddd.env=dev \
+    -Ddd.service=my-service \
+    -Ddd.version=1.3.0 \
+    -Ddd.trace.span.tags=custom.team:frontend,custom.framework:spring \
+    -jar my-java-app.jar
+  ```
+  - You can add custom tags to all spans with `-Ddd.trace.span.tags=key1:value1,key2:value2`
+  - Env variables like `DD_ENV` takes precedence over JVM options `-Ddd.env=...`
+
 
 ### Attributes
 
@@ -406,6 +421,17 @@ Could be done with either Trace Agent (in Datadog Agent) configuration or Tracer
   - some spans are indexed by itself, not in a full trace
   - some spans are indexed because it is in the same trace with an indexed span
 
+### Custom spans
+
+- Automatically-generated spans provide high-level overview
+  - In Python, done by importing the `ddtrace` library, and run the app with `ddtrace-run`
+- Use custom spans to target specific functions or blocks of code
+  - In Python, could be done with decorator `@tracer.wrap(name='span-name', service="my-service", resource='resource-name')`
+- Could attach custom tags to custom spans
+  - In Python, use `tracer.current_span().set_tag('tag_key', 'tag_value')`
+  - They show up as span attributes (used to be called tags ?) in Datadog APM
+  - Could create facets (distinctive) or measures (quantitative) on custom tags
+
 ### Trace metrics
 
 - Metrics:
@@ -448,11 +474,6 @@ Could be done with either Trace Agent (in Datadog Agent) configuration or Tracer
 - You can create alert monitors on these metrics to avoid unexpected usages
 - There are built-in APM dashboards
 
-### Continuous Profiler
-
-- Gives you insight into the system resource consumption (eg. CPU, memory and IO bottlenecks) of your applications beyond traces
-- Supported by client libraries
-
 ### APM monitors
 
 Three types:
@@ -461,6 +482,14 @@ Three types:
 - Trace Analytics
   - Only for traces retained by custom retention filters, not the ones retained by Datadog's Intelligent Retention Filter (those are biased)
 - Watchdog
+
+### Continuous Profiler
+
+- Gives you insight into the system resource consumption (eg. CPU, memory and IO bottlenecks) of your applications beyond traces
+- Supported by client libraries
+
+### Application Security Management
+
 
 
 ## Network Performance Monitoring (NPM)
