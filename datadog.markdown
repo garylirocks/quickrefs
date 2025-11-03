@@ -33,6 +33,7 @@
     - [Node.js](#nodejs)
   - [Usage metrics](#usage-metrics)
   - [APM monitors](#apm-monitors)
+  - [Deployment Tracking](#deployment-tracking)
   - [Continuous Profiler](#continuous-profiler)
   - [Application Security Management](#application-security-management)
 - [Network Performance Monitoring (NPM)](#network-performance-monitoring-npm)
@@ -483,6 +484,12 @@ Three types:
   - Only for traces retained by custom retention filters, not the ones retained by Datadog's Intelligent Retention Filter (those are biased)
 - Watchdog
 
+### Deployment Tracking
+
+- Shows on service page
+- Tracks all versions deployed over the last 30 days
+- Helps compare RED (request, error, delay) metrics across version
+
 ### Continuous Profiler
 
 - Gives you insight into the system resource consumption (eg. CPU, memory and IO bottlenecks) of your applications beyond traces
@@ -530,7 +537,16 @@ Three types:
   - A check could collects multiple metrics, events, logs and service checks
     - eg. use `http_check` to collect metrics from an HTTP endpoint, it generates metrics like `network.http.can_connect`, `network.http.response_time`, etc
   - Some are considered core integrations, eg. disk, Docker, Nginx, MySQL, Redis, etc
-  - You can define custom checks, see [here](https://docs.datadoghq.com/developers/custom_checks/write_agent_check/), you need to create a custom Python file `checks.d/my_custom_check.py`, and then `conf.d/my_custom_check.yaml` (could be in a sub-folder like `conf.d/my_custom_check/conf.yaml` as well)
+  - You can define custom checks, see [here](https://docs.datadoghq.com/developers/custom_checks/write_agent_check/), you need to create a custom Python file `checks.d/my_custom_check.py`, and then `conf.d/my_custom_check.yaml` (could be in a sub-folder like `conf.d/my_custom_check/conf.yaml` as well), your script outputs some text, the `check` method captures the output and sends to the Agent
+    ```yaml
+    init_config:
+    instances:
+      - name: my-custom-check
+        script: "/path/to/script.sh"
+        tags:
+          - tag1:value1
+          - tag2:value2
+    ```
   - Commands:
     ```sh
     # Show the checks
