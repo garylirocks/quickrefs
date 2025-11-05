@@ -13,7 +13,6 @@
   - [Indexing](#indexing)
 - [Metrics](#metrics)
   - [Metric types](#metric-types)
-  - [SLI \& SLO](#sli--slo)
 - [Application Performance Monitoring (APM)](#application-performance-monitoring-apm)
   - [Instrumentation](#instrumentation)
   - [Attributes](#attributes)
@@ -57,6 +56,10 @@
 - [Universal Service Monitoring (USM)](#universal-service-monitoring-usm)
   - [`docker-compose`](#docker-compose-1)
   - [Service Catalog](#service-catalog)
+- [SLI and SLO](#sli-and-slo)
+  - [Service Level Indicators (SLI)](#service-level-indicators-sli)
+  - [Service Level Objectives (SLO)](#service-level-objectives-slo)
+  - [SLA](#sla)
 - [Synthetic testing](#synthetic-testing)
 - [Real User Monitoring (RUM)](#real-user-monitoring-rum)
   - [Collected event types](#collected-event-types)
@@ -185,7 +188,7 @@ Can be collected by:
 
 - DD Agent
 - Integrations
-- Generated within Datadog (eg. form logs)
+- Generated within Datadog (eg. Logs, APM)
 - Custom metrics
   - Agent
   - DogStatsD
@@ -194,23 +197,16 @@ Can be collected by:
 ### Metric types
 
 - Count (times in an interval)
+  - `trace.web.request.hits`, from APM, interval is 10 seconds
 - Rate (frequency)
 - Gauge (last value in an interval)
 - Histogram (five values: mean, count, median, 95th percentile, and maximum)
 - Distribution (summarize values across all the hosts)
   - Enhanced query functionality and configuration options
+  - Examples:
+    - `trace.web.request`, from APM, latency of web requests, percentiles enabled
 
 RED metrics: Rate, Errors, Duration
-
-### SLI & SLO
-
-Service Level Indicators (SLI): metrics to measure some aspect of the level of service
-
-Service Level Objectives (SLO): SLIs monitored overtime, eg.
-- 99% of requests being successful over the past 7 days
-- less than 1 second latency 99% of the time over the past 30 days
-
-You can create an SLO based on a monitor, then you can create a monitor on an SLO to get alerts.
 
 
 ## Application Performance Monitoring (APM)
@@ -496,7 +492,6 @@ Three types:
 - Supported by client libraries
 
 ### Application Security Management
-
 
 
 ## Network Performance Monitoring (NPM)
@@ -911,6 +906,69 @@ You can manage metadata of a service either:
 Metrics:
 - `universal.http.server.*`: inbound traffic to your service
 - `universal.http.client.*`: outbound traffic to other destinations
+
+
+## SLI and SLO
+
+### Service Level Indicators (SLI)
+
+Metrics to measure some aspect of the level of service
+
+Examples:
+
+- **Availability**: The percentage of time a service is online (e.g., 99.9% uptime)
+- **Latency**: How quickly a service responds to user requests (e.g., 95% of responses within 200ms)
+- **Error Rate**: The proportion of requests that result in failures (e.g., 0.01% error rate)
+- **Throughput**: The number of successful transactions processed per second
+
+### Service Level Objectives (SLO)
+
+- SLIs monitored overtime
+- To track the health of services over time
+- Eight characteristics of a good SLO:
+  - Attainable
+  - Repeatable (to provide useful historical data)
+  - Measurable
+  - Understandable
+  - Meaningful (align with business goals)
+  - Controllable
+  - Affordable
+  - Mutually Acceptable
+- Examples:
+  - 99% of requests being successful over the past 7 days
+  - less than 1 second latency 99% of the time over the past 30 days
+- You can create an SLO based on a monitor, then you can create a monitor on an SLO to get alerts.
+
+SLO types in Datadog:
+- Metric based
+- Monitor based
+  - Could be an aggregation of multiple monitors
+- Time slice SLOs
+  - Evaluate whether the service meets its performance goals in each defined interval, such as 5 minutes or an hour
+  - Useful for catching short term issues
+
+Error budgets:
+
+- error budget = 1 - SLO target
+- You could setup monitors on
+  - error budget
+  - or burn rate
+
+Burn rate:
+
+// TODO need to understand the calculation better !
+
+### SLA
+
+Agreement between a service provider (internal or external) and a customer
+
+Number of nines:
+
+- 90% (1 Nine): 36.5 days of downtime per year
+- 99% (2 Nines): 3.65 days of downtime per year
+- 99.9% (3 Nines): 8.76 hours of downtime per year
+- 99.99% (4 Nines): 52.56 minutes of downtime per year
+- 99.999% (5 Nines): 5.26 minutes of downtime per year
 
 
 ## Synthetic testing
