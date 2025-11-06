@@ -1,21 +1,31 @@
 # Azure SQL DB
 
 - [Overview](#overview)
-- [SQL Database](#sql-database)
+- [Azure SQL Database](#azure-sql-database)
   - [Concepts](#concepts)
   - [Purchasing models](#purchasing-models)
+  - [Deployment model](#deployment-model)
   - [High availability](#high-availability)
   - [Scaling](#scaling)
   - [Networking](#networking)
   - [Free offer](#free-offer)
+  - [Automatic tuning](#automatic-tuning)
+  - [Elastic query](#elastic-query)
+  - [Elastic jobs](#elastic-jobs)
+  - [SQL DB in Fabric](#sql-db-in-fabric)
 - [SQL Managed Instance](#sql-managed-instance)
+  - [Connectivity](#connectivity)
+  - [Backup and restore](#backup-and-restore)
   - [High availability](#high-availability-1)
+  - [Migration options](#migration-options)
+  - [Machine Learning Services](#machine-learning-services)
 - [Shared between SQL, SQL MI](#shared-between-sql-sql-mi)
   - [Disaster recovery](#disaster-recovery)
     - [Notes](#notes)
     - [Failover groups](#failover-groups)
   - [Backup](#backup)
 - [SQL Server on Azure VM](#sql-server-on-azure-vm)
+  - [Storage](#storage)
   - [HADR](#hadr)
     - [Always On availability group](#always-on-availability-group)
     - [Failover cluster instance (FCI)](#failover-cluster-instance-fci)
@@ -48,7 +58,7 @@ Deployment options:
 | HA                | geo-replication, auto-failover | automated backup, no auto-failover | no auto-failover |
 
 
-## SQL Database
+## Azure SQL Database
 
 - PaaS, abstracts both the OS and SQL Server instance
 - Hyperscale storage: up to 100TB
@@ -59,7 +69,6 @@ Deployment options:
 - **Elastic pools**: you buy a set of compute and storage resources that are shared among all the databases in the pool
 - **SQL DB Server**: a logic container for databases (could be a mix of single databases and elastic pools), it defines
   - Access: connection string (FQDN), location, authentication method (SQL auth, Entra auth, or both)
-  - Backup settings
   - Business continuity management: failover groups
   - Security: networking, TDE, Defender for Cloud, identity, auditing
   - A server could contain databases of different purchasing models
@@ -72,11 +81,38 @@ This is at database level, NOT server level
 
 - DTU: a bundled measure of compute, storage and I/O resources
 - vCore: select compute and storage resources independently, allows you to use Azure Hybrid Benefit for SQL Server
+  - Compure tier could be
+    - Provisioned: pre-allocated compute resources
+    - Serverless:
+      - auto-scale with min and max vCores
+      - Auto-pause could be enabled for General Purpose tier, delay from 15 min to 7 days, only storage charged when paused
 
 | Service tier            | Basic (DTU) | Standard (DTU) | Premium (DTU) | General Purpose (vCore) | Business Critical (vCore) | Hyperscale (vCore) |
 | ----------------------- | ----------- | -------------- | ------------- | ----------------------- | ------------------------- | ------------------ |
 | Local redundant support | Yes         | Yes            | Yes           | Yes                     | Yes                       | Yes                |
 | Zone redundant support  | No          | No             | Yes           | Yes                     | Yes                       | Yes                |
+
+Tier features:
+
+- General Purpose (vCore)
+  - Budget-friendly
+  - Remote storage
+- Business Critical (vCore)
+  - In-memory OLTP
+  - Built-in read-only replica
+  - More memory per core
+  - Local SSD storage
+  - **Highest** availability and performance
+- Hyperscale (vCore)
+  - Horizontal scaling (adding compute nodes as data sizes grow)
+  - Only single SQL database (seems could be used in elastic pool, what does this mean ?)
+
+### Deployment model
+
+- Single DB: dedicated compute and storage
+- Elastic pool:
+  - Scale the pool, no need to scale individual DBs
+  - Suitable for SaaS, multitenant architecture
 
 ### High availability
 
@@ -135,9 +171,11 @@ All the options below have **RPO == 0**, **RTO < 60 seconds**
     - Partitions database into multiple databases/shards
     - Shards can be in different regions, and scale independently
     - The solution uses a special database named shard map manager, which maintains mapping about all shards
+- Connection interruption may happen when:
+  - Scaling requires an internal failover
+  - Adding or removing DB to an elastic pool
 
-
-Read Scale-out in a business critical service tier:
+Read Scale-out in a Business Critical tier:
 
 ![Read Scale-out](images/azure_sql-db-business-critical-service-tier-read-scale-out.png)
 
@@ -164,24 +202,86 @@ There is a networking setting called "**Allow Azure services and resources to ac
   - pause the DB for the month, ensure it's free
   - allow over usage, get billed
 
+### Automatic tuning
+
+- Identify expensive queries
+- Forcing Last Good Execution Plan
+- Adding/removing Indexes
+
+### Elastic query
+
+Run T-SQL queries spanning multiple databases
+
+Supports both vertical and horizontal partitioning (sharding)
+
+### Elastic jobs
+
+SQL Server Agent replacement (equivalent to the Multi-Server Admin feature on an on-prem SQL Server)
+
+- Useful for DB maintenance tasks
+- Execute T-SQL across several target DBs (single, elastic pool, shard map), could cross Azure subs and region
+- Runs in parallel
+- Not supported by SQL MI
+
+### SQL DB in Fabric
+
+// TODO
+
 
 ## SQL Managed Instance
 
 - A PaaS service, but deployed into your own vNet
 - No need to manage a VM
+- No support for DTU model
 - Most of the SQL Server instance-scoped features are still available:
+  - Cross-database transactions
+  - Common language runtime (CLR)
+  - Access to the system databases
   - SQL Server Agent
   - Service Broker
-  - Common language runtime (CLR)
-  - Cross-database transactions
   - Database Mail
   - Linked servers
   - Distributes transcations
   - Machine Learning Services
 
+### Connectivity
+
+Via TDS endpoints
+
+### Backup and restore
+
+Similar to SQL DB. See below.
+
+Notes:
+- Can't restore to overwrite an existing DB
+- Only be restored to another SQL MI, not to SQL DB or SQL on VM
+- Support copy-only backup to Azure blob storage
+
 ### High availability
 
 Has General Purpose and Business Critical service tiers, and high availability options are similar to the options of Azure SQL Databases, see details here https://learn.microsoft.com/en-us/azure/azure-sql/managed-instance/high-availability-sla
+
+### Migration options
+
+SQL MI is often the better PaaS option (over SQL DB) for migration from on-prem
+
+- Native backup and restore
+- Managed Instance link (using distributed AGs, replicating data between on-prem and Azure)
+- Log replay service (more control)
+- Azure SQL Migration extension for Azure Data Studio (uses Data Migration Service, ideal for small to mid-sized DBs)
+- Transactional replication (for large/complex DBs)
+
+### Machine Learning Services
+
+- Supports Python and R packages
+  - T-SQL store procedure supports Python and R
+- Available on SQL MI, SQL on VM, on-prem SQL, NOT SQL DB
+- To enable, run
+  ```sql
+  EXEC sp_configure 'external scripts enabled', 1;
+  RECONFIGURE WITH OVERRIDE;
+  ```
+  Enables execution of external scripts using `sp_execute_external_script`
 
 
 ## Shared between SQL, SQL MI
@@ -263,9 +363,21 @@ Notes:
 
 SQL, SQL MI:
 
-- A minimum 7 day default backup retention period
-- Standard and premium can be configured for retention up to 35 days without having to configure long-term retention(LTR), only up to 7 days for basic tier.
-- For all SQL DB tiers, LTR can be configured for up to 10 year retention.
+- Continuous backup
+  - Transcation log: 5 to 10 minutes
+  - Differential: every 12 or 24 hours
+  - Full: every week
+- Long term retention (LTR)
+  - Disabled by default
+  - Up to 10 years
+  - Separate retention for weekly/monthly/yearly backups
+- Restore:
+  - Point-in-time restore (PITR)
+    - 1 to 35 days (7 by default, max 7 for Basic, General Purpose)
+    - Only to the same server
+  - Geo-restore
+    - Allows restore to another geo region
+    - Require geo-redundant backup storage (default option)
 
 Synapse SQL pool:
 
@@ -283,6 +395,11 @@ A version of SQL Server that runs in an Azure VM
 
 There's SQL IaaS Agent Extention that helps with licensing, patching, backing up, etc
 
+### Storage
+
+- For prod data, use Premium SSD or Ultra Disk
+- For backup, Standard HDD is ok
+
 ### HADR
 
 Most SQL Server HADR solutions are supported on VMs, as both Azure-only and hybrid solutions.
@@ -295,13 +412,14 @@ Most SQL Server HADR solutions are supported on VMs, as both Azure-only and hybr
 
 |                   | Always On AG                                                  | Always On FCIs                                                |
 | ----------------- | ------------------------------------------------------------- | ------------------------------------------------------------- |
-|                   | database level                                                | instance level                                                |
+| Level                   | database | server instance |
 | Requirement       | A domain controller VM                                        | Shared storage (Azure shared disks, Premium file shares, etc) |
 | Best practices    | VMs in an availability set or different AZs                   |                                                               |
 | Disaster recovery | an AG could span multiple Azure regions, or Azure and on-prem |                                                               |
 
 #### Always On availability group
 
+- Rely on the underlying Windows Server Failover Cluster (WSFC)
 - Azure Only
 
   <img src="./images/azure_sql-server-on-azure-vm-availability-group.png" width="400" alt="Always On availability group overview" />
@@ -314,7 +432,6 @@ Most SQL Server HADR solutions are supported on VMs, as both Azure-only and hybr
 
   <img src="images/azure_sql-server-hybrid-failover-liscense.png" width="400" alt="Always On AG free DR license" />
 
-- Rely on the underlying Windows Server Failover Clustering (WSFC)
 - SQL Server VMs should be in an availability set, or different availability zones
   - VMs in one availability set could be placed in a proximity placement group, minimize latency
   - VMs in different AZs offer better availability, but a greater network latency
@@ -336,9 +453,13 @@ Most SQL Server HADR solutions are supported on VMs, as both Azure-only and hybr
 
 ### Backup
 
+- Manual Backup
+  - Back up to attached disks or Blob storage (aka. "Back up to URL" ?)
+  - Use SSMS or SQL scripts
+
 - Automated Backup
   - Provied by SQL Server IaaS Agent Extension
-  - Stored in a storage account you specify
+  - Stored in a storage account you specify (aka. "Back up to URL" ?)
   - Backups retained up to 90 days
   - With SQL Server 2016 and later: manual backup schedule and time window, backup frequency
   - To restore: locate the backup files and restore using SQL Server Management Studio or Transact-SQL commands
@@ -347,16 +468,12 @@ Most SQL Server HADR solutions are supported on VMs, as both Azure-only and hybr
   - Azure Backup benefits: zero-infrastructure, long-term retension, central management
   - Azure Backup installs a workload backup extension on the VM
   - Additional features for SQL Server on VMs:
+    - Individual database level backup and restore
+    - Support for SQL Always On
     - Workload-aware backups that supports - full, differential, and log
     - SQL transaction log backup RPO up to 15 minutes
     - Point in time recovery up to a second
-    - Individual database level backup and restore
-    - Support for SQL Always  On
   - To restore, do it in Azure Backups, not with SSMS or Transact-SQL
-
-- Manual Backup
-  - Back up to attached disks or Blob storage
-  - Use SSMS or SQL scripts
 
 
 ## Authentication and authorization
