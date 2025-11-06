@@ -1,7 +1,7 @@
 # Azure SQL DB
 
 - [Overview](#overview)
-- [Azure SQL Database](#azure-sql-database)
+- [Azure SQL Database (SQL DB)](#azure-sql-database-sql-db)
   - [Concepts](#concepts)
   - [Purchasing models](#purchasing-models)
   - [Deployment model](#deployment-model)
@@ -13,7 +13,7 @@
   - [Elastic query](#elastic-query)
   - [Elastic jobs](#elastic-jobs)
   - [SQL DB in Fabric](#sql-db-in-fabric)
-- [SQL Managed Instance](#sql-managed-instance)
+- [SQL Managed Instance (SQL MI)](#sql-managed-instance-sql-mi)
   - [Connectivity](#connectivity)
   - [Backup and restore](#backup-and-restore)
   - [High availability](#high-availability-1)
@@ -24,11 +24,17 @@
     - [Notes](#notes)
     - [Failover groups](#failover-groups)
   - [Backup](#backup)
-- [SQL Server on Azure VM](#sql-server-on-azure-vm)
+- [SQL Server on Azure VM (SQL on VM)](#sql-server-on-azure-vm-sql-on-vm)
+  - [Licensing models](#licensing-models)
   - [Storage](#storage)
+  - [Performance considerations](#performance-considerations)
+  - [Table partition](#table-partition)
+  - [Hybrid scenarios](#hybrid-scenarios)
   - [HADR](#hadr)
-    - [Always On availability group](#always-on-availability-group)
-    - [Failover cluster instance (FCI)](#failover-cluster-instance-fci)
+    - [HA options](#ha-options)
+    - [Always On Availability Group](#always-on-availability-group)
+    - [Failover Cluster Instance (FCI)](#failover-cluster-instance-fci)
+    - [DR options](#dr-options)
   - [Backup](#backup-1)
 - [Authentication and authorization](#authentication-and-authorization)
   - [Authentication](#authentication)
@@ -50,7 +56,7 @@ Deployment options:
 
 ![Deployment options](./images/azure_sql-db-deployment-options.png)
 
-|                   | SQL Databases                  | SQL Managed Instance               | SQL Server on VM |
+|                   | SQL Databases (SQL DB)                  | SQL Managed Instance (SQL MI)               | SQL Server on VM (SQL on VM) |
 | ----------------- | ------------------------------ | ---------------------------------- | ---------------- |
 | Type              | PaaS                           | PaaS                               | IaaS             |
 | Why choose        | Modern cloud solution          | Instance-scoped features           | OS level access  |
@@ -58,7 +64,7 @@ Deployment options:
 | HA                | geo-replication, auto-failover | automated backup, no auto-failover | no auto-failover |
 
 
-## Azure SQL Database
+## Azure SQL Database (SQL DB)
 
 - PaaS, abstracts both the OS and SQL Server instance
 - Hyperscale storage: up to 100TB
@@ -228,7 +234,7 @@ SQL Server Agent replacement (equivalent to the Multi-Server Admin feature on an
 // TODO
 
 
-## SQL Managed Instance
+## SQL Managed Instance (SQL MI)
 
 - A PaaS service, but deployed into your own vNet
 - No need to manage a VM
@@ -385,7 +391,7 @@ Synapse SQL pool:
 - LTR not supported
 
 
-## SQL Server on Azure VM
+## SQL Server on Azure VM (SQL on VM)
 
 A version of SQL Server that runs in an Azure VM
 
@@ -393,38 +399,143 @@ A version of SQL Server that runs in an Azure VM
 - Responsible for updating and patching the OS and SQL Server
 - You could use either Windows or Linux VMs
 
-There's SQL IaaS Agent Extention that helps with licensing, patching, backing up, etc
+A SQL Server IaaS Agent Extention is installed automatically (when you deploy from Marketplace). Features:
+- View SQL Server's configuration and storage utilization
+- Automated backup
+- Automated patching
+- Azure KV integration
+- Defender for Cloud integration
+- View Disk utilization in the Portal
+- Flexible licensing
+- Flexible version or edition
+- SQL best practices assessment
+
+### Licensing models
+
+- Pay as you Go: SQL Server preconfigured, license included with the cost of VM
+- Microsoft Software Assurance (SA) program
+  - BYOL, need to manually install SQL Server (through a media, or upload a VM image)
+  - Report the usage of licenses to Microsoft by using the License Mobility verification form within 10 days
 
 ### Storage
 
-- For prod data, use Premium SSD or Ultra Disk
-- For backup, Standard HDD is ok
+- For SQL data, use managed disks
+  - For prod data, use Premium SSD (single ms latency) or Ultra Disk
+  - Each VM needs at least two disks:
+    - OS disk (C:\ for Windows)
+    - Temporary disk (D:\ on Windows)
+    - Data disks, better be separate (can be pooled to increase IOPS and storage capacity, using Storage Spaces on Windows, or Logical Volume Management on Linux)
+  - **Data files** should be stored on their own **pool** with read-caching
+  - **Transaction log** files are better stored on their own **pool** without caching
+  - **TempDB** in its own pool, or VM's temp disk
+  - When deploying Marketplace image, by default, separate drives will be created for SQL Data and SQL Log
+- Failover Cluster Instance can be built on shared disk or file storage
+- For backup, blob (Standard HDD) is ok
+
+### Performance considerations
+
+- Table partitioning (see below)
+- Data compression
+  - Page compression, more rows could be saved on each page (8 KB)
+  - Small CPU overhead, outweighed by IO benefits
+  - Implemented at object level, each index or table can be compressed individually
+    - Can compress partitions in a partitioned table or index
+  - Use `sp_estimate_data_compression_savings` for estimation
+  - Row compression: uses variable-length storage format, stores each value in a row in the minimum space
+  - Page compression: on top of row compression, use prefix and dictionary compression
+  - Columnstore archival compression
+
+Other considerations:
+- Enable backup comrepssion
+- Limit autogrowth of the DB
+- Move all DBs to data disks, including system DBs
+- Move error log and trace file directories to data disks
+- Enable Query Store
+- Schedule SQL Server Agent jobs to run DBCC CHECKDB, index reorganize, index rebuild, and update statistics jobs
+- Monitor and manage the health and size of the transaction log files
+
+### Table partition
+
+- When table becomes too large
+- Steps:
+  - Filegroup creation
+  - Partition function creation
+  - Partition scheme creation
+  - Partition table creation
+
+```sql
+-- Partition function
+CREATE PARTITION FUNCTION PartitionByMonth (datetime2)
+    AS RANGE RIGHT
+    -- The boundary values defined is the first day of each month, where the table will be partitioned into 13 partitions
+    FOR VALUES ('20210101', '20210201', '20210301',
+      '20210401', '20210501', '20210601', '20210701',
+      '20210801', '20210901', '20211001', '20211101',
+      '20211201');
+
+-- The partition scheme below will use the partition function created above, and assign each partition to a specific filegroup.
+CREATE PARTITION SCHEME PartitionByMonthSch
+    AS PARTITION PartitionByMonth
+    TO (FILEGROUP1, FILEGROUP2, FILEGROUP3, FILEGROUP4,
+        FILEGROUP5, FILEGROUP6, FILEGROUP7, FILEGROUP8,
+        FILEGROUP9, FILEGROUP10, FILEGROUP11, FILEGROUP12);
+
+-- Creates a partitioned table called Order that applies PartitionByMonthSch partition scheme to partition the OrderDate column
+CREATE TABLE Order ([Id] int PRIMARY KEY, OrderDate datetime2)
+    ON PartitionByMonthSch (OrderDate) ;
+GO
+```
+
+### Hybrid scenarios
+
+- Disaster recovery (failover to other geo regions)
+  ![SQL hybrid for DR](./images/azure_sql-hybrid-dr.png)
+- Backups
+  - To Azure Blob Storage via URL or Azure Files (SMB)
+- Store on-prem SQL Server data files for user databases (in Azure Storage)
+  - Needs low-latency network
+  - Lock down storage account using ACLs and Entra ID
+- Arc-enabled SQL Servers
+  ![SQL hybrid via Arc](./images/azure_sql-hybrid-arc.png)
+  - The on-prem host has both Arc Agent and SQL Arc Extension
+
+Networking:
+
+- ExpressRoute or VPN, ER has lower latency, but costs more
+- Unable to apply ER between cloud providers ?
 
 ### HADR
 
 Most SQL Server HADR solutions are supported on VMs, as both Azure-only and hybrid solutions.
 
-- Always On availability groups
-- Always On failover cluster instances(FCIs)
-- Log shipping
-- Backup and restore with Azure Blob storage
-- Replicate and fail over SQL Server with Azure Site Recovery
+#### HA options
+
+- Always On Availability Groups (AG)
+- Always On Failover Cluster Instances(FCIs)
 
 |                   | Always On AG                                                  | Always On FCIs                                                |
 | ----------------- | ------------------------------------------------------------- | ------------------------------------------------------------- |
-| Level                   | database | server instance |
+| Unit of failover | a group of databases | server instance |
 | Requirement       | A domain controller VM                                        | Shared storage (Azure shared disks, Premium file shares, etc) |
 | Best practices    | VMs in an availability set or different AZs                   |                                                               |
 | Disaster recovery | an AG could span multiple Azure regions, or Azure and on-prem |                                                               |
 
-#### Always On availability group
+#### Always On Availability Group
+
+![AG overview](./images/azure_sql-availability-group.png)
 
 - Rely on the underlying Windows Server Failover Cluster (WSFC)
-- Azure Only
+- Unit of failover is a group of DBs, not the instance
+- VMs should be in an availability set, or different availability zones
+  - VMs in one availability set could be placed in a proximity placement group, minimize latency
+  - VMs in different AZs offer better availability, but a greater network latency
+- An AG could be across different Azure regions (for disaster recovery)
+- An AG can contain max. of 9 SQL Server instances, Azure only or hybrid
+- One primary replica, secondaries could be either sync or async
+- Azure only scenario
 
   <img src="./images/azure_sql-server-on-azure-vm-availability-group.png" width="400" alt="Always On availability group overview" />
-
-- Hybrid
+- Hybrid scenario
 
   <img src="images/azure_sql-server-hybrid-dr-alwayson-ag.png" width="400" alt="Always On AG hybrid" />
 
@@ -432,12 +543,8 @@ Most SQL Server HADR solutions are supported on VMs, as both Azure-only and hybr
 
   <img src="images/azure_sql-server-hybrid-failover-liscense.png" width="400" alt="Always On AG free DR license" />
 
-- SQL Server VMs should be in an availability set, or different availability zones
-  - VMs in one availability set could be placed in a proximity placement group, minimize latency
-  - VMs in different AZs offer better availability, but a greater network latency
-- An AG could be across different Azure regions (for disaster recovery)
 
-#### Failover cluster instance (FCI)
+#### Failover Cluster Instance (FCI)
 
 - Relies on WSFC
 - An FCI is a single SQL Server instance that's installed across WSFC nodes (could be across multiple subnets)
@@ -450,6 +557,12 @@ Most SQL Server HADR solutions are supported on VMs, as both Azure-only and hybr
   - a disk witness
   - a cloud witness
   - a file share witness
+
+#### DR options
+
+- Log shipping
+- Backup and restore with Azure Blob storage
+- Replicate and fail over SQL Server with Azure Site Recovery
 
 ### Backup
 
