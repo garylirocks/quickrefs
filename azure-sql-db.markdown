@@ -416,6 +416,7 @@ SQL MI is often the better PaaS option (over SQL DB) for migration from on-prem
   - Uses log shipping
   - You must have a storage account, with the SQL backup files
   - More control
+  - Start it using PowerShell
   - LRS job is part of SQL MI
     - Will be cancelled after 30 days
     - The MI resource needs access to the storage account
