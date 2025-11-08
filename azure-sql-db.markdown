@@ -288,12 +288,17 @@ SQL Server Agent replacement (equivalent to the Multi-Server Admin feature on an
 
 - A PaaS service, but deployed into your own vNet
 - No need to manage a VM
-- No support for DTU model
+- Tiers
+  - General Purpose (vCore)
+  - Business Critical (vCore) - (has readable secondary)
+- No DTU model
+- Supports up to 100 DBs
 - Most of the SQL Server instance-scoped features are still available:
-  - Cross-database transactions
-  - Common language runtime (CLR)
+  - Access to tempdb
   - Access to the system databases
   - SQL Server Agent
+  - Cross-database queries (not supported by Azure SQL DB)
+  - Common language runtime (CLR)
   - Service Broker
   - Database Mail
   - Linked servers
@@ -310,8 +315,13 @@ Similar to SQL DB. See below.
 
 Notes:
 - Can't restore to overwrite an existing DB
-- Only be restored to another SQL MI, not to SQL DB or SQL on VM
-- Support copy-only backup to Azure blob storage
+- Only be restored to another SQL MI, NOT to SQL DB or SQL on VM
+  - Both must be in the same Azure sub and region
+  - Only restore individual DBs, not the entire MI instance
+  - For a encrypted DB, you need access to the certificate or asymmetric key used for encryption
+- Difference to SQL DB:
+  - Support copy-only backup to Azure blob storage
+  - To take a user-initiated copy-only backup, you must disable TDE for the specific database
 
 ### High availability
 
