@@ -8,6 +8,7 @@
     "azcollection",
     "azcopy",
     "azurerm",
+    "BACPAC",
     "BYOK",
     "cdktf",
     "centralus",

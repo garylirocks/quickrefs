@@ -12,13 +12,19 @@
   - [Automatic tuning](#automatic-tuning)
   - [Elastic query](#elastic-query)
   - [Elastic jobs](#elastic-jobs)
+  - [Query performance Insights (QPI)](#query-performance-insights-qpi)
+  - [Migration options](#migration-options)
+    - [Offline](#offline)
+    - [Online](#online)
   - [Hyperscale](#hyperscale)
   - [SQL DB in Fabric](#sql-db-in-fabric)
 - [SQL Managed Instance (SQL MI)](#sql-managed-instance-sql-mi)
   - [Connectivity](#connectivity)
   - [Backup and restore](#backup-and-restore)
   - [High availability](#high-availability-1)
-  - [Migration options](#migration-options)
+  - [Migration options](#migration-options-1)
+    - [Offline](#offline-1)
+    - [Online](#online-1)
   - [Machine Learning Services](#machine-learning-services)
 - [Common PaaS features (SQL DB and SQL MI)](#common-paas-features-sql-db-and-sql-mi)
   - [Backup](#backup)
@@ -254,12 +260,66 @@ Supports both vertical and horizontal partitioning (sharding)
 
 ### Elastic jobs
 
-SQL Server Agent replacement (equivalent to the Multi-Server Admin feature on an on-prem SQL Server)
+SQL Server Agent replacement
 
+- Equivalent to the Multi-Server Admin feature on an on-prem SQL Server
 - Useful for DB maintenance tasks
 - Execute T-SQL across several target DBs (single, elastic pool, shard map), could cross Azure subs and region
 - Runs in parallel
 - Not supported by SQL MI
+
+### Query performance Insights (QPI)
+
+Helps find the queries to optimize
+
+### Migration options
+
+#### Offline
+
+Tools:
+
+- Azure Database Migration Service (offline)
+- Azure Migrate (offline)
+- Import Export Wizard/BACPAC (offline)
+- Partial data migration:
+  - Bulk Copy - bcp utility (offline)
+  - Azure Data Factory (offline)
+
+Migrate:
+
+- Azure SQL Migration extension for Azure Data Studio
+  - Uses Azure Database Migration Service (`Microsoft.DataMigration/SqlMigrationServices`)
+    - This needs Azure Data Factory's Self-hosted Integration Runtime (SHIR) to handle connectivity and upload backups to Azure
+  - Ideal for small to mid-sized DBs
+  - You can select which tables to migrate
+  ![SQL Migration extension architecture](./images/azure_sql-migration-extension-architecture.png)
+  - The DB schema needs to be created in the target first (using BACPAC or SQL Database Projects extension)
+  - Could migrate to any Azure SQL offerings, not limited to SQL DB
+- Import Export Wizard/BACPAC (offline)
+  - `.bacpac` file is a compressed file containing metadata and data
+  - You can import in Azure Portal or use `SqlPackage.exe` on localhost
+  - Use a higher service tier and scale down after
+
+Performance Considerations:
+
+- Network bandwith can accommodate maximum log ingestion rate
+- Use a high tier for transfer, and scale down after
+- Disable auto update, autostats, triggers, and indexes during migration
+- Partition tables and indexes, drop indexed views, and recreate them after migration
+
+#### Online
+
+Only method: transactional replication
+
+![Transact replication](./images/azure_sql-transact-replication.png)
+
+- Publisher could be SQL on-prem, on VM, SQL MI
+- Azure SQL DB could be a push subscriber for both transactional and snapshot replication
+- Steps:
+  - Take an initial snapshot of publisher DB object and data
+  - Subsequent changes to data and schema at the Publisher are delivered in near real-time
+- Need to be configured via SSMS, or T-SQL, NOT Azure Portal
+- Can only use SQL auth for the target SQL DB
 
 ### Hyperscale
 
@@ -286,7 +346,8 @@ SQL Server Agent replacement (equivalent to the Multi-Server Admin feature on an
 
 ## SQL Managed Instance (SQL MI)
 
-- A PaaS service, but deployed into your own vNet
+- A PaaS service, need a dedicated subnet in a vNet
+  - Could have both public and private endpoint
 - No need to manage a VM
 - Tiers
   - General Purpose (vCore)
@@ -297,7 +358,7 @@ SQL Server Agent replacement (equivalent to the Multi-Server Admin feature on an
   - Access to tempdb
   - Access to the system databases
   - SQL Server Agent
-  - Cross-database queries (not supported by Azure SQL DB)
+  - Cross-database queries and transactions (not supported by Azure SQL DB)
   - Common language runtime (CLR)
   - Service Broker
   - Database Mail
@@ -331,11 +392,49 @@ Has General Purpose and Business Critical service tiers, and high availability o
 
 SQL MI is often the better PaaS option (over SQL DB) for migration from on-prem
 
-- Native backup and restore
-- Managed Instance link (using distributed AGs, replicating data between on-prem and Azure)
-- Log replay service (more control)
-- Azure SQL Migration extension for Azure Data Studio (uses Data Migration Service, ideal for small to mid-sized DBs)
-- Transactional replication (for large/complex DBs)
+#### Offline
+
+- Native backup and restore (easiest)
+  ```sql
+  BACKUP DATABASE YourDatabase TO URL = 'https://youraccount.blob.core.windows.net/yourcontainer/yourdatabase.bak' WITH COPY_ONLY
+  RESTORE DATABASE YourDatabase FROM URL = 'https://youraccount.blob.core.windows.net/yourcontainer/yourdatabase.bak'
+  ```
+- BACPAC using `SqlPackage`
+  - Unlike SQL DB, can't do this in Azure Portal
+  - Use `SqlPackage.exe`
+- Bulk Copy (bcp)
+- ADF
+- Azure SQL Migration extension for Azure Data Studio
+  - Similar to migrate to SQL DB
+
+#### Online
+
+- Log replay service (LRS)
+
+  ![Log Replay Service](./images/azure_sql-log-replay-service.png)
+  - SQL MI only
+  - Uses log shipping
+  - You must have a storage account, with the SQL backup files
+  - More control
+  - LRS job is part of SQL MI
+    - Will be cancelled after 30 days
+    - The MI resource needs access to the storage account
+  - Backup and restore performance best practices
+    - Split full and diff backups into multiple files
+    - Use backup compression
+    - Use `CHECKSUM` to speed up restore
+- Managed Instance link
+  ![Managed Instance link](./images/azure_sql-managed-instance-link-feature.png)
+  - Set up using SSMS or T-SQL/PowerShell
+  - Using distributed availability group (DAG), replicating data between on-prem and Azure
+  - One DB per link
+  - A DB can be replicated to multiple SQL MIs
+  - A SQL Server instance can have multiple links
+  - SQL Server 2022 supports two-way replication (failover to MI, then failback to SQL Server)
+  - Can be used to offload read-only workloads
+- Transactional replication (online or offline)
+  - For large/complex DBs
+  - SQL MI can be a publisher, distributor, and subscriber
 
 ### Machine Learning Services
 
