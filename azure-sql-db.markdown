@@ -45,6 +45,7 @@
     - [DR options](#dr-options)
   - [Backup](#backup-1)
 - [Authentication and authorization](#authentication-and-authorization)
+  - [Concepts](#concepts-1)
   - [Authentication](#authentication)
   - [Entra auth (contained user)](#entra-auth-contained-user)
   - [Entra auth (server principals - logins)](#entra-auth-server-principals---logins)
@@ -777,14 +778,56 @@ DR usually means backup and restore your data in another region
 
 ## Authentication and authorization
 
-This section applies to Azure SQL Database, Azure SQL Managed Instance, or Azure Synapse.
+This section applies to Azure SQL DB, Azure SQL MI, or Azure Synapse.
+
+### Concepts
+
+- Security principals:
+  - Entities with certain permissions
+  - At either server level or database level
+  - Can be individuals or collections
+  - There are several sets in SQL Server, some have fixed membership, some sets have a membership controlled by the SQL Server administrators
+- Securables scopes:
+    - Server
+    - Database
+    - Schema
+- Schema
+  - A collection of objects, allows objects to be grouped into separate namespaces
+  - Every user has a default schema (if no, then it's `dbo`)
+  - If you don't specify schema, like `SELECT name FROM customers`, it checks the user default schema, then `dbo`
+  - Best practices is to always specify a schema
+- Logins
+  - At server instance level
+  - Credentials stored in the `master` db
+  - Should be linked to by user accounts in one or more DBs
+  - Logins are for authentication, the mapped users are for authorization in each DB
+  ```sql
+  USE [master]
+  GO
+
+  -- create login in master db
+  CREATE LOGIN demo WITH PASSWORD = 'Pa55.w.rd'
+  GO
+
+  USE [MyDBName]
+  GO
+
+  -- create a linked user in another db
+  CREATE USER demo FROM LOGIN demo
+  GO
+  ```
+- Contained users
+  - Database level
+  - Not linked to a login
+  - Could be SQL auth or Windows/Entra auth
+  - DB must be configured for partial containment (default in Azure SQL DB, optional in SQL Server)
+  ```sql
+  -- in a user db context
+  CREATE USER [dba@contoso.com] FROM EXTERNAL PROVIDER;
+  GO
+  ```
 
 ### Authentication
-
-SQL logins and users:
-
-- A **login** is an individual **account** in the `master` database, to which a **user account** in one or more databasese can be linked to. Credential for the **login** is stored in `master`.
-- A **user account** is an individual **account** in any database that may be, but not have to be, linked to a **login**. If not linked, credential is stored in the database.
 
 To create a user, you need `ALTER ANY USER` permission in the database, it's held by:
 - server admin accounts
