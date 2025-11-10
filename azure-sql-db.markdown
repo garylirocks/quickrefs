@@ -832,6 +832,7 @@ When you deploy Azure SQL:
 
   The `CREATE USER "<identity-name>" FROM EXTERNAL PROVIDER` command requires **access from SQL to Entra on behalf of the logged-in user**, the user needs MS Graph permissions to read user/group/apps (see the [applications section](#applications) below).
 - There are a few authentication options when you use tools like SSMS to connect to Azure SQL, notes:
+  - **Microsoft Entra MFA** works
   - **Microsoft Entra integrated**, only works if
     - You are signed in to a domain-joined machine
     - You have set up

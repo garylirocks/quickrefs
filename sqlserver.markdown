@@ -113,7 +113,7 @@ docker exec -it sql1 "bash"
     - User activate the role with the password, then the role permissions are applied to the user, until the role is deactivated
   - Built-in db roles (for each db)
     - All configured with `db_`
-    - eg. `db_owner`, `db_datareader`, `db_accessadmin`
+    - eg. `db_owner`, `db_datareader`, `db_accessadmin` (can create new users), `db_securityadmin` (can grant permissions)
     - `db_denydatawriter`: prevent from writing data, when users have been granted rights via other roles or directly
     - All users with  adb are automatically members of the `public` role, which has no permissions
     - `db_owner` users can always see all data in a db, applications can use `Always Encrypted` to protect data from privileged users
