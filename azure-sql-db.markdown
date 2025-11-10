@@ -8,6 +8,8 @@
   - [High availability](#high-availability)
   - [Scaling](#scaling)
   - [Networking](#networking)
+    - [Logical server level firewall](#logical-server-level-firewall)
+    - [Database-level firewall](#database-level-firewall)
   - [Free offer](#free-offer)
   - [Automatic tuning](#automatic-tuning)
   - [Elastic query](#elastic-query)
@@ -54,6 +56,7 @@
   - [Transparent data encryption (TDE)](#transparent-data-encryption-tde)
   - [Dynamic data masking](#dynamic-data-masking)
   - [Always Encrypted](#always-encrypted)
+    - [Secure enclaves](#secure-enclaves)
   - [Classification and labeling](#classification-and-labeling)
 - [Database Watcher](#database-watcher)
 - [Azure SQL Edge](#azure-sql-edge)
@@ -229,6 +232,8 @@ Read Scale-out in a Business Critical tier:
 
 ### Networking
 
+#### Logical server level firewall
+
 Applies to all databases in a server.
 
 There is a networking setting called "**Allow Azure services and resources to access this server**",
@@ -238,6 +243,11 @@ There is a networking setting called "**Allow Azure services and resources to ac
   - when turned **OFF**, you need to either
     - Allow the client subnet (to connect via ServiceEndpoint)
     - Allow public IP (to connect via Internet)
+
+#### Database-level firewall
+
+- Configured only via T-SQL using `sp_set_database_firewall_rule` from within a db
+- If either db or server level rules allow, connection is allowed
 
 ### Free offer
 
@@ -963,9 +973,11 @@ Managed using database roles and explicit permissions.
 - Encrypts the storage of an entire database by using a symmetric key called the Database Encryption Key (DEK)
 - **Service-mangaged TDE**: DEK is protected by a built-in server certificate
 - **Customer-managed TDE**: the TDE Protector that encrypts the DEK is stored in a customer managed Key Vault
-- For
-  - SQL Database and Azure Synapse, TDE protector is at the server level and inherited by all databases associated with that server.
-  - SQL Managed Instance, TDE protector is set at the instance level and inherited by all encrypted databases on that instance.
+  - The SQL DB logical server could have a UMI, with permission to the key in a Key Vault
+  - For
+    - SQL DB and Azure Synapse, TDE protector is at the server level and inherited by all databases associated with that server.
+    - SQL MI, TDE protector is set at the instance level and inherited by all encrypted databases on that instance.
+    - SQL on VM, a whole key chain: Service Master Key (SQL Server Instance level) -> Database Master Key (`master` db level) -> certificate in `master` -> DEK (Database Encryption Key)
 - Cannot be used to encrypt system databases, such as `master`, which contains objects that are needed to perform the TDE operations on the user databases.
 
 ### Dynamic data masking
@@ -983,16 +995,30 @@ Managed using database roles and explicit permissions.
 
 Steps:
 
-- Two types of keys: column encyrption keys and column master keys
+- Two types of keys: column encyrption keys (CEK) and column master keys (CMK)
+  - Each column can have its own key
 - Column encryption key is used to encrypt data in a column. A column master key is a key-protecting key that encrypts one or more column encryption keys
+  - Encryption type could be
+    - Deterministic: allows comparisons, joins, grouping, indexing
+    - **Randomized**: more secure, recommended for columns with well-known distinct values that could be guessed from the encrypted data, like three-digit credit card verification code,
+      - Limit: value can't be compared, a work around is "Secure enclaves" (see below)
 - The DB engine only stores the encrypted values of column encryption keys and the information about the location of column master keys (eg. Azure Key Vault, Windows Certificate Store)
 - To access data stored in an encrypted column in plaintext, an application must use an *Always Encrypted enabled client driver*. Encryption and decryption occurs via the driver.
+  - Client connection string needs to have `Column Encryption Setting=enabled`, this causes a metadata lookup for each column
 - The driver gets from the DB engine the encrypted value of the column encryption key and the location of the corresponding column master key
 - The driver contacts the key store, to decrypt the encrypted column encryption key value
-- The driver uses the plaintext column encryption key to encrypt the parameter
-- The driver substitutes the plaintext values of the parameters with their encrypted values, and it sends the query to the server for processing
+- The driver uses the plaintext column encryption key to encrypt query parameters
+- The driver has parameters encrypted, then sends the query to the server for processing
 - The server computes the result set
 - The driver decrypts the results and returns plaintext values to the application
+
+#### Secure enclaves
+
+![Secure enclaves](./images/azure_sql-secure-enclaves.png)
+
+- A secure enclave is a secured region of memory within the SQL Server process for processing encrypted data
+- Not possible to view any data or code
+- For columns of randomized encryption type, this enables pattern matching, comparison, indexing
 
 ### Classification and labeling
 
