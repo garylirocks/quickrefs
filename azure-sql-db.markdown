@@ -45,7 +45,6 @@
     - [DR options](#dr-options)
   - [Backup](#backup-1)
 - [Authentication and authorization](#authentication-and-authorization)
-  - [Concepts](#concepts-1)
   - [Authentication](#authentication)
   - [Entra auth (contained user)](#entra-auth-contained-user)
   - [Entra auth (server principals - logins)](#entra-auth-server-principals---logins)
@@ -780,53 +779,6 @@ DR usually means backup and restore your data in another region
 
 This section applies to Azure SQL DB, Azure SQL MI, or Azure Synapse.
 
-### Concepts
-
-- Security principals:
-  - Entities with certain permissions
-  - At either server level or database level
-  - Can be individuals or collections
-  - There are several sets in SQL Server, some have fixed membership, some sets have a membership controlled by the SQL Server administrators
-- Securables scopes:
-    - Server
-    - Database
-    - Schema
-- Schema
-  - A collection of objects, allows objects to be grouped into separate namespaces
-  - Every user has a default schema (if no, then it's `dbo`)
-  - If you don't specify schema, like `SELECT name FROM customers`, it checks the user default schema, then `dbo`
-  - Best practices is to always specify a schema
-- Logins
-  - At server instance level
-  - Credentials stored in the `master` db
-  - Should be linked to by user accounts in one or more DBs
-  - Logins are for authentication, the mapped users are for authorization in each DB
-  ```sql
-  USE [master]
-  GO
-
-  -- create login in master db
-  CREATE LOGIN demo WITH PASSWORD = 'Pa55.w.rd'
-  GO
-
-  USE [MyDBName]
-  GO
-
-  -- create a linked user in another db
-  CREATE USER demo FROM LOGIN demo
-  GO
-  ```
-- Contained users
-  - Database level
-  - Not linked to a login
-  - Could be SQL auth or Windows/Entra auth
-  - DB must be configured for partial containment (default in Azure SQL DB, optional in SQL Server)
-  ```sql
-  -- in a user db context
-  CREATE USER [dba@contoso.com] FROM EXTERNAL PROVIDER;
-  GO
-  ```
-
 ### Authentication
 
 To create a user, you need `ALTER ANY USER` permission in the database, it's held by:
@@ -852,7 +804,7 @@ When you deploy Azure SQL:
 - When you sign into a database with this login, it's matched to the **`dbo` user account**, which
   - exists in every user database
   - has all database permissions
-  - is member of the `db_owner` fixed database role
+  - is member of the `db_owner` database role
 
 ### Entra auth (contained user)
 - To use Entra auth, you need to create an Entra ID-based contained database user
@@ -867,10 +819,10 @@ When you deploy Azure SQL:
   ```sql
   USE MyDatabase;
 
-  -- <identity-name>:
-  --  user principal name for a user
-  --  display name for a group
-  --  resource name for a managed identity
+  -- <identity-name> should be:
+  --  "user principal name" for a user
+  --  "display name" for a group
+  --  "resource name" for a managed identity
   CREATE USER "<identity-name>" FROM EXTERNAL PROVIDER;
 
   -- the user gets the "public" role by default
@@ -941,9 +893,9 @@ See: https://learn.microsoft.com/en-us/azure/azure-sql/database/authentication-a
 - To create Entra-based user/logins in SQL, requires access **from SQL to Entra to read user/group/apps via Microsoft Graph**
   - When a user does this, Azure SQL's firsty-party Microsoft application uses delegated permissions of the user
   - When an app does this, SQL engine uses its **server identity** (see below), which **must have the Microsoft Graph query permissions**.
-    - MS doc suggests creating a roles-assignable group, assign "Directory Readers" role to it, then group owner can add server identities to the group
-    - Or assign individual permissions to the app
-    - Avoid assign the "Directory Readers" role to the app directly, which has unnecessary permissions
+    - MS doc suggests creating a roles-assignable group, assign "Directory Readers" role to it, then group owner can add the *server identity* to the group
+    - Or assign individual permissions to the *server identity*
+    - Avoid assign the "Directory Readers" role to the *server identity* directly, which has unnecessary permissions
 - **server identity**
   - Is the **primary managed identity** assigned to the Azure SQL logical server, SQL managed instance, Synapse workspace
   - Could be system-assigned managed identity (SMI) or user-assigned managed identity (UMI)

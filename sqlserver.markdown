@@ -1,5 +1,6 @@
 # SQL Server
 
+- [Overview](#overview)
 - [Run with Docker](#run-with-docker)
 - [Concepts](#concepts)
 - [Create and query data](#create-and-query-data)
@@ -7,7 +8,17 @@
 - [Datatypes](#datatypes)
   - [`varchar` vs `nvarchar`](#varchar-vs-nvarchar)
 - [Authorization](#authorization)
+  - [Permissions](#permissions)
+  - [Ownership chains](#ownership-chains)
+  - [System tables](#system-tables)
 - [Cheatsheets](#cheatsheets)
+
+
+## Overview
+
+Most content applies to SQL Server.
+
+Some apply to Azure SQL, as noted.
 
 
 ## Run with Docker
@@ -33,14 +44,95 @@ docker exec -it sql1 "bash"
 
 ## Concepts
 
-- schema
+- **Security principals**:
+  - Entities with certain permissions
+  - At either server level or database level
+  - Can be individuals or collections
+  - A role is like a group, is also a security principal
+  - There are several sets in SQL Server, some have fixed membership, some sets have a membership controlled by the SQL Server administrators
+- **Securables scopes**:
+    - Server
+    - Database
+    - Schema: you can assign permissions to a role at this level
+- **Schema**
   - A schema is like a folder inside a database that holds tables, views, etc.
   - Helps with organization, permissions, and naming separation
-  - Default schema is typically `dbo`
+  - Every user has a default schema (if no, then it's `dbo`)
+    - `dbo` stands for "database owner"
+  - If you don't specify schema, like `SELECT name FROM customers`, it checks the user default schema, then `dbo`
+  - Best practices is to always specify a schema
+- **Logins**
+  - At server instance level
+  - Credentials stored in the `master` db
+  - Should be linked to by user accounts in one or more DBs
+  - Logins are for authentication, the mapped users are for authorization in each DB
+  ```sql
+  USE [master]
+  GO
 
-- "dbo"
+  -- create login in master db
+  CREATE LOGIN demo WITH PASSWORD = 'Pa55.w.rd'
+  GO
 
-  "dbo" stands for "database owner" and is the default schema. When you create a table without explicitly specifying a schema, SQL Server assumes the "dbo" schema by default.
+  USE [MyDBName]
+  GO
+
+  -- create a linked user in another db
+  CREATE USER demo FROM LOGIN demo
+  GO
+  ```
+- **Contained users**
+  - Database level
+  - Not linked to a login
+  - Could be SQL auth or Windows/Entra auth
+  - DB must be configured for partial containment (default in Azure SQL DB, optional in SQL Server)
+  ```sql
+  -- in a user db context
+  CREATE USER [dba@contoso.com] FROM EXTERNAL PROVIDER;
+  GO
+  ```
+- **Roles**
+  - Effective security groups
+  - Custom roles can be created at the server or db level
+    - Server roles can't be granted access to db object directly
+    - Server roles NOT available in Azure SQL DB
+    - Schema scoped permissions can be granted to a role
+
+  ```sql
+  CREATE USER [DP300User1] WITH PASSWORD = 'Pa55.w.rd'
+  GO
+  CREATE ROLE [SalesReader]
+  GO
+  ALTER ROLE [SalesReader] ADD MEMBER [DP300User1]
+  GO
+  GRANT SELECT, EXECUTE ON SCHEMA::Sales TO [SalesReader]
+  GO
+  ```
+  - Application roles
+    - There's a preconfigured password
+    - User activate the role with the password, then the role permissions are applied to the user, until the role is deactivated
+  - Built-in db roles (for each db)
+    - All configured with `db_`
+    - eg. `db_owner`, `db_datareader`, `db_accessadmin`
+    - `db_denydatawriter`: prevent from writing data, when users have been granted rights via other roles or directly
+    - All users with  adb are automatically members of the `public` role, which has no permissions
+    - `db_owner` users can always see all data in a db, applications can use `Always Encrypted` to protect data from privileged users
+    - Azure SQL DB nuances
+      - `master` db is virtual
+      - Sever admin has `sysadmin` rights, you can create more limited admins
+      - Two db level roles, only exist in the virtual `master` db: `loginmanager`, `dbmanager`
+  - Fixed server-level roles
+    - Can be assigned to server-level principals (SQL Server logins, Windows accounts, Windows groups)
+    - Permissions are fixed, except the `public` role
+    - eg. `sysadmin`, `serveradmin`, `securityadmin`, `dbcreator`, `public` etc
+    - Server-level roles in Azure SQL DB:
+      - `MS_DatabaseConnector`
+      - `MS_DatabaseManager`
+      - `MS_DefinitionReader`
+      - `MS_LoginManager`
+      - `MS_SecurityDefinitionReader`
+      - `MS_ServerStateReader`
+      - `MS_ServerStateManager`
 
 
 ## Create and query data
@@ -85,6 +177,29 @@ SELECT * FROM #mytemptable
 
 
 ## Authorization
+
+### Permissions
+
+- Four basic operation permissions: `SELECT`, `INSERT`, `UPDATE`, and `DELETE`
+  - Other table/view permissions: `CONTROL`, `REFERENCES`, `TAKE OWNERSHIP`, `VIEW CHANGE TRACKING`, `VIEW DEFINITION`
+  - Function/stored procedure permissions: `ALTER`, `CONTROL`, `EXECUTE`, `VIEW CHANGE TRACKING`, `VIEW DEFINITION`
+- Perimssions can be granted, revoked, or denied
+  - On tables and views
+  - `DENY` supersedes over `GRANT`
+  - Can additionally restrict the columns
+  - SQL Server and Azure SQL DB also include row-level security
+- You can use `EXECUTE AS USER = <user_name>` to change user context
+
+### Ownership chains
+
+- When a funcion or stored procedure executes, it inherits the permissions of the owner.
+- Example:
+  - The owner of `SP_DEMO` has access to `SELECT` on `[Sales].[Orders]`
+  - User `user001` does not have access to `[Sales].[Orders]`, but can `EXECUTE` `SP_DEMO`
+  - Then `user001` can't execute `SELECT` on the table, but can run the stored procedure
+- Dynamic SQL in a stored procedure is executed outside the context of the calling procedure, DON'T inherit permissions of the procedure owner. The calling user's permissions apply.
+
+### System tables
 
 - `sys.database_principals` contains both individual users and roles, each has a principal_id
 - `sys.database_role_members` contains members of each role, eg. `dbo` is a member of `db_owner`
