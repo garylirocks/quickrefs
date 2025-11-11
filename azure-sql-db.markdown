@@ -34,6 +34,7 @@
     - [Notes](#notes)
     - [Failover groups](#failover-groups)
   - [Auditing](#auditing)
+  - [Ledger](#ledger)
 - [SQL Server on Azure VM (SQL on VM)](#sql-server-on-azure-vm-sql-on-vm)
   - [Licensing models](#licensing-models)
   - [Storage](#storage)
@@ -54,10 +55,12 @@
   - [Authorization](#authorization)
 - [Data security](#data-security)
   - [Transparent data encryption (TDE)](#transparent-data-encryption-tde)
-  - [Dynamic data masking](#dynamic-data-masking)
   - [Always Encrypted](#always-encrypted)
     - [Secure enclaves](#secure-enclaves)
+  - [Dynamic data masking](#dynamic-data-masking)
   - [Classification and labeling](#classification-and-labeling)
+  - [Row-level security (RLS)](#row-level-security-rls)
+  - [Microsoft Defender for SQL](#microsoft-defender-for-sql)
 - [Database Watcher](#database-watcher)
 - [Azure SQL Edge](#azure-sql-edge)
 
@@ -346,7 +349,7 @@ Only method: transactional replication
   - Up/Down - CPU and memory
   - In/Out - read replicas
 - In your connection string, set `ApplicationIntent` argument to `ReadOnly` to route to read-only replicas
-- Row-Level Security (RLS): access to specific rows in a table based on user characteristics, suck as group memberships or execution context
+- Row-Level Security (RLS)
 
 
 ### SQL DB in Fabric
@@ -567,8 +570,30 @@ Notes:
 
 ### Auditing
 
-- Audit logs saved in an Azure storage account
+- Audit logs saved in Storage/Log Analytics/Event Hub
 - Advanced Threat Protection analyzes the logs
+- Can have server-level and db-level policies
+  - Recommended to enable on server-level only
+  - Auditing on Read-Only replicas is automatically enabled
+- With data classification enabled, field `data_sensitivity_information` records access to classified columns
+
+### Ledger
+
+- Provides tamper-evidence capabilities
+- Provide concrete proof to auditors, business partners what data has been changed or tampered with.
+- Can be enabled during database creation
+  - Or use `LEDGER = ON` when `CREATE TABLE`
+  - Can't be changed
+  - Optionally enable automatic digest generation (needs a Storage Account/Azure Confidential Ledger)
+
+Two forms:
+
+- Updatable ledger tables
+  - This is the default form
+  - Track history of changes to any rows
+  - Create a history table that store the previous version of the row, full history is kept for any updates or deletes
+- Append-only ledger tables
+  - Blocks all updates and deletes at API level
 
 
 ## SQL Server on Azure VM (SQL on VM)
@@ -980,12 +1005,6 @@ Managed using database roles and explicit permissions.
     - SQL on VM, a whole key chain: Service Master Key (SQL Server Instance level) -> Database Master Key (`master` db level) -> certificate in `master` -> DEK (Database Encryption Key)
 - Cannot be used to encrypt system databases, such as `master`, which contains objects that are needed to perform the TDE operations on the user databases.
 
-### Dynamic data masking
-
-- A presentation layer feature
-- Data in the database is not changed, admins can always view the unmasked data
-- You set data masking policy on **columns** (such as Social security number)
-
 ### Always Encrypted
 
 - Protect sensitive data stored in specific database **columns**
@@ -1020,20 +1039,69 @@ Steps:
 - Not possible to view any data or code
 - For columns of randomized encryption type, this enables pattern matching, comparison, indexing
 
+### Dynamic data masking
+
+- A presentation layer feature
+- Data in the database is not changed, admins can always view the unmasked data
+- You set data masking policy on **columns** (such as Social security number)
+- Could enable via the Portal or T-SQL
+  - `ALTER TABLE [Customer] ALTER COLUMN Address ADD MASKED WITH (FUNCTION = 'partial(0,"XXXX-XXXX-XXXX-",4)')`
+- To allow a user to retrieve unmasked data, explicitly grant `UNMASK` permission
+  - `SELECT INTO` or `INSERT INTO` results in masked data in target table
+  - Export run by a user without `UNMASK` permission, result file contains masked data
+
 ### Classification and labeling
 
 - Apply at **column** level
-- Policy options:
+- Two Information Protection Policy modes:
   - SQL Information Protection policy (legacy)
     - Supports both Sensitivity label and Information type
   - Microsoft Information Protection (MIP) policy
-    - Integrate with Purview, Microsoft 365
-    - Propagate to downstream applications, such as Power BI
     - Only support Sensitivity label, not Information type
+    - Propagate to downstream applications, such as Power BI
+    - Fetched from Purview/Microsoft 365
+    - Can only be changed by tenant root admins
 - Sensitivity label:
-  - Personal, Public, General, Confidential, Highly Confidential
-  - Saved in `sys.sensitivity_classifications` table
+  - Personal, Public, General, Confidential, Highly Confidential, etc
+  - Saved in a catalog view `sys.sensitivity_classifications`
+  - Supported by all SQL options
 - Information type: Credit card, etc
+
+### Row-level security (RLS)
+
+- Configured and applied at database level
+- `SECURITY POLICY` restricting access to a table based on group memberships or execution context
+- Use case: user account `tenant1` can only see rows `WHERE tenant = tenant1`
+
+Implementation steps:
+
+```sql
+CREATE SCHEMA sec;
+GO
+
+-- tvf: inline table-valued function
+CREATE FUNCTION sec.tvf_xx ...
+GO
+
+GRANT SELECT ON sec.tvf_xx TO [user1]
+GO
+
+CREATE SECURITY POLICY sec.MyPolicy
+ADD FILTER PREDICATE sec.tvf_xx(param) ON [dbo].[TableName]
+WITH (STATE = ON);
+GO
+```
+
+### Microsoft Defender for SQL
+
+- For SQL DB and SQL MI
+- Should be enabled at subscription level
+- Two functions:
+  - SQL vulnerability assessment
+    - Scanned weekly
+  - Advanced Threat Protection
+    - Monitors db connections and queries
+    - Auditing is recommended, not required
 
 
 ## Database Watcher
