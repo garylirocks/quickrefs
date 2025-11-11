@@ -619,11 +619,17 @@ You could have nested Traffic Manager profiles, to combine multiple routing meth
 ![Front door split TCP](images/azure_frontdoor-split-tcp.png)
 
 It's like the Application Gateway at a global scale, plus a CDN
-  - works at layer 7 using **anycast** protocol with **split TCP**
-  - operates at the edge, not within a vNet
-  - resilient to failures to an entire Azure region
-  - can cache content
-  - a backend can be within or outside Azure
+
+- Classic resource type is `Microsoft.Network/frontDoors`
+- New Resource type is `Microsoft.Cdn/profiles`
+  - The classic CDN service is merged into this
+- This service is **SLOW** for new instance to start serving traffic (or for changes to take effect)
+  - Wait for an hour !!
+- works at layer 7 using **anycast** protocol with **split TCP**
+- operates at the edge, not within a vNet
+- resilient to failures to an entire Azure region
+- can cache content
+- a backend can be within or outside Azure
 
 Supports:
   - URL-path based routing
