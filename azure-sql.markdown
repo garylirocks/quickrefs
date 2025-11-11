@@ -63,6 +63,7 @@
   - [Microsoft Defender for SQL](#microsoft-defender-for-sql)
   - [Purview](#purview)
 - [Database Watcher](#database-watcher)
+- [Task automation](#task-automation)
 - [Azure SQL Edge](#azure-sql-edge)
 
 ## Overview
@@ -1156,6 +1157,18 @@ A separate resource in Azure to help monitor SQL databases
 - Data store: a KQL data store
 - Networking: supports private endpoints
 - Usage: KQL query, dashboards
+
+
+## Task automation
+
+Apart from SQL Server Agent jobs, Elastic Jobs, Azure has other tools for SQL task automation
+
+- Azure Automation account
+  - Need to import `Az.Accounts`, `Az.SQL` modules
+  - You can use the Automation account's MI for auth to Azure, like: `Connect-AzAccount -Identity`
+  - DB user credential could be first saved in the account, then retrieved in code using `Get-AutomationPSCredential -Name "<cred-name>"`
+
+
 
 
 ## Azure SQL Edge
