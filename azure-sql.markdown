@@ -77,6 +77,7 @@ Deployment options:
 | Why choose        | Modern cloud solution          | Instance-scoped features           | OS level access  |
 | Purchasing models | DTU, vCore                     | vCore                              | -                |
 | HA                | geo-replication, auto-failover | automated backup, no auto-failover | no auto-failover |
+| Task automation | Elastic Jobs | SQL Server Agent jobs | SQL Server Agent jobs |
 
 
 ## Azure SQL Database (SQL DB)
@@ -121,7 +122,7 @@ This is at database level, NOT server level
       - No Geo-replication
       - Long-term backup retention
       - A job database in elastic jobs
-      - The sync database in SQL Data Sync
+      - The `sync` database in SQL Data Sync
 
 | Service tier            | Basic (DTU) | Standard (DTU) | Premium (DTU) | General Purpose (vCore) | Business Critical (vCore) | Hyperscale (vCore) |
 | ----------------------- | ----------- | -------------- | ------------- | ----------------------- | ------------------------- | ------------------ |
@@ -274,13 +275,31 @@ Supports both vertical and horizontal partitioning (sharding)
 
 ### Elastic jobs
 
-SQL Server Agent replacement
+Unlike SQL on VM, and SQL MI, Azure SQL DB does not have `msdb` database and SQL Server Agent
+
+The alternative is Elastic Jobs
+
+![Elastic jobs](./images/azure_sql-elastic-jobs.png)
 
 - Equivalent to the Multi-Server Admin feature on an on-prem SQL Server
-- Useful for DB maintenance tasks
-- Execute T-SQL across several target DBs (single, elastic pool, shard map), could cross Azure subs and region
 - Runs in parallel
+- Could have a schedule
 - Not supported by SQL MI
+- Use cases:
+  - Automate management tasks on a schedule
+  - Load data from Azure Blob storage
+  - Move data
+  - Collect and aggregate data
+  - ...
+
+Components:
+
+- Agent: an Azure resource
+- Job db: a dedicated db (recommend S1 or higher)
+- Target group: could be logical servers, elastic pools and single DBs
+  - For server/pool, the agent needs credential within the `master` db
+  - For single db, database credential is OK
+- Job: one or more T-SQL scripts
 
 ### Query performance Insights (QPI)
 
