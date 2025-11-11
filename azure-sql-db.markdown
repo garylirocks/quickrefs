@@ -61,6 +61,7 @@
   - [Classification and labeling](#classification-and-labeling)
   - [Row-level security (RLS)](#row-level-security-rls)
   - [Microsoft Defender for SQL](#microsoft-defender-for-sql)
+  - [Purview](#purview)
 - [Database Watcher](#database-watcher)
 - [Azure SQL Edge](#azure-sql-edge)
 
@@ -1041,14 +1042,19 @@ Steps:
 
 ### Dynamic data masking
 
-- A presentation layer feature
-- Data in the database is not changed, admins can always view the unmasked data
+- Works for all SQL options
+- Data in the database is not changed
+  - Limit data exposure at SQL server level, no code change in application
 - You set data masking policy on **columns** (such as Social security number)
 - Could enable via the Portal or T-SQL
   - `ALTER TABLE [Customer] ALTER COLUMN Address ADD MASKED WITH (FUNCTION = 'partial(0,"XXXX-XXXX-XXXX-",4)')`
-- To allow a user to retrieve unmasked data, explicitly grant `UNMASK` permission
+- Admins (`dbo`) always get the unmasked data
+- To allow other users to retrieve unmasked data
+  - Explicitly grant `UNMASK` permission: `GRANT UNMASK TO <username>;`
+  - Or can be done in the Portal
+- For masked users
   - `SELECT INTO` or `INSERT INTO` results in masked data in target table
-  - Export run by a user without `UNMASK` permission, result file contains masked data
+  - Export result files contains masked data
 
 ### Classification and labeling
 
@@ -1102,6 +1108,24 @@ GO
   - Advanced Threat Protection
     - Monitors db connections and queries
     - Auditing is recommended, not required
+
+### Purview
+
+To allow Purview to scan SQL data, set up:
+
+- Firewall
+  - Allow Azure connections
+  - Or SHIR in your own vNet
+  - Or IR in a managed vNet
+- Authentication
+  - SMI/UMI attached to the Purview account resource (can't be used with a SHIR)
+  - Service Principal
+  - SQL auth - username/password
+
+Scans with Lineage extraction
+
+- Purview MI needs `db_owner` role
+- Lineage is extraced based on actual stored procedure runs (input and output tables)
 
 
 ## Database Watcher
