@@ -64,6 +64,9 @@
   - [Purview](#purview)
 - [Database Watcher](#database-watcher)
 - [Task automation](#task-automation)
+  - [Maintenance Plans](#maintenance-plans)
+  - [SQL Agent jobs](#sql-agent-jobs)
+  - [Other tools](#other-tools)
 - [Azure SQL Edge](#azure-sql-edge)
 
 ## Overview
@@ -1161,13 +1164,60 @@ A separate resource in Azure to help monitor SQL databases
 
 ## Task automation
 
+Typical maintenance tasks:
+
+- Backup (Full/Differential/Log)
+  - Usual strategy: one full backup a week, then diff backup per night, and transaction log backups for PITR
+- DB consistency checks
+  - Use DB console command `DBCC CHECKDB`
+  - Validate logical and physical consistency of each db page
+  - Backup retention period should be longer than consistency check intervals, make sure you can restore to a un-corrupted state
+- Index maintenance
+  - Rebuilds or reorganizes index
+  - Rebuilding updates index statistics
+- Statistics updates
+  - Updates column and index statistics, used for building query execution plans
+- Maintenance cleanup
+  - Remove old files related to maintenance plans
+
+### Maintenance Plans
+
+- A plan could have multiple tasks
+  - Recommends to have one task per plan
+  - Each task could be scoped to user dbs, system dbs, or a custom selection of dbs
+  - A single schedule for the whole plan or one per task
+- Usually run as "SQL Server Agent service account"
+  - In some scenarios, you may use a proxy account (see below)
+- A plan will appear as a job in SQL Server Agent
+
+### SQL Agent jobs
+
+- `msdb` is the data store for SQL Agent
+- Proxy account
+  - To execute specific job steps
+  - Credentials saved
+  - eg. an account to save backup to a network file share
+- A job could have multiple schedules, and a schedule could be assigned to multiple jobs
+- Can setup alerts on
+  - Error log
+  - SQL Server performance conditions
+  - Windows Management Instrumentation (WMI) events
+- Could send email when a job completes, or an alert fires
+- In a multiserver environment
+  - One server could be designated as a master server
+  - Master server could execute jobs on other servers (aka. target servers)
+  - Master server stores master copy of the jobs, and distribute them to target servers
+  - Target servers periodically connect to the master server to update their job schedules
+
+### Other tools
+
 Apart from SQL Server Agent jobs, Elastic Jobs, Azure has other tools for SQL task automation
 
 - Azure Automation account
-  - Need to import `Az.Accounts`, `Az.SQL` modules
+  - `Az.*` modules are available by default, you can import the `SqlServer` module from gallery
   - You can use the Automation account's MI for auth to Azure, like: `Connect-AzAccount -Identity`
-  - DB user credential could be first saved in the account, then retrieved in code using `Get-AutomationPSCredential -Name "<cred-name>"`
-
+  - Use "Credentials" to save db username/password, then retrieve in code using `Get-AutomationPSCredential -Name "<cred-name>"`
+- Logic Apps
 
 
 
