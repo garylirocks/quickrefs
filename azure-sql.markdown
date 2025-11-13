@@ -11,10 +11,11 @@
     - [Logical server level firewall](#logical-server-level-firewall)
     - [Database-level firewall](#database-level-firewall)
   - [Free offer](#free-offer)
-  - [Automatic tuning](#automatic-tuning)
   - [Elastic query](#elastic-query)
   - [Elastic jobs](#elastic-jobs)
-  - [Query performance Insights (QPI)](#query-performance-insights-qpi)
+  - [Performance and tuning](#performance-and-tuning)
+    - [Query Performance Insights (QPI)](#query-performance-insights-qpi)
+    - [Automatic tuning](#automatic-tuning)
   - [Migration options](#migration-options)
     - [Offline](#offline)
     - [Online](#online)
@@ -62,7 +63,10 @@
   - [Row-level security (RLS)](#row-level-security-rls)
   - [Microsoft Defender for SQL](#microsoft-defender-for-sql)
   - [Purview](#purview)
-- [Database Watcher](#database-watcher)
+- [DB monitoring](#db-monitoring)
+  - [Metrics](#metrics)
+  - [Extended events](#extended-events)
+  - [Database Watcher](#database-watcher)
 - [Task automation](#task-automation)
   - [Maintenance Plans](#maintenance-plans)
   - [SQL Agent jobs](#sql-agent-jobs)
@@ -82,6 +86,7 @@ Deployment options:
 | Purchasing models | DTU, vCore                     | vCore                              | -                |
 | HA                | geo-replication, auto-failover | automated backup, no auto-failover | no auto-failover |
 | Task automation | Elastic Jobs | SQL Server Agent jobs | SQL Server Agent jobs |
+| Perf monitoring | DB Watcher | DB Watcher, X Events | X Events |
 
 
 ## Azure SQL Database (SQL DB)
@@ -265,12 +270,6 @@ There is a networking setting called "**Allow Azure services and resources to ac
   - pause the DB for the month, ensure it's free
   - allow over usage, get billed
 
-### Automatic tuning
-
-- Identify expensive queries
-- Forcing Last Good Execution Plan
-- Adding/removing Indexes
-
 ### Elastic query
 
 Run T-SQL queries spanning multiple databases
@@ -305,9 +304,18 @@ Components:
   - For single db, database credential is OK
 - Job: one or more T-SQL scripts
 
-### Query performance Insights (QPI)
+### Performance and tuning
 
-Helps find the queries to optimize
+#### Query Performance Insights (QPI)
+
+- Help identity expensive queries
+- The Portal shows the query ID and statement, use Query Store to find the execution plan
+
+#### Automatic tuning
+
+- Identify expensive queries
+- Forcing Last Good Execution Plan
+- Adding/removing Indexes
 
 ### Migration options
 
@@ -627,27 +635,43 @@ A version of SQL Server that runs in an Azure VM
 - Access to full capabilities of SQL Server
 - Responsible for updating and patching the OS and SQL Server
 - You could use either Windows or Linux VMs
-- SQL Server IaaS Agent Extention is installed automatically (when you deploy from Marketplace). Features:
-  - View SQL Server's configuration and storage utilization
-  - Automated backup
-  - Automated patching
-  - Azure KV integration
-  - Defender for Cloud integration
-  - View Disk utilization in the Portal
-  - Flexible licensing
-  - Flexible version or edition
-  - SQL best practices assessment
-- Reasons to choose this:
+- Deployment methods:
+  - Create a VM, then install SQL Server, you can then register your VM for the management feature
+  - Deploy a Marketplace image, SQL Server (and the IaaS extension) already installed, two resources are created
+    - `Microsoft.Compute/virtualMachines`
+    - `Microsoft.SqlVirtualMachine/sqlVirtualMachines`, which has management features powered by the SQL IaaS extension:
+      - View SQL Server's configuration and storage utilization
+      - Automated backup
+      - Automated patching
+      - Azure KV integration
+      - Defender for Cloud integration
+      - View Disk utilization in the Portal
+      - Flexible licensing
+      - Flexible version or edition
+      - SQL best practices assessment
+- Reasons to choose SQL on VM:
   - Full control
   - Compatibility with other apps, vendor supports
   - Use "Analysis Services", "Integration Services", "Reporting Services" on the same machine
 
 ### Licensing models
 
+Supported SQL Server editions: Developer, Express, Standard, Enterprise, Web
+
+When change edition, you must manually change the SQL Server edition in your VM
+
+Licensing:
+
 - Pay as you Go: SQL Server preconfigured, license included with the cost of VM
-- Microsoft Software Assurance (SA) program
-  - BYOL (NOT "Hybrid Benefit", which is only for PaaS options ?), need to manually install SQL Server (through a media, or upload a VM image)
-  - Report the usage of licenses to Microsoft by using the License Mobility verification form within 10 days
+- Azure Hybrid Benefit:
+  - Standard and Enterprise edition only
+  - You need a SQL server license with Software Assurance
+- HA/DR: Free through Software Assurance
+
+If manual SQL install (through a media, or upload a VM image):
+
+- BYOL, need to manually install SQL Server
+- Report the usage of licenses to Microsoft by using the License Mobility verification form within 10 days
 
 ### Storage
 
@@ -1151,14 +1175,76 @@ Scans with Lineage extraction
 - Lineage is extraced based on actual stored procedure runs (input and output tables)
 
 
-## Database Watcher
+## DB monitoring
+
+### Metrics
+
+Scopes
+
+- OS metrics:
+  - Azure Monitor
+  - Some only viewable within Performance Monitor (perfmon)
+  - For Linux, perfmon equivalence would be *InfluxDB*, *Collectd*, and *Grafana*
+- SQL server instance:
+  - Some via perfmon
+  - Some only via dynamic management views (DMVs), use T-SQL
+    - `sys.dm_os_volume_stats`: data and transaction log file read/write latency, you may need correlate this with OS level disk IOPS metric to identity issues
+
+Useful metrics:
+
+- Processor %
+- Paging File Usage: memory shouldn't page to the paging file on disk
+- Disk sec/Read, sec/Write: latency should < 20ms, or < 10ms for premium storage
+- Processor Queue Length: how many threads are waiting for CPU
+- Page life expectancy: how long a page live in memory, a drop could indicates poor query patterns
+- SQLServer:SQL Statistics\Batch Requests/sec: how busy SQL server is
+- SQLServer:SQL Statistics\SQL Compilations/sec and SQL Re-Compilations/sec:
+  - when there's no existing execution plan in the plan cache
+  - or a plan invalidated because of a change
+  - A query could have recompile query hints
+- **Wait statistics**
+  - When a thread is forced to wait on an unavailable resource
+  - Statictics in `sys.dm_os_wait_stats`
+
+### Extended events
+
+- Lightweight and powerful monitoring system
+- Could capture granular information about activity in your DB and servers
+- Build on SQL Server Profiler
+- Could trace queries and expose extra data (events) that you can monitor
+- Issues to troubleshoot:
+  - Blocking and deadlocking perf
+  - Long-running queries
+  - Long-running I/O
+  - DDL operations
+  - Missing columns
+  - Memory pressure
+- Events
+  - Divided into four channels (based on audience): Admin, Operational, Analytic, Debug
+    - eg. `sp_statement_completed`, `sql_statement_completed` are in the Analytic channel
+  - Each event has its own fields
+  - Global Fields (aka. Actions) are extra data fields to the events, collected when the event occurs
+- A event session
+  - Could be created using T-SQL `CREATE EVENT SESSION` or SSMS GUI
+  - Could be scoped to a server or a DB
+  - Typically, you add multiple events to a session
+  - You can use filters to limit event collection to specific occurrences
+  - Target could be
+    - Event Counter
+    - Event File
+    - Event Tracing for Windows (ETW): to correlate with Windows OS event data
+    - Ring Buffer: hold data in memory
+
+### Database Watcher
+
+For PaaS: SQL DB or SQL MI
 
 A separate resource in Azure to help monitor SQL databases
 
-- Target: collecting data from Azure SQL and managed instances
+- Target: SQL DB, SQL MI, elastic pools
 - Auth: use managed identity
-- Data store: a KQL data store
 - Networking: supports private endpoints
+- Data store: a KQL data store (eg. Azure Data Explorer cluster, a Fabric Real-Time Analytics db)
 - Usage: KQL query, dashboards
 
 
