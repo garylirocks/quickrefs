@@ -39,6 +39,7 @@
 - [SQL Server on Azure VM (SQL on VM)](#sql-server-on-azure-vm-sql-on-vm)
   - [Licensing models](#licensing-models)
   - [Storage](#storage)
+  - [Constrained cores](#constrained-cores)
   - [Performance considerations](#performance-considerations)
   - [Table partition](#table-partition)
   - [Hybrid scenarios](#hybrid-scenarios)
@@ -63,6 +64,11 @@
   - [Row-level security (RLS)](#row-level-security-rls)
   - [Microsoft Defender for SQL](#microsoft-defender-for-sql)
   - [Purview](#purview)
+- [Resource performance optimization](#resource-performance-optimization)
+  - [I/O performance](#io-performance)
+  - [`tempdb`](#tempdb)
+  - [DB configuration](#db-configuration)
+  - [Resource Governor](#resource-governor)
 - [DB monitoring](#db-monitoring)
   - [Metrics](#metrics)
   - [Extended events](#extended-events)
@@ -676,17 +682,29 @@ If manual SQL install (through a media, or upload a VM image):
 ### Storage
 
 - For SQL data, use managed disks
-  - For prod data, use Premium SSD (single ms latency) or Ultra Disk
-  - Each VM needs at least two disks:
+  - For prod data, use Premium SSD (single ms latency) or Ultra Disk (sub-ms)
+    - Premium SSD disks support reach-caching, caches stored on local SSD (temp disk)
+  - VM disks:
     - OS disk (C:\ for Windows)
     - Temporary disk (D:\ on Windows)
-    - Data disks, better be separate (can be pooled to increase IOPS and storage capacity, using Storage Spaces on Windows, or Logical Volume Management on Linux)
-  - **Data files** should be stored on their own **pool** with read-caching
+    - Data disks, you can have multiple of them, **pool/stripe** them to increase IOPS and storage capacity
+      - Use "Storage Spaces" on Windows, or Logical Volume Management on Linux
+      - A pool gets the sum of the IOPS and volume of all the disks combined
+  - **Data files** should be stored on their own **pool** with *read-caching*
   - **Transaction log** files are better stored on their own **pool** without caching
-  - **tempdb** in its own pool, or VM's local temp disk (if supported)
-  - When deploying Marketplace image, by default, separate drives will be created for SQL Data, SQL Log and tempdb
-- Failover Cluster Instance can be built on shared disk or file storage
-- For backup, blob (Standard HDD) is ok
+  - **tempdb** on VM's local temp disk (if supported), or in its own pool
+- When deploying Marketplace option, by default, separate disks will be created for SQL Data, SQL Log and tempdb
+  - You can specify multiple disks for data, log
+  - Disks are pooled within Windows
+- Failover Cluster Instance can be built on **shared disk or file storage**
+- For backup, **blob** (Standard HDD) is ok
+
+### Constrained cores
+
+- SQL Server licenses are based on number of cores
+- Azure VM usually has a fixed CPU to memory ratio
+  - Usually general purpose or memory-optimized VM families are good for SQL Server
+- If your workload requires large memory, less CPU. You could use constrained cores to limit vCPU count.
 
 ### Performance considerations
 
@@ -703,6 +721,7 @@ If manual SQL install (through a media, or upload a VM image):
 
 Other considerations:
 - Enable backup comrepssion
+- Enable instant file initialization to reduce impace of file-growth activities
 - Limit autogrowth of the DB
 - Move all DBs to data disks, including system DBs
 - Move error log and trace file directories to data disks
@@ -1173,6 +1192,72 @@ Scans with Lineage extraction
 
 - Purview MI needs `db_owner` role
 - Lineage is extraced based on actual stored procedure runs (input and output tables)
+
+## Resource performance optimization
+
+### I/O performance
+
+- Use a higher tier to improve IOPS
+- Use multi-statement transactions to improve transaction log latency
+
+**Proportional fill**
+
+DB engine writes data to files proportionally, eg. writing 1G data to a DB with two data files, 10GB and 1GB each, first file gets 900MB, the latter gets 100MB
+
+The large file could be a bottleneck
+
+**Files and filegroups**
+
+- SQL Server: support files and file groups, through physical file placement
+- Azure SQL DB
+  - Only one database file, configurable max size
+  - Hyperscale have more files
+- SQL MI
+  - Supports adding files (and config sizes)
+  - No physical placement
+
+### `tempdb`
+
+- SQL Server used `tempdb` for tasks beyond storing user-defined temp tables:
+  - Intermediate query results
+  - Sorting operations
+- Azure SQL
+  - Always place `tempdb` on local SSD
+  - Number of files scaled with number of vCores, up to 16
+    - SQL MI: fixed 12 files
+  - Size of `tempdb` scaled per number of vCores
+
+### DB configuration
+
+- Usually done with `ALTER DATABASE` and `ALTER DATABASE SCOPED CONFIGURATION`
+- `MAXDOP` (degree of parallelism)
+  - Higher value means more threads used per query, but requires more memory
+  - Azure SQL supports
+    - Configuration via `ALTER DATABASE SCOPED CONFIGURATION`
+    - `MAXDOP` query hints
+    - SQL MI supports config via `sp_configure` or Resource Governor
+
+### Resource Governor
+
+For SQL Server and SQL MI,
+
+Use cases:
+
+- multi-tenant instance
+- limit resources used by maintenance tasks
+
+When enabled:
+
+- Sessions divided into workload groups
+  - Two built-in workload groups: internal and default
+  - When a connection is established, classifier function assigns it to a group (could be based on user name), default to "default" group
+- Two built-in pools:
+  - internal: critical SQL Server functions
+  - default: configurable as user-defined pools
+- User-defined pools, can configure:
+  - Min/max CPU percent (max percentage could be exceeded if ther's no contention)
+  - Min/max memory percent
+  - Min/max IOPS per volume
 
 
 ## DB monitoring
