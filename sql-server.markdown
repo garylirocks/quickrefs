@@ -7,6 +7,7 @@
   - [Temporary tables](#temporary-tables)
 - [Datatypes](#datatypes)
   - [`varchar` vs `nvarchar`](#varchar-vs-nvarchar)
+- [Normalization](#normalization)
 - [Authorization](#authorization)
   - [Permissions](#permissions)
   - [Ownership chains](#ownership-chains)
@@ -179,6 +180,18 @@ SELECT * FROM #mytemptable
 ### `varchar` vs `nvarchar`
 
 `varchar` is stored as regular 8-bit data (1 byte per character) and `nvarchar` stores data at 2 bytes per character, so usually you should use `nvarchar` for Unicode text
+
+
+## Normalization
+
+- **First normal form**
+  - A primary key for each table (could be a composite key)
+  - No repeating groups (multiple columns for similar data)
+- **Second normal form**
+  - If a table has a composite key, other attributes must depend on the complete key, not just part of it
+- **Third normal form**
+  - All nonkey columns are nontransitively dependent on the primary key (a column shouldn't be dependent on another nonkey column)
+  - Typically the aim for most OLTP dbs
 
 
 ## Authorization
