@@ -15,7 +15,6 @@
   - [Elastic jobs](#elastic-jobs)
   - [Performance and tuning](#performance-and-tuning)
     - [Query Performance Insights (QPI)](#query-performance-insights-qpi)
-    - [Automatic tuning](#automatic-tuning)
   - [Migration options](#migration-options)
     - [Offline](#offline)
     - [Online](#online)
@@ -68,12 +67,18 @@
   - [I/O performance](#io-performance)
   - [`tempdb`](#tempdb)
   - [DB configuration](#db-configuration)
+  - [Automatic tuning](#automatic-tuning)
+    - [Index tuning](#index-tuning)
+  - [Intelligent Query Processing](#intelligent-query-processing)
   - [Resource Governor](#resource-governor)
 - [DB monitoring](#db-monitoring)
   - [Metrics](#metrics)
   - [Extended events](#extended-events)
   - [Database Watcher](#database-watcher)
-- [Task automation](#task-automation)
+- [Maintenance tasks automation](#maintenance-tasks-automation)
+  - [Maintenance tasks](#maintenance-tasks)
+  - [Index rebuild and reorganize](#index-rebuild-and-reorganize)
+  - [Statistics](#statistics)
   - [Maintenance Plans](#maintenance-plans)
   - [SQL Agent jobs](#sql-agent-jobs)
   - [Other tools](#other-tools)
@@ -91,7 +96,7 @@ Deployment options:
 | Why choose        | Modern cloud solution          | Instance-scoped features           | OS level access  |
 | Purchasing models | DTU, vCore                     | vCore                              | -                |
 | HA                | geo-replication, auto-failover | automated backup, no auto-failover | no auto-failover |
-| Task automation | Elastic Jobs | SQL Server Agent jobs | SQL Server Agent jobs |
+| Task automation | Elastic Jobs, Azure Automation, SQL Agent Job from a separate VM | SQL Server Agent jobs | SQL Server Agent jobs |
 | Perf monitoring | DB Watcher | DB Watcher, X Events | X Events |
 
 
@@ -316,12 +321,6 @@ Components:
 
 - Help identity expensive queries
 - The Portal shows the query ID and statement, use Query Store to find the execution plan
-
-#### Automatic tuning
-
-- Identify expensive queries
-- Forcing Last Good Execution Plan
-- Adding/removing Indexes
 
 ### Migration options
 
@@ -1173,6 +1172,7 @@ GO
     - Scanned weekly
   - Advanced Threat Protection
     - Monitors db connections and queries
+    - This is done via a "Extended Events" session
     - Auditing is recommended, not required
 
 ### Purview
@@ -1229,7 +1229,26 @@ The large file could be a bottleneck
 
 ### DB configuration
 
-- Usually done with `ALTER DATABASE` and `ALTER DATABASE SCOPED CONFIGURATION`
+Usually done with `ALTER DATABASE` and `ALTER DATABASE SCOPED CONFIGURATION`
+
+- DB recovery model - full or simple
+- Automatic tuning
+- Auto create and update statistics
+- Query store options
+- Snapshot isolation
+- `MAXDOP`
+
+Concepts:
+
+- Compatibility level
+  - Controls behavior of the query optimizer for a db
+  - Help keep old execution plans in newer SQL Server
+  - Should be updated if possible
+  - Many new features in Intelligent Query Processing only available in compatibility level 140 or 150
+  ```sql
+  ALTER DATABASE [DB_Name] SET COMPATIBILITY_LEVEL = 150;
+  ```
+
 - `MAXDOP` (degree of parallelism)
   - Higher value means more threads used per query, but requires more memory
   - Azure SQL supports
@@ -1237,9 +1256,42 @@ The large file could be a bottleneck
     - `MAXDOP` query hints
     - SQL MI supports config via `sp_configure` or Resource Governor
 
+### Automatic tuning
+
+On-prem or in cloud.
+
+- Identify issues caused by query execution plan regress
+- Based on data from Query Store
+- To check whether it's enabled, see `sys.database_automatic_tuning_options`
+- Tuning recommendations are in `sys.dm_db_tuning_recommendations`
+- Plan forcing:
+  ```sql
+  ALTER DATABASE [WideWorldImporters] SET AUTOMATIC_TUNING (FORCE_LAST_GOOD_PLAN = ON);
+  ```
+  - DB engine applies the last known good plan
+  - If the forced plan doesn't perform better thant the previous one, it's unforced, and a new plan is compiled
+
+#### Index tuning
+
+- Azure SQL DB only
+- Identify indexes that should be added or removed
+  - If performance degrades, recently dropped index is automatically recreated
+
+### Intelligent Query Processing
+
+Many new features in Intelligent Query Processing only available in compatibility level 140 or 150.
+
+- Adaptive QP
+- Table Variable Deferred Compilation
+- Batch Mode on Rowstore
+- T-SQL Scalar UDF Inlining
+- Approximate QP
+  - Approximate Count Distinct: faster to get a distinct count by grouping rows, 2% error rate
+
+
 ### Resource Governor
 
-For SQL Server and SQL MI,
+For SQL Server and SQL MI
 
 Use cases:
 
@@ -1333,7 +1385,9 @@ A separate resource in Azure to help monitor SQL databases
 - Usage: KQL query, dashboards
 
 
-## Task automation
+## Maintenance tasks automation
+
+### Maintenance tasks
 
 Typical maintenance tasks:
 
@@ -1350,6 +1404,33 @@ Typical maintenance tasks:
   - Updates column and index statistics, used for building query execution plans
 - Maintenance cleanup
   - Remove old files related to maintenance plans
+
+### Index rebuild and reorganize
+
+Index fragmentation: index pages' logical ordering doesn't match physical ordering
+
+Stats in
+- `sys.dm_db_index_physical_stats` for b-tree indexes
+- `sys.dm_db_column_store_row_group_physical_stats` for column store indexes
+
+Operations
+
+- Reorganization
+  - Online
+  - Re-order leaf level pages
+  - Doesn't update stats
+- Rebuild
+  - Offline: drop and re-create
+  - Online: new index built in parallel to the existing index
+  - Recommended when defragmentation > 30%
+
+### Statistics
+
+- Stored in user db as blobs
+- Contains information about distribution of data values in one or more columns of a table or indexed view
+- Query optimizer uses statistics to determine cardinality, generate execution plan.
+- `AUTO_CREATE_STATISTICS=ON` allows query optimizer create stats on indexed columns, and single columns in query predicates
+- Use `CREATE STATISTICS` to create more stats
 
 ### Maintenance Plans
 

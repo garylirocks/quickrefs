@@ -11,6 +11,11 @@
   - [Permissions](#permissions)
   - [Ownership chains](#ownership-chains)
   - [System tables](#system-tables)
+- [Query plans](#query-plans)
+  - [Common problems](#common-problems)
+- [Dynamic Management Views (DMV)](#dynamic-management-views-dmv)
+- [Query Store](#query-store)
+- [Isolation levels](#isolation-levels)
 - [Cheatsheets](#cheatsheets)
 
 
@@ -216,6 +221,163 @@ SELECT * FROM #mytemptable
       sys.database_principals dp ON drm.member_principal_id = dp.principal_id
   JOIN
       sys.database_principals dprole ON drm.role_principal_id = dprole.principal_id
+  ```
+
+
+## Query plans
+
+Query processing steps:
+
+1. Check syntax, generate a parse tree of db objects
+1. Parse tree -> *Algebrizer* for bindings -> processor tree
+   1. Validates columns and object exists, identifies data types
+1. Generates *query_hash*, check if a cache exists in the plan cache
+1. If no cache, *query optimizer* generates several execution plans
+1. Plan executed -> results
+
+Query optimizer
+
+- Cost based
+- Factors considered when calculating cost:
+  - Statistics on the columns
+  - Potential indexes
+- Complex queries can have thousands of possible execution plans
+- Optimizer doesn't evaluate every single one
+
+Three types of plans:
+
+- Estimated plan
+  - `SET SHOWPLAN_ALL ON`
+  - Query not executed
+  - Saved in plan cache
+- Actual plan
+  - `SET STATISTICS PROFILE ON`
+  - Includes runtime statistics
+- Live Query Statistics
+  - Animated execution progress
+
+### Common problems
+
+- Hardware constraints
+- Suboptimal query constructs
+- SARGability
+  - Able to use *SEEK* on operation on index, instead of scanning the entire index or table
+  - Wildcard on the left: `LIKE %word`, make the query non-SARGable
+- Missing indexes
+  - recommendations in `sys.dm_db_missing_index_details`
+- Missing and out-of-date statistics
+- Poor optimizer choices
+- Parameter sniffing
+  - When there's data skew, query performance could vary widely
+  - Possible solution: Use hint `OPTION (RECOMPILE)` to force query recompile
+
+
+## Dynamic Management Views (DMV)
+
+- There are DMVs and DMFs, most people use the acronym DMV for both
+- Hundreds of objects
+- Contain system information, to monitor the health of a server instance, diagnose problems, and tune performance
+- All prefixed with `sys.dm_*`
+- Three categories:
+  - db-related
+  - query execution related
+  - transaction related
+
+Two levels:
+
+- **Server scoped objects** – require `VIEW SERVER STATE` permission on the server
+- **Database scoped objects** – require the `VIEW DATABASE STATE` permission within the database
+
+
+## Query Store
+
+Three stores:
+
+- Plan store
+- Runtime stats store
+- Wait stats store
+
+Need to enable in SQL Server:
+
+```sql
+ALTER DATABASE <database_name> SET QUERY_STORE = ON (OPERATION_MODE = READ_WRITE);
+```
+
+*Enabled by default in Azure SQL DB*
+
+![Query Store](./images/sqlserver_query-store.png)
+
+Built-in views:
+
+- Regressed Queries
+- Overall Resource Consumption
+- Top Resource Consumption Queries
+- Queries with Forced Plans
+- Queries with High Variation
+- Query Wait Statistics
+- Tracked Queries
+
+Automatic plan correction:
+
+- `sys.dm_db_tuning_recommendations`: recommendations about query plan regressions
+  - If Query Store is enabled, recommendations are always enabled
+- Optionally enable `AUTOMATIC_TUNING`
+  - Enabled by default for Azure SQL DB
+
+## Isolation levels
+
+- It's a session level setting, there's NO global isolation level
+- Use a proper level to balance consistency and concurrency
+- Locks could be on different levels:
+  - Row
+  - Table (if more than 5000 rows need to be locked, escalate to the table level)
+  - DB
+- "autocommit" is the default, or explicitly use `BEGIN TRANSACTION` and `COMMIT TRANSACTION`
+
+Levels:
+
+- Read uncommitted
+  - Max concurrency
+  - Read uncommitted data from another transcation
+- Read committed (default level)
+  - Shared lock released after read
+  - If a row is read multiple times in the same transaction, it might get different data (updated by other transactions)
+- Repeatable Read
+  - Holds "shared lock" on a row, preventing updates
+  - Phantom rows: another transaction could still insert a new row with the same ID
+- Serializable
+  - Holds a "key-range" lock, preventing inserts into the key range
+  - Lowest concurrency
+- With row-versioning
+  - *To turn on SNAPSHOT for a DB: `ALTER DATABASE MyDb SET ALLOW_SNAPSHOT_ISOLATION ON`
+  - Levels
+    - Read Committed Snapshot (RCSI)
+      - RCSI is the default, no need to set in the session
+      - Transaction always see last committed version at the time when transaction began
+      - If the transaction read again, it may get a newly committed value
+    - Snapshot
+      - Need to be set explicitly in a session: `SET TRANSACTION ISOLATION LEVEL SNAPSHOT`
+      - Like RCSI, reader gets old committed data, not blocked
+      - Different form RCSI, this gets a static snapshot, used through out the transaction (like "Repeatable Read")
+
+Troubleshooting:
+
+- Use `sys.dm_tran_locks`, joined with `sys.dm_exec_requests`, to find locks held by each session
+- Or use Extended Events
+  ```sql
+  USE MASTER
+  GO
+
+  CREATE EVENT SESSION [MySession] ON SERVER
+    ADD EVENT sqlserver.blocked_process_report (
+      ACTION (...)
+    )
+    ...
+  GO
+
+  ALTER EVENT SESSION [MySession] ON SERVER
+    STATE = start;
+  GO
   ```
 
 
