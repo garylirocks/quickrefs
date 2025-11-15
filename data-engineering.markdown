@@ -84,4 +84,4 @@ Data processing
 
 - Data architect
   - Plan and execute an overall data management strategy
-  - Must have both strong deep technical knowledge and strong soft sills
+  - Must have both strong deep technical knowledge and strong soft skills
