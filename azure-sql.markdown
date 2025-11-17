@@ -90,14 +90,19 @@ Deployment options:
 
 ![Deployment options](./images/azure_sql-db-deployment-options.png)
 
-|                   | SQL Databases (SQL DB)                  | SQL Managed Instance (SQL MI)               | SQL Server on VM (SQL on VM) |
-| ----------------- | ------------------------------ | ---------------------------------- | ---------------- |
-| Type              | PaaS                           | PaaS                               | IaaS             |
-| Why choose        | Modern cloud solution          | Instance-scoped features           | OS level access  |
-| Purchasing models | DTU, vCore                     | vCore                              | -                |
-| HA                | geo-replication, auto-failover | automated backup, no auto-failover | no auto-failover |
-| Task automation | Elastic Jobs, Azure Automation, SQL Agent Job from a separate VM | SQL Server Agent jobs | SQL Server Agent jobs |
-| Perf monitoring | DB Watcher | DB Watcher, X Events | X Events |
+|                   | SQL Databases (SQL DB)                                           | SQL Managed Instance (SQL MI)      | SQL Server on VM (SQL on VM) |
+| ----------------- | ---------------------------------------------------------------- | ---------------------------------- | ---------------------------- |
+| Type              | PaaS                                                             | PaaS                               | IaaS                         |
+| Why choose        | Modern cloud solution                                            | Instance-scoped features           | OS level access              |
+| Purchasing models | DTU, vCore                                                       | vCore                              | -                            |
+| HA                | geo-replication, auto-failover                                   | automated backup, no auto-failover | no auto-failover             |
+| DR                |                                                                  |                                    |                              |
+| Task automation   | Elastic Jobs, Azure Automation, SQL Agent Job from a separate VM | SQL Server Agent jobs              | SQL Server Agent jobs        |
+| Perf monitoring   | DB Watcher                                                       | DB Watcher, X Events               | X Events                     |
+
+Notes:
+
+- RTO and RPO should be defined for HA and DR separately, DR usually takes longer
 
 
 ## Azure SQL Database (SQL DB)
@@ -148,7 +153,7 @@ This is at database level, NOT server level
 | ----------------------- | ----------- | -------------- | ------------- | ----------------------- | ------------------------- | ------------------ |
 | Local redundant support | Yes         | Yes            | Yes           | Yes                     | Yes                       | Yes                |
 | Zone redundant support  | No          | No             | Yes           | Yes                     | Yes                       | Yes                |
-| Max data size | 2GB | 1TB | 4TB | 4TB                     | 4TB                       | 100TB                |
+| Max data size           | 2GB         | 1TB            | 4TB           | 4TB                     | 4TB                       | 100TB              |
 
 Tier features:
 
@@ -789,16 +794,20 @@ Most SQL Server HADR solutions are supported on VMs, as both Azure-only and hybr
 
 |                   | Always On AG                                                  | Always On FCIs                                                |
 | ----------------- | ------------------------------------------------------------- | ------------------------------------------------------------- |
-| Unit of failover | a group of databases | server instance |
+| Unit of failover  | a group of databases                                          | server instance                                               |
 | Requirement       | A domain controller VM                                        | Shared storage (Azure shared disks, Premium file shares, etc) |
 | Best practices    | VMs in an availability set or different AZs                   |                                                               |
 | Disaster recovery | an AG could span multiple Azure regions, or Azure and on-prem |                                                               |
+
+Both options require an underlying cluster mechanism:
+
+- Windows: Windows Server Failover Cluster (WSFC)
+- or Linux: Pacemaker
 
 #### Always On Availability Group
 
 ![AG overview](./images/azure_sql-availability-group.png)
 
-- Rely on the underlying Windows Server Failover Cluster (WSFC)
 - Unit of failover is a group of DBs, not the instance
 - VMs should be in an availability set, or different availability zones
   - VMs in one availability set could be placed in a proximity placement group, minimize latency
@@ -820,16 +829,26 @@ Most SQL Server HADR solutions are supported on VMs, as both Azure-only and hybr
 
 #### Failover Cluster Instance (FCI)
 
-- Relies on WSFC
-- Provides high availability for an entire instance, in a single region
-- HA only, no DR (limited in a single region)
+- Provides high availability for an entire instance
+  - Including system DBs, SQL Agent jobs, etc
+- Works in a single region
+- For HA only, not DR
 - AG is recommended in most cases, use FCI only for on-prem migration if needed
 - An FCI is a single SQL Server instance that's installed across WSFC nodes (could be across multiple subnets)
-- On the network, an FCI appears to be a single instance on a single computer
-- SQL Server files needs to be on a shared storage, only the active node can access it at one time, a few options:
-  - Azure shared disks
+  - Configured when SQL Server is installed, can't be enabled later
+- **Networking**:
+  - FCI is assigned a unique name and an IP different from underlying nodes, also different from WSFC
+  - This FCI name is used for connection
+  - In Azure, an ILB is used
+- **Failover**:
+  - Active node stops, all users disconnected
+  - Entire instance restarts on another node, undergoes the recovery process
+- **Storage**: SQL Server files needs to be on a shared storage, only the active node can access it at one time, a few options:
   - Premium file shares
+  - Azure shared disks
   - Storage Spaces Direct(S2D)
+- Requirements:
+  - AD DS, DNS must be implemented
 - Cluster quorum supports using:
   - a disk witness
   - a cloud witness
@@ -840,10 +859,10 @@ Most SQL Server HADR solutions are supported on VMs, as both Azure-only and hybr
 DR usually means backup and restore your data in another region
 
 - Always On AG (replicas in another region)
+- Log shipping
 - Backup (see below)
   - To GRS/RA-GRS storage
   - Use Azure Backup
-- Log shipping
 - Azure Site Recovery
   - Not recommended
   - Need to set a higher recovery point (potential loss of data)
