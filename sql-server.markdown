@@ -8,6 +8,12 @@
 - [Datatypes](#datatypes)
   - [`varchar` vs `nvarchar`](#varchar-vs-nvarchar)
 - [Normalization](#normalization)
+- [Indexes](#indexes)
+- [Performance improvements](#performance-improvements)
+  - [Wait statistics](#wait-statistics)
+  - [Tune indexes](#tune-indexes)
+  - [Resumable index](#resumable-index)
+  - [Query hints](#query-hints)
 - [Authorization](#authorization)
   - [Permissions](#permissions)
   - [Ownership chains](#ownership-chains)
@@ -193,6 +199,127 @@ SELECT * FROM #mytemptable
   - All nonkey columns are nontransitively dependent on the primary key (a column shouldn't be dependent on another nonkey column)
   - Typically the aim for most OLTP dbs
 
+Considerations:
+
+- A normalized database doesn't always give you the best performance, it requires multiple join operations to get all the necessary data returned in a single query
+- Denormalized data can be more efficient, especially for read heavy workloads like a data warehouse. Extra columns offer simpler queries.
+  - Data warehouse usually has a star schema or snowflake schema (fact table in the center, which contains mostly numeric values)
+
+
+## Indexes
+
+- Clustered index
+  - Is the underlying table, stored in sorted order of the key value
+  - Only one clustered index on a given table
+    - A table without a clustered index is called a heap, typically used only as staging tables
+  - Clustered index key should:
+    - As narrow as possible
+    - Use columns with unique and distinct values
+    - On columns used frequently for sorting
+- Nonclustered indexes
+  - Separate structures form the data rows
+  - Contains the key values, and a pointer to the row
+  - Can have multiple nonclustered indexes on a table
+  - Can add extra nonkey columns to the leaf level of a index
+    - If a nonclustered index doesn't have all the columns to fulfill a query, then a "**Key lookup**" against the clustered index operation happens in an execution plan
+- Columnstore indexes
+  - Intially targeted at data warehouses
+    - Best on analytic queries scanning large data sets, such as fact tables
+  - Enhance performance for queries involving large aggregation
+  - Store each column independently
+    - Reduced IO by scanning necessary columns
+    - Greater compression due to similar data within a column
+  - Batch execution mode: `SELECT SUM(Sales) FROM SalesAmount;`
+  - Min. number of rows to bulk insert into a columnstore index: 102,400
+  - Clustered
+    - Represents the table itself, stored in a special way
+    - Include all columns, but NOT sorted
+  - Nonclustered
+    - Stored independently
+
+
+![B-tree index](./images/sqlserver_index-b-tree.png)
+
+Considerations:
+
+- Read benefits from indexes more
+- Optimize indexes for most frequently run queries
+- Choose appropriate data types
+- Use *filtered index* in large tables on columns with with low-cardinality values (like a bit flag)
+- Create indexes on views, if the view contains aggregations and/or joins
+
+
+## Performance improvements
+
+### Wait statistics
+
+Three types:
+
+- **Resource waits**
+  - Locks, latches, disk I/O
+- **Queue waits**
+  - a thread waiting for work to be assigned
+  - Examples: deadlock monitoring, deleted record cleanup
+- **External waits**
+  - Examples: getting results from linked server query, return results to client
+
+Stats:
+
+- `sys.dm_exec_session_wait_stats`: active waiting sessions
+- `sys.dm_os_wait_stats` wait history (`sys.dm_db_wait_stats` fro Azure SQL DB)
+- Query Store also tracks some waits data (not as granular as DMV)
+
+Common waits:
+
+- `RESOURCE_SEMAPHORE`: wait on memory, could indicate long query runtimes (out-of-date stats, missing indexes), or high query concurrency
+- `LCK_M_X`: blocking problem. Could be resolved by changing to `READ COMMITTED SNAPSHOT` isolation level, optimizing indexes, improving transaction management within T-SQL code
+- `PAGEIOLATCH_SH`: query scans excessive amounts of data, indicating bad indexes. If `waiting_tasks_count` is low, but `wait_time_ms` is high, it suggests storage performance problems
+- `SOS_SCHEDULER_YIELD`: high CPU utilization, suggesting high number of large scans, missing indexes
+- `CXPACKET`: improper config or high CPU utilization. To resolve, lower MAXDOP, and increase the cost threshold for parallelism
+- `PAGEIOLATCH_UP`: TempDB contention on Page Free Space (PFS) data pages. Best practice: use one file per CPU core for TempDB, the files should have the same size and outgrowth settings
+
+### Tune indexes
+
+- Update operations that do lookups can benefit from extra indexes or columns added to an existing index
+- Evaluate existing index usage using `sys.dm_db_index_operational_stats` and `sys.dm_db_index_usage_stats`
+- Eliminate unused and duplicate indexes
+  - For monthly/quarterly/yearly operations, create indexes just before the operations
+- Review and evaluate expensive queries from Query Store, Extended Events capture, manually craft indexes to better serve those
+- Test in nonprod environment first
+- In an index, columns should be ordered according to selectivity
+
+### Resumable index
+
+You can pause and then restart index building process
+
+```sql
+-- Creates a nonclustered index for the Customer table
+CREATE INDEX IX_Customer_PersonID_ModifiedDate
+    ON Sales.Customer (PersonID, StoreID, TerritoryID, AccountNumber, ModifiedDate)
+WITH (RESUMABLE=ON, ONLINE=ON)
+GO
+
+ALTER INDEX IX_Customer_PersonID_ModifiedDate ON Sales.Customer PAUSE
+GO
+```
+
+### Query hints
+
+Examples:
+
+- `FAST <int>`: retrieve first <int> number of rows while continueing query execution
+- `OPTIMIZE FOR`
+- `USE PLAN` - use a plan specified by the `xml_plan` attribute
+- `RECOMPILE` - create a new, temporary plan for the query, and discards it immediately after the query is executed
+- `{ LOOP | MERGE | HASH } JOIN` - specifies method for all join operations in the query
+- `MAXDOP <int>` - overrides `sp_configure`, also Resource Governor
+
+Notes:
+
+If you can't modify query text, you can set hints for a query in Query Store:
+
+`EXEC sys.sp_query_store_set_hints @query_id= 42, @query_hints = N'OPTION(RECOMPILE, MAXDOP 1)'`
+
 
 ## Authorization
 
@@ -243,10 +370,12 @@ Query processing steps:
 
 1. Check syntax, generate a parse tree of db objects
 1. Parse tree -> *Algebrizer* for bindings -> processor tree
-   1. Validates columns and object exists, identifies data types
+    1. Validates columns and object exists, identifies data types
 1. Generates *query_hash*, check if a cache exists in the plan cache
-1. If no cache, *query optimizer* generates several execution plans
-1. Plan executed -> results
+    - Different explicit parameter values could cause a different plan
+    - If you use a parameter in your query, `OPTION (RECOMPILE)` causes the query compiler to replace the variable with its value
+2. If no cache, *query optimizer* generates several execution plans
+3. Plan executed -> results
 
 Query optimizer
 
@@ -300,6 +429,17 @@ Two levels:
 
 - **Server scoped objects** – require `VIEW SERVER STATE` permission on the server
 - **Database scoped objects** – require the `VIEW DATABASE STATE` permission within the database
+
+Examples:
+
+- `sys.dm_db_resource_stats` (Azure SQL DB)
+- `sys.server_resource_stats` (Azure SQL MI)
+- `sys.dm_user_db_resource_governance` (Azure SQL DB)
+- `sys.dm_instance_resource_governance` (Azure SQL MI)
+- `sys.dm_os_wait_stats` - aggregated data, not for active tasks
+- `sys.dm_exec_requests` - active queries
+- `sys.dm_os_waiting_tasks` - current executing tasks
+
 
 
 ## Query Store
