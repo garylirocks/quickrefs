@@ -48,6 +48,7 @@
     - [Failover Cluster Instance (FCI)](#failover-cluster-instance-fci)
     - [DR options](#dr-options)
   - [Backup](#backup-1)
+    - [Restore](#restore)
 - [Authentication and authorization](#authentication-and-authorization)
   - [Authentication](#authentication)
   - [Entra auth (contained user)](#entra-auth-contained-user)
@@ -440,7 +441,13 @@ Notes:
   - Only restore individual DBs, not the entire MI instance
   - For a encrypted DB, you need access to the certificate or asymmetric key used for encryption
 - Difference to SQL DB:
-  - Support copy-only backup to Azure blob storage
+  - Support backup to/restore from URL
+  - Can only generate a `COPY_ONLY` backup, log chain is maintained by SQL MI
+    ```sql
+    BACKUP DATABASE contoso
+    TO URL = 'https://myacc.blob.core.windows.net/mycontainer/contoso.bak'
+    WITH COPY_ONLY
+    ```
   - To take a user-initiated copy-only backup, you must disable TDE for the specific database
 
 ### Migration options
@@ -516,22 +523,22 @@ Has General Purpose and Business Critical service tiers, and high availability o
 - Manual backup NOT supported
 - Default to GRS storage (could opt for LRS or RA-GRS)
 - Continuous automatic backup
-  - Transcation log: 5 to 10 minutes
-  - Differential: every 12 or 24 hours
-  - Full: every week
-- Default retention
+  - **Full**: every week
+  - **Differential**: every 12 or 24 hours
+  - **Transcation** log: 5 to 10 minutes
+- PITR retention
   - 1 to 35 days (configurable, 7 by default)
   - Max 7 days for Basic (DTU), General Purpose (vCore)
 - Long term retention (LTR)
   - Disabled by default
   - Up to 10 years
   - Separate retention for weekly/monthly/yearly backups
+- If the server containing the DB is deleted, all backups are deleted at the same time
 - Restore:
   - Can't use T-SQL `RESTORE DATABASE` command
   - Can use PowerShell or Azure CLI
   - Exiting DB must be dropped or renamed, can't overwrite
   - Point-in-time restore (PITR)
-    - 1 to 35 days
     - Only to the same server
   - Geo-restore
     - Allows restore to another geo region
@@ -927,7 +934,17 @@ DR usually means backup and restore your data in another region
 ### Backup
 
 - Manual Backup
-  - Back up to attached disks or Blob storage (aka. "Back up to URL" ?)
+  - Back up to attached disks or mounted file shares
+  - Back to and restore from URL (eg. Blob storage)
+    - Use a Shared Access Signature (SAS) as a SQL Server Credential (use `CREATE CREDENTIAL`, it's saved in `sys.credentials`)
+    - Example:
+      ```sql
+      BACKUP LOG contoso
+      TO URL = 'https://myacc.blob.core.windows.net/mycontainer/contoso202003271200.trn'
+
+      RESTORE DATABASE contoso
+      FROM URL = 'https://myacc.blob.core.windows.net/mycontainer/contoso20200327.bak'
+      ```
   - Could use SQL Agent jobs
   - Use SSMS or SQL scripts
 
@@ -936,19 +953,46 @@ DR usually means backup and restore your data in another region
   - Stored in a storage account you specify (aka. "Back up to URL" ?)
   - Backups retained up to 90 days
   - With SQL Server 2016 and later: manual backup schedule and time window, backup frequency
+  - Don't use this together with other backup options (**each log backup clears the log**)
   - To restore: locate the backup files and restore using SQL Server Management Studio or Transact-SQL commands
 
 - Azure Backup for SQL VMs
   - Azure Backup benefits: zero-infrastructure, long-term retension, central management
   - Azure Backup installs a workload backup extension on the VM
   ![Workload backup extension](./images/azure_sql-on-vm-backup-extension.png)
-  - Additional features for SQL Server on VMs:
+  - SQL Server-aware:
     - Individual database level backup and restore
-    - Support for SQL Always On
-    - Workload-aware backups that supports - full, differential, and log
-    - SQL transaction log backup RPO up to 15 minutes
+    - Support for SQL AlwaysOn
+    - Supports full, differential, and log
+    - Transaction log backup RPO up to 15 minutes
     - Point in time recovery up to a second
+    - May cause issues if used with snapshots
   - To restore, do it in Azure Backups, not with SSMS or Transact-SQL
+
+#### Restore
+
+- To restore a differential or a log backup after a full database is restored, you should use `RESTORE` command `WITH NORECOVERY` or `WITH STANDBY`.
+- Recovery models governs the type of backups and restores for a database:
+  - `FULL`: allows all types of backups
+  - `SIMPLE`: doesn't allow transaction log backups, so won't support smaller RPO
+  - `BULK_LOGGED`: not common
+- Unlike PaaS, you CAN restore to an existing db
+- Restore from a URL:
+  ```sql
+  USE [master]
+  GO
+
+  -- disconnect users, and rollback open transactions
+  ALTER DATABASE MyDB SET SINGLE_USER WITH ROLLBACK IMMEDIATE
+  GO
+
+  RESTORE DATABASE MyDB
+  FROM URL = 'https://stmyacc.blob.core.windows.net/backup/mydb.bak'
+  GO
+
+  ALTER DATABASE MyDB SET MULTI_USER
+  GO
+  ```
 
 
 ## Authentication and authorization
