@@ -37,7 +37,7 @@
   - **Operational tier**
     - First phase of VM backup, copied to vault tier later
     - Instant restore
-    - For VM: Restore Point Collection is saved in a dedicated RG in your subscription
+    - For VM: Restore Point Collection is saved in a dedicated RG (`AzureBackupRG_*`) in your subscription
   - **Vault-standard tier**
     - For all workload
     - An auto-scaling set of storage accounts in a **Microsoft managed tenant**
@@ -218,7 +218,7 @@ Limitations:
 - Policy types:
   - Standard: once-a-day, 1-5 days operational tier (LRS)
   - Enhanced: multiple times a day, 1-30 days operational tier (ZRS)
-- The snapshot of VM is saved as a **"Restore Point Collection" resource in a dedicated resource group in your subscription**
+- The snapshot of VM is saved as a **"Restore Point Collection" resource** in a **dedicated resource group** (`AzureBackupRG_*`) in your subscription
 - The restore point type is "**snapshot**" when first created, after the snapshot is transferred to the vault, the type changes to "**snapshot and vault**"
 - Restore options:
   - Files: a script is provided for you to attach disks to a VM, to retrieve files
