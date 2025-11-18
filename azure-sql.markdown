@@ -5,8 +5,6 @@
   - [Concepts](#concepts)
   - [Purchasing models](#purchasing-models)
   - [Deployment models](#deployment-models)
-  - [High availability](#high-availability)
-  - [Scaling](#scaling)
   - [Networking](#networking)
     - [Logical server level firewall](#logical-server-level-firewall)
     - [Database-level firewall](#database-level-firewall)
@@ -18,16 +16,18 @@
   - [Migration options](#migration-options)
     - [Offline](#offline)
     - [Online](#online)
-  - [Hyperscale](#hyperscale)
   - [SQL DB in Fabric](#sql-db-in-fabric)
+  - [Hyperscale](#hyperscale)
+  - [High availability](#high-availability)
+  - [Scaling](#scaling)
 - [SQL Managed Instance (SQL MI)](#sql-managed-instance-sql-mi)
   - [Connectivity](#connectivity)
   - [Backup and restore](#backup-and-restore)
-  - [High availability](#high-availability-1)
   - [Migration options](#migration-options-1)
     - [Offline](#offline-1)
     - [Online](#online-1)
   - [Machine Learning Services](#machine-learning-services)
+  - [High availability](#high-availability-1)
 - [Common PaaS features (SQL DB and SQL MI)](#common-paas-features-sql-db-and-sql-mi)
   - [Backup](#backup)
   - [Disaster recovery](#disaster-recovery)
@@ -154,6 +154,8 @@ This is at database level, NOT server level
 | Local redundant support | Yes         | Yes            | Yes           | Yes                     | Yes                       | Yes                |
 | Zone redundant support  | No          | No             | Yes           | Yes                     | Yes                       | Yes                |
 | Max data size           | 2GB         | 1TB            | 4TB           | 4TB                     | 4TB                       | 100TB              |
+| AZs                     | No          | No             | Local or AZs  | Local or AZs            | Local or AZs              | -                  |
+| AlwaysOn AG             | No          | No             | Yes           | No                      | Yes                       | -                  |
 
 Tier features:
 
@@ -190,75 +192,6 @@ Tier features:
   - Pooled compute and storage
   - Either DTU or vCore-based
   - Suitable for SaaS, multitenant architecture
-
-### High availability
-
-All the options below have **RPO == 0**, **RTO < 60 seconds**
-
-- Basic, Standard and General Purpose
-
-  ![General purpose architecture](./images/azure_sql-general-purpose.png)
-
-  *Local redundant*
-
-  ![General purpose zone-redundant](./images/azure_sql-general-purpose-zone-redundant.png)
-
-  *Zone-redundant (not available for Basic and Standard tiers)*
-
-  - tempdb in locally attached SSD
-  - data and log files are in Azure Premium Storage
-
-- Premium and Business Critical
-
-  ![Business critical architecture](./images/azure_sql-business-critical.png)
-
-  *Local redundant*
-
-  ![Business critical zone-redundant](images/azure_sql-business-critical-zone-redundant.png)
-
-  *Zone-redundant*
-
-  - Data and log files are stored on direct-attached SSD
-  - It deploys an Always On availability group (AG) behind the scenes
-  - There are three secondary replicas, **only one** of them could be used as a read-only endpoint
-  - A transaction can complete a commit when at least one the secondary replicas has hardened the change for its transcation log
-  - Highest performance and availability of all Azure SQL service tiers
-
-- Hyperscale
-
-  ![Hyperscale architecture](./images/azure_hyperscale-architecture.png)
-
-  - Page servers (sharding) serve database pages out to the compute nodes on demand
-  - Auto-scale quickly up to 128TB
-  - Data changes from the primary compute replica are propagated through the log service: it gets logs from primary compute replica, persists them, forwards them to other compute replicas and relevant page servers
-  - Transcations can commit when the log service hardens to the landing zone
-  - Different types of replicas
-    - **High-availability replicas**: up to 4, share primary's page servers, same region, same SLO
-    - **Named replicas**: up to 30, share primary's page servers, same region, SLO can be different
-    - **Geo replicas**: up to 4 in the same or multiple regions, its own copy of the data
-
-
-### Scaling
-
-- Vertical scaling
-- Horizontal scaling
-  - Read Scale-out
-  - Sharding
-    - Hyperscale does this automatically, or you can do it manually with some tools
-    - Partitions database into multiple databases/shards
-    - Shards can be in different regions, and scale independently
-    - The solution uses a special database named shard map manager, which maintains mapping about all shards
-- Connection interruption may happen when:
-  - Scaling requires an internal failover
-  - Adding or removing DB to an elastic pool
-
-Read Scale-out in a Business Critical tier:
-
-![Read Scale-out](images/azure_sql-db-business-critical-service-tier-read-scale-out.png)
-
-- You set **connection string option** to decide whether the connection is routed to the write replica or a read-only replica.
-- Data-changes are propagated asynchronously
-- Read scale-out with one of the secondary replicas supports **session-level consistency**, if the read-only session reconnects, it might be redirected to another replica
 
 ### Networking
 
@@ -376,6 +309,10 @@ Only method: transactional replication
 - Need to be configured via SSMS, or T-SQL, NOT Azure Portal
 - Can only use SQL auth for the target SQL DB
 
+### SQL DB in Fabric
+
+// TODO
+
 ### Hyperscale
 
 - Max data size over 100TB
@@ -393,10 +330,77 @@ Only method: transactional replication
 - In your connection string, set `ApplicationIntent` argument to `ReadOnly` to route to read-only replicas
 - Row-Level Security (RLS)
 
+### High availability
 
-### SQL DB in Fabric
+- All the options below have **RPO == 0**, **RTO < 60 seconds**
+- Premium (DTU), General Purpose, Business Critical can use AZs
 
-// TODO
+Architecture by tier:
+
+- Basic, Standard and General Purpose
+
+  ![General purpose architecture](./images/azure_sql-general-purpose.png)
+
+  *Local redundant*
+
+  ![General purpose zone-redundant](./images/azure_sql-general-purpose-zone-redundant.png)
+
+  *Zone-redundant (available to General Purpose only)*
+
+  - tempdb in locally attached SSD
+  - data and log files are in Azure Premium Storage
+
+- Premium and Business Critical
+
+  ![Business critical architecture](./images/azure_sql-business-critical.png)
+
+  *Local redundant*
+
+  ![Business critical zone-redundant](images/azure_sql-business-critical-zone-redundant.png)
+
+  *Zone-redundant*
+
+  - Data and log files are stored on direct-attached SSD
+  - It deploys an Always On availability group (AG) behind the scenes
+  - There are three secondary replicas, **only one** of them could be used as a read-only endpoint
+  - A transaction can complete a commit when at least one of the secondary replicas has hardened the change for its transcation log
+  - Highest performance and availability of all Azure SQL service tiers
+
+- Hyperscale
+
+  ![Hyperscale architecture](./images/azure_hyperscale-architecture.png)
+
+  - Page servers (sharding) serve database pages out to the compute nodes on demand
+  - Auto-scale quickly up to 128TB
+  - Data changes from the primary compute replica are propagated through the log service: it gets logs from primary compute replica, persists them, forwards them to other compute replicas and relevant page servers
+  - Transcations can commit when the log service hardens to the landing zone
+  - Different types of replicas
+    - **High-availability replicas**: up to 4, share primary's page servers, same region, same SLO
+    - **Named replicas**: up to 30, share primary's page servers, same region, SLO can be different
+    - **Geo replicas**: up to 4 in the same or multiple regions, its own copy of the data
+
+
+### Scaling
+
+- Vertical scaling
+- Horizontal scaling
+  - Read Scale-out
+  - Sharding
+    - Hyperscale does this automatically, or you can do it manually with some tools
+    - Partitions database into multiple databases/shards
+    - Shards can be in different regions, and scale independently
+    - The solution uses a special database named shard map manager, which maintains mapping about all shards
+- Connection interruption may happen when:
+  - Scaling requires an internal failover
+  - Adding or removing DB to an elastic pool
+
+Read Scale-out in a Business Critical tier:
+
+![Read Scale-out](images/azure_sql-db-business-critical-service-tier-read-scale-out.png)
+
+- You set **connection string option** to decide whether the connection is routed to the write replica or a read-only replica.
+- Data-changes are propagated asynchronously
+- Read scale-out with one of the secondary replicas supports **session-level consistency**, if the read-only session reconnects, it might be redirected to another replica
 
 
 ## SQL Managed Instance (SQL MI)
@@ -438,10 +442,6 @@ Notes:
 - Difference to SQL DB:
   - Support copy-only backup to Azure blob storage
   - To take a user-initiated copy-only backup, you must disable TDE for the specific database
-
-### High availability
-
-Has General Purpose and Business Critical service tiers, and high availability options are similar to the options of Azure SQL Databases, see details here https://learn.microsoft.com/en-us/azure/azure-sql/managed-instance/high-availability-sla
 
 ### Migration options
 
@@ -504,6 +504,10 @@ SQL MI is often the better PaaS option (over SQL DB) for migration from on-prem
   ```
   Enables execution of external scripts using `sp_execute_external_script`
 
+### High availability
+
+Has General Purpose and Business Critical service tiers, and high availability options are similar to the options of Azure SQL Databases, see details here https://learn.microsoft.com/en-us/azure/azure-sql/managed-instance/high-availability-sla
+
 
 ## Common PaaS features (SQL DB and SQL MI)
 
@@ -550,15 +554,15 @@ Comparison between HA and DR:
 
 DR options:
 
-- Geo replicas
+- **Geo replicas**
+  - SQL DB only, NOT for SQL MI
   - Using log shipping to replicate data
   - Set at DB level
   - Separate endpoint for each replica (need to update endpoint when failover)
   - You need to have a logical SQL server in the replica regions to host the replicas
-  - SQL DB only, NOT for SQL MI
   - You can failover to a geo replica manually
   - You can have up to 4 geo replicas for Hyperscale DBs
-- Automatic failover group
+- **Automatic failover group**
   - Is an abstraction over geo replicas
   - A failover group can include multiple DBs
   - Same endpoint (redirection happens automatically when failover)
@@ -792,12 +796,15 @@ Most SQL Server HADR solutions are supported on VMs, as both Azure-only and hybr
 - Always On Availability Groups (AG)
 - Always On Failover Cluster Instances(FCIs)
 
-|                   | Always On AG                                                  | Always On FCIs                                                |
-| ----------------- | ------------------------------------------------------------- | ------------------------------------------------------------- |
-| Unit of failover  | a group of databases                                          | server instance                                               |
-| Requirement       | A domain controller VM                                        | Shared storage (Azure shared disks, Premium file shares, etc) |
-| Best practices    | VMs in an availability set or different AZs                   |                                                               |
-| Disaster recovery | an AG could span multiple Azure regions, or Azure and on-prem |                                                               |
+|                    | Always On AG                                                  | Always On FCIs                                                |
+| ------------------ | ------------------------------------------------------------- | ------------------------------------------------------------- |
+| Unit of failover   | a group of databases                                          | server instance                                               |
+| Requirement        | A domain controller VM                                        | Shared storage (Azure shared disks, Premium file shares, etc) |
+| Read-only replicas | Yes (Enterprise Edition)                                      | No                                                            |
+| Failover           | Fast                                                          | Slow                                                          |
+| Cons               | Storage cost, need to recreate instance level objects         | Storage is a single point of failure                          |
+| Disaster recovery  | an AG could span multiple Azure regions, or Azure and on-prem |                                                               |
+| Best practices     | VMs in an availability set or different AZs                   |                                                               |
 
 Both options require an underlying cluster mechanism:
 
@@ -809,12 +816,17 @@ Both options require an underlying cluster mechanism:
 ![AG overview](./images/azure_sql-availability-group.png)
 
 - Unit of failover is a group of DBs, not the instance
+  - Standard Edition: one DB only, up to two replicas (one primary, one secondary)
+  - Enterprise Edition: an AG can contain multiple DBs, up to 9 replicas (one primary, eight secondary), Azure only or hybrid
+    - Secondaries can be configured for read-only access, used for tasks like DBCCs and backups
 - VMs should be in an availability set, or different availability zones
   - VMs in one availability set could be placed in a proximity placement group, minimize latency
   - VMs in different AZs offer better availability, but a greater network latency
 - An AG could be across different Azure regions (for disaster recovery)
-- An AG can contain max. of 9 SQL Server instances, Azure only or hybrid
 - One primary replica, secondaries could be either sync or async
+- Networking:
+  - AG has its own name and IP, used for connection
+  - Direct connection to an instances is also possible
 - Azure only scenario
 
   <img src="./images/azure_sql-server-on-azure-vm-availability-group.png" width="400" alt="Always On availability group overview" />
@@ -826,14 +838,15 @@ Both options require an underlying cluster mechanism:
 
   <img src="images/azure_sql-server-hybrid-failover-liscense.png" width="400" alt="Always On AG free DR license" />
 
-
 #### Failover Cluster Instance (FCI)
 
+![FCI architecture](./images/azure_sql-fci.png)
+
+- *AG is recommended in most cases, use FCI only for on-prem migration if needed*
 - Provides high availability for an entire instance
   - Including system DBs, SQL Agent jobs, etc
 - Works in a single region
 - For HA only, not DR
-- AG is recommended in most cases, use FCI only for on-prem migration if needed
 - An FCI is a single SQL Server instance that's installed across WSFC nodes (could be across multiple subnets)
   - Configured when SQL Server is installed, can't be enabled later
 - **Networking**:
@@ -858,8 +871,20 @@ Both options require an underlying cluster mechanism:
 
 DR usually means backup and restore your data in another region
 
-- Always On AG (replicas in another region)
-- Log shipping
+- Always On AG (multi-region/hybrid)
+  ![AG](./images/azure_sql-ag-1.png)
+  - Require AD DS and DNS in every region (and on-prem for hybrid)
+  - Primary syncs to all secondaries
+- Distributed AG
+  ![Distributed AG](./images/azure_sql-ag-distributed.png)
+  - Each region has an AG (and underlying WSFC)
+  - Each cluster maintains its own quorum, with its own witness
+- Log shipping  \
+  ![Log shipping](./images/azure_sql-log-shipping.png)
+  - Backup, copy, and restore (done by SQL Server automatically)
+  - DB-level protection (like AG)
+  - Secondaries in loading state (STANDBY or NORECOVERY)
+  - Data loss is likely
 - Backup (see below)
   - To GRS/RA-GRS storage
   - Use Azure Backup
