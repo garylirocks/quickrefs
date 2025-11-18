@@ -32,7 +32,7 @@
   - [Backup](#backup)
   - [Disaster recovery](#disaster-recovery)
     - [Notes](#notes)
-    - [Failover groups](#failover-groups)
+    - [Auto-failover groups](#auto-failover-groups)
   - [Auditing](#auditing)
   - [Ledger](#ledger)
 - [SQL Server on Azure VM (SQL on VM)](#sql-server-on-azure-vm-sql-on-vm)
@@ -90,15 +90,15 @@ Deployment options:
 
 ![Deployment options](./images/azure_sql-db-deployment-options.png)
 
-|                   | SQL Databases (SQL DB)                                           | SQL Managed Instance (SQL MI)      | SQL Server on VM (SQL on VM) |
-| ----------------- | ---------------------------------------------------------------- | ---------------------------------- | ---------------------------- |
-| Type              | PaaS                                                             | PaaS                               | IaaS                         |
-| Why choose        | Modern cloud solution                                            | Instance-scoped features           | OS level access              |
-| Purchasing models | DTU, vCore                                                       | vCore                              | -                            |
-| HA                | geo-replication, auto-failover                                   | automated backup, no auto-failover | no auto-failover             |
-| DR                |                                                                  |                                    |                              |
-| Task automation   | Elastic Jobs, Azure Automation, SQL Agent Job from a separate VM | SQL Server Agent jobs              | SQL Server Agent jobs        |
-| Perf monitoring   | DB Watcher                                                       | DB Watcher, X Events               | X Events                     |
+|                   | SQL Databases (SQL DB)                                           | SQL Managed Instance (SQL MI) | SQL Server on VM (SQL on VM) |
+| ----------------- | ---------------------------------------------------------------- | ----------------------------- | ---------------------------- |
+| Type              | PaaS                                                             | PaaS                          | IaaS                         |
+| Why choose        | Modern cloud solution                                            | Instance-scoped features      | OS level access              |
+| Purchasing models | DTU, vCore                                                       | vCore                         | -                            |
+| HA                | built-in                                                         | built-in                      | AlwaysOn AG, AlwaysOn FCI    |
+| DR                | Geo replicas, AF groups                                          | AF groups                     | AlwaysOn AG, Log Shipping    |
+| Task automation   | Elastic Jobs, Azure Automation, SQL Agent Job from a separate VM | SQL Server Agent jobs         | SQL Server Agent jobs        |
+| Perf monitoring   | DB Watcher                                                       | DB Watcher, X Events          | X Events                     |
 
 Notes:
 
@@ -555,20 +555,35 @@ Comparison between HA and DR:
 DR options:
 
 - **Geo replicas**
+  ![Geo replicas](./images/azure_sql-geo-replicas.png)
   - SQL DB only, NOT for SQL MI
-  - Using log shipping to replicate data
-  - Set at DB level
-  - Separate endpoint for each replica (need to update endpoint when failover)
-  - You need to have a logical SQL server in the replica regions to host the replicas
-  - You can failover to a geo replica manually
-  - You can have up to 4 geo replicas for Hyperscale DBs
-- **Automatic failover group**
+  - Using AlwaysOn AG underneath (not log shipping ?)
+  - Setup
+    - In Portal or API
+    - At DB level
+    - Could be cross-subscription (not via the Portal)
+    - Replica could be in same region
+  - Replicas
+    - Replica should have the same service tier and compute
+    - Need a logical SQL server in each replica region to host the replicas
+    - Separate endpoint for each replica
+    - Up to 4 geo replicas for Hyperscale DBs
+  - Failover
+    - You can failover to a geo replica manually
+    - Need to update the endpoint
+- **Auto-failover groups**
+  ![Auto-failover groups](./images/azure_sql-auto-failover-groups.png)
   - Is an abstraction over geo replicas
-  - A failover group can include multiple DBs
-  - Same endpoint (redirection happens automatically when failover)
-  - A DB can only be in one group
-  - A SQL server can have multiple failover groups
-  - For SQL MI, all databases will be in one failover group
+  - Setup:
+    - An AF group can include multiple DBs
+    - A DB can only be in one group
+    - A SQL server can have multiple failover groups
+    - **ONLY one replica, NOT the same region**
+    - For SQL MI, all databases will be in one AF group
+  - Failover:
+    - Auto (no need to update endpoint)
+    - Could be triggered manually
+    - By default, Read-only listener disabled after failover
 
 #### Notes
 
@@ -581,7 +596,7 @@ DR options:
   - Have a script to failover everything in sequence, instead of doing stuff manually
   - The script should be tested regularly, so you have the confidence it works
 
-#### Failover groups
+#### Auto-failover groups
 
 You can add databases to a failover group, they'll be replicated automatically to a server in a paired region.
 
@@ -796,20 +811,38 @@ Most SQL Server HADR solutions are supported on VMs, as both Azure-only and hybr
 - Always On Availability Groups (AG)
 - Always On Failover Cluster Instances(FCIs)
 
-|                    | Always On AG                                                  | Always On FCIs                                                |
-| ------------------ | ------------------------------------------------------------- | ------------------------------------------------------------- |
-| Unit of failover   | a group of databases                                          | server instance                                               |
-| Requirement        | A domain controller VM                                        | Shared storage (Azure shared disks, Premium file shares, etc) |
-| Read-only replicas | Yes (Enterprise Edition)                                      | No                                                            |
-| Failover           | Fast                                                          | Slow                                                          |
-| Cons               | Storage cost, need to recreate instance level objects         | Storage is a single point of failure                          |
-| Disaster recovery  | an AG could span multiple Azure regions, or Azure and on-prem |                                                               |
-| Best practices     | VMs in an availability set or different AZs                   |                                                               |
+|                    | Always On AG                                                  | Always On FCIs                                                            |
+| ------------------ | ------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Unit of failover   | a group of databases                                          | server instance                                                           |
+| Requirement        | AD DS (optional); DNS;                                        | AD DS; DNS; Shared storage (Azure shared disks, Premium file shares, etc) |
+| Read-only replicas | Yes (Enterprise Edition)                                      | No                                                                        |
+| Failover           | Fast                                                          | Slow                                                                      |
+| Cons               | Storage cost, need to recreate instance level objects         | Storage is a single point of failure                                      |
+| Disaster recovery  | an AG could span multiple Azure regions, or Azure and on-prem |                                                                           |
+| Best practices     | VMs in an availability set or different AZs                   |                                                                           |
 
 Both options require an underlying cluster mechanism:
 
 - Windows: Windows Server Failover Cluster (WSFC)
 - or Linux: Pacemaker
+
+In Azure, WSFC cluster quorum resource could be:
+
+- a disk
+- a file share (SMB 2.0 or later)
+- a cloud witness
+  - Recommended, especially for multi-region/hybrid scenarios
+  - Windows Server 2016 or later
+
+WSFC requires:
+
+- A unique name in DNS
+- An object in AD DS called cluster name object (CNO)
+- Azure-based WSFC requires a vNIC, and an IP (or multiple if the cluster spans multiple subnets)
+  - The IP can't be reserved, make sure no conflicts
+- Windows Server 2017 or later, WSFC in Azure uses Distributed Network Name (DNN) instead of virtual network name (VNN)
+  - With DNN, no need to specify an IP
+  - VNN still exists, but clients connect using DNN
 
 #### Always On Availability Group
 
@@ -824,9 +857,11 @@ Both options require an underlying cluster mechanism:
   - VMs in different AZs offer better availability, but a greater network latency
 - An AG could be across different Azure regions (for disaster recovery)
 - One primary replica, secondaries could be either sync or async
+- Same WSFC can support multiple AGs
 - Networking:
   - AG has its own name and IP, used for connection
   - Direct connection to an instances is also possible
+  - Need an ILB
 - Azure only scenario
 
   <img src="./images/azure_sql-server-on-azure-vm-availability-group.png" width="400" alt="Always On availability group overview" />
@@ -862,10 +897,6 @@ Both options require an underlying cluster mechanism:
   - Storage Spaces Direct(S2D)
 - Requirements:
   - AD DS, DNS must be implemented
-- Cluster quorum supports using:
-  - a disk witness
-  - a cloud witness
-  - a file share witness
 
 #### DR options
 
