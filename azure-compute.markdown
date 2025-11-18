@@ -158,7 +158,7 @@ See naming convention here: https://learn.microsoft.com/en-us/azure/virtual-mach
 
   - 99.95% SLA (connectivity to at least one instance 99.95% of the time)
   - Multiple VMs in an availability set are spread across Fault Domains and Update Domains
-    - The maximum fault domain count is depended on region
+    - The maximum fault domain count is dependent on region, each data center can have up to 3 fault domains
     - The maximum update domain count is 20
     - VMs are placed to update domains in round-robin fashion, so VMs in the same availability set are evenly distributed across update domains
   - The VMs in a set should perform identical functionalities and have the same software installed
@@ -166,7 +166,6 @@ See naming convention here: https://learn.microsoft.com/en-us/azure/virtual-mach
   - Combine a Load Balancer with an availability set
 
   ![Availability Sets](images/azure-vm_availability_sets.png)
-
 
 - Availability zones (one or multiple datacenters within a region equipped with independent power, cooling and networking)
 
