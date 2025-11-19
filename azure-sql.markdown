@@ -283,13 +283,16 @@ Tools:
 Migrate:
 
 - Azure SQL Migration extension for Azure Data Studio
+  ![SQL Migration extension architecture](./images/azure_sql-migration-extension-architecture.png)
   - Uses Azure Database Migration Service (`Microsoft.DataMigration/SqlMigrationServices`)
     - This needs Azure Data Factory's Self-hosted Integration Runtime (SHIR) to handle connectivity and upload backups to Azure
   - Ideal for small to mid-sized DBs
   - You can select which tables to migrate
-  ![SQL Migration extension architecture](./images/azure_sql-migration-extension-architecture.png)
   - The DB schema needs to be created in the target first (using BACPAC or SQL Database Projects extension)
   - Could migrate to any Azure SQL offerings, not limited to SQL DB
+  - Configure source db backup:
+    - Full and log backups only
+    - WITH CHECKSUM
 - Import Export Wizard/BACPAC (offline)
   - `.bacpac` file is a compressed file containing metadata and data
   - You can import in Azure Portal or use `SqlPackage.exe` on localhost
