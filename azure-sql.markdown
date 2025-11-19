@@ -57,6 +57,7 @@
   - [Authorization](#authorization)
 - [Data security](#data-security)
   - [Transparent data encryption (TDE)](#transparent-data-encryption-tde)
+  - [Object-level encryption](#object-level-encryption)
   - [Always Encrypted](#always-encrypted)
     - [Secure enclaves](#secure-enclaves)
   - [Dynamic data masking](#dynamic-data-masking)
@@ -100,6 +101,7 @@ Deployment options:
 | DR                | Geo replicas, AF groups                                          | AF groups                     | AlwaysOn AG, Log Shipping    |
 | Task automation   | Elastic Jobs, Azure Automation, SQL Agent Job from a separate VM | SQL Server Agent jobs         | SQL Server Agent jobs        |
 | Perf monitoring   | DB Watcher                                                       | DB Watcher, X Events          | X Events                     |
+| Migration         | DMS (offline only), T Log replication (online)                   | DMS (online), LRS, MI Link    | same as left                 |
 
 Notes:
 
@@ -200,6 +202,8 @@ Tier features:
 
 Applies to all databases in a server.
 
+Could be set using `sp_set_firewall_rule`
+
 There is a networking setting called "**Allow Azure services and resources to access this server**",
   - when turned **ON**, it creates a subresource `Microsoft.Sql/servers/<sql-name>/firewallRules/AllowAllWindowsAzureIps`, this enables connection in both of the following scenarios, you don't need to allow the client subnet:
     - Client Azure VM subnet does not have a `Sql` ServiceEndpoint (via Internet)
@@ -270,6 +274,8 @@ Tools:
 - Azure Database Migration Service (offline)
 - Azure Migrate (offline)
 - Import Export Wizard/BACPAC (offline)
+  - Azure Portal
+  - `az sql db import`
 - Partial data migration:
   - Bulk Copy - bcp utility (offline)
   - Azure Data Factory (offline)
@@ -391,6 +397,10 @@ Architecture by tier:
     - Partitions database into multiple databases/shards
     - Shards can be in different regions, and scale independently
     - The solution uses a special database named shard map manager, which maintains mapping about all shards
+    - Sharding solutions:
+      - Lookup strategy (find the shard in the map)
+      - Range strategy (datetime range)
+      - Hash strategy (even distribution)
 - Connection interruption may happen when:
   - Scaling requires an internal failover
   - Adding or removing DB to an elastic pool
@@ -441,14 +451,14 @@ Notes:
   - Only restore individual DBs, not the entire MI instance
   - For a encrypted DB, you need access to the certificate or asymmetric key used for encryption
 - Difference to SQL DB:
-  - Support backup to/restore from URL
+  - Support backup to/restore from URL (not a file)
   - Can only generate a `COPY_ONLY` backup, log chain is maintained by SQL MI
     ```sql
     BACKUP DATABASE contoso
     TO URL = 'https://myacc.blob.core.windows.net/mycontainer/contoso.bak'
     WITH COPY_ONLY
     ```
-  - To take a user-initiated copy-only backup, you must disable TDE for the specific database
+  - To take a user-initiated "COPY ONLY" backup, you must disable TDE for the specific database
 
 ### Migration options
 
@@ -740,18 +750,22 @@ If manual SQL install (through a media, or upload a VM image):
 
 - Table partitioning (see below)
 - Data compression
-  - Page compression, more rows could be saved on each page (8 KB)
   - Small CPU overhead, outweighed by IO benefits
   - Implemented at object level, each index or table can be compressed individually
     - Can compress partitions in a partitioned table or index
   - Use `sp_estimate_data_compression_savings` for estimation
-  - Row compression: uses variable-length storage format, stores each value in a row in the minimum space
-  - Page compression: on top of row compression, use prefix and dictionary compression
-  - Columnstore archival compression
+  - **Row compression**: uses variable-length storage format, stores each value in a row in the minimum space
+  - **Page compression**:
+    - On top of row compression, use prefix and dictionary compression
+    - To save more rows could be saved on each page (8 KB)
+  - **Columnstore archival compression**
+    - Highest compression
+    - Columnstore only
+    - For data that is not accessed frequently
 
 Other considerations:
 - Enable backup comrepssion
-- Enable instant file initialization to reduce impace of file-growth activities
+- Enable *instant file initialization* to reduce impact of file-growth activities
 - Limit autogrowth of the DB
 - Move all DBs to data disks, including system DBs
 - Move error log and trace file directories to data disks
@@ -762,6 +776,8 @@ Other considerations:
 ### Table partition
 
 - When table becomes too large
+  - A table could have a partition key and a row key
+  - Use partition key to keep lookups in a single partition
 - Steps:
   - Filegroup creation
   - Partition function creation
@@ -917,6 +933,7 @@ DR usually means backup and restore your data in another region
   ![Distributed AG](./images/azure_sql-ag-distributed.png)
   - Each region has an AG (and underlying WSFC)
   - Each cluster maintains its own quorum, with its own witness
+  - DAG is a feature of SQL Server, not involves WSFC
 - Log shipping  \
   ![Log shipping](./images/azure_sql-log-shipping.png)
   - Backup, copy, and restore (done by SQL Server automatically)
@@ -1190,6 +1207,13 @@ Managed using database roles and explicit permissions.
     - SQL on VM, a whole key chain: Service Master Key (SQL Server Instance level) -> Database Master Key (`master` db level) -> certificate in `master` -> DEK (Database Encryption Key)
 - Cannot be used to encrypt system databases, such as `master`, which contains objects that are needed to perform the TDE operations on the user databases.
 
+### Object-level encryption
+
+Steps using T-SQL (within a user db):
+
+- Create a certificate
+- Create a symmetric key
+
 ### Always Encrypted
 
 - Protect sensitive data stored in specific database **columns**
@@ -1307,10 +1331,15 @@ To allow Purview to scan SQL data, set up:
   - Service Principal
   - SQL auth - username/password
 
+Enforce access control based on Purview sensitivity labels:
+- Register DB
+- Set up Purview access policies
+
 Scans with Lineage extraction
 
 - Purview MI needs `db_owner` role
 - Lineage is extraced based on actual stored procedure runs (input and output tables)
+
 
 ## Resource performance optimization
 
@@ -1328,8 +1357,10 @@ The large file could be a bottleneck
 **Files and filegroups**
 
 - SQL Server: support files and file groups, through physical file placement
+  - Use a single filegroup if no need for independent backup and restore
 - Azure SQL DB
   - Only one database file, configurable max size
+  - Only one filegroup `PRIMARY` (use this for partition scheme)
   - Hyperscale have more files
 - SQL MI
   - Supports adding files (and config sizes)
@@ -1573,7 +1604,7 @@ Operations
   - Error log
   - SQL Server performance conditions
   - Windows Management Instrumentation (WMI) events
-- Could send email when a job completes, or an alert fires
+- Could send email when a job completes(successful or fail), or an alert fires
 - In a multiserver environment
   - One server could be designated as a master server
   - Master server could execute jobs on other servers (aka. target servers)
