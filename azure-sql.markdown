@@ -101,7 +101,7 @@ Deployment options:
 | DR                | Geo replicas, AF groups                                          | AF groups                     | AlwaysOn AG, Log Shipping    |
 | Task automation   | Elastic Jobs, Azure Automation, SQL Agent Job from a separate VM | SQL Server Agent jobs         | SQL Server Agent jobs        |
 | Perf monitoring   | DB Watcher                                                       | DB Watcher, X Events          | X Events                     |
-| Migration         | DMS (offline only), T Log replication (online)                   | DMS (online), LRS, MI Link    | same as left                 |
+| Migration         | DMS (offline only), T Log replication (online)                   | DMS (online), MI Link, LRS    | same as left                 |
 
 Notes:
 
@@ -146,6 +146,7 @@ This is at database level, NOT server level
     - When paused:
       - No vCore charge, only storage charged when paused
       - Application needs retry logic
+      - Up to 1 min to resume
     - Limitations (no constant background processes):
       - No Geo-replication
       - Long-term backup retention
@@ -421,7 +422,7 @@ Read Scale-out in a Business Critical tier:
 
 - A PaaS service, need a dedicated subnet in a vNet
   - Could have both public and private endpoint
-- No need to manage a VM
+  - Creates a `microsoft.sql/virtualclusters` resource as well
 - Tiers
   - General Purpose (vCore)
   - Business Critical (vCore) - (has readable secondary)
@@ -484,8 +485,17 @@ SQL MI is often the better PaaS option (over SQL DB) for migration from on-prem
 
 #### Online
 
-- Log replay service (LRS)
-
+- Azure Database Migration Service (online)
+- Managed Instance link
+  ![Managed Instance link](./images/azure_sql-managed-instance-link-feature.png)
+  - Set up using SSMS or T-SQL/PowerShell
+  - Using distributed availability group (DAG), replicating data between on-prem and Azure
+  - One DB per link
+  - A DB can be replicated to multiple SQL MIs
+  - A SQL Server instance can have multiple links
+  - SQL Server 2022 supports two-way replication (failover to MI, then failback to SQL Server)
+  - Can be used to offload read-only workloads
+- Log replay service (LRS) (not recommended) \
   ![Log Replay Service](./images/azure_sql-log-replay-service.png)
   - SQL MI only
   - Uses log shipping
@@ -499,15 +509,6 @@ SQL MI is often the better PaaS option (over SQL DB) for migration from on-prem
     - Split full and diff backups into multiple files
     - Use backup compression
     - Use `CHECKSUM` to speed up restore
-- Managed Instance link
-  ![Managed Instance link](./images/azure_sql-managed-instance-link-feature.png)
-  - Set up using SSMS or T-SQL/PowerShell
-  - Using distributed availability group (DAG), replicating data between on-prem and Azure
-  - One DB per link
-  - A DB can be replicated to multiple SQL MIs
-  - A SQL Server instance can have multiple links
-  - SQL Server 2022 supports two-way replication (failover to MI, then failback to SQL Server)
-  - Can be used to offload read-only workloads
 - Transactional replication (online or offline)
   - For large/complex DBs
   - SQL MI can be a publisher, distributor, and subscriber
@@ -1376,8 +1377,9 @@ The large file could be a bottleneck
   - Sorting operations
 - Azure SQL
   - Always place `tempdb` on local SSD
-  - Number of files scaled with number of vCores, up to 16
-    - SQL MI: fixed 12 files
+  - Number of files scaled with number of vCores, up to 8
+    - If contention still exists with 8 files, increase to 4 * vCores count
+  - SQL MI: 12 files by default, max. 128
   - Size of `tempdb` scaled per number of vCores
 
 ### DB configuration
