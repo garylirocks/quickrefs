@@ -422,7 +422,8 @@ Read Scale-out in a Business Critical tier:
 
 - A PaaS service, need a dedicated subnet in a vNet
   - Could have both public and private endpoint
-  - Creates a `microsoft.sql/virtualclusters` resource as well
+  - Creates a `microsoft.sql/virtualclusters` (dedicated ring) resource as well
+  - Use a Instance Pool could speed up deployment and scaling
 - Tiers
   - General Purpose (vCore)
   - Business Critical (vCore) - (has readable secondary)
@@ -577,7 +578,7 @@ DR options:
 
 - **Geo replicas**
   ![Geo replicas](./images/azure_sql-geo-replicas.png)
-  - SQL DB only, NOT for SQL MI
+  - SQL DB only, **NOT for SQL MI**
   - Using AlwaysOn AG underneath (not log shipping ?)
   - Setup
     - In Portal or API
@@ -1354,9 +1355,10 @@ Scans with Lineage extraction
 
 **Proportional fill**
 
-DB engine writes data to files proportionally, eg. writing 1G data to a DB with two data files, 10GB and 1GB each, first file gets 900MB, the latter gets 100MB
-
-The large file could be a bottleneck
+- DB engine writes data to files proportionally, eg. writing 1G data to a DB with two data files, 10GB and 1GB each, first file gets 900MB, the latter gets 100MB
+  - Happens within a filegroup
+  - Each file gets a "skip_target" value based on its size, "1" means no skip
+- The large file could be a bottleneck
 
 **Files and filegroups**
 
@@ -1375,23 +1377,35 @@ The large file could be a bottleneck
 - SQL Server used `tempdb` for tasks beyond storing user-defined temp tables:
   - Intermediate query results
   - Sorting operations
-- Azure SQL
+- Azure SQL DB
   - Always place `tempdb` on local SSD
   - Number of files scaled with number of vCores, up to 8
     - If contention still exists with 8 files, increase to 4 * vCores count
-  - SQL MI: 12 files by default, max. 128
   - Size of `tempdb` scaled per number of vCores
+  - Each db in a logical server has itw own `tempdb`
+  - In an elastic pool, `tempdb` is shared, but objects in it are not
+  - Use `tempdb.sys.database_files` to see files info
+  - `tempdb` not viewable in SSMS, so you can't change files via GUI
+- SQL MI
+  - 12 files by default, max. 128
+
 
 ### DB configuration
 
-Usually done with `ALTER DATABASE` and `ALTER DATABASE SCOPED CONFIGURATION`
+Usually done with `ALTER DATABASE`
 
-- DB recovery model - full or simple
+- DB recovery model - `FULL` or `SIMPLE`
 - Automatic tuning
 - Auto create and update statistics
 - Query store options
 - Snapshot isolation
-- `MAXDOP`
+
+and `ALTER DATABASE SCOPED CONFIGURATION`
+
+- `MAXDOP` - override server settings
+- "Legacy Cardinality Estimation"
+- "Last Query Plan Stats"
+- "Optimize for Ad Hoc Workloads"
 
 Concepts:
 

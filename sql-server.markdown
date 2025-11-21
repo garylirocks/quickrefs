@@ -477,6 +477,12 @@ Automatic plan correction:
 - Optionally enable `AUTOMATIC_TUNING`
   - Enabled by default for Azure SQL DB
 
+![Query store storage](./images/sqlserver_query-store-data.png)
+
+Query Store data are written to disk asynchronously
+
+Init size: 100MB, max: 2GB ?
+
 ## Isolation levels
 
 - It's a session level setting, there's NO global isolation level
