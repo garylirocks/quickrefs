@@ -32,7 +32,7 @@
   - [Backup](#backup)
   - [Disaster recovery](#disaster-recovery)
     - [Notes](#notes)
-    - [Auto-failover groups](#auto-failover-groups)
+    - [Auto-failover groups endpoints](#auto-failover-groups-endpoints)
   - [Auditing](#auditing)
   - [Ledger](#ledger)
 - [SQL Server on Azure VM (SQL on VM)](#sql-server-on-azure-vm-sql-on-vm)
@@ -595,7 +595,8 @@ DR options:
     - Need to update the endpoint
 - **Auto-failover groups**
   ![Auto-failover groups](./images/azure_sql-auto-failover-groups.png)
-  - Is an abstraction over geo replicas
+  - Built on top of geo-replicas
+    - Create geo-replica for DBs in the group automatically
   - Setup:
     - An AF group can include multiple DBs
     - A DB can only be in one group
@@ -610,15 +611,19 @@ DR options:
 #### Notes
 
 - DR needs to be sized as production, so it can hold all the data
-- With Planned failover, there is no data loss
-- With Unplanned failover
+- "**Read/Write failover policy**" could be
+  - Customer managed (manual failover) - grace period is fixed to 1 hour
+  - Microsoft managed - grace period configurable from 1 to 24 hours
+- With Planned/manual failover, no data loss
+- With "Forced Failover"
   - RPO is 1~2 seconds (*if you want absolute no data loss, consider CosmosDB, it has strong consistency - data stored in multiple regions, but your application needs to accept latency*)
   - RTO is <60 seconds
+- Removing a single or pooled database from a group does not stop replication, and it does not delete the replicated database.
 - You should
   - Have a script to failover everything in sequence, instead of doing stuff manually
   - The script should be tested regularly, so you have the confidence it works
 
-#### Auto-failover groups
+#### Auto-failover groups endpoints
 
 You can add databases to a failover group, they'll be replicated automatically to a server in a paired region.
 
@@ -649,7 +654,6 @@ Notes:
 
 - You should use these failover listener endpoints in connection string for your application, so you don't need to manually update the connection string when failover happens, the connection is always routed to whichever instance which is currently primary.
 - The listener FQDN's ttl is 30 seconds, when failover happens, it allows the FQDN resolves to the new primary region
-- Removing a failover group for a single or pooled database does not stop replication, and it does not delete the replicated database.
 
 ### Auditing
 

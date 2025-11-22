@@ -1,7 +1,6 @@
 - [Migration](#migration)
 - [Performance](#performance)
   - [Storage](#storage)
-  - [DMV](#dmv)
   - [Indexes](#indexes)
   - [Query](#query)
   - [SQL Server](#sql-server)
@@ -51,12 +50,6 @@
   - Business Critical: local SSD
   - Hyperscale: Page server
 
-### DMV
-
-- `sys.resource_stats` - in `master`, historical CPU/storage usage data for an Azure SQL Database, has db name and start_time
-- `sys.dm_db_resource_stats` - in each DB, one row every 15 seconds, only data for last hour
-- `sys.dm_pdw_nodes_*` - for Azure Synapse Analytics and Analytics Platform System (PDW)
-
 ### Indexes
 
 - Nonclustered indexes
@@ -67,9 +60,6 @@
 - See query parameter values:
   - Enable Lightweight_Query_Profiling in db
   - Enable Last_Query_Plan_Stats in db
-
-- Actual plan of last query:
-  - `sys.dm_exec_query_plan_stats`
 
 - Lightweight profiling
   - Can be enabled at query level using query hint `OPTION (QUERY_PLAN_PROFILE)`

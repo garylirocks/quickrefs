@@ -432,13 +432,45 @@ Two levels:
 
 Examples:
 
-- `sys.dm_db_resource_stats` (Azure SQL DB)
-- `sys.server_resource_stats` (Azure SQL MI)
-- `sys.dm_user_db_resource_governance` (Azure SQL DB)
-- `sys.dm_instance_resource_governance` (Azure SQL MI)
-- `sys.dm_os_wait_stats` - aggregated data, not for active tasks
-- `sys.dm_exec_requests` - active queries
-- `sys.dm_os_waiting_tasks` - current executing tasks
+- Execution & Query stats (Performance)
+  - `sys.dm_exec_query_stats` - query exec time, CPU, reads, ect, contains `sql_handle` and `plan_handle`
+  - `sys.dm_exec_query_plan(plan_handle)` - *a DMF*, exec plan XML
+  - `sys.dm_exec_query_plan_stats` - Seems same as above ?
+  - `sys.dm_exec_sql_text(sql_handle)` - get the text of a SQL batch for a specific sql handle
+  - ...
+  - `sys.dm_exec_sessions` - user and system sessions (running or sleeping)
+  - `sys.dm_exec_requests` - details about each request currently executing, identify long running
+  - ...
+- Index & stats
+  - `sys.dm_db_index_usage_stats` - How often indexes are read/updated
+  - `sys.dm_db_missing_index_details` - Missing index suggestions
+  - `sys.dm_db_index_physical_stats()` - Fragmentation, page count
+  - `sys.dm_db_stats_properties` - Histogram + stats details
+- Waits
+  - `sys.dm_os_wait_stats` - aggregated data since last restart
+  - `sys.dm_os_waiting_tasks` - current waiting tasks
+  - `sys.dm_exec_requests` - active queries (including wait type/time as well)
+- Locking & Blocking
+  - `sys.dm_tran_locks` - current locks, including `session_id`
+  - `sys.dm_os_waiting_tasks` - current waiting tasks, including `blocking_session_id`
+  - `sys.dm_exec_sessions / requests` - identify blockers
+- Memory & caching
+  - `sys.dm_os_sys_memory` - OS memory info
+  - `sys.dm_exec_cached_plans` - cached plan, size and use counts etc
+- I/O & Storage
+  - `sys.dm_io_virtual_file_stats()` - I/O stats for database files
+  - `sys.dm_db_file_space_usage` - db file space usage
+- Resource usage
+  - `sys.resource_stats` - in `master`, historical CPU/storage usage data for an Azure SQL Database, has db name and start_time
+  - `sys.server_resource_stats` (Azure SQL MI)
+  - `sys.dm_db_resource_stats` - (SQL DB) for each DB, one row every 15 seconds, only data for last hour
+  - `sys.dm_user_db_resource_governance` (Azure SQL DB)
+  - `sys.dm_instance_resource_governance` (Azure SQL MI)
+- Misc
+  - `sys.dm_pdw_nodes_*` - for Azure Synapse Analytics and Analytics Platform System (PDW)
+
+
+
 
 
 
