@@ -21,7 +21,6 @@
   - Insights
   - Membership
   - ...
-- Both Microsoft Learn and Partner University accounts could be linked to your Partner Center account
 
 ### Programs
 
@@ -45,5 +44,6 @@ Seems it has its own set of roles and permissions, like:
 
 ## Partner University
 
-- Another platform for learning, dedicated to MS partners
-- It offers courses, assessments, and learning paths to help partners meet skilling requirements for Solutions Partner and Specializations
+- Courses, assessments exclusively for Micorsoft Partners
+- Both Microsoft Learn and Partner University accounts could be linked to your Partner Center account
+  - Both help an organization qualify for programs like Solution Partner designations, Specializations, and Azure Expert MSP program.
