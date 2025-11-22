@@ -3,6 +3,10 @@
 - [Overview](#overview)
 - [Run with Docker](#run-with-docker)
 - [Concepts](#concepts)
+- [Authorization](#authorization)
+  - [Permissions](#permissions)
+  - [Ownership chains](#ownership-chains)
+  - [System tables](#system-tables)
 - [Create and query data](#create-and-query-data)
   - [Temporary tables](#temporary-tables)
 - [Datatypes](#datatypes)
@@ -14,10 +18,6 @@
   - [Tune indexes](#tune-indexes)
   - [Resumable index](#resumable-index)
   - [Query hints](#query-hints)
-- [Authorization](#authorization)
-  - [Permissions](#permissions)
-  - [Ownership chains](#ownership-chains)
-  - [System tables](#system-tables)
 - [Query plans](#query-plans)
   - [Common problems](#common-problems)
 - [Dynamic Management Views (DMV)](#dynamic-management-views-dmv)
@@ -109,17 +109,16 @@ docker exec -it sql1 "bash"
     - Server roles can't be granted access to db object directly
     - Server roles NOT available in Azure SQL DB
     - Schema scoped permissions can be granted to a role
-
-  ```sql
-  CREATE USER [DP300User1] WITH PASSWORD = 'Pa55.w.rd'
-  GO
-  CREATE ROLE [SalesReader]
-  GO
-  ALTER ROLE [SalesReader] ADD MEMBER [DP300User1]
-  GO
-  GRANT SELECT, EXECUTE ON SCHEMA::Sales TO [SalesReader]
-  GO
-  ```
+      ```sql
+      CREATE USER [DP300User1] WITH PASSWORD = 'Pa55.w.rd'
+      GO
+      CREATE ROLE [SalesReader]
+      GO
+      ALTER ROLE [SalesReader] ADD MEMBER [DP300User1]
+      GO
+      GRANT SELECT, EXECUTE ON SCHEMA::Sales TO [SalesReader]
+      GO
+      ```
   - Application roles
     - There's a preconfigured password
     - User activate the role with the password, then the role permissions are applied to the user, until the role is deactivated
@@ -145,6 +144,49 @@ docker exec -it sql1 "bash"
       - `MS_SecurityDefinitionReader`
       - `MS_ServerStateReader`
       - `MS_ServerStateManager`
+
+
+## Authorization
+
+### Permissions
+
+- Four basic operation permissions: `SELECT`, `INSERT`, `UPDATE`, and `DELETE`
+  - Other table/view permissions: `CONTROL`, `REFERENCES`, `TAKE OWNERSHIP`, `VIEW CHANGE TRACKING`, `VIEW DEFINITION`
+  - Function/stored procedure permissions: `ALTER`, `CONTROL`, `EXECUTE`, `VIEW CHANGE TRACKING`, `VIEW DEFINITION`
+- Perimssions can be granted, revoked, or denied
+  - On tables and views
+  - `DENY` supersedes over `GRANT`
+  - Can additionally restrict the columns
+  - SQL Server and Azure SQL DB also include row-level security
+- You can use `EXECUTE AS USER = <user_name>` to change user context
+
+### Ownership chains
+
+- When a funcion or stored procedure executes, it inherits the permissions of the owner.
+- Example:
+  - The owner of `SP_DEMO` has access to `SELECT` on `[Sales].[Orders]`
+  - User `user001` does not have access to `[Sales].[Orders]`, but can `EXECUTE` `SP_DEMO`
+  - Then `user001` can't execute `SELECT` on the table, but can run the stored procedure
+- Dynamic SQL in a stored procedure is executed outside the context of the calling procedure, DON'T inherit permissions of the procedure owner. The calling user's permissions apply.
+
+### System tables
+
+- `sys.database_principals` contains both individual users and roles, each has a principal_id
+- `sys.database_role_members` contains members of each role, eg. `dbo` is a member of `db_owner`
+- users: `dbo`, `guest`, `sys`, ...
+- roles: `db_owner`, `db_accessadmin`, `db_datareader`, ...
+- Query users of each role
+
+  ```sql
+  -- Query users in a particular role
+  SELECT dp.name, dp.type_desc, dprole.name
+  FROM
+      sys.database_role_members drm
+  JOIN
+      sys.database_principals dp ON drm.member_principal_id = dp.principal_id
+  JOIN
+      sys.database_principals dprole ON drm.role_principal_id = dprole.principal_id
+  ```
 
 
 ## Create and query data
@@ -208,21 +250,25 @@ Considerations:
 
 ## Indexes
 
-- Clustered index
-  - Is the underlying table, stored in sorted order of the key value
-  - Only one clustered index on a given table
+- **Clustered index**
+  - Is the underlying table, defines how the rows are sorted
+  - A table can have Only one clustered index
     - A table without a clustered index is called a heap, typically used only as staging tables
   - Clustered index key should:
     - As narrow as possible
     - Use columns with unique and distinct values
     - On columns used frequently for sorting
-- Nonclustered indexes
-  - Separate structures form the data rows
-  - Contains the key values, and a pointer to the row
+    - Usually include the primary key (but NOT mandatory)
+  - Primary key will be clustered by default, if you don't specify another clustered key
+  - eg. for an `Orders` table, primary key is `OrderId`, clustered index on `OrderDate`
+- **Nonclustered indexes**
+  - Separate structures from the data rows
+  - Contains the key values
+  - Always contains the clustered key
   - Can have multiple nonclustered indexes on a table
-  - Can add extra nonkey columns to the leaf level of a index
+  - Can add extra nonkey columns to the leaf level of an index
     - If a nonclustered index doesn't have all the columns to fulfill a query, then a "**Key lookup**" against the clustered index operation happens in an execution plan
-- Columnstore indexes
+- **Columnstore indexes**
   - Intially targeted at data warehouses
     - Best on analytic queries scanning large data sets, such as fact tables
   - Enhance performance for queries involving large aggregation
@@ -272,11 +318,11 @@ Stats:
 Common waits:
 
 - `RESOURCE_SEMAPHORE`: wait on memory, could indicate long query runtimes (out-of-date stats, missing indexes), or high query concurrency
-- `LCK_M_X`: blocking problem. Could be resolved by changing to `READ COMMITTED SNAPSHOT` isolation level, optimizing indexes, improving transaction management within T-SQL code
-- `PAGEIOLATCH_SH`: query scans excessive amounts of data, indicating bad indexes. If `waiting_tasks_count` is low, but `wait_time_ms` is high, it suggests storage performance problems
 - `SOS_SCHEDULER_YIELD`: high CPU utilization, suggesting high number of large scans, missing indexes
 - `CXPACKET`: improper config or high CPU utilization. To resolve, lower MAXDOP, and increase the cost threshold for parallelism
-- `PAGEIOLATCH_UP`: TempDB contention on Page Free Space (PFS) data pages. Best practice: use one file per CPU core for TempDB, the files should have the same size and outgrowth settings
+- `LCK_M_X`: *a lock*, Blocking problem. Could be resolved by changing to `READ COMMITTED SNAPSHOT` isolation level, optimizing indexes, improving transaction management within T-SQL code
+- `PAGEIOLATCH_SH`: *a latch*, query scans excessive amounts of data, indicating bad indexes. If `waiting_tasks_count` is low, but `wait_time_ms` is high, it suggests storage performance problems
+- `PAGEIOLATCH_UP`: *a latch*, TempDB contention on Page Free Space (PFS) data pages. Best practice: use one file per CPU core for TempDB, the files should have the same size and outgrowth settings
 
 ### Tune indexes
 
@@ -321,49 +367,6 @@ If you can't modify query text, you can set hints for a query in Query Store:
 `EXEC sys.sp_query_store_set_hints @query_id= 42, @query_hints = N'OPTION(RECOMPILE, MAXDOP 1)'`
 
 
-## Authorization
-
-### Permissions
-
-- Four basic operation permissions: `SELECT`, `INSERT`, `UPDATE`, and `DELETE`
-  - Other table/view permissions: `CONTROL`, `REFERENCES`, `TAKE OWNERSHIP`, `VIEW CHANGE TRACKING`, `VIEW DEFINITION`
-  - Function/stored procedure permissions: `ALTER`, `CONTROL`, `EXECUTE`, `VIEW CHANGE TRACKING`, `VIEW DEFINITION`
-- Perimssions can be granted, revoked, or denied
-  - On tables and views
-  - `DENY` supersedes over `GRANT`
-  - Can additionally restrict the columns
-  - SQL Server and Azure SQL DB also include row-level security
-- You can use `EXECUTE AS USER = <user_name>` to change user context
-
-### Ownership chains
-
-- When a funcion or stored procedure executes, it inherits the permissions of the owner.
-- Example:
-  - The owner of `SP_DEMO` has access to `SELECT` on `[Sales].[Orders]`
-  - User `user001` does not have access to `[Sales].[Orders]`, but can `EXECUTE` `SP_DEMO`
-  - Then `user001` can't execute `SELECT` on the table, but can run the stored procedure
-- Dynamic SQL in a stored procedure is executed outside the context of the calling procedure, DON'T inherit permissions of the procedure owner. The calling user's permissions apply.
-
-### System tables
-
-- `sys.database_principals` contains both individual users and roles, each has a principal_id
-- `sys.database_role_members` contains members of each role, eg. `dbo` is a member of `db_owner`
-- users: `dbo`, `guest`, `sys`, ...
-- roles: `db_owner`, `db_accessadmin`, `db_datareader`, ...
-- Query users of each role
-
-  ```sql
-  -- Query users in a particular role
-  SELECT dp.name, dp.type_desc, dprole.name
-  FROM
-      sys.database_role_members drm
-  JOIN
-      sys.database_principals dp ON drm.member_principal_id = dp.principal_id
-  JOIN
-      sys.database_principals dprole ON drm.role_principal_id = dprole.principal_id
-  ```
-
-
 ## Query plans
 
 Query processing steps:
@@ -373,7 +376,7 @@ Query processing steps:
     1. Validates columns and object exists, identifies data types
 1. Generates *query_hash*, check if a cache exists in the plan cache
     - Different explicit parameter values could cause a different plan
-    - If you use a parameter in your query, `OPTION (RECOMPILE)` causes the query compiler to replace the variable with its value
+    - If you use a parameter in your query, `OPTION (RECOMPILE)` causes the query compiler to replace the parameter with its value
 2. If no cache, *query optimizer* generates several execution plans
 3. Plan executed -> results
 
@@ -403,7 +406,7 @@ Three types of plans:
 - Hardware constraints
 - Suboptimal query constructs
 - SARGability
-  - Able to use *SEEK* on operation on index, instead of scanning the entire index or table
+  - Able to use *SEEK* operation on index, instead of scanning the entire index or table
   - Wildcard on the left: `LIKE %word`, make the query non-SARGable
 - Missing indexes
   - recommendations in `sys.dm_db_missing_index_details`
@@ -464,6 +467,7 @@ Examples:
   - `sys.resource_stats` - in `master`, historical CPU/storage usage data for an Azure SQL Database, has db name and start_time
   - `sys.server_resource_stats` (Azure SQL MI)
   - `sys.dm_db_resource_stats` - (SQL DB) for each DB, one row every 15 seconds, only data for last hour
+  - ...
   - `sys.dm_user_db_resource_governance` (Azure SQL DB)
   - `sys.dm_instance_resource_governance` (Azure SQL MI)
 - Misc
@@ -540,7 +544,7 @@ Levels:
   - Holds a "key-range" lock, preventing inserts into the key range
   - Lowest concurrency
 - With row-versioning
-  - *To turn on SNAPSHOT for a DB: `ALTER DATABASE MyDb SET ALLOW_SNAPSHOT_ISOLATION ON`
+  - To turn on SNAPSHOT for a DB: `ALTER DATABASE MyDb SET ALLOW_SNAPSHOT_ISOLATION ON`
   - Levels
     - Read Committed Snapshot (RCSI)
       - RCSI is the default, no need to set in the session
