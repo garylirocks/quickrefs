@@ -8,18 +8,18 @@
   - [Networking](#networking)
     - [Logical server level firewall](#logical-server-level-firewall)
     - [Database-level firewall](#database-level-firewall)
-  - [Free offer](#free-offer)
   - [Elastic query](#elastic-query)
   - [Elastic jobs](#elastic-jobs)
   - [Performance and tuning](#performance-and-tuning)
     - [Query Performance Insights (QPI)](#query-performance-insights-qpi)
+  - [High availability](#high-availability)
+  - [Hyperscale](#hyperscale)
+  - [Scaling](#scaling)
   - [Migration options](#migration-options)
     - [Offline](#offline)
     - [Online](#online)
+  - [Free offer](#free-offer)
   - [SQL DB in Fabric](#sql-db-in-fabric)
-  - [Hyperscale](#hyperscale)
-  - [High availability](#high-availability)
-  - [Scaling](#scaling)
 - [SQL Managed Instance (SQL MI)](#sql-managed-instance-sql-mi)
   - [Connectivity](#connectivity)
   - [Backup and restore](#backup-and-restore)
@@ -73,10 +73,6 @@
     - [Index tuning](#index-tuning)
   - [Intelligent Query Processing](#intelligent-query-processing)
   - [Resource Governor](#resource-governor)
-- [DB monitoring](#db-monitoring)
-  - [Metrics](#metrics)
-  - [Extended events](#extended-events)
-  - [Database Watcher](#database-watcher)
 - [Maintenance tasks automation](#maintenance-tasks-automation)
   - [Maintenance tasks](#maintenance-tasks)
   - [Index rebuild and reorganize](#index-rebuild-and-reorganize)
@@ -84,6 +80,10 @@
   - [Maintenance Plans](#maintenance-plans)
   - [SQL Agent jobs](#sql-agent-jobs)
   - [Other tools](#other-tools)
+- [DB monitoring](#db-monitoring)
+  - [Metrics](#metrics)
+  - [Extended events](#extended-events)
+  - [Database Watcher](#database-watcher)
 - [Azure SQL Edge](#azure-sql-edge)
 
 ## Overview
@@ -153,13 +153,14 @@ This is at database level, NOT server level
       - A job database in elastic jobs
       - The `sync` database in SQL Data Sync
 
-| Service tier            | Basic (DTU) | Standard (DTU) | Premium (DTU) | General Purpose (vCore) | Business Critical (vCore) | Hyperscale (vCore) |
-| ----------------------- | ----------- | -------------- | ------------- | ----------------------- | ------------------------- | ------------------ |
-| Local redundant support | Yes         | Yes            | Yes           | Yes                     | Yes                       | Yes                |
-| Zone redundant support  | No          | No             | Yes           | Yes                     | Yes                       | Yes                |
-| Max data size           | 2GB         | 1TB            | 4TB           | 4TB                     | 4TB                       | 100TB              |
-| AZs                     | No          | No             | Local or AZs  | Local or AZs            | Local or AZs              | -                  |
-| AlwaysOn AG             | No          | No             | Yes           | No                      | Yes                       | -                  |
+| Service tier            | Basic (DTU)         | Standard (DTU) | Premium (DTU) | General Purpose (vCore) | Business Critical (vCore) | Hyperscale (vCore)           |
+| ----------------------- | ------------------- | -------------- | ------------- | ----------------------- | ------------------------- | ---------------------------- |
+| Local redundant support | Yes                 | Yes            | Yes           | Yes                     | Yes                       | Yes                          |
+| Zone redundant support  | X                   | X              | Yes           | Yes                     | Yes                       | Yes                          |
+| Data and Log Storage    | LRS premium storage | LRS            | local SSD     | LRS or ZRS              | local SSD                 | local SSD cache, page server |
+| tempdb Storage          | local SSD           | same           | same          | same                    | same                      | same                         |
+| Max data size           | 2GB                 | 1TB            | 4TB           | 4TB                     | 4TB                       | 100TB                        |
+| AlwaysOn AG             | No                  | No             | Yes           | No                      | Yes                       | -                            |
 
 Tier features:
 
@@ -218,13 +219,6 @@ There is a networking setting called "**Allow Azure services and resources to ac
 - Configured only via T-SQL using `sp_set_database_firewall_rule` from within a db
 - If either db or server level rules allow, connection is allowed
 
-### Free offer
-
-- 100,000 vCore seconds per month, 32GB data storage
-- Free limit exhausted, either:
-  - pause the DB for the month, ensure it's free
-  - allow over usage, get billed
-
 ### Elastic query
 
 Run T-SQL queries spanning multiple databases
@@ -265,6 +259,98 @@ Components:
 
 - Help identity expensive queries
 - The Portal shows the query ID and statement, use Query Store to find the execution plan
+
+### High availability
+
+- All the options below have **RPO == 0**, **RTO < 60 seconds**
+- Premium (DTU), General Purpose, Business Critical can use AZs
+
+Architecture by tier:
+
+- Basic, Standard and General Purpose
+
+  ![General purpose architecture](./images/azure_sql-general-purpose.png)
+
+  *Local redundant*
+
+  ![General purpose zone-redundant](./images/azure_sql-general-purpose-zone-redundant.png)
+
+  *Zone-redundant (available to General Purpose only)*
+
+  - tempdb in locally attached SSD
+  - data and log files are in Azure Premium Storage
+
+- Premium and Business Critical
+
+  ![Business critical architecture](./images/azure_sql-business-critical.png)
+
+  *Local redundant*
+
+  ![Business critical zone-redundant](images/azure_sql-business-critical-zone-redundant.png)
+
+  *Zone-redundant*
+
+  - Data and log files are stored on direct-attached SSD
+  - It deploys an Always On availability group (AG) behind the scenes
+  - There are three secondary replicas, **only one** of them could be used as a read-only endpoint
+  - A transaction can complete a commit when at least one of the secondary replicas has hardened the change for its transcation log
+  - Highest performance and availability of all Azure SQL service tiers
+
+- Hyperscale
+
+  ![Hyperscale architecture](./images/azure_hyperscale-architecture.png)
+
+  - Page servers (sharding) serve database pages out to the compute nodes on demand
+  - Auto-scale quickly up to 128TB
+  - Data changes from the primary compute replica are propagated through the log service: it gets logs from primary compute replica, persists them, forwards them to other compute replicas and relevant page servers
+  - Transcations can commit when the log service hardens to the landing zone
+  - Different types of replicas
+    - **High-availability replicas**: up to 4, share primary's page servers, same region, same SLO
+    - **Named replicas**: up to 30, share primary's page servers, same region, SLO can be different
+    - **Geo replicas**: up to 4 in the same or multiple regions, its own copy of the data
+
+### Hyperscale
+
+- Max data size over 100TB
+- Horizontal scaling (adding compute nodes) as data size grows
+- Can be converted to, but not back to a standard SQL DB
+- Ideal for most workloads
+- Storage expands as needed
+- Operation times not dependent on data size
+  - Backup instantly (using snapshots in Blob storage)
+  - Scaling in minutes
+  - Restore in minutes
+- Scaling
+  - Up/Down - CPU and memory
+  - In/Out - read replicas
+- In your connection string, set `ApplicationIntent` argument to `ReadOnly` to route to read-only replicas
+- Row-Level Security (RLS)
+
+### Scaling
+
+- Vertical scaling
+- Horizontal scaling
+  - Read Scale-out
+  - Sharding
+    - Hyperscale does this automatically, or you can do it manually with some tools
+    - Partitions database into multiple databases/shards
+    - Shards can be in different regions, and scale independently
+    - The solution uses a special database named shard map manager, which maintains mapping about all shards
+    - Sharding solutions:
+      - Lookup strategy (find the shard in the map)
+      - Range strategy (datetime range)
+      - Hash strategy (even distribution)
+- Connection interruption may happen when:
+  - Scaling requires an internal failover
+  - Adding or removing DB to an elastic pool
+
+Read Scale-out in a Business Critical tier:
+
+![Read Scale-out](images/azure_sql-db-business-critical-service-tier-read-scale-out.png)
+
+- You set **connection string option** to decide whether the connection is routed to the write replica or a read-only replica.
+- Data-changes are propagated asynchronously
+- Read scale-out with one of the secondary replicas supports **session-level consistency**, if the read-only session reconnects, it might be redirected to another replica
 
 ### Migration options
 
@@ -320,102 +406,16 @@ Only method: transactional replication
 - Need to be configured via SSMS, or T-SQL, NOT Azure Portal
 - Can only use SQL auth for the target SQL DB
 
+### Free offer
+
+- 100,000 vCore seconds per month, 32GB data storage
+- Free limit exhausted, either:
+  - pause the DB for the month, ensure it's free
+  - allow over usage, get billed
+
 ### SQL DB in Fabric
 
 // TODO
-
-### Hyperscale
-
-- Max data size over 100TB
-- Horizontal scaling (adding compute nodes) as data size grows
-- Can be converted to, but not back to a standard SQL DB
-- Ideal for most workloads
-- Storage expands as needed
-- Operation times not dependent on data size
-  - Backup instantly (using snapshots in Blob storage)
-  - Scaling in minutes
-  - Restore in minutes
-- Scaling
-  - Up/Down - CPU and memory
-  - In/Out - read replicas
-- In your connection string, set `ApplicationIntent` argument to `ReadOnly` to route to read-only replicas
-- Row-Level Security (RLS)
-
-### High availability
-
-- All the options below have **RPO == 0**, **RTO < 60 seconds**
-- Premium (DTU), General Purpose, Business Critical can use AZs
-
-Architecture by tier:
-
-- Basic, Standard and General Purpose
-
-  ![General purpose architecture](./images/azure_sql-general-purpose.png)
-
-  *Local redundant*
-
-  ![General purpose zone-redundant](./images/azure_sql-general-purpose-zone-redundant.png)
-
-  *Zone-redundant (available to General Purpose only)*
-
-  - tempdb in locally attached SSD
-  - data and log files are in Azure Premium Storage
-
-- Premium and Business Critical
-
-  ![Business critical architecture](./images/azure_sql-business-critical.png)
-
-  *Local redundant*
-
-  ![Business critical zone-redundant](images/azure_sql-business-critical-zone-redundant.png)
-
-  *Zone-redundant*
-
-  - Data and log files are stored on direct-attached SSD
-  - It deploys an Always On availability group (AG) behind the scenes
-  - There are three secondary replicas, **only one** of them could be used as a read-only endpoint
-  - A transaction can complete a commit when at least one of the secondary replicas has hardened the change for its transcation log
-  - Highest performance and availability of all Azure SQL service tiers
-
-- Hyperscale
-
-  ![Hyperscale architecture](./images/azure_hyperscale-architecture.png)
-
-  - Page servers (sharding) serve database pages out to the compute nodes on demand
-  - Auto-scale quickly up to 128TB
-  - Data changes from the primary compute replica are propagated through the log service: it gets logs from primary compute replica, persists them, forwards them to other compute replicas and relevant page servers
-  - Transcations can commit when the log service hardens to the landing zone
-  - Different types of replicas
-    - **High-availability replicas**: up to 4, share primary's page servers, same region, same SLO
-    - **Named replicas**: up to 30, share primary's page servers, same region, SLO can be different
-    - **Geo replicas**: up to 4 in the same or multiple regions, its own copy of the data
-
-
-### Scaling
-
-- Vertical scaling
-- Horizontal scaling
-  - Read Scale-out
-  - Sharding
-    - Hyperscale does this automatically, or you can do it manually with some tools
-    - Partitions database into multiple databases/shards
-    - Shards can be in different regions, and scale independently
-    - The solution uses a special database named shard map manager, which maintains mapping about all shards
-    - Sharding solutions:
-      - Lookup strategy (find the shard in the map)
-      - Range strategy (datetime range)
-      - Hash strategy (even distribution)
-- Connection interruption may happen when:
-  - Scaling requires an internal failover
-  - Adding or removing DB to an elastic pool
-
-Read Scale-out in a Business Critical tier:
-
-![Read Scale-out](images/azure_sql-db-business-critical-service-tier-read-scale-out.png)
-
-- You set **connection string option** to decide whether the connection is routed to the write replica or a read-only replica.
-- Data-changes are propagated asynchronously
-- Read scale-out with one of the secondary replicas supports **session-level consistency**, if the read-only session reconnects, it might be redirected to another replica
 
 
 ## SQL Managed Instance (SQL MI)
@@ -444,6 +444,8 @@ Read Scale-out in a Business Critical tier:
 ### Connectivity
 
 Via TDS endpoints
+
+Default option is private, no public IP
 
 ### Backup and restore
 
@@ -593,15 +595,18 @@ DR options:
   - Failover
     - You can failover to a geo replica manually
     - Need to update the endpoint
+  - DMVs
+    - `sys.dm_geo_replication_links`: a row for each replication link
+    - `sys.dm_geo_replication_link_status`: replication lag
 - **Auto-failover groups**
   ![Auto-failover groups](./images/azure_sql-auto-failover-groups.png)
   - Built on top of geo-replicas
     - Create geo-replica for DBs in the group automatically
+    - **ONLY one replica, CAN'T be in the same region**
   - Setup:
     - An AF group can include multiple DBs
     - A DB can only be in one group
     - A SQL server can have multiple failover groups
-    - **ONLY one replica, NOT the same region**
     - For SQL MI, all databases will be in one AF group
   - Failover:
     - Auto (no need to update endpoint)
@@ -613,7 +618,7 @@ DR options:
 - DR needs to be sized as production, so it can hold all the data
 - "**Read/Write failover policy**" could be
   - Customer managed (manual failover) - grace period is fixed to 1 hour
-  - Microsoft managed - grace period configurable from 1 to 24 hours
+  - Microsoft managed - grace period configurable from 1 to 24 hours, to prevent unnecessary failover due to transient issues
 - With Planned/manual failover, no data loss
 - With "Forced Failover"
   - RPO is 1~2 seconds (*if you want absolute no data loss, consider CosmosDB, it has strong consistency - data stored in multiple regions, but your application needs to accept latency*)
@@ -748,6 +753,12 @@ If manual SQL install (through a media, or upload a VM image):
 - Failover Cluster Instance can be built on **shared disk or file storage**
 - For backup, **blob** (Standard HDD) is ok
 
+Disk striping steps:
+
+- Create a storage pool
+- Create a virtual disk using stripe layout
+- Create a volume
+
 ### Constrained cores
 
 - SQL Server licenses are based on number of cores
@@ -875,6 +886,7 @@ WSFC requires:
 - Windows Server 2017 or later, WSFC in Azure uses Distributed Network Name (DNN) instead of virtual network name (VNN)
   - With DNN, no need to specify an IP
   - VNN still exists, but clients connect using DNN
+- Cluster with even number of nodes requires a witness to get a majority quorum
 
 #### Always On Availability Group
 
@@ -887,9 +899,12 @@ WSFC requires:
 - VMs should be in an availability set, or different availability zones
   - VMs in one availability set could be placed in a proximity placement group, minimize latency
   - VMs in different AZs offer better availability, but a greater network latency
-- An AG could be across different Azure regions (for disaster recovery)
 - One primary replica, secondaries could be either sync or async
+- Secondaries:
+  - To setup the DB on a secondary, use `RESTORE ... WITH NORECOVERY`
+  - To take a full backup from a secondary, use `BACKUP ... WITH COPY_ONLY`, you can't take a differential backup
 - Same WSFC can support multiple AGs
+- An AG could be across different Azure regions (for disaster recovery)
 - Networking:
   - AG has its own name and IP, used for connection
   - Direct connection to an instances is also possible
@@ -1187,8 +1202,6 @@ $SqlAdapter.Fill($DataSet)
 $DataSet.Tables[0]
 ```
 
-
-
 ### Authorization
 
 Managed using database roles and explicit permissions.
@@ -1289,6 +1302,7 @@ Steps:
   - Saved in a catalog view `sys.sensitivity_classifications`
   - Supported by all SQL options
 - Information type: Credit card, etc
+- Too log access to classified columns, enable auditing, audit logs contain the sensitivity label (and information type ?)
 
 ### Row-level security (RLS)
 
@@ -1399,6 +1413,7 @@ Scans with Lineage extraction
 Usually done with `ALTER DATABASE`
 
 - DB recovery model - `FULL` or `SIMPLE`
+  - PaaS options does not support `SIMPLE` model
 - Automatic tuning
 - Auto create and update statistics
 - Query store options
@@ -1409,7 +1424,7 @@ and `ALTER DATABASE SCOPED CONFIGURATION`
 - `MAXDOP` - override server settings
 - "Legacy Cardinality Estimation"
 - "Last Query Plan Stats"
-- "Optimize for Ad Hoc Workloads"
+- `OPTIMIZE_FOR_AD_HOC_WORKLOADS` - when a batch is compiled for the first time, save a plan stub instead of full plan in the cache, could saves memory
 
 Concepts:
 
@@ -1485,6 +1500,102 @@ When enabled:
   - Min/max IOPS per volume
 
 
+## Maintenance tasks automation
+
+### Maintenance tasks
+
+Typical maintenance tasks:
+
+- Backup (Full/Differential/Log)
+  - Usual strategy: one full backup a week, then diff backup per night, and transaction log backups for PITR
+  - Differential backup is **cumulative**, including all changes since last full backup, so you only need last full + last diff backup in a restore
+- DB consistency checks
+  - Use DB console command `DBCC CHECKDB`
+  - Validate logical and physical consistency of each db page
+  - Backup retention period should be longer than consistency check intervals, make sure you can restore to a un-corrupted state
+- Index maintenance
+  - Rebuilds or reorganizes index
+  - Rebuilding updates index statistics
+- Statistics updates
+  - Updates column and index statistics, used for building query execution plans
+- Maintenance cleanup
+  - Remove old files related to maintenance plans
+
+### Index rebuild and reorganize
+
+Index fragmentation: index pages' logical ordering doesn't match physical ordering
+
+Stats in
+- `sys.dm_db_index_physical_stats` for b-tree indexes
+- `sys.dm_db_column_store_row_group_physical_stats` for column store indexes
+
+Operations
+
+- **Reorganization**
+  - Online
+  - Re-order leaf level pages
+  - Doesn't update stats
+- **Rebuild**
+  - Offline: drop and re-create
+  - Online: new index built in parallel to the existing index, does not block read/write
+  - Recommended when defragmentation > 30%
+
+Notes:
+
+Azure SQL DB does NOT support online index rebuilds like `ALTER INDEX ... REBUILD WITH (ONLINE=ON)`, except for Premium, and Business Critical tiers
+
+### Statistics
+
+- Stored in user db as blobs
+- Contains information about distribution of data values in one or more columns of a table or indexed view
+- Query optimizer uses statistics to determine cardinality, generate execution plan.
+- `AUTO_CREATE_STATISTICS=ON` allows query optimizer create stats on indexed columns, and single columns in query predicates
+- Use `CREATE STATISTICS` to create more stats
+- To improve performance, you could update statistics asynchronously with `AUTO_UPDATE_STATISTICS_ASYNC` option
+
+### Maintenance Plans
+
+- A plan could have multiple tasks
+  - Recommends to have one task per plan
+  - Each task could be scoped to user dbs, system dbs, or a custom selection of dbs
+  - A single schedule for the whole plan or one per task
+- Usually run as "SQL Server Agent service account"
+  - In some scenarios, you may use a proxy account (see below)
+- A plan will appear as a job in SQL Server Agent
+
+### SQL Agent jobs
+
+- `msdb` is the data store for SQL Agent
+- Proxy account
+  - To execute specific job steps
+  - Credentials saved
+  - eg. an account to save backup to a network file share
+- A job could have multiple schedules, and a schedule could be assigned to multiple jobs
+- Can setup alerts on
+  - Error log
+  - SQL Server performance conditions
+  - Windows Management Instrumentation (WMI) events
+- Could send email when a job completes(successful or fail), or an alert fires
+- In a multiserver environment
+  - One server could be designated as a master server
+  - Master server could execute jobs on other servers (aka. target servers)
+  - Master server stores master copy of the jobs, and distribute them to target servers
+  - Target servers periodically connect to the master server to update their job schedules
+- Database Mail:
+  - A feature in SQL Server to send email
+  - A profile could have multiple accounts, each account has SMTP configs
+
+### Other tools
+
+Apart from SQL Server Agent jobs, Elastic Jobs, Azure has other tools for SQL task automation
+
+- Azure Automation account
+  - `Az.*` modules are available by default, you can import the `SqlServer` module from gallery
+  - You can use the Automation account's MI for auth to Azure, like: `Connect-AzAccount -Identity`
+  - Use "Credentials" to save db username/password, then retrieve in code using `Get-AutomationPSCredential -Name "<cred-name>"`
+- Logic Apps
+
+
 ## DB monitoring
 
 ### Metrics
@@ -1556,94 +1667,6 @@ A separate resource in Azure to help monitor SQL databases
 - Networking: supports private endpoints
 - Data store: a KQL data store (eg. Azure Data Explorer cluster, a Fabric Real-Time Analytics db)
 - Usage: KQL query, dashboards
-
-
-## Maintenance tasks automation
-
-### Maintenance tasks
-
-Typical maintenance tasks:
-
-- Backup (Full/Differential/Log)
-  - Usual strategy: one full backup a week, then diff backup per night, and transaction log backups for PITR
-- DB consistency checks
-  - Use DB console command `DBCC CHECKDB`
-  - Validate logical and physical consistency of each db page
-  - Backup retention period should be longer than consistency check intervals, make sure you can restore to a un-corrupted state
-- Index maintenance
-  - Rebuilds or reorganizes index
-  - Rebuilding updates index statistics
-- Statistics updates
-  - Updates column and index statistics, used for building query execution plans
-- Maintenance cleanup
-  - Remove old files related to maintenance plans
-
-### Index rebuild and reorganize
-
-Index fragmentation: index pages' logical ordering doesn't match physical ordering
-
-Stats in
-- `sys.dm_db_index_physical_stats` for b-tree indexes
-- `sys.dm_db_column_store_row_group_physical_stats` for column store indexes
-
-Operations
-
-- Reorganization
-  - Online
-  - Re-order leaf level pages
-  - Doesn't update stats
-- Rebuild
-  - Offline: drop and re-create
-  - Online: new index built in parallel to the existing index
-  - Recommended when defragmentation > 30%
-
-### Statistics
-
-- Stored in user db as blobs
-- Contains information about distribution of data values in one or more columns of a table or indexed view
-- Query optimizer uses statistics to determine cardinality, generate execution plan.
-- `AUTO_CREATE_STATISTICS=ON` allows query optimizer create stats on indexed columns, and single columns in query predicates
-- Use `CREATE STATISTICS` to create more stats
-
-### Maintenance Plans
-
-- A plan could have multiple tasks
-  - Recommends to have one task per plan
-  - Each task could be scoped to user dbs, system dbs, or a custom selection of dbs
-  - A single schedule for the whole plan or one per task
-- Usually run as "SQL Server Agent service account"
-  - In some scenarios, you may use a proxy account (see below)
-- A plan will appear as a job in SQL Server Agent
-
-### SQL Agent jobs
-
-- `msdb` is the data store for SQL Agent
-- Proxy account
-  - To execute specific job steps
-  - Credentials saved
-  - eg. an account to save backup to a network file share
-- A job could have multiple schedules, and a schedule could be assigned to multiple jobs
-- Can setup alerts on
-  - Error log
-  - SQL Server performance conditions
-  - Windows Management Instrumentation (WMI) events
-- Could send email when a job completes(successful or fail), or an alert fires
-- In a multiserver environment
-  - One server could be designated as a master server
-  - Master server could execute jobs on other servers (aka. target servers)
-  - Master server stores master copy of the jobs, and distribute them to target servers
-  - Target servers periodically connect to the master server to update their job schedules
-
-### Other tools
-
-Apart from SQL Server Agent jobs, Elastic Jobs, Azure has other tools for SQL task automation
-
-- Azure Automation account
-  - `Az.*` modules are available by default, you can import the `SqlServer` module from gallery
-  - You can use the Automation account's MI for auth to Azure, like: `Connect-AzAccount -Identity`
-  - Use "Credentials" to save db username/password, then retrieve in code using `Get-AutomationPSCredential -Name "<cred-name>"`
-- Logic Apps
-
 
 
 ## Azure SQL Edge

@@ -1,60 +1,59 @@
 # SQL Server
 
 - [Overview](#overview)
-- [Run with Docker](#run-with-docker)
-- [Concepts](#concepts)
-- [Authorization](#authorization)
+- [Normalization](#normalization)
+- [Authentication and Authorization](#authentication-and-authorization)
+  - [Concepts](#concepts)
   - [Permissions](#permissions)
   - [Ownership chains](#ownership-chains)
+- [Special tables](#special-tables)
   - [System tables](#system-tables)
-- [Create and query data](#create-and-query-data)
   - [Temporary tables](#temporary-tables)
+  - [Temporal tables](#temporal-tables)
 - [Datatypes](#datatypes)
   - [`varchar` vs `nvarchar`](#varchar-vs-nvarchar)
-- [Normalization](#normalization)
 - [Indexes](#indexes)
+- [Isolation levels](#isolation-levels)
+- [Query plans](#query-plans)
+  - [Common problems](#common-problems)
+- [Query Store](#query-store)
+- [Dynamic Management Views (DMV)](#dynamic-management-views-dmv)
 - [Performance improvements](#performance-improvements)
   - [Wait statistics](#wait-statistics)
   - [Tune indexes](#tune-indexes)
   - [Resumable index](#resumable-index)
   - [Query hints](#query-hints)
-- [Query plans](#query-plans)
-  - [Common problems](#common-problems)
-- [Dynamic Management Views (DMV)](#dynamic-management-views-dmv)
-- [Query Store](#query-store)
-- [Isolation levels](#isolation-levels)
 - [Cheatsheets](#cheatsheets)
 
 
 ## Overview
 
-Most content applies to SQL Server.
+Most content applies to SQL Server only.
 
 Some apply to Azure SQL, as noted.
 
 
-## Run with Docker
+## Normalization
 
-```sh
-docker run \
-  -e "ACCEPT_EULA=Y" \
-  -e "SA_PASSWORD=myPassword" \
-  -p 1433:1433 \
-  --name sql1 \
-  -h sql1 \
-  -d mcr.microsoft.com/mssql/server:2019-latest
-```
+- **First normal form**
+  - A primary key for each table (could be a composite key)
+  - No repeating groups (multiple columns for similar data)
+- **Second normal form**
+  - If a table has a composite key, other attributes must depend on the complete key, not just part of it
+- **Third normal form**
+  - All nonkey columns are nontransitively dependent on the primary key (a column shouldn't be dependent on another nonkey column)
+  - Typically the aim for most OLTP dbs
 
-Connect to SQL Server
+Considerations:
 
-```sh
-docker exec -it sql1 "bash"
-
-/opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P "myPassword"
-```
+- A normalized database doesn't always give you the best performance, it requires multiple join operations to get all the necessary data returned in a single query
+- Denormalized data can be more efficient, especially for read heavy workloads like a data warehouse. Extra columns offer simpler queries.
+  - Data warehouse usually has a star schema or snowflake schema (fact table in the center, which contains mostly numeric values)
 
 
-## Concepts
+## Authentication and Authorization
+
+### Concepts
 
 - **Security principals**:
   - Entities with certain permissions
@@ -145,9 +144,6 @@ docker exec -it sql1 "bash"
       - `MS_ServerStateReader`
       - `MS_ServerStateManager`
 
-
-## Authorization
-
 ### Permissions
 
 - Four basic operation permissions: `SELECT`, `INSERT`, `UPDATE`, and `DELETE`
@@ -169,6 +165,9 @@ docker exec -it sql1 "bash"
   - Then `user001` can't execute `SELECT` on the table, but can run the stored procedure
 - Dynamic SQL in a stored procedure is executed outside the context of the calling procedure, DON'T inherit permissions of the procedure owner. The calling user's permissions apply.
 
+
+## Special tables
+
 ### System tables
 
 - `sys.database_principals` contains both individual users and roles, each has a principal_id
@@ -188,26 +187,6 @@ docker exec -it sql1 "bash"
       sys.database_principals dprole ON drm.role_principal_id = dprole.principal_id
   ```
 
-
-## Create and query data
-
-```sql
-CREATE DATABASE TestDB
-SELECT Name from sys.Databases
-
-GO  --need this to actually run queries above
-
-USE TestDB
-CREATE TABLE Inventory (id INT, name NVARCHAR(50), quantity INT)
-INSERT INTO Inventory VALUES (1, 'banana', 150), (2, 'orange', 154);
-GO
-
-SELECT * FROM Inventory WHERE quantity > 152;
-GO
-
-QUIT
-```
-
 ### Temporary tables
 
 - Temporary table name starts with `#`, can be created using `SELECT INTO` or normal `CREATE TABLE`
@@ -215,37 +194,25 @@ QUIT
 - Temporary tables are only accessible within the session that created them
 - To make a temporary table accessible across connections, prefix table name with `##`
 
-```sql
-USE TestDB
-SELECT * INTO #mytemptable FROM Inventory WHERE id = 1;
-GO
+  ```sql
+  USE TestDB
+  SELECT * INTO #mytemptable FROM Inventory WHERE id = 1;
+  GO
 
-SELECT * FROM #mytemptable
-```
+  SELECT * FROM #mytemptable
+  ```
+
+### Temporal tables
+
+- To track and analyze the changes to your data
+- Recover data from a history table
+
 
 ## Datatypes
 
 ### `varchar` vs `nvarchar`
 
 `varchar` is stored as regular 8-bit data (1 byte per character) and `nvarchar` stores data at 2 bytes per character, so usually you should use `nvarchar` for Unicode text
-
-
-## Normalization
-
-- **First normal form**
-  - A primary key for each table (could be a composite key)
-  - No repeating groups (multiple columns for similar data)
-- **Second normal form**
-  - If a table has a composite key, other attributes must depend on the complete key, not just part of it
-- **Third normal form**
-  - All nonkey columns are nontransitively dependent on the primary key (a column shouldn't be dependent on another nonkey column)
-  - Typically the aim for most OLTP dbs
-
-Considerations:
-
-- A normalized database doesn't always give you the best performance, it requires multiple join operations to get all the necessary data returned in a single query
-- Denormalized data can be more efficient, especially for read heavy workloads like a data warehouse. Extra columns offer simpler queries.
-  - Data warehouse usually has a star schema or snowflake schema (fact table in the center, which contains mostly numeric values)
 
 
 ## Indexes
@@ -283,7 +250,6 @@ Considerations:
   - Nonclustered
     - Stored independently
 
-
 ![B-tree index](./images/sqlserver_index-b-tree.png)
 
 Considerations:
@@ -293,6 +259,212 @@ Considerations:
 - Choose appropriate data types
 - Use *filtered index* in large tables on columns with with low-cardinality values (like a bit flag)
 - Create indexes on views, if the view contains aggregations and/or joins
+
+
+## Isolation levels
+
+- It's a session level setting, there's NO global isolation level
+- Use a proper level to balance consistency and concurrency
+- Locks could be on different levels:
+  - Row
+  - Table (if more than 5000 rows need to be locked, escalate to the table level)
+  - DB
+- "autocommit" is the default, or explicitly use `BEGIN TRANSACTION` and `COMMIT TRANSACTION`
+
+Levels:
+
+- Read uncommitted
+  - Max concurrency
+  - Read uncommitted data from another transcation
+- Read committed (default level)
+  - Shared lock released after read
+  - If a row is read multiple times in the same transaction, it might get different data (updated by other transactions)
+- Repeatable Read
+  - Holds "shared lock" on a row, preventing updates
+  - Phantom rows: another transaction could still insert a new row with the same ID
+- Serializable
+  - Holds a "key-range" lock, preventing inserts into the key range
+  - Lowest concurrency
+- With row-versioning
+  - To turn on SNAPSHOT for a DB: `ALTER DATABASE MyDb SET ALLOW_SNAPSHOT_ISOLATION ON`
+  - Levels
+    - Read Committed Snapshot (RCSI)
+      - RCSI is the default, no need to set in the session
+      - Transaction always see last committed version at the time when transaction began
+      - If the transaction read again, it may get a newly committed value
+    - Snapshot
+      - Need to be set explicitly in a session: `SET TRANSACTION ISOLATION LEVEL SNAPSHOT`
+      - Like RCSI, reader gets old committed data, not blocked
+      - Different form RCSI, this gets a static snapshot, used through out the transaction (like "Repeatable Read")
+
+Troubleshooting:
+
+- Use `sys.dm_tran_locks`, joined with `sys.dm_exec_requests`, to find locks held by each session
+- Or use Extended Events
+  ```sql
+  USE MASTER
+  GO
+
+  CREATE EVENT SESSION [MySession] ON SERVER
+    ADD EVENT sqlserver.blocked_process_report (
+      ACTION (...)
+    )
+    ...
+  GO
+
+  ALTER EVENT SESSION [MySession] ON SERVER
+    STATE = start;
+  GO
+  ```
+
+
+## Query plans
+
+Query processing steps:
+
+1. Check syntax, generate a parse tree of db objects
+1. Parse tree -> *Algebrizer* for bindings -> processor tree
+    1. Validates columns and object exists, identifies data types
+1. Generates *query_hash*, check if a cache exists in the plan cache
+    - Different explicit parameter values could cause a different plan
+    - If you use a parameter in your query, `OPTION (RECOMPILE)` causes the query compiler to replace the parameter with its value
+2. If no cache, *query optimizer* generates several execution plans
+3. Plan executed -> results
+
+Query optimizer
+
+- Cost based
+- Factors considered when calculating cost:
+  - Statistics on the columns
+  - Potential indexes
+- Complex queries can have thousands of possible execution plans
+- Optimizer doesn't evaluate every single one
+
+Three types of plans:
+
+- Estimated plan
+  - `SET SHOWPLAN_ALL ON`
+  - Query not executed
+  - Saved in plan cache
+- Actual plan
+  - `SET STATISTICS PROFILE ON`
+  - Includes runtime statistics
+- Live Query Statistics
+  - Animated execution progress
+
+### Common problems
+
+- Hardware constraints
+- Suboptimal query constructs
+- SARGability
+  - Able to use *SEEK* operation on index, instead of scanning the entire index or table
+  - Wildcard on the left: `LIKE %word`, make the query non-SARGable
+- Missing indexes
+  - recommendations in `sys.dm_db_missing_index_details`
+- Missing and out-of-date statistics
+- Poor optimizer choices
+- Parameter sniffing
+  - When there's data skew, query performance could vary widely
+  - Possible solution: Use hint `OPTION (RECOMPILE)` to force query recompile
+
+
+## Query Store
+
+Three stores:
+
+- Plan store
+- Runtime stats store
+- Wait stats store
+
+Need to enable in SQL Server:
+
+```sql
+ALTER DATABASE <database_name> SET QUERY_STORE = ON (OPERATION_MODE = READ_WRITE);
+```
+
+*Enabled by default in Azure SQL DB*
+
+![Query Store](./images/sqlserver_query-store.png)
+
+Built-in views:
+
+- Regressed Queries
+- Overall Resource Consumption
+- Top Resource Consumption Queries
+- Queries with Forced Plans
+- Queries with High Variation
+- Query Wait Statistics
+- Tracked Queries
+
+Automatic plan correction:
+
+- `sys.dm_db_tuning_recommendations`: recommendations about query plan regressions
+  - If Query Store is enabled, recommendations are always enabled
+- Optionally enable `AUTOMATIC_TUNING`
+  - Enabled by default for Azure SQL DB
+
+![Query store storage](./images/sqlserver_query-store-data.png)
+
+Query Store data are written to disk asynchronously
+
+Init size: 100MB, max: 2GB ?
+
+
+## Dynamic Management Views (DMV)
+
+- There are DMVs and DMFs, most people use the acronym DMV for both
+- Hundreds of objects
+- Contain system information, to monitor the health of a server instance, diagnose problems, and tune performance
+- All prefixed with `sys.dm_*`
+- Three categories:
+  - db-related
+  - query execution related
+  - transaction related
+
+Two levels:
+
+- **Server scoped objects** – require `VIEW SERVER STATE` permission on the server
+- **Database scoped objects** – require the `VIEW DATABASE STATE` permission within the database
+
+Examples:
+
+- Execution & Query stats (Performance)
+  - `sys.dm_exec_query_stats` - query exec time, CPU, reads, ect, contains `sql_handle` and `plan_handle`
+  - `sys.dm_exec_query_plan(plan_handle)` - *a DMF*, exec plan XML
+  - `sys.dm_exec_query_plan_stats` - Seems same as above ?
+  - `sys.dm_exec_sql_text(sql_handle)` - get the text of a SQL batch for a specific sql handle
+  - ...
+  - `sys.dm_exec_sessions` - user and system sessions (running or sleeping)
+  - `sys.dm_exec_requests` - details about each request currently executing, identify long running
+  - ...
+- Index & stats
+  - `sys.dm_db_index_usage_stats` - How often indexes are read/updated
+  - `sys.dm_db_missing_index_details` - Missing index suggestions
+  - `sys.dm_db_index_physical_stats()` - Fragmentation, page count
+  - `sys.dm_db_stats_properties` - Histogram + stats details
+- Waits
+  - `sys.dm_os_wait_stats` - aggregated data since last restart
+  - `sys.dm_os_waiting_tasks` - current waiting tasks
+  - `sys.dm_exec_requests` - active queries (including wait type/time as well)
+- Locking & Blocking
+  - `sys.dm_tran_locks` - current locks, including `session_id`
+  - `sys.dm_os_waiting_tasks` - current waiting tasks, including `blocking_session_id`
+  - `sys.dm_exec_sessions / requests` - identify blockers
+- Memory & caching
+  - `sys.dm_os_sys_memory` - OS memory info
+  - `sys.dm_exec_cached_plans` - cached plan, size and use counts etc
+- I/O & Storage
+  - `sys.dm_io_virtual_file_stats()` - I/O stats for database files
+  - `sys.dm_db_file_space_usage` - db file space usage
+- Resource usage
+  - `sys.resource_stats` - in `master`, historical CPU/storage usage data for an Azure SQL Database, has db name and start_time
+  - `sys.server_resource_stats` (Azure SQL MI)
+  - `sys.dm_db_resource_stats` - (SQL DB) for each DB, one row every 15 seconds, only data for last hour
+  - ...
+  - `sys.dm_user_db_resource_governance` (Azure SQL DB)
+  - `sys.dm_instance_resource_governance` (Azure SQL MI)
+- Misc
+  - `sys.dm_pdw_nodes_*` - for Azure Synapse Analytics and Analytics Platform System (PDW)
 
 
 ## Performance improvements
@@ -367,216 +539,44 @@ If you can't modify query text, you can set hints for a query in Query Store:
 `EXEC sys.sp_query_store_set_hints @query_id= 42, @query_hints = N'OPTION(RECOMPILE, MAXDOP 1)'`
 
 
-## Query plans
+## Cheatsheets
 
-Query processing steps:
+- Run with Docker
 
-1. Check syntax, generate a parse tree of db objects
-1. Parse tree -> *Algebrizer* for bindings -> processor tree
-    1. Validates columns and object exists, identifies data types
-1. Generates *query_hash*, check if a cache exists in the plan cache
-    - Different explicit parameter values could cause a different plan
-    - If you use a parameter in your query, `OPTION (RECOMPILE)` causes the query compiler to replace the parameter with its value
-2. If no cache, *query optimizer* generates several execution plans
-3. Plan executed -> results
-
-Query optimizer
-
-- Cost based
-- Factors considered when calculating cost:
-  - Statistics on the columns
-  - Potential indexes
-- Complex queries can have thousands of possible execution plans
-- Optimizer doesn't evaluate every single one
-
-Three types of plans:
-
-- Estimated plan
-  - `SET SHOWPLAN_ALL ON`
-  - Query not executed
-  - Saved in plan cache
-- Actual plan
-  - `SET STATISTICS PROFILE ON`
-  - Includes runtime statistics
-- Live Query Statistics
-  - Animated execution progress
-
-### Common problems
-
-- Hardware constraints
-- Suboptimal query constructs
-- SARGability
-  - Able to use *SEEK* operation on index, instead of scanning the entire index or table
-  - Wildcard on the left: `LIKE %word`, make the query non-SARGable
-- Missing indexes
-  - recommendations in `sys.dm_db_missing_index_details`
-- Missing and out-of-date statistics
-- Poor optimizer choices
-- Parameter sniffing
-  - When there's data skew, query performance could vary widely
-  - Possible solution: Use hint `OPTION (RECOMPILE)` to force query recompile
-
-
-## Dynamic Management Views (DMV)
-
-- There are DMVs and DMFs, most people use the acronym DMV for both
-- Hundreds of objects
-- Contain system information, to monitor the health of a server instance, diagnose problems, and tune performance
-- All prefixed with `sys.dm_*`
-- Three categories:
-  - db-related
-  - query execution related
-  - transaction related
-
-Two levels:
-
-- **Server scoped objects** – require `VIEW SERVER STATE` permission on the server
-- **Database scoped objects** – require the `VIEW DATABASE STATE` permission within the database
-
-Examples:
-
-- Execution & Query stats (Performance)
-  - `sys.dm_exec_query_stats` - query exec time, CPU, reads, ect, contains `sql_handle` and `plan_handle`
-  - `sys.dm_exec_query_plan(plan_handle)` - *a DMF*, exec plan XML
-  - `sys.dm_exec_query_plan_stats` - Seems same as above ?
-  - `sys.dm_exec_sql_text(sql_handle)` - get the text of a SQL batch for a specific sql handle
-  - ...
-  - `sys.dm_exec_sessions` - user and system sessions (running or sleeping)
-  - `sys.dm_exec_requests` - details about each request currently executing, identify long running
-  - ...
-- Index & stats
-  - `sys.dm_db_index_usage_stats` - How often indexes are read/updated
-  - `sys.dm_db_missing_index_details` - Missing index suggestions
-  - `sys.dm_db_index_physical_stats()` - Fragmentation, page count
-  - `sys.dm_db_stats_properties` - Histogram + stats details
-- Waits
-  - `sys.dm_os_wait_stats` - aggregated data since last restart
-  - `sys.dm_os_waiting_tasks` - current waiting tasks
-  - `sys.dm_exec_requests` - active queries (including wait type/time as well)
-- Locking & Blocking
-  - `sys.dm_tran_locks` - current locks, including `session_id`
-  - `sys.dm_os_waiting_tasks` - current waiting tasks, including `blocking_session_id`
-  - `sys.dm_exec_sessions / requests` - identify blockers
-- Memory & caching
-  - `sys.dm_os_sys_memory` - OS memory info
-  - `sys.dm_exec_cached_plans` - cached plan, size and use counts etc
-- I/O & Storage
-  - `sys.dm_io_virtual_file_stats()` - I/O stats for database files
-  - `sys.dm_db_file_space_usage` - db file space usage
-- Resource usage
-  - `sys.resource_stats` - in `master`, historical CPU/storage usage data for an Azure SQL Database, has db name and start_time
-  - `sys.server_resource_stats` (Azure SQL MI)
-  - `sys.dm_db_resource_stats` - (SQL DB) for each DB, one row every 15 seconds, only data for last hour
-  - ...
-  - `sys.dm_user_db_resource_governance` (Azure SQL DB)
-  - `sys.dm_instance_resource_governance` (Azure SQL MI)
-- Misc
-  - `sys.dm_pdw_nodes_*` - for Azure Synapse Analytics and Analytics Platform System (PDW)
-
-
-
-
-
-
-## Query Store
-
-Three stores:
-
-- Plan store
-- Runtime stats store
-- Wait stats store
-
-Need to enable in SQL Server:
-
-```sql
-ALTER DATABASE <database_name> SET QUERY_STORE = ON (OPERATION_MODE = READ_WRITE);
-```
-
-*Enabled by default in Azure SQL DB*
-
-![Query Store](./images/sqlserver_query-store.png)
-
-Built-in views:
-
-- Regressed Queries
-- Overall Resource Consumption
-- Top Resource Consumption Queries
-- Queries with Forced Plans
-- Queries with High Variation
-- Query Wait Statistics
-- Tracked Queries
-
-Automatic plan correction:
-
-- `sys.dm_db_tuning_recommendations`: recommendations about query plan regressions
-  - If Query Store is enabled, recommendations are always enabled
-- Optionally enable `AUTOMATIC_TUNING`
-  - Enabled by default for Azure SQL DB
-
-![Query store storage](./images/sqlserver_query-store-data.png)
-
-Query Store data are written to disk asynchronously
-
-Init size: 100MB, max: 2GB ?
-
-## Isolation levels
-
-- It's a session level setting, there's NO global isolation level
-- Use a proper level to balance consistency and concurrency
-- Locks could be on different levels:
-  - Row
-  - Table (if more than 5000 rows need to be locked, escalate to the table level)
-  - DB
-- "autocommit" is the default, or explicitly use `BEGIN TRANSACTION` and `COMMIT TRANSACTION`
-
-Levels:
-
-- Read uncommitted
-  - Max concurrency
-  - Read uncommitted data from another transcation
-- Read committed (default level)
-  - Shared lock released after read
-  - If a row is read multiple times in the same transaction, it might get different data (updated by other transactions)
-- Repeatable Read
-  - Holds "shared lock" on a row, preventing updates
-  - Phantom rows: another transaction could still insert a new row with the same ID
-- Serializable
-  - Holds a "key-range" lock, preventing inserts into the key range
-  - Lowest concurrency
-- With row-versioning
-  - To turn on SNAPSHOT for a DB: `ALTER DATABASE MyDb SET ALLOW_SNAPSHOT_ISOLATION ON`
-  - Levels
-    - Read Committed Snapshot (RCSI)
-      - RCSI is the default, no need to set in the session
-      - Transaction always see last committed version at the time when transaction began
-      - If the transaction read again, it may get a newly committed value
-    - Snapshot
-      - Need to be set explicitly in a session: `SET TRANSACTION ISOLATION LEVEL SNAPSHOT`
-      - Like RCSI, reader gets old committed data, not blocked
-      - Different form RCSI, this gets a static snapshot, used through out the transaction (like "Repeatable Read")
-
-Troubleshooting:
-
-- Use `sys.dm_tran_locks`, joined with `sys.dm_exec_requests`, to find locks held by each session
-- Or use Extended Events
-  ```sql
-  USE MASTER
-  GO
-
-  CREATE EVENT SESSION [MySession] ON SERVER
-    ADD EVENT sqlserver.blocked_process_report (
-      ACTION (...)
-    )
-    ...
-  GO
-
-  ALTER EVENT SESSION [MySession] ON SERVER
-    STATE = start;
-  GO
+  ```sh
+  docker run \
+    -e "ACCEPT_EULA=Y" \
+    -e "SA_PASSWORD=myPassword" \
+    -p 1433:1433 \
+    --name sql1 \
+    -h sql1 \
+    -d mcr.microsoft.com/mssql/server:2019-latest
   ```
 
+  Connect to SQL Server
 
-## Cheatsheets
+  ```sh
+  docker exec -it sql1 "bash"
+
+  # run in the container
+  /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P "myPassword"
+  ```
+
+- Create a database and a table
+
+  ```sql
+  CREATE DATABASE TestDB
+  SELECT Name from sys.Databases
+  GO  --need this to actually run queries above
+
+  USE TestDB
+  CREATE TABLE Inventory (id INT, name NVARCHAR(50), quantity INT)
+  INSERT INTO Inventory VALUES (1, 'banana', 150), (2, 'orange', 154);
+  GO
+
+  SELECT * FROM Inventory WHERE quantity > 152;
+  GO
+  ```
 
 - A join query
 
