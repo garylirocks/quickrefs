@@ -135,14 +135,19 @@ Considerations:
     - Can be assigned to server-level principals (SQL Server logins, Windows accounts, Windows groups)
     - Permissions are fixed, except the `public` role
     - eg. `sysadmin`, `serveradmin`, `securityadmin`, `dbcreator`, `public` etc
-    - Server-level roles in Azure SQL DB:
-      - `MS_DatabaseConnector`
-      - `MS_DatabaseManager`
-      - `MS_DefinitionReader`
-      - `MS_LoginManager`
-      - `MS_SecurityDefinitionReader`
-      - `MS_ServerStateReader`
-      - `MS_ServerStateManager`
+    - Azure SQL DB:
+      - Fixed server-level roles
+        - `##MS_DatabaseConnector##`
+        - `##MS_DatabaseManager##`
+        - `##MS_DefinitionReader##`
+        - `##MS_LoginManager##`
+        - `##MS_SecurityDefinitionReader##`
+        - `##MS_ServerStateReader##`
+        - `##MS_ServerStateManager##`
+      - Only server-level logins can be members: `ALTER SERVER ROLE ...`
+      - To propagate to a db, the login need a mapped user account in the db
+      - Each member of a fixed server role can add other logins to that same role
+
 
 ### Permissions
 

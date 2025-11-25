@@ -375,7 +375,9 @@ Migrate:
     - This needs Azure Data Factory's Self-hosted Integration Runtime (SHIR) to handle connectivity and upload backups to Azure
   - Ideal for small to mid-sized DBs
   - You can select which tables to migrate
-  - The DB schema needs to be created in the target first (using BACPAC or SQL Database Projects extension)
+  - The DB schema needs to be created in the target by
+    - (Auto) A preview feature
+    - (Manual) Use BACPAC or SQL Database Projects extension
   - Could migrate to any Azure SQL offerings, not limited to SQL DB
   - Configure source db backup:
     - Full and log backups only
