@@ -44,6 +44,7 @@
 - [Azure Batch](#azure-batch)
 - [Azure Compute Gallery](#azure-compute-gallery)
 - [Azure Linux](#azure-linux)
+- [Capacity reservation](#capacity-reservation)
 
 
 ## VMs
@@ -1141,3 +1142,50 @@ Organization:
   - Additional features:
     - Pod sandboxing (KATA containers, running kernel in a container)
     - Confidential containers
+
+
+## Capacity reservation
+
+- No fixed term commitment
+- Create and delete at any time
+- Organized by reservation groups (`microsoft.compute/capacityreservationgroups`)
+  - Optionally specify one or multiple availability zones (AZs)
+  - If no zone specified, a zone is selected implicitly at creation
+  - A reservation is for a specific VM size (optionally in a specific AZ) and instance count
+- To consume a reservation, you need to specify the reservation when creating a VM/VMSS
+  - If not specified, even region/size/AZ match, the reservation won't be used
+  - If no specified zone in a reservation group, to consume it, you should not specify a zone when creating the VM/VMSS
+- Properties
+  - `virtualMachinesAllocated`: Stopped (deallocated) VMs NOT included
+  - `virtualMachinesAssociated`: Stopped (deallocated) VMs included
+- To delete a reservation:
+  - If any associated VMs, you need to disassociate the VMs
+  - A VM can only be disassociated when in "Stopped (deallocated)" state
+- **Billing**:
+  - Unconsumed capacity are billed, same rate as the VM size
+  - After a VM is deployed, you pay for the VM, not the consumed reservation
+  - Both used and unused reservations are eligible for Savings Plan and Reserved Instance discounts
+  ![Billing with reserved instance](./images/azure_reserved-capacity-with-resevered-instance.jpg)
+  *RI discount applies to a VM*
+
+Limitations:
+
+- Not all VM sizes are supported in each region
+- Not all VM sizes support fault domain availability construct
+- Not supported deployment types:
+  - Spot VMs
+  - Availability sets
+  - Dedicated hosts
+- Not supported features:
+  - Proximity placement group
+  - Update domains
+  - Ultra Disk Storage
+- Not for sponsored accounts such as Free Trial and Azure for Students, etc
+
+Comparison:
+
+|          | Capacity Reservation   | Reserved Instance    |
+| -------- | ---------------------- | -------------------- |
+| Term     | Create/delete any time | 1 or 3 years         |
+| Billing  | PaYG rate              | Significant discount |
+| Location | Region, AZs            | Region               |
