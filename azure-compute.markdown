@@ -1152,15 +1152,20 @@ Organization:
   - Optionally specify one or multiple availability zones (AZs)
   - If no zone specified, a zone is selected implicitly at creation
   - A reservation is for a specific VM size (optionally in a specific AZ) and instance count
-- To consume a reservation, you need to specify the reservation when creating a VM/VMSS
-  - If not specified, even region/size/AZ match, the reservation won't be used
-  - If no specified zone in a reservation group, to consume it, you should not specify a zone when creating the VM/VMSS
+- To **consume** a reservation
+  - During creation, specify reservation when creating a VM/VMSS
+    - If not specified, even region/size/AZ match, the reservation won't be used
+    - If no specified zone in a reservation group, to consume it, you should not specify a zone when creating the VM/VMSS
+  - Or you can associate an existing VM into a reservation, this guarantees the VM could be deallocated and restarted
 - Properties
   - `virtualMachinesAllocated`: Stopped (deallocated) VMs NOT included
   - `virtualMachinesAssociated`: Stopped (deallocated) VMs included
 - To delete a reservation:
   - If any associated VMs, you need to disassociate the VMs
   - A VM can only be disassociated when in "Stopped (deallocated)" state
+- **Sharing**:
+  - A reservation group could be shared with up to 100 other subscriptions
+  - If a reservation has specified AZs, you need to be aware that AZ mappings are different in each subscription (so you'll likely need to create VM in a diffrent AZ in a consuming subscription)
 - **Billing**:
   - Unconsumed capacity are billed, same rate as the VM size
   - After a VM is deployed, you pay for the VM, not the consumed reservation
@@ -1170,6 +1175,7 @@ Organization:
 
 Limitations:
 
+- Need to be within your quota for the VM size
 - Not all VM sizes are supported in each region
 - Not all VM sizes support fault domain availability construct
 - Not supported deployment types:
@@ -1187,5 +1193,5 @@ Comparison:
 |          | Capacity Reservation   | Reserved Instance    |
 | -------- | ---------------------- | -------------------- |
 | Term     | Create/delete any time | 1 or 3 years         |
-| Billing  | PaYG rate              | Significant discount |
+| Billing  | PAYG rate              | Significant discount |
 | Location | Region, AZs            | Region               |
