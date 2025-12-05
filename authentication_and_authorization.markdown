@@ -383,5 +383,7 @@ Notes:
   - Seems you can't use Windows Hello alone, you'll need a security key USB disk
   - On your computer, with Google Chrome, you can create passkeys on your mobile devices, seems don't work with Firefox
 - For accounts in your **Entra tenant**, you need to enable passkey as a method in "Authentication methods -> Policies" for your tenant first, then a user can go to his "Account -> Security" page to add a passkey
-  - Worked with iOS device
-  - Created for Android, but failed to add it to the sign-in method list
+  - You could have multiple passkey profiles, a profile could be
+    - "**Device-bound**": MS Authenticator only (not synced)
+    - "**Synced**": could use synced authenticators, like iCloud keychain
+  - A group can have multiple policies applied
