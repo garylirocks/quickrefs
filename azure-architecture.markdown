@@ -10,6 +10,7 @@
   - [Regions with no pair](#regions-with-no-pair)
   - [Storage](#storage)
   - [Key Vault](#key-vault)
+- [Cloud design principles](#cloud-design-principles)
 
 
 ## Well Architected Framework
@@ -120,3 +121,27 @@ See [here](./azure-key-vault.markdown#replication-and-backup)
 You should avoid using global secrets, keys.
 - Create one per country
 - Consider using managed identity, federated credentials, etc
+
+
+## Cloud design principles
+
+- Design for failure
+  - Multiple instances/zones/regions
+  - Intelligent code: retry, exponential backoff
+  - Observability
+- Elasticity and scale
+  - Auto scale
+  - Serverless
+  - PaaS
+- IaC and SDP (software deployment process)
+  - Automated pipelines
+  - Rolling update
+- Governance
+  - Policy
+  - Tagging
+  - Budgets for cost control
+- Security
+  - Zero trust, least privilege
+  - Avoid secrets
+  - Use passkeys
+  - Encrypt everywhere
