@@ -417,7 +417,23 @@ Only method: transactional replication
 
 ### SQL DB in Fabric
 
-// TODO
+An external pre-existing Azure SQL DB can be mirrored into Fabric.
+
+And now Fabric also provides built-in SQL DB:
+
+- Serverless
+  - 16-32 vCores
+  - Autopause if inactive for 15 min
+- 4TB max size
+  - Files (MDF, LDF) stored in ZRS storage
+- Fabric workspace roles are mapped to SQL roles ?
+- Billing:
+  - 1 Fabric CU corresponds to 0.4 vCores
+  - Storage is billed separately
+- **Under the hood**:
+  - A SQL DB is created in a MS managed subscription (SQL endpoint writes data)
+  - It's a simplified version, some Azure SQL DB features are not available (eg. Always Encrypted, Auditing, change data capture, etc)
+  - The data is mirrored into Fabric OneLake (SQL Analytics endpoint reads data from OneLake)
 
 
 ## SQL Managed Instance (SQL MI)
