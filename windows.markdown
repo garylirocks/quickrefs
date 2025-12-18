@@ -24,6 +24,8 @@
   - [Monitoring](#monitoring)
   - [Copy files](#copy-files)
 - [Windows Updates](#windows-updates)
+  - [Hotpatching](#hotpatching)
+  - [WSUS](#wsus)
 
 ## Shortcuts
 
@@ -363,6 +365,34 @@ robocopy /?
 
 
 ## Windows Updates
+
+### Hotpatching
+
+An accumulative update could have different types of updates:
+- Feature
+- Quality
+- Security
+
+A feature or quality update requires a reboot.
+
+**Hotpatching** is only for security updates, which could be applied without reboot.
+
+Timeline:
+
+- First month of each quarter: all types of updates, requires reboot
+- Second/third month of each quarter: security hotpatches, no reboot required
+
+Supports the following OS versions:
+
+- Windows Server 2022|2025 Datacenter: Azure Edition
+- Windows Server 2025
+  - Standard/Datacenter
+  - Arc enabled
+  - Azure Update Manager
+- Windows 11 Edition 24H2+
+  - Intune managed
+
+### WSUS
 
 To find whether a Windows Server Update Services (WSUS) is configured on a machine, go to this regitstry path: `HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate`
 
