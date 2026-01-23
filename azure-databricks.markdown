@@ -7,6 +7,7 @@
 - [Secure cluster connectivity](#secure-cluster-connectivity)
 - [Administration](#administration)
 - [Data](#data)
+- [Managed identity](#managed-identity)
 
 
 ## Overview
@@ -174,3 +175,8 @@ Hierarchy:
 - Catalog
 - Schema (databases)
 - Tables/views
+
+
+## Managed identity
+
+You could create a "Access Connector for Azure Databricks" (`microsoft.databricks/accessconnectors`) to be used as a managed identity for a Databricks cluster to access other Azure resources, especially data lake storage.

@@ -956,7 +956,7 @@ RBAC and ACL do not apply when using a Shared Key or SAS token, because the call
 ![An example ACL](images/azure_storage-adls2-acls.png)
 
 - Each container has a root folder
-- Root/Folders can have default ACLs, which are copied to:
+- Root/Folders can have "default ACLs", which are applied to new children of a directory, copies to:
   - A child directory's access ACL and default ACL
   - A child file's access ACL
 - The "Execute" permission only has effects on directories, allowing you to traverse the child items of a directory.
