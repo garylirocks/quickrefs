@@ -1033,7 +1033,9 @@ az storage fs access set-recursive ...
 
 #### RBAC and ACL
 
-RBAC roles are evaluated first, eg. `Storage Blob Data Contributor` can always read/write a file, regardless of ACLs
+RBAC roles are evaluated first, eg.
+- `Storage Blob Data Contributor` can always read/write a file, regardless of ACLs
+- `Storage Blob Data Reader` can always list/read files, regardless of ACLs, but would need extra ACL permissions to write/delete a file
 
 Some RBAC roles allow a user to change ACLs:
 
