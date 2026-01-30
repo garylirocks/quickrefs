@@ -214,8 +214,8 @@ az network public-ip create \
 
 - Allows you to share public IPs among multiple internal resources
 - You associated it to a subnet (a subnet can only have one NAT gateway)
-- A zonal service, you need to choose an availability zone to deploy it
-  - And the public IP must be in the same zone
+- **StandardV2** is zone-redundant
+  - Legacy "Standard" is zonal, you need to choose an availability zone to deploy it, and the public IP must be in the same zone
 - An NAT gateway can be associated to multiple subnets (must be in the same vNet)
 - Subnets with following resources are not compatible:
   - IPv6 address space
@@ -237,9 +237,7 @@ az network public-ip create \
   - See: https://learn.microsoft.com/en-us/azure/firewall/integrate-with-nat-gateway
 - You could configure the TCP idle timeout, default is 4 minutes
 - Compatible with Standard SKU load balancer, Standard SKU public IP/prefix (those could still accept inbound connections)
-
   ![NAT compatibility](images/azure_networking-nat-flow-direction-inbound-outbound.png)
-
   *Traffic coming in from a load balancer will return via it, not via the NAT Gateway*
 
 ## Network security group (NSG)
