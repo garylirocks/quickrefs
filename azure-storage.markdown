@@ -1113,12 +1113,13 @@ You need to select the tier when creating the storage account, not for individua
 
 - Standard tier
   - Actual capacity usage
-  - or Provisioned v2 (size, IOPS, and throughput could be changed independently)
 
 - Premium tier
   - Provisioned
     - Minimum size: 100GiB, incremental unit 1GiB
     - IOPS and throughput increase along with the provisioned size
+  - Provisioned v2
+    - Size, IOPS, and throughput could be scaled up/down independently
 
 ### Create and mount a share
 
