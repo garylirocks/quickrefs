@@ -8,6 +8,7 @@
 - [DNSSEC](#dnssec)
 - [Windows Server DNS](#windows-server-dns)
 - [TTL](#ttl)
+- [Email related records](#email-related-records)
 - [Misc](#misc)
 
 
@@ -241,6 +242,17 @@ Some notes about Windows Server DNS
 When you do some cutover operations (eg. point a domain name to a new IP), as a preparation, you'd better lower the TTL prior to the cutover, so that the change propagates faster when you do the cutover.
 
 - In Windows DNS Manager, to see the TTL of a record, you need to enable "View" -> "Advanced" first, then you can see TTL setting of each record in "Properties"
+
+
+## Email related records
+
+- **MX**: *mail exchange*, where to deliver email messages for a domain
+- **TXT**: *spf*, prevent someone from spoofing your domain to send spam
+- **CNAME**
+  - Autodiscover: for client-side Autodiscover, helping mail clients connect users to respective mailboxes
+  - DKIM: Helps stop attackers from sending emails that look like they come from your domain by encrypting a signature within every outbound message headers
+
+If you have the above settings for domain `example.com`, then you want to enable email on a sub-domain `sub.example.com`, you need to add these records for `sub.example.com` as well
 
 
 ## Misc
