@@ -1844,3 +1844,6 @@ A few things to note:
   - If you don't specify `owners` field, then the current principal will be added as the sole owner, the principal only needs `Group.Create` permission to create/delete the group
   - If current principal is one of the `owners`, same as above
   - If you specify `owners` field, and current principal is not in it, then current principal needs `Group.ReadWrite.All` permission
+
+- `azurerm_windows_virtual_machine`
+  - `vm_agent_platform_updates_enabled` is now a read only attribute, seems it always reverts to `true` ?
