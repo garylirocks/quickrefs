@@ -29,7 +29,7 @@
     ```sh
     $user = Get-ADUser alice -Properties proxyAddresses
     $proxies = $user.proxyAddresses
-    # Add new primary
+    # Add a new value, OR replace an existing value
     $proxies += "SMTP:alice.smith@new.sub.domain.com"
     Set-ADUser alice -Replace @{proxyAddresses=$proxies}
     ```
@@ -44,3 +44,14 @@
     - Individual sharing controls how your users share their calendars with people outside your organization
     - You can choose "All domains" or specified domains
     - After you create a new sharing policy, you need to go to target mailboxes and apply the policy to make it take effects
+
+
+## SMTP
+
+If you want a third party app to send email using your organizations's domain, there are usually two options:
+
+1. Send from the app's email server, but use your organization's domain in the "From" address.
+   - This usually requires you to add some DNS records (eg. MX, SPF, DKIM) to allow the app's email server to send emails on behalf of your domain
+1. Send from your organization's email server (via SMTP relay)
+   - Use a registered application in Entra (requires admin consent to allow the app to send email on behalf of users in your organization)
+   - Or use a service user account (with Oauth2)
