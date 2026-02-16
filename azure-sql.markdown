@@ -620,7 +620,8 @@ DR options:
   ![Auto-failover groups](./images/azure_sql-auto-failover-groups.png)
   - Built on top of geo-replicas
     - Create geo-replica for DBs in the group automatically
-    - **ONLY one replica, CAN'T be in the same region**
+    - **One to four replicas (preview), each in a different region**
+    - One of the replicas could be a read-only endpoint
   - Setup:
     - An AF group can include multiple DBs
     - A DB can only be in one group
