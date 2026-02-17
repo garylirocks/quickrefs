@@ -53,5 +53,5 @@ If you want a third party app to send email using your organizations's domain, t
 1. Send from the app's email server, but use your organization's domain in the "From" address.
    - This usually requires you to add some DNS records (eg. MX, SPF, DKIM) to allow the app's email server to send emails on behalf of your domain
 1. Send from your organization's email server (via SMTP relay)
-   - Use a registered application in Entra (requires admin consent to allow the app to send email on behalf of users in your organization)
-   - Or use a service user account (with Oauth2)
+   - Use a registered application in Entra (requires admin consent for delegated permission `Mail.Send`)
+   - And use a user account (with Oauth2), which logs in the app to send email
