@@ -214,8 +214,9 @@ az network public-ip create \
 
 - Allows you to share public IPs among multiple internal resources
 - You associated it to a subnet (a subnet can only have one NAT gateway)
-- **StandardV2** is zone-redundant
-  - Legacy "Standard" is zonal, you need to choose an availability zone to deploy it, and the public IP must be in the same zone
+- **StandardV2**
+  - Is **zone-redundant**, legacy "Standard" is zonal, you need to choose an availability zone to deploy it, and the public IP must be in the same zone
+  - Supports IPv6, the vNet must also have IPv6
 - An NAT gateway can be associated to multiple subnets (must be in the same vNet)
 - Subnets with following resources are not compatible:
   - IPv6 address space
