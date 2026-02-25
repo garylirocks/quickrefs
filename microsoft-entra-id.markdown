@@ -632,10 +632,15 @@ Group types
 - **Security groups (mail-enabled)**
   - Can only contain users, NOT devices
   - Need to be managed in M365 Admin center
+  - Users need to be assigned, NOT dynamic
+  - Have a shared email address, like a distribution list
 - **Microsoft 365**
   - Members can only be users
-  - Has a shared email address, calendar and SharePoint site, OneNote notebook
+  - Automatically creates a shared mailbox, calendar, Teams integration, and SharePoint site, OneNote notebook
   - You could create a team in Teams from a group
+  - Could be assigned to an application for access control
+  - Users could be assigned or dynamic
+    - If dynamic, then can't be assigned any Entra roles
 - **Distribution**
   - A group of email addresses (could have external email addresses)
 
