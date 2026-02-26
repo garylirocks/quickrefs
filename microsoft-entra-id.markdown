@@ -635,14 +635,23 @@ Group types
   - Users need to be assigned, NOT dynamic
   - Have a shared email address, like a distribution list
 - **Microsoft 365**
-  - Members can only be users
+  - Members can only be users (including guests)
   - Automatically creates a shared mailbox, calendar, Teams integration, and SharePoint site, OneNote notebook
   - You could create a team in Teams from a group
   - Could be assigned to an application for access control
   - Users could be assigned or dynamic
     - If dynamic, then can't be assigned any Entra roles
 - **Distribution**
-  - A group of email addresses (could have external email addresses)
+  - A group of email addresses
+  - A member could be
+    - a user (with a user mailbox, or shared mailbox)
+    - a guest (with an external email address)
+    - a mail-enabled security group
+    - another distribution list
+  - A member could NOT be
+    - a device
+    - service principal
+    - a M365 group
 
 
 Membership types:
