@@ -3,6 +3,7 @@
 - [VMs](#vms)
   - [Considerations](#considerations)
   - [Series](#series)
+  - [Availability zones](#availability-zones)
   - [Availability options](#availability-options)
   - [Provisioning](#provisioning)
   - [Auto-shutdown](#auto-shutdown)
@@ -147,33 +148,37 @@ Example:
 
 See naming convention here: https://learn.microsoft.com/en-us/azure/virtual-machines/vm-naming-conventions
 
+### Availability zones
+
+![Availability Zones](images/azure-availability-zones.png)
+
+*minimum three separate zones for each enabled region, each AZ is equipped with independent power, cooling and networking*
+
+- When creating a VM, You could specify a zone, or let Azure select one for you
+- If you don't specify a zone, then the VM is reginal (not showing a zone), you could move it to a zone later (this recreates the VM in the target zone, with a short downtime)
 
 ### Availability options
 
 ![Availability Options](images/azure-availability-options.png)
 
 - Single instance VM
+  - Regional (no specified AZ), or zonal (specified AZ)
   - 99.9% SLA when using premium storage for all OS and Data Disks
 
-- Availability sets (different racks within a datacenter)
-
+- Availability sets
+  - Different racks within a datacenter, same Availability Zone
   - 99.95% SLA (connectivity to at least one instance 99.95% of the time)
   - Multiple VMs in an availability set are spread across Fault Domains and Update Domains
     - The maximum fault domain count is dependent on region, each data center can have up to 3 fault domains
     - The maximum update domain count is 20
     - VMs are placed to update domains in round-robin fashion, so VMs in the same availability set are evenly distributed across update domains
   - The VMs in a set should perform identical functionalities and have the same software installed
-  - You can only add a VM to an availability set when creating a VM, you can't add an existing VM to an availability set
+  - You can only add a VM to an availability set when creating a VM, you **CAN'T** add an existing VM to an availability set
   - Combine a Load Balancer with an availability set
 
   ![Availability Sets](images/azure-vm_availability_sets.png)
 
-- Availability zones (one or multiple datacenters within a region equipped with independent power, cooling and networking)
-
-  - minimum three separate zones for each enabled region
-
-  ![Availability Zones](images/azure-availability-zones.png)
-
+- VMSS (see below)
 
 ### Provisioning
 
@@ -956,14 +961,22 @@ Networking requirements:
 
 ## VMSS - Virtual Machine Scale Sets
 
-- All instances are created from the same base OS image and configuration.
+- Could be regional (no specified AZ), or zonal (across specified AZs)
 - Support Load Balancer for layer-4 traffic distribution, and Application Gateway for layer-7 traffic distribution and SSL termination.
-- Number of instances can automatically increase or decrease in response to demand or a defined schedule.
 - You could use your own custom VM images.
 - It has instance repair feature which replaces a VM if it health check fails.
+- Scaling mode:
+  - Manually update instance count
+  - Autoscaling: on CPU metric or schedule
 - Orchestration mode
+  - Uniform
+    - One fixed VM size
+    - Can't manually attach a VM to it
+    - All instances are created from the same base OS image and configuration.
   - Flexible:
-    - You could attach a new or existing VM to a VMSS, it could have a different OS, network configuration, etc
+    - Up to 5 VM sizes
+    - You could attach a new or existing VM to it
+    - A default base OS image, could have VM based on other images ?
 
 
 ## Run Commands
