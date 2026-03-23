@@ -1034,6 +1034,8 @@ Scenarios:
 
 - Use HCM to manage employee lifecycle, the user's provile synced to Entra automatically
 - Provision users and groups in another application
+  - Default sync interval is 40 minutes
+  - When you add a new group to an app, seems a new sync cycle starts within minutes, not waiting for the 40 minutes
 
 
 ## Identity protection
