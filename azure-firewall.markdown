@@ -37,7 +37,7 @@ DNS proxy:
 - Supports DNS request logging
 
 Premium SKU only:
-- TLS inspection
+- TLS inspection (allows filtering of full destination URLs, including paths)
 - IDPS: Intrusion Detection and Prevention System
 
 
@@ -112,6 +112,7 @@ Pricing:
   - Firewall needs to be **able to resolve the FQDN** to an IP address, otherwise you get a "Failed to resolve address" error, and the traffic is denied
     - In both HTTP and TLS inspected HTTPS cases, the firewall ignores the packet's destination IP address and uses the DNS resolved IP address from the "Host" header. (DNS resolution is done by Azure DNS or by a custom DNS if configured on the firewall)
     - Why does it need to resolve the FQDN ?
+  - Could filter **full URLs** (including paths), requires TLS inspection for HTTPS
   - The firewall expects to get port number in the Host header, otherwise it assumes the standard port 80. If there's a port mismatch between the actual TCP port and the port in the host header, the traffic is dropped. 
   - Azure Firewall includes a built-in rule collection for **infrastructure FQDNs** that are allowed by default and evaluated after all custom application rules.
     - Compute access to storage Platform Image Repository (PIR)

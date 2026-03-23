@@ -25,6 +25,7 @@
     - [Azure AD](#azure-ad)
     - [Token store](#token-store)
     - [Application to application](#application-to-application)
+    - [Exclude from authentication](#exclude-from-authentication)
   - [Backup](#backup)
   - [Move](#move)
 - [App Service Environment (ASE)](#app-service-environment-ase)
@@ -436,6 +437,17 @@ Notes:
   - `accessTokenAcceptedVersion`:
     - `null` or `1`: v1.0 token
     - `2`: v2.0 token
+
+#### Exclude from authentication
+
+If you want to exclude certain paths from authentication, you could add them to `globalValidation.excludedPaths` in `Microsoft.Web/sites/<siteName>/config/authsettingsV2`
+
+A few ways:
+
+- ARM API: `https://learn.microsoft.com/en-us/rest/api/appservice/web-apps/update-auth-settings-v-2?view=rest-appservice-2025-05-01&tabs=HTTP#update-auth-settings-v2`
+- or file-based configuration, see `https://learn.microsoft.com/en-us/azure/app-service/configure-authentication-file-based`
+  - When `config/authsettingsV2/platform.configFilePath` is `null`, auth behavior is defined in ARM config, when it's set to a file path, the contents of the file takes precedence
+
 
 ### Backup
 
