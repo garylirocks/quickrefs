@@ -32,7 +32,8 @@
   - [Point to site](#point-to-site)
     - [Native Azure certificate auth](#native-azure-certificate-auth)
 - [ExpressRoute](#expressroute)
-  - [IP addresses](#ip-addresses)
+  - [ExpressRoute Gateway](#expressroute-gateway)
+    - [IP addresses](#ip-addresses)
   - [FastPath](#fastpath)
   - [Resiliency](#resiliency)
   - [Compare to Site-to-Site VPN](#compare-to-site-to-site-vpn)
@@ -742,7 +743,7 @@ echo ${a//:}    # remove ':'
     - The regional BGP community values help you decide which routes take precedence when you have circuits in different regions
       - This value for Australia East is 12076:50015, Australia Southeast 12076:50016
 
-- SKUs:
+- Circuit SKUs:
   - Local: only connect to local regions, egress traffic not charged
   - Standard: connect to regions in the same geopolitical boundary
   - Premium: global connectivity, more than 4k routes, connect to more than 10 vNets
@@ -769,7 +770,21 @@ Connectivity can be from:
   *Global Reach enables connectivity between 10.0.1.0/24 and 10.0.2.0/24*
 - DNS queries, certificate revocation list checking and Azure CDN requests are still sent over the public internet
 
-### IP addresses
+### ExpressRoute Gateway
+
+SKUs:
+
+- Standard (1Gbps)
+- High performance (2Gbps)
+- Ultra performance (10Gbps)
+- ErGw1AZ (1Gbps)
+- ErGw2AZ (2Gbps)
+- ErGw3AZ (10Gbps)
+- ErGwScale
+  - up to 40 scale units, 40Gbps
+  - cheaper than the `*AZ` SKUs, should be preferred
+
+#### IP addresses
 
 If your gateway subnet's CIDR range is `10.0.0.32/28`
 
@@ -789,10 +804,20 @@ By default,
 
 With FastPath
 - The ingress traffic bypasses the gateway
-- Supports for vNet peering and UDR only available for connections associated with ER Direct
-  - Meaning the connection respects vNet peering and UDR configured on the ER gateway subnet, although the data path bypasses it
-  - The UDR is been pushed to the edge routers, which makes the decision for next hop, that's how it's working
-- Supports for private endpoint only available for ER Direct and with limited regions and limited services behind a private endpoint
+- ER Direct supports
+  - IPv4 for UDR
+  - IPv4 for Private Link (certain regions, certain services)
+  - IPv4/IPv6 for vNet Peering (must be in the same region)
+- ER provider circuits
+  - IPv4 connectivity, only to hub vNet (no UDR, Private LInk, vNet Peering)
+  - One of the following SKUs: Ultra, ErGw3AZ, ErGwScale with min. 10 units
+- For UDR and vNet Peering
+  - The connection respects URR and vNet peering configured on the ER gateway subnet, although the data path bypasses it
+  - The UDR/vNet Peering is been pushed to the edge routers, which makes the decision for next hop, that's how it's working
+- Not work for these resources in spoke vNets (traffic goes through the ER gateway, so FastPath won't work)
+  - Internal Load Balancer
+  - Azure Firewall
+  - DNS private resolver
 
 ### Resiliency
 
