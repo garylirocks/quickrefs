@@ -371,6 +371,9 @@ You can inspect the user's claims for finer authorization. App service pass thes
 #### Azure AD
 
 - If you use Azure AD, then an app registration is created
+  - `https://<your-site>.azurewebsites.net/.auth/login/aad/callback` is added as redirect URI
+  - If you use a custom FQDN to access the website, you need to add it as another redirect URI `https://<your-custom-domain>/.auth/login/aad/callback`
+  - The app need access to the app registration's secret, via app settings
 - The sign-in endpoint is at `/.auth/login/aad`, where user is redirected to automatically when un-authenticated
 - By default, every user in your tenant can login/access the app, you could configure the application in AAD to restrict access to a defined set of users
   - Turn on the "Assignment required?" property
