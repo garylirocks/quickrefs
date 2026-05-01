@@ -694,9 +694,20 @@ Types:
   - Benefits:
     - No need to pay for OS disk
     - High performance
-  - You can choose where to put it (both on local SSD in the host)
-    - OS cache placement
-    - Temp disk placement
+  - Placement
+    - Uses local storage, different VM SKUs have different type of local storage, eg. cache disk, temp disk, NVMe disk
+    - Placement doesn't affect performance, which is determined by the VM's local storage
+    - By default, Azure picks the right placement type, depending on VM SKU, you can specify it via the `DiffDiskPlacement` property
+    - Three options:
+      - NVMe Disk: for v6 SKUs,
+      - Temp Disk (resource disk): for SKUs with Temp disk, like `Ddsv5`, etc
+      - Cache Disk: older SKUs, like `Dsv2`, `Dsv3`, etc
+  - Size
+    - Standard Windows Server images: 127GiB, Standard Ubuntu image: 30GiB
+    - Placement:
+      - Cache Disk: the disk size must be larger than the image size
+      - Temp Disk: remaining size can still be used as temp disk, the final temp disk size = (Initial temp disk size - OS image size)
+      - NVMe Disk: OS disk occupies the entire NVMe disk, Final NVMe Disk size = (Total no. of NVMe disks - NVMe Disks used for OS) * Size of each NVMe disk
   - Usage scenarios
     - When you don't care the state of the OS
     - VMSS, and services built on top of it, AKS, App service, etc
