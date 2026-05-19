@@ -226,19 +226,23 @@ B2C tenant is for your application's customers, it's different from your organiz
 - B2C can't be used to authenticate users for Microsoft 365, it's for your custom web or mobile apps
 - You can customize sign-up and sign-in page URL, eg. `contoso.b2clogin.com` -> `login.contoso.com`
 - (Preview) Open B2C pages within an iFrame
+- Local accounts:
+  - Username and password stored locally
+  - Azure AD B2C is the IdP
+  - User names could be any of the following (choose one or more in a sign-up/sign-in user flow):
+    - Email addresses, eg. `alice@gmail.com`, `bob@example.com`
+    - Arbitrary, eg. "alice", "bob", email is still collected and veerified
+    - Phone number, verified
 - Three types of user account:
+  - Consumer: local accounts
   - Work (native to the B2C tenant)
   - Guest
     - After you invite a user, the user could join using the link in the invitation email, or go to `https://myapps.microsoft.com/<b2c-tenant-name>.onmicrosoft.com`
     - This user may need go through **MFA twice**, once in it's own tenant, and once in the B2C tenant ?
-  - Consumer
-    - User names (local accounts) could be one of two types:
-      - Any email addresses, eg. `alice@gmail.com`, `bob@example.com`
-      - Arbitrary, eg. "alice", "bob"
 
 ### How to
 
-- If you have an Entra ID tenant for your employees, and Azure AD B2C for customers. By adding new OpenID Connect provider under "Azure AD B2C" > "Identity providers" or with custom policies, Azure AD B2C can federate to Microsoft Entra ID, allowing authentication of employees in the Entra tenant.
+- If you have an Entra ID tenant for your employees, and Azure AD B2C for customers. In the B2C tenant, go to "Azure AD B2C" > "Identity providers" > "New OpenID Connect provider", or with custom policies, Azure AD B2C can federate to Microsoft Entra ID, allowing authentication of employees in the Entra ID tenant.
 - After you create a B2C tenant
   - You'll need to switch to the B2C tenant,
     - Seems if you are a "Global Administrator" in the B2C tenant, you can go to "Azure AD B2C" to manage it
