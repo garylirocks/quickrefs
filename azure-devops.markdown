@@ -42,6 +42,7 @@
   - [Agent pools](#agent-pools)
     - [Microsoft-hosted](#microsoft-hosted)
     - [Managed DevOps Pool](#managed-devops-pool)
+    - [Azure VMSS](#azure-vmss)
     - [Self-hosted](#self-hosted)
   - [Deployment jobs](#deployment-jobs)
     - [Deployment strategies](#deployment-strategies)
@@ -1209,6 +1210,7 @@ The collection-scoped one is used unless you limit the job access scope to "proj
 - Build agent can be organized into pools
 - Pools are shared across projects in an organization
 - Types:
+  - MS-hosted
   - Managed DevOps Pool
   - Azure VMSS
   - Self-hosted
@@ -1226,6 +1228,7 @@ Have some limitations:
 
 - Resources in Azure
 - Placed in "Dev Center" -> "Dev Center project"
+- VMs running the agents live in a MS Azure subscription, NOT your own subscription
 - You could specify
   - OS disk type
   - OS image (Windows, Ubuntu, custom)
@@ -1233,6 +1236,19 @@ Have some limitations:
   - Max. count of agents
 - Networking: could be an isolated vNet or an existing vNet
 - Scaling: could have a schedule to pre-provision agents, so they become standby, ready to receive jobs
+- Comparing to Azure VMSS agents:
+  - Support multiple images in a pool
+  - Support MS-hosted agent images for Windows and Linux
+  - Don't support custom script
+  - A pool could be shared by multiple ADO organizations
+
+#### Azure VMSS
+
+- Requires:
+  - `--disable-overprovision`, so Azure Pipelines could perform scaling based on number of incoming jobs
+  - `--upgrade-policy-mode manual`
+- Use ephemeral OS disks could improve VM re-image times
+- If using custom image, don't install Azure Pipelines agent, Azure Pipelines will install the agent automatically as it provisions new VMs
 
 #### Self-hosted
 
