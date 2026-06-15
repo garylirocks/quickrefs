@@ -31,11 +31,11 @@ Features:
   - It's a dynamic link between a record and a resource, so when the resource's IP changes, it's automatically handled;
   - Supports these record types: A, AAAA, CNAME;
 - DNSSEC (in preview)
+- DNS security policy
+  - Independent resource type
+  - Link to vNets (usually the hub vNet)
+  - For logging (to Log Analytics), domain filtering, threat intelligence, CNAME chasing
 
-Missing features:
-
-- No conditional forwarding and no query logging
-  - You need to Bring-Your-Own DNS service, and conditionally forward queries to Azure DNS
 
 ## DNS resolution within virtual networks
 
