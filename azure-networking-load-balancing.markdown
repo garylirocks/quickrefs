@@ -630,6 +630,9 @@ It's like the Application Gateway at a global scale, plus a CDN
 - resilient to failures to an entire Azure region
 - can cache content
 - a backend can be within or outside Azure
+- DR:
+  - Without CDN: You can put Azure Traffic Manager in front of Front Door, if Front Door is down, resolve DNS to a local endpoint (such as an Application Gateway)
+  - With CDN: Route 90% traffic to Front Door, and 10% to another CDN endpoint, if Front Door is down, route all traffic to the other CDN endpoint
 
 Supports:
   - URL-path based routing
