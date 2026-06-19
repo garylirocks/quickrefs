@@ -1144,15 +1144,25 @@ findmnt -t cifs
   - Works for all OS: Windows, Mac, Linux
   - Use the primary key of the storage account as password
 
-- Identity-based access (Windows only, SMB shares only)
-  - From AD DS or Microsoft Entra Domain Services domain-joined VMs
-  - Share-level permissions can be performed on Microsoft Entra users/groups via RBAC model (eg. Storage File Data SMB Share Reader)
-    - With RBAC, the credentials you use for file access should be available or synced to Microsoft Entra ID
+- Identity-based access (SMB only, no NFS support yet)
+  - Azure Files supports only **Kerberos** protocol, NOT OAuth
+    - Clients need to obtain a Kerberos ticket from an identity source to authenticate
+  - Identity source could be
+    - AD DS (hybrid identities, domain-joined VMs)
+    - Entra Kerberos
+      - Supports cloud-only or hybrid identities
+      - The storage account app must be excluded from any MFA conditional access policy
+      - Client machine must be configured to retrieve Kerberos ticket from Entra
+      - Supports MacOS via Platform SSO
+    - Entra DS
+  - Only support **ONE identity source** for all file shares in a storage account
+  - When you enable an identity source, an app registration will be created automatically
+  - Share-level permissions are assigned to Microsoft Entra users/groups via RBAC model (eg. Storage File Data SMB Share Reader)
   - At directory/file level, Azure Files supports preserving, inheriting, and enforcing Windows DACLs just like any Windows file servers. Windows ACLs can be preserved when back up a file share to Azure Files.
 
 ![Identity based authentication data flow](images/azure_file-share-authentication.png)
 
-*The Domain Services at step 1 could be either on-prem AD DS or Entra DS*
+*The above depicts using AD DS or Entra DS as identity source*
 
 ### Snapshots
 
