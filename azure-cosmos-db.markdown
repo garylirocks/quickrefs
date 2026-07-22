@@ -12,6 +12,7 @@
     - [Multi-region writes](#multi-region-writes)
   - [Private endpoint](#private-endpoint)
 - [Consistency levels](#consistency-levels)
+- [Roles](#roles)
 
 ## Overview
 
@@ -225,3 +226,15 @@ So if you use the global FQDN in your application, it doesn't work well with one
 | Session           | Consistent Prefix. Monotonic reads, monotonic writes, read-your-writes, write-follows-reads. |
 | Consistent Prefix | Updates returned are some prefix of all the updates, with no gaps.                           |
 | Eventual          | Out of order reads.                                                                          |
+
+
+## Roles
+
+There are usual control plane roles.
+
+Additionally, there are data plane roles,
+  - two built-in ones:
+    - Cosmos DB Built-in Data Reader
+    - Cosmos DB Built-in Data Contributor (`/subscriptions/<sub-id>/resourceGroups/<rg-id>/providers/Microsoft.DocumentDB/databaseAccounts/<cosmos-db-id>/sqlRoleDefinitions/00000000-0000-0000-0000-000000000002`)
+  - within the scope of a Cosmos DB, you could create custom ones
+    - Use `az cosmosdb sql role definition/assignment create`
