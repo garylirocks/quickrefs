@@ -8,6 +8,7 @@
   - [System-assigned (SAMI)](#system-assigned-sami)
   - [User-assigned (UAMI)](#user-assigned-uami)
   - [Considerations](#considerations)
+  - [Entra permissions](#entra-permissions)
 - [Workload identity federation](#workload-identity-federation)
   - [How it works](#how-it-works)
   - [CLI](#cli)
@@ -232,6 +233,28 @@ az login --identity --username <client_id|object_id|resource_id>
 | ----------------- | ----------------- | ----------------------- |
 | Service Principal | Yes               | Yes                     |
 | Managed Identity  | No                | Yes                     |
+
+### Entra permissions
+
+You can give a UAMI (or SAMI?) Graph permissions, this couldn't be done in the Portal, you need scripts:
+
+```sh
+# 1. Define variables (Replace these with your values)
+miObjectId="YOUR_USER_ASSIGNED_IDENTITY_OBJECT_ID"
+permissionName="Directory.Read.All"
+
+# 2. Get the Service Principal ID for Microsoft Graph (App ID is always 00000003-0000-0000-c000-000000000000)
+graphSpId=$(az ad sp show --id 00000003-0000-0000-c000-000000000000 --query id --output tsv)
+
+# 3. Retrieve the specific App Role ID for the required permission
+appRoleId=$(az ad sp show --id 00000003-0000-0000-c000-000000000000 --query "appRoles[?value=='$permissionName'].id" --output tsv)
+
+# 4. Assign the API permission to the Managed Identity
+az rest --method POST \
+  --uri "https://graph.microsoft.com/v1.0/servicePrincipals/$miObjectId/appRoleAssignments" \
+  --body "{\"principalId\":\"$miObjectId\",\"resourceId\":\"$graphSpId\",\"appRoleId\":\"$appRoleId\"}"
+```
+
 
 ## Workload identity federation
 

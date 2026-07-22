@@ -145,7 +145,8 @@ Features:
   - or **members**
 - Who can invite:
   - By default, all users (including guests) can invite guests, if this is turned off, you can assign "Guest Inviter" role explicitly to users
-  - You can create either a allow list or a deny list to control what external domains are allowed
+- Who can be invited:
+  - You can create either an allow list or a deny list to control what external domains are allowed
 - How guest user sign in:
   - Guest user won't have credentials saved in your tenant, they will login via another Entra, an email code, SMS code, Google/Facebook account, etc
   - By default these IdPs are configured: Entra, Microsoft Account, Email one-time passcode
@@ -190,7 +191,7 @@ For any other Entra tenant, you could set
 
 Notes:
 
-B2B direct connect feature
+**B2B direct connect** feature
   - is blocked by default
   - need to be enabled on both sides
   - currently works with Microsoft Teams shared channels
