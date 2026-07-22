@@ -582,7 +582,7 @@ If you run or skip certain tags by default, you can use the `TAGS_RUN` and `TAGS
 
 When you run a playbook, you can selectively choose (with `--limit` flag) which managed nodes or groups in your inventory to target.
 
-A pattern can refere to a single host, an IP address, an inventory group, a set of groups, or all hosts in your inventory.
+A pattern can refer to a single host, an IP address, an inventory group, a set of groups, or all hosts in your inventory.
 
 ### Common patterns
 
