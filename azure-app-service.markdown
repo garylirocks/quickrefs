@@ -42,6 +42,7 @@
 - [Static Web Apps](#static-web-apps)
 - [Azure Functions](#azure-functions)
   - [Overview](#overview-1)
+  - [Web job storage access](#web-job-storage-access)
 - [Durable functions](#durable-functions)
   - [Patterns](#patterns)
 
@@ -822,6 +823,18 @@ module.exports = function (context, req) {
 - If `id` is found in the DB, `bookmark` will be set;
 - `"connectionStringSetting": "gary-cosmos_DOCUMENTDB"` is an application setting in app scope, not restricted to current function, available to the function as an env variable;
 - Simply assign a value to `newbookmark` and `newmessage` for output
+
+### Web job storage access
+
+Instead of using a SAS token to access web job storage. You could use a managed identity, either SAMI or UAMI.
+
+To use an UAMI,
+  - The UAMI need to have proper roles to the storage account
+  - You need to have these settings:
+    - `AzureWebJobsStorage__accountName=<storage-account-name>`
+    - `AzureWebJobsStorage__clientId=<uami-client-id>`
+    - `AzureWebJobsStorage__credential=managedidentity`
+  - And delete the `AzureWebJobsStorage` setting
 
 
 ## Durable functions
