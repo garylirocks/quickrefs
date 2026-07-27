@@ -33,3 +33,17 @@
 - AVDs run in your virtual network
 - **Doesn't require any inbound access** to your virtual network
 - A set of outbound network connections are required
+
+
+## Management
+
+- Deployment
+  - Standard
+  - Host pool configuration: ONLY for polled host pools, NOT personal host pools
+- Update
+  - If using "Host pool configuration", you could automate the update of session hosts in a host pool
+    - New hosts created using the new configuration
+    - Initial update targeting one host
+    - If successful, update the rest of the hosts in batches
+  - For standard host pool, you need to update the host pool manually
+    - By adding new hosts with new image, then removing the old hosts ?
