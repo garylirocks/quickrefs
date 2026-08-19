@@ -92,7 +92,12 @@ Azure Monitor is based on a common mornitoring data platform that includes Logs 
 - Usually for a resource:
   - *Metrics* and the *Activity logs* are collected and stored automatically, but can be routed to other locations by using a *diagnostic setting*.
   - *Resource Logs* are not collected and stored until you create a *diagnostic setting* and route them to one or more locations.
-- Use *Data Collector API* to send data from your custom code
+- Use *Log Ingestion API* to send data from your custom code
+  - Replacement for the old *Data Collector API*
+  - Supports transformation: filtering, data manipulation before ingestion into destination table
+  - Send data to multiple destinations
+  - Manage destination table schema, including column names
+  - Supports RBAC to restrict data ingestion by DCR and identity
 
 ### Azure metrics
 

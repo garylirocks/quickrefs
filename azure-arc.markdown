@@ -39,6 +39,7 @@ You need to install the "Azure Connected Machine agent" on the target machine(s)
 
 ### Onboarding
 
+- Your Azure subscription need to be registered with the `Microsoft.HybridCompute` resource provider
 - Permissions: administrator permission required to install the agent on the target machine
   - Linux: by using the root account
   - Windows: as a member of the Local Administrators group
