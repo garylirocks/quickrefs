@@ -5,6 +5,7 @@
   - [Programs](#programs)
   - [Permissions](#permissions)
 - [Partner University](#partner-university)
+- [GDAP](#gdap)
 
 
 ## Overview
@@ -47,3 +48,14 @@ Seems it has its own set of roles and permissions, like:
 - Courses, assessments exclusively for Micorsoft Partners
 - Both Microsoft Learn and Partner University accounts could be linked to your Partner Center account
   - Both help an organization qualify for programs like Solution Partner designations, Specializations, and Azure Expert MSP program.
+
+
+## GDAP
+
+Granular Delegated Admin Privileges (GDAP) is a way for partners to request permissions in customers' tenants.
+
+1. Partner creates a GDAP request in Partner Center
+  - Could have a time range
+2. Customer approves the request in their tenant (MS 365 Admin Center)
+3. Partner then assign roles to their security groups in Partner Center
+  - NOT reflected in customers tenants

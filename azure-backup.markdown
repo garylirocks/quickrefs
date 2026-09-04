@@ -80,6 +80,7 @@ Now it's supported.
 - **MABS / Azure Backup Server**: protect application workloads such as Hyper-V VMs, SQL Server, SharePoint Server, etc from  a single console
 
 - **MARS Agent**: to backup data from on-prem machines and Azure VMs to a Recovery Services vault in Azure
+  - Allows you to backup "Files-Folders" or "System State"
 
 - **Backup policy**:
   - backup schedule: when, how often, snapshot method (full, incremental, differential)
