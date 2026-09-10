@@ -326,6 +326,10 @@ Cost allocation allows to you to allocate cost of source (subscription/resource 
   - A management group of the subscription (any ancestor MG for the sub)
   - Any subscription in the same billing profile
 - Automatically apply to matching resources (no need to create any associations)
+  - Start with usage that receives highest discount
+  - Discounted cost deducted from the plan's hourly commitment
+  - Remaining eligible usage billed at standard pay-as-you-go rates
+  - Unused commitment does NOT roll over
 - **Cannot** be cancelled
 
 
