@@ -659,7 +659,8 @@ Compare metadata and tags
   - Subtypes: Base blobs / versions / snapshots
   - Filter: prefix, index tags
 - Apply rules to containers or a subset of blobs
-- **Changing a blob's tier doesn't affect its last modified time**. If there is a lifecycle management policy in effect for the storage account, then rehydrating a blob with "Set Blob Tier" can result in a scenario where the lifecycle policy moves the blob back to the archive tier after rehydration because the last modified time is beyond the threshold set for the policy.  To avoid this scenario, add the `daysAfterLastTierChangeGreaterThan` condition to the `tierToArchive` action of the policy. Alternatively, you can rehydrate the archived blob by copying it instead, copy operation creates a new instance of the blob with an updated last modified time, so it won't trigger the lifecycle management policy.
+- Rules evaluated once a day.
+- **Changing a blob's tier (or rehydration) doesn't affect its last modified time**. If there is a lifecycle management policy in effect for the storage account, then rehydrating a blob with "Set Blob Tier" can result in a scenario where the lifecycle policy moves the blob back to the archive tier after rehydration because the last modified time is beyond the threshold set for the policy.  To avoid this scenario, add the `daysAfterLastTierChangeGreaterThan` condition to the `tierToArchive` action of the policy. Alternatively, you can rehydrate the archived blob by copying it instead, copy operation creates a new instance of the blob with an updated last modified time, so it won't trigger the lifecycle management policy.
 
 ### Data protection
 

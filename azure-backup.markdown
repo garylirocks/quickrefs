@@ -81,6 +81,7 @@ Now it's supported.
 
 - **MARS Agent**: to backup data from on-prem machines and Azure VMs to a Recovery Services vault in Azure
   - Allows you to backup "Files-Folders" or "System State"
+  - You can restore files backed up from one server to another server
 
 - **Backup policy**:
   - backup schedule: when, how often, snapshot method (full, incremental, differential)
