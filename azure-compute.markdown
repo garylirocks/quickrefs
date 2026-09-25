@@ -165,7 +165,7 @@ See naming convention here: https://learn.microsoft.com/en-us/azure/virtual-mach
   - Regional (no specified AZ), or zonal (specified AZ)
   - 99.9% SLA when using premium storage for all OS and Data Disks
 
-- Availability sets
+- Availability sets (*doesn't provide same level of availability as availability zones, or MS suggests migrating to VMSS Flex*)
   - Different racks within a datacenter, same Availability Zone
   - 99.95% SLA (connectivity to at least one instance 99.95% of the time)
   - Multiple VMs in an availability set are spread across Fault Domains and Update Domains
