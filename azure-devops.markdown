@@ -44,6 +44,7 @@
     - [Managed DevOps Pool](#managed-devops-pool)
     - [Azure VMSS](#azure-vmss)
     - [Self-hosted](#self-hosted)
+    - [Authentication](#authentication)
   - [Deployment jobs](#deployment-jobs)
     - [Deployment strategies](#deployment-strategies)
   - [GitHub integration](#github-integration)
@@ -1261,8 +1262,16 @@ Have some limitations:
   ```
 - Generate a PAT (Personal Access Token) to register your hosted agent in a pool
 - You need to install the agent software on your machine, and start a daemon service to connect to the pool
+- Need to open port 443 outbound to Azure Pipelines service
+- On Windows, it's recommended to run the agent as a service, use a service account like "Network Service" or "Local Service"
 
+#### Authentication
 
+- When registering an agent (to an agent pool), you could use a PAT, device code flow or service principal
+  - This is only used during registration
+  - A public-private key pair is generated, public key is sent to Azure Pipelines service, private key is stored in the agent machine
+- After registration, the agent downloads a "listener OAuth token" and use it to listen to the job queue
+- When a job is available, the agent downloads the job and a "job-specific OAuth token" to run the job
 
 ### Deployment jobs
 
