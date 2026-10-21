@@ -58,8 +58,8 @@ Considerations:
 - **Security principals**:
   - Entities with certain permissions
   - At either server level or database level
-  - Can be individuals or collections
-  - A role is like a group, is also a security principal
+    - In `sys.database_principals` table in each DB
+  - Type can be a user or a role (a role is like a group)
   - There are several sets in SQL Server, some have fixed membership, some sets have a membership controlled by the SQL Server administrators
 - **Securables scopes**:
     - Server
@@ -68,7 +68,7 @@ Considerations:
 - **Schema**
   - A schema is like a folder inside a database that holds tables, views, etc.
   - Helps with organization, permissions, and naming separation
-  - Every user has a default schema (if no, then it's `dbo`)
+  - Each principal (user and role) has a default schema (if no, then it's `dbo`)
     - `dbo` stands for "database owner"
   - If you don't specify schema, like `SELECT name FROM customers`, it checks the user default schema, then `dbo`
   - Best practices is to always specify a schema
@@ -125,12 +125,12 @@ Considerations:
     - All configured with `db_`
     - eg. `db_owner`, `db_datareader`, `db_accessadmin` (can create new users), `db_securityadmin` (can grant permissions)
     - `db_denydatawriter`: prevent from writing data, when users have been granted rights via other roles or directly
-    - All users with  adb are automatically members of the `public` role, which has no permissions
+    - All users within a db are automatically members of the `public` role, which has no permissions
     - `db_owner` users can always see all data in a db, applications can use `Always Encrypted` to protect data from privileged users
     - Azure SQL DB nuances
       - `master` db is virtual
+        - DB roles only available in `master` db: `loginmanager`, `dbmanager`
       - Sever admin has `sysadmin` rights, you can create more limited admins
-      - Two db level roles, only exist in the virtual `master` db: `loginmanager`, `dbmanager`
   - Fixed server-level roles
     - Can be assigned to server-level principals (SQL Server logins, Windows accounts, Windows groups)
     - Permissions are fixed, except the `public` role
@@ -175,12 +175,11 @@ Considerations:
 
 ### System tables
 
-- `sys.database_principals` contains both individual users and roles, each has a principal_id
+- `sys.database_principals` contains both `SQL_USER` and `DATABASE_ROLE`, each has a principal_id
+  - users: `dbo`, `guest`, `sys`, ...
+  - roles: `db_owner`, `db_accessadmin`, `db_datareader`, ...
 - `sys.database_role_members` contains members of each role, eg. `dbo` is a member of `db_owner`
-- users: `dbo`, `guest`, `sys`, ...
-- roles: `db_owner`, `db_accessadmin`, `db_datareader`, ...
 - Query users of each role
-
   ```sql
   -- Query users in a particular role
   SELECT dp.name, dp.type_desc, dprole.name
