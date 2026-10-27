@@ -84,6 +84,7 @@
   - [Metrics](#metrics)
   - [Extended events](#extended-events)
   - [Database Watcher](#database-watcher)
+- [SQL Database in Microsoft Fabric](#sql-database-in-microsoft-fabric)
 - [Azure SQL Edge](#azure-sql-edge)
 
 ## Overview
@@ -1686,6 +1687,22 @@ A separate resource in Azure to help monitor SQL databases
 - Networking: supports private endpoints
 - Data store: a KQL data store (eg. Azure Data Explorer cluster, a Fabric Real-Time Analytics db)
 - Usage: KQL query, dashboards
+
+
+## SQL Database in Microsoft Fabric
+
+- Built on Azure SQL DB
+- Integrates with Fabric's analytics ecosystem
+- Operational tables **automatically mirrored** into OneLake as Delta Parquet files
+- Every table is instantly available for analytics through the SQL analytics endpoint, which provides *read-only* view of yout data
+- Can query across multiple data sources: SQL DB, Fabric warehouses, lakehouses, even other SQL DBs
+- Intelligent performance features:
+  - automatic index creation
+  - AI: semantic search, and RAG
+- Other features:
+  - Portability: SqlPackage (`.bacpac/.dacpac`)
+  - Fabric source control
+  - GraphQL APIs
 
 
 ## Azure SQL Edge

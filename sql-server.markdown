@@ -8,11 +8,20 @@
   - [Ownership chains](#ownership-chains)
 - [Special tables](#special-tables)
   - [System tables](#system-tables)
-  - [Temporary tables](#temporary-tables)
+  - [In-memory tables](#in-memory-tables)
   - [Temporal tables](#temporal-tables)
+  - [External tables](#external-tables)
+  - [Ledger tables](#ledger-tables)
+  - [Graph tables](#graph-tables)
+  - [Temporary tables](#temporary-tables)
 - [Datatypes](#datatypes)
-  - [`varchar` vs `nvarchar`](#varchar-vs-nvarchar)
+  - [JSON columns and indexes](#json-columns-and-indexes)
+- [Constraints](#constraints)
 - [Indexes](#indexes)
+  - [Rowstore](#rowstore)
+  - [Columnstore](#columnstore)
+  - [Other](#other)
+- [Partitioning](#partitioning)
 - [Isolation levels](#isolation-levels)
 - [Query plans](#query-plans)
   - [Common problems](#common-problems)
@@ -191,6 +200,94 @@ Considerations:
       sys.database_principals dprole ON drm.role_principal_id = dprole.principal_id
   ```
 
+### In-memory tables
+
+- For high-frequency, low latency scenarios
+- Transaction logs still writes to disks
+- Don't support large objects like `VARCHAR(MAX)`, etc
+- Create with `MEMORY_OPTIMIZED = ON` option
+
+Examples:
+- Web session state
+- Financial trading
+- Shopping cart
+- As a caching layer (product catalogs, configurations)
+- Staging tables (in ETL processes)
+
+### Temporal tables
+
+- Track complete history of data changes
+- Create with `SYSTEM_VERSIONING = ON` option, requires two extra `DATETIME2` to track the validity period of each row version
+- SQL Server automatically creates a history table to store previous row versions
+- Examples:
+  - Tracking salary changes and promotions
+  - Inventory analyzing
+  - Patient record history
+  - Insurance tracking policy coverage changes
+
+### External tables
+
+- Querying data across data lakes, blob storage, and multiple systems.
+- Scenarios:
+  - Data lake integration - query Parquet/CSV files in ADLS
+  - Archival storage - access historical data stored in cheaper blob storage
+- Limitations:
+  - Slower
+  - Read-only
+  - Limited indexing and optimization
+
+```sql
+-- Create external table pointing to data lake
+CREATE EXTERNAL TABLE dbo.ExternalSalesData (
+    OrderID INT,
+    CustomerID INT,
+    OrderAmount DECIMAL(10,2),
+    OrderDate DATE
+) WITH (
+    LOCATION = '/raw/sales/',
+    DATA_SOURCE = DataLakeSource,
+    FILE_FORMAT = ParquetFormat
+);
+```
+
+### Ledger tables
+
+- Use blockchain technology to create tamper-evident records
+- Two types:
+  - Updatable (allows `INSERT`, `UPDATE` and `DELETE`)
+  - Append-only (allows only `INSERT`)
+- A table could be both updatable ledger table and temporal table
+- Create with `LEDGER=ON` option, `APPEND_ONLY=ON` for append-only
+- Verify data integrity using built-in system views like `sys.database_ledger_transactions`
+- Use `sp_verify_database_ledger` to validate the cryptographic chain remains unbroken
+
+### Graph tables
+
+- Two types of tables:
+  - Node tables
+  - Edge tables
+- Uses the `MATCH` syntax for querying
+- Example
+
+```sql
+-- Create graph tables
+CREATE TABLE Person AS NODE;
+CREATE TABLE Manages AS EDGE;
+CREATE TABLE Knows AS EDGE;
+
+-- Insert nodes
+INSERT INTO Person VALUES (1, 'Alice'), (2, 'Bob'), (3, 'Charlie');
+
+-- Insert edges (relationships)
+INSERT INTO Manages VALUES (1, 2), (2, 3);
+
+-- Query relationships
+SELECT Person1.name, Person2.name
+FROM Person AS Person1, Manages, Person AS Person2
+WHERE MATCH (Person1-(Manages)->Person2)
+AND Person1.id = 1;
+```
+
 ### Temporary tables
 
 - Temporary table name starts with `#`, can be created using `SELECT INTO` or normal `CREATE TABLE`
@@ -206,25 +303,139 @@ Considerations:
   SELECT * FROM #mytemptable
   ```
 
-### Temporal tables
-
-- To track and analyze the changes to your data
-- Recover data from a history table
-
 
 ## Datatypes
 
-### `varchar` vs `nvarchar`
+Some common datatypes:
 
-`varchar` is stored as regular 8-bit data (1 byte per character) and `nvarchar` stores data at 2 bytes per character, so usually you should use `nvarchar` for Unicode text
+| Datatype           | Size (bytes)    | Description                                                     |
+| ------------------ | --------------- | --------------------------------------------------------------- |
+| `char`             | 1 per character | Fixed-length non-Unicode text, e.g., `char(2)` for country code |
+| `varchar`          | 1 per character | Variable-length non-Unicode text                                |
+| `nvarchar`         | 2 per character | Unicode text                                                    |
+| `int`              | 4               | Integer                                                         |
+| `bigint`           | 8               | Large integer, e.g., `Population BIGINT`                        |
+| `decimal`          | Varies          | Financial data, e.g., `Revenue DECIMAL(8,2)`                    |
+| `date`             | 3               | Date only, no time                                              |
+| `datetime2`        | 6-8             | Provides better precision than `datetime`                       |
+| `uniqueidentifier` | 16              | GUIDs                                                           |
+
+### JSON columns and indexes
+
+- Introduced SQL Server 2025 as a native data type
+  - For earlier versions, you could use an `NVARCHAR(MAX)` column
+- Stored in binary format
+- You can create a computed column based on a JSON property, then create an index on it
+- Use `CHECK` constraints with `JSON_PATH_EXISTS` to ensure required fields are present, eg. `CHECK (JSON_PATH_EXISTS(AdditionalAttributes, '$.weight') = 1),`
+- Usage scenarios:
+  - User preference settings
+  - Flexible metadata (eg. product with variable attributes, tags, labels)
+  - Multi-tenant applications
+
+Example:
+
+```sql
+-- Create table with native JSON type (SQL Server 2025+)
+CREATE TABLE ConfigurationData (
+    ConfigID INT PRIMARY KEY,
+    ConfigSettings JSON NOT NULL
+);
+
+-- Insert JSON documents
+INSERT INTO ConfigurationData (ConfigID, ConfigSettings)
+VALUES (1, '{"theme":"dark","language":"en","notifications":true}');
+
+INSERT INTO ConfigurationData (ConfigID, ConfigSettings)
+VALUES (2, '{"theme":"light","language":"fr","notifications":false}');
+
+-- Query JSON properties
+SELECT ConfigID,
+       JSON_VALUE(ConfigSettings, '$.theme') AS Theme,
+       JSON_VALUE(ConfigSettings, '$.language') AS Language,
+       JSON_QUERY(ConfigSettings, '$') AS FullConfig
+FROM ConfigurationData;
+
+-- Update a single property using the modify method (SQL Server 2025+ preview)
+UPDATE ConfigurationData
+SET ConfigSettings.modify('$.theme', 'light')
+WHERE ConfigID = 1;
+
+-- Alternative: JSON_MODIFY works with both JSON and NVARCHAR(MAX) columns
+UPDATE ConfigurationData
+SET ConfigSettings = JSON_MODIFY(CAST(ConfigSettings AS NVARCHAR(MAX)), '$.notifications', CAST(0 AS BIT))
+WHERE ConfigID = 1;
+
+-- Create a computed column on a property, then add an index
+ALTER TABLE ConfigurationData
+ADD ThemeValue AS JSON_VALUE(ConfigSettings, '$.theme');
+
+CREATE INDEX IX_Theme ON ConfigurationData(ThemeValue);
+```
+
+
+## Constraints
+
+- `PRIMARY KEY`
+  - Don't allow `NULL`
+  - A unique index created automatically
+- `FOREIGN KEY`
+  - Syntax `FOREIGN KEY (CustomerID) REFERENCES Customer(CustomerID)`
+  - Could be added on the `PRIMARY KEY` column
+  - Use `CASCADE`, `SET NULL`, or `SET DEFAULT` to specify what happens (in the foreign key table) when a user tries to delete or update a key to which existing foreign keys point
+- `UNIQUE`
+  - Allows one `NULL` value in the column
+  - A unique nonclustered index is created automatically
+- `CHECK`
+  - Example: `CHECK (Salary >= 20000), CHECK (HireDate <= GETDATE())`
+  - `NULL` is still allowed
+- `DEFAULT`
+  - You can define a constraint name
+  - Example: `CreatedDate DATETIME2 CONSTRAINT DF_Activity_CreatedDate DEFAULT GETUTCDATE()`
+- `IDENTITY`
+  - Automatic numbering for a single table
+- `SEQUENCE`
+  - Could be used by multiple tables or multiple columns within a table
+  - You can get a range
+  - Value could be cycled, doesn't enforce uniqueness
+  - Example:
+    ```sql
+    -- Create sequence
+    CREATE SEQUENCE OrderNumber
+        START WITH 1000
+        INCREMENT BY 1
+        MINVALUE 1000
+        MAXVALUE 999999
+        NO CYCLE;
+
+    -- Use sequence in INSERT with NEXT VALUE FOR function
+    INSERT INTO Order (OrderID, CustomerID, OrderNumber, OrderDate)
+    VALUES (1, 100, NEXT VALUE FOR OrderNumber, GETDATE());
+
+    -- Get next value before INSERT
+    DECLARE @NextOrderNum INT = NEXT VALUE FOR OrderNumber;
+    SELECT @NextOrderNum;
+
+    -- Get multiple sequence numbers at once for batch processing
+    DECLARE @FirstSeq INT, @LastSeq INT;
+    EXEC sp_sequence_get_range
+        @sequence_name = N'OrderNumber',
+        @range_size = 100,
+        @range_first_value = @FirstSeq OUTPUT,
+        @range_last_value = @LastSeq OUTPUT;
+
+    -- Reset sequence
+    ALTER SEQUENCE OrderNumber RESTART WITH 1000;
+    ```
 
 
 ## Indexes
 
+### Rowstore
+
 - **Clustered index**
-  - Is the underlying table, defines how the rows are sorted
-  - A table can have Only one clustered index
-    - A table without a clustered index is called a heap, typically used only as staging tables
+  - Is the underlying table, defines how the rows are sorted and stored
+  - A table can have ONLY ONE clustered index
+    - A table without a clustered index is called a *heap*, typically used only as staging tables
   - Clustered index key should:
     - As narrow as possible
     - Use columns with unique and distinct values
@@ -234,25 +445,104 @@ Considerations:
   - eg. for an `Orders` table, primary key is `OrderId`, clustered index on `OrderDate`
 - **Nonclustered indexes**
   - Separate structures from the data rows
-  - Contains the key values
-  - Always contains the clustered key
   - Can have multiple nonclustered indexes on a table
+  - Contains the key values, each key value entry has a pointer to the data row that contains the key value
+  - Always contains the clustered key
   - Can add extra nonkey columns to the leaf level of an index
     - If a nonclustered index doesn't have all the columns to fulfill a query, then a "**Key lookup**" against the clustered index operation happens in an execution plan
-- **Columnstore indexes**
-  - Intially targeted at data warehouses
-    - Best on analytic queries scanning large data sets, such as fact tables
-  - Enhance performance for queries involving large aggregation
-  - Store each column independently
-    - Reduced IO by scanning necessary columns
-    - Greater compression due to similar data within a column
-  - Batch execution mode: `SELECT SUM(Sales) FROM SalesAmount;`
-  - Min. number of rows to bulk insert into a columnstore index: 102,400
-  - Clustered
-    - Represents the table itself, stored in a special way
-    - Include all columns, but NOT sorted
-  - Nonclustered
-    - Stored independently
+
+Example:
+
+  ```sql
+  -- Create clustered index on primary key (defines physical row order)
+  CREATE CLUSTERED INDEX IX_Product_ProductID
+  ON Product(ProductID);
+
+  -- Create non-clustered index on frequently searched column
+  CREATE NONCLUSTERED INDEX IX_Product_Category
+  ON Product(Category)
+  INCLUDE (ProductName, Price);
+  ```
+
+|           | Clustered                                                           | Non-clustered                                   |
+| --------- | ------------------------------------------------------------------- | ----------------------------------------------- |
+| Per table | One                                                                 | Multiple                                        |
+| Best for  | Efficient range queries, stable and narrow keys, natural sort order | Specific predicates, joins, or sorting patterns |
+
+
+### Columnstore
+
+- Intially targeted at data warehouses
+  - Best on analytic queries scanning large data sets, such as fact tables
+- Enhance performance for queries involving large aggregation
+- Store each column independently
+  - Reduced IO by scanning necessary columns
+  - Greater compression due to similar data within a column
+- Batch execution mode: `SELECT SUM(Sales) FROM SalesAmount;`
+- Suitable for:
+  - Data warehouse fact tables
+  - Reporting databases
+  - Historical data
+- NOT for:
+  - Small tables (< 1M rows) (rowgroups need sufficient rows for effective compression)
+  - High-frequency updates/deletes
+  - Single-row lookup
+- Architecture:
+  - Organizes data into rowgroups (up to 1M rows)
+  - Within each rowgroup, each column is stored (and compressed) independently as *column segment*
+  - Inserting:
+    - Small batches go to a *deltastore* (a temporary rowstore structure using a B+ tree index), once accumulates to 102,400 rows, a background process `tuple-mover` compresses it into the columnstore
+    - Bulk loads (> 102,400) bypass the deltastore, go directly to columnstore
+- Fragmentation: Modifications mark rows as *deleted* rather than updating in place, causing fragmentation
+
+Types:
+
+- **Clustered (CCI)**
+  - Represents the table itself, stored in a special way
+  - Include all columns, but NOT sorted
+  - Use this when analytics is the primary workload
+- **Nonclustered (NCCI)**
+  - Stored independently
+  - Can be added to a rowstore clustered table, so a table could be used for both transactional and analytic workloads
+
+Examples:
+
+```sql
+-- Create clustered columnstore index (replaces clustered rowstore)
+CREATE CLUSTERED COLUMNSTORE INDEX CCI_SalesHistory
+ON SalesHistory;
+
+-- Rebuild to improve compression
+ALTER INDEX CCI_SalesHistory ON SalesHistory REBUILD;
+
+-- Create non-clustered columnstore for analytics
+CREATE NONCLUSTERED COLUMNSTORE INDEX NCCI_Product_Analytics
+ON Product(Price, StockQuantity, Category, ProductName);
+```
+
+You can get the health of columnstore indexes with `sys.dm_db_column_store_row_group_physical_stats`
+
+```sql
+-- Check columnstore health
+SELECT
+    object_name(object_id) AS TableName,
+    state_desc,
+    total_rows,
+    deleted_rows,
+    size_in_bytes / 1024 / 1024 AS SizeMB
+FROM sys.dm_db_column_store_row_group_physical_stats
+WHERE object_id = OBJECT_ID('SalesHistory');
+```
+- State:
+  - Open: accepting inserts in the deltastore
+  - Closed: waiting for `tuple-mover` to compress them
+  - Compressed: already in columnar format
+- High deleted row counts or many small rowgroups indicate fragmentation, use `ALTER INDEX REORGANIZE` to resolve
+
+
+### Other
+
+B-tree structure:
 
 ![B-tree index](./images/sqlserver_index-b-tree.png)
 
@@ -261,13 +551,87 @@ Considerations:
 - Read benefits from indexes more
 - Optimize indexes for most frequently run queries
 - Choose appropriate data types
-- Use *filtered index* in large tables on columns with with low-cardinality values (like a bit flag)
+- Use *filtered index* in large tables on columns with low-cardinality values (like a bit flag)
 - Create indexes on views, if the view contains aggregations and/or joins
+
+
+## Partitioning
+
+Divides large tables into smaller, more manageable partitions, while keeping then as a single logical table. A typical example: an "Orders" table partitioned by `Orderdate` value
+
+- Concepts:
+  - Partition function: how data is divided
+  - Partition scheme: maps partition to filegroups
+- Partition key
+  - Should be included in most queries
+  - Partition key must be included in primary key
+  - Data should be distributed evenly across partitions
+  - Target millions of rows per partion, not thousands
+  - Schedule jobs to add new partitions, or archive old ones
+- Indexes could be aligned or nonaligned with the partition scheme
+  - By default, nonclustered indexes inherit the table's partition scheme
+
+Example:
+
+```sql
+-- Create partition function based on date ranges
+-- Use RANGE RIGHT for datetime columns to keep same-day values together
+CREATE PARTITION FUNCTION PF_OrderDate (DATETIME2)
+    AS RANGE RIGHT FOR VALUES
+    ('2024-01-01', '2024-04-01', '2024-07-01', '2024-10-01');
+
+-- Create partition scheme mapping to a single filegroup (recommended)
+-- Use multiple filegroups only for tiered storage or independent backups
+CREATE PARTITION SCHEME PS_OrderDate
+    AS PARTITION PF_OrderDate ALL TO ([PRIMARY]);
+
+-- Create partitioned table
+-- Include partition column in primary key for clustered index alignment
+CREATE TABLE Orders (
+    OrderID INT NOT NULL,
+    OrderDate DATETIME2 NOT NULL,
+    CustomerID INT,
+    Amount DECIMAL(10,2),
+    CONSTRAINT PK_Orders PRIMARY KEY (OrderID, OrderDate)
+) ON PS_OrderDate(OrderDate);
+```
+
+Query partition info, use (`$PARTITION` function):
+
+```sql
+-- View partition information
+SELECT
+    $PARTITION.PF_OrderDate(OrderDate) AS PartitionNumber,
+    MIN(OrderDate) AS MinDate,
+    MAX(OrderDate) AS MaxDate,
+    COUNT(*) AS RowCount
+FROM Orders
+GROUP BY $PARTITION.PF_OrderDate(OrderDate)
+ORDER BY PartitionNumber;
+```
+
+Add new partition boundary
+
+```sql
+-- Split partition to add new boundary
+ALTER PARTITION FUNCTION PF_OrderDate()
+    SPLIT RANGE ('2024-11-01');
+```
+
+Archive or merge partition
+
+```sql
+-- Merge partitions to archive old data
+ALTER PARTITION FUNCTION PF_OrderDate()
+    MERGE RANGE ('2023-12-31');
+```
+
+
 
 
 ## Isolation levels
 
-- It's a session level setting, there's NO global isolation level
+- It's a **session level** setting, there's NO global isolation level
 - Use a proper level to balance consistency and concurrency
 - Locks could be on different levels:
   - Row
@@ -299,7 +663,7 @@ Levels:
     - Snapshot
       - Need to be set explicitly in a session: `SET TRANSACTION ISOLATION LEVEL SNAPSHOT`
       - Like RCSI, reader gets old committed data, not blocked
-      - Different form RCSI, this gets a static snapshot, used through out the transaction (like "Repeatable Read")
+      - Different from RCSI, this gets a static snapshot, used through out the transaction (like "Repeatable Read")
 
 Troubleshooting:
 
@@ -488,7 +852,7 @@ Three types:
 Stats:
 
 - `sys.dm_exec_session_wait_stats`: active waiting sessions
-- `sys.dm_os_wait_stats` wait history (`sys.dm_db_wait_stats` fro Azure SQL DB)
+- `sys.dm_os_wait_stats` wait history (`sys.dm_db_wait_stats` Azure for SQL DB)
 - Query Store also tracks some waits data (not as granular as DMV)
 
 Common waits:
