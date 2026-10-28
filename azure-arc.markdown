@@ -4,6 +4,7 @@
 - [Arc machines](#arc-machines)
   - [Roles](#roles)
   - [Onboarding](#onboarding)
+  - [Identity](#identity)
 - [Multicloud connector](#multicloud-connector)
 
 
@@ -59,6 +60,26 @@ You need to install the "Azure Connected Machine agent" on the target machine(s)
   - Public endpoint
   - Private endpoint (`hybridcompute` sub-resource)
   - Proxy server
+
+### Identity
+
+When a server is onboarded to Azure Arc, a system assigned managed identity is crated for the server as well.
+
+The `IDENTITY_ENDPOINT` is `http://localhost:40342/metadata/identity/oauth2/token`
+, the endpoint is on localhost instead of `169.254.169.254` for an Azure VM
+
+See [example here](https://learn.microsoft.com/en-us/azure/azure-arc/servers/managed-identity-authentication#acquire-an-access-token-using-rest-api) for how to get an access token.
+
+Notes:
+  - To allow an IIS App Pool to get a token, the App Pool Identity needs to be in the `Hybrid Agent Extension Applications` local group
+    ```pwsh
+    # If using DefaultAppPool:
+    Add-LocalGroupMember -Group "Hybrid Agent Extension Applications" -Member "IIS APPPOOL\DefaultAppPool"
+
+    # If using a custom AppPool (replace AppPoolName with your actual pool name):
+    Add-LocalGroupMember -Group "Hybrid Agent Extension Applications" -Member "IIS APPPOOL\AppPoolName"
+    ```
+    Then recycle the App Pool or restart IIS (`iisreset /restart`) to apply the change.
 
 
 ## Multicloud connector
