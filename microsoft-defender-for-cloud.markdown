@@ -220,7 +220,7 @@ Allows you to build queries interactively to hunt for risks, like "SQL servers W
   - Defender for Servers
     - Azure Arc agent (For multicloud and on-premises servers)
     - Microsoft Defender for Endpoint (MDE)
-      - Installed by "Windows Azure Security Resource Provider" when certain plan enabled
+      - Installed by "Windows Azure Security Resource Provider" when certain plan enabled, seems this is NOT done by a policy
     - Vulnerability assessment
     - Azure Monitor Agent (AMA)
     - Log Analytics agent (deprecating, also known as "MMA")
