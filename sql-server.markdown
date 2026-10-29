@@ -22,6 +22,17 @@
   - [Columnstore](#columnstore)
   - [Other](#other)
 - [Partitioning](#partitioning)
+- [Programmable objects](#programmable-objects)
+  - [Views](#views)
+  - [Stored procedures](#stored-procedures)
+  - [Scalar functions](#scalar-functions)
+  - [Table-valued functions](#table-valued-functions)
+  - [Triggers](#triggers)
+    - [DML triggers](#dml-triggers)
+- [Advanced SQL queries](#advanced-sql-queries)
+  - [Common Table Expression (CTE)](#common-table-expression-cte)
+  - [Window functions](#window-functions)
+  - [JSON functions](#json-functions)
 - [Isolation levels](#isolation-levels)
 - [Query plans](#query-plans)
   - [Common problems](#common-problems)
@@ -377,14 +388,14 @@ CREATE INDEX IX_Theme ON ConfigurationData(ThemeValue);
 
 - `PRIMARY KEY`
   - Don't allow `NULL`
-  - A unique index created automatically
+  - A unique index (prefixed `PK_`) created automatically
 - `FOREIGN KEY`
   - Syntax `FOREIGN KEY (CustomerID) REFERENCES Customer(CustomerID)`
   - Could be added on the `PRIMARY KEY` column
   - Use `CASCADE`, `SET NULL`, or `SET DEFAULT` to specify what happens (in the foreign key table) when a user tries to delete or update a key to which existing foreign keys point
 - `UNIQUE`
   - Allows one `NULL` value in the column
-  - A unique nonclustered index is created automatically
+  - A unique nonclustered index (prefixed `UQ_`) is created automatically
 - `CHECK`
   - Example: `CHECK (Salary >= 20000), CHECK (HireDate <= GETDATE())`
   - `NULL` is still allowed
@@ -626,6 +637,613 @@ ALTER PARTITION FUNCTION PF_OrderDate()
     MERGE RANGE ('2023-12-31');
 ```
 
+
+## Programmable objects
+
+### Views
+
+![What is a View](./images/sqlserver_view.png)
+
+- A virtual table
+  - Based on a `SELECT` statement
+  - Encapsulate reusable query logic
+  - You CAN `INSERT` and `UPDATE` data through a view (use `WITH CHECK OPTION` to make sure only rows visible in the view could be inserted/updated)
+- Also a security boundary, you can grant user access to views without giving out full table access
+- Views could be nested, you should keep them shallow
+- Use other objects in these scenarios:
+  - Indexed views (materialized views): result stored physically, for performance-critical queries that always return the same result
+  - UDF: for complex calculations that accept parameters
+  - Stored procedure: for data modification logic
+
+Example:
+
+```sql
+CREATE VIEW Sales.OrderSummary
+AS
+SELECT
+    OrderID,
+    CustomerID,
+    OrderDate,
+    TotalAmount,
+    -- can have computed columns
+    CASE
+        WHEN TotalAmount < 100 THEN 'Small'
+        WHEN TotalAmount < 1000 THEN 'Medium'
+        ELSE 'Large'
+    END AS OrderSize
+FROM Sales.Orders;
+
+CREATE VIEW Sales.HighValueOrders
+AS
+SELECT
+    OrderID,
+    CustomerID,
+    OrderDate,
+    TotalAmount
+FROM Sales.Orders
+WHERE TotalAmount > 1000
+WITH CHECK OPTION; -- use this to ensure only insert/update rows with TotalAmount > 1000
+```
+
+### Stored procedures
+
+- Precompiled and optimized
+- To encapsulate complex business logic, enforce data validation rules
+- Example usage:
+  - validate input
+  - apply business rules
+  - log change before modifying dat
+- Best practices
+  - Use schema qualified names, eg. `dbo.UpdateCustomerAddress`
+    - DON'T use the `sp_` prefix, SQL Server reserves this prefix for system procedures in the `master` database
+  - Validate parameters at the start of your procedure
+  - Avoid `SELECT *`
+
+```sql
+-- With parameters
+CREATE PROCEDURE dbo.GetCustomerOrdersByDate
+    @CustomerID int,
+    @StartDate datetime = NULL,
+    @EndDate datetime = NULL
+AS
+BEGIN
+    SET NOCOUNT ON; -- don't return how many rows affected
+
+    SELECT
+        OrderID,
+        OrderDate,
+        TotalAmount
+    FROM dbo.Orders
+    WHERE CustomerID = @CustomerID
+        AND (@StartDate IS NULL OR OrderDate >= @StartDate)
+        AND (@EndDate IS NULL OR OrderDate <= @EndDate)
+    ORDER BY OrderDate DESC;
+END
+
+-- can have an output parameter
+CREATE PROCEDURE dbo.CalculateOrderTotal
+    @OrderID int,
+    @TotalAmount decimal(10,2) OUTPUT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT @TotalAmount = SUM(Quantity * UnitPrice)
+    FROM dbo.OrderDetails
+    WHERE OrderID = @OrderID;
+
+    RETURN 0;
+END
+
+-- with TRY...CATCH
+CREATE PROCEDURE dbo.InsertCustomerOrder
+    @CustomerID int,
+    @OrderDate datetime,
+    @TotalAmount decimal(10,2)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        -- Validate customer exists
+        IF NOT EXISTS (SELECT 1 FROM dbo.Customers WHERE CustomerID = @CustomerID)
+        BEGIN
+            RAISERROR('Customer does not exist.', 16, 1);
+        END
+
+        -- Insert order
+        INSERT INTO dbo.Orders (CustomerID, OrderDate, TotalAmount)
+        VALUES (@CustomerID, @OrderDate, @TotalAmount);
+
+        COMMIT TRANSACTION;
+        RETURN 0;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 -- ROLLBACK if necessary
+            ROLLBACK TRANSACTION;
+
+        DECLARE @ErrorMessage nvarchar(4000) = ERROR_MESSAGE();
+        DECLARE @ErrorSeverity int = ERROR_SEVERITY();
+        DECLARE @ErrorState int = ERROR_STATE();
+
+        RAISERROR(@ErrorMessage, @ErrorSeverity, @ErrorState);
+        RETURN -1;
+    END CATCH
+END
+```
+
+### Scalar functions
+
+- Returns a single value
+- Can be used in `SELECT`, `  WHERE`, and other T-SQL expressions
+- Management
+  - You can modify a defined function with `ALTER FUNCTION`
+  - Before `ALTER FUNCTION`, check if other objects depend on it by checking `sys.sql_expression_dependencies`
+- Deterministic function
+  - Always return same result with same input
+  - A function that reference system date/time functions (eg. `GETDate()`) or tables are non-deterministic
+  - Non-deterministic functions can't be used in indexed views or indexed on computed columns
+- Best practices
+  - Keep it deterministic when possible
+  - Avoid side effects (eg. modify data)
+  - Avoid using it in `WHERE` on large tables (the function executes for every row, degrading performance)
+
+Example:
+
+```sql
+CREATE FUNCTION dbo.CalculateSalesTax
+(
+    @Amount DECIMAL(10,2),
+    @TaxRate DECIMAL(5,4)
+)
+RETURNS DECIMAL(10,2)
+AS
+BEGIN
+    DECLARE @TaxAmount DECIMAL(10,2)
+    SET @TaxAmount = @Amount * @TaxRate
+    RETURN @TaxAmount
+END
+```
+
+### Table-valued functions
+
+- Return result sets, like tables or views
+- Could be used in `FROM` or `JOIN`
+- Two types
+  - Inline
+    - A single `SELECT` statement
+    - Like views with parameters
+    - Better performance than multi-statement TVF
+    - Allows plan caching because the optimizer expands them directly in the query plan
+  - Multi-statement
+    - Uses a `BEGIN...END` block
+    - Explicitly declares the structure of the returned table
+
+Inline TVF
+
+```sql
+CREATE FUNCTION dbo.GetCustomerOrders
+(
+    @CustomerID INT
+)
+RETURNS TABLE
+AS
+RETURN
+(
+    SELECT
+        OrderID,
+        OrderDate,
+        TotalAmount,
+        Status
+    FROM Sales.Orders
+    WHERE CustomerID = @CustomerID
+);
+
+-- use it like a table
+SELECT OrderID, OrderDate, TotalAmount
+FROM dbo.GetCustomerOrders(1001)
+WHERE OrderDate >= '2024-01-01';
+```
+
+Multi-statement TVF
+
+```sql
+CREATE FUNCTION dbo.GetProductSalesSummary
+(
+    @StartDate DATE,
+    @EndDate DATE
+)
+RETURNS @SalesSummary TABLE
+(
+    ProductID INT,
+    ProductName NVARCHAR(100),
+    TotalQuantity INT,
+    TotalRevenue DECIMAL(18,2),
+    AveragePrice DECIMAL(18,2)
+)
+AS
+BEGIN
+    INSERT INTO @SalesSummary
+    SELECT
+        p.ProductID,
+        p.ProductName,
+        SUM(od.Quantity) AS TotalQuantity,
+        SUM(od.Quantity * od.UnitPrice) AS TotalRevenue,
+        AVG(od.UnitPrice) AS AveragePrice
+    FROM Production.Products p
+    INNER JOIN Sales.OrderDetails od ON p.ProductID = od.ProductID
+    INNER JOIN Sales.Orders o ON od.OrderID = o.OrderID
+    WHERE o.OrderDate BETWEEN @StartDate AND @EndDate
+    GROUP BY p.ProductID, p.ProductName;
+
+    RETURN;
+END;
+```
+
+Use TVF in ``JOIN`
+
+```sql
+SELECT
+    c.CustomerName,
+    o.OrderID,
+    o.TotalAmount
+FROM Customers c
+CROSS APPLY dbo.GetCustomerOrders(c.CustomerID) o
+WHERE o.Status = 'Completed';
+```
+
+### Triggers
+
+- Special stored procedures
+- Responds to DML or DDL operations
+- Best practices:
+  - Keep them efficient to minimize impact
+  - Keep logic focused and minimal (eg. log to another table, and process them later)
+  - Avoid recursive operations
+  - Handle errors properly (if you don't handle an error in a trigger, the transcation rolls back)
+  - Document them
+
+#### DML triggers
+
+Two types
+  - `AFTER` triggers: to validate changes, update related tables, logging, etc
+  - `INSTEAD OF` triggers: to modify views, or to implement complex logic
+- You could access pseudo-tables `inserted` or `deleted`
+  - For `UPDATE`, `inserted` contains new values, `deleted` holds old values
+- A single trigger could responds to multiple events by combining `INSERT`, `UPDATE`, and `DELETE` in the trigger definition
+
+```sql
+CREATE TRIGGER tr_UpdateInventory
+ON Sales.OrderDetails
+AFTER INSERT
+AS
+BEGIN
+    UPDATE Inventory.Products
+    SET QuantityInStock = QuantityInStock - i.Quantity
+    FROM Inventory.Products p
+    INNER JOIN inserted i ON p.ProductID = i.ProductID;
+END;
+
+CREATE TRIGGER tr_UpdateOrderView
+ON Sales.OrderSummaryView
+INSTEAD OF UPDATE
+AS
+BEGIN
+    UPDATE Sales.Orders
+    SET OrderStatus = i.OrderStatus,
+        ModifiedDate = GETDATE()
+    FROM Sales.Orders o
+    INNER JOIN inserted i ON o.OrderID = i.OrderID;
+END;
+```
+
+Multiple DML operations:
+
+```sql
+CREATE TRIGGER tr_AuditEmployeeChanges
+ON HR.Employees
+AFTER INSERT, UPDATE, DELETE
+AS
+BEGIN
+    DECLARE @Operation NVARCHAR(10);
+
+    IF EXISTS (SELECT * FROM inserted) AND NOT EXISTS (SELECT * FROM deleted)
+        SET @Operation = 'INSERT';
+    ELSE IF EXISTS (SELECT * FROM inserted) AND EXISTS (SELECT * FROM deleted)
+        SET @Operation = 'UPDATE';
+    ELSE
+        SET @Operation = 'DELETE';
+
+    INSERT INTO Audit.EmployeeLog (EmployeeID, Operation, ChangeDate)
+    SELECT COALESCE(i.EmployeeID, d.EmployeeID), @Operation, GETDATE()
+    FROM inserted i
+    FULL OUTER JOIN deleted d ON i.EmployeeID = d.EmployeeID;
+END;
+```
+
+## Advanced SQL queries
+
+### Common Table Expression (CTE)
+
+- Use the `WITH` clause, can be referenced multiple times in a query
+- Could define multiple CTEs, later ones can reference earlier ones
+  ```sql
+  WITH CategorySales AS
+  (
+      SELECT
+          p.ProductCategoryID,
+          SUM(sod.LineTotal) AS CategoryRevenue
+      FROM SalesLT.Product AS p
+      INNER JOIN SalesLT.SalesOrderDetail AS sod
+          ON p.ProductID = sod.ProductID
+      GROUP BY p.ProductCategoryID
+  ),
+  RankedCategories AS
+  (
+      SELECT
+          ProductCategoryID,
+          CategoryRevenue,
+          RANK() OVER (ORDER BY CategoryRevenue DESC) AS RevenueRank
+      FROM CategorySales
+  )
+  SELECT
+      pc.Name AS CategoryName,
+      rc.CategoryRevenue,
+      rc.RevenueRank
+  FROM RankedCategories AS rc
+  INNER JOIN SalesLT.ProductCategory AS pc
+      ON rc.ProductCategoryID = pc.ProductCategoryID
+  WHERE rc.RevenueRank <= 5;
+  ```
+- Could be recursive, enabling hierarchical data travesal, recursive level default to 100, could be customized with `OPTION (MAXRECURSION n)`
+  ```sql
+  WITH EmployeeHierarchy AS
+  (
+      -- Anchor: Start with top-level managers (no manager)
+      SELECT
+          EmployeeID,
+          FirstName,
+          LastName,
+          ManagerID,
+          0 AS Level,
+          CAST(FirstName + ' ' + LastName AS NVARCHAR(500)) AS HierarchyPath
+      FROM HumanResources.Employee
+      WHERE ManagerID IS NULL
+
+      UNION ALL
+
+      -- Recursive: Find employees who report to previously found employees
+      SELECT
+          e.EmployeeID,
+          e.FirstName,
+          e.LastName,
+          e.ManagerID,
+          eh.Level + 1,
+          CAST(eh.HierarchyPath + ' > ' + e.FirstName + ' ' + e.LastName AS NVARCHAR(500))
+      FROM HumanResources.Employee AS e
+      INNER JOIN EmployeeHierarchy AS eh
+          ON e.ManagerID = eh.EmployeeID
+  )
+  SELECT
+      EmployeeID,
+      FirstName,
+      LastName,
+      Level,
+      HierarchyPath
+  FROM EmployeeHierarchy
+  ORDER BY HierarchyPath;
+  ```
+  - Recursive CTEs could be used for generating number or date ranges
+    ```sql
+    -- Generate a numbers table from 1 to 1000
+    WITH Numbers AS
+    (
+        -- Anchor: Start with 1
+        SELECT 1 AS n
+        UNION ALL
+        -- Recursive: Increment until we reach 1000
+        SELECT n + 1 FROM Numbers WHERE n < 1000
+    ),
+    -- Convert numbers to dates for the entire year
+    DateRange AS
+    (
+        SELECT DATEADD(DAY, n - 1, '2024-01-01') AS OrderDate
+        FROM Numbers
+        WHERE DATEADD(DAY, n - 1, '2024-01-01') <= '2024-12-31'
+    )
+    -- Count orders for each date, showing 0 for dates with no orders
+    ```
+
+### Window functions
+
+Performing calculations across a set of rows related to current row (eg. ranking), while preserving all original rows in the result.
+
+```sql
+function_name(arguments) OVER (
+    [PARTITION BY partition_expression] -- divide rows into groups
+    [ORDER BY order_expression [ASC | DESC]] -- order within each partition
+    [ROWS | RANGE frame_specification]
+)
+```
+
+Ranking
+
+```sql
+-- ROW_NUMBER(), a unique sequential number for each row
+-- results are ordered by the `ORDER BY` in the window function !
+SELECT
+    ProductID,
+    Name,
+    ListPrice,
+    ROW_NUMBER() OVER (ORDER BY ListPrice DESC) AS PriceRank
+FROM SalesLT.Product
+WHERE ListPrice > 0;
+
+-- RANK(), skips numbers for ties, eg. three "1", then "4", etc
+-- DENSE_RANK(), eg. three "1", then "2", number not skipped
+-- NTILE(n), divides rows into percentiles, groups are roughly the same size
+```
+
+With `PARTITION BY`, to get per-group ranking
+
+```sql
+SELECT
+    pc.Name AS Category,
+    p.Name AS Product,
+    p.ListPrice,
+    ROW_NUMBER() OVER (
+        PARTITION BY p.ProductCategoryID
+        ORDER BY p.ListPrice DESC
+    ) AS CategoryPriceRank
+FROM SalesLT.Product AS p
+INNER JOIN SalesLT.ProductCategory AS pc
+    ON p.ProductCategoryID = pc.ProductCategoryID
+WHERE p.ListPrice > 0;
+```
+
+Use standard aggregate functions like `SUM`, `AVG`, `COUNT`, `MIN` and `MAX` as windows functions by adding the `OVER` clause. This can be used to get cumulative aggregates.
+
+```sql
+SELECT
+    SalesOrderID,
+    OrderDate,
+    TotalDue,
+    -- use "ORDER BY" to get cumulative aggregation from partion start to current row, otherwise it's calculated across the entire partition
+    SUM(TotalDue) OVER (ORDER BY OrderDate, SalesOrderID) AS RunningTotal,
+    AVG(TotalDue) OVER (ORDER BY OrderDate, SalesOrderID) AS RunningAverage,
+    COUNT(*) OVER (ORDER BY OrderDate, SalesOrderID) AS OrderNumber
+FROM SalesLT.SalesOrderHeader
+ORDER BY OrderDate, SalesOrderID;
+```
+
+Window frames with `ROWS` and `RANGE`
+- `UNBOUNDED PRECEDING`: From the partition start
+- `n PRECEDING`: n rows before current row
+- `CURRENT ROW`: The current row
+- `n FOLLOWING`: n rows after current row
+- `UNBOUNDED FOLLOWING`: To the partition end
+
+```sql
+SELECT
+    SalesOrderID,
+    OrderDate,
+    TotalDue,
+    AVG(TotalDue) OVER (
+        ORDER BY OrderDate
+        ROWS BETWEEN 2 PRECEDING AND CURRENT ROW
+    ) AS MovingAvg3Orders
+FROM SalesLT.SalesOrderHeader
+ORDER BY OrderDate;
+```
+
+Analytical functions
+- `LAG(colName, n, defaultValue)`: n rows preceding current row
+- `LEAD(colName, n, defaultValue)`: n rows after current row
+- `FIRSTVALUE(colName)`: first value in a frame
+- `LASTVALUE(colName)`: last value in a frame, use `ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING`, otherwise it returns current row
+- `PERCENT_RANK()` relative position within a partition (0 to 1), don't include itself
+- `CUME_DIST()` including itself
+
+### JSON functions
+
+- `JSON_VALUE()` extract a scalar value
+- `JSON_QUERY()` extract an object or array
+- `OPENJSON(@jsonName) WITH (...)` to turn JSON to rowset
+
+  ```sql
+  DECLARE @json NVARCHAR(MAX) = N'{
+      "customer": {
+          "id": 12345,
+          "name": "Contoso Ltd",
+          "active": true
+      },
+      "orderTotal": 1599.99
+  }';
+
+  SELECT
+      JSON_QUERY(@json, '$.customer') AS CustomerObject,
+      JSON_VALUE(@json, '$.customer.id') AS CustomerID,
+      JSON_VALUE(@json, '$.customer.name') AS CustomerName,
+      JSON_VALUE(@json, '$.orderTotal') AS OrderTotal;
+  ```
+
+- `JSON_OBJECT()` and `JSON_ARRAY()` for building JSON
+
+  ```sql
+  SELECT JSON_OBJECT(
+      'orderId': soh.SalesOrderID,
+      'orderDate': soh.OrderDate,
+      'customer': JSON_OBJECT(
+          'id': c.CustomerID,
+          'name': c.CompanyName
+      ),
+      'totals': JSON_OBJECT(
+          'subtotal': soh.SubTotal,
+          'tax': soh.TaxAmt,
+          'total': soh.TotalDue
+      )
+  ) AS OrderJson
+  FROM SalesLT.SalesOrderHeader AS soh
+  INNER JOIN SalesLT.Customer AS c
+      ON soh.CustomerID = c.CustomerID
+  WHERE soh.SalesOrderID = 71774;
+  ```
+
+- `JSON_ARRAYAGG()` for aggregating data into arrays, combining with `GROUP BY ...`
+- `ISJSON()` to validate JSON format, `NULL` returns `NULL`
+- `JSON_PATH_EXISTS()`
+
+- Path modes:
+  - `lax $.path.to.key` return `NULL` if path not found
+  - `strict $.path.to.key` raise an error if path not found
+
+- Computed column for JSON properties
+
+  ```sql
+  -- Add a computed column that extracts a JSON property
+  -- This computed column is virtual, calculated at query time
+  ALTER TABLE Products
+  ADD ProductCategory AS JSON_VALUE(ProductData, '$.category');
+
+  -- The column is now available in queries
+  SELECT ProductID, ProductName, ProductCategory
+  FROM Products
+  WHERE ProductCategory = 'Electronics';
+  ```
+
+- You can also persist a computed column and add index (could be multiple columns and a composite index)
+
+  ```sql
+  -- Extract multiple properties
+  ALTER TABLE Products
+  ADD ProductCategory AS JSON_VALUE(ProductData, '$.category') PERSISTED,
+      ProductBrand AS JSON_VALUE(ProductData, '$.brand') PERSISTED,
+      ProductPrice AS CAST(JSON_VALUE(ProductData, '$.price') AS DECIMAL(10,2)) PERSISTED;
+
+  -- Create a composite index for common query patterns
+  CREATE INDEX IX_Products_Category_Brand ON Products(ProductCategory, ProductBrand);
+
+  -- Create an index for price range queries
+  CREATE INDEX IX_Products_Price ON Products(ProductPrice);
+  ```
+
+- Use `FOR JSON PATH` and aliases to transform rowset output as JSON
+
+  ```sql
+  SELECT
+      p.ProductID AS 'product.id',
+      p.Name AS 'product.name',
+      pc.Name AS 'product.category'
+  FROM SalesLT.Product AS p
+  INNER JOIN SalesLT.ProductCategory AS pc
+      ON p.ProductCategoryID = pc.ProductCategoryID
+  WHERE p.ProductID = 680
+  FOR JSON PATH;
+  ```
+
+  Result is like `[{"product":{"id":680,"name":"HL Road Frame - Black, 58","category":"Road Frames"}}]`
 
 
 
