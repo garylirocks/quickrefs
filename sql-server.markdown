@@ -33,6 +33,10 @@
   - [Common Table Expression (CTE)](#common-table-expression-cte)
   - [Window functions](#window-functions)
   - [JSON functions](#json-functions)
+  - [Regex](#regex)
+  - [Fuzzy match](#fuzzy-match)
+  - [Correlated subqueries](#correlated-subqueries)
+  - [`TRY...CATCH...`](#trycatch)
 - [Isolation levels](#isolation-levels)
 - [Query plans](#query-plans)
   - [Common problems](#common-problems)
@@ -275,8 +279,8 @@ CREATE EXTERNAL TABLE dbo.ExternalSalesData (
 ### Graph tables
 
 - Two types of tables:
-  - Node tables
-  - Edge tables
+  - Node tables, has an auto-generated `$node_id` column
+  - Edge tables, has auto-genraged `$edge_id`, `$from_id`, `$to_id` columns
 - Uses the `MATCH` syntax for querying
 - Example
 
@@ -295,9 +299,54 @@ INSERT INTO Manages VALUES (1, 2), (2, 3);
 -- Query relationships
 SELECT Person1.name, Person2.name
 FROM Person AS Person1, Manages, Person AS Person2
-WHERE MATCH (Person1-(Manages)->Person2)
+WHERE MATCH(Person1-(Manages)->Person2)
 AND Person1.id = 1;
 ```
+
+Edge table can have other properties
+
+```sql
+INSERT INTO dbo.ReportsTo ($from_id, $to_id, StartDate, ReportType)
+SELECT
+    (SELECT $node_id FROM dbo.Person WHERE Name = 'Alice Johnson'),
+    (SELECT $node_id FROM dbo.Person WHERE Name = 'Bob Smith'),
+    '2023-01-15',
+    'Direct';
+```
+
+Arrow direction matters:
+
+- `(Node1)-(Edge)->(Node2)`: Edge goes from Node1 to Node2
+- `(Node1)<-(Edge)-(Node2)`: Edge goes from Node2 to Node1
+
+A single `MATCH` can chain multiple relationships
+
+```sql
+-- one alias can only be used once in a MATCH, so create multiple aliases here
+...
+FROM dbo.Person AS p1,
+     dbo.Knows AS k,
+     dbo.Person AS p2,
+     dbo.Purchased AS pu,
+     dbo.Product AS prod
+WHERE MATCH(p1-(k)->p2-(pu)->prod)
+```
+
+`SHORTEST_PATH`, use `FOR PATH` to mark all node and edge tables in variable-length matching
+
+```sql
+-- finds all people reachable from Alice within three hops and counts the distance to each
+SELECT
+    StartPerson.Name,
+    LAST_VALUE(ReachablePerson.Name) WITHIN GROUP (GRAPH PATH) AS ReachablePerson,
+    COUNT(ReachablePerson.Name) WITHIN GROUP (GRAPH PATH) AS Distance
+FROM dbo.Person AS StartPerson,
+     dbo.Knows FOR PATH AS k,
+     dbo.Person FOR PATH AS ReachablePerson
+WHERE MATCH(SHORTEST_PATH(StartPerson(-(k)->ReachablePerson){1,3}))
+  AND StartPerson.Name = 'Alice Johnson';
+```
+
 
 ### Temporary tables
 
@@ -1245,7 +1294,193 @@ Analytical functions
 
   Result is like `[{"product":{"id":680,"name":"HL Road Frame - Black, 58","category":"Road Frames"}}]`
 
+### Regex
 
+Same syntax as ECMAScript
+
+- `REGEXP_LIKE` check pattern exist or not
+- `REGEXP_REPLACE` check pattern exist or not
+- `REGEXP_SUBSTR` extract subsring
+- `REGEXP_INSTR` starting position of a pattern
+- `REGEXP_COUNT` pattern occurrence count
+- `REGEXP_SPLIT_TO_TABLE` table-valued function (TVF), split a string to rows, a `value` column, eg. `REGEXP_SPLIT_TO_TABLE(@data, '[,;|]')`
+- `REGEXP_MATCHES` table-valued function (TVF), returns two columns `match_value`, `match_id`
+
+### Fuzzy match
+
+- `EDIT_DISTANCE`
+  - How many single-character edits away from one string to another
+- `EDIT_DISTANCE_SIMILARITY`
+  - Between 0 to 100 (identical)
+  - Better for longer strings
+- `JARO_WINKLER_DISTANCE`
+  - For phonetic similarity
+  - Designed for comparing names and short strings
+  - Higher scores to strings that match from the beginning
+  - Score above 0.9 indicates a strong match for names
+
+Note:
+- You should narrow results first before applying expensive fuzzy functions
+  - Use `LIKE` patterns, exact matches, or range filters, etc
+
+### Correlated subqueries
+
+Correlated subquery:
+  - a subquery that reference columns from the outer query
+  - the subquery execute once for each row processed by the outer query
+
+Compares each row agains a dynamically calculated value based on that row's attributes
+
+Usage scenarios:
+  - Identify outliers in a group
+  - Find top-N per group
+
+Notes:
+  - Query optimizer often transforms correlated subqueries into equivalent joins internally.
+    - Use `SET STATISTICS IO ON` to examine the actual execution plan
+  - Should use window functions for some scenarios
+    - To find max value per group, `ROW_NUMBER()` is better than `MAX()` in subquery
+
+```sql
+-- Correlated subquery (executes per outer row)
+-- Find products with higher than average price in each category
+SELECT p1.ProductID, p1.Name, p1.ListPrice
+FROM SalesLT.Product AS p1
+WHERE p1.ListPrice > (
+    SELECT AVG(p2.ListPrice)
+    FROM SalesLT.Product AS p2
+    WHERE p2.ProductCategoryID = p1.ProductCategoryID  -- References outer query
+);
+```
+
+`EXISTS`
+- Typically outperforms `IN` with subqueries, the optimizer can stop after finding the first match
+- Example
+  ```sql
+  -- Find customers who have placed at least one order
+  SELECT CustomerID, FirstName, LastName
+  FROM SalesLT.Customer AS c
+  WHERE EXISTS (
+      SELECT 1
+      FROM SalesLT.SalesOrderHeader AS soh
+      WHERE soh.CustomerID = c.CustomerID
+  );
+  ```
+
+Find top-N rows in a group
+
+```sql
+-- can also be done with window function
+SELECT
+    pc.Name AS Category,
+    p.Name AS Product,
+    p.ListPrice
+FROM SalesLT.Product AS p
+INNER JOIN SalesLT.ProductCategory AS pc
+    ON p.ProductCategoryID = pc.ProductCategoryID
+WHERE p.ProductID IN (
+    SELECT TOP 3 p2.ProductID
+    FROM SalesLT.Product AS p2
+    WHERE p2.ProductCategoryID = p.ProductCategoryID
+    ORDER BY p2.ListPrice DESC
+)
+ORDER BY pc.Name, p.ListPrice DESC;
+```
+
+### `TRY...CATCH...`
+
+```sql
+BEGIN TRY
+    -- Attempt an operation that might fail
+    INSERT INTO SalesLT.Customer (CustomerID, FirstName, LastName)
+    VALUES (1, 'Test', 'Customer');  -- Duplicate key causes error
+END TRY
+BEGIN CATCH
+    -- Log error details to a table using the ERROR_* functions
+    INSERT INTO ErrorLog (
+        ErrorTime,
+        ErrorNumber,
+        ErrorSeverity,
+        ErrorState,
+        ErrorProcedure,
+        ErrorLine,
+        ErrorMessage
+    )
+    VALUES (
+        GETDATE(),
+        ERROR_NUMBER(),       -- The error number (e.g., 2627 for duplicate key)
+        ERROR_SEVERITY(),     -- Severity level (0-25)
+        ERROR_STATE(),        -- Error state for debugging
+        ISNULL(ERROR_PROCEDURE(), 'Ad hoc query'),  -- NULL if not in a procedure
+        ERROR_LINE(),         -- Line number where error occurred
+        ERROR_MESSAGE()       -- Full error message text
+    );
+
+    -- Re-raise the error to the calling application
+    THROW;
+END CATCH;
+```
+
+Roll back transactions:
+- `SET XACT_ABORT ON;` to automatically rolls back transactions, could be used together with `TRY...CATCH`
+
+```sql
+SET XACT_ABORT ON;
+
+BEGIN TRY
+    -- Start a transaction to group multiple operations
+    BEGIN TRANSACTION;
+
+    -- First operation: update product prices
+    UPDATE SalesLT.Product
+    SET ListPrice = ListPrice * 1.05
+    WHERE ProductCategoryID = 5;
+
+    -- Second operation: update order totals
+    -- If this fails, we want to undo the first update too
+    UPDATE SalesLT.SalesOrderHeader
+    SET TotalDue = TotalDue * 1.05
+    WHERE CustomerID = 12345;
+
+    -- Both operations succeeded, make changes permanent
+    COMMIT TRANSACTION;
+END TRY
+BEGIN CATCH
+    -- Check if a transaction is still active before rolling back
+    -- Some errors auto-rollback before reaching `CATCH`, so @@TRANCOUNT might be 0
+    IF @@TRANCOUNT > 0
+        ROLLBACK TRANSACTION;  -- Undo all changes from this transaction
+
+    -- Re-raise the error so the caller knows something failed
+    THROW;
+END CATCH;
+```
+
+`THROW` and `RAISERROR`
+- `THROW` is recommended, it includes a stack trace
+- `RAISERROR` when you need formatted message, or compatibility requirement
+
+```sql
+-- User defined error number must > 50000, state parameter between 1 and 255
+THROW 50002, 'Order not found.', 1;
+
+-- RAISERROR provide more printf style formatting
+DECLARE @ProductName NVARCHAR(100) = 'Widget Pro';
+DECLARE @CurrentStock INT = 5;
+DECLARE @RequestedQty INT = 10;
+
+IF @CurrentStock < @RequestedQty
+BEGIN
+    RAISERROR(
+        'Insufficient stock for product "%s". Available: %d, Requested: %d',
+        16,  -- Severity
+        1,   -- State
+        @ProductName,
+        @CurrentStock,
+        @RequestedQty
+    );
+END;
+```
 
 ## Isolation levels
 
