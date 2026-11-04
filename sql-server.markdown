@@ -47,6 +47,8 @@
   - [Tune indexes](#tune-indexes)
   - [Resumable index](#resumable-index)
   - [Query hints](#query-hints)
+- [AI features](#ai-features)
+  - [GitHub Copilot](#github-copilot)
 - [Cheatsheets](#cheatsheets)
 
 
@@ -1758,6 +1760,64 @@ Notes:
 If you can't modify query text, you can set hints for a query in Query Store:
 
 `EXEC sys.sp_query_store_set_hints @query_id= 42, @query_hints = N'OPTION(RECOMPILE, MAXDOP 1)'`
+
+
+## AI features
+
+### GitHub Copilot
+
+`.github/copilot-instructions.md` example:
+
+```md
+# Project Guidelines for Copilot
+
+## Database Development Standards
+
+This project uses SQL Server 2022 with the following conventions:
+
+### Naming Conventions
+- Tables: PascalCase, singular (Customer, OrderDetail)
+- Columns: PascalCase (FirstName, OrderDate)
+- Stored procedures: usp_ActionEntity (usp_GetCustomerOrders)
+- Views: vw_EntityName (vw_ActiveCustomers)
+- Indexes: IX_TableName_ColumnName
+
+### T-SQL Style
+- Use explicit column lists in SELECT statements (avoid SELECT *)
+- Always include schema prefix (dbo.TableName)
+- Use ANSI JOIN syntax, not comma-separated tables
+- Include error handling in all stored procedures
+- Use TRY...CATCH blocks for data modification operations
+
+### Security Requirements
+- Never generate GRANT statements to public
+- Use parameterized queries, never concatenate user input
+- Avoid dynamic SQL when possible
+
+### Performance Guidelines
+- Suggest appropriate indexes when creating tables
+- Prefer SET NOCOUNT ON in stored procedures
+- Use EXISTS instead of COUNT for existence checks
+```
+
+`.github/prompts/create-procedure.prompt.md` example:
+
+```md
+# Create Stored Procedure
+
+Generate a stored procedure with the following specifications:
+
+- Procedure name: {{procedureName}}
+- Purpose: {{description}}
+- Parameters: {{parameters}}
+
+Follow these requirements:
+- Include TRY...CATCH error handling
+- Add SET NOCOUNT ON at the beginning
+- Include appropriate comments
+- Follow our naming conventions (usp_ prefix)
+- Use explicit transactions for data modifications
+```
 
 
 ## Cheatsheets

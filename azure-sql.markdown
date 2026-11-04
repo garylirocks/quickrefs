@@ -58,6 +58,7 @@
 - [Data security](#data-security)
   - [Transparent data encryption (TDE)](#transparent-data-encryption-tde)
   - [Object-level encryption](#object-level-encryption)
+  - [Column-level encryption](#column-level-encryption)
   - [Always Encrypted](#always-encrypted)
     - [Secure enclaves](#secure-enclaves)
   - [Dynamic data masking](#dynamic-data-masking)
@@ -1229,6 +1230,8 @@ Managed using database roles and explicit permissions.
 
 ## Data security
 
+![Data security](images/sqlserver_data-encryption.png)
+
 | Data State      | Encryption Method         |
 | --------------- | ------------------------- |
 | Data-at-rest    | TDE, Always Encrypted     |
@@ -1238,15 +1241,21 @@ Managed using database roles and explicit permissions.
 ### Transparent data encryption (TDE)
 
 - Encrypt/decrypt at the data page level
-- Backups are encrypted as well (*backup operation just copies the data pages from the database file to the backup device*)
-- Encrypts the storage of an entire database by using a symmetric key called the Database Encryption Key (DEK)
+- Logs are encrypted as well
+- Backups are encrypted as well
+  - backup operation just copies the data pages from the database file to the backup device
+- Encrypts the storage of an entire database by using a symmetric key called the **Database Encryption Key** (**DEK**)
 - **Service-mangaged TDE**: DEK is protected by a built-in server certificate
 - **Customer-managed TDE**: the TDE Protector that encrypts the DEK is stored in a customer managed Key Vault
   - The SQL DB logical server could have a UMI, with permission to the key in a Key Vault
   - For
     - SQL DB and Azure Synapse, TDE protector is at the server level and inherited by all databases associated with that server.
     - SQL MI, TDE protector is set at the instance level and inherited by all encrypted databases on that instance.
-    - SQL on VM, a whole key chain: Service Master Key (SQL Server Instance level) -> Database Master Key (`master` db level) -> certificate in `master` -> DEK (Database Encryption Key)
+    - SQL on VM, the whole key chain:
+      - Service Master Key (SQL Server Instance level)
+      - -> Database Master Key (`master` db level)
+      - -> certificate in `master`
+      - -> DEK
 - Cannot be used to encrypt system databases, such as `master`, which contains objects that are needed to perform the TDE operations on the user databases.
 
 ### Object-level encryption
@@ -1256,35 +1265,112 @@ Steps using T-SQL (within a user db):
 - Create a certificate
 - Create a symmetric key
 
+### Column-level encryption
+
+- Explicitly encrypt and decrypt data in your T-SQL or application
+- Keys
+  - could be symmetric or asymmetric
+  - stored in DB
+  - you create and manage permissions for the keys
+- You can grant or deny permissions to the symmetric key
+- More development effort, but also more control than Always Encrypted
+
+```sql
+-- Database master key
+CREATE MASTER KEY ENCRYPTION BY PASSWORD = 'StrongPassword123!';
+
+-- create a certificate
+CREATE CERTIFICATE SensitiveDataCert
+WITH SUBJECT = 'Certificate for sensitive data encryption';
+
+-- create symmetric key
+CREATE SYMMETRIC KEY SensitiveDataKey
+WITH ALGORITHM = AES_256
+ENCRYPTION BY CERTIFICATE SensitiveDataCert;
+
+-- encrypt data
+OPEN SYMMETRIC KEY SensitiveDataKey
+DECRYPTION BY CERTIFICATE SensitiveDataCert;
+
+INSERT INTO CustomerData (CustomerID, CreditCardNumber)
+VALUES (1, ENCRYPTBYKEY(KEY_GUID('SensitiveDataKey'), '4111-1111-1111-1111'));
+
+CLOSE SYMMETRIC KEY SensitiveDataKey;
+
+-- decrypt data
+OPEN SYMMETRIC KEY SensitiveDataKey
+DECRYPTION BY CERTIFICATE SensitiveDataCert;
+
+SELECT CustomerID,
+       CONVERT(varchar(20), DECRYPTBYKEY(CreditCardNumber)) AS CardNumber
+FROM CustomerData;
+
+CLOSE SYMMETRIC KEY SensitiveDataKey;
+```
+
 ### Always Encrypted
+
+![Always Encrypted](./images/azure_sql-secure-enclaves.png)
 
 - Protect sensitive data stored in specific database **columns**
 - Data can only be decrypted by **client applications** with access to the encryption key, a DBA can't see the data if he does not have the key
 - Could be used in cases like: you want a third-party to manage the DB for you without exposing all the data
 - Can't be used together with dynamic data masking
 
-Steps:
+How it works:
 
-- Two types of keys: column encyrption keys (CEK) and column master keys (CMK)
-  - Each column can have its own key
-- Column encryption key is used to encrypt data in a column. A column master key is a key-protecting key that encrypts one or more column encryption keys
+- Two types of keys: **column encyrption keys** (**CEK**) and **column master keys** (**CMK**)
+  - A key could be used for one or multiple columns
+- CEK is used to encrypt data in a column. A CMK is a key-protecting key that encrypts one or more CEKs
   - Encryption type could be
-    - Deterministic: allows comparisons, joins, grouping, indexing
+    - Deterministic: allows equality comparisons, joins, grouping, indexing
     - **Randomized**: more secure, recommended for columns with well-known distinct values that could be guessed from the encrypted data, like three-digit credit card verification code,
       - Limit: value can't be compared, a work around is "Secure enclaves" (see below)
-- The DB engine only stores the encrypted values of column encryption keys and the information about the location of column master keys (eg. Azure Key Vault, Windows Certificate Store)
+- The DB engine only stores the encrypted values of CEKs and the information about the location of CMKs (eg. Azure Key Vault, Windows Certificate Store, HSM)
 - To access data stored in an encrypted column in plaintext, an application must use an *Always Encrypted enabled client driver*. Encryption and decryption occurs via the driver.
   - Client connection string needs to have `Column Encryption Setting=enabled`, this causes a metadata lookup for each column
-- The driver gets from the DB engine the encrypted value of the column encryption key and the location of the corresponding column master key
-- The driver contacts the key store, to decrypt the encrypted column encryption key value
-- The driver uses the plaintext column encryption key to encrypt query parameters
+- The driver gets from the DB engine the encrypted value of the CEK and the location of the corresponding CMK
+- The driver contacts the key store, to decrypt the encrypted CEK value
+- The driver uses the plaintext CEK to encrypt query parameters
 - The driver has parameters encrypted, then sends the query to the server for processing
 - The server computes the result set
 - The driver decrypts the results and returns plaintext values to the application
 
-#### Secure enclaves
+```sql
+-- Create a CMK, value NOT store in DB
+CREATE COLUMN MASTER KEY MyCMK
+WITH (
+    KEY_STORE_PROVIDER_NAME = 'AZURE_KEY_VAULT',
+    KEY_PATH = 'https://mykeyvault.vault.azure.net/keys/MyCMK/abc123'
+);
 
-![Secure enclaves](./images/azure_sql-secure-enclaves.png)
+-- Create a CEK, already encrypted
+CREATE COLUMN ENCRYPTION KEY MyCEK
+WITH VALUES (
+    COLUMN_MASTER_KEY = MyCMK,
+    ALGORITHM = 'RSA_OAEP',
+    ENCRYPTED_VALUE = 0x01700000016C006F00...
+);
+
+-- Specify encryption for columns when creating a table
+CREATE TABLE Employees (
+    EmployeeID int PRIMARY KEY,
+    SSN char(11) COLLATE Latin1_General_BIN2
+        ENCRYPTED WITH (
+            ENCRYPTION_TYPE = DETERMINISTIC,
+            ALGORITHM = 'AEAD_AES_256_CBC_HMAC_SHA_256',
+            COLUMN_ENCRYPTION_KEY = MyCEK
+        ),
+    Salary money
+        ENCRYPTED WITH (
+            ENCRYPTION_TYPE = RANDOMIZED,
+            ALGORITHM = 'AEAD_AES_256_CBC_HMAC_SHA_256',
+            COLUMN_ENCRYPTION_KEY = MyCEK
+        )
+);
+```
+
+#### Secure enclaves
 
 - A secure enclave is a secured region of memory within the SQL Server process for processing encrypted data
 - Not possible to view any data or code
@@ -1322,7 +1408,7 @@ Steps:
   - Saved in a catalog view `sys.sensitivity_classifications`
   - Supported by all SQL options
 - Information type: Credit card, etc
-- Too log access to classified columns, enable auditing, audit logs contain the sensitivity label (and information type ?)
+- To log access to classified columns, enable auditing, audit logs contain the sensitivity label (and information type ?)
 
 ### Row-level security (RLS)
 
