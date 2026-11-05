@@ -47,6 +47,7 @@
   - [Tune indexes](#tune-indexes)
   - [Resumable index](#resumable-index)
   - [Query hints](#query-hints)
+- [Auditing](#auditing)
 - [AI features](#ai-features)
   - [GitHub Copilot](#github-copilot)
 - [Cheatsheets](#cheatsheets)
@@ -174,18 +175,35 @@ Considerations:
       - To propagate to a db, the login need a mapped user account in the db
       - Each member of a fixed server role can add other logins to that same role
 
-
 ### Permissions
 
+- Permission hierarchy: **server -> db -> schema -> object** (table, view, stored procedure etc)
 - Four basic operation permissions: `SELECT`, `INSERT`, `UPDATE`, and `DELETE`
   - Other table/view permissions: `CONTROL`, `REFERENCES`, `TAKE OWNERSHIP`, `VIEW CHANGE TRACKING`, `VIEW DEFINITION`
   - Function/stored procedure permissions: `ALTER`, `CONTROL`, `EXECUTE`, `VIEW CHANGE TRACKING`, `VIEW DEFINITION`
-- Perimssions can be granted, revoked, or denied
-  - On tables and views
-  - `DENY` supersedes over `GRANT`
+- Perimssions actions include `GRANT`, `REVOKE`, `DENY`
+  - `DENY` overrides `GRANT`
   - Can additionally restrict the columns
-  - SQL Server and Azure SQL DB also include row-level security
+  - SQL Server and Azure SQL DB also include row-level security (RLS)
 - You can use `EXECUTE AS USER = <user_name>` to change user context
+
+Use system tables to review and audit permissions:
+
+```sql
+-- View all permissions for a specific principal
+SELECT
+    prin.name AS PrincipalName,
+    perm.permission_name,
+    perm.state_desc AS PermissionState,
+    obj.name AS ObjectName
+FROM sys.database_permissions perm
+INNER JOIN sys.database_principals prin ON perm.grantee_principal_id = prin.principal_id
+LEFT JOIN sys.objects obj ON perm.major_id = obj.object_id
+WHERE prin.name = 'SalesAnalyst';
+
+-- Check effective permissions for the current user
+SELECT * FROM fn_my_permissions('Sales.Orders', 'OBJECT');
+```
 
 ### Ownership chains
 
@@ -1760,6 +1778,42 @@ Notes:
 If you can't modify query text, you can set hints for a query in Query Store:
 
 `EXEC sys.sp_query_store_set_hints @query_id= 42, @query_hints = N'OPTION(RECOMPILE, MAXDOP 1)'`
+
+
+## Auditing
+
+Uses "Extended Events", can write to files, Windows Security log, or Windows Application log
+
+Use T-SQL to create audit specifications
+
+```sql
+CREATE SERVER AUDIT SecurityAudit
+TO FILE (FILEPATH = 'C:\AuditLogs\', MAXSIZE = 100 MB, MAX_ROLLOVER_FILES = 10)
+WITH (QUEUE_DELAY = 1000, ON_FAILURE = CONTINUE);
+
+-- enable
+ALTER SERVER AUDIT SecurityAudit WITH (STATE = ON);
+
+-- server specification: what to log
+CREATE SERVER AUDIT SPECIFICATION ServerAuditSpec
+FOR SERVER AUDIT SecurityAudit
+ADD (FAILED_LOGIN_GROUP),
+ADD (SUCCESSFUL_LOGIN_GROUP),
+ADD (SERVER_PERMISSION_CHANGE_GROUP),
+ADD (DATABASE_PERMISSION_CHANGE_GROUP)
+WITH (STATE = ON);
+
+-- db-level specification
+USE MyDatabase;
+GO
+
+CREATE DATABASE AUDIT SPECIFICATION DatabaseAuditSpec
+FOR SERVER AUDIT SecurityAudit
+ADD (SELECT, INSERT, UPDATE, DELETE ON dbo.SensitiveData BY public),
+ADD (EXECUTE ON SCHEMA::dbo BY public),
+ADD (DATABASE_ROLE_MEMBER_CHANGE_GROUP)
+WITH (STATE = ON);
+```
 
 
 ## AI features

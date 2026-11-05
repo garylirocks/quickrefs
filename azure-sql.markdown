@@ -85,6 +85,7 @@
   - [Metrics](#metrics)
   - [Extended events](#extended-events)
   - [Database Watcher](#database-watcher)
+- [AI](#ai)
 - [SQL Database in Microsoft Fabric](#sql-database-in-microsoft-fabric)
 - [Azure SQL Edge](#azure-sql-edge)
 
@@ -689,6 +690,13 @@ Notes:
   - Recommended to enable on server-level only
   - Auditing on Read-Only replicas is automatically enabled
 - With data classification enabled, field `data_sensitivity_information` records access to classified columns
+
+Common action groups to audit:
+
+- `FAILED_DATABASE_AUTHENTICATION_GROUP`
+- `DATABASE_PRINCIPAL_CHANGE_GROUP` - user changes
+- `SCHEMA_OBJECT_CHANGE_GROUP`
+- ...
 
 ### Ledger
 
@@ -1858,6 +1866,48 @@ A separate resource in Azure to help monitor SQL databases
 - Usage: KQL query, dashboards
 
 
+## AI
+
+Your DB could call an AI model endpoints, via stored procedures or functions
+
+To authenticate to the endpoints, it's recommended to use managed identity.
+
+You can create a database-scoped credential that uses Managed Identity.
+
+```sql
+CREATE DATABASE SCOPED CREDENTIAL AzureOpenAICredential
+WITH IDENTITY = 'Managed Identity',
+SECRET = '{"resourceId": "https://cognitiveservices.azure.com/"}';
+
+-- Create an external data source
+CREATE EXTERNAL DATA SOURCE AzureOpenAI
+WITH (
+    TYPE = REST,
+    LOCATION = 'https://myopenai.openai.azure.com',
+    CREDENTIAL = AzureOpenAICredential
+);
+
+-- Create a stored procedure to call the AI endpoint
+CREATE PROCEDURE dbo.GetEmbedding
+    @InputText nvarchar(max),
+    @Embedding nvarchar(max) OUTPUT
+AS
+BEGIN
+    DECLARE @payload nvarchar(max) = JSON_OBJECT('input': @InputText);
+    DECLARE @response nvarchar(max);
+
+    EXEC sp_invoke_external_rest_endpoint
+        @url = 'https://myopenai.openai.azure.com/openai/deployments/text-embedding/embeddings?api-version=2024-02-01',
+        @method = 'POST',
+        @payload = @payload,
+        @credential = AzureOpenAICredential,
+        @response = @response OUTPUT;
+
+    SET @Embedding = JSON_VALUE(@response, '$.data[0].embedding');
+END;
+```
+
+
 ## SQL Database in Microsoft Fabric
 
 - Built on Azure SQL DB
@@ -1872,6 +1922,11 @@ A separate resource in Azure to help monitor SQL databases
   - Portability: SqlPackage (`.bacpac/.dacpac`)
   - Fabric source control
   - GraphQL APIs
+
+Access to AI endpoints:
+- Instead of database-scoped credentials and Managed Identity, Fabric uses workspace roles
+  - Users with **Contributor** role or higher workspace roles can invoke AI features
+  - Access control happens at the workspace level rather than through database permissions
 
 
 ## Azure SQL Edge
