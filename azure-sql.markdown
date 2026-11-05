@@ -1381,16 +1381,31 @@ CREATE TABLE Employees (
 - Works for all SQL options
 - Data in the database is not changed
   - Limit data exposure at SQL server level, no code change in application
-- You set data masking policy on **columns** (such as Social security number)
-- Could enable via the Portal or T-SQL
+- You add masking to **columns** (such as Social security number)
   - `ALTER TABLE [Customer] ALTER COLUMN Address ADD MASKED WITH (FUNCTION = 'partial(0,"XXXX-XXXX-XXXX-",4)')`
+- Functions:
+  - Default - `XXXX`, `0000` or `01-01-1900`
+  - Email - `jXXX@XXXX.com`
+  - Random - a random number
+  - Partial - you control how many chars to show at the start/end, and padding string, eg. `206-XXX-XX89`
 - Admins (`dbo`) always get the unmasked data
-- To allow other users to retrieve unmasked data
-  - Explicitly grant `UNMASK` permission: `GRANT UNMASK TO <username>;`
-  - Or can be done in the Portal
+- To allow other users to retrieve unmasked data, explicitly grant `UNMASK` permission
+  - Could be done at schema, table or column level
+    ```sql
+    -- Grant unmask on a specific schema
+    GRANT UNMASK ON SCHEMA::Sales TO SalesManager;
+
+    -- Grant unmask on a specific table
+    GRANT UNMASK ON Customers TO CustomerService;
+
+    -- Grant unmask on a specific column
+    GRANT UNMASK ON Customers(Phone) TO TelemarketingTeam;
+    ```
+  - User with `ALTER` permission can remove the mask
 - For masked users
   - `SELECT INTO` or `INSERT INTO` results in masked data in target table
   - Export result files contains masked data
+- Should be used with encryption, RLS for full protection
 
 ### Classification and labeling
 
@@ -1412,28 +1427,96 @@ CREATE TABLE Employees (
 
 ### Row-level security (RLS)
 
-- Configured and applied at database level
-- `SECURITY POLICY` restricting access to a table based on group memberships or execution context
+![RLS diagram](./images/sqlserver_row-level-security.png)
+
 - Use case: user account `tenant1` can only see rows `WHERE tenant = tenant1`
+- Configured at database level, applied to tables
+  - Works transparently with views, stored procedures and other db objects that query the protected tables
+- **Security Predicate**
+  - An inline TVF, return 1 or 0 for each row
+  - Receives the current user/session context and row values
+- **Security Policy**
+  - Apply predicate functions to tables and specifies the type of filtering.
+  - **Filter predicates**: silently exclude unauthorized rows from query results, don't raise an error
+  - **Block predicates**: prevent unauthorized insert, update, and deletion, raise an error for unauthorized changes
+
 
 Implementation steps:
 
 ```sql
-CREATE SCHEMA sec;
+CREATE SCHEMA Security;
 GO
 
--- tvf: inline table-valued function
-CREATE FUNCTION sec.tvf_xx ...
-GO
+-- Create a TVF in Security schema
+-- checks whether the row's TenantID matches the value stored in session contex
+CREATE FUNCTION Security.fn_TenantAccessPredicate(@TenantID int)
+RETURNS TABLE
+WITH SCHEMABINDING
+AS
+RETURN SELECT 1 AS fn_TenantAccessPredicate_Result
+    WHERE @TenantID = CAST(SESSION_CONTEXT(N'TenantID') AS int);
 
-GRANT SELECT ON sec.tvf_xx TO [user1]
-GO
+-- A predicate can also reference the current user:
+CREATE FUNCTION Security.fn_SalesRepPredicate(@SalesRepID int)
+RETURNS TABLE
+WITH SCHEMABINDING
+AS
+RETURN SELECT 1 AS fn_SalesRepPredicate_Result
+    WHERE @SalesRepID = DATABASE_PRINCIPAL_ID()
+       OR IS_MEMBER('SalesManagers') = 1;
 
-CREATE SECURITY POLICY sec.MyPolicy
-ADD FILTER PREDICATE sec.tvf_xx(param) ON [dbo].[TableName]
+-- Create the security policy
+-- Specify predicate for tables
+CREATE SECURITY POLICY TenantSecurityPolicy
+ADD FILTER PREDICATE Security.fn_TenantAccessPredicate(TenantID)
+    ON dbo.Orders,
+ADD FILTER PREDICATE Security.fn_TenantAccessPredicate(TenantID)
+    ON dbo.OrderDetails
 WITH (STATE = ON);
-GO
+
+-- You can combine filter and block predicates in one policy
+CREATE SECURITY POLICY SalesSecurityPolicy
+ADD FILTER PREDICATE Security.fn_SalesRepPredicate(SalesRepID)
+    ON dbo.CustomerAccounts,
+ADD BLOCK PREDICATE Security.fn_SalesRepPredicate(SalesRepID)
+    ON dbo.CustomerAccounts AFTER INSERT,
+ADD BLOCK PREDICATE Security.fn_SalesRepPredicate(SalesRepID)
+    ON dbo.CustomerAccounts AFTER UPDATE
+WITH (STATE = ON);
 ```
+
+Session context should be set by application after user authenticates:
+
+```sql
+EXEC sp_set_session_context @key = N'TenantID', @value = 42;
+```
+
+Implement hierarchical access pattern
+
+- Using a recursive CTE to get all employees under the current user
+- Returns 1 if a row is owned by anyone in the hierarchy
+
+```sql
+CREATE FUNCTION Security.fn_HierarchyPredicate(@OwnerID int)
+RETURNS TABLE
+WITH SCHEMABINDING
+AS
+RETURN
+    WITH EmployeeHierarchy AS (
+        SELECT EmployeeID, ManagerID
+        FROM dbo.Employees
+        WHERE EmployeeID = DATABASE_PRINCIPAL_ID()
+
+        UNION ALL
+
+        SELECT e.EmployeeID, e.ManagerID
+        FROM dbo.Employees e
+        INNER JOIN EmployeeHierarchy h ON e.ManagerID = h.EmployeeID
+    )
+    SELECT 1 AS fn_HierarchyPredicate_Result
+    WHERE @OwnerID IN (SELECT EmployeeID FROM EmployeeHierarchy);
+```
+
 
 ### Microsoft Defender for SQL
 
