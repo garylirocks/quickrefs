@@ -90,6 +90,7 @@
 - [Azure SQL Edge](#azure-sql-edge)
 - [SQL Projects](#sql-projects)
   - [Pre and post deployment scripts](#pre-and-post-deployment-scripts)
+  - [Drift detection](#drift-detection)
 
 ## Overview
 
@@ -2022,3 +2023,10 @@ sqlpackage /Action:DeployReport /SourceFile:bin/Debug/MyDatabaseProject.dacpac /
       INSERT ([StatusID], [StatusName])
       VALUES (source.[StatusID], source.[StatusName]);
   ```
+
+### Drift detection
+
+- Compare any combination of a live database, a SQL project, or a `.dacpac` file
+- Schema comparison settings could be saved in `.scmp` file and committed to Git
+- In CI/CD, you can use the `SqlPackage /Action:Extract` action to pull live schema into files, and then use `git status` to detect changes
+- `DacpacVerify` is the .Net tool for comparing two `.dacpac` files for differences
