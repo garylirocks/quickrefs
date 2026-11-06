@@ -88,6 +88,8 @@
 - [AI](#ai)
 - [SQL Database in Microsoft Fabric](#sql-database-in-microsoft-fabric)
 - [Azure SQL Edge](#azure-sql-edge)
+- [SQL Projects](#sql-projects)
+  - [Pre and post deployment scripts](#pre-and-post-deployment-scripts)
 
 ## Overview
 
@@ -1947,3 +1949,76 @@ Access to AI endpoints:
 Deployment models:
 - Connected: Deployed as a module for Azure IoT Edge
 - Disconnected: Deployed as a standalone docker container or on a Kubernetes cluster
+
+
+## SQL Projects
+
+- Put every object in its own `.sql` file
+- Build produces a `.dacpac` file
+- SDK-style projects support .NET 8+, it's cross platform
+- `SqlPackage` is used for deployment
+
+```sh
+# Start a new project
+dotnet new sqlproj -n MyDatabaseProject
+
+# build
+dotnet build MyDatabaseProject.sqlproj
+# this produces a .dacpac file
+```
+
+SqlPackage is the tool used for deployment
+
+```sh
+dotnet tool install --global microsoft.sqlpackage
+```
+
+Publish to target database:
+
+```sh
+sqlpackage /Action:Publish /SourceFile:bin/Debug/MyDatabaseProject.dacpac /TargetConnectionString:"<connection-string"
+```
+
+Deployment is idempotent, for an existing database, it calculates the diff between `.dacpac` and the live schema, then generates only the `ALTER` statements needed.
+
+```sh
+# You can preview the planned changes with `Script` or `DeployReport` action
+sqlpackage /Action:Script /SourceFile:bin/Debug/MyDatabaseProject.dacpac /TargetConnectionString:"..." /OutputPath:deploy-script.sql
+
+sqlpackage /Action:DeployReport /SourceFile:bin/Debug/MyDatabaseProject.dacpac /TargetConnectionString:"..." /OutputPath:report.xml
+```
+
+### Pre and post deployment scripts
+
+- Predeployment scripts
+  - Dropping constraints
+  - Migrating data
+- Post-deployment scripts
+  - Seeding lookup tables (eg. status, regions)
+  - Set application defaults
+- Only **ONE** pre and one post deployment script are allowed
+- A script could pull in other scripts if needed, use the `:r` syntax
+  ```sh
+  :r .\Scripts\PostDeployment\seed-statuses.sql
+  :r .\Scripts\PostDeployment\seed-regions.sql
+  :r .\Scripts\PostDeployment\seed-app-settings.sql
+  ```
+  - Referenced files should be excluded from the build, using `<BUILD REMOVE="<file-path>" />` in `.sqlproj`
+  - To keep the files visible in the project, use `<None Include="<file-path>" />`
+- Scripts need to be idempotent as well, use `MERGE` instead of `INSERT`, so the scripts could be run repeatedly
+  ```sh
+  MERGE INTO [dbo].[OrderStatuses] AS target
+  USING (VALUES
+      (1, N'Pending'),
+      (2, N'Processing'),
+      (3, N'Shipped'),
+      (4, N'Delivered'),
+      (5, N'Cancelled')
+  ) AS source ([StatusID], [StatusName])
+  ON target.[StatusID] = source.[StatusID]
+  WHEN MATCHED THEN
+      UPDATE SET [StatusName] = source.[StatusName]
+  WHEN NOT MATCHED THEN
+      INSERT ([StatusID], [StatusName])
+      VALUES (source.[StatusID], source.[StatusName]);
+  ```
