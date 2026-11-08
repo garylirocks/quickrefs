@@ -55,7 +55,7 @@ Seems it has its own set of roles and permissions, like:
 Granular Delegated Admin Privileges (GDAP) is a way for partners to request permissions in customers' tenants.
 
 1. Partner creates a GDAP request in Partner Center
-  - Could have a time range
-2. Customer approves the request in their tenant (MS 365 Admin Center)
-3. Partner then assign roles to their security groups in Partner Center
-  - NOT reflected in customers tenants
+    - Could have a time range
+1. Customer approves the request in their tenant (MS 365 Admin Center)
+1. Partner then assign roles to their security groups in Partner Center
+    - NOT reflected in customers tenants
