@@ -85,12 +85,22 @@
   - [Metrics](#metrics)
   - [Extended events](#extended-events)
   - [Database Watcher](#database-watcher)
-- [AI](#ai)
 - [SQL Database in Microsoft Fabric](#sql-database-in-microsoft-fabric)
 - [Azure SQL Edge](#azure-sql-edge)
 - [SQL Projects](#sql-projects)
   - [Pre and post deployment scripts](#pre-and-post-deployment-scripts)
   - [Drift detection](#drift-detection)
+  - [GitHub CI/CD](#github-cicd)
+- [Data API Builder](#data-api-builder)
+- [AI](#ai)
+  - [External endpoint](#external-endpoint)
+  - [External models](#external-models)
+  - [Chunking](#chunking)
+  - [Embedding](#embedding)
+  - [Intelligent Search](#intelligent-search)
+    - [Full-text search](#full-text-search)
+    - [Vector search](#vector-search)
+    - [Hybrid search and ranking](#hybrid-search-and-ranking)
 
 ## Overview
 
@@ -1869,48 +1879,6 @@ A separate resource in Azure to help monitor SQL databases
 - Usage: KQL query, dashboards
 
 
-## AI
-
-Your DB could call an AI model endpoints, via stored procedures or functions
-
-To authenticate to the endpoints, it's recommended to use managed identity.
-
-You can create a database-scoped credential that uses Managed Identity.
-
-```sql
-CREATE DATABASE SCOPED CREDENTIAL AzureOpenAICredential
-WITH IDENTITY = 'Managed Identity',
-SECRET = '{"resourceId": "https://cognitiveservices.azure.com/"}';
-
--- Create an external data source
-CREATE EXTERNAL DATA SOURCE AzureOpenAI
-WITH (
-    TYPE = REST,
-    LOCATION = 'https://myopenai.openai.azure.com',
-    CREDENTIAL = AzureOpenAICredential
-);
-
--- Create a stored procedure to call the AI endpoint
-CREATE PROCEDURE dbo.GetEmbedding
-    @InputText nvarchar(max),
-    @Embedding nvarchar(max) OUTPUT
-AS
-BEGIN
-    DECLARE @payload nvarchar(max) = JSON_OBJECT('input': @InputText);
-    DECLARE @response nvarchar(max);
-
-    EXEC sp_invoke_external_rest_endpoint
-        @url = 'https://myopenai.openai.azure.com/openai/deployments/text-embedding/embeddings?api-version=2024-02-01',
-        @method = 'POST',
-        @payload = @payload,
-        @credential = AzureOpenAICredential,
-        @response = @response OUTPUT;
-
-    SET @Embedding = JSON_VALUE(@response, '$.data[0].embedding');
-END;
-```
-
-
 ## SQL Database in Microsoft Fabric
 
 - Built on Azure SQL DB
@@ -2030,3 +1998,363 @@ sqlpackage /Action:DeployReport /SourceFile:bin/Debug/MyDatabaseProject.dacpac /
 - Schema comparison settings could be saved in `.scmp` file and committed to Git
 - In CI/CD, you can use the `SqlPackage /Action:Extract` action to pull live schema into files, and then use `git status` to detect changes
 - `DacpacVerify` is the .Net tool for comparing two `.dacpac` files for differences
+
+### GitHub CI/CD
+
+- The `azure/sql-action` GitHub action can deploy a `.dacpac` file to Azure SQL Database and can automatically configure firewall rules for the runner
+
+
+## Data API Builder
+
+- Creates REST and GraphQL endpoints for your database
+- Can expose tables, views and stored procedures
+- Use config files instead of code
+  - You can have environment-specific config files (like `dab-config.production.json`), which will be merged with the base config
+- Install locally with `dotnet tool install --global Microsoft.DataApiBuilder`
+
+Example config file:
+
+```json
+{
+  "$schema": "https://github.com/Azure/data-api-builder/releases/download/v1.1.7/dab.draft.schema.json",
+  "data-source": {
+    "database-type": "mssql",
+    "connection-string": "@env('DATABASE_CONNECTION_STRING')"
+  },
+  "runtime": {
+    "rest": {
+      "enabled": true,
+      "path": "/api"
+    },
+    "graphql": {
+      "enabled": true,
+      "path": "/graphql"
+    },
+    "host": {
+      "cors": {
+        "origins": ["http://localhost:3000"],
+        "allow-credentials": false
+      },
+      "authentication": {
+        "provider": "StaticWebApps"
+      }
+    }
+  },
+  "entities": {}
+}
+```
+
+
+## AI
+
+### External endpoint
+
+Your DB could call external endpoints (could be an AI model), via stored procedures or functions.
+
+- Could be used as `EXTERNAL DATA SOURCE` or `EXTERNAL MODEL`
+- Create database-scoped credential for authentication
+  - Credential name is URL of the endpoint
+  - By managed identity (recommended)
+  ```sql
+  CREATE DATABASE SCOPED CREDENTIAL [https://<resource-name>.cognitiveservices.azure.com/]
+    WITH IDENTITY = 'Managed Identity',
+    SECRET = '{"resourceid":"https://cognitiveservices.azure.com"}';
+  ```
+  - By API key (when MI is not possible)
+  ```sql
+  CREATE DATABASE SCOPED CREDENTIAL [https://<resource-name>.cognitiveservices.azure.com/]
+    WITH IDENTITY = 'HTTPEndpointHeaders',
+    SECRET = '{"api-key":"<your-api-key>"}';
+  ```
+- Permissions managed via `GRANT EXECUTE ANY EXTERNAL ENDPOINT TO [user_or_role];`
+
+Example:
+
+```sql
+CREATE DATABASE SCOPED CREDENTIAL AzureOpenAICredential
+WITH IDENTITY = 'Managed Identity',
+SECRET = '{"resourceId": "https://cognitiveservices.azure.com/"}';
+
+-- Create an external data source
+CREATE EXTERNAL DATA SOURCE AzureOpenAI
+WITH (
+    TYPE = REST,
+    LOCATION = 'https://myopenai.openai.azure.com',
+    CREDENTIAL = AzureOpenAICredential
+);
+
+-- Create a stored procedure to call the AI endpoint
+CREATE PROCEDURE dbo.GetEmbedding
+    @InputText nvarchar(max),
+    @Embedding nvarchar(max) OUTPUT
+AS
+BEGIN
+    DECLARE @payload nvarchar(max) = JSON_OBJECT('input': @InputText);
+    DECLARE @response nvarchar(max);
+
+    EXEC sp_invoke_external_rest_endpoint
+        @url = 'https://myopenai.openai.azure.com/openai/deployments/text-embedding/embeddings?api-version=2024-02-01',
+        @method = 'POST',
+        @payload = @payload,
+        @credential = AzureOpenAICredential,
+        @response = @response OUTPUT;
+
+    SET @Embedding = JSON_VALUE(@response, '$.data[0].embedding');
+END;
+```
+
+### External models
+
+- An external model is a database object, which is a reference to an external AI model that can be called from SQL
+- Create with `CREATE EXTERNAL MODEL`
+- AI functions can call this object (eg. `AI_GENERATE_EMBEDDINGS`)
+
+Create `EXTERNAL MODEL` with parameters (URL, credential, model type, etc)
+
+```sql
+CREATE EXTERNAL MODEL my_external_model
+WITH (
+    LOCATION   = 'https://<resource-name>.cognitiveservices.azure.com/openai/deployments/<deployment-name>/embeddings?api-version=<api-version>',
+    API_FORMAT = 'Azure OpenAI',
+    MODEL_TYPE = EMBEDDINGS,
+    MODEL      = 'text-embedding-3-small',
+    CREDENTIAL = [https://<resource-name>.cognitiveservices.azure.com/],
+    PARAMETERS = '{"dimensions":<n>}'
+);
+```
+
+Call a model using an AI function
+
+```sql
+SELECT
+    id,
+    AI_GENERATE_EMBEDDINGS(
+        description USE MODEL my_external_model
+    ) AS embedding
+FROM dbo.documents;
+```
+
+### Chunking
+
+Divide text into small chunks. Each chunk will be passed to an embedding function, so each embedding represends a focused portion of the original text.
+
+```sql
+SELECT
+    id,
+    c.chunk
+FROM dbo.documents
+CROSS APPLY
+    AI_GENERATE_CHUNKS(SOURCE = description, CHUNK_TYPE = FIXED, CHUNK_SIZE = 500) AS c;
+```
+
+### Embedding
+
+```sql
+CREATE TABLE dbo.documents
+(
+    id INT PRIMARY KEY,
+    description NVARCHAR(MAX),
+    embedding VECTOR(1536)  -- 1536 is the number of dimensions, each element is a single-precision float (4B), so this is around 6KB
+);
+```
+
+Generate embedding using an external model
+
+```sql
+UPDATE dbo.documents
+SET embedding = AI_GENERATE_EMBEDDINGS(description USE MODEL my_embedding_model);
+```
+
+Embedding maintenance options:
+
+- Table triggers - increases latency
+- Change Tracking - balance latency and performance
+- Change Data Capture (CDC) - suitable for high-volume workloads
+- Azure Functions with SQL trigger binding
+- Azure Logic Apps
+- Change Event Streaming (CES)
+
+### Intelligent Search
+
+Three approaches:
+- Full-text search
+- Semantic vector search
+- Hybrid search
+  - Combines the above two approaches
+  - To merge the results, use Reciprocal Rank Fusion (RRF)
+
+#### Full-text search
+
+- Understands linguistic rules, searching for "ride" can also find "riding" or "rode"
+  - Doesn't match synonyms and abbreviations ("MTB" for "mountain bike") by default, unless you configure a thesaurus
+- Requires a **full-text index** on the columns
+  ```sql
+  -- Create a full-text catalog
+  CREATE FULLTEXT CATALOG ProductReviewCatalog AS DEFAULT;
+  GO
+
+  -- Create a full-text index on ReviewTitle and ReviewText
+  CREATE FULLTEXT INDEX ON dbo.ProductReview
+  (
+      ReviewTitle LANGUAGE 1033, -- specifies English
+      ReviewText LANGUAGE 1033
+  )
+  KEY INDEX PK_ProductReview -- reference primary key
+  ON ProductReviewCatalog
+  WITH (CHANGE_TRACKING AUTO); -- auto update index
+  GO
+  ```
+- Predicates
+  - `CONTAINS` - for exact matches of words and phrases
+    - `CONTAINS(Description, 'aluminum')` - matches a term
+    - `CONTAINS(Description, '"mountain bike"')` - matches a phrase, need double quotes
+    - `CONTAINS(Description, '"light*"')` - search by prefix
+    - `CONTAINS(Description, 'FORMSOF(INFLECTIONAL, "ride")')` - matches different forms of a word, similar to `FREETEXT`
+    - `CONTAINS(Description, 'NEAR((light, aluminum))')` - matches when "light" and "aluminum" appear close together
+  - `FREETEXT` - search for different forms of words
+    ```sql
+    SELECT ProductID, Name
+    FROM Production.Product
+    WHERE FREETEXT(Name, 'riding bikes');
+    ```
+  - `CONTAINSTABLE` and `FREETEXTTABLE` - returns a table (with columns `KEY` and `RANK`) of matches, `RANK` is a BM25 score
+    ```sql
+    SELECT p.ProductID, p.Name, ft.RANK
+    FROM Production.Product AS p
+    -- find products where "mountain" and "bike" appear nearby
+    INNER JOIN CONTAINSTABLE(Production.Product, Name,
+        'NEAR((mountain, bike))') AS ft
+      ON p.ProductID = ft.[KEY]
+    ORDER BY ft.RANK DESC;
+    ```
+
+#### Vector search
+
+- Compares mathematical representation of concepts
+- Needs vector embeddings
+- The `VECTOR` data type
+  - Each vector is an array of floating-point numbers
+  - Stored in an optimized binary format
+  - Exposed as JSON arrays
+  ```sql
+  CREATE TABLE dbo.Products
+  (
+      ProductID INT PRIMARY KEY,
+      Name NVARCHAR(100),
+      Description NVARCHAR(MAX),
+      DescriptionVector VECTOR(1536) NOT NULL
+  );
+  ```
+- Distance metrics
+  - Cosine distance
+    - Measures the angle, ignoring magnitude
+    - Ranges from 0 (identical) to 2 (opposite)
+  - Euclidean distance
+    - Measures straight-line distance between vectors
+    - Measures both direction and magnitude
+    - Ranges from 0 to infinity
+  - Dot product
+    - Sum of element-wise products of vectors
+- Most embedding models are optimized for cosine distance
+- Exact nearest neighbor (ENN)
+  - Calculate distance to every row
+  - `VECTOR_DISTANCE('cosine', @query, DescriptionVector) AS Distance`
+  - Suitable for table with less than 50,000 vectors
+- Approximate nearest neighbor (ANN)
+  - Won't scan every row
+  - Create a vector index first
+  ```sql
+  CREATE VECTOR INDEX idx_Products_DescriptionVector
+  ON dbo.Products(DescriptionVector)
+  WITH (METRIC = 'cosine', TYPE = 'DiskANN');
+  ```
+  - Then query with `VECTOR_SEARCH`, the function returns all column in the table, adding a distance column
+  ```sql
+  DECLARE @query VECTOR(1536) = '[0.1, 0.2, ...]';
+
+  SELECT t.ProductID, t.Name, s.distance
+  FROM VECTOR_SEARCH(
+      TABLE = dbo.Products AS t,
+      COLUMN = DescriptionVector,
+      SIMILAR_TO = @query,
+      METRIC = 'cosine',
+      TOP_N = 10
+  ) AS s
+  ORDER BY s.distance;
+  ```
+- Vector index limitations
+  - The table must have a single-column integer primary key with a clustered index
+  - Tables with vector indexes become read-only, you need to drop the index to modify data, then recreate it. Or, you can keep it writable by enabling `ALLOW_STALE_VECTOR_INDEX`
+    ```sql
+    -- Enable preview features required for vector indexes
+    ALTER DATABASE SCOPED CONFIGURATION SET PREVIEW_FEATURES = ON;
+    GO
+
+    -- Allow the table to remain writable after vector index creation
+    ALTER DATABASE SCOPED CONFIGURATION SET ALLOW_STALE_VECTOR_INDEX = ON;
+    GO
+    ```
+  - Vector indexes can't be partitioned
+
+#### Hybrid search and ranking
+
+RRF (Reciprocal Rank Fusion) combines ranked lists
+
+```
+RRF_score = 1/(k + rank_from_source_1) + 1/(k + rank_from_source_2)
+```
+
+*`k` is typically 60*
+
+Complete hybrid search example, using Common Table Expressions (CTEs)
+
+```sql
+DECLARE @searchText NVARCHAR(1000) = 'lightweight hiking boots';
+DECLARE @searchVector VECTOR(1536);
+DECLARE @topN INT = 50;
+DECLARE @rrfK INT = 60;
+
+-- Generate embedding for the search phrase
+SELECT @searchVector = AI_GENERATE_EMBEDDINGS(@searchText USE MODEL MyEmbeddingModel);
+
+-- Run hybrid search with RRF
+WITH keyword_search AS (
+    SELECT TOP(@topN)
+        p.ProductID,
+        RANK() OVER (ORDER BY ftt.[RANK] DESC) AS keyword_rank
+    FROM dbo.Products p
+    INNER JOIN FREETEXTTABLE(dbo.Products, Description, @searchText) AS ftt
+        ON p.ProductID = ftt.[KEY]
+),
+vector_search AS (
+    SELECT TOP(@topN)
+        ProductID,
+        RANK() OVER (ORDER BY distance) AS vector_rank
+    FROM (
+        SELECT
+            ProductID,
+            VECTOR_DISTANCE('cosine', @searchVector, DescriptionVector) AS distance
+        FROM dbo.Products
+    ) AS similar_products
+),
+combined AS (
+    SELECT TOP(@topN)
+        COALESCE(ks.ProductID, vs.ProductID) AS ProductID,
+        ks.keyword_rank,
+        vs.vector_rank,
+        COALESCE(1.0 / (@rrfK + ks.keyword_rank), 0.0) +
+        COALESCE(1.0 / (@rrfK + vs.vector_rank), 0.0) AS rrf_score
+    FROM keyword_search ks
+    FULL OUTER JOIN vector_search vs ON ks.ProductID = vs.ProductID
+)
+SELECT
+    p.ProductID,
+    p.Name,
+    p.Description,
+    c.keyword_rank,
+    c.vector_rank,
+    c.rrf_score
+FROM combined c
+INNER JOIN dbo.Products p ON c.ProductID = p.ProductID
+ORDER BY c.rrf_score DESC;
+```
