@@ -101,6 +101,9 @@
     - [Full-text search](#full-text-search)
     - [Vector search](#vector-search)
     - [Hybrid search and ranking](#hybrid-search-and-ranking)
+  - [RAG](#rag)
+    - [Format query results as JSON](#format-query-results-as-json)
+    - [Prompt augmentation](#prompt-augmentation)
 
 ## Overview
 
@@ -2357,4 +2360,114 @@ SELECT
 FROM combined c
 INNER JOIN dbo.Products p ON c.ProductID = p.ProductID
 ORDER BY c.rrf_score DESC;
+```
+
+
+### RAG
+
+![RAG diagram](./images/sql_rag-architecture.png)
+
+RAG grounds responses in retrieved data, rather than just the model's training.
+
+You could use T-SQL for RAG orchestration:
+1. retrieve data
+2. augment prompt
+3. call the model (with `sp_invoke_external_rest_endpoint`)
+4. process RAG responses and return it
+
+#### Format query results as JSON
+
+You usually need to send data in JSON format to a model.
+
+```sql
+SELECT Name, ListPrice, Color
+FROM Production.Product
+WHERE ProductID = @ProductID
+FOR JSON AUTO;
+-- output:
+-- [{"Name":"Mountain-500 Black, 48","ListPrice":564.99,"Color":"Black"}]
+
+-- to use custom field names
+SELECT
+    Name AS 'product.name',
+    ListPrice AS 'product.price',
+    Size AS 'product.size'
+FROM Production.Product
+WHERE ProductID = @ProductID
+FOR JSON PATH;
+-- output:
+-- [{"product":{"name":"Mountain-500 Black, 48","price":564.99,"size":"48"}}]
+```
+
+Options:
+
+- `WITHOUT_ARRAY_WRAPPER` - remove the bracket when only one row is returned
+- `INCLUDE_NULL_VALUES` - include nulls in output
+- `ROOT('name')` - wraps output in a root element
+
+#### Prompt augmentation
+
+Typicall prompt structure
+
+```json
+{
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are a helpful assistant that answers questions about products. Use only the provided context to answer. If the context doesn't contain enough information, say so."
+    },
+    {
+      "role": "user",
+      "content": "Context: {retrieved_data}\n\nQuestion: {user_question}"
+    }
+  ],
+  "max_tokens": 500,
+  "temperature": 0.7
+}
+```
+
+`temperature` controls creativity on a scale from 0 to 2. Lower values (0.3 to 0.5) produce more consistent factual responses.
+
+Example for building the complete payload:
+
+```sql
+DECLARE @userQuestion NVARCHAR(1000) = 'Which pedals are compatible with the Mountain-500?';
+DECLARE @questionVector VECTOR(1536);
+DECLARE @context NVARCHAR(MAX);
+DECLARE @payload NVARCHAR(MAX);
+
+-- Generate embedding for the question
+SELECT @questionVector = AI_GENERATE_EMBEDDINGS(@userQuestion USE MODEL my_embedding_model);
+
+-- Get product context using vector search
+SET @context = (
+    SELECT TOP 3
+        p.Name AS ProductName,
+        p.Color,
+        p.Size,
+        pc.Name AS Category,
+        pm.Name AS Model
+    FROM Production.Product p
+    INNER JOIN Production.ProductSubcategory ps ON p.ProductSubcategoryID = ps.ProductSubcategoryID
+    INNER JOIN Production.ProductCategory pc ON ps.ProductCategoryID = pc.ProductCategoryID
+    INNER JOIN Production.ProductModel pm ON p.ProductModelID = pm.ProductModelID
+    ORDER BY VECTOR_DISTANCE('cosine', p.DescriptionVector, @questionVector)
+    FOR JSON PATH
+);
+
+-- Build the prompt
+SET @payload = JSON_OBJECT(
+    'messages': JSON_ARRAY(
+        JSON_OBJECT(
+            'role': 'system',
+            'content': 'You are an Adventure Works product assistant. Use only the provided product data to answer questions.'
+        ),
+        JSON_OBJECT(
+            'role': 'user',
+            'content': 'Product data: ' + @context + CHAR(10) + 'Question: ' + @userQuestion
+        )
+    ),
+    'max_tokens': 500,
+    'temperature': 0.5
+);
 ```
