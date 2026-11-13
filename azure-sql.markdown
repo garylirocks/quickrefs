@@ -3,7 +3,7 @@
 - [Overview](#overview)
 - [Azure SQL Database (SQL DB)](#azure-sql-database-sql-db)
   - [Concepts](#concepts)
-  - [Purchasing models](#purchasing-models)
+  - [Purchasing models (resource models)](#purchasing-models-resource-models)
   - [Deployment models](#deployment-models)
   - [Networking](#networking)
     - [Logical server level firewall](#logical-server-level-firewall)
@@ -104,6 +104,7 @@
   - [RAG](#rag)
     - [Format query results as JSON](#format-query-results-as-json)
     - [Prompt augmentation](#prompt-augmentation)
+- [Change tracking](#change-tracking)
 
 ## Overview
 
@@ -145,22 +146,23 @@ Notes:
   - Security: networking, TDE, Defender for Cloud, identity, auditing
   - A server could contain databases of different purchasing models
 
-### Purchasing models
+### Purchasing models (resource models)
 
 This is at database level, NOT server level
 
 ![Purchasing models](./images/azure_sql-db-purchasing-models.png)
 
 - DTU: a bundled measure of compute, storage and I/O resources
-- vCore: select compute and storage resources independently, allows you to use Azure Hybrid Benefit for SQL Server, compute tier could be
+- vCore: select compute and storage resources independently, allows you to use Azure Hybrid Benefit for SQL Server, **compute tier** could be
   - Provisioned:
     - Pre-allocated compute resources
     - Billed hourly on vCores configured
   - Serverless:
+    - Available for "General Purpose" and "Hyperscale" tier
     - Auto-scale, you set min and max vCores
     - Billed per second
     - Not for "Business Critical" tier
-    - Auto-pause could be enabled for "General Purpose" tier, delay from 15 min to 7 days
+    - Auto-pause is only for "General Purpose" tier, delay from 15 min to 7 days
     ![Auto pause delay](./images/azure_sql-serverless-auto-pause.png)
     - When paused:
       - No vCore charge, only storage charged when paused
@@ -172,14 +174,16 @@ This is at database level, NOT server level
       - A job database in elastic jobs
       - The `sync` database in SQL Data Sync
 
-| Service tier            | Basic (DTU)         | Standard (DTU) | Premium (DTU) | General Purpose (vCore) | Business Critical (vCore) | Hyperscale (vCore)           |
-| ----------------------- | ------------------- | -------------- | ------------- | ----------------------- | ------------------------- | ---------------------------- |
-| Local redundant support | Yes                 | Yes            | Yes           | Yes                     | Yes                       | Yes                          |
-| Zone redundant support  | X                   | X              | Yes           | Yes                     | Yes                       | Yes                          |
-| Data and Log Storage    | LRS premium storage | LRS            | local SSD     | LRS or ZRS              | local SSD                 | local SSD cache, page server |
-| tempdb Storage          | local SSD           | same           | same          | same                    | same                      | same                         |
-| Max data size           | 2GB                 | 1TB            | 4TB           | 4TB                     | 4TB                       | 100TB                        |
-| AlwaysOn AG             | No                  | No             | Yes           | No                      | Yes                       | -                            |
+| Service tier            | Basic (DTU)         | Standard (DTU) | Premium (DTU) | General Purpose (vCore)   | Business Critical (vCore) | Hyperscale (vCore)           |
+| ----------------------- | ------------------- | -------------- | ------------- | ------------------------- | ------------------------- | ---------------------------- |
+| Local redundant support | Yes                 | Yes            | Yes           | Yes                       | Yes                       | Yes                          |
+| Zone redundant support  | X                   | X              | Yes           | Yes                       | Yes                       | Yes                          |
+| Data and Log Storage    | LRS premium storage | LRS            | local SSD     | Blob Storage (LRS or ZRS) | local SSD                 | local SSD cache, page server |
+| Latency                 |                     |                |               | 5 - 10 ms                 | < 2ms                     |                              |
+| tempdb Storage          | local SSD           | same           | same          | same                      | same                      | same                         |
+| Max data size           | 2GB                 | 1TB            | 4TB           | 4TB                       | 4TB                       | 128TB                        |
+| Availability replicas   |                     |                |               | 1 (no read replica)       | 3 + 1 read replica        | 0 to 4                       |
+| AlwaysOn AG             | No                  | No             | Yes           | No                        | Yes                       | -                            |
 
 Tier features:
 
@@ -196,13 +200,15 @@ Tier features:
   - Remote storage (Premium SSD)
   - Provisioned or serverless compute (supports auto-pause)
 - Business Critical (vCore)
-  - Local SSD storage
   - **Highest** availability and performance
   - **Lowest** latency
-  - Built-in read-only replica
+    - Local SSD storage, <2ms latency
+  - **Fastest** failover - three sync replicas
+  - One built-in read-only replica
   - In-memory OLTP
   - More memory per core
   - No "serverless" option
+  - Cost is 2.7 times of General Purpose tier
 - Hyperscale (vCore)
   - Horizontal scaling (adding compute nodes as data sizes grow)
   - Only single SQL database (seems could be used in elastic pool, what does this mean ?)
@@ -330,7 +336,7 @@ Architecture by tier:
 
 ### Hyperscale
 
-- Max data size over 100TB
+- Max data size over 128TB
 - Horizontal scaling (adding compute nodes) as data size grows
 - Can be converted to, but not back to a standard SQL DB
 - Ideal for most workloads
@@ -1628,6 +1634,12 @@ Usually done with `ALTER DATABASE`
 - DB recovery model - `FULL` or `SIMPLE`
   - PaaS options does not support `SIMPLE` model
 - Automatic tuning
+  ```sql
+  ALTER DATABASE CURRENT
+  SET AUTOMATIC_TUNING (FORCE_LAST_GOOD_PLAN = ON,
+                        CREATE_INDEX = ON,
+                        DROP_INDEX = OFF);
+  ```
 - Auto create and update statistics
 - Query store options
 - Snapshot isolation
@@ -1637,24 +1649,28 @@ and `ALTER DATABASE SCOPED CONFIGURATION`
 - `MAXDOP` - override server settings
 - "Legacy Cardinality Estimation"
 - "Last Query Plan Stats"
-- `OPTIMIZE_FOR_AD_HOC_WORKLOADS` - when a batch is compiled for the first time, save a plan stub instead of full plan in the cache, could saves memory
+- `OPTIMIZE_FOR_AD_HOC_WORKLOADS`
+  - when a query is compiled for the first time, save a tiny plan stub instead of full plan in the cache, could saves memory
+  - when the same query runs again, full plan is cached
 
 Concepts:
 
 - Compatibility level
-  - Controls behavior of the query optimizer for a db
+  - Controls which query optimizer behaviors are available
+  - New DB in Azure SQL default to 170
   - Help keep old execution plans in newer SQL Server
   - Should be updated if possible
-  - Many new features in Intelligent Query Processing only available in compatibility level 140 or 150
-  ```sql
-  ALTER DATABASE [DB_Name] SET COMPATIBILITY_LEVEL = 150;
-  ```
-
+  - Each level unlocks a set of Intelligent Query Processing (IQP) features
+    ```sql
+    ALTER DATABASE [DB_Name] SET COMPATIBILITY_LEVEL = 170;
+    ```
 - `MAXDOP` (degree of parallelism)
   - Higher value means more threads used per query, but requires more memory
+  - Azure SQL DB defaults to 8
+  - You can set a different value for secondary replicas
   - Azure SQL supports
-    - Configuration via `ALTER DATABASE SCOPED CONFIGURATION`
-    - `MAXDOP` query hints
+    - Configuration via `ALTER DATABASE SCOPED CONFIGURATION SET MAXDOP = 8`
+    - `OPTION (MAXDOP 8)` query hints
     - SQL MI supports config via `sp_configure` or Resource Governor
 
 ### Automatic tuning
@@ -2286,6 +2302,7 @@ Three approaches:
   ORDER BY s.distance;
   ```
 - Vector index limitations
+  - Vector indexes has a metric type (like cosine)
   - The table must have a single-column integer primary key with a clustered index
   - Tables with vector indexes become read-only, you need to drop the index to modify data, then recreate it. Or, you can keep it writable by enabling `ALLOW_STALE_VECTOR_INDEX`
     ```sql
@@ -2471,3 +2488,15 @@ SET @payload = JSON_OBJECT(
     'temperature': 0.5
 );
 ```
+
+
+## Change tracking
+
+- Change tracking
+  - Need to be enabled for both the DB and the table
+  - Azure Function SQL trigger
+    - default polling interval: 1s
+    - default batch size: 100 changes
+- Change Data Capture (CDC)
+  - Change written to another table
+- Change event streaming (CES)

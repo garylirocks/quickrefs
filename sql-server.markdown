@@ -452,6 +452,18 @@ ADD ThemeValue AS JSON_VALUE(ConfigSettings, '$.theme');
 CREATE INDEX IX_Theme ON ConfigurationData(ThemeValue);
 ```
 
+You can also add a `JSON INDEX` directly on certain properties
+
+```sql
+-- Index specific paths
+CREATE JSON INDEX IX_Orders_Info
+    ON Orders (Info)
+    FOR ('$.customer.id', '$.status');
+
+-- Or index the whole document
+CREATE JSON INDEX IX_Orders_Info_All ON Orders (Info);
+```
+
 
 ## Constraints
 
@@ -631,7 +643,13 @@ Considerations:
 - Read benefits from indexes more
 - Optimize indexes for most frequently run queries
 - Choose appropriate data types
-- Use *filtered index* in large tables on columns with low-cardinality values (like a bit flag)
+- Use *filtered index* in large tables on columns with low-cardinality values (like a bit flag), a filtered index is smaller and easier to maintain
+  ```sql
+  CREATE NONCLUSTERED INDEX FIBillOfMaterialsWithEndDate
+      ON Production.BillOfMaterials (ComponentID, StartDate)
+      WHERE EndDate IS NOT NULL ;
+  GO
+  ```
 - Create indexes on views, if the view contains aggregations and/or joins
 
 
@@ -846,7 +864,7 @@ END
 ### Scalar functions
 
 - Returns a single value
-- Can be used in `SELECT`, `  WHERE`, and other T-SQL expressions
+- Can be used in `SELECT`, `WHERE`, and other T-SQL expressions
 - Management
   - You can modify a defined function with `ALTER FUNCTION`
   - Before `ALTER FUNCTION`, check if other objects depend on it by checking `sys.sql_expression_dependencies`
@@ -951,7 +969,7 @@ BEGIN
 END;
 ```
 
-Use TVF in ``JOIN`
+Use TVF in `JOIN`
 
 ```sql
 SELECT
@@ -1319,7 +1337,7 @@ Analytical functions
 Same syntax as ECMAScript
 
 - `REGEXP_LIKE` check pattern exist or not
-- `REGEXP_REPLACE` check pattern exist or not
+- `REGEXP_REPLACE`
 - `REGEXP_SUBSTR` extract subsring
 - `REGEXP_INSTR` starting position of a pattern
 - `REGEXP_COUNT` pattern occurrence count
@@ -1504,6 +1522,11 @@ END;
 
 ## Isolation levels
 
+- Controls how much one transaction can see another transaction's uncommitted work
+- Three concurrency side effects:
+  - Dirty reads - read uncommitted data from other transactions
+  - Non-repeatable reads - a transaction reads the same row twice and gets different data
+  - Phantoms - a transaction re-executes a query and sees new rows inserted by others
 - It's a **session level** setting, there's NO global isolation level
 - Use a proper level to balance consistency and concurrency
 - Locks could be on different levels:
