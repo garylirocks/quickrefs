@@ -1276,32 +1276,59 @@ provider "aws" {
   region = "us-west-2"
 }
 
-module "tunnel" {
-  source    = "./tunnel"
+module "child1" {
+  source    = "./child1"
   providers = {                                     # 2
     aws.src = aws.usw1
     aws.dst = aws.usw2
   }
 }
+
+
+module "child2" {
+  source    = "./child2"
+  providers = {                                     # 3
+    aws = aws.usw1
+  }
+}
 ```
 
 ```terraform
-# child module
+# child module 1
 
 terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
       version = ">= 2.7.0"
-      configuration_aliases = [ aws.src, aws.dest ]  # 3
+      configuration_aliases = [ aws.src, aws.dest ]  # 4
     }
   }
 }
 ```
 
+```terraform
+# child module 2
+
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 2.7.0"
+    }
+  }
+}
+
+aws_s3_bucket "example" {
+  bucket = "child2-example"                          # 5
+}
+```
+
 - #1 Root module defines aliases
 - #2 Passes down by the `providers` meta-argument in a `module` block
-- #3 Child module declares its expected alias names
+- #3 Default module is always names `provider`, without the dot part, and you can explicitly set an alias provider as default in child module
+- #4 Child module declares its expected alias names
+- #5 This block is using the default provider, passed from root module
 
 
 ## Best practices
